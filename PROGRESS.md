@@ -26,7 +26,7 @@
 | --- | --- | --- |
 | 0 | Bootstrap: lift reference app to root, prove it boots | ✅ Done |
 | 1 | Central config + real external links (no SDK yet) | ✅ Done |
-| 2 | Pure billing logic (TDD) + Jest harness | ⬜ Not started |
+| 2 | Pure billing logic (TDD) + Jest harness | ✅ Done |
 | 3 | Sim service + refactor `usePurchaseFlow` onto the seam | ⬜ Not started |
 | 4 | RevenueCat service + provider selection | ⬜ Not started |
 | 5 | Live entitlement → renewal/plan/price; cancel reflects willRenew | ⬜ Not started |
@@ -49,9 +49,9 @@ Legend: ⬜ Not started · 🟡 In progress · ✅ Done · ⛔ Blocked
 - [x] 1.3 Wire `openExternal` into `RitualsApp.js` (replace toast `openLink`)
 
 ### Phase 2 — Pure logic + tests
-- [ ] 2.1 Jest harness (`jest-expo`, RNTL, `react-test-renderer@18.2.0`, jest config, `jest.setup.js`)
-- [ ] 2.2 `src/billing/format.js` + test (`formatRenewDate`, `planFromProductId`)
-- [ ] 2.3 `src/billing/mapError.js` + test (`mapPurchaseError`)
+- [x] 2.1 Jest harness (`jest-expo`, RNTL, `react-test-renderer@18.2.0`, jest config, `jest.setup.js`)
+- [x] 2.2 `src/billing/format.js` + test (`formatRenewDate`, `planFromProductId`)
+- [x] 2.3 `src/billing/mapError.js` + test (`mapPurchaseError`)
 
 ### Phase 3 — Service seam
 - [ ] 3.1 `src/billing/simService.js` + test
@@ -128,3 +128,5 @@ _2026-06-03 — Plan + this tracker created by Opus. No code written yet. Next a
 _2026-06-03 — Phase 0 complete. Copied 26 reference files to root, ran `npm install` (1143 packages, warnings only), Metro started and reached "Waiting on http://localhost:8081" with no import errors. Last command: `git commit -m "chore: lock dependencies for lifted app"` — succeeded (commit 80afacb). Next: Phase 1, Task 1.1 — create `src/billing/config.js`._
 
 _2026-06-03 — Phase 1 complete. Created `src/billing/config.js` (ENTITLEMENT_ID, RC_KEYS, LINKS, hasKeyFor), `src/billing/links.js` (openExternal using RN Linking), and replaced the toast-only `openLink` in `src/RitualsApp.js` with a real `openExternal` call. Three commits: 1f8afda, a3f3e5d, 1ecf830. Last command: `git commit -m "feat(billing): use real Linking for legal links"` — succeeded. Next: Phase 2, Task 2.1 — stand up Jest harness (`src/billing/` directory already created; add jest-expo + devDeps to package.json, create jest.setup.js)._
+
+_2026-06-03 — Phase 2 complete. Stood up jest-expo harness (added `testPathIgnorePatterns` for `design_handoff_plus_compliance/` to silence Haste collision, `--passWithNoTests` so empty suite exits 0). TDD'd `src/billing/format.js` (5 passing) and `src/billing/mapError.js` (4 passing); 9/9 green overall. Four commits: 161a865, 46b166b, 1a9f180, plus this PROGRESS.md commit. Last command: `npm test` — 9 passed, 2 suites. Next: Phase 3, Task 3.1 — write failing test for `createSimService` in `__tests__/billing/simService.test.js`, then implement `src/billing/simService.js`._
