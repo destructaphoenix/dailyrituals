@@ -25,7 +25,7 @@
 | Phase | Title | Status |
 | --- | --- | --- |
 | 0 | Bootstrap: lift reference app to root, prove it boots | ✅ Done |
-| 1 | Central config + real external links (no SDK yet) | ⬜ Not started |
+| 1 | Central config + real external links (no SDK yet) | ✅ Done |
 | 2 | Pure billing logic (TDD) + Jest harness | ⬜ Not started |
 | 3 | Sim service + refactor `usePurchaseFlow` onto the seam | ⬜ Not started |
 | 4 | RevenueCat service + provider selection | ⬜ Not started |
@@ -44,9 +44,9 @@ Legend: ⬜ Not started · 🟡 In progress · ✅ Done · ⛔ Blocked
 - [x] 0.2 `npm install`, `npx expo start` boots to Onboarding, commit lockfile
 
 ### Phase 1 — Config + links
-- [ ] 1.1 `src/billing/config.js`
-- [ ] 1.2 `src/billing/links.js`
-- [ ] 1.3 Wire `openExternal` into `RitualsApp.js` (replace toast `openLink`)
+- [x] 1.1 `src/billing/config.js`
+- [x] 1.2 `src/billing/links.js`
+- [x] 1.3 Wire `openExternal` into `RitualsApp.js` (replace toast `openLink`)
 
 ### Phase 2 — Pure logic + tests
 - [ ] 2.1 Jest harness (`jest-expo`, RNTL, `react-test-renderer@18.2.0`, jest config, `jest.setup.js`)
@@ -126,3 +126,5 @@ Fill these in `.env` (copy from `.env.example`, created in Phase 4) and record t
 _2026-06-03 — Plan + this tracker created by Opus. No code written yet. Next action: Phase 0, Task 0.1 (copy reference app to root)._
 
 _2026-06-03 — Phase 0 complete. Copied 26 reference files to root, ran `npm install` (1143 packages, warnings only), Metro started and reached "Waiting on http://localhost:8081" with no import errors. Last command: `git commit -m "chore: lock dependencies for lifted app"` — succeeded (commit 80afacb). Next: Phase 1, Task 1.1 — create `src/billing/config.js`._
+
+_2026-06-03 — Phase 1 complete. Created `src/billing/config.js` (ENTITLEMENT_ID, RC_KEYS, LINKS, hasKeyFor), `src/billing/links.js` (openExternal using RN Linking), and replaced the toast-only `openLink` in `src/RitualsApp.js` with a real `openExternal` call. Three commits: 1f8afda, a3f3e5d, 1ecf830. Last command: `git commit -m "feat(billing): use real Linking for legal links"` — succeeded. Next: Phase 2, Task 2.1 — stand up Jest harness (`src/billing/` directory already created; add jest-expo + devDeps to package.json, create jest.setup.js)._
