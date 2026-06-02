@@ -1,0 +1,202 @@
+// HomeScreen.js — streak hub. Ported from HomeScreen in rituals-screens.jsx.
+
+import React from 'react';
+import { View, ScrollView, Pressable, Text } from 'react-native';
+import { useTheme } from '../theme';
+import { T, Card, PrimaryButton, ProgressBar } from '../ui';
+import { Sun, Moon, Check, Pencil, BADGE_ICON } from '../icons';
+import { RayFan, NightSky } from '../art';
+import { WEEK, BADGES, SAMPLE_ENTRIES, TODAY_LABEL } from '../data';
+import { StreakFreeze, DailyQuests } from '../gamify';
+import { EmberPill } from '../shopui';
+
+export default function HomeScreen({ copy, gamify, mode, streak, xp, xpMax, level, levelName, quests, freezes, onOpenAchievements, done, onWrite, onToggleMode, embers, plus, onOpenShop }) {
+  const t = useTheme();
+  const c = t.colors;
+  const Orb = mode === 'night' ? Moon : Sun;
+  const greeting = mode === 'night' ? copy.greetingNight : copy.greeting;
+  const streakShadow = { textShadowColor: 'rgba(0,0,0,0.7)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 10 };
+
+  return (
+    <ScrollView
+      style={{ flex: 1 }}
+      contentContainerStyle={{ paddingTop: 8, paddingBottom: 26, gap: 18 }}
+      showsVerticalScrollIndicator={false}
+    >
+      {/* greeting */}
+      <View style={{ paddingHorizontal: 20, paddingTop: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <View>
+          <T d w={700} color={c.ink} style={{ fontSize: 27, lineHeight: 30 }}>{greeting}.</T>
+          <T w={600} color={c.muted} style={{ fontSize: 14, marginTop: 2 }}>{TODAY_LABEL}</T>
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9 }}>
+          <EmberPill embers={embers} plus={plus} onPress={onOpenShop} />
+          <Pressable
+            onPress={onToggleMode}
+            accessibilityLabel={mode === 'night' ? 'Switch to light mode' : 'Switch to dark mode'}
+            style={({ pressed }) => [{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.accentSoft, borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center', transform: [{ scale: pressed ? 0.92 : 1 }] }]}
+          >
+            <Orb size={24} color={c.accentDeep} />
+          </Pressable>
+        </View>
+      </View>
+
+      {/* streak hero */}
+      {gamify && (
+        <View style={{ paddingHorizontal: 20 }}>
+          <Card style={{ paddingHorizontal: 22, paddingTop: 26, paddingBottom: 22, alignItems: 'center', overflow: 'hidden' }}>
+            {mode === 'night' ? <NightSky /> : <RayFan />}
+            <View style={{ zIndex: 1, alignItems: 'center' }}>
+              <T d w={800} color={c.accentDeep} style={{ fontSize: 76, lineHeight: 76 }}>{streak}</T>
+              <T d w={700} color={c.ink} style={[{ fontSize: 16, marginTop: 2 }, t.dark && streakShadow]}>day streak</T>
+              <T w={600} color={t.dark ? '#d8c7a8' : c.muted} style={[{ fontSize: 13, marginTop: 4 }, t.dark && streakShadow]}>Four days running — keep it tender.</T>
+            </View>
+            <View style={{ zIndex: 1, width: '100%', marginTop: 22 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 7 }}>
+                <T d w={700} color={c.ink} style={{ fontSize: 14 }}>Lv {level} · {levelName}</T>
+                <T w={700} color={c.muted} style={{ fontSize: 12 }}>{xp} / {xpMax} XP</T>
+              </View>
+              <ProgressBar value={Math.min(100, (xp / xpMax) * 100)} />
+            </View>
+            {freezes != null && <StreakFreeze count={freezes} />}
+          </Card>
+        </View>
+      )}
+
+      {/* daily rites (quests) + goal ring */}
+      {gamify && quests && (
+        <View style={{ paddingHorizontal: 20 }}>
+          <DailyQuests quests={quests} />
+        </View>
+      )}
+
+      {/* week strip */}
+      {gamify && (
+        <View style={{ paddingHorizontal: 20 }}>
+          <Card style={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 14 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              {WEEK.map((d, i) => {
+                const isDone = d.state === 'done' || (d.state === 'today' && done);
+                return (
+                  <View key={i} style={{ flex: 1, alignItems: 'center', gap: 7 }}>
+                    <T w={800} color={c.muted} style={{ fontSize: 11 }}>{d.l}</T>
+                    <Dot state={d.state} done={done} mode={mode}>
+                      {isDone && <Check size={18} color="#fff" />}
+                      {d.state === 'today' && !done && <Orb size={17} color={c.accentDeep} />}
+                      {d.state === 'miss' && <Text style={{ fontSize: 17, lineHeight: 21 }}>💀</Text>}
+                    </Dot>
+                  </View>
+                );
+              })}
+            </View>
+          </Card>
+        </View>
+      )}
+
+      {/* today's ritual CTA */}
+      <View style={{ paddingHorizontal: 20 }}>
+        {!done ? (
+          <Card style={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 22 }}>
+            <T w={700} color={c.muted} style={{ fontSize: 12, letterSpacing: 1.7, textTransform: 'uppercase', marginBottom: 12 }}>
+              {copy.teaserKicker}
+            </T>
+            <T d w={600} color={c.ink} style={{ fontSize: 19, lineHeight: 25 }}>
+              {copy.teaser[0]}<T d w={700} color={c.accentDeep} style={{ fontSize: 19 }}>{copy.teaser[1]}</T>{copy.teaser[2]}
+            </T>
+            <PrimaryButton
+              label={copy.cta}
+              onPress={onWrite}
+              icon={<Pencil size={20} color="#fff" />}
+              style={{ marginTop: 20 }}
+            />
+          </Card>
+        ) : (
+          <Card style={{ padding: 20, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+            <View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: c.greenSoft, alignItems: 'center', justifyContent: 'center' }}>
+              <Check size={26} color={c.green} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <T d w={600} color={c.ink} style={{ fontSize: 17, lineHeight: 22 }}>Today is at rest.</T>
+              <T w={600} color={c.muted} style={{ fontSize: 14, marginTop: 2 }}>You can revisit it anytime in Reflections.</T>
+            </View>
+          </Card>
+        )}
+      </View>
+
+      {/* badges */}
+      {gamify && (
+        <View style={{ paddingHorizontal: 20 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <T d w={700} color={c.ink} style={{ fontSize: 17 }}>Keepsakes</T>
+            <Pressable onPress={onOpenAchievements} hitSlop={8}>
+              <T w={700} color={c.accentDeep} style={{ fontSize: 13 }}>All</T>
+            </Pressable>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingVertical: 2 }}>
+            {BADGES.map((b) => {
+              const Ic = BADGE_ICON[b.icon];
+              return (
+                <Pressable key={b.id} onPress={onOpenAchievements} style={{ width: 72, alignItems: 'center', gap: 6 }}>
+                  <Medal earned={b.earned} mode={mode}>
+                    <Ic size={24} color={b.earned ? '#7c2d12' : (mode === 'night' ? '#6b6256' : '#c3bcb0')} />
+                  </Medal>
+                  <T w={700} color={c.muted} style={{ fontSize: 10.5, textAlign: 'center', lineHeight: 12 }}>{b.label}</T>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </View>
+      )}
+
+      {/* gentle peek when gamification is off */}
+      {!gamify && (
+        <View style={{ paddingHorizontal: 20 }}>
+          <T d w={700} color={c.ink} style={{ fontSize: 17, marginBottom: 12 }}>Yesterday</T>
+          <Card style={{ padding: 18 }}>
+            <T d w={700} color={c.accentDeep} style={{ fontSize: 14, marginBottom: 6 }}>What you did</T>
+            <T w={400} color={c.muted} style={{ fontSize: 13.5, lineHeight: 19.5 }} numberOfLines={2}>
+              {SAMPLE_ENTRIES[0].did}
+            </T>
+          </Card>
+        </View>
+      )}
+    </ScrollView>
+  );
+}
+
+function Dot({ state, done, mode, children }) {
+  const t = useTheme();
+  const c = t.colors;
+  let bg = c.dot, borderColor = 'transparent', borderStyle = 'solid';
+  let extra = {};
+  if (state === 'done' || (state === 'today' && done)) {
+    bg = c.accent;
+    extra = t.shadow(8, c.accentDeep, 0.8);
+  } else if (state === 'today') {
+    bg = c.surface; borderColor = c.accent;
+  } else if (state === 'future') {
+    bg = 'transparent'; borderColor = c.border; borderStyle = 'dashed';
+  }
+  return (
+    <View style={[{ width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: bg, borderWidth: 1.5, borderColor, borderStyle }, extra]}>
+      {children}
+    </View>
+  );
+}
+
+function Medal({ earned, mode, children }) {
+  const t = useTheme();
+  const c = t.colors;
+  if (earned) {
+    return (
+      <View style={[{ width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', backgroundColor: c.accent, borderWidth: 1.5, borderColor: c.accentDeep }, t.shadow(10, c.accentDeep, 0.8)]}>
+        {children}
+      </View>
+    );
+  }
+  return (
+    <View style={{ width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', backgroundColor: c.dot, borderWidth: 1.5, borderColor: c.border }}>
+      {children}
+    </View>
+  );
+}

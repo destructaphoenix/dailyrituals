@@ -1,0 +1,72 @@
+// App.js — entry point. Loads the Google fonts, provides safe-area context,
+// and holds the live mode + settings state (the You tab drives them).
+
+import React, { useState } from 'react';
+import { View, ActivityIndicator } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+
+import {
+  Baloo2_500Medium, Baloo2_600SemiBold, Baloo2_700Bold, Baloo2_800ExtraBold,
+} from '@expo-google-fonts/baloo-2';
+import {
+  Quicksand_500Medium, Quicksand_600SemiBold, Quicksand_700Bold,
+} from '@expo-google-fonts/quicksand';
+import {
+  Fredoka_500Medium, Fredoka_600SemiBold, Fredoka_700Bold,
+} from '@expo-google-fonts/fredoka';
+import {
+  Nunito_400Regular, Nunito_600SemiBold, Nunito_700Bold, Nunito_800ExtraBold,
+} from '@expo-google-fonts/nunito';
+import { useFonts } from 'expo-font';
+
+import RitualsApp from './src/RitualsApp';
+import Onboarding from './src/screens/Onboarding';
+import { DEFAULT_SETTINGS } from './src/theme';
+
+export default function App() {
+  const [mode, setMode] = useState('day');
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+  const [onboarded, setOnboarded] = useState(false); // new users start in first-run
+  const [startedPlus, setStartedPlus] = useState(false); // subscribed during onboarding
+
+  const [fontsLoaded] = useFonts({
+    Baloo2_500Medium, Baloo2_600SemiBold, Baloo2_700Bold, Baloo2_800ExtraBold,
+    Quicksand_500Medium, Quicksand_600SemiBold, Quicksand_700Bold,
+    Fredoka_500Medium, Fredoka_600SemiBold, Fredoka_700Bold,
+    Nunito_400Regular, Nunito_600SemiBold, Nunito_700Bold, Nunito_800ExtraBold,
+  });
+
+  if (!fontsLoaded) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#f9f7f4' }}>
+        <ActivityIndicator color="#d97706" />
+      </View>
+    );
+  }
+
+  const dark = mode === 'night';
+
+  // First-run / signup flow hands off to the live app on completion.
+  if (!onboarded) {
+    return (
+      <SafeAreaProvider>
+        <StatusBar style="dark" />
+        <Onboarding settings={settings} onDone={(plus) => { setStartedPlus(!!plus); setOnboarded(true); }} />
+      </SafeAreaProvider>
+    );
+  }
+
+  return (
+    <SafeAreaProvider>
+      <StatusBar style={dark ? 'light' : 'dark'} />
+      <RitualsApp
+        mode={mode}
+        settings={settings}
+        setSettings={setSettings}
+        onToggleMode={() => setMode(dark ? 'day' : 'night')}
+        initialPlus={startedPlus}
+      />
+    </SafeAreaProvider>
+  );
+}

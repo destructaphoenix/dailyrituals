@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "Daily Rituals",
+    "slug": "daily-rituals",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "backgroundColor": "#f9f7f4"
+    },
+    "ios": {
+      "supportsTablet": false
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#f9f7f4"
+      }
+    }
+  }
+}

@@ -1,0 +1,49 @@
+// ReadingSheet.js — entry detail. Ported from ReadingSheet. Rendered inside a
+// Modal by RitualsApp, so it's just the sheet body here.
+
+import React from 'react';
+import { View, ScrollView, Pressable, Text } from 'react-native';
+import { useTheme } from '../theme';
+import { T } from '../ui';
+import { Chevron } from '../icons';
+import { moodEmoji } from '../data';
+
+export default function ReadingSheet({ entry, copy, mode, insets, onClose }) {
+  const t = useTheme();
+  const c = t.colors;
+  return (
+    <View style={{ flex: 1, backgroundColor: c.cream, paddingTop: insets.top }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingTop: 14, paddingBottom: 6 }}>
+        <IconBtn onPress={onClose}><Chevron dir="left" size={22} color={c.ink} /></IconBtn>
+        {entry.mood ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 999, backgroundColor: c.accentSoft }}>
+            <Text style={{ fontSize: 13 }}>{moodEmoji(entry.mood)}</Text>
+            <T w={800} color={c.accentDeep} style={{ fontSize: 11 }}>{entry.mood}</T>
+          </View>
+        ) : null}
+      </View>
+
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 6, paddingBottom: 30 }} showsVerticalScrollIndicator={false}>
+        <T d w={600} color={c.muted} style={{ fontSize: 13, letterSpacing: 0.5, textTransform: 'uppercase' }}>{copy.epitaph}</T>
+        <T d w={800} color={c.ink} style={{ fontSize: 26, marginTop: 8, marginBottom: 2 }}>{entry.wd}, {entry.day} {entry.mon}</T>
+
+        <T d w={700} color={c.accentDeep} style={{ fontSize: 14, marginTop: 22, marginBottom: 7 }}>{copy.q1}</T>
+        <T w={400} color={c.ink} style={{ fontSize: 16.5, lineHeight: 26.7 }}>{entry.did}</T>
+
+        <View style={{ height: 1, backgroundColor: c.border, marginVertical: 14 }} />
+
+        <T d w={700} color={c.accentDeep} style={{ fontSize: 14, marginBottom: 7 }}>{copy.q2}</T>
+        <T w={400} color={c.ink} style={{ fontSize: 16.5, lineHeight: 26.7 }}>{entry.wished}</T>
+      </ScrollView>
+    </View>
+  );
+}
+
+function IconBtn({ onPress, children }) {
+  const t = useTheme();
+  return (
+    <Pressable onPress={onPress} style={{ width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: t.dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }}>
+      {children}
+    </Pressable>
+  );
+}
