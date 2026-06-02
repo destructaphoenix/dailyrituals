@@ -25,6 +25,7 @@ import Paywall from './screens/Paywall';
 import { ManageSubscription } from './screens/PlusFlow';
 import GetEmbers from './screens/GetEmbers';
 import Toast from './screens/Toast';
+import { openExternal } from './billing/links';
 
 const XP_GAIN = 50;
 const XP_MAX = 500;
@@ -79,10 +80,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   // Store outcome is driven by settings so every purchase/restore state is
   // reachable without a live billing backend (wire to RevenueCat in prod).
   const sim = { purchase: settings.storePurchase || 'success', restore: settings.storeRestore || 'empty' };
-  const openLink = (k) => showToast(
-    k === 'terms' ? 'Opening Terms of Service…' :
-    k === 'privacy' ? 'Opening Privacy Policy…' : 'Opening…'
-  );
+  const openLink = (k) => { openExternal(k, PLATFORM); };
 
   const retint = (swatch) => setSettings && setSettings((s) => ({ ...s, accent: swatch }));
   const applyPalette = (p) => { setActivePalette(p.id); retint(p.swatch); showToast(p.name + ' applied'); };
