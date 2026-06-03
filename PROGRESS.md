@@ -27,7 +27,7 @@
 | 0 | Bootstrap: lift reference app to root, prove it boots | ✅ Done |
 | 1 | Central config + real external links (no SDK yet) | ✅ Done |
 | 2 | Pure billing logic (TDD) + Jest harness | ✅ Done |
-| 3 | Sim service + refactor `usePurchaseFlow` onto the seam | ⬜ Not started |
+| 3 | Sim service + refactor `usePurchaseFlow` onto the seam | ✅ Done |
 | 4 | RevenueCat service + provider selection | ⬜ Not started |
 | 5 | Live entitlement → renewal/plan/price; cancel reflects willRenew | ⬜ Not started |
 | 6 | Dev client build + real-billing verification (Android) | ⬜ Not started |
@@ -54,10 +54,10 @@ Legend: ⬜ Not started · 🟡 In progress · ✅ Done · ⛔ Blocked
 - [x] 2.3 `src/billing/mapError.js` + test (`mapPurchaseError`)
 
 ### Phase 3 — Service seam
-- [ ] 3.1 `src/billing/simService.js` + test
-- [ ] 3.2 Refactor `usePurchaseFlow` in `PlusFlow.js` + hook test
-- [ ] 3.3 `Paywall.js` consumes `service`, passes selected `plan`
-- [ ] 3.4 `RitualsApp.js` builds + injects service; `subscribe` captures entitlement
+- [x] 3.1 `src/billing/simService.js` + test
+- [x] 3.2 Refactor `usePurchaseFlow` in `PlusFlow.js` + hook test
+- [x] 3.3 `Paywall.js` consumes `service`, passes selected `plan`
+- [x] 3.4 `RitualsApp.js` builds + injects service; `subscribe` captures entitlement
 - [ ] Verify all 6 sim states (success/cancel/failed/network/owned + restore empty/found) in Expo Go
 
 ### Phase 4 — RevenueCat
@@ -130,3 +130,5 @@ _2026-06-03 — Phase 0 complete. Copied 26 reference files to root, ran `npm in
 _2026-06-03 — Phase 1 complete. Created `src/billing/config.js` (ENTITLEMENT_ID, RC_KEYS, LINKS, hasKeyFor), `src/billing/links.js` (openExternal using RN Linking), and replaced the toast-only `openLink` in `src/RitualsApp.js` with a real `openExternal` call. Three commits: 1f8afda, a3f3e5d, 1ecf830. Last command: `git commit -m "feat(billing): use real Linking for legal links"` — succeeded. Next: Phase 2, Task 2.1 — stand up Jest harness (`src/billing/` directory already created; add jest-expo + devDeps to package.json, create jest.setup.js)._
 
 _2026-06-03 — Phase 2 complete. Stood up jest-expo harness (added `testPathIgnorePatterns` for `design_handoff_plus_compliance/` to silence Haste collision, `--passWithNoTests` so empty suite exits 0). TDD'd `src/billing/format.js` (5 passing) and `src/billing/mapError.js` (4 passing); 9/9 green overall. Four commits: 161a865, 46b166b, 1a9f180, plus this PROGRESS.md commit. Last command: `npm test` — 9 passed, 2 suites. Next: Phase 3, Task 3.1 — write failing test for `createSimService` in `__tests__/billing/simService.test.js`, then implement `src/billing/simService.js`._
+
+_2026-06-03 — Phase 3 complete (code tasks). TDD'd `src/billing/simService.js` (5 passing); refactored `usePurchaseFlow` in `src/screens/PlusFlow.js` off timers+sim onto injected async service (hook test 3 passing); updated `src/screens/Paywall.js` to accept `service` prop and pass `plan` into `buy()`; wired `src/RitualsApp.js` to build `service = createSimService(sim, plus)` via `useMemo` and inject it into Paywall. Full suite: 17/17 green. Four commits: 3a574cb, c8f637d, 9e1dedb, ee7a131. Last command: `npm test` — 17 passed, 4 suites. Note: manual Expo Go verification of all 6 sim states (success/cancel/failed/network/owned + restore empty/found) is the remaining checkbox — code is correct per tests but runtime walk not done this session. Next: Phase 4, Task 4.1 — install SDK + expo-dev-client + expo-constants; convert app.json → app.config.js; create .env.example._
