@@ -27,6 +27,7 @@ import GetEmbers from './screens/GetEmbers';
 import Toast from './screens/Toast';
 import { openExternal } from './billing/links';
 import { createPurchaseService } from './billing';
+import { formatRenewDate } from './billing/format';
 
 const XP_GAIN = 50;
 const XP_MAX = 500;
@@ -79,6 +80,9 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   const [subCanceled, setSubCanceled] = useState(false);
   const [activePlan, setActivePlan] = useState('annual');
   const [liveEntitlement, setLiveEntitlement] = useState(null);
+  const renewLabel = liveEntitlement ? formatRenewDate(liveEntitlement.renewISO) : RENEW_DATE;
+  const livePlan = liveEntitlement ? liveEntitlement.plan : activePlan;
+  const livePrice = liveEntitlement ? liveEntitlement.priceString : null;
   // Store outcome is driven by settings so every purchase/restore state is
   // reachable without a live billing backend (wire to RevenueCat in prod).
   const sim = { purchase: settings.storePurchase || 'success', restore: settings.storeRestore || 'empty' };
@@ -267,12 +271,13 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
         <Modal visible={manageOpen} animationType="slide" presentationStyle="overFullScreen" onRequestClose={() => setManageOpen(false)}>
           <ThemeContext.Provider value={theme}>
             <ManageSubscription
-              insets={insets} platform={PLATFORM} plan={activePlan} canceled={subCanceled}
+              insets={insets} platform={PLATFORM} plan={livePlan} canceled={subCanceled}
+              renewLabel={renewLabel} priceString={livePrice}
               onClose={() => setManageOpen(false)}
               onChangePlan={() => { setManageOpen(false); setPaywall(true); }}
               onRestore={() => showToast('Your subscription is active')}
               onCancel={() => { setSubCanceled(true); showToast('Subscription set to cancel'); }}
-              onResume={() => { setSubCanceled(false); showToast('Plus resumed — renews ' + RENEW_DATE); }}
+              onResume={() => { setSubCanceled(false); showToast('Plus resumed — renews ' + renewLabel); }}
               onLink={openLink}
             />
             {toast && <Toast key={toast.key} message={toast.msg} bottom={insets.bottom} />}

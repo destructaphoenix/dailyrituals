@@ -172,11 +172,13 @@ export function usePurchaseFlow({ service, platform, onComplete }) {
 }
 
 // ── Manage / cancel subscription ──────────────────────────────────────────────
-export function ManageSubscription({ insets, platform, plan, canceled, onClose, onChangePlan, onRestore, onCancel, onResume, onLink }) {
+export function ManageSubscription({ insets, platform, plan, canceled, renewLabel, priceString, onClose, onChangePlan, onRestore, onCancel, onResume, onLink }) {
   const t = useTheme();
   const c = t.colors;
   const w = storeWords(platform);
   const p = PLUS_PRICES[plan] || PLUS_PRICES.annual;
+  const renew = renewLabel || RENEW_DATE;
+  const priceText = priceString || p.price;
   const [cancelSheet, setCancelSheet] = useState(false);
 
   const Row = ({ icon, label, value, onPress }) => (
@@ -210,7 +212,7 @@ export function ManageSubscription({ insets, platform, plan, canceled, onClose, 
           <View style={{ flex: 1 }}>
             <T d w={800} color={c.ink} style={{ fontSize: 16 }}>Daily Rituals Plus</T>
             <T w={600} color={c.muted} style={{ fontSize: 12.5, marginTop: 1 }}>
-              {canceled ? `Ends ${RENEW_DATE} · access until then` : `${p.label} · renews ${RENEW_DATE}`}
+              {canceled ? `Ends ${renew} · access until then` : `${p.label} · renews ${renew}`}
             </T>
           </View>
           <View style={{ backgroundColor: canceled ? 'rgba(217,119,6,0.14)' : c.greenSoft, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999 }}>
@@ -225,7 +227,7 @@ export function ManageSubscription({ insets, platform, plan, canceled, onClose, 
           </View>
           <View style={{ flex: 1 }}>
             <T d w={800} color={c.ink} style={{ fontSize: 16 }}>{p.label} plan</T>
-            <T w={600} color={c.muted} style={{ fontSize: 13, marginTop: 2 }}>{p.price} {p.per} · {p.sub.toLowerCase()}</T>
+            <T w={600} color={c.muted} style={{ fontSize: 13, marginTop: 2 }}>{priceText} {p.per} · {p.sub.toLowerCase()}</T>
           </View>
         </View>
 
@@ -250,8 +252,8 @@ export function ManageSubscription({ insets, platform, plan, canceled, onClose, 
 
         <T w={600} color={c.muted} style={{ fontSize: 12, lineHeight: 18, textAlign: 'center', marginTop: 18, marginHorizontal: 4 }}>
           Billing is handled by {w.store}. {canceled
-            ? `Your subscription won't renew. You'll keep Plus until ${RENEW_DATE}.`
-            : `Cancelling stops the next renewal — you keep Plus until ${RENEW_DATE}.`}
+            ? `Your subscription won't renew. You'll keep Plus until ${renew}.`
+            : `Cancelling stops the next renewal — you keep Plus until ${renew}.`}
         </T>
       </ScrollView>
 
