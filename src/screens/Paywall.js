@@ -12,14 +12,14 @@ import { BigSun } from '../art';
 import { PLUS_PRICES, PLUS_PERKS } from '../data';
 import { LegalFooter, usePurchaseFlow } from './PlusFlow';
 
-export default function Paywall({ insets, platform = 'ios', sim, alreadyPlus, onClose, onSubscribe, onLink }) {
+export default function Paywall({ insets, platform = 'ios', service, alreadyPlus, onClose, onSubscribe, onLink }) {
   const t = useTheme();
   const c = t.colors;
   const [plan, setPlan] = useState('annual');
   const flow = usePurchaseFlow({
-    sim: { ...(sim || {}), platform },
-    alreadyPlus,
-    onComplete: () => onSubscribe(plan),
+    service,
+    platform,
+    onComplete: (entitlement) => onSubscribe(plan, entitlement),
   });
 
   return (
@@ -85,7 +85,7 @@ export default function Paywall({ insets, platform = 'ios', sim, alreadyPlus, on
 
       {/* footer CTA + legal */}
       <View style={{ paddingHorizontal: 26, paddingTop: 14, paddingBottom: 14 + insets.bottom, borderTopWidth: 1, borderTopColor: c.border, backgroundColor: c.surface }}>
-        <PrimaryButton label="Start 7-day free trial" onPress={flow.buy} />
+        <PrimaryButton label="Start 7-day free trial" onPress={() => flow.buy(plan)} />
         <LegalFooter platform={platform} plan={plan}
           onLink={(k) => (k === 'restore' ? flow.restore() : onLink && onLink(k))} />
       </View>
