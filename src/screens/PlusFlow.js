@@ -10,7 +10,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 import { useTheme } from '../theme';
 import { T, PrimaryButton } from '../ui';
-import { Close, Check, Sun, Chevron, Alert, NoSignal, Restore, Shield, Receipt, Ban } from '../icons';
+import { Close, Check, Sun, Chevron, Alert, NoSignal, Restore, Shield, Receipt, Ban, Info } from '../icons';
 import { PLUS_PRICES, RENEW_DATE } from '../data';
 
 // Store wording flips with platform so the disclosure is truthful on both.
@@ -172,7 +172,7 @@ export function usePurchaseFlow({ service, platform, onComplete }) {
 }
 
 // ── Manage / cancel subscription ──────────────────────────────────────────────
-export function ManageSubscription({ insets, platform, plan, canceled, renewLabel, priceString, onClose, onChangePlan, onRestore, onCancel, onResume, onLink }) {
+export function ManageSubscription({ insets, platform, plan, canceled, renewLabel, priceString, onClose, onChangePlan, onRestore, onCancel, onResume, onLink, onGetHelp }) {
   const t = useTheme();
   const c = t.colors;
   const w = storeWords(platform);
@@ -240,6 +240,8 @@ export function ManageSubscription({ insets, platform, plan, canceled, renewLabe
           <Row icon={<Restore size={18} color={c.accentDeep} />} label="Restore purchases" onPress={onRestore} />
           <Divider />
           <Row icon={<Shield size={18} color={c.accentDeep} />} label="Terms & Privacy" onPress={() => onLink && onLink('privacy')} />
+          <Divider />
+          <Row icon={<Info size={18} color={c.accentDeep} />} label="Get help" onPress={onGetHelp} />
         </View>
 
         {/* cancel */}

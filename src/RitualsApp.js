@@ -26,7 +26,7 @@ import { ManageSubscription } from './screens/PlusFlow';
 import GetEmbers from './screens/GetEmbers';
 import Toast from './screens/Toast';
 import { openExternal } from './billing/links';
-import { createPurchaseService } from './billing';
+import { createPurchaseService, isBillingConfigured } from './billing';
 import { formatRenewDate } from './billing/format';
 
 const XP_GAIN = 50;
@@ -140,6 +140,19 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     await openExternal('manage', PLATFORM);
     showToast('Resume your subscription in ' + (PLATFORM === 'android' ? 'Google Play' : 'the App Store'));
   };
+  const doGetHelp = async () => {
+    if (!isBillingConfigured(PLATFORM)) {
+      showToast('Visit dailyrituals.app/support for help');
+      return;
+    }
+    try {
+      const RevenueCatUI = require('react-native-purchases-ui').default;
+      await RevenueCatUI.presentCustomerCenter();
+    } catch (e) {
+      showToast('Visit dailyrituals.app/support for help');
+    }
+  };
+
   const doRestore = async () => {
     const res = await service.restore();
     if (res.kind === 'restored') {
@@ -313,6 +326,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
               onCancel={() => doCancel()}
               onResume={() => doResume()}
               onLink={openLink}
+              onGetHelp={doGetHelp}
             />
             {toast && <Toast key={toast.key} message={toast.msg} bottom={insets.bottom} />}
           </ThemeContext.Provider>

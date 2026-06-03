@@ -30,7 +30,7 @@
 | 3 | Sim service + refactor `usePurchaseFlow` onto the seam | ✅ Done |
 | 4 | RevenueCat service + provider selection | ✅ Done |
 | 5 | Live entitlement → renewal/plan/price; cancel reflects willRenew | ✅ Done |
-| 6 | Dev client build + real-billing verification (Android) | ⬜ Not started |
+| 6 | Dev client build + real-billing verification (Android) | 🟡 In progress |
 | 7 | Final verification + docs | ⬜ Not started |
 
 Legend: ⬜ Not started · 🟡 In progress · ✅ Done · ⛔ Blocked
@@ -72,7 +72,7 @@ Legend: ⬜ Not started · 🟡 In progress · ✅ Done · ⛔ Blocked
 - [x] 5.3 Onboarding routes through `createPurchaseService`
 
 ### Phase 6 — Dev build + real billing (Android)
-- [ ] 6.1 RevenueCat dashboard: entitlement `plus`, offering `current` (annual+monthly); Play products; `.env` keys; license tester
+- [x] 6.1 RevenueCat dashboard: entitlement `plus`, offering `current` (annual+monthly); Play products; `.env` keys; license tester
 - [ ] 6.2 `npx expo run:android` (or EAS dev profile); confirm real Play purchase sheet + walk all states
 - [ ] iOS verification — ⛔ blocked (needs Mac or EAS; out of current scope)
 
@@ -89,7 +89,7 @@ Fill these in `.env` (copy from `.env.example`, created in Phase 4) and record t
 | --- | --- | --- |
 | RevenueCat entitlement id | RevenueCat dashboard | `plus` (must match `ENTITLEMENT_ID`) |
 | RevenueCat offering | dashboard | `current` (annual + monthly packages) |
-| `RC_ANDROID_KEY` | RevenueCat → API keys | _TBD_ |
+| `RC_ANDROID_KEY` | RevenueCat → API keys | `test_UEBAuHmtvXGnNuTLxlnCTtgKfDi` (in `.env`) |
 | `RC_IOS_KEY` | RevenueCat → API keys | _TBD (iOS later)_ |
 | Play product ids | Play Console | _TBD_ |
 | `TERMS_URL` / `PRIVACY_URL` | your site | _TBD_ |
@@ -136,3 +136,5 @@ _2026-06-03 — Phase 3 complete (code tasks). TDD'd `src/billing/simService.js`
 _2026-06-03 — Phase 4 complete (code tasks). Installed `react-native-purchases` v10 (expo install picked compatible version over plan's v8). Created `app.config.js` (CommonJS module.exports — not ESM export default, which failed) without `react-native-purchases` in plugins (v10 has no config plugin; native setup deferred to Phase 6). Created `.env.example`. Implemented `src/billing/revenueCatService.js` (buy/restore/getEntitlement/getPrices). Implemented `src/billing/index.js` (isBillingConfigured + createPurchaseService factory with runtime sim fallback). Updated `App.js` to configure RevenueCat on mount guarded by isBillingConfigured. Swapped `createSimService` → `createPurchaseService` in `RitualsApp.js`. Full suite: 17/17 green. Four commits: 1177d8b, da9d2f1, 06afe16, plus this PROGRESS.md commit. Last command: `npm test` — 17 passed, 4 suites. Note: manual Expo Go fallback verification remaining (no crash expected; isBillingConfigured returns false without keys). Next: Phase 5, Task 5.1 — add optional `renewLabel`/`priceString` overrides to `ManageSubscription` in `src/screens/PlusFlow.js` and compute live values in `src/RitualsApp.js`._
 
 _2026-06-03 — Phase 5 complete (code tasks). Task 5.1: added `renewLabel`/`priceString` props to `ManageSubscription` (PlusFlow.js) with `RENEW_DATE`/`p.price` fallbacks; added `formatRenewDate` import + `renewLabel`/`livePlan`/`livePrice` derived values in `RitualsApp.js`; updated ManageSubscription JSX to pass live props. Task 5.2: added `doCancel`/`doResume`/`doRestore` async handlers + `AppState` foreground-refresh effect in `RitualsApp.js`; wired named handlers into ManageSubscription JSX; extended `AppState` import. Task 5.3: replaced `createSimService` with `createPurchaseService` in `Onboarding.js`. Three commits: b4cacbf, a61f003, d424a71. Last command: `npm test` — 17 passed, 4 suites. Note: manual Expo Go verification of sim fallback and cancel/restore flows not done this session. Next: Phase 6, Task 6.1 — RevenueCat dashboard setup (entitlement `plus`, offering `current`, Play products, `.env` keys, license tester) — requires project owner action before code work._
+
+_2026-06-04 — Phase 6 partial. Created `.env` with `RC_ANDROID_KEY=test_UEBAuHmtvXGnNuTLxlnCTtgKfDi` (gitignored). Kept existing custom `Paywall.js` (already fully wired to the service — no replacement needed). Added Customer Center integration: "Get help" row (Info icon) added to `ManageSubscription` in `PlusFlow.js`; `doGetHelp` handler added to `RitualsApp.js` — calls `RevenueCatUI.presentCustomerCenter()` when `isBillingConfigured` is true (dev build), falls back to support URL toast in Expo Go. `isBillingConfigured` added to billing import in `RitualsApp.js`. `react-native-purchases-ui` was already installed (v10.2.0). Full suite: 17/17 green. Last command: `npm test` — 17 passed, 4 suites. Next: Phase 6, Task 6.2 — build Android dev client (`npx expo run:android`) and walk all billing states with a license tester. Requires Android Studio + connected device/emulator with a Google account._
