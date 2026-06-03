@@ -6,7 +6,7 @@
 // drive them. Overlays (write/read/celebrate) are RN Modals.
 
 import React, { useState, useMemo } from 'react';
-import { View, Pressable, Modal, StyleSheet, Platform } from 'react-native';
+import { View, Pressable, Modal, StyleSheet, Platform, AppState } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemeContext, makeTheme } from './theme';
 import { T } from './ui';
@@ -128,6 +128,40 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     setFreezes((f) => f + 3);
     showToast('Welcome to Plus — enjoy.');
   };
+
+  // Cancel: route to the OS subscription settings (Apple/Google own cancellation),
+  // then optimistically mark ending. A focus-refresh (below) corrects from truth.
+  const doCancel = async () => {
+    await openExternal('manage', PLATFORM);
+    setSubCanceled(true);
+    showToast('Manage your subscription in ' + (PLATFORM === 'android' ? 'Google Play' : 'the App Store'));
+  };
+  const doResume = async () => {
+    await openExternal('manage', PLATFORM);
+    showToast('Resume your subscription in ' + (PLATFORM === 'android' ? 'Google Play' : 'the App Store'));
+  };
+  const doRestore = async () => {
+    const res = await service.restore();
+    if (res.kind === 'restored') {
+      setPlus(true);
+      if (res.entitlement) { setLiveEntitlement(res.entitlement); setActivePlan(res.entitlement.plan); setSubCanceled(res.entitlement.willRenew === false); }
+      showToast('Your subscription is active');
+    } else {
+      showToast('Nothing to restore');
+    }
+  };
+
+  React.useEffect(() => {
+    const sub = AppState.addEventListener('change', async (s) => {
+      if (s !== 'active' || !plus) return;
+      const ent = await service.getEntitlement();
+      if (!ent) return;
+      setLiveEntitlement(ent);
+      setSubCanceled(ent.willRenew === false);
+      setActivePlan(ent.plan);
+    });
+    return () => sub.remove();
+  }, [plus, service]);
 
   const complete = ({ did, wished, mood }) => {
     const entry = { id: 'new' + Date.now(), day: '31', mon: 'May', wd: 'Saturday', mood, did, wished, streak: true };
@@ -275,9 +309,9 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
               renewLabel={renewLabel} priceString={livePrice}
               onClose={() => setManageOpen(false)}
               onChangePlan={() => { setManageOpen(false); setPaywall(true); }}
-              onRestore={() => showToast('Your subscription is active')}
-              onCancel={() => { setSubCanceled(true); showToast('Subscription set to cancel'); }}
-              onResume={() => { setSubCanceled(false); showToast('Plus resumed — renews ' + renewLabel); }}
+              onRestore={() => doRestore()}
+              onCancel={() => doCancel()}
+              onResume={() => doResume()}
               onLink={openLink}
             />
             {toast && <Toast key={toast.key} message={toast.msg} bottom={insets.bottom} />}
