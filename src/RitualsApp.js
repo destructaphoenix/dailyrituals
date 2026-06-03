@@ -26,6 +26,7 @@ import { ManageSubscription } from './screens/PlusFlow';
 import GetEmbers from './screens/GetEmbers';
 import Toast from './screens/Toast';
 import { openExternal } from './billing/links';
+import { createSimService } from './billing/simService';
 
 const XP_GAIN = 50;
 const XP_MAX = 500;
@@ -77,9 +78,12 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   const [manageOpen, setManageOpen] = useState(false);
   const [subCanceled, setSubCanceled] = useState(false);
   const [activePlan, setActivePlan] = useState('annual');
+  const [liveEntitlement, setLiveEntitlement] = useState(null);
   // Store outcome is driven by settings so every purchase/restore state is
   // reachable without a live billing backend (wire to RevenueCat in prod).
   const sim = { purchase: settings.storePurchase || 'success', restore: settings.storeRestore || 'empty' };
+  // Phase 3: sim only. Phase 4 swaps this for createPurchaseService({...}).
+  const service = useMemo(() => createSimService(sim, plus), [sim.purchase, sim.restore, plus]);
   const openLink = (k) => { openExternal(k, PLATFORM); };
 
   const retint = (swatch) => setSettings && setSettings((s) => ({ ...s, accent: swatch }));
@@ -109,9 +113,11 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     if (pack && pack.amount) { setEmbers((e) => e + pack.amount); showToast('+' + pack.amount + ' Embers'); setGetEmbersOpen(false); }
     else { setGetEmbersOpen(true); }
   };
-  const subscribe = (plan) => {
+  const subscribe = (plan, entitlement) => {
     setPlus(true); setSubCanceled(false);
-    if (plan) setActivePlan(plan);
+    if (entitlement && entitlement.plan) setActivePlan(entitlement.plan);
+    else if (plan) setActivePlan(plan);
+    if (entitlement) setLiveEntitlement(entitlement);
     setPaywall(false);
     setFreezes((f) => f + 3);
     showToast('Welcome to Plus — enjoy.');
@@ -251,7 +257,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
 
         <Modal visible={paywall} animationType="slide" presentationStyle="overFullScreen" onRequestClose={() => setPaywall(false)}>
           <ThemeContext.Provider value={theme}>
-            <Paywall insets={insets} platform={PLATFORM} sim={sim} alreadyPlus={plus}
+            <Paywall insets={insets} platform={PLATFORM} service={service} alreadyPlus={plus}
               onClose={() => setPaywall(false)} onSubscribe={subscribe} onLink={openLink} />
           </ThemeContext.Provider>
         </Modal>
