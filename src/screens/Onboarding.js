@@ -12,6 +12,7 @@ import { Pencil, Check, Chevron, Sun } from '../icons';
 import { BigSun, BigMoon } from '../art';
 import { PLUS_PERKS } from '../data';
 import Paywall from './Paywall';
+import { createSimService } from '../billing/simService';
 
 const INTRO = [
   { motif: 'sun',    h: 'Every day deserves\na send-off.', b: "Daily Rituals is two honest questions and a quiet goodbye — about a minute, once a day." },
@@ -34,6 +35,7 @@ export default function Onboarding({ settings, onDone }) {
   const [step, setStep] = useState('intro');
   const [payOpen, setPayOpen] = useState(false);
   const sim = { purchase: settings.storePurchase || 'success', restore: settings.storeRestore || 'empty' };
+  const service = createSimService(sim, false);
 
   return (
     <ThemeContext.Provider value={theme}>
@@ -45,7 +47,7 @@ export default function Onboarding({ settings, onDone }) {
 
         {payOpen && (
           <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 20, backgroundColor: theme.colors.cream }}>
-            <Paywall insets={insets} platform={OB_PLATFORM} sim={sim}
+            <Paywall insets={insets} platform={OB_PLATFORM} service={service}
               onClose={() => setPayOpen(false)}
               onSubscribe={() => { setPayOpen(false); onDone(true); }}
               onLink={() => {}} />
