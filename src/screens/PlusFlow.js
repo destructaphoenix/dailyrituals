@@ -132,36 +132,40 @@ export function PurchaseOverlay({ flow, platform, onRetry, onDismiss, onComplete
   );
 }
 
-// Shared store state machine; resolves from `sim` so every path is reachable.
-export function usePurchaseFlow({ sim, alreadyPlus, onComplete }) {
+// Shared store state machine. Drives its pending→result overlay off an injected
+// async PurchaseService (sim in Expo Go, RevenueCat in dev/prod builds). The
+// service owns timing/outcomes; this hook owns transient UI state.
+export function usePurchaseFlow({ service, platform, onComplete }) {
   const [flow, setFlow] = useState(null);
-  const timer = useRef();
-  useEffect(() => () => clearTimeout(timer.current), []);
-  const settle = (fn, ms) => { clearTimeout(timer.current); timer.current = setTimeout(fn, ms); };
+  const alive = useRef(true);
+  useEffect(() => () => { alive.current = false; }, []);
+  const lastEntitlement = useRef(null);
+  const lastPlanRef = useRef('annual');
 
-  const buy = () => {
-    setFlow({ phase: 'pending', mode: 'buy' });
-    settle(() => {
-      const o = (sim && sim.purchase) || 'success';
-      if (o === 'cancel') { setFlow(null); return; }
-      setFlow({ phase: 'result', kind: o });
-    }, 1500);
+  const run = async (mode, fn) => {
+    setFlow({ phase: 'pending', mode });
+    let res;
+    try {
+      res = await fn();
+    } catch (e) {
+      res = { kind: 'failed' };
+    }
+    if (!alive.current) return;
+    lastEntitlement.current = res.entitlement || null;
+    if (res.kind === 'cancel') { setFlow(null); return; }
+    setFlow({ phase: 'result', kind: res.kind });
   };
-  const restore = () => {
-    setFlow({ phase: 'pending', mode: 'restore' });
-    settle(() => {
-      const found = alreadyPlus || (sim && sim.restore) === 'found';
-      setFlow({ phase: 'result', kind: found ? 'restored' : 'restore-empty' });
-    }, 1300);
-  };
+
+  const buy = (plan) => { lastPlanRef.current = plan; return run('buy', () => service.buy(plan)); };
+  const restore = () => run('restore', () => service.restore());
 
   const overlay = (
     <PurchaseOverlay
       flow={flow}
-      platform={sim && sim.platform}
-      onRetry={() => { setFlow(null); buy(); }}
+      platform={platform}
+      onRetry={() => { setFlow(null); buy(lastPlanRef.current); }}
       onDismiss={() => setFlow(null)}
-      onComplete={() => { setFlow(null); onComplete(); }}
+      onComplete={() => { setFlow(null); onComplete(lastEntitlement.current); }}
     />
   );
   return { flow, buy, restore, overlay, reset: () => setFlow(null) };
