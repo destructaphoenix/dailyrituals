@@ -12,7 +12,7 @@ import { Pencil, Check, Chevron, Sun } from '../icons';
 import { BigSun, BigMoon } from '../art';
 import { PLUS_PERKS } from '../data';
 import Paywall from './Paywall';
-import { createSimService } from '../billing/simService';
+import { createPurchaseService } from '../billing';
 
 const INTRO = [
   { motif: 'sun',    h: 'Every day deserves\na send-off.', b: "Daily Rituals is two honest questions and a quiet goodbye — about a minute, once a day." },
@@ -34,8 +34,11 @@ export default function Onboarding({ settings, onDone }) {
   const insets = useSafeAreaInsets();
   const [step, setStep] = useState('intro');
   const [payOpen, setPayOpen] = useState(false);
-  const sim = { purchase: settings.storePurchase || 'success', restore: settings.storeRestore || 'empty' };
-  const service = createSimService(sim, false);
+  const service = createPurchaseService({
+    sim: { purchase: settings.storePurchase || 'success', restore: settings.storeRestore || 'empty' },
+    alreadyPlus: false,
+    platform: OB_PLATFORM,
+  });
 
   return (
     <ThemeContext.Provider value={theme}>
