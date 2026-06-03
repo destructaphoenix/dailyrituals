@@ -2,7 +2,9 @@
 // and holds the live mode + settings state (the You tab drives them).
 
 import React, { useState } from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, Platform } from 'react-native';
+import { RC_KEYS } from './src/billing/config';
+import { isBillingConfigured } from './src/billing';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -29,6 +31,13 @@ export default function App() {
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [onboarded, setOnboarded] = useState(false); // new users start in first-run
   const [startedPlus, setStartedPlus] = useState(false); // subscribed during onboarding
+
+  React.useEffect(() => {
+    const platform = Platform.OS === 'android' ? 'android' : 'ios';
+    if (!isBillingConfigured(platform)) return;
+    const Purchases = require('react-native-purchases').default;
+    Purchases.configure({ apiKey: platform === 'android' ? RC_KEYS.android : RC_KEYS.ios });
+  }, []);
 
   const [fontsLoaded] = useFonts({
     Baloo2_500Medium, Baloo2_600SemiBold, Baloo2_700Bold, Baloo2_800ExtraBold,

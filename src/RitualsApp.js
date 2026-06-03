@@ -26,7 +26,7 @@ import { ManageSubscription } from './screens/PlusFlow';
 import GetEmbers from './screens/GetEmbers';
 import Toast from './screens/Toast';
 import { openExternal } from './billing/links';
-import { createSimService } from './billing/simService';
+import { createPurchaseService } from './billing';
 
 const XP_GAIN = 50;
 const XP_MAX = 500;
@@ -82,8 +82,10 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   // Store outcome is driven by settings so every purchase/restore state is
   // reachable without a live billing backend (wire to RevenueCat in prod).
   const sim = { purchase: settings.storePurchase || 'success', restore: settings.storeRestore || 'empty' };
-  // Phase 3: sim only. Phase 4 swaps this for createPurchaseService({...}).
-  const service = useMemo(() => createSimService(sim, plus), [sim.purchase, sim.restore, plus]);
+  const service = useMemo(
+    () => createPurchaseService({ sim, alreadyPlus: plus, platform: PLATFORM }),
+    [sim.purchase, sim.restore, plus]
+  );
   const openLink = (k) => { openExternal(k, PLATFORM); };
 
   const retint = (swatch) => setSettings && setSettings((s) => ({ ...s, accent: swatch }));
