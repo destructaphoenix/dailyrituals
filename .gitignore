@@ -1,0 +1,35 @@
+# Design Handoff and Compliance
+design_handoff_plus_compliance/
+
+# Node.js / Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Expo / Bundler
+.expo/
+dist/
+web-build/
+metro-cache/
+
+# Native Builds (Expo Prebuild / EAS)
+ios/
+android/
+
+# Environment / Secrets
+.env
+.env.local
+.env*.local
+
+# System / IDE Files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
