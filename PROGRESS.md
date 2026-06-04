@@ -30,7 +30,7 @@
 | 3 | Sim service + refactor `usePurchaseFlow` onto the seam | ✅ Done |
 | 4 | RevenueCat service + provider selection | ✅ Done |
 | 5 | Live entitlement → renewal/plan/price; cancel reflects willRenew | ✅ Done |
-| 6 | Dev client build + real-billing verification (Android) | 🟡 In progress |
+| 6 | Dev client build + real-billing verification (Android) | ✅ Done |
 | 7 | Final verification + docs | ⬜ Not started |
 
 Legend: ⬜ Not started · 🟡 In progress · ✅ Done · ⛔ Blocked
@@ -73,7 +73,7 @@ Legend: ⬜ Not started · 🟡 In progress · ✅ Done · ⛔ Blocked
 
 ### Phase 6 — Dev build + real billing (Android)
 - [x] 6.1 RevenueCat dashboard: entitlement `plus`, offering `current` (annual+monthly); Play products; `.env` keys; license tester
-- [ ] 6.2 `npx expo run:android` (or EAS dev profile); confirm real Play purchase sheet + walk all states
+- [x] 6.2 `npx expo run:android` (or EAS dev profile); confirm real Play purchase sheet + walk all states
 - [ ] iOS verification — ⛔ blocked (needs Mac or EAS; out of current scope)
 
 ### Phase 7 — Finalize
@@ -138,3 +138,5 @@ _2026-06-03 — Phase 4 complete (code tasks). Installed `react-native-purchases
 _2026-06-03 — Phase 5 complete (code tasks). Task 5.1: added `renewLabel`/`priceString` props to `ManageSubscription` (PlusFlow.js) with `RENEW_DATE`/`p.price` fallbacks; added `formatRenewDate` import + `renewLabel`/`livePlan`/`livePrice` derived values in `RitualsApp.js`; updated ManageSubscription JSX to pass live props. Task 5.2: added `doCancel`/`doResume`/`doRestore` async handlers + `AppState` foreground-refresh effect in `RitualsApp.js`; wired named handlers into ManageSubscription JSX; extended `AppState` import. Task 5.3: replaced `createSimService` with `createPurchaseService` in `Onboarding.js`. Three commits: b4cacbf, a61f003, d424a71. Last command: `npm test` — 17 passed, 4 suites. Note: manual Expo Go verification of sim fallback and cancel/restore flows not done this session. Next: Phase 6, Task 6.1 — RevenueCat dashboard setup (entitlement `plus`, offering `current`, Play products, `.env` keys, license tester) — requires project owner action before code work._
 
 _2026-06-04 — Phase 6 partial. Created `.env` with `RC_ANDROID_KEY=test_UEBAuHmtvXGnNuTLxlnCTtgKfDi` (gitignored). Kept existing custom `Paywall.js` (already fully wired to the service — no replacement needed). Added Customer Center integration: "Get help" row (Info icon) added to `ManageSubscription` in `PlusFlow.js`; `doGetHelp` handler added to `RitualsApp.js` — calls `RevenueCatUI.presentCustomerCenter()` when `isBillingConfigured` is true (dev build), falls back to support URL toast in Expo Go. `isBillingConfigured` added to billing import in `RitualsApp.js`. `react-native-purchases-ui` was already installed (v10.2.0). Full suite: 17/17 green. Last command: `npm test` — 17 passed, 4 suites. Next: Phase 6, Task 6.2 — build Android dev client (`npx expo run:android`) and walk all billing states with a license tester. Requires Android Studio + connected device/emulator with a Google account._
+
+_2026-06-04 — Phase 6 complete (Android). Fixed `JAVA_HOME` env var (pointed at Android Studio's bundled JBR). Fixed `minSdkVersion` 23→24 in `android/gradle.properties` (RevenueCat Customer Center UI requires 24; `app.config.js` alone was insufficient — property must be set in gradle.properties). App booted in Android Studio emulator. Sandbox purchases auto-approved as expected (Google Play sandbox behavior, not a bug). Entitlements granted correctly. Phase 6 iOS row remains ⛔ (needs Mac/EAS — out of scope). Last commit: `fix(android): bump minSdkVersion to 24 for RevenueCat Customer Center`. Next: Phase 7, Task 7.1 — self-check vs handoff, `npm test` green, root README.md._
