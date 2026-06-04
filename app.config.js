@@ -11,7 +11,7 @@ module.exports = {
       resizeMode: 'contain',
       backgroundColor: '#f9f7f4',
     },
-    runtimeVersion: { policy: 'appVersion' },
+    runtimeVersion: '1.0.0',
     ios: { supportsTablet: false, bundleIdentifier: 'app.dailyrituals.mobile' },
     android: {
       adaptiveIcon: {
@@ -19,6 +19,7 @@ module.exports = {
         backgroundColor: '#f9f7f4',
       },
       package: 'app.dailyrituals.mobile',
+      versionCode: 1,
       minSdkVersion: 24,
     },
     plugins: ['expo-dev-client'],
