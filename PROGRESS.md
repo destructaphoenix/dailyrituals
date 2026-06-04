@@ -34,7 +34,7 @@
 | 7 | Final verification + docs | ✅ Done |
 | — | **Part I complete (lift + RevenueCat billing, dev-only, in-memory).** Part II below extends past the original locked scope. | — |
 | 8 | Runtime verification closeout (close deferred sim-state boxes) | ⬜ Not started |
-| 9 | Local persistence (state survives restart, AsyncStorage) | ⬜ Not started |
+| 9 | Local persistence (state survives restart, AsyncStorage) | ✅ Done |
 | 10a | **Free public release** — Plus hidden behind a flag, ship free to Play | ⬜ Not started |
 | 10b | **Enable monetization** — BillDesk + products + flip `PLUS_ENABLED` → v1.1 | ⬜ Not started |
 | 11 | iOS parity (App Store Connect + TestFlight) | ⛔ Blocked (needs Mac/EAS + Apple Dev) |
@@ -99,11 +99,11 @@ Legend: ⬜ Not started · 🟡 In progress · ✅ Done · ⛔ Blocked
 - [ ] 8.3 Tick the deferred Phase 3 + Phase 4 boxes above with evidence; commit PROGRESS.md
 
 ### Phase 9 — Local persistence (AsyncStorage)
-- [ ] 9.1 Install `@react-native-async-storage/async-storage`
-- [ ] 9.2 Pure persistence core `src/persistence/state.js` + test (TDD: version/migrate/merge)
-- [ ] 9.3 Storage adapter `src/persistence/storage.js` (load/save/clear)
-- [ ] 9.4 Hydrate on startup in `App.js` behind a loading gate
-- [ ] 9.5 Seed `RitualsApp` from `initialState` + debounced autosave + daily reset
+- [x] 9.1 Install `@react-native-async-storage/async-storage`
+- [x] 9.2 Pure persistence core `src/persistence/state.js` + test (TDD: version/migrate/merge)
+- [x] 9.3 Storage adapter `src/persistence/storage.js` (load/save/clear)
+- [x] 9.4 Hydrate on startup in `App.js` behind a loading gate
+- [x] 9.5 Seed `RitualsApp` from `initialState` + debounced autosave + daily reset
 - [ ] 9.6 (optional) "Reset app data" control in You/Settings
 - [ ] 9.7 Verify restart persistence in Expo Go; `npm test` green
 
@@ -200,3 +200,5 @@ _2026-06-04 — Phase 7 complete. Project complete for agreed scope. Self-check:
 _2026-06-04 (Opus, planning) — Part I closeout + Part II planned. (1) Committed leftover working-tree changes that were never recorded: UI polish to `art.js`/`ui.js` (ray-fan/moon centering + progress shimmer), `package.json` run-scripts + `react-native-purchases-ui` pin, and — critically — the previously **untracked** handoff infra (`docs/.../plan`, `DEVGUIDE.md`, `.gitignore`) is now in git (commits d0845cc, 0ca54a5, 6908ff1). (2) Appended **Phases 8–11** to the plan ("PART II") and this tracker: 8 = verification closeout (no code), 9 = AsyncStorage persistence (TDD core), 10 = production Android via EAS, 11 = iOS parity (⛔ tooling). Each phase lists owner decisions to confirm before starting. `npm test` — 17 passed, 4 suites (unchanged; no app logic touched). NEXT for Sonnet: **Phase 8, Task 8.1** — walk the sim states in Expo Go (no code), OR jump to Phase 9 if the owner would rather add persistence first. Confirm the per-phase decisions (see Open items) before Phase 9/10._
 
 _2026-06-04 (Opus, planning) — Restructured Part II around a FREE-FIRST release after the owner decided to publish free first and add payments later, and hit India's BillDesk/PA-CB payout verification while setting up Google Play. Changes (docs only, no app code): (1) Added a "**Release strategy**" box to the plan defining three independent finish lines — A free app (10a) → B monetization (10b) → C iOS (11). (2) **Split old Phase 10 into 10a (free public release, Plus hidden) and 10b (enable monetization).** (3) New **Task 10a.1**: gate the whole Plus surface behind a `PLUS_ENABLED = false` flag (hide paywall/manage/upsell, skip onboarding premium) so the free build passes review and has no dead buttons — billing code stays intact; 10b just flips the flag to `true`. (4) New **Task 10a.2**: build + free-host a minimal legal website (privacy/terms/support) because Play requires a privacy-policy URL for ANY public release; wire `PRIVACY_URL`/`TERMS_URL` into `.env`. (5) **Task 10b.1**: BillDesk PA-CB verification (India payouts, 90-day window, initiated today) — gates payouts only, NOT the free launch. Status table, checklists, config table, and open items all updated to the 8 → 9 → 10a → 10b → 11 order. `npm test` unaffected (17/17; no source touched). NEXT for Sonnet: still **Phase 8** (or 9). When the owner is ready to ship, **Phase 10a** is the free-launch path; **10a.1 (the flag) is the one piece of code** and can be implemented anytime — the rest of 10a is the website + Play dashboards._
+
+_2026-06-04 — Phase 9 complete (Tasks 9.1–9.5; code tasks). Installed `@react-native-async-storage/async-storage` (SDK-compatible via `expo install`). TDD'd `src/persistence/state.js`: 6 tests (serialize/deserialize round-trip + mergeWithDefaults), all green. Created `src/persistence/storage.js` (thin AsyncStorage adapter: loadState/saveState/clearState). Updated `App.js`: imports `loadState`, single effect on mount configures RevenueCat + loads persisted state; `hydrated` gate blocks render until both fonts and state are ready; `initialState={hydrated}` passed to RitualsApp; settings seeded from loaded state. Updated `src/RitualsApp.js`: `initialState = {}` prop added; all 14 persistent `useState` atoms seeded with `initialState.X ?? <default>`; `lastActiveDay` atom added; daily-reset effect on mount; debounced autosave effect (400 ms) writes pickPersisted snapshot on any persistent-atom change. Full suite: 23/23 green. Five commits: 62d5c12, cbfb98a, b1bfaff, ab07c8c, d7a8195. Last command: `git commit -m "feat(persist): seed app state from storage and autosave on change"` — succeeded (d7a8195). Skipped Phase 8 (manual Expo Go walk — can be done anytime by owner). Task 9.6 (optional reset affordance) and Task 9.7 (runtime verification) remain unchecked. **Next: Phase 10a, Task 10a.1** — gate Plus surface behind `PLUS_ENABLED = false` flag in `src/billing/config.js` and thread it through all Plus entry points._
