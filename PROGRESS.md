@@ -109,7 +109,7 @@ Legend: ⬜ Not started · 🟡 In progress · ✅ Done · ⛔ Blocked
 
 ### Phase 10a — Free public release (Plus hidden, no payments)
 - [x] 10a.1 Gate the Plus surface behind `PLUS_ENABLED = false` (hide paywall/manage/upsell + skip onboarding premium) — CODE
-- [ ] 10a.2 Build + host the minimal legal website (privacy + terms + support); set `PRIVACY_URL`/`TERMS_URL` in `.env`
+- [x] 10a.2 Build + host the minimal legal website (privacy + terms + support); set `PRIVACY_URL`/`TERMS_URL` in `.env`
 - [ ] 10a.3 Expo/EAS account + `eas.json` (dev/preview/production profiles)
 - [ ] 10a.4 Production `app.config.js` (version, versionCode autoincrement, icon/splash, runtimeVersion)
 - [ ] 10a.5 `eas build -p android`; Play store listing + data safety + content rating + privacy URL; publish **FREE** to production
@@ -142,7 +142,7 @@ Fill these in `.env` (copy from `.env.example`, created in Phase 4) and record t
 | `RC_ANDROID_KEY` | RevenueCat → API keys | `test_UEBAuHmtvXGnNuTLxlnCTtgKfDi` (**sandbox key** — in `.env`; must swap to the production Android key for Phase 10) |
 | `RC_IOS_KEY` | RevenueCat → API keys | _TBD (Phase 11 / iOS)_ |
 | Play product ids | Play Console | _TBD (Phase **10b** — live subscription products; not needed for the free 10a launch)_ |
-| `TERMS_URL` / `PRIVACY_URL` | the minimal website (Task **10a.2**, free-hosted) | _TBD — **mandatory for the free 10a launch** (Play requires a reachable privacy URL)_ |
+| `TERMS_URL` / `PRIVACY_URL` | the minimal website (Task **10a.2**, free-hosted) | `https://destructaphoenix.github.io/dailyrituals-website.github.io/terms.html` / `…/privacy.html` — ✅ live (GitHub Pages) |
 | BillDesk PA-CB verification | email from `onboarding@billdesk.com` | _TBD (Phase **10b** — India payout verification; up-to-90-day window once started)_ |
 
 ---
@@ -205,4 +205,4 @@ _2026-06-04 — Phase 9 complete (Tasks 9.1–9.5; code tasks). Installed `@reac
 
 _2026-06-04 — Phase 10a, Task 10a.1 complete. Added `PLUS_ENABLED = false` to `src/billing/config.js`. Gated all Plus entry points: (1) `RitualsApp.js` — imported flag, guarded `onOpenPaywall`/`onOpenManage` handlers to no-ops when `!PLUS_ENABLED`, guarded modal `visible={PLUS_ENABLED && paywall}` and `visible={PLUS_ENABLED && manageOpen}`; (2) `YouScreen.js` — added `plusEnabled` prop, hid `PlusBanner`, removed Plus badge from Export row; (3) `Shop.js` — added `plusEnabled` prop, hid `PlusBanner`, Plus-locked cosmetics stay visually locked but pressing does nothing; (4) `Onboarding.js` — imported flag, Personalize's `onDone` routes straight to `onDone(false)` (skips Premium step) when `!PLUS_ENABLED`, Premium step and paywall overlay fully gated. `npm test` — 23/23 green (flag touches no tested logic). Commit: d76c0cd. **Next: Phase 10a, Task 10a.2** — build the minimal legal website (privacy + terms + support pages, host free for the Play privacy-policy URL requirement)._
 
-_2026-06-04 — Phase 10a, Task 10a.2 partial (Steps 1 + 4 complete; Steps 2–3 are owner actions). Created `website/` with `index.html`, `privacy.html`, `terms.html`, `support.html`, `style.css`. Privacy policy accurately reflects local-only storage, no account/server, RevenueCat/Google Play mentioned only for the future paid feature, no ad tracking. Terms cover licence, auto-renew subscription terms (for when Plus is live), as-is disclaimer, India governing law. Support page covers FAQs (backup, phone transfer, data reset, billing). **All `YOUR_EMAIL_HERE` placeholders must be replaced with a real contact email before hosting.** Last command: `git commit -m "docs(release): minimal legal website (privacy, terms, support)"` — succeeded (159534d). **Owner action required (before 10a.2 is fully done):** (1) Replace `YOUR_EMAIL_HERE` in all four HTML files with a real contact email. (2) Host `website/` on GitHub Pages, Netlify, or Cloudflare Pages (free). (3) Once live, set `PRIVACY_URL` and `TERMS_URL` in `.env` to the real hosted URLs. Then Task 10a.2 checkbox can be ticked. **Next code task: Phase 10a, Task 10a.3** — create `eas.json` and link Expo/EAS account (requires owner to have/create an Expo account first)._
+_2026-06-04 — Phase 10a, Task 10a.2 complete. Created `website/` (`index.html`, `privacy.html`, `terms.html`, `support.html`, `style.css`), wired contact email `admin@destructaphoenix.dev`, committed (159534d, 09a6078). Site hosted on GitHub Pages. Set `PRIVACY_URL=https://destructaphoenix.github.io/dailyrituals-website.github.io/privacy.html` and `TERMS_URL=…/terms.html` in `.env` (git-ignored). Last command: updated `.env` with live URLs. **Next: Phase 10a, Task 10a.3** — create `eas.json` and link Expo/EAS account (requires owner to have/create an Expo account and run `eas login` + `eas init`)._
