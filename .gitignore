@@ -22,7 +22,26 @@ android/
 .env
 .env.local
 .env*.local
+*.local
+
+# Keys, keystores, credentials
+*.keystore
+*.jks
+*.p12
+*.pem
+*.key
+*.cer
+*.pfx
+keystore.properties
+*keystore.properties
 play-service-account.json
+google-services.json
+GoogleService-Info.plist
+*-service-account.json
+credentials.json
+
+# EAS / Expo secrets
+.expo-shared/
 
 # System / IDE Files
 .DS_Store
