@@ -10,6 +10,7 @@ module.exports = {
     android: {
       adaptiveIcon: { backgroundColor: '#f9f7f4' },
       package: 'app.dailyrituals.mobile',
+      minSdkVersion: 24,
     },
     plugins: ['expo-dev-client'],
     extra: {
