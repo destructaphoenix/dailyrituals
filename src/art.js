@@ -3,8 +3,8 @@
 // twinkle, confetti) are re-expressed with the RN Animated API.
 
 import React, { useEffect, useRef, useMemo } from 'react';
-import { Animated, Easing, View, StyleSheet } from 'react-native';
-import Svg, { Circle, Line, G, Defs, RadialGradient, Stop, ClipPath } from 'react-native-svg';
+import { Animated, Easing, View } from 'react-native';
+import Svg, { Circle, Line, G, Defs, RadialGradient, Stop, ClipPath, Path } from 'react-native-svg';
 import { useTheme } from './theme';
 
 const AView = Animated.View;
@@ -31,9 +31,11 @@ export function RayFan({ size = 300 }) {
     );
   }
   return (
-    <AView pointerEvents="none" style={[styles.fan, { top: -70, width: size, height: size, opacity: 0.5, transform: [{ translateX: -size / 2 }, { rotate }] }]}>
-      <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} fill="none">{rays}</Svg>
-    </AView>
+    <View pointerEvents="none" style={{ position: 'absolute', top: -70, left: 0, right: 0, height: size, alignItems: 'center', opacity: 0.5 }}>
+      <AView style={{ width: size, height: size, transform: [{ rotate }] }}>
+        <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} fill="none">{rays}</Svg>
+      </AView>
+    </View>
   );
 }
 
@@ -73,50 +75,50 @@ export function NightSky({ size = 300 }) {
   const holes = [[122, 128, 11], [180, 122, 7], [186, 172, 8], [128, 182, 12], [108, 158, 5]];
 
   return (
-    <View pointerEvents="none" style={[styles.fan, { width: size, height: size, top: -90, transform: [{ translateX: -size / 2 }] }]}>
-      {/* breathing moon body */}
-      <AView style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: moonOpacity, transform: [{ scale }] }}>
-        <Svg width={size} height={size} viewBox="0 0 300 300" fill="none">
-          <Defs>
-            <ClipPath id="moonClip"><Circle cx="150" cy="150" r="64" /></ClipPath>
-            <RadialGradient id="moonHaze" cx="50%" cy="50%" r="50%">
-              <Stop offset="0%" stopColor="rgba(245,158,11,0.32)" />
-              <Stop offset="100%" stopColor="rgba(245,158,11,0)" />
-            </RadialGradient>
-            <RadialGradient id="moonDisc" cx="38%" cy="32%" r="82%">
-              <Stop offset="0%" stopColor="#fffaf2" />
-              <Stop offset="58%" stopColor="#f6ecd6" />
-              <Stop offset="100%" stopColor="#e6d3a4" />
-            </RadialGradient>
-            <RadialGradient id="moonHole" cx="36%" cy="30%" r="84%">
-              <Stop offset="0%" stopColor="#bda06a" />
-              <Stop offset="50%" stopColor="#d4ba84" />
-              <Stop offset="100%" stopColor="#ecd9ac" />
-            </RadialGradient>
-          </Defs>
-          <Circle cx="150" cy="150" r="92" fill="url(#moonHaze)" />
-          <G clipPath="url(#moonClip)">
-            <Circle cx="150" cy="150" r="64" fill="url(#moonDisc)" />
-            {holes.map(([cx, cy, r], i) => (
-              <G key={i}>
-                {/* soft lit lower-right lip */}
-                <Circle cx={cx + r * 0.14} cy={cy + r * 0.16} r={r} fill="#fffaf0" fillOpacity={0.5} />
-                {/* gently recessed interior, a touch shadowed at the top-left lip */}
-                <Circle cx={cx} cy={cy} r={r} fill="url(#moonHole)" fillOpacity={0.78} />
-              </G>
+    <View pointerEvents="none" style={{ position: 'absolute', top: -90, left: 0, right: 0, height: size, alignItems: 'center' }}>
+      <View style={{ width: size, height: size }}>
+        {/* breathing moon body */}
+        <AView style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: moonOpacity, transform: [{ scale }] }}>
+          <Svg width={size} height={size} viewBox="0 0 300 300" fill="none">
+            <Defs>
+              <ClipPath id="moonClip"><Circle cx="150" cy="150" r="64" /></ClipPath>
+              <RadialGradient id="moonHaze" cx="50%" cy="50%" r="50%">
+                <Stop offset="0%" stopColor="rgba(245,158,11,0.32)" />
+                <Stop offset="100%" stopColor="rgba(245,158,11,0)" />
+              </RadialGradient>
+              <RadialGradient id="moonDisc" cx="38%" cy="32%" r="82%">
+                <Stop offset="0%" stopColor="#fffaf2" />
+                <Stop offset="58%" stopColor="#f6ecd6" />
+                <Stop offset="100%" stopColor="#e6d3a4" />
+              </RadialGradient>
+              <RadialGradient id="moonHole" cx="36%" cy="30%" r="84%">
+                <Stop offset="0%" stopColor="#bda06a" />
+                <Stop offset="50%" stopColor="#d4ba84" />
+                <Stop offset="100%" stopColor="#ecd9ac" />
+              </RadialGradient>
+            </Defs>
+            <Circle cx="150" cy="150" r="92" fill="url(#moonHaze)" />
+            <G clipPath="url(#moonClip)">
+              <Circle cx="150" cy="150" r="64" fill="url(#moonDisc)" />
+              {holes.map(([cx, cy, r], i) => (
+                <G key={i}>
+                  <Circle cx={cx + r * 0.14} cy={cy + r * 0.16} r={r} fill="#fffaf0" fillOpacity={0.5} />
+                  <Circle cx={cx} cy={cy} r={r} fill="url(#moonHole)" fillOpacity={0.78} />
+                </G>
+              ))}
+            </G>
+            <Circle cx="150" cy="150" r="64" fill="none" stroke="#f5e6c0" strokeOpacity={0.5} strokeWidth={1.6} />
+          </Svg>
+        </AView>
+        {/* twinkling stars */}
+        <AView style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: starOpacity }}>
+          <Svg width={size} height={size} viewBox="0 0 300 300" fill="none">
+            {stars.map(([x, y, r], i) => (
+              <Circle key={i} cx={x} cy={y} r={r} fill={t.colors.accent} />
             ))}
-          </G>
-          <Circle cx="150" cy="150" r="64" fill="none" stroke="#f5e6c0" strokeOpacity={0.5} strokeWidth={1.6} />
-        </Svg>
-      </AView>
-      {/* twinkling stars */}
-      <AView style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: starOpacity }}>
-        <Svg width={size} height={size} viewBox="0 0 300 300" fill="none">
-          {stars.map(([x, y, r], i) => (
-            <Circle key={i} cx={x} cy={y} r={r} fill={t.colors.accent} />
-          ))}
-        </Svg>
-      </AView>
+          </Svg>
+        </AView>
+      </View>
     </View>
   );
 }
@@ -214,6 +216,3 @@ function Bit({ tx, ty, rot, c, delay, round }) {
   );
 }
 
-const styles = StyleSheet.create({
-  fan: { position: 'absolute', left: '50%' },
-});

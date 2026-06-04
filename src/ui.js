@@ -87,14 +87,17 @@ export function ProgressBar({ value }) {
   }, [value, w]);
   useEffect(() => {
     const loop = Animated.loop(
-      Animated.timing(shimmer, { toValue: 1, duration: 2600, useNativeDriver: true })
+      Animated.sequence([
+        Animated.timing(shimmer, { toValue: 1, duration: 1200, useNativeDriver: true }),
+        Animated.delay(5000),
+      ])
     );
     loop.start();
     return () => loop.stop();
   }, [shimmer]);
 
   const width = w.interpolate({ inputRange: [0, 100], outputRange: ['0%', '100%'], extrapolate: 'clamp' });
-  const tx = shimmer.interpolate({ inputRange: [0, 1], outputRange: [-60, 280] });
+  const tx = shimmer.interpolate({ inputRange: [0, 1], outputRange: [-80, 320] });
 
   return (
     <View style={[styles.bar, { backgroundColor: t.colors.accentSoft }]}>
@@ -106,11 +109,16 @@ export function ProgressBar({ value }) {
         >
           <Animated.View
             style={{
-              position: 'absolute', top: 0, bottom: 0, width: 60,
-              backgroundColor: 'rgba(255,255,255,0.55)',
-              transform: [{ translateX: tx }, { skewX: '-20deg' }],
+              position: 'absolute', top: 0, bottom: 0, width: 80,
+              transform: [{ translateX: tx }, { skewX: '-15deg' }],
             }}
-          />
+          >
+            <LinearGradient
+              colors={['rgba(255,255,255,0)', 'rgba(255,255,255,0.42)', 'rgba(255,255,255,0)']}
+              start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+              style={{ flex: 1 }}
+            />
+          </Animated.View>
         </LinearGradient>
       </Animated.View>
     </View>
