@@ -163,8 +163,8 @@ Fill these in `.env` (copy from `.env.example`, created in Phase 4) and record t
 
 - iOS real-billing verification needs a Mac or EAS account (out of current scope) — Phase 6 iOS row stays ⛔ until then. Phase 11 (iOS parity) is blocked on the same plus an Apple Developer Program enrollment.
 - RevenueCat keys + Play products must be created by the project owner before Phase 6 real-billing checks (Phase 0–5 run fully on the sim without them).
-- **Before Phase 9:** confirm persistence engine (AsyncStorage recommended) + whether to add a "Reset app data" control.
-- **Before Phase 10:** confirm final Android `package` id (placeholder `app.dailyrituals.mobile` is permanent once published), live Terms/Privacy URLs, Expo/EAS + Google Play accounts, and swap the sandbox `test_…` RevenueCat key for the production key.
+- **Before Phase 9:** persistence engine ✅ **confirmed: AsyncStorage** (2026-06-04). Still open: whether to add a "Reset app data" control (Task 9.6, optional).
+- **Before Phase 10:** package id ✅ **confirmed: keep `app.dailyrituals.mobile`** (2026-06-04). Still open: live Terms/Privacy URLs (need a hosted privacy policy + terms page — no domain required for the id itself), Expo/EAS + Google Play accounts, and swap the sandbox `test_…` RevenueCat key for the production key.
 
 ## Last session note
 

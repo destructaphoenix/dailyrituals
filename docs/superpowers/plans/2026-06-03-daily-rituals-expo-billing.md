@@ -1432,7 +1432,7 @@ git commit -m "docs: record Phase 8 runtime verification of sim states + fallbac
 The original scope kept **all non-billing state in-memory** (a deliberate v1 cut). This phase makes entries, streak, XP, quests, freezes, embers, owned cosmetics, and settings durable across restarts so the app behaves like a real product. Billing truth is **not** persisted as source-of-truth — it is re-derived from the RevenueCat SDK on launch (a cached mirror of `plus`/`activePlan`/`subCanceled` is persisted only for instant first paint).
 
 > **Decisions to confirm before starting:**
-> 1. **Engine:** `@react-native-async-storage/async-storage` (recommended — the entire app state is a few KB of JSON; AsyncStorage is the Expo-supported default) vs. SQLite/MMKV (overkill here). The steps below assume AsyncStorage.
+> 1. **Engine:** ✅ **CONFIRMED 2026-06-04 — AsyncStorage** (`@react-native-async-storage/async-storage`). The entire app state is a few KB of JSON loaded once at launch; SQLite/MMKV were considered and rejected as overkill (no lazy queries, no large dataset). Revisit only if entries gain full-text search or pagination later.
 > 2. **Reset affordance:** add a "Reset app data" row in the You/Settings screen? (recommended — invaluable for testing and a real user feature). Steps include it as optional Task 9.6.
 > 3. **First-run seed:** keep the existing `SAMPLE_ENTRIES` / starting embers etc. as the seed for a fresh install? (recommended yes — preserves the current demo-friendly first run.)
 
@@ -1695,7 +1695,7 @@ Moves from the local Android **dev client** (Phase 6) to a **signed production A
 
 > **Decisions to confirm before starting:**
 > 1. **Expo/EAS account** owner + project (`eas init` links a project id). Free tier builds queue; paid tier is faster.
-> 2. **Real application id** — currently the placeholder `app.dailyrituals.mobile` in `app.config.js`. **This is permanent on Play once published** — confirm the final value now.
+> 2. **Real application id** — ✅ **CONFIRMED 2026-06-04: keep `app.dailyrituals.mobile`** (both `android.package` and `ios.bundleIdentifier`). No domain ownership is required for the id itself; it is permanent on Play once published. No `app.config.js` change needed — the value is already set.
 > 3. **Real Terms/Privacy URLs** on a live domain (Play requires a reachable privacy policy URL). The app currently falls back to `https://dailyrituals.app/{terms,privacy}` placeholders.
 > 4. **Google Play Developer account** (one-time $25) and **Google Play App Signing** (recommended — Google holds the signing key).
 > 5. **RevenueCat production key** — the `.env` currently holds a **`test_…` sandbox key**. Production needs the real Android key + products attached to **live** Play subscriptions.
