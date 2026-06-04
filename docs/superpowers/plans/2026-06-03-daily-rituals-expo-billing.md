@@ -1366,3 +1366,468 @@ This plan is intended to be executed by Sonnet across multiple sessions. Each se
 3. Update `PROGRESS.md` at the phase boundary before ending the session.
 
 Recommended: **superpowers:subagent-driven-development** (fresh subagent per task with review between) or **superpowers:executing-plans** (inline batch with checkpoints).
+
+---
+---
+
+# PART II — Beyond the original scope (Phases 8–11, added 2026-06-04)
+
+> **Read this first.** Phases 0–7 are **complete** (the lift + RevenueCat billing, dev-only, in-memory state). Part II deliberately steps past the original **Locked decisions** ("dev only", "all state in-memory"). Each phase below lists the **decisions to confirm with the owner before starting** — do not begin a Part II phase until its decisions are answered, because they change what you build (bundle id, real domains, store accounts, persistence engine).
+>
+> **Recommended order:** 8 → 9 → 10 → 11. Rationale: 8 is a free correctness pass; 9 (persistence) must land **before** 10 because shipping an app that loses data on restart is not acceptable for real users; 11 (iOS) is last because it needs a Mac or paid EAS macOS builds.
+>
+> Same rules as Part I: one task per chat where possible, commit per task with the exact message, update `PROGRESS.md` at every phase boundary.
+
+---
+
+## Phase 8 — Runtime verification closeout (no new production code)
+
+Closes the three manual-verification checkboxes deferred across Phases 3, 4, and 6. This is a **read-only runtime walk** in Expo Go (plus the existing Android dev client from Phase 6). If any state renders wrong, **STOP and record it in PROGRESS.md "Open items / blockers"** — do not fix inline; a broken state becomes its own follow-up task so the verification stays honest.
+
+> **Decisions to confirm:** none. This phase invents nothing.
+
+### Task 8.1: Walk every sim purchase/restore state in Expo Go
+
+**Files:** none. You will temporarily edit `src/theme.js` `DEFAULT_SETTINGS` to drive each outcome, then revert.
+
+- [ ] **Step 1: Start Expo Go**
+
+Run: `npx expo start`. Open in Expo Go (no `.env` → `isBillingConfigured` is false → sim path).
+
+- [ ] **Step 2: Drive each purchase outcome.** For each value below, set `DEFAULT_SETTINGS.storePurchase` in `src/theme.js`, reload, open the Paywall (You tab → Plus banner, or Onboarding → Premium), tap **Start 7-day free trial**, and confirm the overlay:
+  - [ ] `success` → pending "Confirming…" then **"You're in."** → Begin → becomes member.
+  - [ ] `cancel` → silent dismiss, **no** result card.
+  - [ ] `failed` → **"Something went wrong."** with Try again.
+  - [ ] `network` → **"No connection."**
+  - [ ] `owned` → **"You already have Plus."**
+
+- [ ] **Step 3: Drive each restore outcome.** Set `DEFAULT_SETTINGS.storeRestore`, reload, open Paywall → **Restore purchases**:
+  - [ ] `found` → **"Plus restored."**
+  - [ ] `empty` → **"Nothing to restore."**
+
+- [ ] **Step 4: Revert `theme.js`** back to its committed defaults (`storePurchase: 'success'`, `storeRestore: 'empty'`). Confirm `git diff src/theme.js` is empty.
+
+### Task 8.2: Confirm Expo Go sim fallback never crashes
+
+- [ ] **Step 1:** With no `.env` present, open the app cold in Expo Go and exercise a purchase. Expected: the sim path runs end-to-end with **no red screen** and no "native module RNPurchases not found" error (the lazy require-guard in `src/billing/index.js` must hold).
+
+### Task 8.3: Record the verification and tick the deferred boxes
+
+**Files:** `PROGRESS.md` only (no code commit).
+
+- [ ] **Step 1:** In `PROGRESS.md`, tick Phase 3 "Verify all 6 sim states…" and Phase 4 "Verify Expo Go still falls back to sim…". Add a dated Last session note listing pass/fail per state.
+- [ ] **Step 2: Commit**
+
+```powershell
+git add PROGRESS.md
+git commit -m "docs: record Phase 8 runtime verification of sim states + fallback"
+```
+
+> ✅ **Update PROGRESS.md Phase 8 → Done.** No production code changed; the deferred boxes are now closed with evidence.
+
+---
+
+## Phase 9 — Local persistence (state survives app restart) via AsyncStorage
+
+The original scope kept **all non-billing state in-memory** (a deliberate v1 cut). This phase makes entries, streak, XP, quests, freezes, embers, owned cosmetics, and settings durable across restarts so the app behaves like a real product. Billing truth is **not** persisted as source-of-truth — it is re-derived from the RevenueCat SDK on launch (a cached mirror of `plus`/`activePlan`/`subCanceled` is persisted only for instant first paint).
+
+> **Decisions to confirm before starting:**
+> 1. **Engine:** `@react-native-async-storage/async-storage` (recommended — the entire app state is a few KB of JSON; AsyncStorage is the Expo-supported default) vs. SQLite/MMKV (overkill here). The steps below assume AsyncStorage.
+> 2. **Reset affordance:** add a "Reset app data" row in the You/Settings screen? (recommended — invaluable for testing and a real user feature). Steps include it as optional Task 9.6.
+> 3. **First-run seed:** keep the existing `SAMPLE_ENTRIES` / starting embers etc. as the seed for a fresh install? (recommended yes — preserves the current demo-friendly first run.)
+
+**Architecture:** a **pure, tested** persistence core (versioned schema + migration + validation, all immutable) is separated from a thin async **storage adapter** (the only file that touches AsyncStorage). `App.js` hydrates once on mount behind a loading gate, passes the persisted slice into `RitualsApp` as `initialState`, and a single **debounced autosave** effect writes changes back. No screen logic changes.
+
+### Persistent state inventory (the exact slice to round-trip)
+
+From `src/RitualsApp.js`: `entries, streak, xp, done, quests, freezes, embers, plus, activePalette, ownedPalettes, activeSky, ownedSkies, subCanceled, activePlan`, plus `lastActiveDay` (new, for daily reset). From `App.js`: the full `settings` object. **Excluded:** `liveEntitlement` (re-fetched from the SDK), all transient UI flags (`tab, writing, reading, celebrate, paywall, manageOpen, toast, …`).
+
+### Task 9.1: Install AsyncStorage
+
+- [ ] **Step 1:** Run `npx expo install @react-native-async-storage/async-storage`
+- [ ] **Step 2: Commit**
+
+```powershell
+git add package.json package-lock.json
+git commit -m "build(persist): add AsyncStorage dependency"
+```
+
+### Task 9.2: Pure persistence core (TDD)
+
+**Files:**
+- Test: `__tests__/persistence/state.test.js`
+- Create: `src/persistence/state.js`
+
+- [ ] **Step 1: Write the failing test**
+
+```js
+// __tests__/persistence/state.test.js
+import { SCHEMA_VERSION, serialize, deserialize, mergeWithDefaults } from '../../src/persistence/state';
+
+const sample = { version: SCHEMA_VERSION, embers: 360, streak: 4, ownedSkies: ['classic'] };
+
+describe('serialize/deserialize round-trip', () => {
+  test('serialize tags the current schema version', () => {
+    const out = JSON.parse(serialize({ embers: 10 }));
+    expect(out.version).toBe(SCHEMA_VERSION);
+    expect(out.embers).toBe(10);
+  });
+  test('deserialize returns null for empty/garbage input', () => {
+    expect(deserialize(null)).toBeNull();
+    expect(deserialize('not json')).toBeNull();
+  });
+  test('deserialize drops a payload from an unknown future version', () => {
+    expect(deserialize(JSON.stringify({ version: 9999, embers: 1 }))).toBeNull();
+  });
+  test('round-trips a valid payload', () => {
+    expect(deserialize(serialize(sample))).toMatchObject({ embers: 360, streak: 4 });
+  });
+});
+
+describe('mergeWithDefaults', () => {
+  test('fills missing keys from defaults but keeps loaded values', () => {
+    const merged = mergeWithDefaults({ embers: 999 }, { embers: 360, streak: 4 });
+    expect(merged).toMatchObject({ embers: 999, streak: 4 });
+  });
+  test('null loaded yields the defaults unchanged (immutably)', () => {
+    const defaults = { embers: 360 };
+    const merged = mergeWithDefaults(null, defaults);
+    expect(merged).toEqual(defaults);
+    expect(merged).not.toBe(defaults);
+  });
+});
+```
+
+- [ ] **Step 2:** Run `npm test -- persistence/state` → FAIL (module missing).
+
+- [ ] **Step 3: Implement `src/persistence/state.js`**
+
+```js
+// src/persistence/state.js — pure, storage-agnostic persistence core. The only
+// file that knows the schema shape + version. No I/O here (testable in jsdom).
+// All operations are immutable.
+
+export const SCHEMA_VERSION = 1;
+
+// The exact slice of app state we persist. Transient UI flags are never included.
+export const PERSISTED_KEYS = [
+  'entries', 'streak', 'xp', 'done', 'quests', 'freezes', 'embers',
+  'plus', 'activePalette', 'ownedPalettes', 'activeSky', 'ownedSkies',
+  'subCanceled', 'activePlan', 'lastActiveDay', 'settings',
+];
+
+// Pick only the persisted keys from a larger state object (immutable copy).
+export function pickPersisted(state) {
+  const out = {};
+  for (const k of PERSISTED_KEYS) if (state[k] !== undefined) out[k] = state[k];
+  return out;
+}
+
+export function serialize(slice) {
+  return JSON.stringify({ version: SCHEMA_VERSION, ...slice });
+}
+
+// Returns a plain object (sans `version`) or null if absent/corrupt/incompatible.
+export function deserialize(raw) {
+  if (!raw) return null;
+  let parsed;
+  try { parsed = JSON.parse(raw); } catch (e) { return null; }
+  if (!parsed || typeof parsed !== 'object') return null;
+  const migrated = migrate(parsed);
+  if (!migrated) return null;
+  const { version, ...rest } = migrated;
+  return rest;
+}
+
+// Forward-migrate older payloads to SCHEMA_VERSION. Unknown/newer → drop (null).
+function migrate(parsed) {
+  let v = parsed.version || 0;
+  let data = parsed;
+  if (v > SCHEMA_VERSION) return null; // a newer build wrote this; don't guess
+  // while (v < SCHEMA_VERSION) { data = migrators[v](data); v += 1; }
+  return { ...data, version: SCHEMA_VERSION };
+}
+
+// Shallow-merge loaded over defaults (defaults supply any missing key). Immutable.
+export function mergeWithDefaults(loaded, defaults) {
+  return { ...defaults, ...(loaded || {}) };
+}
+```
+
+- [ ] **Step 4:** Run `npm test -- persistence/state` → PASS.
+- [ ] **Step 5: Commit**
+
+```powershell
+git add src/persistence/state.js __tests__/persistence/state.test.js
+git commit -m "feat(persist): versioned, immutable persistence core with tests"
+```
+
+### Task 9.3: Storage adapter (the only AsyncStorage I/O)
+
+**Files:** Create `src/persistence/storage.js`
+
+- [ ] **Step 1: Write it**
+
+```js
+// src/persistence/storage.js — thin async adapter over AsyncStorage. The ONLY
+// module that performs persistence I/O. Errors are surfaced (warned) and degrade
+// to a clean in-memory start, never a crash.
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { serialize, deserialize } from './state';
+
+const KEY = 'dailyrituals:v1:state';
+
+export async function loadState() {
+  try {
+    const raw = await AsyncStorage.getItem(KEY);
+    return deserialize(raw); // null on miss/corrupt → caller uses defaults
+  } catch (e) {
+    console.warn('loadState failed; starting fresh', e);
+    return null;
+  }
+}
+
+export async function saveState(slice) {
+  try {
+    await AsyncStorage.setItem(KEY, serialize(slice));
+    return true;
+  } catch (e) {
+    console.warn('saveState failed', e);
+    return false;
+  }
+}
+
+export async function clearState() {
+  try { await AsyncStorage.removeItem(KEY); return true; }
+  catch (e) { console.warn('clearState failed', e); return false; }
+}
+```
+
+- [ ] **Step 2: Commit**
+
+```powershell
+git add src/persistence/storage.js
+git commit -m "feat(persist): AsyncStorage adapter (load/save/clear)"
+```
+
+### Task 9.4: Hydrate on startup in `App.js` (loading gate)
+
+**Files:** Modify `App.js`.
+
+- [ ] **Step 1:** On mount, `loadState()`; until it resolves, render the existing splash/null (do **not** flash default state then overwrite). After it resolves, hold the loaded slice in state and pass it into `RitualsApp` as `initialState={...}` and seed `settings` from `loaded.settings` (fall back to the current `DEFAULT_SETTINGS`). Pattern:
+
+```js
+const [hydrated, setHydrated] = React.useState(null); // null = still loading
+React.useEffect(() => { loadState().then((s) => setHydrated(s || {})); }, []);
+if (hydrated === null) return null; // or the existing splash component
+// ...seed settings: useState(hydrated.settings || DEFAULT_SETTINGS)
+// ...render: <RitualsApp initialState={hydrated} ... />
+```
+
+- [ ] **Step 2: Commit**
+
+```powershell
+git add App.js
+git commit -m "feat(persist): hydrate persisted state on startup behind a loading gate"
+```
+
+### Task 9.5: Seed `RitualsApp` from `initialState` + debounced autosave
+
+**Files:** Modify `src/RitualsApp.js`.
+
+- [ ] **Step 1: Seed each persistent `useState` from `initialState`.** Add `initialState = {}` to the component props, then change each persistent atom's initializer to read it, e.g.:
+
+```js
+export default function RitualsApp({ mode = 'day', settings, setSettings, onToggleMode, initialPlus = false, initialState = {} }) {
+  const [entries, setEntries] = useState(initialState.entries ?? SAMPLE_ENTRIES);
+  const [streak,  setStreak]  = useState(initialState.streak  ?? 4);
+  const [xp,      setXp]      = useState(initialState.xp      ?? 320);
+  const [embers,  setEmbers]  = useState(initialState.embers  ?? 360);
+  const [plus,    setPlus]    = useState(initialState.plus    ?? initialPlus);
+  // …apply the same `initialState.X ?? <current default>` to: done, quests,
+  //   freezes, activePalette, ownedPalettes, activeSky, ownedSkies,
+  //   subCanceled, activePlan. (liveEntitlement stays null — SDK re-fetches it.)
+```
+
+- [ ] **Step 2: Add a debounced autosave effect** (write the persisted slice ~400ms after any change settles, so rapid updates coalesce):
+
+```js
+const persistData = { entries, streak, xp, done, quests, freezes, embers, plus,
+  activePalette, ownedPalettes, activeSky, ownedSkies, subCanceled, activePlan,
+  lastActiveDay, settings };
+React.useEffect(() => {
+  const id = setTimeout(() => { saveState(pickPersisted(persistData)); }, 400);
+  return () => clearTimeout(id);
+}, [entries, streak, xp, done, quests, freezes, embers, plus, activePalette,
+    ownedPalettes, activeSky, ownedSkies, subCanceled, activePlan, lastActiveDay, settings]);
+```
+
+Add imports: `import { saveState } from './persistence/storage';` and `import { pickPersisted } from './persistence/state';`.
+
+- [ ] **Step 3: Daily reset.** Add `lastActiveDay` (seed `initialState.lastActiveDay ?? todayKey()`). On mount, if `lastActiveDay !== todayKey()`, reset `done → false`, reset each daily quest `cur → 0`, and set `lastActiveDay = todayKey()`. (`todayKey()` = `new Date().toISOString().slice(0,10)`.) This prevents a stale "completed today" surviving overnight.
+
+- [ ] **Step 4: Commit**
+
+```powershell
+git add src/RitualsApp.js
+git commit -m "feat(persist): seed app state from storage and autosave on change"
+```
+
+### Task 9.6 (optional): "Reset app data" affordance
+
+**Files:** `src/screens/YouScreen.js` (+ a handler in `RitualsApp.js`).
+
+- [ ] **Step 1:** Add a destructive "Reset app data" row that confirms, calls `clearState()`, and reloads to a fresh first-run seed. Guard with a confirm dialog. Commit `feat(persist): add reset-app-data control`.
+
+### Task 9.7: Verify persistence end-to-end
+
+- [ ] **Step 1:** `npm test` → all green (new persistence tests included).
+- [ ] **Step 2:** In Expo Go: write an entry / spend embers / unlock a sky → fully close the app → reopen. Expected: the changes are **still there**. Then (if 9.6 done) Reset app data → confirm it returns to the first-run seed.
+- [ ] **Step 3:** Commit any PROGRESS note.
+
+> ✅ **Update PROGRESS.md Phase 9 → Done.** Non-billing state now persists; billing truth still comes from the SDK. (This reverses the original "all state in-memory" locked decision — note that in PROGRESS.md.)
+
+---
+
+## Phase 10 — Production Android release (EAS build → Play Console)
+
+Moves from the local Android **dev client** (Phase 6) to a **signed production AAB** on Google Play. This phase is **mostly external/manual** (accounts, dashboards, store forms); the repo changes are a config file plus production hardening. Treat the checkboxes as a release runbook.
+
+> **Decisions to confirm before starting:**
+> 1. **Expo/EAS account** owner + project (`eas init` links a project id). Free tier builds queue; paid tier is faster.
+> 2. **Real application id** — currently the placeholder `app.dailyrituals.mobile` in `app.config.js`. **This is permanent on Play once published** — confirm the final value now.
+> 3. **Real Terms/Privacy URLs** on a live domain (Play requires a reachable privacy policy URL). The app currently falls back to `https://dailyrituals.app/{terms,privacy}` placeholders.
+> 4. **Google Play Developer account** (one-time $25) and **Google Play App Signing** (recommended — Google holds the signing key).
+> 5. **RevenueCat production key** — the `.env` currently holds a **`test_…` sandbox key**. Production needs the real Android key + products attached to **live** Play subscriptions.
+
+### Task 10.1: Release decisions + accounts (manual checklist)
+
+- [ ] Confirm final `package` / application id (10.2 decision #2).
+- [ ] Create/confirm Expo account; run `npx expo install eas-cli` (or use `npx eas-cli@latest`); `eas login`; `eas init`.
+- [ ] Google Play Console account created; new app drafted.
+- [ ] Live Terms + Privacy URLs reachable; set them in `.env` (`TERMS_URL`, `PRIVACY_URL`).
+
+### Task 10.2: Add `eas.json` build profiles
+
+**Files:** Create `eas.json`.
+
+- [ ] **Step 1: Write it**
+
+```json
+{
+  "cli": { "version": ">= 12.0.0" },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "android": { "buildType": "apk" }
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": { "buildType": "apk" }
+    },
+    "production": {
+      "autoIncrement": true,
+      "android": { "buildType": "app-bundle" }
+    }
+  },
+  "submit": {
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "./play-service-account.json",
+        "track": "internal"
+      }
+    }
+  }
+}
+```
+
+> `play-service-account.json` is a Play Console service-account key — **secret, git-ignored** (add it to `.gitignore`). Used only by `eas submit`.
+
+- [ ] **Step 2: Commit**
+
+```powershell
+git add eas.json .gitignore
+git commit -m "build(release): add EAS build/submit profiles for Android"
+```
+
+### Task 10.3: Production hardening of `app.config.js`
+
+**Files:** Modify `app.config.js`.
+
+- [ ] **Step 1:** Set the **final** `android.package` (decision #2); add `version` + let EAS manage `android.versionCode` via `autoIncrement`; add real `icon`, `adaptiveIcon.foregroundImage`, and `splash` assets; add `runtimeVersion` (e.g. `{ "policy": "appVersion" }`); trim `android.permissions` to only what's needed (RevenueCat needs `com.android.vending.BILLING`, added by the SDK). Keep keys env-sourced via `extra`.
+- [ ] **Step 2: Commit** `build(release): production app.config (final id, versioning, assets)`.
+
+### Task 10.4: RevenueCat + Play products for production
+
+**Files:** none (external) + `.env`.
+
+- [ ] Swap `RC_ANDROID_KEY` from the `test_…` sandbox key to the **production** Android API key.
+- [ ] In Play Console, create the **live** subscription products (annual + monthly) matching the RevenueCat `current` offering packages; activate them.
+- [ ] In RevenueCat, confirm the entitlement `plus` and offering `current` point at the live Play products.
+- [ ] Record the final product ids in PROGRESS.md "Config you must supply".
+
+### Task 10.5: Build, upload, and verify on the internal track
+
+- [ ] **Step 1:** `eas build --platform android --profile production` → produces a signed `.aab`.
+- [ ] **Step 2:** Upload to Play Console **Internal testing** (or `eas submit -p android --profile production`). Complete the required forms: **Data safety**, **content rating**, **target audience**, **store listing** (screenshots, description), and the **privacy policy URL**.
+- [ ] **Step 3:** Install from the internal-testing link on a real device signed into a tester account. Verify a **real (non-sandbox) purchase** opens the Play sheet, grants `plus`, and that restore/cancel/manage all behave (re-walk the Phase 6.2 state list against production billing).
+- [ ] **Step 4:** When green, promote internal → **production** rollout (staged % if desired).
+
+### Task 10.6: Record the release
+
+- [ ] Commit any final config; update PROGRESS.md with the build id, versionCode, and track status.
+
+> ✅ **Update PROGRESS.md Phase 10 → Done (Android production).** This reverses the original "dev only" locked decision — note it.
+
+---
+
+## Phase 11 — iOS parity (App Store Connect + TestFlight)
+
+Brings iOS to the same state as Android. **Blocked on tooling:** iOS builds need a **Mac** (local Xcode) **or** EAS macOS builds (paid). Until one exists, this phase stays ⛔ exactly as the Phase 6 iOS row.
+
+> **Decisions to confirm before starting:**
+> 1. **Build path:** local Mac + Xcode, or `eas build -p ios` (needs an Apple Developer account on the EAS project). 
+> 2. **Apple Developer Program** enrollment ($99/yr) — required to ship to TestFlight/App Store.
+> 3. **Final `ios.bundleIdentifier`** (can differ from Android `package`; permanent once used).
+
+### Task 11.1: Apple Developer + App Store Connect setup (manual)
+
+- [ ] Enroll in the Apple Developer Program; create the App ID / bundle identifier; create the app record in App Store Connect.
+
+### Task 11.2: StoreKit subscription products
+
+- [ ] In App Store Connect, create an **auto-renewable subscription group** with **annual** and **monthly** products matching the RevenueCat `current` offering. Fill localizations + review screenshot.
+
+### Task 11.3: RevenueCat iOS wiring
+
+- [ ] Add the RevenueCat **iOS (App Store) API key**; set `RC_IOS_KEY` in `.env`. Attach the iOS products to the **same** entitlement `plus` and offering `current` so no app code changes (`createPurchaseService` already keys off platform).
+
+### Task 11.4: iOS config in `app.config.js`
+
+**Files:** Modify `app.config.js`.
+
+- [ ] Set the final `ios.bundleIdentifier`, `ios.buildNumber` (EAS auto-increment), `ios.infoPlist.ITSAppUsesNonExemptEncryption = false` (unless using non-exempt crypto), and any required usage strings. Commit `build(release): iOS production config`.
+
+### Task 11.5: Build + sandbox verification
+
+- [ ] **Step 1:** `eas build --platform ios --profile preview` (or local `npx expo run:ios` on a Mac).
+- [ ] **Step 2:** With a **StoreKit sandbox** Apple ID, walk the full state list (Phase 6.2) on iOS: purchase, cancel, network, owned, restore found/empty, manage deep-link.
+
+### Task 11.6: TestFlight + submission
+
+- [ ] **Step 1:** `eas submit -p ios` (or Xcode/Transporter) → TestFlight; test with internal/external testers.
+- [ ] **Step 2:** Complete **App Privacy** ("nutrition label"), provide **review notes** with a demo account and restore instructions, then **Submit for Review**.
+- [ ] **Step 3:** Record build/version in PROGRESS.md.
+
+> ✅ **Update PROGRESS.md Phase 11 → Done (iOS)** once a Mac/EAS path is available; otherwise keep ⛔ with the exact blocker (no Mac / no Apple Developer account).
+
+---
+
+## Part II self-review (decisions & scope honesty)
+
+- **Reverses two locked decisions on purpose:** "dev only" (Phases 10–11) and "all state in-memory" (Phase 9). Both are flagged at the top of Part II and inside each phase's PROGRESS marker so the change is never silent. The owner must confirm the per-phase decision lists before work starts.
+- **Money/accounts gates** ($25 Play, $99 Apple, possible paid EAS) are called out as decisions, not buried in steps — none can be satisfied by Claude; they are owner actions.
+- **Secrets:** production RevenueCat keys and the Play service-account JSON are env/git-ignored; the current `.env` `test_…` key is explicitly marked as sandbox-only and must be swapped for Phase 10.
+- **Ordering rationale** (8 → 9 → 10 → 11) is stated and load-bearing: persistence precedes any public release.
+- **Test discipline preserved:** the only net-new logic with branches (the persistence core, Task 9.2) is TDD'd; release phases are runbooks (no unit-testable pure logic) and say so.

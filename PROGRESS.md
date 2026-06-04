@@ -32,8 +32,15 @@
 | 5 | Live entitlement → renewal/plan/price; cancel reflects willRenew | ✅ Done |
 | 6 | Dev client build + real-billing verification (Android) | ✅ Done |
 | 7 | Final verification + docs | ✅ Done |
+| — | **Part I complete (lift + RevenueCat billing, dev-only, in-memory).** Part II below extends past the original locked scope. | — |
+| 8 | Runtime verification closeout (close deferred sim-state boxes) | ⬜ Not started |
+| 9 | Local persistence (state survives restart, AsyncStorage) | ⬜ Not started |
+| 10 | Production Android release (EAS build → Play Console) | ⬜ Not started |
+| 11 | iOS parity (App Store Connect + TestFlight) | ⛔ Blocked (needs Mac/EAS + Apple Dev) |
 
 Legend: ⬜ Not started · 🟡 In progress · ✅ Done · ⛔ Blocked
+
+> **Part II (Phases 8–11) was added 2026-06-04.** It deliberately reverses two original locked decisions — "dev only" (Phases 10–11) and "all state in-memory" (Phase 9). **Each Part II phase lists decisions the owner must confirm before it starts** (engine choice, final bundle ids, real domains, store accounts). See the plan's "PART II" section. Recommended order: 8 → 9 → 10 → 11 (persistence must land before any public release).
 
 ---
 
@@ -81,6 +88,42 @@ Legend: ⬜ Not started · 🟡 In progress · ✅ Done · ⛔ Blocked
 
 ---
 
+## Phase checklists — Part II (Phases 8–11, added 2026-06-04)
+
+> Decisions to confirm per phase live in the plan's **PART II** section. Do not start a phase until its decisions are answered.
+
+### Phase 8 — Runtime verification closeout (no new code)
+- [ ] 8.1 Walk all 5 purchase outcomes in Expo Go (success/cancel/failed/network/owned), revert `theme.js`
+- [ ] 8.2 Walk both restore outcomes (found/empty); confirm sim fallback never crashes
+- [ ] 8.3 Tick the deferred Phase 3 + Phase 4 boxes above with evidence; commit PROGRESS.md
+
+### Phase 9 — Local persistence (AsyncStorage)
+- [ ] 9.1 Install `@react-native-async-storage/async-storage`
+- [ ] 9.2 Pure persistence core `src/persistence/state.js` + test (TDD: version/migrate/merge)
+- [ ] 9.3 Storage adapter `src/persistence/storage.js` (load/save/clear)
+- [ ] 9.4 Hydrate on startup in `App.js` behind a loading gate
+- [ ] 9.5 Seed `RitualsApp` from `initialState` + debounced autosave + daily reset
+- [ ] 9.6 (optional) "Reset app data" control in You/Settings
+- [ ] 9.7 Verify restart persistence in Expo Go; `npm test` green
+
+### Phase 10 — Production Android release (EAS)
+- [ ] 10.1 Release decisions + accounts (Expo/EAS, Play Console, live legal URLs)
+- [ ] 10.2 `eas.json` build/submit profiles; git-ignore Play service-account key
+- [ ] 10.3 Production `app.config.js` (final package id, versioning, icon/splash, runtimeVersion)
+- [ ] 10.4 Production RevenueCat key (swap the `test_…` sandbox key) + live Play products
+- [ ] 10.5 `eas build -p android --profile production`; internal-track verify real purchase; promote to production
+- [ ] 10.6 Record build id / versionCode / track in PROGRESS.md
+
+### Phase 11 — iOS parity — ⛔ blocked (needs Mac or EAS macOS + Apple Developer Program)
+- [ ] 11.1 Apple Developer + App Store Connect app record + bundle id
+- [ ] 11.2 StoreKit subscription group (annual + monthly)
+- [ ] 11.3 RevenueCat iOS key (`RC_IOS_KEY`); attach iOS products to `plus` / `current`
+- [ ] 11.4 iOS config in `app.config.js` (bundleIdentifier, buildNumber, infoPlist)
+- [ ] 11.5 `eas build -p ios` (or Mac); StoreKit-sandbox walk of all states
+- [ ] 11.6 TestFlight + App Privacy + submit for review
+
+---
+
 ## Config you must supply (no secrets in git)
 
 Fill these in `.env` (copy from `.env.example`, created in Phase 4) and record the IDs here as they're created:
@@ -89,10 +132,10 @@ Fill these in `.env` (copy from `.env.example`, created in Phase 4) and record t
 | --- | --- | --- |
 | RevenueCat entitlement id | RevenueCat dashboard | `plus` (must match `ENTITLEMENT_ID`) |
 | RevenueCat offering | dashboard | `current` (annual + monthly packages) |
-| `RC_ANDROID_KEY` | RevenueCat → API keys | `test_UEBAuHmtvXGnNuTLxlnCTtgKfDi` (in `.env`) |
-| `RC_IOS_KEY` | RevenueCat → API keys | _TBD (iOS later)_ |
-| Play product ids | Play Console | _TBD_ |
-| `TERMS_URL` / `PRIVACY_URL` | your site | _TBD_ |
+| `RC_ANDROID_KEY` | RevenueCat → API keys | `test_UEBAuHmtvXGnNuTLxlnCTtgKfDi` (**sandbox key** — in `.env`; must swap to the production Android key for Phase 10) |
+| `RC_IOS_KEY` | RevenueCat → API keys | _TBD (Phase 11 / iOS)_ |
+| Play product ids | Play Console | _TBD (Phase 10 — live subscription products)_ |
+| `TERMS_URL` / `PRIVACY_URL` | your live site | _TBD (Phase 10 — Play requires a reachable privacy URL)_ |
 
 ---
 
@@ -118,8 +161,10 @@ Fill these in `.env` (copy from `.env.example`, created in Phase 4) and record t
 
 ## Open items / blockers
 
-- iOS real-billing verification needs a Mac or EAS account (out of current scope) — Phase 6 iOS row stays ⛔ until then.
+- iOS real-billing verification needs a Mac or EAS account (out of current scope) — Phase 6 iOS row stays ⛔ until then. Phase 11 (iOS parity) is blocked on the same plus an Apple Developer Program enrollment.
 - RevenueCat keys + Play products must be created by the project owner before Phase 6 real-billing checks (Phase 0–5 run fully on the sim without them).
+- **Before Phase 9:** confirm persistence engine (AsyncStorage recommended) + whether to add a "Reset app data" control.
+- **Before Phase 10:** confirm final Android `package` id (placeholder `app.dailyrituals.mobile` is permanent once published), live Terms/Privacy URLs, Expo/EAS + Google Play accounts, and swap the sandbox `test_…` RevenueCat key for the production key.
 
 ## Last session note
 
@@ -141,4 +186,6 @@ _2026-06-04 — Phase 6 partial. Created `.env` with `RC_ANDROID_KEY=test_UEBAuH
 
 _2026-06-04 — Phase 6 complete (Android). Fixed `JAVA_HOME` env var (pointed at Android Studio's bundled JBR). Fixed `minSdkVersion` 23→24 in `android/gradle.properties` (RevenueCat Customer Center UI requires 24; `app.config.js` alone was insufficient — property must be set in gradle.properties). App booted in Android Studio emulator. Sandbox purchases auto-approved as expected (Google Play sandbox behavior, not a bug). Entitlements granted correctly. Phase 6 iOS row remains ⛔ (needs Mac/EAS — out of scope). Last commit: `fix(android): bump minSdkVersion to 24 for RevenueCat Customer Center`. Next: Phase 7, Task 7.1 — self-check vs handoff, `npm test` green, root README.md._
 
-_2026-06-04 — Phase 7 complete. Project complete for agreed scope. Self-check: all 8 handoff spec bullets confirmed in code (buy/restore wired, error→kind mapping, deep-links, renewal/plan/price from entitlement, real Terms/Privacy, Customer Center). `npm test` — 17 passed, 4 suites. Runtime: Android dev client confirmed in Phase 6; Expo Go sim path confirmed. Wrote `README.md` at root (run instructions, env keys, billing layer map). Last command: `git commit -m "docs: project readme for run + billing wiring"` — succeeded (commit 0063fb3). **Build complete. No next step — all phases done.**_
+_2026-06-04 — Phase 7 complete. Project complete for agreed scope. Self-check: all 8 handoff spec bullets confirmed in code (buy/restore wired, error→kind mapping, deep-links, renewal/plan/price from entitlement, real Terms/Privacy, Customer Center). `npm test` — 17 passed, 4 suites. Runtime: Android dev client confirmed in Phase 6; Expo Go sim path confirmed. Wrote `README.md` at root (run instructions, env keys, billing layer map). Last command: `git commit -m "docs: project readme for run + billing wiring"` — succeeded (commit 0063fb3). **Build complete (Part I). No next step within original scope — all phases done.**_
+
+_2026-06-04 (Opus, planning) — Part I closeout + Part II planned. (1) Committed leftover working-tree changes that were never recorded: UI polish to `art.js`/`ui.js` (ray-fan/moon centering + progress shimmer), `package.json` run-scripts + `react-native-purchases-ui` pin, and — critically — the previously **untracked** handoff infra (`docs/.../plan`, `DEVGUIDE.md`, `.gitignore`) is now in git (commits d0845cc, 0ca54a5, 6908ff1). (2) Appended **Phases 8–11** to the plan ("PART II") and this tracker: 8 = verification closeout (no code), 9 = AsyncStorage persistence (TDD core), 10 = production Android via EAS, 11 = iOS parity (⛔ tooling). Each phase lists owner decisions to confirm before starting. `npm test` — 17 passed, 4 suites (unchanged; no app logic touched). NEXT for Sonnet: **Phase 8, Task 8.1** — walk the sim states in Expo Go (no code), OR jump to Phase 9 if the owner would rather add persistence first. Confirm the per-phase decisions (see Open items) before Phase 9/10._
