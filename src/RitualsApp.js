@@ -28,14 +28,17 @@ import Toast from './screens/Toast';
 import { openExternal } from './billing/links';
 import { createPurchaseService, isBillingConfigured } from './billing';
 import { formatRenewDate } from './billing/format';
+import { saveState } from './persistence/storage';
+import { pickPersisted } from './persistence/state';
 
 const XP_GAIN = 50;
 const XP_MAX = 500;
 const LEVEL = 3;
 const LEVEL_NAME = 'Contemplative';
 const PLATFORM = Platform.OS === 'android' ? 'android' : 'ios';
+const todayKey = () => new Date().toISOString().slice(0, 10);
 
-export default function RitualsApp({ mode = 'day', settings, setSettings, onToggleMode, initialPlus = false }) {
+export default function RitualsApp({ mode = 'day', settings, setSettings, onToggleMode, initialPlus = false, initialState = {} }) {
   const theme = useMemo(() => makeTheme(mode, settings), [mode, settings]);
   const c = theme.colors;
   const safe = useSafeAreaInsets();
@@ -49,24 +52,24 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   const [reading, setReading] = useState(null);
   const [celebrate, setCelebrate] = useState(null);
 
-  const [entries, setEntries] = useState(SAMPLE_ENTRIES);
-  const [streak, setStreak] = useState(4);
-  const [xp, setXp] = useState(320);
-  const [done, setDone] = useState(false);
-  const [quests, setQuests] = useState(DAILY_QUESTS);
-  const [freezes, setFreezes] = useState(2);
+  const [entries, setEntries] = useState(initialState.entries ?? SAMPLE_ENTRIES);
+  const [streak, setStreak] = useState(initialState.streak ?? 4);
+  const [xp, setXp] = useState(initialState.xp ?? 320);
+  const [done, setDone] = useState(initialState.done ?? false);
+  const [quests, setQuests] = useState(initialState.quests ?? DAILY_QUESTS);
+  const [freezes, setFreezes] = useState(initialState.freezes ?? 2);
   const [showAch, setShowAch] = useState(false);
 
   // ── Shop / Plus / Embers economy ──
-  const [embers, setEmbers] = useState(360);
-  const [plus, setPlus] = useState(initialPlus);
+  const [embers, setEmbers] = useState(initialState.embers ?? 360);
+  const [plus, setPlus] = useState(initialState.plus ?? initialPlus);
   const [shopOpen, setShopOpen] = useState(false);
   const [getEmbersOpen, setGetEmbersOpen] = useState(false);
   const [paywall, setPaywall] = useState(false);
-  const [activePalette, setActivePalette] = useState('goldenhour');
-  const [ownedPalettes, setOwnedPalettes] = useState(['goldenhour']);
-  const [activeSky, setActiveSky] = useState('classic');
-  const [ownedSkies, setOwnedSkies] = useState(['classic', 'crescent']);
+  const [activePalette, setActivePalette] = useState(initialState.activePalette ?? 'goldenhour');
+  const [ownedPalettes, setOwnedPalettes] = useState(initialState.ownedPalettes ?? ['goldenhour']);
+  const [activeSky, setActiveSky] = useState(initialState.activeSky ?? 'classic');
+  const [ownedSkies, setOwnedSkies] = useState(initialState.ownedSkies ?? ['classic', 'crescent']);
   const [toast, setToast] = useState(null);
   const toastRef = React.useRef();
   const showToast = (msg) => {
@@ -77,8 +80,9 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
 
   // ── Subscription lifecycle (manage / cancel) ──
   const [manageOpen, setManageOpen] = useState(false);
-  const [subCanceled, setSubCanceled] = useState(false);
-  const [activePlan, setActivePlan] = useState('annual');
+  const [subCanceled, setSubCanceled] = useState(initialState.subCanceled ?? false);
+  const [activePlan, setActivePlan] = useState(initialState.activePlan ?? 'annual');
+  const [lastActiveDay, setLastActiveDay] = useState(initialState.lastActiveDay ?? todayKey());
   const [liveEntitlement, setLiveEntitlement] = useState(null);
   const renewLabel = liveEntitlement ? formatRenewDate(liveEntitlement.renewISO) : RENEW_DATE;
   const livePlan = liveEntitlement ? liveEntitlement.plan : activePlan;
@@ -175,6 +179,30 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     });
     return () => sub.remove();
   }, [plus, service]);
+
+  // Daily reset: clear done + quest progress when the calendar day rolls over.
+  React.useEffect(() => {
+    const today = todayKey();
+    if (lastActiveDay !== today) {
+      setDone(false);
+      setQuests((qs) => qs.map((q) => ({ ...q, cur: 0 })));
+      setLastActiveDay(today);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Debounced autosave — coalesces rapid state changes into one write.
+  React.useEffect(() => {
+    const id = setTimeout(() => {
+      saveState(pickPersisted({
+        entries, streak, xp, done, quests, freezes, embers, plus,
+        activePalette, ownedPalettes, activeSky, ownedSkies,
+        subCanceled, activePlan, lastActiveDay, settings,
+      }));
+    }, 400);
+    return () => clearTimeout(id);
+  }, [entries, streak, xp, done, quests, freezes, embers, plus,
+    activePalette, ownedPalettes, activeSky, ownedSkies,
+    subCanceled, activePlan, lastActiveDay, settings]);
 
   const complete = ({ did, wished, mood }) => {
     const entry = { id: 'new' + Date.now(), day: '31', mon: 'May', wd: 'Saturday', mood, did, wished, streak: true };
