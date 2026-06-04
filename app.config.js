@@ -18,6 +18,7 @@ module.exports = {
       rcAndroidKey: process.env.RC_ANDROID_KEY || '',
       termsUrl: process.env.TERMS_URL || '',
       privacyUrl: process.env.PRIVACY_URL || '',
+      eas: { projectId: '1a0f9b15-cb1a-4cec-9577-3cd66e9f1d36' },
     },
   },
 };
