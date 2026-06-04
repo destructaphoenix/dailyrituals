@@ -1370,11 +1370,34 @@ Recommended: **superpowers:subagent-driven-development** (fresh subagent per tas
 ---
 ---
 
-# PART II — Beyond the original scope (Phases 8–11, added 2026-06-04)
+# PART II — Beyond the original scope (added 2026-06-04)
 
-> **Read this first.** Phases 0–7 are **complete** (the lift + RevenueCat billing, dev-only, in-memory state). Part II deliberately steps past the original **Locked decisions** ("dev only", "all state in-memory"). Each phase below lists the **decisions to confirm with the owner before starting** — do not begin a Part II phase until its decisions are answered, because they change what you build (bundle id, real domains, store accounts, persistence engine).
->
-> **Recommended order:** 8 → 9 → 10 → 11. Rationale: 8 is a free correctness pass; 9 (persistence) must land **before** 10 because shipping an app that loses data on restart is not acceptable for real users; 11 (iOS) is last because it needs a Mac or paid EAS macOS builds.
+> **Read this first.** Phases 0–7 are **complete** (the lift + RevenueCat billing, dev-only, in-memory state). Part II deliberately steps past the original **Locked decisions** ("dev only", "all state in-memory"). Each phase below lists the **decisions to confirm with the owner before starting** — do not begin a Part II phase until its decisions are answered.
+
+## ⭐ Release strategy (the single most important thing to understand — read before touching Phases 10–11)
+
+**We ship the app to the public as a FREE app FIRST, then add paid Plus in a follow-up update.** This is deliberate. Here is the whole mental model — internalize it so neither Sonnet nor the owner gets lost in store dashboards:
+
+There are **three different finish lines**, and they are independent:
+
+| Finish line | What it means | What it needs | Phase |
+| --- | --- | --- | --- |
+| **A. Free app live** | Anyone can download a fully-working **free** journaling app. Plus/paywall is **hidden**. | Persistence + Plus hidden behind a flag + a hosted privacy policy/terms site + Play store listing. **No payments, no BillDesk, no RevenueCat production key.** | **10a** |
+| **B. Plus monetization live** | The Plus subscription is turned on; real users can subscribe and we get paid. | BillDesk seller verification + live Play subscription products + RevenueCat production key + flip the `PLUS_ENABLED` flag → ship v1.1. | **10b** |
+| **C. iOS parity** | Same app on the App Store. | Mac/EAS + Apple Developer + StoreKit products. | **11** |
+
+**Why free-first:** it gets the app live with the least friction (no waiting on BillDesk's up-to-90-day verification, no payout setup), lets real users in, and turns monetization into a low-risk follow-up update instead of a launch blocker.
+
+**The one rule that makes this safe:** the app currently *ships with a working-looking paywall*. If we publish that without functioning Play Billing products, Google review will likely **reject** it and users get dead buttons. So **10a gates the entire Plus surface OFF behind a `PLUS_ENABLED` flag** (default `false`). v1 is genuinely free with no purchase entry points. **10b flips the flag to `true`** once payments exist.
+
+**What you can NOT skip even for the free launch:** Google Play **requires a reachable privacy-policy URL** (+ Data safety form, content rating, store graphics) to publish *anything*. That is why 10a includes building a **minimal website** with the mandatory legal pages. The website is small and can be free-hosted; it is not optional for a public release.
+
+> **Recommended order:** **8 → 9 → 10a → 10b → 11.**
+> - 8 = free correctness pass (no code).
+> - 9 = persistence — MUST land before 10a (shipping an app that forgets entries on restart is not acceptable).
+> - 10a = the free public launch (the real goal for a first release).
+> - 10b = switch on paid Plus once BillDesk + products are ready (the BillDesk 90-day clock runs in the background; start it early, finish it before 10b).
+> - 11 = iOS, last (needs Mac/EAS + Apple Developer).
 >
 > Same rules as Part I: one task per chat where possible, commit per task with the exact message, update `PROGRESS.md` at every phase boundary.
 
@@ -1689,102 +1712,205 @@ git commit -m "feat(persist): seed app state from storage and autosave on change
 
 ---
 
-## Phase 10 — Production Android release (EAS build → Play Console)
+## Phase 10a — Free public release (Plus hidden, no payments)
 
-Moves from the local Android **dev client** (Phase 6) to a **signed production AAB** on Google Play. This phase is **mostly external/manual** (accounts, dashboards, store forms); the repo changes are a config file plus production hardening. Treat the checkboxes as a release runbook.
+**The goal of this phase: get a fully-working FREE app live on Google Play.** No subscriptions, no BillDesk, no RevenueCat production key. The entire Plus surface is hidden behind a flag; all the billing code stays in the repo, dormant, ready for 10b. See the **Release strategy** box at the top of Part II — read it before starting.
 
 > **Decisions to confirm before starting:**
-> 1. **Expo/EAS account** owner + project (`eas init` links a project id). Free tier builds queue; paid tier is faster.
-> 2. **Real application id** — ✅ **CONFIRMED 2026-06-04: keep `app.dailyrituals.mobile`** (both `android.package` and `ios.bundleIdentifier`). No domain ownership is required for the id itself; it is permanent on Play once published. No `app.config.js` change needed — the value is already set.
-> 3. **Real Terms/Privacy URLs** on a live domain (Play requires a reachable privacy policy URL). The app currently falls back to `https://dailyrituals.app/{terms,privacy}` placeholders.
-> 4. **Google Play Developer account** (one-time $25) and **Google Play App Signing** (recommended — Google holds the signing key).
-> 5. **RevenueCat production key** — the `.env` currently holds a **`test_…` sandbox key**. Production needs the real Android key + products attached to **live** Play subscriptions.
+> 1. **Application id** — ✅ **CONFIRMED 2026-06-04: keep `app.dailyrituals.mobile`.** Permanent once published; value already set in `app.config.js`.
+> 2. **Expo/EAS account** — free tier is fine (builds queue). Needed for `eas build`.
+> 3. **Google Play Developer account** ($25 one-time) — needed to publish. **Google Play App Signing** recommended (Google holds the key).
+> 4. **Website host for the legal pages** — any free host works (GitHub Pages / Netlify / Cloudflare Pages). A custom domain is **optional** — Play only needs a reachable HTTPS privacy-policy URL.
+> 5. **Reset-app-data control** (Task 9.6) — recommend shipping it so testers can reset.
 
-### Task 10.1: Release decisions + accounts (manual checklist)
+### Task 10a.1: Gate the entire Plus surface behind a feature flag
 
-- [ ] Confirm final `package` / application id (10.2 decision #2).
-- [ ] Create/confirm Expo account; run `npx expo install eas-cli` (or use `npx eas-cli@latest`); `eas login`; `eas init`.
-- [ ] Google Play Console account created; new app drafted.
-- [ ] Live Terms + Privacy URLs reachable; set them in `.env` (`TERMS_URL`, `PRIVACY_URL`).
+The app ships with a working-looking paywall. For a free launch it must be hidden, or Play review rejects it and users get dead buttons. This adds **one flag** that hides every purchase/manage entry point. **No billing code is deleted** — 10b just flips the flag back on.
 
-### Task 10.2: Add `eas.json` build profiles
+**Files:**
+- Modify: `src/billing/config.js` (add the flag)
+- Modify: `src/RitualsApp.js`, `src/screens/YouScreen.js`, `src/screens/HomeScreen.js` (or wherever the Plus banner lives), `src/screens/Shop.js`, `src/screens/Onboarding.js` (hide entry points)
+
+- [ ] **Step 1: Add the flag** to `src/billing/config.js`:
+
+```js
+// Master switch for the paid Plus surface. FALSE = free release (v1): every
+// paywall/upgrade/manage entry point is hidden, no purchases are possible.
+// Flip to TRUE in Phase 10b once Play products + production RevenueCat key exist.
+export const PLUS_ENABLED = false;
+```
+
+- [ ] **Step 2: Find every Plus entry point.** Grep the app for the call sites and gate each one on `PLUS_ENABLED`:
+
+```
+grep -rn "setPaywall(true)\|onOpenPaywall\|onOpenManage\|setManageOpen(true)" src/
+```
+
+Expected entry points to hide when `!PLUS_ENABLED`:
+  - **You tab** (`YouScreen`): the "Get Plus" / "Manage" banner + its `onOpenPaywall` / `onOpenManage`.
+  - **Home / Shop** Plus banners and any "Upgrade" CTA.
+  - **Onboarding**: skip the Premium/paywall step entirely (route straight past it).
+  - The `<Paywall>` and `<ManageSubscription>` modals in `RitualsApp.js` — they simply never open (guarded by the hidden triggers), but also short-circuit `setPaywall(true)` / `setManageOpen(true)` so nothing can open them.
+
+Implementation pattern (immutable, minimal): import `PLUS_ENABLED` where needed and wrap the trigger/JSX, e.g. in `RitualsApp.js`:
+
+```js
+import { PLUS_ENABLED } from './billing/config';
+// …pass down to screens:
+<YouScreen … plusEnabled={PLUS_ENABLED} onOpenPaywall={() => setPaywall(true)} onOpenManage={() => setManageOpen(true)} />
+```
+and in each screen, render the Plus banner/buttons only when `plusEnabled` is true. Leave the in-app **Embers/Shop** economy intact (it's free, cosmetic) — only the *paid* Plus upsell is hidden. Plus-gated cosmetics simply stay locked in v1.
+
+- [ ] **Step 3: Verify in Expo Go** that with `PLUS_ENABLED = false` there is **no** way to reach the paywall or manage screen, onboarding flows straight through, and `npm test` is still green (17/17 — the flag doesn't touch tested logic).
+
+- [ ] **Step 4: Commit**
+
+```powershell
+git add src/billing/config.js src/RitualsApp.js src/screens/*.js
+git commit -m "feat(release): gate Plus surface behind PLUS_ENABLED flag (free v1)"
+```
+
+### Task 10a.2: Build the minimal legal website (mandatory for any public release)
+
+Play **requires** a reachable privacy-policy URL to publish. Build a tiny static site with the legal pages and host it free. Keep it minimal — it just has to exist and be accurate.
+
+**Files:** Create `website/` (`index.html`, `privacy.html`, `terms.html`, `support.html`, one small `style.css`).
+
+- [ ] **Step 1: Write the pages.** Minimal static HTML. The **Privacy Policy must accurately state** how Daily Rituals handles data:
+  - Journal entries, settings, streaks, and in-app Embers are stored **locally on the device** (AsyncStorage) — there is **no account and no server**; the developer cannot read them.
+  - When paid Plus is enabled (a future update), subscriptions are processed by **Google Play** and managed via **RevenueCat**, which receive purchase tokens and device identifiers solely to validate the subscription. (For the v1 free release, no payment data is collected at all.)
+  - No personal data is sold or shared with advertisers.
+  - A contact email for privacy questions.
+
+  The **Terms / EULA** should cover: licence to use the app, subscription terms (auto-renew, manage/cancel via the store) for when Plus is live, "as-is" no-warranty, and a contact email. Starter skeleton for `privacy.html` (adapt and fill the email/date):
+
+```html
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Daily Rituals — Privacy Policy</title><link rel="stylesheet" href="style.css"></head>
+<body><main>
+<h1>Privacy Policy</h1><p>Last updated: <!-- DATE --></p>
+<p>Daily Rituals stores your journal entries, settings, streaks, and in-app Embers
+<strong>only on your device</strong>. There is no account and no server; we cannot
+read your entries.</p>
+<p>The app does not sell or share your personal data with advertisers.</p>
+<p>If paid features are enabled in a future update, subscriptions are processed by
+Google Play and managed through RevenueCat, which receive purchase and device
+identifiers solely to validate your subscription.</p>
+<p>Questions? Email <a href="mailto:YOUR_EMAIL">YOUR_EMAIL</a>.</p>
+</main></body></html>
+```
+
+- [ ] **Step 2: Host it (free).** Easiest options:
+  - **GitHub Pages:** push `website/` to a repo (or this repo's `/docs` on a `gh-pages` branch) → Settings → Pages → live at `https://<user>.github.io/<repo>/privacy.html`.
+  - **Netlify / Cloudflare Pages:** drag-drop the `website/` folder → instant `https://<name>.netlify.app/privacy.html`.
+  - A **custom domain** is optional; if the owner has one, point it at the same host.
+
+- [ ] **Step 3: Wire the live URLs into the app.** Put the hosted URLs in `.env`:
+
+```
+TERMS_URL=https://…/terms.html
+PRIVACY_URL=https://…/privacy.html
+```
+
+These already flow through `app.config.js` → `expo-constants` → `src/billing/config.js` `LINKS`, so the in-app legal footer opens the real pages. (Optional: update the support fallback in `RitualsApp.js doGetHelp` to the hosted `support.html`.)
+
+- [ ] **Step 4: Commit** the site (the `.env` stays git-ignored):
+
+```powershell
+git add website
+git commit -m "docs(release): minimal legal website (privacy, terms, support)"
+```
+
+### Task 10a.3: Add `eas.json` + Expo account
 
 **Files:** Create `eas.json`.
 
-- [ ] **Step 1: Write it**
+- [ ] **Step 1:** Create/confirm the Expo account; `eas login`; `eas init` (links a project id).
+- [ ] **Step 2: Write `eas.json`**
 
 ```json
 {
   "cli": { "version": ">= 12.0.0" },
   "build": {
-    "development": {
-      "developmentClient": true,
-      "distribution": "internal",
-      "android": { "buildType": "apk" }
-    },
-    "preview": {
-      "distribution": "internal",
-      "android": { "buildType": "apk" }
-    },
-    "production": {
-      "autoIncrement": true,
-      "android": { "buildType": "app-bundle" }
-    }
+    "development": { "developmentClient": true, "distribution": "internal", "android": { "buildType": "apk" } },
+    "preview":     { "distribution": "internal", "android": { "buildType": "apk" } },
+    "production":  { "autoIncrement": true, "android": { "buildType": "app-bundle" } }
   },
   "submit": {
-    "production": {
-      "android": {
-        "serviceAccountKeyPath": "./play-service-account.json",
-        "track": "internal"
-      }
-    }
+    "production": { "android": { "serviceAccountKeyPath": "./play-service-account.json", "track": "internal" } }
   }
 }
 ```
 
-> `play-service-account.json` is a Play Console service-account key — **secret, git-ignored** (add it to `.gitignore`). Used only by `eas submit`.
+> `play-service-account.json` is the Play service-account key — **secret, git-ignored**. (`eas submit` uses it; you can also upload the AAB to Play by hand and skip it for now.)
 
-- [ ] **Step 2: Commit**
+- [ ] **Step 3: Commit** — `git add eas.json .gitignore && git commit -m "build(release): add EAS build/submit profiles for Android"`
 
-```powershell
-git add eas.json .gitignore
-git commit -m "build(release): add EAS build/submit profiles for Android"
-```
-
-### Task 10.3: Production hardening of `app.config.js`
+### Task 10a.4: Production hardening of `app.config.js`
 
 **Files:** Modify `app.config.js`.
 
-- [ ] **Step 1:** Set the **final** `android.package` (decision #2); add `version` + let EAS manage `android.versionCode` via `autoIncrement`; add real `icon`, `adaptiveIcon.foregroundImage`, and `splash` assets; add `runtimeVersion` (e.g. `{ "policy": "appVersion" }`); trim `android.permissions` to only what's needed (RevenueCat needs `com.android.vending.BILLING`, added by the SDK). Keep keys env-sourced via `extra`.
-- [ ] **Step 2: Commit** `build(release): production app.config (final id, versioning, assets)`.
+- [ ] **Step 1:** Add `version`; let EAS manage `android.versionCode` via `autoIncrement`; add real `icon`, `adaptiveIcon.foregroundImage`, and `splash` assets; add `runtimeVersion` (`{ "policy": "appVersion" }`). The `android.package` is already final. Keep `extra` env-sourced. (No RevenueCat **production** key is needed for 10a — the app ships with Plus hidden, so a missing/sandbox key is irrelevant; `isBillingConfigured` is never reached because the paywall is gated off.)
+- [ ] **Step 2: Commit** `build(release): production app.config (versioning, assets, runtimeVersion)`.
 
-### Task 10.4: RevenueCat + Play products for production
+### Task 10a.5: Build, complete the store listing, and publish FREE
 
-**Files:** none (external) + `.env`.
+- [ ] **Step 1:** `eas build --platform android --profile production` → signed `.aab`.
+- [ ] **Step 2:** In Play Console, create the app (App, **Free**) and complete the **"Set up your app"** checklist:
+  - App access: "All functionality available without restrictions" · Ads: **No** · Content rating: questionnaire (likely Everyone) · Target audience: 13+/18+, not children · **Data safety**: declare local-only storage; for v1 free, **no** purchase data is collected · **Privacy policy URL**: the hosted `privacy.html` from 10a.2.
+  - **Store listing**: name, short + full description, app icon, **feature graphic**, and **screenshots** (capture from the running app).
+- [ ] **Step 3:** Upload the AAB → **Internal testing** first; install on a device and smoke-test the free app (write entries, restart → persistence holds, no Plus buttons anywhere).
+- [ ] **Step 4:** When happy, promote to **Production** → submit for review → **publish the free app**. 🎉
+- [ ] **Step 5:** Record the build id, versionCode, and Play URL in PROGRESS.md.
 
-- [ ] Swap `RC_ANDROID_KEY` from the `test_…` sandbox key to the **production** Android API key.
-- [ ] In Play Console, create the **live** subscription products (annual + monthly) matching the RevenueCat `current` offering packages; activate them.
-- [ ] In RevenueCat, confirm the entitlement `plus` and offering `current` point at the live Play products.
-- [ ] Record the final product ids in PROGRESS.md "Config you must supply".
+> ✅ **Update PROGRESS.md Phase 10a → Done (free app live).** Reverses the original "dev only" locked decision — note it. The app is public and free; monetization is the follow-up (10b).
 
-### Task 10.5: Build, upload, and verify on the internal track
+---
 
-- [ ] **Step 1:** `eas build --platform android --profile production` → produces a signed `.aab`.
-- [ ] **Step 2:** Upload to Play Console **Internal testing** (or `eas submit -p android --profile production`). Complete the required forms: **Data safety**, **content rating**, **target audience**, **store listing** (screenshots, description), and the **privacy policy URL**.
-- [ ] **Step 3:** Install from the internal-testing link on a real device signed into a tester account. Verify a **real (non-sandbox) purchase** opens the Play sheet, grants `plus`, and that restore/cancel/manage all behave (re-walk the Phase 6.2 state list against production billing).
-- [ ] **Step 4:** When green, promote internal → **production** rollout (staged % if desired).
+## Phase 10b — Enable monetization (turn Plus on → v1.1)
 
-### Task 10.6: Record the release
+Switches the dormant Plus surface back on once payments are ready. Mostly external setup + one flag flip + a new build. **The BillDesk seller verification has an up-to-90-day clock — start it early (it can run during 10a) and it must be finished before you can be paid.**
 
-- [ ] Commit any final config; update PROGRESS.md with the build id, versionCode, and track status.
+> **Decisions to confirm before starting:**
+> 1. **BillDesk PA-CB verification** done (India sellers — required to receive payouts; see 10b.1).
+> 2. **RevenueCat production Android key** ready (the `.env` currently holds a **`test_…` sandbox key** — swap it).
+> 3. Final **Play subscription product ids** (annual + monthly) decided.
 
-> ✅ **Update PROGRESS.md Phase 10 → Done (Android production).** This reverses the original "dev only" locked decision — note it.
+### Task 10b.1: BillDesk PA-CB seller verification (India)
+
+**Files:** none (external). For developers based in India, Google routes payout verification through **BillDesk** to satisfy the RBI **Payment Aggregator – Cross Border (PA-CB)** regulation. This gates *getting paid*, not building.
+
+- [ ] Watch for the email from `onboarding@billdesk.com` (sent to the payments-profile contact); complete the KYC (business/identity, **bank account** for payouts, tax/PAN). **90-day window** from starting the application. Record the start date + deadline in PROGRESS.md.
+
+### Task 10b.2: Live Play subscription products + production RevenueCat key
+
+**Files:** `.env` (key swap).
+
+- [ ] In **Play Console → Monetize → Subscriptions**, create the **annual** and **monthly** subscription products; activate them. Record the product ids in PROGRESS.md.
+- [ ] Swap `RC_ANDROID_KEY` in `.env` from the `test_…` sandbox key to the **production** RevenueCat Android key.
+
+### Task 10b.3: Attach products in RevenueCat
+
+- [ ] In RevenueCat, point the `plus` entitlement and `current` offering (annual + monthly packages) at the live Play products. Confirm `Purchases.getOfferings()` returns them (prices non-empty).
+
+### Task 10b.4: Flip the flag, rebuild, verify, publish v1.1
+
+**Files:** Modify `src/billing/config.js`.
+
+- [ ] **Step 1:** Set `PLUS_ENABLED = true`. (This re-exposes every entry point hidden in 10a.1 — no other code change.)
+- [ ] **Step 2:** `npm test` → green; `eas build -p android --profile production`.
+- [ ] **Step 3:** Upload to **Internal testing**; with a **license tester**, walk the full state list (Phase 6.2): purchase success, cancel, network, owned, restore found/empty, manage→cancel deep-link + focus-refresh to "ENDING".
+- [ ] **Step 4:** When green, promote to **Production** → v1.1 with Plus live.
+- [ ] **Step 5: Commit** `feat(release): enable Plus (PLUS_ENABLED=true) for v1.1`; record build/version in PROGRESS.md.
+
+> ✅ **Update PROGRESS.md Phase 10b → Done (Plus live).**
 
 ---
 
 ## Phase 11 — iOS parity (App Store Connect + TestFlight)
 
-Brings iOS to the same state as Android. **Blocked on tooling:** iOS builds need a **Mac** (local Xcode) **or** EAS macOS builds (paid). Until one exists, this phase stays ⛔ exactly as the Phase 6 iOS row.
+Brings iOS to parity. The same free-first option applies — an iOS build inherits whatever `PLUS_ENABLED` is at build time (ship iOS free first, then enable Plus by mirroring 10b's StoreKit products + flag). **Blocked on tooling:** iOS builds need a **Mac** (local Xcode) **or** EAS macOS builds (paid). Until one exists, this phase stays ⛔ exactly as the Phase 6 iOS row.
 
 > **Decisions to confirm before starting:**
 > 1. **Build path:** local Mac + Xcode, or `eas build -p ios` (needs an Apple Developer account on the EAS project). 
@@ -1826,8 +1952,11 @@ Brings iOS to the same state as Android. **Blocked on tooling:** iOS builds need
 
 ## Part II self-review (decisions & scope honesty)
 
-- **Reverses two locked decisions on purpose:** "dev only" (Phases 10–11) and "all state in-memory" (Phase 9). Both are flagged at the top of Part II and inside each phase's PROGRESS marker so the change is never silent. The owner must confirm the per-phase decision lists before work starts.
-- **Money/accounts gates** ($25 Play, $99 Apple, possible paid EAS) are called out as decisions, not buried in steps — none can be satisfied by Claude; they are owner actions.
-- **Secrets:** production RevenueCat keys and the Play service-account JSON are env/git-ignored; the current `.env` `test_…` key is explicitly marked as sandbox-only and must be swapped for Phase 10.
-- **Ordering rationale** (8 → 9 → 10 → 11) is stated and load-bearing: persistence precedes any public release.
+- **Free-first release strategy is the spine of Part II:** the **Release strategy** box up top defines the three independent finish lines (A free app → B monetization → C iOS) so neither Sonnet nor the owner conflates "publish" with "enable payments." Phase 10 is split into **10a (free public release, Plus hidden)** and **10b (turn Plus on)** to make this concrete.
+- **The `PLUS_ENABLED` flag (Task 10a.1)** is the safety mechanism: v1 ships with every paywall/manage entry point hidden (no dead buttons, no Play rejection), all billing code intact; 10b is a one-line flip + rebuild. Tested logic is untouched, so `npm test` stays 17/17 through the flag.
+- **The mandatory website (Task 10a.2)** is called out as non-skippable for *any* public release (Play requires a privacy-policy URL), free-hostable, custom domain optional. Its privacy copy is specced to match reality (local-only storage; payment data only when Plus is later enabled).
+- **Reverses two locked decisions on purpose:** "dev only" (10a/10b/11) and "all state in-memory" (Phase 9). Flagged at the top of Part II and in each PROGRESS marker so the change is never silent.
+- **Money/accounts + regional gates** ($25 Play, India **BillDesk PA-CB** payout verification with its 90-day clock, $99 Apple, possible paid EAS) are surfaced as decisions/tasks, not buried — none can be done by Claude; they are owner actions. BillDesk gates **10b (payouts)** only, **not** the free 10a launch.
+- **Secrets:** production RevenueCat key + Play service-account JSON are env/git-ignored; the `.env` `test_…` key is sandbox-only and swapped in 10b. The free 10a release needs **no** production billing key at all.
+- **Ordering rationale** (8 → 9 → 10a → 10b → 11) is stated and load-bearing: persistence precedes any public release; the free launch precedes monetization.
 - **Test discipline preserved:** the only net-new logic with branches (the persistence core, Task 9.2) is TDD'd; release phases are runbooks (no unit-testable pure logic) and say so.

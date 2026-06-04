@@ -35,12 +35,13 @@
 | — | **Part I complete (lift + RevenueCat billing, dev-only, in-memory).** Part II below extends past the original locked scope. | — |
 | 8 | Runtime verification closeout (close deferred sim-state boxes) | ⬜ Not started |
 | 9 | Local persistence (state survives restart, AsyncStorage) | ⬜ Not started |
-| 10 | Production Android release (EAS build → Play Console) | ⬜ Not started |
+| 10a | **Free public release** — Plus hidden behind a flag, ship free to Play | ⬜ Not started |
+| 10b | **Enable monetization** — BillDesk + products + flip `PLUS_ENABLED` → v1.1 | ⬜ Not started |
 | 11 | iOS parity (App Store Connect + TestFlight) | ⛔ Blocked (needs Mac/EAS + Apple Dev) |
 
 Legend: ⬜ Not started · 🟡 In progress · ✅ Done · ⛔ Blocked
 
-> **Part II (Phases 8–11) was added 2026-06-04.** It deliberately reverses two original locked decisions — "dev only" (Phases 10–11) and "all state in-memory" (Phase 9). **Each Part II phase lists decisions the owner must confirm before it starts** (engine choice, final bundle ids, real domains, store accounts). See the plan's "PART II" section. Recommended order: 8 → 9 → 10 → 11 (persistence must land before any public release).
+> **Part II was added 2026-06-04 and restructured around a FREE-FIRST release.** ⭐ **The big idea:** ship the app to Play as a **free** app first (Plus hidden behind a `PLUS_ENABLED` flag), then turn on paid Plus in a follow-up update (v1.1). Three independent finish lines: **A** free app live (10a) → **B** monetization live (10b) → **C** iOS (11). A free launch needs **no payments and no BillDesk** — but it **does** need a hosted privacy-policy page (built in 10a) + Play store listing. BillDesk (India PA-CB payout verification, up-to-90-day clock) gates **10b only**. Full detail + rationale in the plan's "**PART II → Release strategy**" box. Recommended order: **8 → 9 → 10a → 10b → 11**. Part II reverses two original locked decisions — "dev only" and "all state in-memory" — on purpose; each phase lists owner decisions to confirm first.
 
 ---
 
@@ -106,13 +107,19 @@ Legend: ⬜ Not started · 🟡 In progress · ✅ Done · ⛔ Blocked
 - [ ] 9.6 (optional) "Reset app data" control in You/Settings
 - [ ] 9.7 Verify restart persistence in Expo Go; `npm test` green
 
-### Phase 10 — Production Android release (EAS)
-- [ ] 10.1 Release decisions + accounts (Expo/EAS, Play Console, live legal URLs)
-- [ ] 10.2 `eas.json` build/submit profiles; git-ignore Play service-account key
-- [ ] 10.3 Production `app.config.js` (final package id, versioning, icon/splash, runtimeVersion)
-- [ ] 10.4 Production RevenueCat key (swap the `test_…` sandbox key) + live Play products
-- [ ] 10.5 `eas build -p android --profile production`; internal-track verify real purchase; promote to production
-- [ ] 10.6 Record build id / versionCode / track in PROGRESS.md
+### Phase 10a — Free public release (Plus hidden, no payments)
+- [ ] 10a.1 Gate the Plus surface behind `PLUS_ENABLED = false` (hide paywall/manage/upsell + skip onboarding premium) — CODE
+- [ ] 10a.2 Build + host the minimal legal website (privacy + terms + support); set `PRIVACY_URL`/`TERMS_URL` in `.env`
+- [ ] 10a.3 Expo/EAS account + `eas.json` (dev/preview/production profiles)
+- [ ] 10a.4 Production `app.config.js` (version, versionCode autoincrement, icon/splash, runtimeVersion)
+- [ ] 10a.5 `eas build -p android`; Play store listing + data safety + content rating + privacy URL; publish **FREE** to production
+- _No payments, no BillDesk, no RevenueCat production key needed for 10a._
+
+### Phase 10b — Enable monetization (turn Plus on → v1.1)
+- [ ] 10b.1 BillDesk PA-CB seller verification (India payouts; up-to-90-day window — start early, finish before 10b)
+- [ ] 10b.2 Live Play subscription products (annual + monthly) + swap `test_…` → production RevenueCat key
+- [ ] 10b.3 Attach products to RevenueCat `plus` / `current`; confirm offerings return live prices
+- [ ] 10b.4 Flip `PLUS_ENABLED = true`; `eas build`; internal-track verify real purchase (all states); promote → v1.1
 
 ### Phase 11 — iOS parity — ⛔ blocked (needs Mac or EAS macOS + Apple Developer Program)
 - [ ] 11.1 Apple Developer + App Store Connect app record + bundle id
@@ -134,8 +141,9 @@ Fill these in `.env` (copy from `.env.example`, created in Phase 4) and record t
 | RevenueCat offering | dashboard | `current` (annual + monthly packages) |
 | `RC_ANDROID_KEY` | RevenueCat → API keys | `test_UEBAuHmtvXGnNuTLxlnCTtgKfDi` (**sandbox key** — in `.env`; must swap to the production Android key for Phase 10) |
 | `RC_IOS_KEY` | RevenueCat → API keys | _TBD (Phase 11 / iOS)_ |
-| Play product ids | Play Console | _TBD (Phase 10 — live subscription products)_ |
-| `TERMS_URL` / `PRIVACY_URL` | your live site | _TBD (Phase 10 — Play requires a reachable privacy URL)_ |
+| Play product ids | Play Console | _TBD (Phase **10b** — live subscription products; not needed for the free 10a launch)_ |
+| `TERMS_URL` / `PRIVACY_URL` | the minimal website (Task **10a.2**, free-hosted) | _TBD — **mandatory for the free 10a launch** (Play requires a reachable privacy URL)_ |
+| BillDesk PA-CB verification | email from `onboarding@billdesk.com` | _TBD (Phase **10b** — India payout verification; up-to-90-day window once started)_ |
 
 ---
 
@@ -164,7 +172,8 @@ Fill these in `.env` (copy from `.env.example`, created in Phase 4) and record t
 - iOS real-billing verification needs a Mac or EAS account (out of current scope) — Phase 6 iOS row stays ⛔ until then. Phase 11 (iOS parity) is blocked on the same plus an Apple Developer Program enrollment.
 - RevenueCat keys + Play products must be created by the project owner before Phase 6 real-billing checks (Phase 0–5 run fully on the sim without them).
 - **Before Phase 9:** persistence engine ✅ **confirmed: AsyncStorage** (2026-06-04). Still open: whether to add a "Reset app data" control (Task 9.6, optional).
-- **Before Phase 10:** package id ✅ **confirmed: keep `app.dailyrituals.mobile`** (2026-06-04). Still open: live Terms/Privacy URLs (need a hosted privacy policy + terms page — no domain required for the id itself), Expo/EAS + Google Play accounts, and swap the sandbox `test_…` RevenueCat key for the production key.
+- **Before Phase 10a (free launch):** package id ✅ **confirmed: keep `app.dailyrituals.mobile`**. Still open: Expo/EAS account, Google Play Developer account ($25), and a **hosted privacy-policy + terms page** (built in Task 10a.2 — free host fine, custom domain optional). **No payments/BillDesk/production RevenueCat key needed here.**
+- **Before Phase 10b (monetization):** **BillDesk PA-CB seller verification** (India — already *initiated* 2026-06-04 via Google Play; finish within the 90-day window), live Play subscription products, and swap the sandbox `test_…` RevenueCat key for the production key.
 
 ## Last session note
 
@@ -189,3 +198,5 @@ _2026-06-04 — Phase 6 complete (Android). Fixed `JAVA_HOME` env var (pointed a
 _2026-06-04 — Phase 7 complete. Project complete for agreed scope. Self-check: all 8 handoff spec bullets confirmed in code (buy/restore wired, error→kind mapping, deep-links, renewal/plan/price from entitlement, real Terms/Privacy, Customer Center). `npm test` — 17 passed, 4 suites. Runtime: Android dev client confirmed in Phase 6; Expo Go sim path confirmed. Wrote `README.md` at root (run instructions, env keys, billing layer map). Last command: `git commit -m "docs: project readme for run + billing wiring"` — succeeded (commit 0063fb3). **Build complete (Part I). No next step within original scope — all phases done.**_
 
 _2026-06-04 (Opus, planning) — Part I closeout + Part II planned. (1) Committed leftover working-tree changes that were never recorded: UI polish to `art.js`/`ui.js` (ray-fan/moon centering + progress shimmer), `package.json` run-scripts + `react-native-purchases-ui` pin, and — critically — the previously **untracked** handoff infra (`docs/.../plan`, `DEVGUIDE.md`, `.gitignore`) is now in git (commits d0845cc, 0ca54a5, 6908ff1). (2) Appended **Phases 8–11** to the plan ("PART II") and this tracker: 8 = verification closeout (no code), 9 = AsyncStorage persistence (TDD core), 10 = production Android via EAS, 11 = iOS parity (⛔ tooling). Each phase lists owner decisions to confirm before starting. `npm test` — 17 passed, 4 suites (unchanged; no app logic touched). NEXT for Sonnet: **Phase 8, Task 8.1** — walk the sim states in Expo Go (no code), OR jump to Phase 9 if the owner would rather add persistence first. Confirm the per-phase decisions (see Open items) before Phase 9/10._
+
+_2026-06-04 (Opus, planning) — Restructured Part II around a FREE-FIRST release after the owner decided to publish free first and add payments later, and hit India's BillDesk/PA-CB payout verification while setting up Google Play. Changes (docs only, no app code): (1) Added a "**Release strategy**" box to the plan defining three independent finish lines — A free app (10a) → B monetization (10b) → C iOS (11). (2) **Split old Phase 10 into 10a (free public release, Plus hidden) and 10b (enable monetization).** (3) New **Task 10a.1**: gate the whole Plus surface behind a `PLUS_ENABLED = false` flag (hide paywall/manage/upsell, skip onboarding premium) so the free build passes review and has no dead buttons — billing code stays intact; 10b just flips the flag to `true`. (4) New **Task 10a.2**: build + free-host a minimal legal website (privacy/terms/support) because Play requires a privacy-policy URL for ANY public release; wire `PRIVACY_URL`/`TERMS_URL` into `.env`. (5) **Task 10b.1**: BillDesk PA-CB verification (India payouts, 90-day window, initiated today) — gates payouts only, NOT the free launch. Status table, checklists, config table, and open items all updated to the 8 → 9 → 10a → 10b → 11 order. `npm test` unaffected (17/17; no source touched). NEXT for Sonnet: still **Phase 8** (or 9). When the owner is ready to ship, **Phase 10a** is the free-launch path; **10a.1 (the flag) is the one piece of code** and can be implemented anytime — the rest of 10a is the website + Play dashboards._
