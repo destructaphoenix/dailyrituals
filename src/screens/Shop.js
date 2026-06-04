@@ -15,7 +15,7 @@ export default function Shop({
   insets, onClose, embers, plus,
   activePalette, ownedPalettes, onApplyPalette, onBuyPalette,
   activeSky, ownedSkies, onApplySky, onBuySky,
-  freezes, onBuyCandles, onOpenPaywall, onGetEmbers, onManage,
+  freezes, onBuyCandles, onOpenPaywall, onGetEmbers, onManage, plusEnabled = true,
 }) {
   const t = useTheme();
   const c = t.colors;
@@ -53,9 +53,11 @@ export default function Shop({
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36 }} showsVerticalScrollIndicator={false}>
         {/* Plus upsell / status */}
-        <View style={{ marginTop: 4 }}>
-          <PlusBanner plus={plus} onOpenPaywall={onOpenPaywall} onManage={onManage} />
-        </View>
+        {plusEnabled && (
+          <View style={{ marginTop: 4 }}>
+            <PlusBanner plus={plus} onOpenPaywall={onOpenPaywall} onManage={onManage} />
+          </View>
+        )}
 
         {/* Candles */}
         <View style={{ marginTop: 22 }}>
@@ -99,7 +101,7 @@ export default function Shop({
                   onPress={() => {
                     if (st === 'active') return;
                     if (st === 'owned') onApplyPalette(p);
-                    else if (st === 'plus') onOpenPaywall();
+                    else if (st === 'plus') { if (plusEnabled) onOpenPaywall(); }
                     else onBuyPalette(p);
                   }}
                   style={({ pressed }) => [{ width: '48%', marginBottom: 12, padding: 12, borderRadius: t.radius.card, transform: [{ scale: pressed ? 0.98 : 1 }] }, { backgroundColor: c.surface, borderWidth: 1.5, borderColor: st === 'active' ? c.accent : c.border }, t.dark ? null : t.shadow(8, '#5b4a2a', 0.08)]}>
@@ -143,7 +145,7 @@ export default function Shop({
                   onPress={() => {
                     if (st === 'active') return;
                     if (st === 'owned') onApplySky(s);
-                    else if (st === 'plus') onOpenPaywall();
+                    else if (st === 'plus') { if (plusEnabled) onOpenPaywall(); }
                     else onBuySky(s);
                   }}
                   style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 12, borderRadius: t.radius.card, transform: [{ scale: pressed ? 0.99 : 1 }] }, { backgroundColor: c.surface, borderWidth: 1.5, borderColor: st === 'active' ? c.accent : c.border }, t.dark ? null : t.shadow(8, '#5b4a2a', 0.08)]}>

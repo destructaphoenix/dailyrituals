@@ -11,7 +11,7 @@ import { PlusBanner } from '../shopui';
 export default function YouScreen({
   mode, onToggleMode, settings, setSettings,
   streak, xp, xpMax, level, levelName, entriesCount, badgesEarned, onOpenAchievements,
-  embers, plus, onOpenShop, onOpenPaywall, onOpenManage,
+  embers, plus, onOpenShop, onOpenPaywall, onOpenManage, plusEnabled = true,
 }) {
   const t = useTheme();
   const c = t.colors;
@@ -69,7 +69,7 @@ export default function YouScreen({
 
       {/* Plus + Shop */}
       <View style={{ paddingHorizontal: 20, gap: 12 }}>
-        <PlusBanner plus={plus} onOpenPaywall={onOpenPaywall} onManage={onOpenManage} compact />
+        {plusEnabled && <PlusBanner plus={plus} onOpenPaywall={onOpenPaywall} onManage={onOpenManage} compact />}
         <Pressable onPress={onOpenShop} style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.99 : 1 }] })}>
           <Card>
             <Row icon={<Bag size={20} color={c.accentDeep} />} label="Shop"
@@ -119,14 +119,16 @@ export default function YouScreen({
           <Row icon={<Download size={20} color={c.accentDeep} />} label="Export reflections"
             right={plus
               ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><T w={700} color={c.muted} style={{ fontSize: 14 }}>PDF</T><Chevron dir="right" size={18} color={c.muted} /></View>
-              : <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: c.accentSoft, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 999 }}>
-                    <Sun size={11} color={c.accentDeep} />
-                    <T d w={800} color={c.accentDeep} style={{ fontSize: 12.5 }}>Plus</T>
+              : plusEnabled
+                ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: c.accentSoft, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 999 }}>
+                      <Sun size={11} color={c.accentDeep} />
+                      <T d w={800} color={c.accentDeep} style={{ fontSize: 12.5 }}>Plus</T>
+                    </View>
+                    <Chevron dir="right" size={18} color={c.muted} />
                   </View>
-                  <Chevron dir="right" size={18} color={c.muted} />
-                </View>}
-            onPress={plus ? () => {} : onOpenPaywall} />
+                : <Chevron dir="right" size={18} color={c.muted} />}
+            onPress={plus ? () => {} : plusEnabled ? onOpenPaywall : undefined} />
           <Divider />
           <Row icon={<Info size={20} color={c.accentDeep} />} label="About Daily Rituals"
             value="v1.0" onPress={() => {}} />

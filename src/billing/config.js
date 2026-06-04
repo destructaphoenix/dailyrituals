@@ -32,3 +32,8 @@ export const LINKS = {
 export function hasKeyFor(platform) {
   return Boolean(platform === 'android' ? RC_KEYS.android : RC_KEYS.ios);
 }
+
+// Master switch for the paid Plus surface. FALSE = free release (v1): every
+// paywall/upgrade/manage entry point is hidden, no purchases are possible.
+// Flip to TRUE in Phase 10b once Play products + production RevenueCat key exist.
+export const PLUS_ENABLED = false;

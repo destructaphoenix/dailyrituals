@@ -13,6 +13,7 @@ import { BigSun, BigMoon } from '../art';
 import { PLUS_PERKS } from '../data';
 import Paywall from './Paywall';
 import { createPurchaseService } from '../billing';
+import { PLUS_ENABLED } from '../billing/config';
 
 const INTRO = [
   { motif: 'sun',    h: 'Every day deserves\na send-off.', b: "Daily Rituals is two honest questions and a quiet goodbye — about a minute, once a day." },
@@ -45,10 +46,10 @@ export default function Onboarding({ settings, onDone }) {
       <View style={{ flex: 1, backgroundColor: theme.colors.cream, paddingTop: insets.top }}>
         {step === 'intro' && <IntroSwipe onDone={() => setStep('signup')} onSkip={() => setStep('signup')} insets={insets} />}
         {step === 'signup' && <SignUp onAuthed={() => setStep('personalize')} onBack={() => setStep('intro')} insets={insets} />}
-        {step === 'personalize' && <Personalize onDone={() => setStep('premium')} onBack={() => setStep('signup')} insets={insets} />}
-        {step === 'premium' && <Premium onOpenPaywall={() => setPayOpen(true)} onSkip={() => onDone(false)} onBack={() => setStep('personalize')} insets={insets} />}
+        {step === 'personalize' && <Personalize onDone={PLUS_ENABLED ? () => setStep('premium') : () => onDone(false)} onBack={() => setStep('signup')} insets={insets} />}
+        {PLUS_ENABLED && step === 'premium' && <Premium onOpenPaywall={() => setPayOpen(true)} onSkip={() => onDone(false)} onBack={() => setStep('personalize')} insets={insets} />}
 
-        {payOpen && (
+        {PLUS_ENABLED && payOpen && (
           <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 20, backgroundColor: theme.colors.cream }}>
             <Paywall insets={insets} platform={OB_PLATFORM} service={service}
               onClose={() => setPayOpen(false)}

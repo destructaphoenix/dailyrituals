@@ -27,6 +27,7 @@ import GetEmbers from './screens/GetEmbers';
 import Toast from './screens/Toast';
 import { openExternal } from './billing/links';
 import { createPurchaseService, isBillingConfigured } from './billing';
+import { PLUS_ENABLED } from './billing/config';
 import { formatRenewDate } from './billing/format';
 import { saveState } from './persistence/storage';
 import { pickPersisted } from './persistence/state';
@@ -233,8 +234,10 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             mode={mode} onToggleMode={onToggleMode} settings={settings} setSettings={setSettings}
             streak={streak} xp={xp} xpMax={XP_MAX} level={LEVEL} levelName={LEVEL_NAME}
             entriesCount={entries.length} badgesEarned={ACHIEVEMENTS.filter((b) => b.cur >= b.goal).length}
-            embers={embers} plus={plus} onOpenShop={() => setShopOpen(true)} onOpenPaywall={() => setPaywall(true)}
-            onOpenManage={() => setManageOpen(true)}
+            embers={embers} plus={plus} onOpenShop={() => setShopOpen(true)}
+            plusEnabled={PLUS_ENABLED}
+            onOpenPaywall={PLUS_ENABLED ? () => setPaywall(true) : () => {}}
+            onOpenManage={PLUS_ENABLED ? () => setManageOpen(true) : () => {}}
             onOpenAchievements={() => setShowAch(true)}
           />
         );
@@ -323,7 +326,10 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
               activePalette={activePalette} ownedPalettes={ownedPalettes} onApplyPalette={applyPalette} onBuyPalette={buyPalette}
               activeSky={activeSky} ownedSkies={ownedSkies} onApplySky={applySky} onBuySky={buySky}
               freezes={freezes} onBuyCandles={buyCandles}
-              onOpenPaywall={() => setPaywall(true)} onGetEmbers={getEmbers} onManage={() => setManageOpen(true)}
+              plusEnabled={PLUS_ENABLED}
+              onOpenPaywall={PLUS_ENABLED ? () => setPaywall(true) : () => {}}
+              onGetEmbers={getEmbers}
+              onManage={PLUS_ENABLED ? () => setManageOpen(true) : () => {}}
             />
             {toast && <Toast key={toast.key} message={toast.msg} bottom={insets.bottom} />}
           </ThemeContext.Provider>
@@ -336,14 +342,14 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
           </ThemeContext.Provider>
         </Modal>
 
-        <Modal visible={paywall} animationType="slide" presentationStyle="overFullScreen" onRequestClose={() => setPaywall(false)}>
+        <Modal visible={PLUS_ENABLED && paywall} animationType="slide" presentationStyle="overFullScreen" onRequestClose={() => setPaywall(false)}>
           <ThemeContext.Provider value={theme}>
             <Paywall insets={insets} platform={PLATFORM} service={service} alreadyPlus={plus}
               onClose={() => setPaywall(false)} onSubscribe={subscribe} onLink={openLink} />
           </ThemeContext.Provider>
         </Modal>
 
-        <Modal visible={manageOpen} animationType="slide" presentationStyle="overFullScreen" onRequestClose={() => setManageOpen(false)}>
+        <Modal visible={PLUS_ENABLED && manageOpen} animationType="slide" presentationStyle="overFullScreen" onRequestClose={() => setManageOpen(false)}>
           <ThemeContext.Provider value={theme}>
             <ManageSubscription
               insets={insets} platform={PLATFORM} plan={livePlan} canceled={subCanceled}
