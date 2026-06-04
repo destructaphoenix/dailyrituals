@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { View, ActivityIndicator, Platform } from 'react-native';
 import { RC_KEYS } from './src/billing/config';
 import { isBillingConfigured } from './src/billing';
+import { loadState } from './src/persistence/storage';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -31,12 +32,19 @@ export default function App() {
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [onboarded, setOnboarded] = useState(false); // new users start in first-run
   const [startedPlus, setStartedPlus] = useState(false); // subscribed during onboarding
+  const [hydrated, setHydrated] = useState(null); // null = still loading persisted state
 
   React.useEffect(() => {
     const platform = Platform.OS === 'android' ? 'android' : 'ios';
-    if (!isBillingConfigured(platform)) return;
-    const Purchases = require('react-native-purchases').default;
-    Purchases.configure({ apiKey: platform === 'android' ? RC_KEYS.android : RC_KEYS.ios });
+    if (isBillingConfigured(platform)) {
+      const Purchases = require('react-native-purchases').default;
+      Purchases.configure({ apiKey: platform === 'android' ? RC_KEYS.android : RC_KEYS.ios });
+    }
+    loadState().then((loaded) => {
+      const s = loaded || {};
+      setHydrated(s);
+      if (s.settings) setSettings(s.settings);
+    });
   }, []);
 
   const [fontsLoaded] = useFonts({
@@ -46,7 +54,7 @@ export default function App() {
     Nunito_400Regular, Nunito_600SemiBold, Nunito_700Bold, Nunito_800ExtraBold,
   });
 
-  if (!fontsLoaded) {
+  if (!fontsLoaded || hydrated === null) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#f9f7f4' }}>
         <ActivityIndicator color="#d97706" />
@@ -75,6 +83,7 @@ export default function App() {
         setSettings={setSettings}
         onToggleMode={() => setMode(dark ? 'day' : 'night')}
         initialPlus={startedPlus}
+        initialState={hydrated}
       />
     </SafeAreaProvider>
   );
