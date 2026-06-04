@@ -5,10 +5,19 @@ module.exports = {
     version: '1.0.0',
     orientation: 'portrait',
     userInterfaceStyle: 'automatic',
-    splash: { backgroundColor: '#f9f7f4' },
+    icon: './assets/icon.png',
+    splash: {
+      image: './assets/splash.png',
+      resizeMode: 'contain',
+      backgroundColor: '#f9f7f4',
+    },
+    runtimeVersion: { policy: 'appVersion' },
     ios: { supportsTablet: false, bundleIdentifier: 'app.dailyrituals.mobile' },
     android: {
-      adaptiveIcon: { backgroundColor: '#f9f7f4' },
+      adaptiveIcon: {
+        foregroundImage: './assets/adaptive-icon.png',
+        backgroundColor: '#f9f7f4',
+      },
       package: 'app.dailyrituals.mobile',
       minSdkVersion: 24,
     },
