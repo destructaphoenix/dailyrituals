@@ -35,7 +35,7 @@
 | — | **Part I complete (lift + RevenueCat billing, dev-only, in-memory).** Part II below extends past the original locked scope. | — |
 | 8 | Runtime verification closeout (close deferred sim-state boxes) | ⬜ Not started |
 | 9 | Local persistence (state survives restart, AsyncStorage) | ✅ Done |
-| 10a | **Free public release** — Plus hidden behind a flag, ship free to Play | ⬜ Not started |
+| 10a | **Free public release** — Plus hidden behind a flag, ship free to Play | 🟡 In review (closed testing 12×14 gate) |
 | 10b | **Enable monetization** — BillDesk + products + flip `PLUS_ENABLED` → v1.1 | ⬜ Not started |
 | 11 | iOS parity (App Store Connect + TestFlight) | ⛔ Blocked (needs Mac/EAS + Apple Dev) |
 
@@ -112,7 +112,8 @@ Legend: ⬜ Not started · 🟡 In progress · ✅ Done · ⛔ Blocked
 - [x] 10a.2 Build + host the minimal legal website (privacy + terms + support); set `PRIVACY_URL`/`TERMS_URL` in `.env`
 - [x] 10a.3 Expo/EAS account + `eas.json` (dev/preview/production profiles)
 - [x] 10a.4 Production `app.config.js` (version, versionCode autoincrement, icon/splash, runtimeVersion)
-- [ ] 10a.5 `eas build -p android`; Play store listing + data safety + content rating + privacy URL; publish **FREE** to production
+- [x] 10a.5 `eas build -p android` ✅ (signed `.aab` built + uploaded; Play listing + data safety + content rating done; release **sent for review** 2026-06-06)
+- [ ] 10a.6 **Closed testing gate** — Play requires **12 testers opted-in for 14 continuous days** (individual accounts post-2023-11-13) before "Apply for production" unlocks. ⏳ Recruiting testers 2026-06-06; 14-day clock starts once 12 are opted in. Then apply for production → publish **FREE**.
 - _No payments, no BillDesk, no RevenueCat production key needed for 10a._
 
 ### Phase 10b — Enable monetization (turn Plus on → v1.1)
@@ -139,7 +140,7 @@ Fill these in `.env` (copy from `.env.example`, created in Phase 4) and record t
 | --- | --- | --- |
 | RevenueCat entitlement id | RevenueCat dashboard | `plus` (must match `ENTITLEMENT_ID`) |
 | RevenueCat offering | dashboard | `current` (annual + monthly packages) |
-| `RC_ANDROID_KEY` | RevenueCat → API keys | `test_UEBAuHmtvXGnNuTLxlnCTtgKfDi` (**sandbox key** — in `.env`; must swap to the production Android key for Phase 10) |
+| `RC_ANDROID_KEY` | RevenueCat → API keys | ✅ **Production `goog_…` key now set in `.env`** (2026-06-06; publishable, not committed). Was sandbox `test_…`. |
 | `RC_IOS_KEY` | RevenueCat → API keys | _TBD (Phase 11 / iOS)_ |
 | Play product ids | Play Console | _TBD (Phase **10b** — live subscription products; not needed for the free 10a launch)_ |
 | `TERMS_URL` / `PRIVACY_URL` | the minimal website (Task **10a.2**, free-hosted) | `https://destructaphoenix.github.io/dailyrituals-website.github.io/terms.html` / `…/privacy.html` — ✅ live (GitHub Pages) |
@@ -173,7 +174,27 @@ Fill these in `.env` (copy from `.env.example`, created in Phase 4) and record t
 - RevenueCat keys + Play products must be created by the project owner before Phase 6 real-billing checks (Phase 0–5 run fully on the sim without them).
 - **Before Phase 9:** persistence engine ✅ **confirmed: AsyncStorage** (2026-06-04). Still open: whether to add a "Reset app data" control (Task 9.6, optional).
 - **Before Phase 10a (free launch):** package id ✅ **confirmed: keep `app.dailyrituals.mobile`**. Still open: Expo/EAS account, Google Play Developer account ($25), and a **hosted privacy-policy + terms page** (built in Task 10a.2 — free host fine, custom domain optional). **No payments/BillDesk/production RevenueCat key needed here.**
-- **Before Phase 10b (monetization):** **BillDesk PA-CB seller verification** (India — already *initiated* 2026-06-04 via Google Play; finish within the 90-day window), live Play subscription products, and swap the sandbox `test_…` RevenueCat key for the production key.
+- **Before Phase 10b (monetization):** **BillDesk PA-CB seller verification** (India — already *initiated* 2026-06-04 via Google Play; finish within the 90-day window), live Play subscription products. (RevenueCat production key already swapped 2026-06-06.) See the **Phase 10b enablement checklist** in the 2026-06-05 session note for the full step list (Google service account JSON → RevenueCat, products → entitlement/offering, flip `PLUS_ENABLED`).
+- **⏳ CURRENT BLOCKER (Phase 10a.6):** Free release is in Play review, but production publish is gated by the **closed-testing 12×14 requirement**. Owner is recruiting 12 testers (2026-06-06). Nothing to code here — purely a Play Console / community process. Production unlocks ≈ 14 days after 12 testers are continuously opted in (target ~late June 2026). When back, owner may bring **bug fixes / improvements** rather than continuing the phase ladder.
+
+---
+
+## 🔑 Android release signing — DO NOT BREAK (critical, repo-invisible)
+
+Production `.aab` **must** be signed with the local **`dailyrituals-release.keystore`** (git-ignored, in project root):
+
+| Field | Value |
+| --- | --- |
+| Keystore file | `dailyrituals-release.keystore` (project root, git-ignored — also backed up off-repo by owner) |
+| Alias | `daily-rituals` |
+| Password location | `android/keystore.properties` + `credentials.json` (both git-ignored — never commit) |
+| **Upload cert SHA1** | `21:88:52:36:B7:CB:5C:9F:09:86:CD:09:F9:D7:60:A9:EE:51:40:BB` |
+| Upload cert SHA256 | `F4:3B:1D:1B:B5:DB:C8:4E:D4:BA:45:6B:A4:1A:F2:64:70:78:BE:D6:AA:BF:3E:2E:99:B1:B6:FA:3D:D5:ED:0D` |
+| Where EAS stores it | Server-side as Build Credentials **`M7r91j0b83`** (default, production) — confirmed matches the SHA1 above |
+
+- This SHA1 is the cert **Play App Signing registered as the upload key**. Any build signed with a *different* key (e.g. an EAS auto-generated keystore) is **rejected** ("signed with the wrong key"). **Never let EAS auto-generate a new keystore for this app.**
+- Losing the keystore = forced Play **upload-key reset**. Keep it + its password backed up off-repo.
+- SDK versions are pinned via **`expo-build-properties`** in `app.config.js` (the `android.minSdkVersion`/etc. config keys are no-ops in Expo): `minSdkVersion 24` (RevenueCat), `compileSdkVersion`/`targetSdkVersion 35` (Play API-35 requirement). Bump `android.versionCode` on every Play upload (currently **4**).
 
 ## Last session note
 
@@ -214,3 +235,7 @@ _2026-06-04 — Phase 10a, Task 10a.4 complete. Created `assets/` directory with
 _2026-06-05 — EAS build/signing fixes during first Play upload. (1) **minSdk:** EAS build failed manifest-merger — `com.revenuecat.purchases:purchases-hybrid-common-ui:18.8.0` requires `minSdkVersion 24` but project resolved to 23. Root cause: the `android.minSdkVersion` key in `app.config.js` is a **no-op** (Expo doesn't read it); SDK 51 defaulted to 23. Fix: installed `expo-build-properties` and set `minSdkVersion: 24` through it (plugins array). Removed the dead `android.minSdkVersion` key. Commit 7146f77. Build then succeeded. (2) **Upload-key mismatch:** Play rejected the `.aab` ("signed with the wrong key"). Cause: the previously-accepted upload was signed locally with `dailyrituals-release.keystore`, so Play registered THAT cert as the upload key — but the EAS cloud build had auto-generated its own keystore. **CRITICAL signing fact:** production `.aab` MUST be signed with `dailyrituals-release.keystore` (alias `daily-rituals`), upload cert SHA1 `21:88:52:36:B7:CB:5C:9F:09:86:CD:09:F9:D7:60:A9:EE:51:40:BB` / SHA256 `F4:3B:1D:1B:B5:DB:C8:4E:D4:BA:45:6B:A4:1A:F2:64:70:78:BE:D6:AA:BF:3E:2E:99:B1:B6:FA:3D:D5:ED:0D`. Fix: created local `credentials.json` (git-ignored) pointing at the keystore, then uploaded it to EAS via `eas credentials` — it is now the server-side production keystore (Build Credentials `M7r91j0b83`); confirmed its SHA1 matches. **Never let EAS auto-generate a new keystore.** Keep `dailyrituals-release.keystore` + its password backed up off-repo — losing it forces a Play upload-key reset. (3) **Security audit:** full working-tree + all-history scan — no secret files or secret patterns ever committed; `.gitignore` covers `.env`, `*.keystore`/`*.jks`, `*-service-account.json`, `credentials.json`. Repo clean. **Known gap:** `RC_ANDROID_KEY` in `.env` is still a placeholder (`test…`, not a real `goog_…` key) — in-app purchases won't work in prod until replaced (Phase 10b concern; free launch unaffected). Next: re-upload the correctly-signed `.aab` to Play, finish the listing (data safety, content rating), publish FREE._
 
 _2026-06-05 — RevenueCat Android key set; Phase 10b enablement checklist recorded. Replaced the `test_…` placeholder in `.env` with the real Android **public** SDK key `RC_ANDROID_KEY=goog_…` (publishable — ships in the app binary; kept in git-ignored `.env`, never committed). The key alone does NOT make purchases work; it only connects the app to RevenueCat. **Phase 10b — remaining steps to actually enable monetization (none block the free launch):** (a) **Google service account** — in Google Cloud Console enable *Google Play Android Developer API* + *Play Developer Reporting API*, create a service account, download its JSON; in Google Play Console → Users & permissions, grant that SA *View financial data* + *Manage orders and subscriptions*; then upload the JSON into the **RevenueCat dashboard** (Android app → Service Account credentials JSON). Note: the existing local `play-service-account.json` (used by `eas submit`) CAN be reused as this SA, but only if it also gets the financial/subscription Play permissions above. (b) **Products** — create the subscription/IAP products in Google Play Console, then map them to an entitlement + offering in RevenueCat. (c) **Code flag** — flip `PLUS_ENABLED` from `false` to `true` in `src/billing/config.js` (Task 10a.1 gated the entire Plus surface behind it). (d) **iOS** — separate `RC_IOS_KEY` (still blank) + App Store Connect products when iOS ships (Phase 11). No commit (only `.env` changed, which is git-ignored). Next: still the free launch — re-upload signed `.aab`, finish Play listing, publish FREE; Phase 10b whenever monetization is turned on._
+
+_2026-06-06 — Phase 10a.5 DONE; release sent to review; now blocked on closed-testing gate (10a.6). (1) **Target API 35:** after the signed `.aab` uploaded cleanly (no fingerprint error), Play flagged the app for targeting API 34 — new uploads must target **API level 35** (Play policy since 2025-08-31). Set `compileSdkVersion`/`targetSdkVersion: 35` via `expo-build-properties` and bumped `android.versionCode` 3→4 (3 was already uploaded). Commit `0dda460`. NOTE: we *override* SDK 51's default (34) up to 35 — it built fine this time, but if a future build breaks on a compileSdk-35/AGP issue, the clean fix is `npx expo install expo@^52 --fix` (SDK 52+ targets 35 natively). (2) **Rebuilt + uploaded + listing finished** (data safety, content rating); **release sent for review** (versionCode 4, target 35, min 24, signed with `M7r91j0b83` = upload cert `21:88…40:BB`). (3) **⏳ Now blocked on Play's closed-testing requirement** (Task 10a.6): individual dev accounts (post 2023-11-13) need **12 testers opted-in for 14 continuous days** before the "Apply for production" button unlocks. Owner is going to **recruit 12 testers** (reciprocal-testing communities: r/androidtesting etc.; Google Group as the tester list; over-recruit to ~15 for buffer) and will be **away ~1–2 weeks** while the 14-day clock runs. (4) Docs commits this session: `da2fd5e`, `47a7527`, `0dda460`, plus this note.
+
+**▶️ WHEN OWNER RETURNS (read this first):** Owner will likely arrive with **bug fixes or improvements** discovered during testing — NOT necessarily the next phase in the ladder. Treat their request as primary. Context they expect Opus to already know: (a) the app is a free Android app **in/through Play closed testing**, Plus is **hidden** (`PLUS_ENABLED = false`); (b) any new release needs a **bumped `versionCode`** and must keep targeting **API 35 / min 24** and be signed with the **`M7r91j0b83`** EAS keystore (never auto-generate — see the "🔑 Android release signing" block above); (c) for code changes, follow the normal TDD loop and keep `npm test` green (currently 23/23). After production unlocks, remaining big rocks are **Phase 10b** (monetization — RC service-account JSON + products + flip the flag) and **Phase 11** (iOS, ⛔ needs Mac/Apple Dev). Next: support owner's bug-fix/improvement requests; resume the phase ladder (10b) only when they choose to monetize._
