@@ -11,7 +11,10 @@ module.exports = {
       resizeMode: 'contain',
       backgroundColor: '#f9f7f4',
     },
-    runtimeVersion: '1.0.0',
+    runtimeVersion: { policy: 'fingerprint' },
+    updates: {
+      url: 'https://u.expo.dev/1a0f9b15-cb1a-4cec-9577-3cd66e9f1d36',
+    },
     ios: { supportsTablet: false, bundleIdentifier: 'app.dailyrituals.mobile' },
     android: {
       adaptiveIcon: {
