@@ -19,14 +19,18 @@ module.exports = {
         backgroundColor: '#f9f7f4',
       },
       package: 'app.dailyrituals.mobile',
-      versionCode: 3,
+      versionCode: 4,
     },
     plugins: [
       'expo-dev-client',
       [
         'expo-build-properties',
         {
-          android: { minSdkVersion: 24 },
+          android: {
+            minSdkVersion: 24,
+            compileSdkVersion: 35,
+            targetSdkVersion: 35,
+          },
         },
       ],
     ],
