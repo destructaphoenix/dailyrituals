@@ -153,6 +153,8 @@ Legend: ⬜ Not started · 🟡 In progress · ✅ Done · ⛔ Blocked
 | --- | --- | --- | --- |
 | IMP-001 | Show the user's chosen name on the You tab (kill hardcoded "Amara") | OTA | ⬜ |
 | IMP-002 | Greeting + date from device local time (drop ", you"; kill hardcoded date) | OTA | ⬜ |
+| IMP-003 | Center the streak number in the hero card (both axes, robust 1–4 digits) | OTA | ⬜ |
+| IMP-004 | New-user zero-state — start from real 0s, not prototype demo data; dynamic streak subtitle | OTA | ⬜ |
 
 ### Tasks
 _(Opus appends one block per issue, in priority order, using the template below. Sonnet works the first unchecked one.)_
@@ -199,6 +201,46 @@ _(Opus appends one block per issue, in priority order, using the template below.
 - **Commit:** `fix(home): derive greeting and date from the device's local time`
 - **Acceptance (runtime walk):** Open the app in the morning (or set the phone clock before noon) → "Good morning." Set the phone clock to the afternoon/evening → "Good evening." Date line shows today's real date in "Weekday, D Month" form. Toggle the day/night theme → greeting text does NOT change with it (it follows the clock now, not the theme). Playful tone no longer shows ", you".
 - **Ship after merge:** OTA-eligible (JS only). Same v5 caveat as IMP-001 — rides the next full build, which becomes the first OTA-capable one.
+
+### IMP-003 — Center the streak number in the hero card   ·   Lane: OTA   ·   Status: ⬜
+- **Goal:** The big streak number sits **optically dead-center inside the sun (day) and the moon (night)**, and stays centered for 1, 2, 3, and 4-digit streaks.
+- **Why / context:** Owner reports the streak number looks off-center on the Today hero card. Diagnosis: horizontal is already handled by `alignItems:'center'` (digit-count-safe), but (a) Android's default `includeFontPadding` throws the 76px display glyph off inside its own line box, and (b) the number's vertical center (~64px from card top) doesn't line up with the art's focal center, and the two backgrounds don't even share a focal y: **RayFan's sun center ≈ 80px** from the card's top inner edge (`top:-70` + radius 150), while **NightSky's moon center ≈ 60px** (`top:-90` + 150). So no single static offset can center the number in both modes until those are harmonized.
+- **Files touched:** `src/screens/HomeScreen.js`, and likely `src/art.js` (to align the two focal centers).
+- **Approach (decided by Opus — do not re-litigate):**
+  - On the number `T` (HomeScreen ~line 50) add `includeFontPadding: false` and `textAlign: 'center'`, and give `lineHeight` a little headroom over `fontSize` (e.g. 76→ ~82) so the glyph isn't clipped. This fixes the font-box offset and makes horizontal bulletproof for any digit count.
+  - **Harmonize the two backgrounds' focal centers** so the sun and moon share the same y on the card — simplest: set `NightSky`'s container `top` to match `RayFan`'s (`-70`), and confirm in Expo Go the moon + stars still compose well (nudge if a star clips). Then position the number block so its optical center lands on that shared focal y.
+  - This is **pure cosmetic tuning** — verify by eye in Expo Go, both modes, multiple digit counts. Sonnet may pick the cleanest mechanism (adjust card `paddingTop` / a `marginTop` on the number, or absolutely-position the number block to the focal center) as long as the acceptance below passes.
+  - Do NOT touch the subtitle line here (`Four days running…`) — that's IMP-004.
+- **TDD:** N/A — pure layout/styling. `npm test` must stay green (unchanged count).
+- **Steps:**
+  - [ ] 1. Apply the number-`T` style fixes (`includeFontPadding:false`, `textAlign:'center'`, lineHeight headroom) in `src/screens/HomeScreen.js`.
+  - [ ] 2. Harmonize `RayFan`/`NightSky` focal centers in `src/art.js` (align their container `top`), then set the number block's vertical position so it's centered on that focal point.
+  - [ ] 3. Verify in Expo Go: day mode + night mode, with streak temporarily set to `1`, `4`, and `1234` — number stays centered in the sun/moon every time. Revert the temporary streak value.
+  - [ ] 4. `npm test` green (unchanged count).
+- **Commit:** `fix(home): center the streak number in the hero card across 1–4 digits`
+- **Acceptance (runtime walk):** In both day and night, the streak number looks centered in the sun/moon glow; switching 1↔4 digits keeps it centered (no left/right drift); no glyph clipping at top/bottom.
+- **Ship after merge:** OTA-eligible (JS only). Same v5 caveat — rides the next full build.
+
+### IMP-004 — New-user zero-state (no prototype demo data)   ·   Lane: OTA   ·   Status: ⬜
+- **Goal:** A brand-new install starts from a **real zero-state** — 0 streak, 0 XP, 0 embers, 0 streak-freezes, no journal entries — instead of the web-prototype's seeded demo account. The streak hero subtitle reflects the **actual** streak instead of the hardcoded "Four days running."
+- **Why / context:** AsyncStorage persistence works (Phase 9) — but the *fallback defaults* in `src/RitualsApp.js` (~lines 56–73) are the prototype's demo values, so a fresh install shows streak **4**, **320** XP, **360** embers, **2** freezes, and **SAMPLE_ENTRIES** (fake journal). Worse, the debounced autosave then persists those demo values on first launch, so new users effectively *start* at streak 4. Owner confirmed this should be a clean zero-state. (Confirmed via owner Q on 2026-06-07.)
+- **Files touched:** `src/RitualsApp.js`, `src/home/streakCopy.js` (new) + `__tests__/home/streakCopy.test.js` (new), `src/screens/HomeScreen.js`, possibly `src/data.js` (remove now-unused `SAMPLE_ENTRIES` import).
+- **Approach (decided by Opus — do not re-litigate):**
+  - In `src/RitualsApp.js`, change the **progress** fallbacks only: `entries ?? SAMPLE_ENTRIES` → `?? []`; `streak ?? 4` → `?? 0`; `xp ?? 320` → `?? 0`; `embers ?? 360` → `?? 0`; `freezes ?? 2` → `?? 0`. Leave `quests ?? DAILY_QUESTS` as-is (those are *today's* fresh rites, not progress — verify DAILY_QUESTS starts all-undone). Leave `done`, `lastActiveDay`, subscription atoms unchanged.
+  - **OUT OF SCOPE (flag, don't touch):** cosmetics ownership (`ownedPalettes`/`ownedSkies`/`activePalette`/`activeSky`) — that's a shop/monetization concern, and Plus is hidden anyway. If `crescent` sky should be locked for new users, that's a separate later tweak. Also **no welcome bonus** (embers/freezes start at 0) — if the owner later wants a starter gift, that's a deliberate add, not this fix.
+  - **No migration for existing testers:** returning users with persisted state keep their values (we only change the fresh-install fallback). Existing closed-testing devices that already persisted demo values will still show them — to test the zero-state on a dirty device, clear app data / reinstall. (Relates to the still-open optional Task 9.6 "Reset app data" control — not built here.)
+  - Dynamic subtitle via a pure tested helper `streakSubtitle(streak)` in `src/home/streakCopy.js`: `0` → a fresh-start line; `1` → "1 day running — keep it tender."; `n≥2` → "{n} days running — keep it tender." Use **digits**, not spelled words (so 1234 reads sanely). *(Copy wording is overridable — flag the 0-streak line for owner review.)*
+- **TDD:** Yes — write `__tests__/home/streakCopy.test.js` FIRST (RED), then implement the helper.
+- **Steps:**
+  - [ ] 1. **(RED)** Create `__tests__/home/streakCopy.test.js`: `streakSubtitle(0)` → the fresh-start string; `streakSubtitle(1)` → 'One day…'? no — `'1 day running — keep it tender.'`; `streakSubtitle(4)` → `'4 days running — keep it tender.'`; `streakSubtitle(1234)` → `'1234 days running — keep it tender.'`. Run `npm test` → fails.
+  - [ ] 2. **(GREEN)** Create `src/home/streakCopy.js` exporting `streakSubtitle(streak)` (0 → e.g. `'A fresh page — begin today.'`; 1 → `'1 day running — keep it tender.'`; else → `` `${streak} days running — keep it tender.` ``). Run `npm test` → passes.
+  - [ ] 3. In `src/RitualsApp.js`, switch the five progress fallbacks to zero/empty as listed above. If `SAMPLE_ENTRIES` becomes unused, remove it from the `'./data'` import (`grep -rn SAMPLE_ENTRIES src` to confirm first).
+  - [ ] 4. In `src/screens/HomeScreen.js`, replace the hardcoded subtitle (~line 52, "Four days running — keep it tender.") with `{streakSubtitle(streak)}` (import the helper).
+  - [ ] 5. Verify in Expo Go on a **cleared** app (or fresh): streak shows **0**, XP/embers **0**, freezes **0**, journal empty (no crash on empty entries), subtitle shows the fresh-start line. Write one entry → streak becomes **1**, subtitle reads "1 day running…".
+  - [ ] 6. `npm test` green (prior count + the new streakCopy cases).
+- **Commit:** `fix(state): start new users from a real zero-state, not prototype demo data`
+- **Acceptance (runtime walk):** Fresh/cleared install shows all-zero progress and an empty journal with no crash; the streak subtitle matches the real number (0 → fresh line, 1 → "1 day", n → "n days"); returning users' persisted values are untouched.
+- **Ship after merge:** OTA-eligible (JS only). Same v5 caveat. NOTE: existing closed-testing devices keep their already-persisted demo values until app data is cleared — only new installs get the clean zero-state.
 
 <!-- TEMPLATE — Opus copies this per issue, fills it, adds a row to the table above, then hands the task to Sonnet:
 
