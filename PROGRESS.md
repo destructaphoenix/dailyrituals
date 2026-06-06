@@ -153,7 +153,7 @@ Legend: ⬜ Not started · 🟡 In progress · ✅ Done · ⛔ Blocked
 | --- | --- | --- | --- |
 | IMP-001 | Show the user's chosen name on the You tab (kill hardcoded "Amara") | OTA | ✅ |
 | IMP-002 | Greeting + date from device local time (drop ", you"; kill hardcoded date) | OTA | ✅ |
-| IMP-003 | Center the streak number in the hero card (both axes, robust 1–4 digits) | OTA | ⬜ |
+| IMP-003 | Center the streak number in the hero card (both axes, robust 1–4 digits) | OTA | ✅ |
 | IMP-004 | New-user zero-state + v1→v2 migration (existing testers auto-cleaned on update, no reset); dynamic streak subtitle | OTA (ships in v5) | ⬜ |
 | IMP-005 | Remove the cosmetic login/signup step from onboarding (app stays local-only, no accounts) | OTA | ⬜ |
 | IMP-006 | Enable + verify Android Auto Backup (new-device restore, no login) | Build (rides v5) | ⬜ |
@@ -183,7 +183,7 @@ _(Opus appends one block per issue, in priority order, using the template below.
 - **Acceptance (runtime walk):** Fresh onboarding → type "Maya" → "Looks good" → You tab shows **Maya** + avatar **M**. Leave the field blank → You tab shows **Friend** + **F**. Kill & relaunch the app → the name persists. Existing user with old persisted settings (no `name`) → shows Friend, no crash.
 - **Ship after merge:** OTA-eligible (JS only). Caveat: OTA only reaches builds ≥ versionCode 5; the in-review v4 build can't receive it, so in practice this rides the next full build (which becomes v5, the first OTA-capable one).
 
-### IMP-002 — Greeting + date from the device's local time   ·   Lane: OTA   ·   Status: ⬜
+### IMP-002 — Greeting + date from the device's local time   ·   Lane: OTA   ·   Status: ✅
 - **Goal:** The Home/Today greeting reads **"Good morning."** before noon and **"Good evening."** from noon on, based on the **phone's local time** — for both tones, with no ", you". The date line below it shows **today's real local date** (e.g. "Sunday, 7 June") instead of the frozen sample string.
 - **Why / context:** Owner doesn't want the playful tone's "Morning, you" / "Evening, you" — just "Good morning" / "Good evening" by actual time of day. Currently the greeting is tied to the **theme `mode`** (day/night toggle), NOT real time, and the playful tone appends ", you". The date directly below (`TODAY_LABEL`) is hardcoded to `'Saturday, 31 May'` — stale sample data (31 May 2026 is actually a Sunday), never wired to the clock. Owner confirmed folding the date fix into this task.
 - **Files touched:** `src/time/clock.js` (new) + `__tests__/time/clock.test.js` (new), `src/screens/HomeScreen.js`, `src/data.js` (remove dead copy).
@@ -215,10 +215,10 @@ _(Opus appends one block per issue, in priority order, using the template below.
   - Do NOT touch the subtitle line here (`Four days running…`) — that's IMP-004.
 - **TDD:** N/A — pure layout/styling. `npm test` must stay green (unchanged count).
 - **Steps:**
-  - [ ] 1. Apply the number-`T` style fixes (`includeFontPadding:false`, `textAlign:'center'`, lineHeight headroom) in `src/screens/HomeScreen.js`.
-  - [ ] 2. Harmonize `RayFan`/`NightSky` focal centers in `src/art.js` (align their container `top`), then set the number block's vertical position so it's centered on that focal point.
+  - [x] 1. Apply the number-`T` style fixes (`includeFontPadding:false`, `textAlign:'center'`, lineHeight headroom) in `src/screens/HomeScreen.js`.
+  - [x] 2. Harmonize `RayFan`/`NightSky` focal centers in `src/art.js` (align their container `top`), then set the number block's vertical position so it's centered on that focal point.
   - [ ] 3. Verify in Expo Go: day mode + night mode, with streak temporarily set to `1`, `4`, and `1234` — number stays centered in the sun/moon every time. Revert the temporary streak value.
-  - [ ] 4. `npm test` green (unchanged count).
+  - [x] 4. `npm test` green (unchanged count).
 - **Commit:** `fix(home): center the streak number in the hero card across 1–4 digits`
 - **Acceptance (runtime walk):** In both day and night, the streak number looks centered in the sun/moon glow; switching 1↔4 digits keeps it centered (no left/right drift); no glyph clipping at top/bottom.
 - **Ship after merge:** OTA-eligible (JS only). Same v5 caveat — rides the next full build.
@@ -412,6 +412,8 @@ _2026-06-06 — Phase 10a.5 DONE; release sent to review; now blocked on closed-
 _2026-06-06 — EAS Update (OTA) set up. Owner asked "is there CI/CD like websites" — answer: no auto-deploy by default, but added **over-the-air updates** so JS-only fixes ship without a Play review. Installed `expo-updates ~0.25.28`; set `runtimeVersion: { policy: 'fingerprint' }` (auto-computes a native signature so OTA is refused to native-incompatible builds — the safety guard); added `updates.url` (EAS endpoint for projectId `1a0f9b15-…`); added `channel` (development/preview/production) to each `eas.json` build profile. `npm test` 23/23 green. Commit `b117c1e`. **CRITICAL caveat:** OTA only works on builds that have `expo-updates` baked in — the **in-review versionCode 4 build predates this and CANNOT receive OTA**. The FIRST build made after this commit (versionCode ≥5) is the first OTA-capable one. **No CI configured** (no `.github/workflows`); builds/updates are still run manually by the owner (could add GitHub Actions / EAS Workflows later)._
 
 _2026-06-07 — IMP-002 complete. TDD'd `src/time/clock.js` (`greetingFor` + `todayLabel`, 7 test cases); wired both into `HomeScreen.js` (greeting is now clock-derived, not mode-derived; date line is live); removed unused `greeting`/`greetingNight` keys from `COPY.gentle` and `COPY.playful` in `data.js`; kept `TODAY_LABEL` export (still used by `WriteFlow.js`). `npm test` — 34 passed (was 27 + 7 new clock cases). Last command: `git commit -m "fix(home): derive greeting and date from the device's local time"` — succeeded (d1e06ba). **Next: IMP-003** — center the streak number in the hero card (pure layout tuning in `HomeScreen.js` + `art.js`, no TDD)._
+
+_2026-06-07 — IMP-003 complete. Pure cosmetic/layout — no TDD. Applied three targeted changes: (1) streak number `T` in `HomeScreen.js` line 51: added `includeFontPadding: false`, `textAlign: 'center'`, changed `lineHeight: 76` → `82` (headroom so glyph isn't clipped); (2) added `marginTop: 13` to the number-block container View (line 50) — math: card `paddingTop:26` + 13 + half-lineHeight 41 = 80px = focal center of art; (3) `NightSky` in `art.js` line 78: changed `top: -90` → `-70` to match `RayFan` (both art backgrounds now share focal center at y=80 from card top). `npm test` — 34 passed (unchanged). Last command: `git commit -m "fix(home): center the streak number in the hero card across 1–4 digits"` — succeeded (9d87f14). Step 3 (Expo Go visual verification — day/night, 1/4/1234 digits) is the owner's manual check; no device available in session. **Next: IMP-004** — new-user zero-state + v1→v2 migration (TDD for both `streakCopy` helper and migrator; zero the demo defaults in `RitualsApp.js`; dynamic subtitle in `HomeScreen.js`). This is a larger task; start with the RED tests first._
 
 _2026-06-07 — IMP-001 complete. TDD'd `src/profile/identity.js` (`profileIdentity` helper, 4 cases); added `name: ''` to `DEFAULT_SETTINGS` in `src/theme.js`; threaded `setSettings`/`settings` into `Onboarding` → `Personalize` (seeds `name` from settings, saves on "Looks good"); passed `setSettings` from `App.js` to `<Onboarding />`; updated `YouScreen.js` to import and use `profileIdentity` — replaced hardcoded `A`/`Amara` with `{initial}`/`{display}`. `npm test` — 27 passed (was 23 + 4 new). Last command: `git commit -m "fix(profile): show the user's chosen name on the You tab instead of hardcoded \"Amara\""` — succeeded (e01f8fe). **Next: IMP-002** — derive greeting + date from device local time (`src/time/clock.js` + HomeScreen.js)._
 
