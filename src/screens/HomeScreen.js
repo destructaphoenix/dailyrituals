@@ -6,7 +6,8 @@ import { useTheme } from '../theme';
 import { T, Card, PrimaryButton, ProgressBar } from '../ui';
 import { Sun, Moon, Check, Pencil, BADGE_ICON } from '../icons';
 import { RayFan, NightSky } from '../art';
-import { WEEK, BADGES, SAMPLE_ENTRIES, TODAY_LABEL } from '../data';
+import { WEEK, BADGES, SAMPLE_ENTRIES } from '../data';
+import { greetingFor, todayLabel } from '../time/clock';
 import { StreakFreeze, DailyQuests } from '../gamify';
 import { EmberPill } from '../shopui';
 
@@ -14,7 +15,7 @@ export default function HomeScreen({ copy, gamify, mode, streak, xp, xpMax, leve
   const t = useTheme();
   const c = t.colors;
   const Orb = mode === 'night' ? Moon : Sun;
-  const greeting = mode === 'night' ? copy.greetingNight : copy.greeting;
+  const greeting = greetingFor();
   const streakShadow = { textShadowColor: 'rgba(0,0,0,0.7)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 10 };
 
   return (
@@ -27,7 +28,7 @@ export default function HomeScreen({ copy, gamify, mode, streak, xp, xpMax, leve
       <View style={{ paddingHorizontal: 20, paddingTop: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <View>
           <T d w={700} color={c.ink} style={{ fontSize: 27, lineHeight: 30 }}>{greeting}.</T>
-          <T w={600} color={c.muted} style={{ fontSize: 14, marginTop: 2 }}>{TODAY_LABEL}</T>
+          <T w={600} color={c.muted} style={{ fontSize: 14, marginTop: 2 }}>{todayLabel()}</T>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9 }}>
           <EmberPill embers={embers} plus={plus} onPress={onOpenShop} />

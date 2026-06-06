@@ -4,8 +4,6 @@ export const TODAY_LABEL = 'Saturday, 31 May';
 
 export const COPY = {
   gentle: {
-    greeting: 'Good morning',
-    greetingNight: 'Good evening',
     teaserKicker: "Today's ritual",
     teaser: ['Give ', 'yesterday', ' a few honest words before it slips away.'],
     cta: "Begin today's reflection",
@@ -22,8 +20,6 @@ export const COPY = {
     finish: 'Lay the day to rest',
   },
   playful: {
-    greeting: 'Morning, you',
-    greetingNight: 'Evening, you',
     teaserKicker: "Today's ritual",
     teaser: ['Yesterday is gone — ', "let's give it", ' a proper send-off.'],
     cta: "Write today's obituary",
