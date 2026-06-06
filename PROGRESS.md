@@ -156,6 +156,7 @@ Legend: ⬜ Not started · 🟡 In progress · ✅ Done · ⛔ Blocked
 | IMP-003 | Center the streak number in the hero card (both axes, robust 1–4 digits) | OTA | ⬜ |
 | IMP-004 | New-user zero-state + v1→v2 migration (existing testers auto-cleaned on update, no reset); dynamic streak subtitle | OTA (ships in v5) | ⬜ |
 | IMP-005 | Remove the cosmetic login/signup step from onboarding (app stays local-only, no accounts) | OTA | ⬜ |
+| IMP-006 | Enable + verify Android Auto Backup (new-device restore, no login) | Build (rides v5) | ⬜ |
 
 ### Tasks
 _(Opus appends one block per issue, in priority order, using the template below. Sonnet works the first unchecked one.)_
@@ -262,6 +263,24 @@ _(Opus appends one block per issue, in priority order, using the template below.
 - **Commit:** `refactor(onboarding): remove cosmetic login step — app stays local-only`
 - **Acceptance (runtime walk):** Fresh onboarding: intro swipe → "Get started" (and "Skip") lands directly on the "Before we dig in." personalize screen — no sign-in screen anywhere. Personalize's Back returns to the intro swipe. Reaching the app still works (with and without `PLUS_ENABLED`). No `SignUp`/`AuthButton` code remains.
 - **Ship after merge:** OTA-eligible (JS only). Rides the v5 bundle with the other fixes.
+
+### IMP-006 — Enable + verify Android Auto Backup (new-device restore, no login)   ·   Lane: Build (rides v5)   ·   Status: ⬜
+- **Goal:** A user's local data (journal, streak, settings — the AsyncStorage store) restores automatically onto a **new or reinstalled device** via Android Auto Backup to their own Google Drive — no accounts, no login, no PII handled by us. Covers "got a new phone, my stuff came back."
+- **Why / context:** Chosen (2026-06-07) as the zero-login, zero-legal alternative to cloud accounts (which the owner rejected — see [[daily-rituals-local-only-decision]] / IMP-005). **Expo defaults `android.allowBackup` to `true` and `app.config.js` doesn't override it**, so the capability is *very likely already active* on the current build — the app's data dir (incl. AsyncStorage's RKStorage SQLite DB) is eligible. So this task is mostly: lock the intent explicitly, then **actually verify** the backup→reinstall→restore cycle, plus a data-safety note.
+- **Files touched:** `app.config.js` (one line), `PROGRESS.md`.
+- **Approach (decided by Opus — do not re-litigate):**
+  - Add `allowBackup: true` explicitly to the `android` block in `app.config.js` so the intent is documented and can't silently regress if Expo's default ever changes. (Functionally identical to today's default — the value is the explicitness + the verification below.)
+  - **No custom backup rules.** There's nothing sensitive on-device to exclude (no auth tokens — the RevenueCat key ships in the binary/env, not in user data), so the default full-data backup is correct. *(Flag: if a future feature ever stores a secret/token on-device, add `dataExtractionRules`/`fullBackupContent` via a config plugin to exclude it — not needed now.)*
+  - **Restore robustness:** a restored backup from an older app version is handled by the persistence `migrate()` chain (schema `version`), so no special handling needed.
+- **TDD:** N/A — native/manifest config + manual device verification. `npm test` unaffected (green, unchanged count).
+- **Steps:**
+  - [ ] 1. Add `allowBackup: true` to the `android` block in `app.config.js`. Commit.
+  - [ ] 2. **Device verification (owner or Sonnet-with-device; needs an emulator/device signed into a Google account with backup ON):** in the app, create data (write an entry, let streak/XP move) → force a backup `adb shell bmgr backupnow app.dailyrituals.mobile` (confirm backup manager is on: `adb shell bmgr enabled`) → `adb uninstall app.dailyrituals.mobile` → reinstall the same build → launch → **confirm the journal/streak/settings came back** with no login.
+  - [ ] 3. **Play data-safety:** confirm the form reflects reality — Auto Backup data goes to the *user's own* Google Drive, not collected/transferred to the developer (typically no "data collected" change; just confirm the backup question is answered honestly).
+  - [ ] 4. `npm test` green (unchanged — no JS logic touched).
+- **Commit:** `build(android): enable Android Auto Backup explicitly (new-device restore, no login)`
+- **Acceptance (runtime walk):** After forcing a backup, uninstalling, and reinstalling on a backup-enabled device/account, the journal + streak + settings restore automatically with no sign-in. (If the device has backup disabled or no Google account, restore won't happen — that's expected OS behavior, not a bug.)
+- **Ship after merge:** Rides the **v5 full build** (it's a manifest/native change — not OTA-eligible — but v5 is already a full build, so no extra build needed). Ensure the v5 `versionCode` bump covers it. Known limits to set expectations: ~daily backup cadence (Wi-Fi/charging/idle, so the most recent entries may not be captured before a loss); restore only on reinstall/new-device setup; Android-only (iOS gets its own iCloud mechanism in Phase 11); not live multi-device sync.
 
 <!-- TEMPLATE — Opus copies this per issue, fills it, adds a row to the table above, then hands the task to Sonnet:
 
