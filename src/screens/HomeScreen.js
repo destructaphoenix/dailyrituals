@@ -47,8 +47,8 @@ export default function HomeScreen({ copy, gamify, mode, streak, xp, xpMax, leve
         <View style={{ paddingHorizontal: 20 }}>
           <Card style={{ paddingHorizontal: 22, paddingTop: 26, paddingBottom: 22, alignItems: 'center', overflow: 'hidden' }}>
             {mode === 'night' ? <NightSky /> : <RayFan />}
-            <View style={{ zIndex: 1, alignItems: 'center' }}>
-              <T d w={800} color={c.accentDeep} style={{ fontSize: 76, lineHeight: 76 }}>{streak}</T>
+            <View style={{ zIndex: 1, alignItems: 'center', marginTop: 13 }}>
+              <T d w={800} color={c.accentDeep} style={{ fontSize: 76, lineHeight: 82, includeFontPadding: false, textAlign: 'center' }}>{streak}</T>
               <T d w={700} color={c.ink} style={[{ fontSize: 16, marginTop: 2 }, t.dark && streakShadow]}>day streak</T>
               <T w={600} color={t.dark ? '#d8c7a8' : c.muted} style={[{ fontSize: 13, marginTop: 4 }, t.dark && streakShadow]}>Four days running — keep it tender.</T>
             </View>

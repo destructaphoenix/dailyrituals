@@ -75,7 +75,7 @@ export function NightSky({ size = 300 }) {
   const holes = [[122, 128, 11], [180, 122, 7], [186, 172, 8], [128, 182, 12], [108, 158, 5]];
 
   return (
-    <View pointerEvents="none" style={{ position: 'absolute', top: -90, left: 0, right: 0, height: size, alignItems: 'center' }}>
+    <View pointerEvents="none" style={{ position: 'absolute', top: -70, left: 0, right: 0, height: size, alignItems: 'center' }}>
       <View style={{ width: size, height: size }}>
         {/* breathing moon body */}
         <AView style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: moonOpacity, transform: [{ scale }] }}>
