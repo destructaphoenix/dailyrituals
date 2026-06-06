@@ -41,6 +41,9 @@
 
 Legend: ⬜ Not started · 🟡 In progress · ✅ Done · ⛔ Blocked
 
+> ## ▶️ ACTIVE TRACK (read this before picking a task)
+> While the app sits in closed testing, the **live work is the [Improvements / bug-fix backlog](#-improvements--bug-fix-backlog-post-launch--active-track)** near the bottom of this file — **not** the phase ladder. **If any `IMP-xxx` task there is unchecked, work the first unchecked one BEFORE Phases 8 / 10b / 11**, which are parked until the owner explicitly resumes them. Each `IMP` task carries its full spec inline (no separate plan file unless it links one), so do **not** go hunting in the phase plan for it.
+
 > **Part II was added 2026-06-04 and restructured around a FREE-FIRST release.** ⭐ **The big idea:** ship the app to Play as a **free** app first (Plus hidden behind a `PLUS_ENABLED` flag), then turn on paid Plus in a follow-up update (v1.1). Three independent finish lines: **A** free app live (10a) → **B** monetization live (10b) → **C** iOS (11). A free launch needs **no payments and no BillDesk** — but it **does** need a hosted privacy-policy page (built in 10a) + Play store listing. BillDesk (India PA-CB payout verification, up-to-90-day clock) gates **10b only**. Full detail + rationale in the plan's "**PART II → Release strategy**" box. Recommended order: **8 → 9 → 10a → 10b → 11**. Part II reverses two original locked decisions — "dev only" and "all state in-memory" — on purpose; each phase lists owner decisions to confirm first.
 
 ---
@@ -132,6 +135,46 @@ Legend: ⬜ Not started · 🟡 In progress · ✅ Done · ⛔ Blocked
 
 ---
 
+## 🔧 Improvements / bug-fix backlog (post-launch — ACTIVE TRACK)
+
+> **This is the live track while the app is in closed testing.** Opus scopes each issue the owner files into a numbered `IMP-xxx` task below — steps, commit message, and ship lane all inline. Sonnet picks the **first unchecked `IMP` task**, executes its steps in order, commits with the given message, then ticks the boxes and writes the Last session note. Same golden loop as the phases — but the spec lives **here**, not in the phase plan. The phase ladder (8 / 10b / 11) stays parked until the owner says otherwise.
+
+### Ship lane — which fix ships how (decide per task)
+| What changed | Lane | Command | Play review? |
+| --- | --- | --- | --- |
+| JS / UI / copy / logic / JS assets only | **OTA** | `eas update --branch production --message "…"` | ❌ none (minutes) |
+| Native dep, permission, SDK/target, icon/splash, `app.config` native field, version bump | **Full build** | bump `android.versionCode` → `eas build -p android` → upload `.aab` | ✅ required |
+
+- OTA only reaches builds **≥ versionCode 5**. The v4 build in review can't receive it — so the **first full build we push for improvements (versionCode 5) is what turns the OTA lane on** for everything after.
+- Tag every task below with its lane so we batch OTA-able fixes and only rebuild when something native actually changes.
+
+### Backlog at a glance
+| ID | Title | Lane | Status |
+| --- | --- | --- | --- |
+| _(none yet — Opus appends a row here as each issue is filed)_ | | | |
+
+### Tasks
+_(Opus appends one block per issue, in priority order, using the template below. Sonnet works the first unchecked one.)_
+
+<!-- TEMPLATE — Opus copies this per issue, fills it, adds a row to the table above, then hands the task to Sonnet:
+
+### IMP-00X — <short title>   ·   Lane: OTA | full-build   ·   Status: ⬜
+- **Goal:** <what "done" looks like, 1–2 lines>
+- **Why / context:** <the symptom, request, or screenshot the owner gave>
+- **Files likely touched:** `src/...`
+- **Approach (decided by Opus — do not re-litigate):** <the chosen method>
+- **TDD:** <which logic gets a failing test first — or "N/A, pure cosmetic">
+- **Steps:**
+  - [ ] 1. …
+  - [ ] 2. …
+  - [ ] 3. `npm test` green (must stay ≥ 23)
+- **Commit:** `<type>: <message>`
+- **Acceptance:** <how to confirm it works at runtime>
+- **Ship after merge:** OTA `eas update --branch production` | hold for next full build
+-->
+
+---
+
 ## Config you must supply (no secrets in git)
 
 Fill these in `.env` (copy from `.env.example`, created in Phase 4) and record the IDs here as they're created:
@@ -161,9 +204,9 @@ Fill these in `.env` (copy from `.env.example`, created in Phase 4) and record t
 ## How to resume in a fresh chat (no context)
 
 1. Read this file + the plan header.
-2. Find the first ⬜/🟡 phase in the status table.
-3. Open the plan, go to that phase, execute its steps **in order**, committing as written.
-4. After the phase: tick its boxes here, set the status emoji, write a "Last session note".
+2. **Check the [ACTIVE TRACK callout](#️-active-track-read-this-before-picking-a-task) at the top.** If the **Improvements backlog** has an unchecked `IMP-xxx` task, that is your work — its full spec is inline in that task block (skip steps 3's "open the plan", improvements aren't in the phase plan). Only if the backlog is empty/all-done do you fall through to the phase ladder.
+3. Otherwise (phase-ladder work): find the first ⬜/🟡 phase in the status table, open the plan, go to that phase, execute its steps **in order**, committing as written.
+4. After the task/phase: tick its boxes here, set the status emoji, write a "Last session note".
 5. If blocked, set ⛔ and write exactly what's needed to unblock under "Open items / blockers".
 
 ---
@@ -241,6 +284,8 @@ _2026-06-06 — Phase 10a.5 DONE; release sent to review; now blocked on closed-
 **▶️ WHEN OWNER RETURNS (read this first):** Owner will likely arrive with **bug fixes or improvements** discovered during testing — NOT necessarily the next phase in the ladder. Treat their request as primary. Context they expect Opus to already know: (a) the app is a free Android app **in/through Play closed testing**, Plus is **hidden** (`PLUS_ENABLED = false`); (b) any new release needs a **bumped `versionCode`** and must keep targeting **API 35 / min 24** and be signed with the **`M7r91j0b83`** EAS keystore (never auto-generate — see the "🔑 Android release signing" block above); (c) for code changes, follow the normal TDD loop and keep `npm test` green (currently 23/23). After production unlocks, remaining big rocks are **Phase 10b** (monetization — RC service-account JSON + products + flip the flag) and **Phase 11** (iOS, ⛔ needs Mac/Apple Dev). Next: support owner's bug-fix/improvement requests; resume the phase ladder (10b) only when they choose to monetize._
 
 _2026-06-06 — EAS Update (OTA) set up. Owner asked "is there CI/CD like websites" — answer: no auto-deploy by default, but added **over-the-air updates** so JS-only fixes ship without a Play review. Installed `expo-updates ~0.25.28`; set `runtimeVersion: { policy: 'fingerprint' }` (auto-computes a native signature so OTA is refused to native-incompatible builds — the safety guard); added `updates.url` (EAS endpoint for projectId `1a0f9b15-…`); added `channel` (development/preview/production) to each `eas.json` build profile. `npm test` 23/23 green. Commit `b117c1e`. **CRITICAL caveat:** OTA only works on builds that have `expo-updates` baked in — the **in-review versionCode 4 build predates this and CANNOT receive OTA**. The FIRST build made after this commit (versionCode ≥5) is the first OTA-capable one. **No CI configured** (no `.github/workflows`); builds/updates are still run manually by the owner (could add GitHub Actions / EAS Workflows later)._
+
+_2026-06-06 (Opus, planning) — Opened the **post-launch improvements track**. Owner is back in bug-fix/improvement mode (cosmetic + technical), not the phase ladder. Set up PROGRESS.md so the existing DEVGUIDE prompts route Sonnet to this work automatically: (1) added an **▶️ ACTIVE TRACK** callout under the status legend telling Sonnet to work the first unchecked `IMP-xxx` task before Phases 8/10b/11 (parked); (2) added the **🔧 Improvements / bug-fix backlog** section (ship-lane table OTA-vs-full-build, backlog-at-a-glance table, and a per-issue task TEMPLATE — each `IMP` task carries its full spec inline so Sonnet never hunts the phase plan); (3) updated "How to resume" step 2 to check the active track first. No app code touched — `npm test` unchanged (23/23). Backlog is empty; Opus appends one scoped `IMP` block per issue the owner files, in priority order. **Next:** owner files the first improvement issue → Opus scopes it into IMP-001 → Sonnet executes via DEVGUIDE Prompt 1._
 
 ---
 
