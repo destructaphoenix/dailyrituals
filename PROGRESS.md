@@ -152,6 +152,7 @@ Legend: ⬜ Not started · 🟡 In progress · ✅ Done · ⛔ Blocked
 | ID | Title | Lane | Status |
 | --- | --- | --- | --- |
 | IMP-001 | Show the user's chosen name on the You tab (kill hardcoded "Amara") | OTA | ⬜ |
+| IMP-002 | Greeting + date from device local time (drop ", you"; kill hardcoded date) | OTA | ⬜ |
 
 ### Tasks
 _(Opus appends one block per issue, in priority order, using the template below. Sonnet works the first unchecked one.)_
@@ -177,6 +178,27 @@ _(Opus appends one block per issue, in priority order, using the template below.
 - **Commit:** `fix(profile): show the user's chosen name on the You tab instead of hardcoded "Amara"`
 - **Acceptance (runtime walk):** Fresh onboarding → type "Maya" → "Looks good" → You tab shows **Maya** + avatar **M**. Leave the field blank → You tab shows **Friend** + **F**. Kill & relaunch the app → the name persists. Existing user with old persisted settings (no `name`) → shows Friend, no crash.
 - **Ship after merge:** OTA-eligible (JS only). Caveat: OTA only reaches builds ≥ versionCode 5; the in-review v4 build can't receive it, so in practice this rides the next full build (which becomes v5, the first OTA-capable one).
+
+### IMP-002 — Greeting + date from the device's local time   ·   Lane: OTA   ·   Status: ⬜
+- **Goal:** The Home/Today greeting reads **"Good morning."** before noon and **"Good evening."** from noon on, based on the **phone's local time** — for both tones, with no ", you". The date line below it shows **today's real local date** (e.g. "Sunday, 7 June") instead of the frozen sample string.
+- **Why / context:** Owner doesn't want the playful tone's "Morning, you" / "Evening, you" — just "Good morning" / "Good evening" by actual time of day. Currently the greeting is tied to the **theme `mode`** (day/night toggle), NOT real time, and the playful tone appends ", you". The date directly below (`TODAY_LABEL`) is hardcoded to `'Saturday, 31 May'` — stale sample data (31 May 2026 is actually a Sunday), never wired to the clock. Owner confirmed folding the date fix into this task.
+- **Files touched:** `src/time/clock.js` (new) + `__tests__/time/clock.test.js` (new), `src/screens/HomeScreen.js`, `src/data.js` (remove dead copy).
+- **Approach (decided by Opus — do not re-litigate):**
+  - Two pure, tested helpers in one new module `src/time/clock.js`, both defaulting to `new Date()`:
+    - `greetingFor(date = new Date())` → `date.getHours() < 12 ? 'Good morning' : 'Good evening'`. (Two buckets only — owner asked for morning/evening, no afternoon. Noon boundary is the one tweakable knob.)
+    - `todayLabel(date = new Date())` → `` `${WEEKDAYS[date.getDay()]}, ${date.getDate()} ${MONTHS[date.getMonth()]}` `` using local English `WEEKDAYS`/`MONTHS` const arrays (matches the existing "31 May" day-then-month visual format; deterministic — avoids RN/Hermes `Intl` locale-data flakiness; English-only is consistent with the rest of the app's copy).
+  - Greeting becomes **tone- and mode-independent** — computed from the clock, not pulled from `COPY`. This is what drops the ", you" (the playful variants simply stop being used).
+  - **Known minor limitation (acceptable, document only):** greeting/date recompute on each render of HomeScreen (mount / tab switch), not on a live timer — if the app sits open across midnight or noon it updates on the next navigation, not instantly. No timer (not worth the complexity/battery).
+- **TDD:** Yes — write `__tests__/time/clock.test.js` FIRST (RED), then implement `src/time/clock.js`.
+- **Steps:**
+  - [ ] 1. **(RED)** Create `__tests__/time/clock.test.js`. `greetingFor`: `new Date(2026,0,1,9,0)`→'Good morning'; `…,11,59`→'Good morning'; `…,12,0`→'Good evening'; `…,23,0`→'Good evening'; `…,0,0`→'Good morning'. `todayLabel`: `new Date(2026,0,1)`→'Thursday, 1 January'; `new Date(2026,4,31)`→'Sunday, 31 May'. Run `npm test` → fails.
+  - [ ] 2. **(GREEN)** Create `src/time/clock.js` with the two helpers + the `WEEKDAYS` (Sunday-first, matching `Date.getDay()`) and `MONTHS` (January-first) const arrays. Run `npm test` → passes.
+  - [ ] 3. `src/screens/HomeScreen.js`: `import { greetingFor, todayLabel } from '../time/clock';`. Replace line 17 (`const greeting = mode === 'night' ? copy.greetingNight : copy.greeting;`) with `const greeting = greetingFor();`. Replace `{TODAY_LABEL}` (~line 30) with `{todayLabel()}`. Leave `mode`/`copy` otherwise untouched (still used by the theme orb + toggle and other copy).
+  - [ ] 4. Remove the now-dead `TODAY_LABEL` from the `'../data'` import in HomeScreen. Run `grep -rn TODAY_LABEL src` — if nothing else references it, delete the `TODAY_LABEL` export from `src/data.js`. Likewise `grep -rn "greeting" src` — the `greeting`/`greetingNight` keys in both `COPY.gentle` and `COPY.playful` are now unused; remove all four.
+  - [ ] 5. `npm test` green (must stay ≥ 23 — should be the prior count + the new clock cases).
+- **Commit:** `fix(home): derive greeting and date from the device's local time`
+- **Acceptance (runtime walk):** Open the app in the morning (or set the phone clock before noon) → "Good morning." Set the phone clock to the afternoon/evening → "Good evening." Date line shows today's real date in "Weekday, D Month" form. Toggle the day/night theme → greeting text does NOT change with it (it follows the clock now, not the theme). Playful tone no longer shows ", you".
+- **Ship after merge:** OTA-eligible (JS only). Same v5 caveat as IMP-001 — rides the next full build, which becomes the first OTA-capable one.
 
 <!-- TEMPLATE — Opus copies this per issue, fills it, adds a row to the table above, then hands the task to Sonnet:
 
