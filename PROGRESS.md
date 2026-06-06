@@ -155,6 +155,7 @@ Legend: ⬜ Not started · 🟡 In progress · ✅ Done · ⛔ Blocked
 | IMP-002 | Greeting + date from device local time (drop ", you"; kill hardcoded date) | OTA | ⬜ |
 | IMP-003 | Center the streak number in the hero card (both axes, robust 1–4 digits) | OTA | ⬜ |
 | IMP-004 | New-user zero-state + v1→v2 migration (existing testers auto-cleaned on update, no reset); dynamic streak subtitle | OTA (ships in v5) | ⬜ |
+| IMP-005 | Remove the cosmetic login/signup step from onboarding (app stays local-only, no accounts) | OTA | ⬜ |
 
 ### Tasks
 _(Opus appends one block per issue, in priority order, using the template below. Sonnet works the first unchecked one.)_
@@ -243,6 +244,24 @@ _(Opus appends one block per issue, in priority order, using the template below.
 - **Commit:** `fix(state): zero-state for new users + v1→v2 migration to clean existing testers`
 - **Acceptance (runtime walk):** Fresh install shows all-zero progress + empty journal (no crash) + fresh-start subtitle. A device that already has demo data (v1), on updating to v5, shows the clean zero-state on next launch **without clearing data or reinstalling**, and keeps its `settings`/name. Subtitle matches the real streak (0 → fresh line, 1 → "1 day", n → "n days").
 - **Ship after merge:** JS-only, but **must ride the v5 full build** to reach current testers — they're on **v4**, which predates `expo-updates` and CANNOT receive OTA. Delivery: bundle into `eas build` → upload to the **Play closed-testing track** → testers get an **in-place update** (auto-update / "Update" button). An in-place update does NOT uninstall, does NOT clear data, and does NOT reset Google's 12×14 continuous-install clock (only a true uninstall would) — and it's signed with the same `M7r91j0b83` keystore so Android preserves the app's data dir, letting the migration run on the existing data. After v5 is the installed version, later JS fixes CAN ship via OTA.
+
+### IMP-005 — Remove the cosmetic login/signup step from onboarding   ·   Lane: OTA   ·   Status: ⬜
+- **Goal:** New users no longer see a sign-in screen. Onboarding goes **intro → personalize → (done)** with one fewer step. No accounts, no auth, no backend — the app stays purely local.
+- **Why / context:** The existing `SignUp` screen (Apple/Google/email buttons) is **cosmetic** — every button just calls `onAuthed` and advances; there's no real auth. Owner evaluated adding real Google/Apple login for cloud backup/sync (2026-06-07) and **deliberately rejected it** to avoid onboarding friction and the legal/PII burden of accounts (privacy/data-deletion duties, online-required first run). Decision: stay local-only and delete the dead login screen entirely. *(Tradeoff accepted: no cloud backup — a lost/wiped phone loses the journal. Optional future no-login mitigation noted separately: Android Auto Backup.)*
+- **Files touched:** `src/screens/Onboarding.js` only.
+- **Approach (decided by Opus — do not re-litigate):** Re-route the step machine around the `signup` step and delete the now-dead `SignUp` + `AuthButton` components. Keep everything else (intro swipe, personalize, premium gating) exactly as-is.
+  - ⚠️ **Coordinate with IMP-001:** IMP-001 also edits `src/screens/Onboarding.js` (it adds `setSettings`/`settings` to `Personalize` and changes the `Personalize` line in the step machine, ~line 49). This task changes that **same line's** `onBack` target. Whichever runs second must **re-read the current line** before editing, not assume the original text. No conflict in intent — just don't blind-apply a stale diff.
+- **TDD:** N/A — onboarding flow wiring / dead-code removal, no pure logic. `npm test` must stay green (unchanged count).
+- **Steps:**
+  - [ ] 1. In the `Onboarding` step machine (~lines 44–63): change `IntroSwipe`'s `onDone` and `onSkip` from `() => setStep('signup')` to `() => setStep('personalize')`.
+  - [ ] 2. Delete the `{step === 'signup' && <SignUp … />}` line entirely.
+  - [ ] 3. Change `Personalize`'s `onBack` from `() => setStep('signup')` to `() => setStep('intro')` (re-read the line first — see IMP-001 coordination note).
+  - [ ] 4. Delete the `SignUp` function component (~lines 208–254) and the `AuthButton` helper (~lines 184–206) — nothing else references them (confirm with `grep -rn "SignUp\|AuthButton" src`).
+  - [ ] 5. Remove any imports left unused by that deletion (verify `TextInput` and `useState` are still used by `Personalize` — they are — so likely no import change; remove only genuinely-orphaned ones).
+  - [ ] 6. `npm test` green (unchanged count); bundle in Expo Go with no red screen.
+- **Commit:** `refactor(onboarding): remove cosmetic login step — app stays local-only`
+- **Acceptance (runtime walk):** Fresh onboarding: intro swipe → "Get started" (and "Skip") lands directly on the "Before we dig in." personalize screen — no sign-in screen anywhere. Personalize's Back returns to the intro swipe. Reaching the app still works (with and without `PLUS_ENABLED`). No `SignUp`/`AuthButton` code remains.
+- **Ship after merge:** OTA-eligible (JS only). Rides the v5 bundle with the other fixes.
 
 <!-- TEMPLATE — Opus copies this per issue, fills it, adds a row to the table above, then hands the task to Sonnet:
 
