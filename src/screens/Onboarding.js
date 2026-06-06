@@ -30,7 +30,7 @@ const OB_PLATFORM = Platform.OS === 'android' ? 'android' : 'ios';
 
 // ── Entry: provides a Day-mode theme + safe area, runs the step machine ──────
 // onDone(plus) — `plus` is true when the user subscribed during onboarding.
-export default function Onboarding({ settings, onDone }) {
+export default function Onboarding({ settings, setSettings, onDone }) {
   const theme = makeTheme('day', settings);
   const insets = useSafeAreaInsets();
   const [step, setStep] = useState('intro');
@@ -46,7 +46,7 @@ export default function Onboarding({ settings, onDone }) {
       <View style={{ flex: 1, backgroundColor: theme.colors.cream, paddingTop: insets.top }}>
         {step === 'intro' && <IntroSwipe onDone={() => setStep('signup')} onSkip={() => setStep('signup')} insets={insets} />}
         {step === 'signup' && <SignUp onAuthed={() => setStep('personalize')} onBack={() => setStep('intro')} insets={insets} />}
-        {step === 'personalize' && <Personalize onDone={PLUS_ENABLED ? () => setStep('premium') : () => onDone(false)} onBack={() => setStep('signup')} insets={insets} />}
+        {step === 'personalize' && <Personalize settings={settings} setSettings={setSettings} onDone={PLUS_ENABLED ? () => setStep('premium') : () => onDone(false)} onBack={() => setStep('signup')} insets={insets} />}
         {PLUS_ENABLED && step === 'premium' && <Premium onOpenPaywall={() => setPayOpen(true)} onSkip={() => onDone(false)} onBack={() => setStep('personalize')} insets={insets} />}
 
         {PLUS_ENABLED && payOpen && (
@@ -257,9 +257,9 @@ function SignUp({ onAuthed, onBack, insets }) {
 }
 
 // ── Personalize ──────────────────────────────────────────────────────────────
-function Personalize({ onDone, onBack, insets }) {
+function Personalize({ settings, setSettings, onDone, onBack, insets }) {
   const t = React.useContext(ThemeContext);
-  const [name, setName] = useState('');
+  const [name, setName] = useState(settings?.name || '');
   const [time, setTime] = useState(TIMES[0]);
   return (
     <View style={{ flex: 1 }}>
@@ -293,7 +293,7 @@ function Personalize({ onDone, onBack, insets }) {
         </View>
       </ScrollView>
       <View style={{ paddingHorizontal: 24, paddingTop: 8, paddingBottom: 16 + insets.bottom }}>
-        <PrimaryButton label="Looks good" onPress={onDone} />
+        <PrimaryButton label="Looks good" onPress={() => { setSettings((s) => ({ ...s, name: name.trim() })); onDone(); }} />
       </View>
     </View>
   );

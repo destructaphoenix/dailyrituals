@@ -73,6 +73,7 @@ const BODY = {
 
 // Default "tweaks" — these were the chosen values in the web prototype.
 export const DEFAULT_SETTINGS = {
+  name: '',
   headlineFont: 'Quicksand', // 'Baloo 2' | 'Quicksand' | 'Fredoka'
   accent: ['#f59e0b', '#d97706', '#fef3c7'], // [accent, deep, soft] — day only
   roundness: 1, // 0.6 – 1.4

@@ -7,6 +7,7 @@ import { useTheme } from '../theme';
 import { T, Card, ProgressBar } from '../ui';
 import { Bell, Contrast, Pencil, Diamond, Download, Info, Chevron, Sun, Moon, Bag, Ember } from '../icons';
 import { PlusBanner } from '../shopui';
+import { profileIdentity } from '../profile/identity';
 
 export default function YouScreen({
   mode, onToggleMode, settings, setSettings,
@@ -17,6 +18,7 @@ export default function YouScreen({
   const c = t.colors;
   const dark = mode === 'night';
 
+  const { display, initial } = profileIdentity(settings.name);
   const setTone = () => setSettings((s) => ({ ...s, tone: s.tone === 'gentle' ? 'playful' : 'gentle' }));
   const setGamify = (v) => setSettings((s) => ({ ...s, gamify: v }));
 
@@ -31,10 +33,10 @@ export default function YouScreen({
         <Card style={{ padding: 20 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
             <View style={[{ width: 64, height: 64, borderRadius: 32, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }, t.shadow(12, c.accentDeep, 0.7)]}>
-              <T d w={800} color="#fff" style={{ fontSize: 26 }}>A</T>
+              <T d w={800} color="#fff" style={{ fontSize: 26 }}>{initial}</T>
             </View>
             <View style={{ flex: 1 }}>
-              <T d w={800} color={c.ink} style={{ fontSize: 22 }}>Amara</T>
+              <T d w={800} color={c.ink} style={{ fontSize: 22 }}>{display}</T>
               <View style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6, marginTop: 4, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, backgroundColor: c.accentSoft }}>
                 {dark ? <Moon size={13} color={c.accentDeep} /> : <Sun size={13} color={c.accentDeep} />}
                 <T w={800} color={c.accentDeep} style={{ fontSize: 12 }}>Lv {level} · {levelName}</T>

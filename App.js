@@ -69,7 +69,7 @@ export default function App() {
     return (
       <SafeAreaProvider>
         <StatusBar style="dark" />
-        <Onboarding settings={settings} onDone={(plus) => { setStartedPlus(!!plus); setOnboarded(true); }} />
+        <Onboarding settings={settings} setSettings={setSettings} onDone={(plus) => { setStartedPlus(!!plus); setOnboarded(true); }} />
       </SafeAreaProvider>
     );
   }
