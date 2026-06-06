@@ -151,10 +151,32 @@ Legend: ⬜ Not started · 🟡 In progress · ✅ Done · ⛔ Blocked
 ### Backlog at a glance
 | ID | Title | Lane | Status |
 | --- | --- | --- | --- |
-| _(none yet — Opus appends a row here as each issue is filed)_ | | | |
+| IMP-001 | Show the user's chosen name on the You tab (kill hardcoded "Amara") | OTA | ⬜ |
 
 ### Tasks
 _(Opus appends one block per issue, in priority order, using the template below. Sonnet works the first unchecked one.)_
+
+### IMP-001 — Show the user's chosen name on the You tab   ·   Lane: OTA   ·   Status: ⬜
+- **Goal:** The name typed in onboarding's "What should we call you?" appears on the You/profile tab (name + avatar initial), survives app restart, and falls back gracefully when left blank. No more hardcoded "Amara"/"A".
+- **Why / context:** Owner reports the entered name never shows on the profile tab — the app looks hardcoded. Confirmed: onboarding captures the name in local state but drops it (`onDone` only carries the plus flag), and `YouScreen` hardcodes `"Amara"` / avatar `"A"`. There is no `name` field in settings at all.
+- **Files touched:** `src/theme.js`, `src/profile/identity.js` (new) + `__tests__/profile/identity.test.js` (new), `src/screens/Onboarding.js`, `App.js`, `src/screens/YouScreen.js`.
+- **Approach (decided by Opus — do not re-litigate):**
+  - Store the name in the existing `settings` object (it's already persisted via `pickPersisted` and already passed to both Onboarding and YouScreen — no new state container, no persistence migration needed; old saves without `name` just fall back).
+  - Derive display name + avatar initial through ONE pure, tested helper (mirrors the `src/billing/format.js` pattern) so `YouScreen` stays dumb.
+  - Empty/blank name falls back to **"Friend"** (avatar "F"). *(Copy choice — owner can swap the fallback word later; flag it, don't block on it.)*
+  - Do NOT touch the Today-screen greeting (intentionally name-less) and do NOT wire the reminder-`time` field (no notification consumer exists yet — separate future issue).
+- **TDD:** Yes — write `__tests__/profile/identity.test.js` FIRST (RED) for the pure helper, then implement.
+- **Steps:**
+  - [ ] 1. **(RED)** Create `__tests__/profile/identity.test.js`: assert `profileIdentity('Maya')` → `{ display: 'Maya', initial: 'M' }`; `profileIdentity('  amara ')` → `{ display: 'amara', initial: 'A' }` (trimmed, initial upper-cased); `profileIdentity('')` and `profileIdentity(undefined)` → `{ display: 'Friend', initial: 'F' }`. Run `npm test` → fails.
+  - [ ] 2. **(GREEN)** Create `src/profile/identity.js` exporting `profileIdentity(name)`: `const display = (name || '').trim() || 'Friend'; return { display, initial: display.charAt(0).toUpperCase() };`. Run `npm test` → passes.
+  - [ ] 3. Add `name: ''` to `DEFAULT_SETTINGS` in `src/theme.js`.
+  - [ ] 4. `src/screens/Onboarding.js`: thread `setSettings` (and `settings`) into the `Onboarding` component and down into `Personalize`. In `Personalize`, init `const [name, setName] = useState(settings?.name || '')`, and replace `onPress={onDone}` with a handler that first does `setSettings((s) => ({ ...s, name: name.trim() }))` then calls `onDone()` — so the name is saved on "Looks good" regardless of the Plus branch.
+  - [ ] 5. `App.js`: pass `setSettings={setSettings}` (and it already passes `settings`) to `<Onboarding … />`.
+  - [ ] 6. `src/screens/YouScreen.js`: `import { profileIdentity } from '../profile/identity';`, compute `const { display, initial } = profileIdentity(settings.name);`, replace hardcoded `A` (avatar, ~line 34) with `{initial}` and `Amara` (~line 37) with `{display}`.
+  - [ ] 7. `npm test` green (must stay ≥ 23 — should be 23 + the new identity cases).
+- **Commit:** `fix(profile): show the user's chosen name on the You tab instead of hardcoded "Amara"`
+- **Acceptance (runtime walk):** Fresh onboarding → type "Maya" → "Looks good" → You tab shows **Maya** + avatar **M**. Leave the field blank → You tab shows **Friend** + **F**. Kill & relaunch the app → the name persists. Existing user with old persisted settings (no `name`) → shows Friend, no crash.
+- **Ship after merge:** OTA-eligible (JS only). Caveat: OTA only reaches builds ≥ versionCode 5; the in-review v4 build can't receive it, so in practice this rides the next full build (which becomes v5, the first OTA-capable one).
 
 <!-- TEMPLATE — Opus copies this per issue, fills it, adds a row to the table above, then hands the task to Sonnet:
 
