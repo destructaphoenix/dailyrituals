@@ -11,7 +11,16 @@ module.exports = {
       resizeMode: 'contain',
       backgroundColor: '#f9f7f4',
     },
-    runtimeVersion: { policy: 'fingerprint' },
+    // runtimeVersion drives OTA compatibility. We use `appVersion` (= the
+    // `version` string above) rather than `fingerprint`: fingerprint embeds
+    // machine-specific absolute paths + CRLF-hashed node_modules, so it
+    // computes DIFFERENTLY on a Windows dev machine vs EAS's Linux build
+    // servers — making locally-published OTA updates incompatible with EAS
+    // builds. appVersion is OS-independent. Trade-off: the auto "refuse OTA to
+    // native-incompatible builds" guard is gone, so YOU must bump `version`
+    // whenever a build carries native changes (see "Update workflow" in
+    // PROGRESS.md). Pure-JS OTA updates keep the same version.
+    runtimeVersion: { policy: 'appVersion' },
     updates: {
       url: 'https://u.expo.dev/1a0f9b15-cb1a-4cec-9577-3cd66e9f1d36',
     },
