@@ -1,0 +1,97 @@
+# .github/workflows/release.yml
+# Releases only when the HEAD commit carries a "Release-Lane: ota|build" trailer.
+# Pushes without it are no-ops (safe for WIP). See docs/superpowers/specs/2026-06-07-...
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  classify:
+    runs-on: ubuntu-latest
+    outputs:
+      lane: ${{ steps.detect.outputs.lane }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # need full history for the before..after diff
+
+      - id: detect
+        name: Detect Release-Lane trailer
+        run: |
+          LANE=$(git log -1 --pretty=%B | grep -ioP '^Release-Lane:\s*\K(ota|build)' | head -1 || true)
+          echo "Detected lane: '${LANE}'"
+          echo "lane=${LANE}" >> "$GITHUB_OUTPUT"
+
+      - name: OTA native-change backstop
+        if: steps.detect.outputs.lane == 'ota'
+        run: |
+          BEFORE='${{ github.event.before }}'
+          if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            BEFORE=$(git rev-parse HEAD~1)
+          fi
+          CHANGED=$(git diff --name-only "$BEFORE" '${{ github.event.after }}')
+          echo "Changed files:"; echo "$CHANGED"
+          if echo "$CHANGED" | grep -E '^(app\.config\.js|package\.json|package-lock\.json|eas\.json|babel\.config\.js|assets/)'; then
+            echo "::error::Release-Lane is 'ota' but native-affecting files changed. Re-tag the commit as 'Release-Lane: build'."
+            exit 1
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.detect.outputs.lane != ''
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install deps
+        if: steps.detect.outputs.lane != ''
+        run: npm ci
+
+      - name: Test gate
+        if: steps.detect.outputs.lane != ''
+        run: npm test
+
+  ota:
+    needs: classify
+    if: needs.classify.outputs.lane == 'ota'
+    runs-on: ubuntu-latest
+    environment: production # one-tap approval gate
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - name: Publish OTA
+        run: |
+          MSG=$(git log -1 --pretty=%s)
+          eas update --branch production --message "$MSG" --non-interactive
+
+  build:
+    needs: classify
+    if: needs.classify.outputs.lane == 'build'
+    runs-on: ubuntu-latest
+    environment: production # one-tap approval gate
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - name: Write Play service account
+        env:
+          SA_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+        run: printf '%s' "$SA_JSON" > play-service-account.json
+      - name: Build + auto-submit to closed testing
+        run: eas build -p android --profile production --auto-submit --non-interactive
