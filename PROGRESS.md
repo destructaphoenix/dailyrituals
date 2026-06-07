@@ -159,6 +159,7 @@ Legend: ⬜ Not started · 🟡 In progress · ✅ Done · ⛔ Blocked
 | IMP-006 | Enable + verify Android Auto Backup (new-device restore, no login) | Build (rides v5) | 🟡 |
 | IMP-007 | 🔴 Streak no longer stacks on multiple same-day entries (reward once/day; same-day re-write edits) | OTA | ✅ |
 | IMP-008 | Real zero-state finish: derive level from XP (kill hardcoded Lv 3), calendar + week strip from real entries (kill fake HEAT/WEEK), real entry dates (kill 31 May) | OTA | ✅ (code; runtime walk + ship pending) |
+| IMP-009 | Insights tab from real entries (kill hardcoded STATS/MOOD_MIX/RHYTHM); empty state | OTA | ⬜ |
 
 ### Tasks
 _(Opus appends one block per issue, in priority order, using the template below. Sonnet works the first unchecked one.)_
@@ -318,6 +319,35 @@ _(Opus appends one block per issue, in priority order, using the template below.
 - **DESIGN RESOLVED (2026-06-07):** brainstormed → spec [`docs/superpowers/specs/2026-06-07-imp-008-real-zero-state-finish-design.md`](docs/superpowers/specs/2026-06-07-imp-008-real-zero-state-finish-design.md), planned → [`docs/superpowers/plans/2026-06-07-imp-008-real-zero-state-finish.md`](docs/superpowers/plans/2026-06-07-imp-008-real-zero-state-finish.md), implemented (8 TDD tasks). Owner decisions: (1) **XP-threshold levels** — uncapped XP, `levelFromXp(xp)` → `{level,name,into,toNext}`, names Waking→Keeper of Days (Lv1–7); bar is within-level (`into/toNext`, "Max" at top). (2) Calendar = **35-cell grid from real entries, neutral empties (no skulls)**. (3) **Week strip folded in** (owner chose to include it — same neutral treatment, last-7-days from entries). (4) Entry dates derived via `entryDateParts()` in `src/time/clock.js`. No migration needed (IMP-004 already empties entries).
 - **Sequencing:** This is the **inaugural ship through the new release pipeline** (owner decision 2026-06-07) — see [`docs/superpowers/specs/2026-06-07-streamlined-release-pipeline-design.md`](docs/superpowers/specs/2026-06-07-streamlined-release-pipeline-design.md). Build the pipeline first; then brainstorm IMP-008's design; then implement + ship it as the first `Release-Lane: ota`.
 - **Ship after merge:** OTA-eligible (all JS in `src/`). Reaches testers on v5+ only.
+
+### IMP-009 — Insights tab from real entries (kill hardcoded data)   ·   Lane: OTA   ·   Status: ⬜
+- **Goal:** The Insights tab shows the user's **real** numbers — stats, mood mix, and weekly rhythm derived from their actual entries + streak — instead of the baked-in sample numbers. A user with no entries sees a clean empty state, not fake charts.
+- **Why / context:** `src/screens/InsightsScreen.js` is fully hardcoded — top comment even says "Numbers are illustrative sample data." `STATS` (current streak 4, longest 21, days kept 47, this month 12), `MOOD_MIX`, and `RHYTHM` are module constants ([lines 11–31](src/screens/InsightsScreen.js#L11-L31)), and the component only receives `copy` — no real data is passed in. The subtitle "Saturdays win" is hardcoded too. Owner also just added a **delete/reset-data control on the You page**, which makes the empty state reachable in normal use — so it must look right at zero.
+- **Data available (post IMP-007/008):** each entry carries `dayKey` ('YYYY-MM-DD'), `mood` (a label from `MOODS` in `src/data.js`, or absent if the user skipped mood), plus real date parts. `streak` (current) is a RitualsApp atom. `moodEmoji(label)` maps mood→emoji.
+- **Files touched:** `src/insights/derive.js` (new) + `__tests__/insights/derive.test.js` (new), `src/screens/InsightsScreen.js`, `src/RitualsApp.js`.
+- **Approach (decided by Opus — do not re-litigate):**
+  - Put all the math in a **pure, tested helper** `deriveInsights(entries, currentStreak, now = new Date())` in `src/insights/derive.js` (mirrors the `completeEntry`/`clock` pure-helper pattern). It returns:
+    - `empty` — `true` when there are no entries.
+    - `stats` — `{ currentStreak, longestStreak, daysKept, thisMonth }`. `daysKept` = count of unique `dayKey`s. `thisMonth` = entries whose `dayKey.slice(0,7)` matches `now`'s local `YYYY-MM`. `longestStreak` = longest run of consecutive calendar days across the unique `dayKey`s, **guarded to be ≥ `currentStreak`**.
+    - `moodMix` — `[{ m, n }]` counting entries per mood (skip entries with no mood), sorted by `n` desc, only `n > 0`.
+    - `rhythm` — 7 buckets Mon→Sun, labels `['M','T','W','T','F','S','S']`, counting entries by weekday.
+    - `peakWeekday` — full name (e.g. `'Saturday'`) of the busiest weekday, or `null` if there's no data/peak.
+  - **Date parsing (avoid the UTC off-by-one trap):** parse a `dayKey` by splitting parts and building a *local* date — `const [y,m,d] = key.split('-').map(Number); new Date(y, m-1, d)` — for weekday (`getDay()`, Mon-first index `(getDay()+6)%7`). For the consecutive-day check use `Date.UTC(y,m-1,d)` diffs (`=== 86400000`) so DST can't break it.
+  - `InsightsScreen` becomes a dumb renderer: take new props `entries` + `streak`, call `deriveInsights`, and render from its result. Delete the hardcoded `STATS`/`MOOD_MIX`/`RHYTHM` constants. Guard the bar scaling against divide-by-zero (`Math.max(1, max)`). Make the rhythm subtitle dynamic: `peakWeekday ? `${peakWeekday}s win` : ''` (hidden when null). If `moodMix` is empty (entries but no moods logged), show a small "No moods logged yet." note instead of bars.
+  - **Empty state:** when `data.empty`, render the header + a single calm card ("No insights yet — write your first reflection and the shape of your days will appear here.") and skip the stat/mood/rhythm cards.
+  - In `src/RitualsApp.js`, pass the data in: `case 'insights': return <InsightsScreen copy={copy} entries={entries} streak={streak} />;`.
+  - **Known nuance (document, don't fix):** `longestStreak` is derived from consecutive entry-days, so it ignores streaks that were bridged by a streak-freeze/candle; the `≥ currentStreak` guard keeps it from ever showing *less* than the live streak. Good enough.
+- **TDD:** Yes — write `__tests__/insights/derive.test.js` FIRST (RED), then implement.
+- **Steps:**
+  - [ ] 1. **(RED)** Create `__tests__/insights/derive.test.js` with a fixed `now` and explicit `dayKey`s: (a) `[]` → `empty:true`, all stats 0; (b) a multi-day set spanning two months → `daysKept` = unique days, `thisMonth` counts only `now`'s month, `longestStreak` = the longest consecutive run; (c) `longestStreak` never less than a larger `currentStreak` arg; (d) `moodMix` counts/sorts desc and excludes mood-less entries; (e) `rhythm` buckets land on the right Mon-first weekday and `peakWeekday` names the busiest day. Run `npm test` → fails.
+  - [ ] 2. **(GREEN)** Implement `src/insights/derive.js` per the Approach. Run `npm test` → passes.
+  - [ ] 3. Rewrite `src/screens/InsightsScreen.js` to consume `deriveInsights(entries, streak)`; delete the hardcoded constants; add the empty state, the dynamic peak subtitle, the mood-less note, and divide-by-zero guards.
+  - [ ] 4. In `src/RitualsApp.js`, pass `entries={entries} streak={streak}` to `<InsightsScreen … />`.
+  - [ ] 5. Verify in Expo Go: with a fresh/reset account the Insights tab shows the empty state (no fake 4/21/47/12); write entries across a few days → stats, mood bars, and weekday rhythm reflect them; the rhythm subtitle names the real busiest day.
+  - [ ] 6. `npm test` green (prior count + new derive cases).
+- **Commit:** `fix(insights): derive stats, mood mix and rhythm from real entries`
+- **Acceptance (runtime walk):** Insights shows real current/longest streak, days kept, this-month count, a mood mix that matches what was logged, and a weekday rhythm from actual entry days; an empty/reset account shows the empty state with no fabricated numbers.
+- **Ship after merge:** OTA-eligible (all JS in `src/`) — ships via the OTA release lane like IMP-008. Reaches testers on v5+ only.
 
 <!-- TEMPLATE — Opus copies this per issue, fills it, adds a row to the table above, then hands the task to Sonnet:
 
