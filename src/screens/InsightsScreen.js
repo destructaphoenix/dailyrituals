@@ -1,5 +1,4 @@
-// InsightsScreen.js — stats, mood mix and weekday rhythm. New tab.
-// Numbers are illustrative sample data; wire to your store to make them live.
+// InsightsScreen.js — stats, mood mix and weekday rhythm derived from real entries.
 
 import React from 'react';
 import { View, ScrollView, Text } from 'react-native';
@@ -7,34 +6,51 @@ import { useTheme } from '../theme';
 import { T, Card } from '../ui';
 import { ChartIcon } from '../icons';
 import { moodEmoji } from '../data';
+import { deriveInsights } from '../insights/derive';
 
-const STATS = [
-  { label: 'Current streak', value: '4', unit: 'days' },
-  { label: 'Longest streak', value: '21', unit: 'days' },
-  { label: 'Days kept', value: '47', unit: 'total' },
-  { label: 'This month', value: '12', unit: 'entries' },
-];
-
-const MOOD_MIX = [
-  { m: 'Tender', n: 9 },
-  { m: 'Proud', n: 7 },
-  { m: 'Grateful', n: 6 },
-  { m: 'Restless', n: 5 },
-  { m: 'Tired', n: 4 },
-  { m: 'Hopeful', n: 3 },
-];
-
-// entries written on each weekday (Mon..Sun)
-const RHYTHM = [
-  { l: 'M', n: 6 }, { l: 'T', n: 5 }, { l: 'W', n: 7 }, { l: 'T', n: 6 },
-  { l: 'F', n: 8 }, { l: 'S', n: 9 }, { l: 'S', n: 7 },
-];
-
-export default function InsightsScreen({ copy }) {
+export default function InsightsScreen({ copy, entries = [], streak = 0 }) {
   const t = useTheme();
   const c = t.colors;
-  const moodMax = Math.max(...MOOD_MIX.map((x) => x.n));
-  const rhythmMax = Math.max(...RHYTHM.map((x) => x.n));
+
+  const data = deriveInsights(entries, streak);
+
+  if (data.empty) {
+    return (
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingTop: 8, paddingBottom: 26, gap: 18 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={{ paddingHorizontal: 20, paddingTop: 6, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <View>
+            <T d w={800} color={c.ink} style={{ fontSize: 24 }}>Insights</T>
+            <T w={600} color={c.muted} style={{ fontSize: 14, marginTop: 2 }}>The shape of your days so far.</T>
+          </View>
+          <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
+            <ChartIcon size={22} color={c.accentDeep} />
+          </View>
+        </View>
+        <View style={{ paddingHorizontal: 20 }}>
+          <Card style={{ padding: 24, alignItems: 'center' }}>
+            <T w={600} color={c.muted} style={{ fontSize: 15, textAlign: 'center', lineHeight: 22 }}>
+              No insights yet — write your first reflection and the shape of your days will appear here.
+            </T>
+          </Card>
+        </View>
+      </ScrollView>
+    );
+  }
+
+  const { stats, moodMix, rhythm, peakWeekday } = data;
+  const moodMax = moodMix.length ? Math.max(...moodMix.map((x) => x.n)) : 1;
+  const rhythmMax = Math.max(1, ...rhythm.map((x) => x.n));
+
+  const STATS = [
+    { label: 'Current streak', value: String(stats.currentStreak), unit: 'days' },
+    { label: 'Longest streak', value: String(stats.longestStreak), unit: 'days' },
+    { label: 'Days kept', value: String(stats.daysKept), unit: 'total' },
+    { label: 'This month', value: String(stats.thisMonth), unit: 'entries' },
+  ];
 
   return (
     <ScrollView
@@ -74,23 +90,27 @@ export default function InsightsScreen({ copy }) {
       <View style={{ paddingHorizontal: 20 }}>
         <Card style={{ padding: 18 }}>
           <T d w={700} color={c.ink} style={{ fontSize: 17, marginBottom: 16 }}>Mood mix</T>
-          <View style={{ gap: 13 }}>
-            {MOOD_MIX.map((x, i) => (
-              <View key={x.m} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                <View style={{ width: 84, flexDirection: 'row', alignItems: 'center', gap: 7 }}>
-                  <Text style={{ fontSize: 15 }}>{moodEmoji(x.m)}</Text>
-                  <T w={700} color={c.ink} style={{ fontSize: 13.5 }}>{x.m}</T>
+          {moodMix.length === 0 ? (
+            <T w={600} color={c.muted} style={{ fontSize: 14 }}>No moods logged yet.</T>
+          ) : (
+            <View style={{ gap: 13 }}>
+              {moodMix.map((x, i) => (
+                <View key={x.m} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  <View style={{ width: 84, flexDirection: 'row', alignItems: 'center', gap: 7 }}>
+                    <Text style={{ fontSize: 15 }}>{moodEmoji(x.m)}</Text>
+                    <T w={700} color={c.ink} style={{ fontSize: 13.5 }}>{x.m}</T>
+                  </View>
+                  <View style={{ flex: 1, height: 12, borderRadius: 999, backgroundColor: c.accentSoft, overflow: 'hidden' }}>
+                    <View style={{
+                      width: `${(x.n / moodMax) * 100}%`, height: '100%', borderRadius: 999,
+                      backgroundColor: c.accent, opacity: 1 - i * 0.1,
+                    }} />
+                  </View>
+                  <T w={700} color={c.muted} style={{ width: 18, fontSize: 12.5, textAlign: 'right' }}>{x.n}</T>
                 </View>
-                <View style={{ flex: 1, height: 12, borderRadius: 999, backgroundColor: c.accentSoft, overflow: 'hidden' }}>
-                  <View style={{
-                    width: `${(x.n / moodMax) * 100}%`, height: '100%', borderRadius: 999,
-                    backgroundColor: c.accent, opacity: 1 - i * 0.1,
-                  }} />
-                </View>
-                <T w={700} color={c.muted} style={{ width: 18, fontSize: 12.5, textAlign: 'right' }}>{x.n}</T>
-              </View>
-            ))}
-          </View>
+              ))}
+            </View>
+          )}
         </Card>
       </View>
 
@@ -99,11 +119,13 @@ export default function InsightsScreen({ copy }) {
         <Card style={{ padding: 18 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
             <T d w={700} color={c.ink} style={{ fontSize: 17 }}>Weekly rhythm</T>
-            <T w={700} color={c.muted} style={{ fontSize: 12.5 }}>Saturdays win</T>
+            {peakWeekday ? (
+              <T w={700} color={c.muted} style={{ fontSize: 12.5 }}>{peakWeekday}s win</T>
+            ) : null}
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', height: 120, gap: 8 }}>
-            {RHYTHM.map((d, i) => {
-              const peak = d.n === rhythmMax;
+            {rhythm.map((d, i) => {
+              const peak = d.n === rhythmMax && d.n > 0;
               return (
                 <View key={i} style={{ flex: 1, alignItems: 'center', gap: 8 }}>
                   <View style={{ flex: 1, width: '100%', justifyContent: 'flex-end' }}>

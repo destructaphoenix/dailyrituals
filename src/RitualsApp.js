@@ -229,7 +229,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   const screen = () => {
     switch (tab) {
       case 'insights':
-        return <InsightsScreen copy={copy} />;
+        return <InsightsScreen copy={copy} entries={entries} streak={streak} />;
       case 'archive':
         return <ArchiveScreen copy={copy} gamify={gamify} mode={mode} entries={entries} onOpen={(e) => setReading(e)} />;
       case 'you':
