@@ -1,4 +1,4 @@
-import { greetingFor, todayLabel } from '../../src/time/clock';
+import { greetingFor, todayLabel, entryDateParts } from '../../src/time/clock';
 
 describe('greetingFor', () => {
   it('returns Good morning before noon', () => {
@@ -24,5 +24,14 @@ describe('todayLabel', () => {
   });
   it('formats a Sunday correctly', () => {
     expect(todayLabel(new Date(2026, 4, 31))).toBe('Sunday, 31 May');
+  });
+});
+
+describe('entryDateParts', () => {
+  it('returns day, 3-letter month and full weekday', () => {
+    expect(entryDateParts(new Date(2026, 5, 7))).toEqual({ day: '7', mon: 'Jun', wd: 'Sunday' });
+  });
+  it('handles a two-digit day and end of month', () => {
+    expect(entryDateParts(new Date(2026, 4, 31))).toEqual({ day: '31', mon: 'May', wd: 'Sunday' });
   });
 });
