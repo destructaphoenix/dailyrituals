@@ -1,4 +1,8 @@
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
+
+const migrators = {
+  1: (data) => ({ ...data, entries: [], streak: 0, xp: 0, embers: 0, freezes: 0 }),
+};
 
 export const PERSISTED_KEYS = [
   'entries', 'streak', 'xp', 'done', 'quests', 'freezes', 'embers',
@@ -28,10 +32,13 @@ export function deserialize(raw) {
 }
 
 function migrate(parsed) {
-  const v = parsed.version || 0;
-  const data = parsed;
+  let v = parsed.version || 0;
+  let data = parsed;
   if (v > SCHEMA_VERSION) return null;
-  // while (v < SCHEMA_VERSION) { data = migrators[v](data); v += 1; }
+  while (v < SCHEMA_VERSION) {
+    if (migrators[v]) data = migrators[v](data);
+    v += 1;
+  }
   return { ...data, version: SCHEMA_VERSION };
 }
 

@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemeContext, makeTheme } from './theme';
 import { T } from './ui';
 import { HomeIcon, BookIcon, Pencil, ChartIcon, UserIcon } from './icons';
-import { COPY, SAMPLE_ENTRIES, BADGES, DAILY_QUESTS, ACHIEVEMENTS, STREAK_MILESTONES, SHOP_PALETTES, EMBER_GAIN, RENEW_DATE } from './data';
+import { COPY, BADGES, DAILY_QUESTS, ACHIEVEMENTS, STREAK_MILESTONES, SHOP_PALETTES, EMBER_GAIN, RENEW_DATE } from './data';
 import HomeScreen from './screens/HomeScreen';
 import ArchiveScreen from './screens/ArchiveScreen';
 import InsightsScreen from './screens/InsightsScreen';
@@ -53,16 +53,16 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   const [reading, setReading] = useState(null);
   const [celebrate, setCelebrate] = useState(null);
 
-  const [entries, setEntries] = useState(initialState.entries ?? SAMPLE_ENTRIES);
-  const [streak, setStreak] = useState(initialState.streak ?? 4);
-  const [xp, setXp] = useState(initialState.xp ?? 320);
+  const [entries, setEntries] = useState(initialState.entries ?? []);
+  const [streak, setStreak] = useState(initialState.streak ?? 0);
+  const [xp, setXp] = useState(initialState.xp ?? 0);
   const [done, setDone] = useState(initialState.done ?? false);
   const [quests, setQuests] = useState(initialState.quests ?? DAILY_QUESTS);
-  const [freezes, setFreezes] = useState(initialState.freezes ?? 2);
+  const [freezes, setFreezes] = useState(initialState.freezes ?? 0);
   const [showAch, setShowAch] = useState(false);
 
   // ── Shop / Plus / Embers economy ──
-  const [embers, setEmbers] = useState(initialState.embers ?? 360);
+  const [embers, setEmbers] = useState(initialState.embers ?? 0);
   const [plus, setPlus] = useState(initialState.plus ?? initialPlus);
   const [shopOpen, setShopOpen] = useState(false);
   const [getEmbersOpen, setGetEmbersOpen] = useState(false);

@@ -8,6 +8,7 @@ import { Sun, Moon, Check, Pencil, BADGE_ICON } from '../icons';
 import { RayFan, NightSky } from '../art';
 import { WEEK, BADGES, SAMPLE_ENTRIES } from '../data';
 import { greetingFor, todayLabel } from '../time/clock';
+import { streakSubtitle } from '../home/streakCopy';
 import { StreakFreeze, DailyQuests } from '../gamify';
 import { EmberPill } from '../shopui';
 
@@ -50,7 +51,7 @@ export default function HomeScreen({ copy, gamify, mode, streak, xp, xpMax, leve
             <View style={{ zIndex: 1, alignItems: 'center', marginTop: 13 }}>
               <T d w={800} color={c.accentDeep} style={{ fontSize: 76, lineHeight: 82, includeFontPadding: false, textAlign: 'center' }}>{streak}</T>
               <T d w={700} color={c.ink} style={[{ fontSize: 16, marginTop: 2 }, t.dark && streakShadow]}>day streak</T>
-              <T w={600} color={t.dark ? '#d8c7a8' : c.muted} style={[{ fontSize: 13, marginTop: 4 }, t.dark && streakShadow]}>Four days running — keep it tender.</T>
+              <T w={600} color={t.dark ? '#d8c7a8' : c.muted} style={[{ fontSize: 13, marginTop: 4 }, t.dark && streakShadow]}>{streakSubtitle(streak)}</T>
             </View>
             <View style={{ zIndex: 1, width: '100%', marginTop: 22 }}>
               <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 7 }}>
