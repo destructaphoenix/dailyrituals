@@ -1,7 +1,9 @@
-// screens/Onboarding.js — first-run / signup flow, mirrored from
-// rituals-onboarding.jsx. Step machine: intro → signup → personalize →
-// premium → (onDone hands off to the live app). The welcome is a swipe-card
-// carousel (real horizontal paging). Playful, obituary-wink voice.
+// screens/Onboarding.js — first-run flow, mirrored from
+// rituals-onboarding.jsx. Step machine: intro → personalize →
+// premium → (onDone hands off to the live app). The app stays local-only
+// (no accounts) — the cosmetic sign-in step was removed (IMP-005). The
+// welcome is a swipe-card carousel (real horizontal paging). Playful,
+// obituary-wink voice.
 
 import React, { useState, useRef } from 'react';
 import { View, ScrollView, Pressable, TextInput, Dimensions, Platform } from 'react-native';
@@ -44,9 +46,8 @@ export default function Onboarding({ settings, setSettings, onDone }) {
   return (
     <ThemeContext.Provider value={theme}>
       <View style={{ flex: 1, backgroundColor: theme.colors.cream, paddingTop: insets.top }}>
-        {step === 'intro' && <IntroSwipe onDone={() => setStep('signup')} onSkip={() => setStep('signup')} insets={insets} />}
-        {step === 'signup' && <SignUp onAuthed={() => setStep('personalize')} onBack={() => setStep('intro')} insets={insets} />}
-        {step === 'personalize' && <Personalize settings={settings} setSettings={setSettings} onDone={PLUS_ENABLED ? () => setStep('premium') : () => onDone(false)} onBack={() => setStep('signup')} insets={insets} />}
+        {step === 'intro' && <IntroSwipe onDone={() => setStep('personalize')} onSkip={() => setStep('personalize')} insets={insets} />}
+        {step === 'personalize' && <Personalize settings={settings} setSettings={setSettings} onDone={PLUS_ENABLED ? () => setStep('premium') : () => onDone(false)} onBack={() => setStep('intro')} insets={insets} />}
         {PLUS_ENABLED && step === 'premium' && <Premium onOpenPaywall={() => setPayOpen(true)} onSkip={() => onDone(false)} onBack={() => setStep('personalize')} insets={insets} />}
 
         {PLUS_ENABLED && payOpen && (
@@ -176,82 +177,6 @@ function IntroSwipe({ onDone, onSkip, insets }) {
         <PrimaryButton label={last ? 'Get started' : 'Next'} onPress={next}
           icon={last ? <Pencil size={19} color="#fff" /> : null} />
       </View>
-    </View>
-  );
-}
-
-// ── Sign up ──────────────────────────────────────────────────────────────────
-function AuthButton({ kind, label, onPress }) {
-  const t = React.useContext(ThemeContext);
-  const styleByKind = {
-    apple: { bg: '#1a1714', fg: '#fff', border: 'transparent', markBg: 'rgba(255,255,255,0.14)', markFg: '#fff', mark: '' },
-    google: { bg: t.colors.surface, fg: t.colors.ink, border: t.colors.border, markBg: t.colors.accentSoft, markFg: t.colors.accentDeep, mark: 'G' },
-    email: { bg: t.colors.accentSoft, fg: t.colors.accentDeep, border: 'transparent', markBg: 'rgba(217,119,6,0.16)', markFg: t.colors.accentDeep, mark: '@' },
-  }[kind];
-  return (
-    <Pressable onPress={onPress} style={({ pressed }) => ({
-      width: '100%', paddingVertical: 15, paddingHorizontal: 20, borderRadius: t.radius.btn,
-      flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
-      backgroundColor: styleByKind.bg, borderWidth: 1.5, borderColor: styleByKind.border,
-      transform: [{ scale: pressed ? 0.99 : 1 }],
-    })}>
-      {styleByKind.mark ? (
-        <View style={{ width: 20, height: 20, borderRadius: 5, alignItems: 'center', justifyContent: 'center', backgroundColor: styleByKind.markBg }}>
-          <T d w={800} color={styleByKind.markFg} style={{ fontSize: 13 }}>{styleByKind.mark}</T>
-        </View>
-      ) : null}
-      <T d w={700} color={styleByKind.fg} style={{ fontSize: 16 }}>{label}</T>
-    </Pressable>
-  );
-}
-
-function SignUp({ onAuthed, onBack, insets }) {
-  const t = React.useContext(ThemeContext);
-  const [emailOpen, setEmailOpen] = useState(false);
-  const [email, setEmail] = useState('');
-  const emailValid = /\S+@\S+\.\S+/.test(email);
-  return (
-    <View style={{ flex: 1 }}>
-      <TopChrome left={<BackBtn onPress={onBack} label="Back" />} />
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 28, paddingTop: 14, paddingBottom: 18 + insets.bottom }} keyboardShouldPersistTaps="handled">
-        <T d w={800} color={t.colors.ink} style={{ fontSize: 30, lineHeight: 33 }}>Make it yours.</T>
-        <T w={600} color={t.colors.muted} style={{ fontSize: 15.5, lineHeight: 23, marginTop: 9 }}>
-          Your graveyard, your rules. Sign in so your days follow you everywhere — and never anywhere else.
-        </T>
-
-        {!emailOpen ? (
-          <View style={{ gap: 12, marginTop: 30 }}>
-            <AuthButton kind="apple" label="Continue with Apple" onPress={onAuthed} />
-            <AuthButton kind="google" label="Continue with Google" onPress={onAuthed} />
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 6 }}>
-              <View style={{ flex: 1, height: 1, backgroundColor: t.colors.border }} />
-              <T w={700} color={t.colors.muted} style={{ fontSize: 12 }}>OR</T>
-              <View style={{ flex: 1, height: 1, backgroundColor: t.colors.border }} />
-            </View>
-            <AuthButton kind="email" label="Continue with email" onPress={() => setEmailOpen(true)} />
-          </View>
-        ) : (
-          <View style={{ marginTop: 28 }}>
-            <T d w={700} color={t.colors.accentDeep} style={{ fontSize: 14, marginBottom: 9 }}>Your email</T>
-            <TextInput
-              style={{ width: '100%', paddingVertical: 15, paddingHorizontal: 16, borderRadius: t.radius.btn, borderWidth: 1.5, borderColor: t.colors.border, backgroundColor: t.colors.surface, fontFamily: t.body(400), fontSize: 16, color: t.colors.ink }}
-              placeholder="you@somewhere.com" placeholderTextColor="#c3bcb0"
-              keyboardType="email-address" autoCapitalize="none" autoComplete="email"
-              value={email} onChangeText={setEmail}
-            />
-            <View style={{ marginTop: 22 }}>
-              <PrimaryButton label="Continue" disabled={!emailValid} onPress={onAuthed} />
-            </View>
-            <Pressable onPress={() => setEmailOpen(false)} style={{ marginTop: 14, alignItems: 'center' }}>
-              <T d w={700} color={t.colors.accentDeep} style={{ fontSize: 15 }}>Other options</T>
-            </Pressable>
-          </View>
-        )}
-
-        <T w={600} color={t.colors.muted} style={{ fontSize: 12.5, lineHeight: 19, marginTop: 18, textAlign: 'center' }}>
-          We'll never post anything. <T w={800} color={t.colors.ink} style={{ fontSize: 12.5 }}>Your reflections stay yours.</T>
-        </T>
-      </ScrollView>
     </View>
   );
 }
