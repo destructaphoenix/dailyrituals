@@ -158,6 +158,7 @@ Legend: ⬜ Not started · 🟡 In progress · ✅ Done · ⛔ Blocked
 | IMP-005 | Remove the cosmetic login/signup step from onboarding (app stays local-only, no accounts) | OTA | ✅ |
 | IMP-006 | Enable + verify Android Auto Backup (new-device restore, no login) | Build (rides v5) | 🟡 |
 | IMP-007 | 🔴 Streak no longer stacks on multiple same-day entries (reward once/day; same-day re-write edits) | OTA | ✅ |
+| IMP-008 | Real zero-state finish: derive level from XP (kill hardcoded Lv 3), calendar from real entries (kill fake HEAT), real entry dates (kill 31 May) | OTA | ⬜ design pending |
 
 ### Tasks
 _(Opus appends one block per issue, in priority order, using the template below. Sonnet works the first unchecked one.)_
@@ -307,6 +308,16 @@ _(Opus appends one block per issue, in priority order, using the template below.
 - **Acceptance (runtime walk):** Multiple entries on the same day never increase streak/XP/embers/entry-count beyond the first; the journal keeps one entry per day (re-write replaces it); a genuinely new calendar day still increments the streak by one.
 - **Ship after merge:** OTA-eligible (JS only). Rides the v5 bundle. (If v5 has already shipped by the time this lands, it can go out as a true OTA `eas update`.)
 - **Related follow-ups (NOT in this task — flagged):** real per-entry display dates (kill hardcoded `day:'31'`); pre-fill the editor with today's entry when re-writing so it tweaks rather than overwrites.
+
+### IMP-008 — Real zero-state finish (level + calendar + entry dates)   ·   Lane: OTA   ·   Status: ⬜ DESIGN PENDING
+- **Goal:** A new/low-activity user sees an honest profile: level reflects real XP (not a fake "Lv 3 · Contemplative"), the Archive calendar shows the user's *real* entries (empty for a fresh user, not the seeded demo grid), and journal entries are stamped with the real date (not "31 May / Saturday").
+- **Why / context (owner report 2026-06-07):** Even after IMP-004's zero-state, the app still shows level 3, a pre-filled calendar, and 31-May dates. Investigated — three independent HARDCODED leftovers, all confirmed in code:
+  1. **Level:** [`src/RitualsApp.js:38-39`](src/RitualsApp.js#L38-L39) `const LEVEL = 3; const LEVEL_NAME = 'Contemplative';` — passed to HomeScreen/YouScreen as `level`/`levelName`. NEVER derived from XP; there is **no level model anywhere** in the codebase. So it shows Lv 3 at any XP.
+  2. **Calendar:** [`src/data.js:127-136`](src/data.js#L127-L136) `HEAT` is a hardcoded 35-cell fake mood/skull array; ArchiveScreen's `<Heat />` ([`src/screens/ArchiveScreen.js:32,65`](src/screens/ArchiveScreen.js#L65)) renders that constant, NOT `entries`. Same fake calendar for everyone.
+  3. **Entry dates:** [`src/RitualsApp.js:210`](src/RitualsApp.js#L210) new entries built with `day:'31', mon:'May', wd:'Saturday'`; only `dayKey` is real. (This is the IMP-007 deferred follow-up.)
+- **DESIGN PENDING (brainstorm BEFORE implementing — do not free-code this):** #1 requires *inventing a level model* (XP→level thresholds + level names) since none exists — that's a product decision, not a mechanical fix. #2 (calendar from real entries) depends on #3 (entries carrying real dates) so the heatmap can place cells by date. Open questions for the brainstorm: level thresholds & names (or drop levels entirely?); calendar = full date-indexed heatmap vs simpler "last N days from entries"; entry date format (reuse `src/time/clock.js`).
+- **Sequencing:** This is the **inaugural ship through the new release pipeline** (owner decision 2026-06-07) — see [`docs/superpowers/specs/2026-06-07-streamlined-release-pipeline-design.md`](docs/superpowers/specs/2026-06-07-streamlined-release-pipeline-design.md). Build the pipeline first; then brainstorm IMP-008's design; then implement + ship it as the first `Release-Lane: ota`.
+- **Ship after merge:** OTA-eligible (all JS in `src/`). Reaches testers on v5+ only.
 
 <!-- TEMPLATE — Opus copies this per issue, fills it, adds a row to the table above, then hands the task to Sonnet:
 
