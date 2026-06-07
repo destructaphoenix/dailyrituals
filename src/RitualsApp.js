@@ -31,6 +31,7 @@ import { PLUS_ENABLED } from './billing/config';
 import { formatRenewDate } from './billing/format';
 import { saveState } from './persistence/storage';
 import { pickPersisted } from './persistence/state';
+import { applyCompletion } from './home/completeEntry';
 
 const XP_GAIN = 50;
 const XP_MAX = 500;
@@ -206,20 +207,21 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     subCanceled, activePlan, lastActiveDay, settings]);
 
   const complete = ({ did, wished, mood }) => {
-    const entry = { id: 'new' + Date.now(), day: '31', mon: 'May', wd: 'Saturday', mood, did, wished, streak: true };
-    setEntries((es) => [entry, ...es]);
-    const newStreak = streak + 1;
-    setStreak(newStreak);
-    setQuests((qs) => qs.map((q) => {
-      if (q.id === 'write') return { ...q, cur: q.goal };
-      if (q.id === 'feel' && mood) return { ...q, cur: q.goal };
-      return q;
-    }));
-    setXp((x) => Math.min(XP_MAX, x + XP_GAIN));
-    setEmbers((e) => e + EMBER_GAIN);
-    setDone(true);
+    const entry = { id: 'new' + Date.now(), day: '31', mon: 'May', wd: 'Saturday', dayKey: todayKey(), mood, did, wished, streak: true };
+    const next = applyCompletion(
+      { entries, streak, xp, embers, done, quests },
+      entry,
+      { config: { XP_GAIN, EMBER_GAIN, XP_MAX, milestones: STREAK_MILESTONES } }
+    );
+    setEntries(next.entries);
+    setStreak(next.streak);
+    setXp(next.xp);
+    setEmbers(next.embers);
+    setQuests(next.quests);
+    setDone(next.done);
     setWriting(false);
-    setCelebrate({ streak: newStreak, xp: XP_GAIN, embers: EMBER_GAIN, milestone: STREAK_MILESTONES[newStreak] || null });
+    if (next.celebrate) setCelebrate(next.celebrate);
+    else showToast("Today's reflection updated");
   };
 
   const screen = () => {
@@ -271,7 +273,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
           {/* center FAB */}
           <View style={{ width: 72, alignItems: 'center' }}>
             <Pressable
-              onPress={() => { setDone(false); setWriting(true); }}
+              onPress={() => setWriting(true)}
               style={({ pressed }) => [
                 styles.fab,
                 { backgroundColor: c.accent, borderColor: c.cream, transform: [{ scale: pressed ? 0.93 : 1 }] },
