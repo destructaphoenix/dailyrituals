@@ -6,9 +6,10 @@ import { useTheme } from '../theme';
 import { T, Card, PrimaryButton, ProgressBar } from '../ui';
 import { Sun, Moon, Check, Pencil, BADGE_ICON } from '../icons';
 import { RayFan, NightSky } from '../art';
-import { WEEK, BADGES, SAMPLE_ENTRIES } from '../data';
+import { BADGES, SAMPLE_ENTRIES } from '../data';
 import { greetingFor, todayLabel } from '../time/clock';
 import { streakSubtitle } from '../home/streakCopy';
+import { buildWeekStrip } from '../home/calendar';
 import { StreakFreeze, DailyQuests } from '../gamify';
 import { EmberPill } from '../shopui';
 
@@ -17,6 +18,7 @@ export default function HomeScreen({ copy, gamify, mode, streak, level, levelNam
   const c = t.colors;
   const Orb = mode === 'night' ? Moon : Sun;
   const greeting = greetingFor();
+  const week = buildWeekStrip(entries || []);
   const streakShadow = { textShadowColor: 'rgba(0,0,0,0.7)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 10 };
 
   return (
@@ -77,7 +79,7 @@ export default function HomeScreen({ copy, gamify, mode, streak, level, levelNam
         <View style={{ paddingHorizontal: 20 }}>
           <Card style={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 14 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              {WEEK.map((d, i) => {
+              {week.map((d, i) => {
                 const isDone = d.state === 'done' || (d.state === 'today' && done);
                 return (
                   <View key={i} style={{ flex: 1, alignItems: 'center', gap: 7 }}>
@@ -85,7 +87,6 @@ export default function HomeScreen({ copy, gamify, mode, streak, level, levelNam
                     <Dot state={d.state} done={done} mode={mode}>
                       {isDone && <Check size={18} color="#fff" />}
                       {d.state === 'today' && !done && <Orb size={17} color={c.accentDeep} />}
-                      {d.state === 'miss' && <Text style={{ fontSize: 17, lineHeight: 21 }}>💀</Text>}
                     </Dot>
                   </View>
                 );
