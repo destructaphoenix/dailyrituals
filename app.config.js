@@ -54,8 +54,8 @@ module.exports = {
     extra: {
       rcIosKey: process.env.RC_IOS_KEY || '',
       rcAndroidKey: process.env.RC_ANDROID_KEY || '',
-      termsUrl: process.env.TERMS_URL || '',
-      privacyUrl: process.env.PRIVACY_URL || '',
+      termsUrl: process.env.TERMS_URL || 'https://destructaphoenix.github.io/dailyrituals-website.github.io/terms.html',
+      privacyUrl: process.env.PRIVACY_URL || 'https://destructaphoenix.github.io/dailyrituals-website.github.io/privacy.html',
       eas: { projectId: '1a0f9b15-cb1a-4cec-9577-3cd66e9f1d36' },
     },
   },
