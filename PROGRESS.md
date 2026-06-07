@@ -472,6 +472,24 @@ _2026-06-07 — Prep for the first improvements build (v5) + fixed a fingerprint
 
 ---
 
+## 🤖 Release rules (Opus/Sonnet — how shipping works now)
+
+Shipping is automated (GitHub Actions + one-tap owner approval). **Agents NEVER run `eas` commands and never hand-edit version numbers.** To ship a finished, shippable change:
+
+1. **Pick the lane:**
+   - **OTA** — only files under `src/` changed (JS / UI / copy / logic).
+   - **BUILD** — any native-affecting file changed: `app.config.js`, `package.json`, `package-lock.json`, `eas.json`, `babel.config.js`, `assets/`, or a new native dep / permission / SDK / target.
+2. **BUILD lane only — bump versions with the scripts (never by hand):**
+   - `npm run bump:build` — native/config change that is runtime-compatible → `versionCode +1`.
+   - `npm run bump:native` — native change affecting runtime/OTA compatibility → `version` patch +1 **and** `versionCode +1`. **When unsure, use `bump:native`** (safer; scopes OTA to compatible builds).
+3. **Tag the final commit** of the shippable unit with the trailer as the last line(s) of the commit message, exactly:
+   - `Release-Lane: ota`  — or —  `Release-Lane: build`
+   (Putting it on the PROGRESS.md closeout commit is fine; CI reads the trailer from HEAD and diffs the whole push.)
+4. **Push `main`.** CI runs the test gate, then waits for the owner's one-tap approval, then ships: OTA (`eas update`) or build + auto-submit to closed testing (`alpha` track).
+5. **No trailer = nothing ships** — safe for work-in-progress pushes.
+
+Guardrails: a commit tagged `ota` that touched native files is auto-rejected by CI's backstop (re-tag as `build`). OTA reaches testers on **v5+** only. Rollback: owner runs the **Rollback OTA** workflow (Actions tab). Owner one-time setup (tokens/secrets/approval environment) is in the pipeline plan, [`docs/superpowers/plans/2026-06-07-streamlined-release-pipeline.md`](docs/superpowers/plans/2026-06-07-streamlined-release-pipeline.md), Task 8.
+
 ## 🚀 Update workflow (post-launch) — which lane to use
 
 Two ways to ship a change. **Pick by what changed:**

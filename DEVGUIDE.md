@@ -13,9 +13,10 @@ If you remember nothing else: **`PROGRESS.md` is the memory between chats.** The
 
 > Sonnet has **no memory** of previous chats. It only knows what's in the repo. So the breadcrumb left in `PROGRESS.md` at the end of one chat is the *only* thing the next chat can rely on.
 
-Two non-negotiables baked into the prompts below:
+Three non-negotiables baked into the prompts below:
 1. **Every chat begins by reading `PROGRESS.md` + the plan.** (Self-update.)
 2. **Every chat ends by writing the "Last session note" + ticking checkboxes**, *especially* if it stops mid-task because credits ran out.
+3. **Shipping is automated** — when a change is ready to ship, follow the **"🤖 Release rules"** section in `PROGRESS.md` (pick lane → `npm run bump:*` if build → `Release-Lane:` trailer → push). Never run `eas` by hand.
 
 ---
 
