@@ -3,7 +3,7 @@
 // twinkle, confetti) are re-expressed with the RN Animated API.
 
 import React, { useEffect, useRef, useMemo } from 'react';
-import { Animated, Easing, View } from 'react-native';
+import { Animated, Easing, View, StyleSheet } from 'react-native';
 import Svg, { Circle, Line, G, Defs, RadialGradient, Stop, ClipPath, Path } from 'react-native-svg';
 import { useTheme } from './theme';
 
