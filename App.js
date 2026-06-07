@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import { View, ActivityIndicator, Platform } from 'react-native';
 import { RC_KEYS } from './src/billing/config';
 import { isBillingConfigured } from './src/billing';
-import { loadState } from './src/persistence/storage';
+import { loadState, clearState } from './src/persistence/storage';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -62,6 +62,15 @@ export default function App() {
     );
   }
 
+  const handleResetData = async () => {
+    await clearState();
+    setSettings(DEFAULT_SETTINGS);
+    setMode('day');
+    setStartedPlus(false);
+    setHydrated({});
+    setOnboarded(false);
+  };
+
   const dark = mode === 'night';
 
   // First-run / signup flow hands off to the live app on completion.
@@ -84,6 +93,7 @@ export default function App() {
         onToggleMode={() => setMode(dark ? 'day' : 'night')}
         initialPlus={startedPlus}
         initialState={hydrated}
+        onResetData={handleResetData}
       />
     </SafeAreaProvider>
   );

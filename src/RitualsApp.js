@@ -39,7 +39,7 @@ const XP_GAIN = 50;
 const PLATFORM = Platform.OS === 'android' ? 'android' : 'ios';
 const todayKey = () => new Date().toISOString().slice(0, 10);
 
-export default function RitualsApp({ mode = 'day', settings, setSettings, onToggleMode, initialPlus = false, initialState = {} }) {
+export default function RitualsApp({ mode = 'day', settings, setSettings, onToggleMode, initialPlus = false, initialState = {}, onResetData }) {
   const theme = useMemo(() => makeTheme(mode, settings), [mode, settings]);
   const c = theme.colors;
   const safe = useSafeAreaInsets();
@@ -243,6 +243,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             onOpenPaywall={PLUS_ENABLED ? () => setPaywall(true) : () => {}}
             onOpenManage={PLUS_ENABLED ? () => setManageOpen(true) : () => {}}
             onOpenAchievements={() => setShowAch(true)}
+            onResetData={onResetData}
           />
         );
       case 'today':

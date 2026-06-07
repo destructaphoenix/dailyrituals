@@ -2,17 +2,17 @@
 // Gamification rows drive real app state (passed down from App.js).
 
 import React from 'react';
-import { View, ScrollView, Pressable, Switch } from 'react-native';
+import { View, ScrollView, Pressable, Switch, Alert } from 'react-native';
 import { useTheme } from '../theme';
 import { T, Card, ProgressBar } from '../ui';
-import { Bell, Contrast, Pencil, Diamond, Download, Info, Chevron, Sun, Moon, Bag, Ember } from '../icons';
+import { Bell, Contrast, Pencil, Diamond, Download, Info, Chevron, Sun, Moon, Bag, Ember, Restore } from '../icons';
 import { PlusBanner } from '../shopui';
 import { profileIdentity } from '../profile/identity';
 
 export default function YouScreen({
   mode, onToggleMode, settings, setSettings,
   streak, level, levelName, xpInto, xpToNext, entriesCount, badgesEarned, onOpenAchievements,
-  embers, plus, onOpenShop, onOpenPaywall, onOpenManage, plusEnabled = true,
+  embers, plus, onOpenShop, onOpenPaywall, onOpenManage, plusEnabled = true, onResetData,
 }) {
   const t = useTheme();
   const c = t.colors;
@@ -20,6 +20,16 @@ export default function YouScreen({
 
   const { display, initial } = profileIdentity(settings.name);
   const setTone = () => setSettings((s) => ({ ...s, tone: s.tone === 'gentle' ? 'playful' : 'gentle' }));
+  const confirmReset = () => {
+    Alert.alert(
+      'Reset all data',
+      'This will erase your journal, streak, XP, and settings. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Reset', style: 'destructive', onPress: onResetData },
+      ]
+    );
+  };
   const setGamify = (v) => setSettings((s) => ({ ...s, gamify: v }));
 
   return (
@@ -134,13 +144,20 @@ export default function YouScreen({
           <Divider />
           <Row icon={<Info size={20} color={c.accentDeep} />} label="About Daily Rituals"
             value="v1.0" onPress={() => {}} />
+          {onResetData && (
+            <>
+              <Divider />
+              <Row icon={<Restore size={20} color="#ef4444" />} label="Reset all data"
+                labelColor="#ef4444" onPress={confirmReset} />
+            </>
+          )}
         </Card>
       </View>
     </ScrollView>
   );
 }
 
-function Row({ icon, label, value, right, onPress }) {
+function Row({ icon, label, labelColor, value, right, onPress }) {
   const t = useTheme();
   const c = t.colors;
   return (
@@ -152,7 +169,7 @@ function Row({ icon, label, value, right, onPress }) {
       <View style={{ width: 36, height: 36, borderRadius: 11, backgroundColor: c.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
         {icon}
       </View>
-      <T w={700} color={c.ink} style={{ flex: 1, fontSize: 15.5 }}>{label}</T>
+      <T w={700} color={labelColor || c.ink} style={{ flex: 1, fontSize: 15.5 }}>{label}</T>
       {right || (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
           {value ? <T w={700} color={c.muted} style={{ fontSize: 14 }}>{value}</T> : null}
