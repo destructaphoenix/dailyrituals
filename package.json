@@ -8,6 +8,8 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "test": "jest --passWithNoTests",
+    "bump:build": "node scripts/bump-version.js build",
+    "bump:native": "node scripts/bump-version.js native",
     "postinstall": "node -e \"const fs=require('fs'),f='node_modules/expo-modules-core/android/src/main/java/expo/modules/adapters/react/permissions/PermissionsService.kt';try{let c=fs.readFileSync(f,'utf8');c=c.replace('return requestedPermissions.contains(permission)','return requestedPermissions?.contains(permission) ?: false');fs.writeFileSync(f,c);console.log('patch: expo-modules-core PermissionsService null-safety ok')}catch(e){}\""
   },
   "jest": {
