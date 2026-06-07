@@ -23,6 +23,11 @@ module.exports = {
       },
       package: 'app.dailyrituals.mobile',
       versionCode: 4,
+      // Android Auto Backup: user's local data (journal/streak/settings) backs
+      // up to their own Google Drive and restores on a new/reinstalled device —
+      // no accounts, no login. Explicit so it can't silently regress if Expo's
+      // default ever changes. See IMP-006.
+      allowBackup: true,
     },
     plugins: [
       'expo-dev-client',
