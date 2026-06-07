@@ -7,7 +7,7 @@
 //
 // `prev`  = { entries, streak, xp, embers, done, quests }
 // `entry` = the fully-built new entry object (must carry a `dayKey`)
-// `opts`  = { config: { XP_GAIN, EMBER_GAIN, XP_MAX, milestones } }
+// `opts`  = { config: { XP_GAIN, EMBER_GAIN, milestones } }
 //
 // Returns a new slice { entries, streak, xp, embers, done, quests, celebrate, rewarded }.
 export function applyCompletion(prev, entry, { config }) {
@@ -27,7 +27,7 @@ export function applyCompletion(prev, entry, { config }) {
   }
 
   const streak = prev.streak + 1;
-  const xp = Math.min(config.XP_MAX, prev.xp + config.XP_GAIN);
+  const xp = prev.xp + config.XP_GAIN;
   const embers = prev.embers + config.EMBER_GAIN;
   const quests = prev.quests.map((q) => {
     if (q.id === 'write') return { ...q, cur: q.goal };

@@ -3,7 +3,6 @@ import { applyCompletion } from '../../src/home/completeEntry';
 const config = {
   XP_GAIN: 50,
   EMBER_GAIN: 15,
-  XP_MAX: 500,
   milestones: { 7: 'Seven Suns' },
 };
 
@@ -52,9 +51,9 @@ describe('applyCompletion', () => {
       expect(next.celebrate.milestone).toBeNull();
     });
 
-    test('xp is capped at XP_MAX', () => {
+    test('xp accumulates uncapped (no XP_MAX ceiling)', () => {
       const next = applyCompletion({ ...prev, xp: 480 }, makeEntry(), { config });
-      expect(next.xp).toBe(500);
+      expect(next.xp).toBe(530);
     });
 
     test('feel quest completes only when entry.mood is set', () => {
