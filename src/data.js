@@ -55,14 +55,6 @@ export const moodEmoji = (m) => MOOD_EMOJI[m] || '';
 // A missed day is marked with a skull, both on the week strip and the calendar.
 export const MISS_EMOJI = '💀';
 
-// week strip — Mon..Sun, today = Sat (idx 5). Monday was skipped (a "miss");
-// the run rebuilt Tue–Fri, today still open.
-export const WEEK = [
-  { l: 'M', state: 'miss' }, { l: 'T', state: 'done' }, { l: 'W', state: 'done' },
-  { l: 'T', state: 'done' }, { l: 'F', state: 'done' }, { l: 'S', state: 'today' },
-  { l: 'S', state: 'future' },
-];
-
 export const BADGES = [
   { id: 'firstlight', label: 'First Light', icon: 'sunrise', earned: true },
   { id: 'seven', label: 'Seven Suns', icon: 'sun', earned: true },
@@ -121,19 +113,6 @@ export const SAMPLE_ENTRIES = [
     wished: 'I had gone to bed an hour earlier instead of chasing a second wind that never came.',
   },
 ];
-
-// 35-cell calendar (5 weeks). Days with an entry carry a mood (→ emoji);
-// the rest are misses (→ skull). The last filled cell is today.
-export const HEAT = (() => {
-  const base = [1,2,2,3,1,0,1, 2,3,1,2,2,3,1, 0,1,3,2,1,2,3, 1,2,2,3,3,1,2, 3,2,3,2,1,3,2];
-  const cycle = ['Tender', 'Proud', 'Grateful', 'Hopeful', 'Restless', 'Tired', 'Light', 'Heavy'];
-  let k = 0;
-  return base.map((lvl, i) => {
-    if (lvl === 0) return { empty: true, today: false };
-    const mood = cycle[k++ % cycle.length];
-    return { mood, emoji: MOOD_EMOJI[mood], today: i === 33 };
-  });
-})();
 
 // ── Shop / economy ───────────────────────────────────────────────────────────
 // Mirrors rituals-shop.jsx. Embers are the soft currency; Plus is the sub.
