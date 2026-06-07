@@ -26,12 +26,15 @@ jobs:
 
       - name: OTA native-change backstop
         if: steps.detect.outputs.lane == 'ota'
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+          AFTER_SHA: ${{ github.event.after }}
         run: |
-          BEFORE='${{ github.event.before }}'
+          BEFORE="$BEFORE_SHA"
           if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
             BEFORE=$(git rev-parse HEAD~1)
           fi
-          CHANGED=$(git diff --name-only "$BEFORE" '${{ github.event.after }}')
+          CHANGED=$(git diff --name-only "$BEFORE" "$AFTER_SHA")
           echo "Changed files:"; echo "$CHANGED"
           if echo "$CHANGED" | grep -E '^(app\.config\.js|package\.json|package-lock\.json|eas\.json|babel\.config\.js|assets/)'; then
             echo "::error::Release-Lane is 'ota' but native-affecting files changed. Re-tag the commit as 'Release-Lane: build'."
