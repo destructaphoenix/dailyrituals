@@ -157,6 +157,7 @@ Legend: ⬜ Not started · 🟡 In progress · ✅ Done · ⛔ Blocked
 | IMP-004 | New-user zero-state + v1→v2 migration (existing testers auto-cleaned on update, no reset); dynamic streak subtitle | OTA (ships in v5) | ✅ |
 | IMP-005 | Remove the cosmetic login/signup step from onboarding (app stays local-only, no accounts) | OTA | ✅ |
 | IMP-006 | Enable + verify Android Auto Backup (new-device restore, no login) | Build (rides v5) | 🟡 |
+| IMP-007 | 🔴 Streak no longer stacks on multiple same-day entries (reward once/day; same-day re-write edits) | OTA | ⬜ |
 
 ### Tasks
 _(Opus appends one block per issue, in priority order, using the template below. Sonnet works the first unchecked one.)_
@@ -281,6 +282,31 @@ _(Opus appends one block per issue, in priority order, using the template below.
 - **Commit:** `build(android): enable Android Auto Backup explicitly (new-device restore, no login)`
 - **Acceptance (runtime walk):** After forcing a backup, uninstalling, and reinstalling on a backup-enabled device/account, the journal + streak + settings restore automatically with no sign-in. (If the device has backup disabled or no Google account, restore won't happen — that's expected OS behavior, not a bug.)
 - **Ship after merge:** Rides the **v5 full build** (it's a manifest/native change — not OTA-eligible — but v5 is already a full build, so no extra build needed). Ensure the v5 `versionCode` bump covers it. Known limits to set expectations: ~daily backup cadence (Wi-Fi/charging/idle, so the most recent entries may not be captured before a loss); restore only on reinstall/new-device setup; Android-only (iOS gets its own iCloud mechanism in Phase 11); not live multi-device sync.
+
+### IMP-007 — 🔴 Streak stops stacking on multiple same-day entries   ·   Lane: OTA   ·   Status: ⬜
+- **Goal:** Completing the daily ritual **rewards once per calendar day** — streak +1, XP, and embers apply only on the FIRST entry of the day. Writing again the same day **edits** that day's entry (no duplicate, no extra streak/XP/embers/entry-count). Different *real* days still build the streak normally.
+- **Why / context (CRITICAL bug):** Owner found that adding multiple entries the same day keeps bumping the streak. Two compounding causes, both in `src/RitualsApp.js`: (1) the center Write **FAB** does `onPress={() => { setDone(false); setWriting(true); }}` (~line 274) — it wipes the "already done today" flag on every tap; (2) `complete` (~lines 208–223) does `streak + 1`, `+XP_GAIN`, `+EMBER_GAIN` unconditionally, never checking `done`. There's already a `done` flag with a midnight daily-reset (~lines 184–192) — it's the correct guard; the code just defeats it. The HomeScreen CTA (`onWrite`, ~line 252) does NOT clear `done` — only the FAB does.
+- **Files touched:** `src/home/completeEntry.js` (new) + `__tests__/home/completeEntry.test.js` (new), `src/RitualsApp.js`.
+- **Approach (decided by Opus — do not re-litigate):**
+  - Extract the reward/dedup decision into a **pure, tested helper** `applyCompletion(prev, entry, opts)` (matches the codebase's pure-helper pattern; gives this critical bug real test coverage). 
+    - `prev` = `{ entries, streak, xp, embers, done, quests }`; `entry` = the fully-built new entry object (must carry a `dayKey`); `opts` = `{ config: { XP_GAIN, EMBER_GAIN, XP_MAX, milestones } }`.
+    - **If `prev.done` is true (already completed today):** treat as an EDIT — `entries = [entry, ...prev.entries.filter(e => e.dayKey !== entry.dayKey)]` (replace today's, no duplicate); return streak/xp/embers/done **unchanged**, `quests` unchanged, `celebrate: null`, `rewarded: false`.
+    - **If `prev.done` is false (first today):** `streak = prev.streak + 1`; `xp = Math.min(config.XP_MAX, prev.xp + config.XP_GAIN)`; `embers = prev.embers + config.EMBER_GAIN`; update `quests` (write→goal, feel→goal if `entry.mood`); `entries = [entry, ...prev.entries]`; `done = true`; `celebrate = { streak, xp: config.XP_GAIN, embers: config.EMBER_GAIN, milestone: config.milestones[streak] || null }`; `rewarded: true`.
+  - **Fix the FAB:** change its `onPress` to just `() => setWriting(true)` (remove `setDone(false)`). The FAB still lets the user write again — it just won't re-arm the reward.
+  - **Rewire `complete`:** build the entry with `dayKey: todayKey()` (already imported, ~line 40), call `applyCompletion`, apply the returned slice via the setters, then: if `next.celebrate` → `setCelebrate(next.celebrate)`, else → `showToast("Today's reflection updated")`. Keep `setWriting(false)`.
+  - **Keep the entry's display-date fields (`day: '31', mon: 'May', wd: 'Saturday'`) exactly as they are** — that hardcoded-date bug is OUT OF SCOPE here (it needs the Archive/Reading screens + clock helper). Just ADD `dayKey` alongside them. Tracked separately as a follow-up (real entry dates).
+- **TDD:** Yes — write `__tests__/home/completeEntry.test.js` FIRST (RED), then implement the helper.
+- **Steps:**
+  - [ ] 1. **(RED)** Create `__tests__/home/completeEntry.test.js` covering: (a) first-of-day (`done:false`) → `rewarded:true`, `streak` +1, `xp` increased (and capped at `XP_MAX` when near the cap), `embers` increased, `done:true`, entry prepended, `celebrate` set with the right gains + milestone lookup; (b) same-day re-write (`done:true`) → `rewarded:false`, `streak`/`xp`/`embers`/`done` unchanged, the entry with the same `dayKey` is replaced (entries length does NOT grow), `celebrate:null`; (c) `feel` quest only completes when `entry.mood` is set. Use a fixed `config` and prebuilt `entry` objects (no `Date` dependency). Run `npm test` → fails.
+  - [ ] 2. **(GREEN)** Create `src/home/completeEntry.js` exporting `applyCompletion` per the Approach. Run `npm test` → passes.
+  - [ ] 3. In `src/RitualsApp.js`: remove `setDone(false)` from the Write FAB `onPress` (~line 274).
+  - [ ] 4. In `src/RitualsApp.js`: rewire `complete` to build the entry with `dayKey: todayKey()`, call `applyCompletion`, apply the result with the existing setters, and branch celebration-vs-toast as described. Remove the old unconditional `streak + 1`/XP/embers lines.
+  - [ ] 5. Verify in Expo Go: write today → streak +1, celebration shows. Tap the Write FAB and submit again the SAME day → streak/XP/embers/"kept" count do NOT change, only a "reflection updated" toast, and the journal still shows ONE entry for today (not two). (Optional: simulate a new day by changing `lastActiveDay`/device clock → next entry bumps streak again.)
+  - [ ] 6. `npm test` green (prior count + new completeEntry cases).
+- **Commit:** `fix(streak): reward only the first entry each day; same-day re-write edits instead of stacking`
+- **Acceptance (runtime walk):** Multiple entries on the same day never increase streak/XP/embers/entry-count beyond the first; the journal keeps one entry per day (re-write replaces it); a genuinely new calendar day still increments the streak by one.
+- **Ship after merge:** OTA-eligible (JS only). Rides the v5 bundle. (If v5 has already shipped by the time this lands, it can go out as a true OTA `eas update`.)
+- **Related follow-ups (NOT in this task — flagged):** real per-entry display dates (kill hardcoded `day:'31'`); pre-fill the editor with today's entry when re-writing so it tweaks rather than overwrites.
 
 <!-- TEMPLATE — Opus copies this per issue, fills it, adds a row to the table above, then hands the task to Sonnet:
 
