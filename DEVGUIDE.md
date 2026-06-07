@@ -55,6 +55,16 @@ STEP 4 — Close out (CRITICAL — do this even if you're low on credits):
   its result, and the EXACT next step (file + step number) for the next chat.
 - If you stopped mid-task, say which step number you completed last and which is next.
 - Commit PROGRESS.md.
+
+STEP 5 — Ship (only if I asked you to release this change):
+- Follow the "🤖 Release rules" section in PROGRESS.md. In short:
+  - BUILD lane (native change)? First run `npm run bump:build` (or `npm run bump:native`
+    if runtime/OTA compatibility changed). OTA lane (JS/UI/copy/logic only)? No bump.
+  - Make the FINAL commit's last line the trailer — exactly `Release-Lane: ota` or
+    `Release-Lane: build` — and `git push origin main`.
+  - NEVER run `eas` yourself. Pushing the tagged commit is what ships it; GitHub Actions
+    runs the tests and waits for MY one-tap approval. No trailer = nothing ships (fine for WIP).
+- If I did NOT ask to release, just leave it committed (no trailer) — do not push to ship.
 ```
 
 > **Why "STOP and wait for go" in Step 2?** It lets you sanity-check that Sonnet picked the right place *before* it burns credits doing work. If it's obviously right, just reply `go`.
@@ -150,7 +160,7 @@ This guarantees the next chat (Prompt 3) can pick up cleanly.
 | Verify a finished phase | **Prompt 4** | Read-only checks, no feature code |
 | Running out of credits now | the snippet above | Stop cleanly, leave a precise breadcrumb |
 
-**Golden loop:** `Read PROGRESS.md + plan` → `do exactly one task` → `commit` → `update PROGRESS.md` → end chat. Repeat in a fresh chat.
+**Golden loop:** `Read PROGRESS.md + plan` → `do exactly one task` → `commit` → `update PROGRESS.md` → `ship if asked (Release-Lane: trailer + push; never run eas)` → end chat. Repeat in a fresh chat.
 
 ---
 
