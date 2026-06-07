@@ -34,11 +34,10 @@ import { formatRenewDate } from './billing/format';
 import { saveState } from './persistence/storage';
 import { pickPersisted } from './persistence/state';
 import { applyCompletion } from './home/completeEntry';
+import { levelFromXp } from './profile/level';
+import { entryDateParts } from './time/clock';
 
 const XP_GAIN = 50;
-const XP_MAX = 500;
-const LEVEL = 3;
-const LEVEL_NAME = 'Contemplative';
 const PLATFORM = Platform.OS === 'android' ? 'android' : 'ios';
 const todayKey = () => new Date().toISOString().slice(0, 10);
 
@@ -63,6 +62,9 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   const [quests, setQuests] = useState(initialState.quests ?? DAILY_QUESTS);
   const [freezes, setFreezes] = useState(initialState.freezes ?? 0);
   const [showAch, setShowAch] = useState(false);
+
+  // Live level derived from total XP (no hardcoded level).
+  const { level, name: levelName, into: xpInto, toNext: xpToNext } = levelFromXp(xp);
 
   // ── Shop / Plus / Embers economy ──
   const [embers, setEmbers] = useState(initialState.embers ?? 0);
@@ -209,11 +211,11 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     subCanceled, activePlan, lastActiveDay, settings]);
 
   const complete = ({ did, wished, mood }) => {
-    const entry = { id: 'new' + Date.now(), day: '31', mon: 'May', wd: 'Saturday', dayKey: todayKey(), mood, did, wished, streak: true };
+    const entry = { id: 'new' + Date.now(), ...entryDateParts(), dayKey: todayKey(), mood, did, wished, streak: true };
     const next = applyCompletion(
       { entries, streak, xp, embers, done, quests },
       entry,
-      { config: { XP_GAIN, EMBER_GAIN, XP_MAX, milestones: STREAK_MILESTONES } }
+      { config: { XP_GAIN, EMBER_GAIN, milestones: STREAK_MILESTONES } }
     );
     setEntries(next.entries);
     setStreak(next.streak);
@@ -236,7 +238,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
         return (
           <YouScreen
             mode={mode} onToggleMode={onToggleMode} settings={settings} setSettings={setSettings}
-            streak={streak} xp={xp} xpMax={XP_MAX} level={LEVEL} levelName={LEVEL_NAME}
+            streak={streak} level={level} levelName={levelName} xpInto={xpInto} xpToNext={xpToNext}
             entriesCount={entries.length} badgesEarned={ACHIEVEMENTS.filter((b) => b.cur >= b.goal).length}
             embers={embers} plus={plus} onOpenShop={() => setShopOpen(true)}
             plusEnabled={PLUS_ENABLED}
@@ -250,7 +252,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
         return (
           <HomeScreen
             copy={copy} gamify={gamify} mode={mode}
-            streak={streak} xp={xp} xpMax={XP_MAX} level={LEVEL} levelName={LEVEL_NAME}
+            streak={streak} level={level} levelName={levelName} xpInto={xpInto} xpToNext={xpToNext} entries={entries}
             quests={quests} freezes={freezes} onOpenAchievements={() => setShowAch(true)}
             embers={embers} plus={plus} onOpenShop={() => setShopOpen(true)}
             done={done} onWrite={() => setWriting(true)} onToggleMode={onToggleMode}

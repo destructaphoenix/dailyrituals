@@ -11,7 +11,7 @@ import { profileIdentity } from '../profile/identity';
 
 export default function YouScreen({
   mode, onToggleMode, settings, setSettings,
-  streak, xp, xpMax, level, levelName, entriesCount, badgesEarned, onOpenAchievements,
+  streak, level, levelName, xpInto, xpToNext, entriesCount, badgesEarned, onOpenAchievements,
   embers, plus, onOpenShop, onOpenPaywall, onOpenManage, plusEnabled = true,
 }) {
   const t = useTheme();
@@ -46,9 +46,9 @@ export default function YouScreen({
           <View style={{ marginTop: 18 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 7 }}>
               <T w={700} color={c.muted} style={{ fontSize: 12 }}>Next level</T>
-              <T w={700} color={c.muted} style={{ fontSize: 12 }}>{xp} / {xpMax} XP</T>
+              <T w={700} color={c.muted} style={{ fontSize: 12 }}>{xpToNext == null ? 'Max' : `${xpInto} / ${xpToNext} XP`}</T>
             </View>
-            <ProgressBar value={Math.min(100, (xp / xpMax) * 100)} />
+            <ProgressBar value={xpToNext == null ? 100 : Math.min(100, (xpInto / xpToNext) * 100)} />
           </View>
         </Card>
       </View>

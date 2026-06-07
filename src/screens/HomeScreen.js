@@ -12,7 +12,7 @@ import { streakSubtitle } from '../home/streakCopy';
 import { StreakFreeze, DailyQuests } from '../gamify';
 import { EmberPill } from '../shopui';
 
-export default function HomeScreen({ copy, gamify, mode, streak, xp, xpMax, level, levelName, quests, freezes, onOpenAchievements, done, onWrite, onToggleMode, embers, plus, onOpenShop }) {
+export default function HomeScreen({ copy, gamify, mode, streak, level, levelName, xpInto, xpToNext, entries, quests, freezes, onOpenAchievements, done, onWrite, onToggleMode, embers, plus, onOpenShop }) {
   const t = useTheme();
   const c = t.colors;
   const Orb = mode === 'night' ? Moon : Sun;
@@ -56,9 +56,9 @@ export default function HomeScreen({ copy, gamify, mode, streak, xp, xpMax, leve
             <View style={{ zIndex: 1, width: '100%', marginTop: 22 }}>
               <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 7 }}>
                 <T d w={700} color={c.ink} style={{ fontSize: 14 }}>Lv {level} · {levelName}</T>
-                <T w={700} color={c.muted} style={{ fontSize: 12 }}>{xp} / {xpMax} XP</T>
+                <T w={700} color={c.muted} style={{ fontSize: 12 }}>{xpToNext == null ? 'Max' : `${xpInto} / ${xpToNext} XP`}</T>
               </View>
-              <ProgressBar value={Math.min(100, (xp / xpMax) * 100)} />
+              <ProgressBar value={xpToNext == null ? 100 : Math.min(100, (xpInto / xpToNext) * 100)} />
             </View>
             {freezes != null && <StreakFreeze count={freezes} />}
           </Card>
