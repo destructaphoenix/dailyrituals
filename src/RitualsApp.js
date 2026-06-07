@@ -1,6 +1,8 @@
 // RitualsApp.js — state, navigation and chrome. Ported from rituals-app.jsx,
 // then extended with the Insights and You tabs.
 //
+// (release pipeline shakedown — 2026-06-07; invisible no-op to prove the OTA chain)
+//
 // Tab bar layout: [Today] [Insights] (✎ FAB) [Reflections] [You].
 // Mode (day/night) and live settings come from App.js so the You tab can
 // drive them. Overlays (write/read/celebrate) are RN Modals.
