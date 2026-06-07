@@ -251,21 +251,19 @@ git commit -m "fix(config): hardcode public legal-URL fallbacks so CI-published 
 **Files:**
 - Modify: `eas.json`
 
-- [ ] **Step 1: Get the exact track name from the owner**
+- [ ] **Step 1: Track name (confirmed by owner)**
 
-Ask the owner for the exact closed-testing track name as shown in Play Console → **Testing → Closed testing** (the track's identifier). Google's default closed track is `alpha`; a custom-named closed track uses its own slug. Do not guess — confirm the literal string. Record the confirmed value (call it `<TRACK>` below).
+The owner confirmed the closed-testing track shows as **"Closed testing – Alpha"** in Play Console, i.e. the track identifier is `alpha`. Use that literal value below.
 
 - [ ] **Step 2: Set the track**
 
-In `eas.json`, change the submit profile's track from `"internal"` to the confirmed value:
+In `eas.json`, change the submit profile's track from `"internal"` to `"alpha"`:
 
 ```json
   "submit": {
-    "production": { "android": { "serviceAccountKeyPath": "./play-service-account.json", "track": "<TRACK>" } }
+    "production": { "android": { "serviceAccountKeyPath": "./play-service-account.json", "track": "alpha" } }
   }
 ```
-
-(Replace `<TRACK>` with the literal string from Step 1, e.g. `"alpha"`.)
 
 - [ ] **Step 3: Commit**
 
