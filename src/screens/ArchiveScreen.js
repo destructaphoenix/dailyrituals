@@ -5,11 +5,12 @@ import { View, ScrollView, Pressable, Text } from 'react-native';
 import { useTheme } from '../theme';
 import { T, Card } from '../ui';
 import { moodEmoji } from '../data';
-import { HEAT } from '../data';
+import { buildHeatmap } from '../home/calendar';
 
 export default function ArchiveScreen({ copy, gamify, mode, entries, onOpen }) {
   const t = useTheme();
   const c = t.colors;
+  const heat = buildHeatmap(entries);
 
   return (
     <ScrollView
@@ -29,7 +30,7 @@ export default function ArchiveScreen({ copy, gamify, mode, entries, onOpen }) {
               <T d w={700} color={c.ink} style={{ fontSize: 15 }}>Last 5 weeks</T>
               <T w={700} color={c.muted} style={{ fontSize: 12 }}>{entries.length} kept</T>
             </View>
-            <Heat />
+            <Heat cells={heat} />
           </Card>
         </View>
       )}
@@ -62,11 +63,11 @@ export default function ArchiveScreen({ copy, gamify, mode, entries, onOpen }) {
   );
 }
 
-function Heat() {
+function Heat({ cells }) {
   const t = useTheme();
   const c = t.colors;
   const rows = [];
-  for (let r = 0; r < HEAT.length; r += 7) rows.push(HEAT.slice(r, r + 7));
+  for (let r = 0; r < cells.length; r += 7) rows.push(cells.slice(r, r + 7));
   return (
     <View style={{ gap: 6 }}>
       {rows.map((row, ri) => (
@@ -88,7 +89,7 @@ function Heat() {
             >
               {!cell.empty
                 ? <Text style={{ fontSize: 19, lineHeight: 23 }}>{cell.emoji}</Text>
-                : <Text style={{ fontSize: 17, lineHeight: 21, opacity: 0.5 }}>💀</Text>}
+                : null}
             </View>
           ))}
         </View>
