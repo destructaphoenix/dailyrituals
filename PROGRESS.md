@@ -504,4 +504,4 @@ Two ways to ship a change. **Pick by what changed:**
 - **Channels↔branches:** production builds listen on channel `production`; `eas update --branch production` serves them. (Keep branch name = channel name to avoid confusion.)
 - **First OTA-capable build = versionCode 5 / version 1.0.0** (the v4 build in review predates `expo-updates` and can't receive updates). v5 is the OTA baseline at runtimeVersion `1.0.0`.
 - **Roll back a bad OTA:** `eas update:rollback` or republish the previous good commit with `eas update`.
-- No CI yet — all builds/updates are manual. Optional future: GitHub Actions or EAS Workflows to trigger on push.
+- **CI is now automated** — see the **🤖 Release rules** section above. Agents tag a commit `Release-Lane: ota|build` and push; GitHub Actions runs the test gate, waits for the owner's one-tap approval, then ships (OTA) or builds + auto-submits to the `alpha` track. Rollback via the **Rollback OTA** workflow.
