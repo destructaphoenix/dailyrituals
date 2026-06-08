@@ -1,4 +1,4 @@
-import { SCHEMA_VERSION, serialize, deserialize, mergeWithDefaults } from '../../src/persistence/state';
+import { SCHEMA_VERSION, serialize, deserialize, mergeWithDefaults, pickPersisted } from '../../src/persistence/state';
 import { SAMPLE_ENTRIES } from '../../src/data';
 
 const sample = { version: SCHEMA_VERSION, embers: 360, streak: 4, ownedSkies: ['classic'] };
@@ -60,6 +60,15 @@ describe('v1→v2 migration', () => {
     expect(SCHEMA_VERSION).toBe(2);
     const out = JSON.parse(serialize({ streak: 0 }));
     expect(out.version).toBe(2);
+  });
+});
+
+describe('onboarded flag persistence (first-run shows once)', () => {
+  test('pickPersisted carries the onboarded flag', () => {
+    expect(pickPersisted({ onboarded: true, junk: 1 })).toEqual({ onboarded: true });
+  });
+  test('onboarded round-trips through serialize/deserialize', () => {
+    expect(deserialize(serialize({ version: SCHEMA_VERSION, onboarded: true }))).toMatchObject({ onboarded: true });
   });
 });
 

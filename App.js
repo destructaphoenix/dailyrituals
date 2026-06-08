@@ -6,6 +6,7 @@ import { View, ActivityIndicator, Platform } from 'react-native';
 import { RC_KEYS } from './src/billing/config';
 import { isBillingConfigured } from './src/billing';
 import { loadState, clearState } from './src/persistence/storage';
+import { hasCompletedOnboarding } from './src/persistence/onboarding';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -44,6 +45,10 @@ export default function App() {
       const s = loaded || {};
       setHydrated(s);
       if (s.settings) setSettings(s.settings);
+      // Show first-run onboarding only to genuinely new users. See
+      // hasCompletedOnboarding — returning users (any persisted state, or the
+      // explicit flag) skip it, so updates never re-onboard existing testers.
+      if (hasCompletedOnboarding(loaded)) setOnboarded(true);
     });
   }, []);
 

@@ -198,6 +198,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   React.useEffect(() => {
     const id = setTimeout(() => {
       saveState(pickPersisted({
+        onboarded: true, // RitualsApp only mounts after first-run; record it so we skip onboarding next launch
         entries, streak, xp, done, quests, freezes, embers, plus,
         activePalette, ownedPalettes, activeSky, ownedSkies,
         subCanceled, activePlan, lastActiveDay, settings,
