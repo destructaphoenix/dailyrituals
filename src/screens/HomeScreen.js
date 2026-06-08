@@ -6,10 +6,11 @@ import { useTheme } from '../theme';
 import { T, Card, PrimaryButton, ProgressBar } from '../ui';
 import { Sun, Moon, Check, Pencil, BADGE_ICON } from '../icons';
 import { RayFan, NightSky } from '../art';
-import { BADGES, SAMPLE_ENTRIES } from '../data';
+import { SAMPLE_ENTRIES } from '../data';
 import { greetingFor, todayLabel } from '../time/clock';
 import { streakSubtitle } from '../home/streakCopy';
 import { buildWeekStrip } from '../home/calendar';
+import { deriveKeepsakes } from '../profile/achievements';
 import { StreakFreeze, DailyQuests } from '../gamify';
 import { EmberPill } from '../shopui';
 
@@ -19,6 +20,7 @@ export default function HomeScreen({ copy, gamify, mode, streak, level, levelNam
   const Orb = mode === 'night' ? Moon : Sun;
   const greeting = greetingFor();
   const week = buildWeekStrip(entries || []);
+  const keepsakes = deriveKeepsakes(entries || [], streak || 0);
   const streakShadow = { textShadowColor: 'rgba(0,0,0,0.7)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 10 };
 
   return (
@@ -136,7 +138,7 @@ export default function HomeScreen({ copy, gamify, mode, streak, level, levelNam
             </Pressable>
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingVertical: 2 }}>
-            {BADGES.map((b) => {
+            {keepsakes.map((b) => {
               const Ic = BADGE_ICON[b.icon];
               return (
                 <Pressable key={b.id} onPress={onOpenAchievements} style={{ width: 72, alignItems: 'center', gap: 6 }}>

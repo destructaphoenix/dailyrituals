@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemeContext, makeTheme } from './theme';
 import { T } from './ui';
 import { HomeIcon, BookIcon, Pencil, ChartIcon, UserIcon } from './icons';
-import { COPY, BADGES, DAILY_QUESTS, ACHIEVEMENTS, STREAK_MILESTONES, SHOP_PALETTES, EMBER_GAIN, RENEW_DATE } from './data';
+import { COPY, DAILY_QUESTS, STREAK_MILESTONES, SHOP_PALETTES, EMBER_GAIN, RENEW_DATE } from './data';
 import HomeScreen from './screens/HomeScreen';
 import ArchiveScreen from './screens/ArchiveScreen';
 import InsightsScreen from './screens/InsightsScreen';
@@ -33,6 +33,7 @@ import { saveState } from './persistence/storage';
 import { pickPersisted } from './persistence/state';
 import { applyCompletion } from './home/completeEntry';
 import { levelFromXp } from './profile/level';
+import { deriveAchievements } from './profile/achievements';
 import { entryDateParts } from './time/clock';
 
 const XP_GAIN = 50;
@@ -63,6 +64,10 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
 
   // Live level derived from total XP (no hardcoded level).
   const { level, name: levelName, into: xpInto, toNext: xpToNext } = levelFromXp(xp);
+
+  // Achievements derived from real entries + streak (no hardcoded progress).
+  const achievements = useMemo(() => deriveAchievements(entries, streak), [entries, streak]);
+  const badgesEarned = achievements.filter((a) => a.done).length;
 
   // ── Shop / Plus / Embers economy ──
   const [embers, setEmbers] = useState(initialState.embers ?? 0);
@@ -238,7 +243,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
           <YouScreen
             mode={mode} onToggleMode={onToggleMode} settings={settings} setSettings={setSettings}
             streak={streak} level={level} levelName={levelName} xpInto={xpInto} xpToNext={xpToNext}
-            entriesCount={entries.length} badgesEarned={ACHIEVEMENTS.filter((b) => b.cur >= b.goal).length}
+            entriesCount={entries.length} badgesEarned={badgesEarned}
             embers={embers} plus={plus} onOpenShop={() => setShopOpen(true)}
             plusEnabled={PLUS_ENABLED}
             onOpenPaywall={PLUS_ENABLED ? () => setPaywall(true) : () => {}}
@@ -321,7 +326,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
 
         <Modal visible={showAch} animationType="slide" presentationStyle="overFullScreen" onRequestClose={() => setShowAch(false)}>
           <ThemeContext.Provider value={theme}>
-            <Achievements insets={insets} onClose={() => setShowAch(false)} />
+            <Achievements insets={insets} onClose={() => setShowAch(false)} entries={entries} streak={streak} />
           </ThemeContext.Provider>
         </Modal>
 

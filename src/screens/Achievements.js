@@ -8,12 +8,13 @@ import { useTheme } from '../theme';
 import { T } from '../ui';
 import { Chevron, Check, ACH_ICON, Sun } from '../icons';
 import { ThinBar } from '../gamify';
-import { ACHIEVEMENTS } from '../data';
+import { deriveAchievements } from '../profile/achievements';
 
-export default function Achievements({ insets, onClose }) {
+export default function Achievements({ insets, onClose, entries = [], streak = 0 }) {
   const t = useTheme();
   const c = t.colors;
-  const earned = ACHIEVEMENTS.filter((a) => a.cur >= a.goal).length;
+  const achievements = deriveAchievements(entries, streak);
+  const earned = achievements.filter((a) => a.done).length;
   return (
     <View style={{ flex: 1, backgroundColor: c.cream, paddingTop: insets.top }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingTop: 14, paddingBottom: 6 }}>
@@ -21,7 +22,7 @@ export default function Achievements({ insets, onClose }) {
           style={({ pressed }) => ({ width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: t.dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', opacity: pressed ? 0.6 : 1 })}>
           <Chevron dir="left" size={22} color={c.ink} />
         </Pressable>
-        <T w={700} color={c.muted} style={{ fontSize: 12 }}>{earned} of {ACHIEVEMENTS.length} earned</T>
+        <T w={700} color={c.muted} style={{ fontSize: 12 }}>{earned} of {achievements.length} earned</T>
       </View>
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 30 }} showsVerticalScrollIndicator={false}>
@@ -32,9 +33,9 @@ export default function Achievements({ insets, onClose }) {
         </T>
 
         <View style={{ gap: 12 }}>
-          {ACHIEVEMENTS.map((a) => {
+          {achievements.map((a) => {
             const Ic = ACH_ICON[a.icon] || Sun;
-            const done = a.cur >= a.goal;
+            const done = a.done;
             return (
               <View key={a.id} style={[
                 { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14, borderRadius: t.radius.card, borderWidth: 1, borderColor: done ? 'rgba(245,158,11,0.35)' : c.border, backgroundColor: c.surface },

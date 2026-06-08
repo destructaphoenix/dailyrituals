@@ -53,14 +53,6 @@ export const moodEmoji = (m) => MOOD_EMOJI[m] || '';
 // A missed day is marked with a skull, both on the week strip and the calendar.
 export const MISS_EMOJI = '💀';
 
-export const BADGES = [
-  { id: 'firstlight', label: 'First Light', icon: 'sunrise', earned: true },
-  { id: 'seven', label: 'Seven Suns', icon: 'sun', earned: true },
-  { id: 'honest', label: 'Honest Heart', icon: 'check', earned: true },
-  { id: 'steadfast', label: '30 Days', icon: 'diamond', earned: false },
-  { id: 'fullcircle', label: 'Full Circle', icon: 'ring', earned: false },
-];
-
 // ── Duolingo-style mechanics (solo & gentle) ────────────────────────────────
 // Daily "rites" — three small quests that renew each day. revisit starts done.
 export const DAILY_QUESTS = [
@@ -70,16 +62,6 @@ export const DAILY_QUESTS = [
 ];
 export const questsXp = (qs) => qs.reduce((s, q) => s + (q.cur >= q.goal ? q.xp : 0), 0);
 export const questsGoal = (qs) => qs.reduce((s, q) => s + q.xp, 0);
-
-// Tiered achievements (progress, not binary).
-export const ACHIEVEMENTS = [
-  { id: 'firstlight', label: 'First Light',    desc: 'Lay your first day to rest', icon: 'sunrise', cur: 1,  goal: 1 },
-  { id: 'seven',      label: 'Seven Suns',     desc: 'Keep a seven-day streak',    icon: 'sun',     cur: 7,  goal: 7 },
-  { id: 'honest',     label: 'Honest Heart',   desc: 'Name twenty-five feelings',  icon: 'heart',   cur: 12, goal: 25 },
-  { id: 'moonlit',    label: 'Moonlit',        desc: 'Lay ten nights to rest',     icon: 'moon',    cur: 3,  goal: 10 },
-  { id: 'society',    label: 'Streak Society', desc: 'Reach a thirty-day streak',  icon: 'diamond', cur: 4,  goal: 30 },
-  { id: 'keeper',     label: 'Keeper of Days', desc: 'Keep one hundred days',      icon: 'ring',    cur: 47, goal: 100 },
-];
 
 // Streak milestones worth a special send-off in the celebration.
 export const STREAK_MILESTONES = { 7: 'Seven Suns', 30: 'Streak Society', 100: 'Keeper of Days' };
