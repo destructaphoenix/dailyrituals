@@ -115,6 +115,7 @@ _(Phase 9 complete — detailed checklist in [docs/build-log.md](docs/build-log.
 | IMP-009 | Insights tab from real entries (kill hardcoded STATS/MOOD_MIX/RHYTHM); empty state | OTA | ✅ (code; runtime walk + ship pending) |
 | IMP-010 | Onboarding shows only on first ever launch (persist `onboarded`; returning testers skip it, no re-onboard on update) | OTA | ✅ (code; runtime walk + ship pending) |
 | IMP-011 | Kill the last hardcoded "31 May" — WriteFlow epitaph uses the device's real date (`todayLabel()`); delete dead `TODAY_LABEL` | OTA | ✅ (code; runtime walk + ship pending) |
+| IMP-012 | Achievements + Home "Keepsakes" start fresh — derive every `cur`/`earned` from real entries+streak (kill hardcoded `ACHIEVEMENTS.cur` & `BADGES.earned`); empty for new users | OTA | ⬜ |
 
 ### Tasks
 _(Opus appends one block per issue, in priority order, using the template below. Sonnet works the first unchecked one.)_
@@ -185,6 +186,35 @@ _(IMP-007 – IMP-008 complete — full task detail in [docs/build-log.md](docs/
 - **Commit:** `fix(insights): derive stats, mood mix and rhythm from real entries`
 - **Acceptance (runtime walk):** Insights shows real current/longest streak, days kept, this-month count, a mood mix that matches what was logged, and a weekday rhythm from actual entry days; an empty/reset account shows the empty state with no fabricated numbers.
 - **Ship after merge:** OTA-eligible (all JS in `src/`) — ships via the OTA release lane like IMP-008. Reaches testers on v5+ only.
+
+### IMP-012 — Achievements + Home "Keepsakes" start fresh (kill hardcoded progress)   ·   Lane: OTA   ·   Status: ⬜
+- **Goal:** The Achievements screen and the Home "Keepsakes" medal strip show the user's **real** progress derived from their entries + streak. A brand-new / reset user sees every achievement at 0/​goal and every medal unlit — no fabricated "47/100 days", "Streak Society 4/30", or pre-earned First Light/Seven Suns/Honest Heart.
+- **Why / context:** Both surfaces read baked-in sample numbers from `src/data.js`:
+  - `ACHIEVEMENTS` ([data.js:75-84](src/data.js#L75-L84)) has hardcoded `cur` values (firstlight 1, seven 7, honest 12, moonlit 3, society 4, keeper 47). `Achievements.js` renders `a.cur / a.goal`, the "X of N earned" count, and the "Earned" badge straight from these — so a fresh user sees 3 earned and partial progress on the rest.
+  - `BADGES` ([data.js:56-64](src/data.js#L56-L64)) has hardcoded `earned: true/false`. `HomeScreen.js` ([HomeScreen.js:139-149](src/screens/HomeScreen.js#L139-L149)) lights medals from `b.earned`, so First Light / Seven Suns / Honest Heart show lit on day one.
+  - `RitualsApp.js` ([RitualsApp.js:241](src/RitualsApp.js#L241)) computes the You-tab `badgesEarned` keepsakes count from `ACHIEVEMENTS.filter(b => b.cur >= b.goal).length` — also fake. This is the same family of zero-state bugs as IMP-008/009; the new "Reset all data" control (Task 9.6) makes the empty state reachable in normal use, so it must read right at zero.
+- **Data available:** `deriveInsights(entries, currentStreak, now)` (from IMP-009, [src/insights/derive.js](src/insights/derive.js)) already yields `stats.longestStreak`, `stats.daysKept`, and `moodMix` (sum of `n` = entries with a mood logged = "feelings named"). Reuse it — do not re-derive streak/day math.
+- **Files touched:** `src/profile/achievements.js` (new) + `__tests__/profile/achievements.test.js` (new), `src/screens/Achievements.js`, `src/screens/HomeScreen.js`, `src/RitualsApp.js`, `src/data.js`.
+- **Approach (decided by Opus — do not re-litigate):**
+  - Create a pure helper `src/profile/achievements.js` exporting `ACHIEVEMENT_DEFS` (static metadata: `{ id, label, desc, icon, goal, stat }` where `stat ∈ 'daysKept' | 'longestStreak' | 'moodsLogged'`) and `deriveAchievements(entries, currentStreak, now = new Date())`. It calls `deriveInsights(...)` once, computes `moodsLogged = sum(moodMix.n)`, then maps `ACHIEVEMENT_DEFS` → `{ ...def, cur: Math.min(statValue, goal), done: statValue >= goal }`. Keep the SAME six achievements + their current ids/labels/descs/icons/goals — only the source of `cur` changes (lift the metadata out of `data.js`'s `ACHIEVEMENTS` into `ACHIEVEMENT_DEFS`). **Stat mapping:** firstlight→daysKept, seven→longestStreak, honest→moodsLogged, moonlit→daysKept, society→longestStreak, keeper→daysKept.
+  - `Achievements.js` becomes a dumb renderer: new props `entries` + `streak`; call `deriveAchievements`; render the list, the "X of N earned" count, and per-row `cur/goal` + Earned badge from the result. Drop the `import { ACHIEVEMENTS }`.
+  - `RitualsApp.js`: compute `const achievements = deriveAchievements(entries, streak)` (memoize), pass `badgesEarned={achievements.filter(a => a.done).length}` and thread `entries`/`streak` into `<Achievements … />`. Drop the `ACHIEVEMENTS`/`BADGES` imports once unused.
+  - **Home "Keepsakes" strip:** keep the existing 5-medal strip (same icons/labels) but make each medal's lit/unlit state real. Drive it off `deriveAchievements` — map the five Home medals to achievements by id where they line up (firstlight, seven, honest) and to a stat threshold for the two Home-only ones (`steadfast`/"30 Days" → `longestStreak >= 30`; `fullcircle`/"Full Circle" → `daysKept >= 100`). Simplest clean form: extend `ACHIEVEMENT_DEFS` (or add a small `KEEPSAKE_DEFS`) so the strip is derived the same way, then delete the hardcoded `BADGES` constant. `HomeScreen` already receives `entries` + `streak`; compute the strip from those. **Do not change which five medals appear or their order** — only their earned state.
+  - **No empty-state card needed** — the achievements list and medal strip are self-explanatory at 0 (all unlit, progress bars at 0/goal). Just make sure the "X of N earned" reads "0 of 6 earned" for a fresh user.
+  - **Guard:** `ThinBar pct={(cur / goal) * 100}` is safe (goal ≥ 1 for all defs), but keep `cur` clamped via `Math.min` so a bar never exceeds 100%.
+  - **Known nuance (document, don't fix):** like IMP-009, `longestStreak` ignores freeze-bridged streaks; `moodsLogged` counts entries-with-a-mood (one per day kept, since same-day re-writes replace), so "Name 25 feelings" tracks distinct mood-logged days — good enough.
+- **TDD:** Yes — write `__tests__/profile/achievements.test.js` FIRST (RED), then implement.
+- **Steps:**
+  - [ ] 1. **(RED)** `__tests__/profile/achievements.test.js`: (a) `[]` + streak 0 → every `cur` 0, every `done` false, earned-count 0; (b) a fixed entry set → each achievement's `cur` equals the right clamped stat (daysKept / longestStreak / moodsLogged) and `done` flips exactly at goal; (c) `cur` never exceeds `goal`; (d) `moodsLogged` ignores mood-less entries. Run `npm test` → fails (module not found).
+  - [ ] 2. **(GREEN)** Implement `src/profile/achievements.js` per the Approach (reusing `deriveInsights`). Run `npm test` → passes.
+  - [ ] 3. Rewrite `src/screens/Achievements.js` to consume `deriveAchievements(entries, streak)`; remove the `ACHIEVEMENTS` import.
+  - [ ] 4. Update `src/screens/HomeScreen.js` to derive the Keepsakes strip's earned states (same 5 medals); remove the `BADGES` import.
+  - [ ] 5. `src/RitualsApp.js`: derive `badgesEarned` from `deriveAchievements`, thread `entries`/`streak` into `<Achievements />`; drop now-unused `ACHIEVEMENTS`/`BADGES` imports. Delete the dead `ACHIEVEMENTS`/`BADGES` constants from `src/data.js` (grep first — `BADGES` is also used by HomeScreen until step 4; `STREAK_MILESTONES`/`MOOD_EMOJI` etc. stay).
+  - [ ] 6. Verify in Expo Go: fresh/reset account → "0 of 6 earned", all medals unlit, all bars at 0/goal; write entries / build a streak → the right achievements progress and light up; the You-tab keepsakes count matches.
+  - [ ] 7. `npm test` green (prior count + new achievements cases; currently 103).
+- **Commit:** `fix(achievements): derive progress + keepsakes from real entries (kill hardcoded values)`
+- **Acceptance (runtime walk):** A new/reset user sees zero earned achievements, unlit keepsake medals, and 0/goal progress everywhere; progress and earned states grow only from real entries + streak; the You-tab keepsakes count matches the earned count.
+- **Ship after merge:** OTA-eligible (all JS in `src/`) — ships via the OTA release lane like IMP-008/009.
 
 <!-- TEMPLATE — Opus copies this per issue, fills it, adds a row to the table above, then hands the task to Sonnet:
 
