@@ -54,7 +54,8 @@ STEP 4 — Close out (CRITICAL — do this even if you're low on credits):
   "Last session note" dated today with: what you finished, the LAST command you ran and
   its result, and the EXACT next step (file + step number) for the next chat.
 - If you stopped mid-task, say which step number you completed last and which is next.
-- Commit PROGRESS.md.
+- **Keep PROGRESS.md small (it's read in full every chat).** Once a task is ✅ *and shipped*, MOVE its full block out of PROGRESS.md into [`docs/build-log.md`](docs/build-log.md), leaving only its one-line row in the backlog/status table + a short pointer. Same for completed phase checklists. Live PROGRESS.md = active/pending tasks + the status tables + reference (config, signing, blockers, last note). History lives in the archive + git.
+- Commit PROGRESS.md (and `docs/build-log.md` if you archived anything).
 
 STEP 5 — Ship (only if I asked you to release this change):
 - Follow the "🤖 Release rules" section in PROGRESS.md. In short:
