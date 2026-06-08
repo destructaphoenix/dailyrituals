@@ -1,7 +1,5 @@
 // data.js — copy, sample content and config, ported verbatim from rituals-bits.jsx.
 
-export const TODAY_LABEL = 'Saturday, 31 May';
-
 export const COPY = {
   gentle: {
     teaserKicker: "Today's ritual",

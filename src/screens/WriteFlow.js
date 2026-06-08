@@ -6,7 +6,8 @@ import { View, ScrollView, TextInput, Pressable, KeyboardAvoidingView, Platform,
 import { useTheme } from '../theme';
 import { T, PrimaryButton } from '../ui';
 import { Sun, Chevron, Close } from '../icons';
-import { MOODS, TODAY_LABEL, moodEmoji } from '../data';
+import { MOODS, moodEmoji } from '../data';
+import { todayLabel } from '../time/clock';
 
 const countWords = (s) => (s.trim() ? s.trim().split(/\s+/).length : 0);
 
@@ -55,7 +56,7 @@ export default function WriteFlow({ copy, insets, onClose, onComplete }) {
       {!isMood ? (
         <>
           <ScrollView contentContainerStyle={{ paddingHorizontal: 22, paddingTop: 12, paddingBottom: 18, flexGrow: 1 }} keyboardShouldPersistTaps="handled">
-            <T d w={600} color={c.muted} style={{ fontSize: 13, letterSpacing: 0.5, textTransform: 'uppercase' }}>{copy.epitaph} {TODAY_LABEL}</T>
+            <T d w={600} color={c.muted} style={{ fontSize: 13, letterSpacing: 0.5, textTransform: 'uppercase' }}>{copy.epitaph} {todayLabel()}</T>
             <T d w={700} color={c.ink} style={{ fontSize: 27, lineHeight: 32, marginTop: 8, marginBottom: 4 }}>{cur.q}</T>
             <T w={600} color={c.muted} style={{ fontSize: 14, lineHeight: 19.6 }}>{cur.help}</T>
             <TextInput
@@ -78,7 +79,7 @@ export default function WriteFlow({ copy, insets, onClose, onComplete }) {
       ) : (
         <>
           <ScrollView contentContainerStyle={{ paddingHorizontal: 22, paddingTop: 12, paddingBottom: 18, flexGrow: 1 }}>
-            <T d w={600} color={c.muted} style={{ fontSize: 13, letterSpacing: 0.5, textTransform: 'uppercase' }}>{copy.epitaph} {TODAY_LABEL}</T>
+            <T d w={600} color={c.muted} style={{ fontSize: 13, letterSpacing: 0.5, textTransform: 'uppercase' }}>{copy.epitaph} {todayLabel()}</T>
             <T d w={700} color={c.ink} style={{ fontSize: 27, lineHeight: 32, marginTop: 8, marginBottom: 4 }}>{copy.moodQ}</T>
             <T w={600} color={c.muted} style={{ fontSize: 14, lineHeight: 19.6 }}>{copy.moodHelp}</T>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 22 }}>
