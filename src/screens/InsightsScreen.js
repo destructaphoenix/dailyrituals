@@ -1,4 +1,4 @@
-// InsightsScreen.js — stats, mood mix and weekday rhythm derived from real entries.
+// InsightsScreen.js — "Your record" (lifetime stats) + "Your patterns" (mood/rhythm).
 
 import React from 'react';
 import { View, ScrollView, Text } from 'react-native';
@@ -7,8 +7,10 @@ import { T, Card } from '../ui';
 import { ChartIcon } from '../icons';
 import { moodEmoji } from '../data';
 import { deriveInsights } from '../insights/derive';
+import { deriveLifetime } from '../insights/lifetime';
+import { buildLifetimeHeatmap } from '../home/calendar';
 
-export default function InsightsScreen({ copy, entries = [], streak = 0 }) {
+export default function InsightsScreen({ copy, entries = [], streak = 0, xp = 0 }) {
   const t = useTheme();
   const c = t.colors;
 
@@ -24,7 +26,7 @@ export default function InsightsScreen({ copy, entries = [], streak = 0 }) {
         <View style={{ paddingHorizontal: 20, paddingTop: 6, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <View>
             <T d w={800} color={c.ink} style={{ fontSize: 24 }}>Insights</T>
-            <T w={600} color={c.muted} style={{ fontSize: 14, marginTop: 2 }}>The shape of your days so far.</T>
+            <T w={600} color={c.muted} style={{ fontSize: 14, marginTop: 2 }}>The record you&rsquo;re building.</T>
           </View>
           <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
             <ChartIcon size={22} color={c.accentDeep} />
@@ -41,16 +43,13 @@ export default function InsightsScreen({ copy, entries = [], streak = 0 }) {
     );
   }
 
-  const { stats, moodMix, rhythm, peakWeekday } = data;
+  const { moodMix, rhythm, peakWeekday } = data;
   const moodMax = moodMix.length ? Math.max(...moodMix.map((x) => x.n)) : 1;
   const rhythmMax = Math.max(1, ...rhythm.map((x) => x.n));
 
-  const STATS = [
-    { label: 'Current streak', value: String(stats.currentStreak), unit: 'days' },
-    { label: 'Longest streak', value: String(stats.longestStreak), unit: 'days' },
-    { label: 'Days kept', value: String(stats.daysKept), unit: 'total' },
-    { label: 'This month', value: String(stats.thisMonth), unit: 'entries' },
-  ];
+  const life = deriveLifetime(entries, { xp, currentStreak: streak });
+  const heat = buildLifetimeHeatmap(entries);
+  const fmt = (n) => n.toLocaleString();
 
   return (
     <ScrollView
@@ -62,28 +61,54 @@ export default function InsightsScreen({ copy, entries = [], streak = 0 }) {
       <View style={{ paddingHorizontal: 20, paddingTop: 6, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <View>
           <T d w={800} color={c.ink} style={{ fontSize: 24 }}>Insights</T>
-          <T w={600} color={c.muted} style={{ fontSize: 14, marginTop: 2 }}>The shape of your days so far.</T>
+          <T w={600} color={c.muted} style={{ fontSize: 14, marginTop: 2 }}>The record you&rsquo;re building.</T>
         </View>
         <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
           <ChartIcon size={22} color={c.accentDeep} />
         </View>
       </View>
 
-      {/* stat tiles 2×2 */}
-      <View style={{ paddingHorizontal: 20, gap: 12 }}>
-        {[STATS.slice(0, 2), STATS.slice(2, 4)].map((row, ri) => (
-          <View key={ri} style={{ flexDirection: 'row', gap: 12 }}>
-            {row.map((s) => (
-              <Card key={s.label} style={{ flex: 1, padding: 16 }}>
-                <T w={700} color={c.muted} style={{ fontSize: 12, letterSpacing: 0.6, textTransform: 'uppercase' }}>{s.label}</T>
-                <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 5, marginTop: 8 }}>
-                  <T d w={800} color={c.accentDeep} style={{ fontSize: 34, lineHeight: 36 }}>{s.value}</T>
-                  <T w={700} color={c.muted} style={{ fontSize: 13 }}>{s.unit}</T>
-                </View>
-              </Card>
+      {/* Your record — the legacy/cumulative story */}
+      <View style={{ paddingHorizontal: 20 }}>
+        <T d w={700} color={c.ink} style={{ fontSize: 15, marginBottom: 10, marginLeft: 2 }}>Your record</T>
+        <Card style={{ padding: 20 }}>
+          {/* hero number */}
+          <View style={{ alignItems: 'center', marginBottom: 18 }}>
+            <T d w={800} color={c.accentDeep} style={{ fontSize: 56, lineHeight: 60 }}>{fmt(life.daysRemembered)}</T>
+            <T w={700} color={c.ink} style={{ fontSize: 15, marginTop: 2 }}>days remembered</T>
+            <T w={600} color={c.muted} style={{ fontSize: 12.5, marginTop: 4 }}>
+              Lv {life.level} · {life.levelName}{life.activeSpan ? ` · ${life.activeSpan}` : ''}
+            </T>
+          </View>
+
+          {/* totals grid 2×2 */}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+            {[
+              { label: 'Entries', value: fmt(life.totalEntries) },
+              { label: 'Words', value: fmt(life.totalWords) },
+              { label: 'Current streak', value: fmt(life.currentStreak) },
+              { label: 'Longest streak', value: fmt(life.longestStreak) },
+            ].map((s, i) => (
+              <View key={s.label} style={{ width: '50%', paddingVertical: 10, paddingRight: i % 2 === 0 ? 8 : 0 }}>
+                <T w={700} color={c.muted} style={{ fontSize: 11.5, letterSpacing: 0.5, textTransform: 'uppercase' }}>{s.label}</T>
+                <T d w={800} color={c.ink} style={{ fontSize: 24, lineHeight: 28, marginTop: 3 }}>{s.value}</T>
+              </View>
             ))}
           </View>
-        ))}
+
+          {/* adaptive consistency heatmap */}
+          {heat.length > 0 && (
+            <View style={{ marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: c.border }}>
+              <T w={700} color={c.muted} style={{ fontSize: 11.5, letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 12 }}>Consistency</T>
+              <LifetimeHeat rows={heat} />
+            </View>
+          )}
+        </Card>
+      </View>
+
+      {/* Your patterns — the existing analytical cards */}
+      <View style={{ paddingHorizontal: 20, marginBottom: -6 }}>
+        <T d w={700} color={c.ink} style={{ fontSize: 15, marginLeft: 2 }}>Your patterns</T>
       </View>
 
       {/* mood mix */}
@@ -145,5 +170,33 @@ export default function InsightsScreen({ copy, entries = [], streak = 0 }) {
         </Card>
       </View>
     </ScrollView>
+  );
+}
+
+function LifetimeHeat({ rows }) {
+  const c = useTheme().colors;
+  return (
+    <View style={{ gap: 4 }}>
+      {rows.map((row, ri) => (
+        <View key={ri} style={{ flexDirection: 'row', gap: 4 }}>
+          {row.map((cell, i) => {
+            const has = !(cell.missed || cell.empty || cell.future);
+            return (
+              <View
+                key={i}
+                style={{
+                  flex: 1,
+                  aspectRatio: 1,
+                  borderRadius: 4,
+                  backgroundColor: has ? c.accent : 'transparent',
+                  borderWidth: cell.today ? 2 : has ? 0 : 1,
+                  borderColor: cell.today ? c.accentDeep : c.border,
+                }}
+              />
+            );
+          })}
+        </View>
+      ))}
+    </View>
   );
 }
