@@ -1,4 +1,4 @@
-import { buildHeatmap, buildWeekStrip } from '../../src/home/calendar';
+import { buildHeatmap, buildWeekStrip, buildLifetimeHeatmap } from '../../src/home/calendar';
 
 // 2026-06-07 is a Sunday; 2026-06-03 is a Wednesday. Use a midday UTC time so
 // toISOString().slice(0,10) yields the intended date regardless of test host TZ.
@@ -120,5 +120,37 @@ describe('buildWeekStrip — missed days', () => {
   it('no entries → zero missed states', () => {
     const cells = buildWeekStrip([], wed);
     expect(cells.every((c) => c.state !== 'missed')).toBe(true);
+  });
+});
+
+const today = new Date('2026-06-14T12:00:00.000Z'); // a Sunday
+
+describe('buildLifetimeHeatmap', () => {
+  test('no entries → empty array', () => {
+    expect(buildLifetimeHeatmap([], today)).toEqual([]);
+  });
+
+  test('each row is a Monday-first week of 7 cells', () => {
+    const rows = buildLifetimeHeatmap([{ dayKey: '2026-06-14' }], today);
+    expect(rows.length).toBe(1);          // first entry is in the current week
+    expect(rows[0].length).toBe(7);
+  });
+
+  test('window spans the first-entry week through the current week', () => {
+    // 2026-06-01 is a Monday; 2026-06-14 is a Sunday → 2 calendar weeks
+    const rows = buildLifetimeHeatmap([{ dayKey: '2026-06-01' }, { dayKey: '2026-06-14' }], today);
+    expect(rows.length).toBe(2);
+  });
+
+  test('cell states: done where an entry exists, missed for a gap day before today', () => {
+    const rows = buildLifetimeHeatmap([{ dayKey: '2026-06-08', mood: 'calm' }], today);
+    // week of 06-08 (Mon) .. 06-14 (Sun). 06-08 has an entry; 06-09 is a past gap.
+    const flat = rows.flat();
+    const mon = flat.find((c) => c.dayKey === '2026-06-08');
+    const tue = flat.find((c) => c.dayKey === '2026-06-09');
+    const sun = flat.find((c) => c.dayKey === '2026-06-14');
+    expect(mon.mood).toBe('calm');     // done
+    expect(tue.missed).toBe(true);     // past gap after first entry
+    expect(sun.today).toBe(true);      // today
   });
 });

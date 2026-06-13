@@ -61,6 +61,34 @@ export function buildHeatmap(entries, today = new Date()) {
   return cells;
 }
 
+// Adaptive lifetime heatmap: an array of week-rows (each 7 cells, Monday-first),
+// spanning the week of the first entry through the week containing today. Grows
+// as history accumulates; returns [] when there are no entries.
+export function buildLifetimeHeatmap(entries, today = new Date()) {
+  const firstKey = minDayKey(entries);
+  if (!firstKey) return [];
+  const byDay = indexByDay(entries);
+  const todayK = keyOf(today);
+  const endMonday = shiftKey(todayK, -weekdayMon0(todayK));
+  const rows = [];
+  let weekStart = shiftKey(firstKey, -weekdayMon0(firstKey));
+  while (weekStart <= endMonday) {
+    const row = [];
+    for (let i = 0; i < 7; i += 1) {
+      const dayKey = shiftKey(weekStart, i);
+      const isToday = dayKey === todayK;
+      const entry = byDay[dayKey];
+      if (entry) row.push({ dayKey, mood: entry.mood, emoji: MOOD_EMOJI[entry.mood] || '', today: isToday });
+      else if (dayKey > todayK) row.push({ dayKey, future: true });
+      else if (dayKey >= firstKey) row.push({ dayKey, missed: true, today: isToday });
+      else row.push({ dayKey, empty: true, today: isToday });
+    }
+    rows.push(row);
+    weekStart = shiftKey(weekStart, 7);
+  }
+  return rows;
+}
+
 const WEEK_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
 // 7 cells, Monday-first, for the calendar week containing today.
