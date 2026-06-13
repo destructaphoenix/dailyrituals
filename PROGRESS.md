@@ -41,10 +41,27 @@ Opus scopes each owner-filed issue into a numbered `IMP-xxx` task (steps + commi
 | IMP-018 | Today's reflection is editable — today only — prefilled, with a "Start fresh" reset | OTA | ✅ |
 | IMP-019 | Premium true-black AMOLED dark mode + rotating-rays hero, behind a one-line `DARK_THEME` revert flag | OTA | ✅ promoted |
 | IMP-020 | Backup / Restore — user-held JSON export (off-device) + restore-by-replace with auto safety copy; surface Android Auto Backup | Build | ✅ code-complete (device smoke test owner-pending) — full detail in build-log |
+| IMP-021 | Lifetime Progress — evolve Insights into "Your record" (days remembered + totals + adaptive heatmap) above "Your patterns"; Home hero untouched | OTA | ⬜ open — legacy roadmap A+B |
 
 ### Open task specs
 
-_None open — IMP-020 is code-complete and archived to [`docs/build-log.md`](docs/build-log.md). Awaiting the owner's next filed issue (Opus scopes it here as the next IMP block) or the legacy roadmap's next piece (A+B — days-captured hero + Lifetime Progress)._
+**IMP-021 — Lifetime Progress ("Your record" on the Insights tab)** · Lane: **OTA**
+
+> Second piece of the "legacy" roadmap (A+B). Evolves the **Insights tab** (Home hero stays untouched — owner constraint) into "Your record" (big **days remembered** number + totals + an adaptive consistency heatmap that grows from the first entry) above the existing "Your patterns" (mood + rhythm). All derived from existing `entries`/`xp`/`streak` — **no new persisted state, no native deps**. Full design + per-step TDD code:
+> - Design (the why): [`docs/superpowers/specs/2026-06-14-lifetime-progress-design.md`](docs/superpowers/specs/2026-06-14-lifetime-progress-design.md)
+> - Plan (the how — 5 tasks, exact code, commits): [`docs/superpowers/plans/2026-06-14-lifetime-progress.md`](docs/superpowers/plans/2026-06-14-lifetime-progress.md)
+
+Work the plan's tasks **in order**, committing per task with the message each gives:
+
+- [ ] Task 1 — extract shared `longestConsecutiveRun` into `src/insights/dateKeys.js`; re-point `derive.js` + test
+- [ ] Task 2 — `deriveLifetime` (days remembered, total words, adaptive span) + tests
+- [ ] Task 3 — `buildLifetimeHeatmap` (adaptive: first entry → today) in `calendar.js` + tests
+- [ ] Task 4 — evolve `InsightsScreen` ("Your record" section + compact heatmap + "Your patterns" heading; remove old "Days kept"/"This month" tiles); pass `xp` from RitualsApp
+- [ ] Task 5 — full suite + manual smoke + update/prune PROGRESS.md (archive this block)
+
+**Key constraints:** Home hero must NOT change; hero label is exactly **"days remembered"**; heatmap + span are **adaptive** (a new user sees almost nothing, it fills in over time); remove the "Days kept" and "This month" tiles; ship lane is **OTA** (no `bump:*`; `Release-Lane: ota` trailer only if the owner asks to ship).
+
+When IMP-021 is code-complete, archive this whole block to [`docs/build-log.md`](docs/build-log.md), leaving only its backlog row. NEXT roadmap piece after this: **C — Annual Recap / Time Capsule** (folds in the deferred milestone timeline).
 
 ---
 
