@@ -391,6 +391,8 @@ _2026-06-13 — IMP-018 COMPLETE (code) — Today's reflection is editable (pref
 
 _2026-06-13 — 🚀 OTA SHIPPED — published the accumulated improvements (IMP-008 → IMP-018) to the `production` channel over the air. Closeout commit `b9d0df5` tagged `Release-Lane: ota` and pushed to `main`; CI Release workflow ran (native backstop clean — only `src/`/`__tests__/`/docs touched; `npm test` gate 149/19 green), owner gave the one-tap `production` approval, **OTA confirmed green by owner**. Since `eas update` publishes the whole current JS bundle, this single update carries everything not previously OTA'd (real zero-state, insights, onboarding-once, real dates, achievements/keepsakes, revisit-quest fix, missed-day skull, mandatory name, proportional Ember icon, afternoon greeting, same-day prefilled edit). Reaches testers on **v5+** builds only (v4 can't receive OTA). Backlog statuses flipped to "✅ shipped OTA 2026-06-13; runtime walk pending". Rollback if needed: Actions → Rollback OTA workflow._
 
+_2026-06-13 (Opus, planning) — IMP-019 dark mode reviewed by owner → **v1 too plain / not premium**; scoped **Round 2 "rich & alive"** (no code written by Opus). Diagnosis from code: `EmberGlow` is one flat amber radial blob + 5 tiny 1–2px specks (with a `duration:1` hard reset) — no hot core, no structure, no layering, so it reads dim. Owner picked the **rich & alive** direction. Round-2 spec (inline under the IMP-019 task block): layered hot-core bloom + coal-bed + 16 glowing Svg embers + lit number + card sheen. All behind `DARK_THEME='v2'`, OTA, classic intact. (Round 2 was later built then **abandoned** — see the Round-3 crescent pivot.)_
+
 ---
 
 ## Update workflow — superseded manual reference
