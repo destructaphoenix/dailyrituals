@@ -6,8 +6,12 @@
 // drive them. Overlays (write/read/celebrate) are RN Modals.
 
 import React, { useState, useMemo } from 'react';
-import { View, Pressable, Modal, StyleSheet, Platform, AppState } from 'react-native';
+import { View, Pressable, Modal, StyleSheet, Platform, AppState, Alert, Linking } from 'react-native';
+import Constants from 'expo-constants';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { createBackup, readBackup, backupFilename } from './backup/backup';
+import { runConfirmedImport } from './backup/importFlow';
+import * as backupIO from './backup/io';
 import { ThemeContext, makeTheme } from './theme';
 import { T } from './ui';
 import { HomeIcon, BookIcon, Pencil, ChartIcon, UserIcon } from './icons';
@@ -39,10 +43,17 @@ import { deriveAchievements } from './profile/achievements';
 import { entryDateParts } from './time/clock';
 
 const XP_GAIN = 50;
+const APP_VERSION = Constants.expoConfig?.version || '1.0.0';
+const IMPORT_ERROR = {
+  'not-json': "That file isn't readable as a backup.",
+  'not-backup': "This doesn't look like a Daily Rituals backup.",
+  'too-new': 'This backup was made by a newer version — update the app first.',
+  'unreadable': "That backup file looks damaged and can't be restored.",
+};
 const PLATFORM = Platform.OS === 'android' ? 'android' : 'ios';
 const todayKey = () => new Date().toISOString().slice(0, 10);
 
-export default function RitualsApp({ mode = 'day', settings, setSettings, onToggleMode, initialPlus = false, initialState = {}, onResetData }) {
+export default function RitualsApp({ mode = 'day', settings, setSettings, onToggleMode, initialPlus = false, initialState = {}, onResetData, onReplaceAllData }) {
   const theme = useMemo(() => makeTheme(mode, settings), [mode, settings]);
   const c = theme.colors;
   const safe = useSafeAreaInsets();
@@ -62,6 +73,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   const [done, setDone] = useState(initialState.done ?? false);
   const [quests, setQuests] = useState(initialState.quests ?? DAILY_QUESTS);
   const [freezes, setFreezes] = useState(initialState.freezes ?? 0);
+  const [lastBackupAt, setLastBackupAt] = useState(initialState.lastBackupAt ?? null);
   const [showAch, setShowAch] = useState(false);
 
   // Live level derived from total XP (no hardcoded level).
@@ -208,13 +220,13 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
         onboarded: true, // RitualsApp only mounts after first-run; record it so we skip onboarding next launch
         entries, streak, xp, done, quests, freezes, embers, plus,
         activePalette, ownedPalettes, activeSky, ownedSkies,
-        subCanceled, activePlan, lastActiveDay, settings,
+        subCanceled, activePlan, lastActiveDay, settings, lastBackupAt,
       }));
     }, 400);
     return () => clearTimeout(id);
   }, [entries, streak, xp, done, quests, freezes, embers, plus,
     activePalette, ownedPalettes, activeSky, ownedSkies,
-    subCanceled, activePlan, lastActiveDay, settings]);
+    subCanceled, activePlan, lastActiveDay, settings, lastBackupAt]);
 
   const complete = ({ did, wished, mood }) => {
     const entry = { id: 'new' + Date.now(), ...entryDateParts(), dayKey: todayKey(), mood, did, wished, streak: true };
@@ -232,6 +244,77 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     setWriting(false);
     if (next.celebrate) setCelebrate(next.celebrate);
     else showToast("Today's reflection updated");
+  };
+
+  // The exact persisted slice (mirrors the autosave object) — source for backups.
+  const currentSlice = () => ({
+    onboarded: true,
+    entries, streak, xp, done, quests, freezes, embers, plus,
+    activePalette, ownedPalettes, activeSky, ownedSkies,
+    subCanceled, activePlan, lastActiveDay, settings, lastBackupAt,
+  });
+
+  const doExport = async () => {
+    if (!entries.length) { showToast("Nothing to back up yet — write your first reflection."); return; }
+    try {
+      const env = createBackup(currentSlice(), { appVersion: APP_VERSION });
+      const shared = await backupIO.exportFile(backupFilename(), JSON.stringify(env));
+      if (shared) {
+        setLastBackupAt(new Date().toISOString());
+        showToast('Backup ready — save it somewhere off this phone.');
+      }
+    } catch (e) {
+      showToast("Couldn't create the backup. Please try again.");
+    }
+  };
+
+  const doImport = async () => {
+    let raw;
+    try { raw = await backupIO.pickFile(); }
+    catch (e) { showToast("Couldn't open that file."); return; }
+    if (raw == null) return; // user cancelled the picker
+
+    const res = readBackup(raw);
+    if (!res.ok) { showToast(IMPORT_ERROR[res.reason] || IMPORT_ERROR['not-backup']); return; }
+
+    const here = entries.length;
+    Alert.alert(
+      'Restore this backup?',
+      `This backup has ${res.meta.counts.entries} ${res.meta.counts.entries === 1 ? 'entry' : 'entries'}.\n` +
+      `It will replace what's on this phone now (${here} ${here === 1 ? 'entry' : 'entries'}). ` +
+      `We'll save a recovery copy of your current journal first.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Replace', style: 'destructive',
+          onPress: async () => {
+            try {
+              await runConfirmedImport({
+                currentEnvelopeText: JSON.stringify(createBackup(currentSlice(), { appVersion: APP_VERSION })),
+                restoredState: res.state,
+                writeRecovery: (text) => backupIO.writeRecovery(text),
+                replaceAll: (state) => onReplaceAllData(state),
+              });
+            } catch (e) {
+              showToast("Restore failed — your current journal is unchanged.");
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // Honest Auto Backup explainer (we can't read the OS-level Google toggle).
+  const explainAutoBackup = () => {
+    Alert.alert(
+      'Automatic backup',
+      "Your journal is included in Android's automatic backup to your Google account, so it can be restored when you set up a new phone.\n\n" +
+      "We can't see whether device backup is switched on, so it's worth checking: Settings › Google › Backup. For full control, also export your own copy.",
+      [
+        { text: 'Open phone settings', onPress: () => Linking.openSettings() },
+        { text: 'OK', style: 'cancel' },
+      ]
+    );
   };
 
   const screen = () => {
@@ -252,6 +335,10 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             onOpenManage={PLUS_ENABLED ? () => setManageOpen(true) : () => {}}
             onOpenAchievements={() => setShowAch(true)}
             onResetData={onResetData}
+            lastBackupAt={lastBackupAt}
+            onExportData={doExport}
+            onImportData={doImport}
+            onExplainAutoBackup={explainAutoBackup}
           />
         );
       case 'today':

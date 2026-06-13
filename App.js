@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import { View, ActivityIndicator, Platform } from 'react-native';
 import { RC_KEYS } from './src/billing/config';
 import { isBillingConfigured } from './src/billing';
-import { loadState, clearState } from './src/persistence/storage';
+import { loadState, saveState, clearState } from './src/persistence/storage';
 import { hasCompletedOnboarding } from './src/persistence/onboarding';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -34,6 +34,7 @@ export default function App() {
   const [onboarded, setOnboarded] = useState(false); // new users start in first-run
   const [startedPlus, setStartedPlus] = useState(false); // subscribed during onboarding
   const [hydrated, setHydrated] = useState(null); // null = still loading persisted state
+  const [dataKey, setDataKey] = useState(0); // bump to remount RitualsApp with fresh state
 
   React.useEffect(() => {
     const platform = Platform.OS === 'android' ? 'android' : 'ios';
@@ -76,6 +77,13 @@ export default function App() {
     setOnboarded(false);
   };
 
+  const handleReplaceAllData = async (restoredSlice) => {
+    await saveState(restoredSlice);
+    setHydrated(restoredSlice);
+    if (restoredSlice.settings) setSettings(restoredSlice.settings);
+    setDataKey((k) => k + 1); // forces RitualsApp to re-init useState from the restored slice
+  };
+
   const dark = mode === 'night';
 
   // First-run / signup flow hands off to the live app on completion.
@@ -92,6 +100,7 @@ export default function App() {
     <SafeAreaProvider>
       <StatusBar style={dark ? 'light' : 'dark'} />
       <RitualsApp
+        key={dataKey}
         mode={mode}
         settings={settings}
         setSettings={setSettings}
@@ -99,6 +108,7 @@ export default function App() {
         initialPlus={startedPlus}
         initialState={hydrated}
         onResetData={handleResetData}
+        onReplaceAllData={handleReplaceAllData}
       />
     </SafeAreaProvider>
   );
