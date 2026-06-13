@@ -5,7 +5,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, Pressable, Animated, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useTheme } from './theme';
+import { useTheme, DARK_THEME } from './theme';
 
 // Themed <Text> wrappers. `w` = weight; `d` = use the display family.
 export function T({ d = false, w, italic, style, color, children, ...rest }) {
@@ -22,6 +22,7 @@ export function T({ d = false, w, italic, style, color, children, ...rest }) {
 // ── Card ─────────────────────────────────────────────────────────────────────
 export function Card({ style, children, padded, ...rest }) {
   const t = useTheme();
+  const isNightV2 = t.dark && DARK_THEME === 'v2';
   return (
     <View
       {...rest}
@@ -31,12 +32,24 @@ export function Card({ style, children, padded, ...rest }) {
           borderWidth: 1,
           borderColor: t.colors.border,
           borderRadius: t.radius.card,
+          // overflow:hidden lets the sheen gradient respect the card radius; safe in
+          // dark mode because t.shadow() returns null there (no Android elevation to lose).
+          overflow: isNightV2 ? 'hidden' : undefined,
         },
         t.dark ? null : t.shadow(14, '#5b4a2a', 0.16),
         padded && { padding: 18 },
         style,
       ]}
     >
+      {isNightV2 && (
+        <LinearGradient
+          pointerEvents="none"
+          colors={['rgba(255,255,255,0.06)', 'rgba(255,255,255,0)']}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 0.5 }}
+          style={StyleSheet.absoluteFill}
+        />
+      )}
       {children}
     </View>
   );

@@ -22,6 +22,8 @@ export default function HomeScreen({ copy, gamify, mode, streak, level, levelNam
   const week = buildWeekStrip(entries || []);
   const keepsakes = deriveKeepsakes(entries || [], streak || 0);
   const streakShadow = { textShadowColor: 'rgba(0,0,0,0.7)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 10 };
+  const isNightV2 = t.dark && DARK_THEME === 'v2';
+  const numberGlow = isNightV2 ? { textShadowColor: 'rgba(245,158,11,0.55)', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 16 } : {};
 
   return (
     <ScrollView
@@ -53,7 +55,7 @@ export default function HomeScreen({ copy, gamify, mode, streak, level, levelNam
           <Card style={{ paddingHorizontal: 22, paddingTop: 26, paddingBottom: 22, alignItems: 'center', overflow: 'hidden' }}>
             {mode === 'night' ? (DARK_THEME === 'v2' ? <EmberGlow /> : <NightSky />) : <RayFan />}
             <View style={{ zIndex: 1, alignItems: 'center', marginTop: 13 }}>
-              <T d w={800} color={c.accentDeep} style={{ fontSize: 76, lineHeight: 82, includeFontPadding: false, textAlign: 'center' }}>{streak}</T>
+              <T d w={800} color={c.accentDeep} style={[{ fontSize: 76, lineHeight: 82, includeFontPadding: false, textAlign: 'center' }, numberGlow]}>{streak}</T>
               <T d w={700} color={c.ink} style={[{ fontSize: 16, marginTop: 2 }, t.dark && streakShadow]}>day streak</T>
               <T w={600} color={t.dark ? '#d8c7a8' : c.muted} style={[{ fontSize: 13, marginTop: 4 }, t.dark && streakShadow]}>{streakSubtitle(streak)}</T>
             </View>
