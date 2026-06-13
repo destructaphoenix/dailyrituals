@@ -31,7 +31,7 @@ module.exports = {
         backgroundColor: '#f9f7f4',
       },
       package: 'app.dailyrituals.mobile',
-      versionCode: 5,
+      versionCode: 6,
       // Android Auto Backup: user's local data (journal/streak/settings) backs
       // up to their own Google Drive and restores on a new/reinstalled device —
       // no accounts, no login. Explicit so it can't silently regress if Expo's
