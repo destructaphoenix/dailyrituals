@@ -8,7 +8,7 @@ import { Platform } from 'react-native';
 
 // 'v2' = premium AMOLED dark (IMP-019); 'classic' = original night palette.
 // Revert: change to 'classic' and ship OTA — no other change needed.
-export const DARK_THEME = 'v2';
+export const DARK_THEME = 'classic';
 
 // ── Palettes ────────────────────────────────────────────────────────────────
 export const PALETTES = {

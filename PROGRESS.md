@@ -122,7 +122,7 @@ _(Phase 9 complete — detailed checklist in [docs/build-log.md](docs/build-log.
 | IMP-016 | Ember/amber flame icon in the header is proportional + centered (glyph fills its box; fix tight top-biased viewBox so it isn't tiny/misaligned at small sizes) | OTA | ✅ (shipped OTA 2026-06-13; runtime walk pending) |
 | IMP-017 | Greeting is Good morning / Good afternoon / Good evening by the user's local time (add the missing "afternoon" band) | OTA | ✅ (shipped OTA 2026-06-13; runtime walk pending) |
 | IMP-018 | Today's reflection is editable — today ONLY — and editing pre-fills the existing text (with a "Start fresh" reset), never opens blank | OTA | ✅ (shipped OTA 2026-06-13; runtime walk pending) |
-| IMP-019 | Premium dark-mode redesign ("Embers in the Dark") — true-black AMOLED, ember-glow hero (no moon), in line with light mode; behind a one-line revert flag (classic dark stays intact) | OTA | ⏳ Code done (Round 2) — **owner screenshot review on OLED before OTA** |
+| IMP-019 | Premium dark-mode redesign — true-black AMOLED, premium hero, in line with light mode; behind a one-line revert flag (classic dark stays intact) | OTA | 🟡 ember-hero direction (v1 + Round 2) abandoned by owner; **`DARK_THEME` reverted to `classic`**; redesigning hero → **crescent + embers** under consideration (palette/flag/card-sheen reusable) |
 
 ### Tasks
 _(Opus appends one block per issue, in priority order, using the template below. Sonnet works the first unchecked one.)_
