@@ -3,7 +3,10 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 const MONTHS_ABBR = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 export function greetingFor(date = new Date()) {
-  return date.getHours() < 12 ? 'Good morning' : 'Good evening';
+  const h = date.getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  return 'Good evening';
 }
 
 export function todayLabel(date = new Date()) {

@@ -7,8 +7,17 @@ describe('greetingFor', () => {
   it('returns Good morning at 11:59', () => {
     expect(greetingFor(new Date(2026, 0, 1, 11, 59))).toBe('Good morning');
   });
-  it('returns Good evening at noon exactly', () => {
-    expect(greetingFor(new Date(2026, 0, 1, 12, 0))).toBe('Good evening');
+  it('returns Good afternoon at noon exactly', () => {
+    expect(greetingFor(new Date(2026, 0, 1, 12, 0))).toBe('Good afternoon');
+  });
+  it('returns Good afternoon at 16:59', () => {
+    expect(greetingFor(new Date(2026, 0, 1, 16, 59))).toBe('Good afternoon');
+  });
+  it('returns Good evening at 17:00', () => {
+    expect(greetingFor(new Date(2026, 0, 1, 17, 0))).toBe('Good evening');
+  });
+  it('returns Good evening at 21:00', () => {
+    expect(greetingFor(new Date(2026, 0, 1, 21, 0))).toBe('Good evening');
   });
   it('returns Good evening at 23:00', () => {
     expect(greetingFor(new Date(2026, 0, 1, 23, 0))).toBe('Good evening');
