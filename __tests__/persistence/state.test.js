@@ -72,6 +72,13 @@ describe('onboarded flag persistence (first-run shows once)', () => {
   });
 });
 
+describe('lastBackupAt persistence', () => {
+  test('pickPersisted carries lastBackupAt', () => {
+    expect(pickPersisted({ lastBackupAt: '2026-06-14T00:00:00.000Z', junk: 1 }))
+      .toEqual({ lastBackupAt: '2026-06-14T00:00:00.000Z' });
+  });
+});
+
 describe('mergeWithDefaults', () => {
   test('fills missing keys from defaults but keeps loaded values', () => {
     const merged = mergeWithDefaults({ embers: 999 }, { embers: 360, streak: 4 });
