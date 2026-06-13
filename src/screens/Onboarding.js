@@ -10,6 +10,7 @@ import { View, ScrollView, Pressable, TextInput, Dimensions, Platform } from 're
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemeContext, makeTheme } from '../theme';
 import { T, PrimaryButton } from '../ui';
+import { isValidName } from '../profile/name';
 import { Pencil, Check, Chevron, Sun } from '../icons';
 import { BigSun, BigMoon } from '../art';
 import { PLUS_PERKS } from '../data';
@@ -185,7 +186,9 @@ function IntroSwipe({ onDone, onSkip, insets }) {
 function Personalize({ settings, setSettings, onDone, onBack, insets }) {
   const t = React.useContext(ThemeContext);
   const [name, setName] = useState(settings?.name || '');
+  const [nameTouched, setNameTouched] = useState(false);
   const [time, setTime] = useState(TIMES[0]);
+  const nameOk = isValidName(name);
   return (
     <View style={{ flex: 1 }}>
       <TopChrome left={<BackBtn onPress={onBack} label="Back" />} />
@@ -197,8 +200,13 @@ function Personalize({ settings, setSettings, onDone, onBack, insets }) {
           <T d w={700} color={t.colors.accentDeep} style={{ fontSize: 14, marginBottom: 9 }}>What should we call you?</T>
           <TextInput
             style={{ width: '100%', paddingVertical: 15, paddingHorizontal: 16, borderRadius: t.radius.btn, borderWidth: 1.5, borderColor: t.colors.border, backgroundColor: t.colors.surface, fontFamily: t.body(400), fontSize: 16, color: t.colors.ink }}
-            placeholder="Your name" placeholderTextColor="#c3bcb0" value={name} onChangeText={setName}
+            placeholder="Your name" placeholderTextColor="#c3bcb0" value={name}
+            onChangeText={(v) => { setName(v); setNameTouched(true); }}
+            onBlur={() => setNameTouched(true)}
           />
+          {nameTouched && !nameOk && (
+            <T w={500} color={t.colors.muted} style={{ fontSize: 13, marginTop: 6 }}>A name is required to continue.</T>
+          )}
         </View>
         <View style={{ marginTop: 22 }}>
           <T d w={700} color={t.colors.accentDeep} style={{ fontSize: 14, marginBottom: 9 }}>When should we nudge you to lay the day to rest?</T>
@@ -218,7 +226,7 @@ function Personalize({ settings, setSettings, onDone, onBack, insets }) {
         </View>
       </ScrollView>
       <View style={{ paddingHorizontal: 24, paddingTop: 8, paddingBottom: 16 + insets.bottom }}>
-        <PrimaryButton label="Looks good" onPress={() => { setSettings((s) => ({ ...s, name: name.trim() })); onDone(); }} />
+        <PrimaryButton label="Looks good" disabled={!nameOk} onPress={() => { setSettings((s) => ({ ...s, name: name.trim() })); onDone(); }} />
       </View>
     </View>
   );
