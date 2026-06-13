@@ -385,6 +385,8 @@ _2026-06-13 — IMP-015 COMPLETE (code) — "What should we call you?" is now ma
 
 _2026-06-13 — IMP-016 COMPLETE (code) — Ember flame icon now fills and centers its rendered box. Changed `src/icons.js` `Ember` component's `viewBox` from `"0 0 24 24"` → `"4.75 1.6 14.5 14.5"` (a 14.5×14.5 square centered on the glyph's bounding box: x ∈ [7.3,16.7], y ∈ [2.3,15.4], center ≈ (12, 8.85)). The flame now fills ~90% of the rendered box at all sizes (was ~40%, floating top-biased). No size adjustments needed in `EmberPill` or `PalTag` — both callers look correct with the new viewBox. No logic changed; `npm test` → **137 passed, 18 suites** (unchanged). Commit `9e41706`. **Acceptance (owner runtime walk — no device in session):** the amber flame in the embers pill (top-right, Today) should be clearly visible, proportional to the number beside it, and vertically centered. **Ship:** OTA-eligible (all JS in `src/`)._
 
+_2026-06-13 — IMP-017 COMPLETE (code) — "Good afternoon" greeting band added. `src/time/clock.js` `greetingFor` now returns three bands: `h < 12` → "Good morning"; `12 ≤ h < 17` → "Good afternoon"; `h ≥ 17` → "Good evening" (was binary morning/evening). Extended `__tests__/time/clock.test.js`: updated the noon assertion (was "Good evening" → "Good afternoon") and added 3 new cases (16:59 → afternoon, 17:00 → evening, 21:00 → evening). `npm test` → **140 passed, 18 suites** (was 137 + 3 new). Commit `f66b20c`. **Acceptance (owner runtime walk):** opening the app in the afternoon shows "Good afternoon."; morning "Good morning."; evening "Good evening." — all matching the device clock. **Ship:** OTA-eligible (all JS in `src/`)._
+
 ---
 
 ## Update workflow — superseded manual reference
