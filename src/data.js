@@ -54,11 +54,12 @@ export const moodEmoji = (m) => MOOD_EMOJI[m] || '';
 export const MISS_EMOJI = '💀';
 
 // ── Duolingo-style mechanics (solo & gentle) ────────────────────────────────
-// Daily "rites" — three small quests that renew each day. revisit starts done.
+// Daily "rites" — three small quests that renew each day. All start at cur: 0.
+// revisit is kept by opening a past entry from Reflections (see markRevisited.js).
 export const DAILY_QUESTS = [
   { id: 'write',   label: 'Lay today to rest', icon: 'write',   cur: 0, goal: 1, xp: 10 },
   { id: 'feel',    label: 'Name how it felt',  icon: 'feel',    cur: 0, goal: 1, xp: 10 },
-  { id: 'revisit', label: 'Tend an old grave', icon: 'revisit', cur: 1, goal: 1, xp: 10 },
+  { id: 'revisit', label: 'Tend an old grave', icon: 'revisit', cur: 0, goal: 1, xp: 10 },
 ];
 export const questsXp = (qs) => qs.reduce((s, q) => s + (q.cur >= q.goal ? q.xp : 0), 0);
 export const questsGoal = (qs) => qs.reduce((s, q) => s + q.xp, 0);

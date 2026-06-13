@@ -32,6 +32,7 @@ import { formatRenewDate } from './billing/format';
 import { saveState } from './persistence/storage';
 import { pickPersisted } from './persistence/state';
 import { applyCompletion } from './home/completeEntry';
+import { markRevisited } from './home/markRevisited';
 import { levelFromXp } from './profile/level';
 import { deriveAchievements } from './profile/achievements';
 import { entryDateParts } from './time/clock';
@@ -237,7 +238,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
       case 'insights':
         return <InsightsScreen copy={copy} entries={entries} streak={streak} />;
       case 'archive':
-        return <ArchiveScreen copy={copy} gamify={gamify} mode={mode} entries={entries} onOpen={(e) => setReading(e)} />;
+        return <ArchiveScreen copy={copy} gamify={gamify} mode={mode} entries={entries} onOpen={(e) => { setReading(e); setQuests((qs) => markRevisited(qs, e, todayKey())); }} />;
       case 'you':
         return (
           <YouScreen
