@@ -33,6 +33,7 @@ import { saveState } from './persistence/storage';
 import { pickPersisted } from './persistence/state';
 import { applyCompletion } from './home/completeEntry';
 import { markRevisited } from './home/markRevisited';
+import { findTodaysEntry, isEditableToday } from './home/todaysEntry';
 import { levelFromXp } from './profile/level';
 import { deriveAchievements } from './profile/achievements';
 import { entryDateParts } from './time/clock';
@@ -304,13 +305,23 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
         {/* overlays */}
         <Modal visible={writing} animationType="slide" presentationStyle="overFullScreen" onRequestClose={() => setWriting(false)}>
           <ThemeContext.Provider value={theme}>
-            <WriteFlow copy={copy} insets={insets} onClose={() => setWriting(false)} onComplete={complete} />
+            {writing && (() => {
+              const te = findTodaysEntry(entries, todayKey());
+              const initial = te ? { did: te.did, wished: te.wished, mood: te.mood } : null;
+              return <WriteFlow copy={copy} insets={insets} onClose={() => setWriting(false)} onComplete={complete} initial={initial} />;
+            })()}
           </ThemeContext.Provider>
         </Modal>
 
         <Modal visible={!!reading} animationType="slide" presentationStyle="overFullScreen" onRequestClose={() => setReading(null)}>
           <ThemeContext.Provider value={theme}>
-            {reading && <ReadingSheet entry={reading} copy={copy} mode={mode} insets={insets} onClose={() => setReading(null)} />}
+            {reading && (
+              <ReadingSheet
+                entry={reading} copy={copy} mode={mode} insets={insets} onClose={() => setReading(null)}
+                canEdit={isEditableToday(reading, todayKey())}
+                onEdit={() => { setReading(null); setWriting(true); }}
+              />
+            )}
           </ThemeContext.Provider>
         </Modal>
 

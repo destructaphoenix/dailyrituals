@@ -11,14 +11,16 @@ import { todayLabel } from '../time/clock';
 
 const countWords = (s) => (s.trim() ? s.trim().split(/\s+/).length : 0);
 
-export default function WriteFlow({ copy, insets, onClose, onComplete }) {
+export default function WriteFlow({ copy, insets, onClose, onComplete, initial }) {
   const t = useTheme();
   const c = t.colors;
 
   const [step, setStep] = useState(0);
-  const [did, setDid] = useState('');
-  const [wished, setWished] = useState('');
-  const [mood, setMood] = useState(null);
+  const [did, setDid] = useState(initial?.did ?? '');
+  const [wished, setWished] = useState(initial?.wished ?? '');
+  const [mood, setMood] = useState(initial?.mood ?? null);
+
+  const startFresh = () => { setDid(''); setWished(''); setMood(null); setStep(0); };
 
   const steps = [
     { q: copy.q1, help: copy.q1help, val: did, set: setDid, ph: 'Start anywhere…' },
@@ -50,7 +52,13 @@ export default function WriteFlow({ copy, insets, onClose, onComplete }) {
             }} />
           ))}
         </View>
-        <View style={{ width: 38 }} />
+        {initial ? (
+          <Pressable onPress={startFresh} style={{ paddingHorizontal: 6, paddingVertical: 4 }}>
+            <T w={600} color={c.muted} style={{ fontSize: 13 }}>Start fresh</T>
+          </Pressable>
+        ) : (
+          <View style={{ width: 38 }} />
+        )}
       </View>
 
       {!isMood ? (

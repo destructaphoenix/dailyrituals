@@ -8,7 +8,7 @@ import { T } from '../ui';
 import { Chevron } from '../icons';
 import { moodEmoji } from '../data';
 
-export default function ReadingSheet({ entry, copy, mode, insets, onClose }) {
+export default function ReadingSheet({ entry, copy, mode, insets, onClose, canEdit, onEdit }) {
   const t = useTheme();
   const c = t.colors;
   return (
@@ -20,6 +20,11 @@ export default function ReadingSheet({ entry, copy, mode, insets, onClose }) {
             <Text style={{ fontSize: 13 }}>{moodEmoji(entry.mood)}</Text>
             <T w={800} color={c.accentDeep} style={{ fontSize: 11 }}>{entry.mood}</T>
           </View>
+        ) : null}
+        {canEdit ? (
+          <Pressable onPress={onEdit} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+            <T w={700} color={c.accentDeep} style={{ fontSize: 13 }}>Edit</T>
+          </Pressable>
         ) : null}
       </View>
 
