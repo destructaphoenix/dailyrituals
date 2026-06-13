@@ -6,6 +6,10 @@
 import React from 'react';
 import { Platform } from 'react-native';
 
+// 'v2' = premium AMOLED dark (IMP-019); 'classic' = original night palette.
+// Revert: change to 'classic' and ship OTA — no other change needed.
+export const DARK_THEME = 'v2';
+
 // ── Palettes ────────────────────────────────────────────────────────────────
 export const PALETTES = {
   day: {
@@ -27,6 +31,7 @@ export const PALETTES = {
     navBg: 'rgba(255,255,255,0.92)',
   },
   night: {
+    // Classic dark — preserved byte-for-byte so DARK_THEME='classic' is a safe revert.
     cream: '#000000',
     surface: '#16120d',
     ink: '#f4eee4',
@@ -43,6 +48,25 @@ export const PALETTES = {
     heat0: '#2a2113', heat1: '#4a3414', heat2: '#936412', heat3: '#f59e0b',
     placeholder: '#5c544c',
     navBg: 'rgba(0,0,0,0.72)',
+  },
+  nightV2: {
+    // Premium AMOLED dark (IMP-019): true-black canvas, neutral near-black cards,
+    // amber-only accents. No brown. Depth via surface contrast + hairline borders.
+    cream: '#000000',       // pure AMOLED black
+    surface: '#0e0e10',     // near-black elevated card (neutraler than classic #16120d)
+    ink: '#f4eee4',         // keep
+    muted: '#8b857c',       // slightly lighter for legibility on pure black
+    border: '#26241f',      // hairline; faint amber tint (was #2c261f)
+    dot: '#0a0a0b',         // near-invisible on black bg
+    accent: '#f59e0b',
+    accentDeep: '#fbbf24',
+    accentSoft: '#1c160c',  // near-black amber tint; crisp chips on black (was #2a2113)
+    green: '#34d399',
+    greenSoft: '#14271a',
+    red: '#ef4444',
+    heat0: '#1c160c', heat1: '#3d2c10', heat2: '#7a5410', heat3: '#f59e0b',
+    placeholder: '#585250',
+    navBg: 'rgba(0,0,0,0.88)',
   },
 };
 
@@ -86,8 +110,12 @@ export const DEFAULT_SETTINGS = {
   storeRestore: 'empty',
 };
 
-export function makeTheme(mode = 'day', settings = DEFAULT_SETTINGS) {
-  const base = PALETTES[mode];
+// _variant is a test seam ('v2'|'classic'); production code omits it (uses DARK_THEME).
+export function makeTheme(mode = 'day', settings = DEFAULT_SETTINGS, _variant) {
+  const nightVariant = _variant ?? DARK_THEME;
+  const base = mode === 'night'
+    ? (nightVariant === 'v2' ? PALETTES.nightV2 : PALETTES.night)
+    : PALETTES[mode];
   // Day mode lets the accent triple be tweaked; night keeps its fixed amber.
   const colors =
     mode === 'night'

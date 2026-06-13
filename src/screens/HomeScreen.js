@@ -2,10 +2,10 @@
 
 import React from 'react';
 import { View, ScrollView, Pressable, Text } from 'react-native';
-import { useTheme } from '../theme';
+import { useTheme, DARK_THEME } from '../theme';
 import { T, Card, PrimaryButton, ProgressBar } from '../ui';
 import { Sun, Moon, Check, Pencil, BADGE_ICON } from '../icons';
-import { RayFan, NightSky } from '../art';
+import { RayFan, NightSky, EmberGlow } from '../art';
 import { SAMPLE_ENTRIES } from '../data';
 import { greetingFor, todayLabel } from '../time/clock';
 import { streakSubtitle } from '../home/streakCopy';
@@ -51,7 +51,7 @@ export default function HomeScreen({ copy, gamify, mode, streak, level, levelNam
       {gamify && (
         <View style={{ paddingHorizontal: 20 }}>
           <Card style={{ paddingHorizontal: 22, paddingTop: 26, paddingBottom: 22, alignItems: 'center', overflow: 'hidden' }}>
-            {mode === 'night' ? <NightSky /> : <RayFan />}
+            {mode === 'night' ? (DARK_THEME === 'v2' ? <EmberGlow /> : <NightSky />) : <RayFan />}
             <View style={{ zIndex: 1, alignItems: 'center', marginTop: 13 }}>
               <T d w={800} color={c.accentDeep} style={{ fontSize: 76, lineHeight: 82, includeFontPadding: false, textAlign: 'center' }}>{streak}</T>
               <T d w={700} color={c.ink} style={[{ fontSize: 16, marginTop: 2 }, t.dark && streakShadow]}>day streak</T>

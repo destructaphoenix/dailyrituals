@@ -123,6 +123,83 @@ export function NightSky({ size = 300 }) {
   );
 }
 
+// ── Night-v2 hero: ember glow + drifting sparks (true-black AMOLED) ──────────
+// Focal point y≈80px from card top (matches IMP-003 streak-number center).
+// Keeps NightSky intact — selection in HomeScreen is driven by DARK_THEME flag.
+
+const EMBER_SPARKS = [
+  { cx: 148, cy: 153, r: 2.2, dur: 2600, color: '#fde68a' },
+  { cx: 137, cy: 163, r: 1.6, dur: 3100, color: '#fbbf24' },
+  { cx: 159, cy: 157, r: 1.9, dur: 2850, color: '#f59e0b' },
+  { cx: 143, cy: 169, r: 1.3, dur: 3400, color: '#fde68a' },
+  { cx: 155, cy: 173, r: 1.5, dur: 2950, color: '#fbbf24' },
+];
+
+function EmberSpark({ cx, cy, r, dur, color, canvasSize }) {
+  const p = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(p, { toValue: 1, duration: dur, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+        Animated.timing(p, { toValue: 0, duration: 1, useNativeDriver: true }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [p, dur]);
+  const scale = canvasSize / 300;
+  return (
+    <AView
+      style={{
+        position: 'absolute',
+        left: cx * scale - r,
+        top: cy * scale - r,
+        width: r * 2,
+        height: r * 2,
+        borderRadius: r,
+        backgroundColor: color,
+        opacity: p.interpolate({ inputRange: [0, 0.12, 0.72, 1], outputRange: [0, 0.9, 0.35, 0], extrapolate: 'clamp' }),
+        transform: [{ translateY: p.interpolate({ inputRange: [0, 1], outputRange: [0, -(18 + r * 8)], extrapolate: 'clamp' }) }],
+      }}
+    />
+  );
+}
+
+export function EmberGlow({ size = 300 }) {
+  const breathe = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(breathe, { toValue: 1, duration: 2800, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+        Animated.timing(breathe, { toValue: 0, duration: 2800, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [breathe]);
+  const bloomScale = breathe.interpolate({ inputRange: [0, 1], outputRange: [0.87, 1.0] });
+  const bloomOpacity = breathe.interpolate({ inputRange: [0, 1], outputRange: [0.38, 0.56] });
+  return (
+    <View pointerEvents="none" style={{ position: 'absolute', top: -70, left: 0, right: 0, height: size, alignItems: 'center' }}>
+      <View style={{ width: size, height: size }}>
+        <AView style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: bloomOpacity, transform: [{ scale: bloomScale }] }}>
+          <Svg width={size} height={size} viewBox="0 0 300 300" fill="none">
+            <Defs>
+              <RadialGradient id="emberBloom" cx="50%" cy="50%" r="50%">
+                <Stop offset="0%" stopColor="#f59e0b" stopOpacity="0.55" />
+                <Stop offset="40%" stopColor="#f59e0b" stopOpacity="0.22" />
+                <Stop offset="100%" stopColor="#f59e0b" stopOpacity="0" />
+              </RadialGradient>
+            </Defs>
+            <Circle cx={150} cy={150} r={135} fill="url(#emberBloom)" />
+          </Svg>
+        </AView>
+        {EMBER_SPARKS.map((s, i) => <EmberSpark key={i} {...s} canvasSize={size} />)}
+      </View>
+    </View>
+  );
+}
+
 // ── Big radiant sun (celebration, day) ───────────────────────────────────────
 export function BigSun({ size = 132 }) {
   const t = useTheme();
