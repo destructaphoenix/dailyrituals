@@ -120,7 +120,7 @@ _(Phase 9 complete — detailed checklist in [docs/build-log.md](docs/build-log.
 | IMP-014 | Missed days show 💀 (skull) instead of a blank cell — in the Today week strip AND the Reflections heatmap; only for genuinely-missed days (past, no entry, on/after first activity), never pre-start or future days | OTA | ✅ (code; runtime walk + ship pending) |
 | IMP-015 | "What should we call you?" is mandatory in onboarding — can't proceed past Personalize with an empty name (new users / after reset) | OTA | ✅ (code; runtime walk + ship pending) |
 | IMP-016 | Ember/amber flame icon in the header is proportional + centered (glyph fills its box; fix tight top-biased viewBox so it isn't tiny/misaligned at small sizes) | OTA | ✅ (code; runtime walk + ship pending) |
-| IMP-017 | Greeting is Good morning / Good afternoon / Good evening by the user's local time (add the missing "afternoon" band) | OTA | ⬜ |
+| IMP-017 | Greeting is Good morning / Good afternoon / Good evening by the user's local time (add the missing "afternoon" band) | OTA | ✅ (code; runtime walk + ship pending) |
 | IMP-018 | Today's reflection is editable — today ONLY — and editing pre-fills the existing text (with a "Start fresh" reset), never opens blank | OTA | ⬜ |
 
 ### Tasks
@@ -243,9 +243,9 @@ _(IMP-009 – IMP-012 complete — full task detail archived in [docs/build-log.
 - **Approach (decided by Opus — do not re-litigate):** make `greetingFor(date = new Date())` return by local hour `h = date.getHours()`: `h < 12` → "Good morning"; `12 ≤ h < 17` → "Good afternoon"; `h ≥ 17` → "Good evening". (Boundaries: noon flips to afternoon, 5:00 PM flips to evening — standard, simple.) Pure function; no other change.
 - **TDD (write tests FIRST — RED → GREEN), extend `__tests__/time/clock.test.js`:** assert greeting at representative hours by passing a fixed `date` — e.g. 06:00 → morning, 12:00 → afternoon, 16:59 → afternoon, 17:00 → evening, 21:00 → evening, 00:00 → morning. (Construct dates so `getHours()` is deterministic regardless of TZ — e.g. `new Date(2026,0,1,6,0,0)`.)
 - **Steps:**
-  - [ ] 1. Add the afternoon-band tests to `__tests__/time/clock.test.js` (RED).
-  - [ ] 2. Update `greetingFor` with the three bands → GREEN.
-  - [ ] 3. `npm test` green (≥ 123 + new cases).
+  - [x] 1. Add the afternoon-band tests to `__tests__/time/clock.test.js` (RED).
+  - [x] 2. Update `greetingFor` with the three bands → GREEN.
+  - [x] 3. `npm test` green (140 passed, 18 suites — 3 new cases).
 - **Commit:** `fix(clock): add "Good afternoon" — greeting now morning/afternoon/evening by local time`
 - **Acceptance (runtime walk — owner):** Opening the app in the afternoon shows "Good afternoon."; morning shows "Good morning."; evening shows "Good evening." — matching the device clock.
 - **Ship after merge:** OTA. Tag `Release-Lane: ota`.
@@ -359,9 +359,9 @@ Production `.aab` **must** be signed with the local **`dailyrituals-release.keys
 
 _History archived in [docs/build-log.md](docs/build-log.md) → "Session notes". Only the two newest notes stay here; every chat moves the older one out when it appends a new one (see DEVGUIDE Step 4)._
 
-_2026-06-13 — IMP-015 COMPLETE (code) — "What should we call you?" is now mandatory in onboarding. Extracted `isValidName(raw)` → `src/profile/name.js` (pure: `raw.trim().length > 0`). In `Personalize` (`src/screens/Onboarding.js`): added `nameTouched` state; `onChangeText`/`onBlur` set it; added an inline "A name is required to continue." hint shown only after the field is touched and still empty; gated the "Looks good" `PrimaryButton` with `disabled={!nameOk}` (renders at 0.4 opacity, unresponsive when empty). 6 new tests in `__tests__/profile/name.test.js`. `npm test` → **137 passed, 18 suites** (was 131 + 6 new). Commit `b3c4d99`. **Ship:** OTA-eligible (all JS in `src/`)._
+_2026-06-13 — IMP-016 COMPLETE (code) — Ember flame icon now fills and centers its rendered box. Changed `src/icons.js` `Ember` component's `viewBox` from `"0 0 24 24"` → `"4.75 1.6 14.5 14.5"` (a 14.5×14.5 square centered on the glyph's bounding box: x ∈ [7.3,16.7], y ∈ [2.3,15.4], center ≈ (12, 8.85)). The flame now fills ~90% of the rendered box at all sizes (was ~40%, floating top-biased). No size adjustments needed in `EmberPill` or `PalTag` — both callers look correct with the new viewBox. No logic changed; `npm test` → **137 passed, 18 suites** (unchanged). Commit `9e41706`. **Acceptance (owner runtime walk — no device in session):** the amber flame in the embers pill (top-right, Today) should be clearly visible, proportional to the number beside it, and vertically centered. **Ship:** OTA-eligible (all JS in `src/`)._
 
-_2026-06-13 — IMP-016 COMPLETE (code) — Ember flame icon now fills and centers its rendered box. Changed `src/icons.js` `Ember` component's `viewBox` from `"0 0 24 24"` → `"4.75 1.6 14.5 14.5"` (a 14.5×14.5 square centered on the glyph's bounding box: x ∈ [7.3,16.7], y ∈ [2.3,15.4], center ≈ (12, 8.85)). The flame now fills ~90% of the rendered box at all sizes (was ~40%, floating top-biased). No size adjustments needed in `EmberPill` or `PalTag` — both callers look correct with the new viewBox. No logic changed; `npm test` → **137 passed, 18 suites** (unchanged). Commit `9e41706`. **Acceptance (owner runtime walk — no device in session):** the amber flame in the embers pill (top-right, Today) should be clearly visible, proportional to the number beside it, and vertically centered. **Ship:** OTA-eligible (all JS in `src/`). **EXACT NEXT STEP:** IMP-017 — add "Good afternoon" greeting band in `src/time/clock.js`._
+_2026-06-13 — IMP-017 COMPLETE (code) — "Good afternoon" greeting band added. `src/time/clock.js` `greetingFor` now returns three bands: `h < 12` → "Good morning"; `12 ≤ h < 17` → "Good afternoon"; `h ≥ 17` → "Good evening" (was binary morning/evening). Extended `__tests__/time/clock.test.js`: updated the noon assertion (was "Good evening" → "Good afternoon") and added 3 new cases (16:59 → afternoon, 17:00 → evening, 21:00 → evening). `npm test` → **140 passed, 18 suites** (was 137 + 3 new). Commit `f66b20c`. **Acceptance (owner runtime walk):** opening the app in the afternoon shows "Good afternoon."; morning "Good morning."; evening "Good evening." — all matching the device clock. **Ship:** OTA-eligible (all JS in `src/`). **EXACT NEXT STEP:** IMP-018 — today's reflection is editable (prefilled write flow with "Start fresh" reset)._
 
 ---
 
