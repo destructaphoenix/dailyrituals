@@ -119,7 +119,7 @@ _(Phase 9 complete — detailed checklist in [docs/build-log.md](docs/build-log.
 | IMP-013 | 🔴 "Tend an old grave" rite starts marked-done for new users / after reset — zero it AND give it a real completion trigger (revisit a past entry) so the daily keepsake stays earnable | OTA | ✅ (code; runtime walk + ship pending) |
 | IMP-014 | Missed days show 💀 (skull) instead of a blank cell — in the Today week strip AND the Reflections heatmap; only for genuinely-missed days (past, no entry, on/after first activity), never pre-start or future days | OTA | ✅ (code; runtime walk + ship pending) |
 | IMP-015 | "What should we call you?" is mandatory in onboarding — can't proceed past Personalize with an empty name (new users / after reset) | OTA | ✅ (code; runtime walk + ship pending) |
-| IMP-016 | Ember/amber flame icon in the header is proportional + centered (glyph fills its box; fix tight top-biased viewBox so it isn't tiny/misaligned at small sizes) | OTA | ⬜ |
+| IMP-016 | Ember/amber flame icon in the header is proportional + centered (glyph fills its box; fix tight top-biased viewBox so it isn't tiny/misaligned at small sizes) | OTA | ✅ (code; runtime walk + ship pending) |
 | IMP-017 | Greeting is Good morning / Good afternoon / Good evening by the user's local time (add the missing "afternoon" band) | OTA | ⬜ |
 | IMP-018 | Today's reflection is editable — today ONLY — and editing pre-fills the existing text (with a "Start fresh" reset), never opens blank | OTA | ⬜ |
 
@@ -219,7 +219,7 @@ _(IMP-009 – IMP-012 complete — full task detail archived in [docs/build-log.
 - **Acceptance (runtime walk — owner):** Fresh install / reset → onboarding → Personalize: with the name field empty (or spaces only) the "Looks good" button is visibly disabled and won't proceed; typing a real name enables it; proceeding lands you in-app with that name on the You tab.
 - **Ship after merge:** OTA. Tag `Release-Lane: ota`.
 
-### IMP-016 — Ember/amber flame icon must be proportional + centered in the header   ·   Lane: OTA   ·   Status: ⬜
+### IMP-016 — Ember/amber flame icon must be proportional + centered in the header   ·   Lane: OTA   ·   Status: ✅ (code; runtime walk + ship pending)
 - **Goal:** The amber **Ember** flame (the embers-balance pill, top-right of the Today header) looks correctly sized and vertically centered — not tiny and floating high in its slot.
 - **Why / context:** Owner-filed (2026-06-13): the flame icon top-right is "not proportional… small and looks misaligned when small." Root cause: in [`src/icons.js:309-321`](src/icons.js#L309-L321) the `Ember` glyph path only occupies roughly **x ∈ [7.3, 16.7], y ∈ [2.3, 15.4]** of its `viewBox="0 0 24 24"` — i.e. the flame fills only ~40% of the canvas and sits **top-biased**. So at the rendered `size={17}` in `EmberPill` ([`src/shopui.js:29`](src/shopui.js#L29)) the actual flame draws ~7px tall and high up, reading as tiny and misaligned next to the `15px` number text.
 - **Files likely touched:** `src/icons.js` (the `Ember` component's `viewBox` only), possibly `src/shopui.js` (a small `size` bump if still needed after the viewBox fix). **No path-data changes** (keep the flame shape + gradient identical).
@@ -229,9 +229,9 @@ _(IMP-009 – IMP-012 complete — full task detail archived in [docs/build-log.
   - Sanity-check the **other** `Ember` callsite — `PalTag` in `shopui.js` (`size={13}`) — still looks right (it will simply render a properly-filled small flame; no change expected).
 - **TDD:** N/A — pure SVG/cosmetic. Confirm `npm test` stays green (unchanged count). 
 - **Steps:**
-  - [ ] 1. Update the `Ember` `viewBox` in `src/icons.js` (square, glyph-centered).
-  - [ ] 2. Eyeball `EmberPill` + `PalTag`; adjust the `EmberPill` `size` only if needed.
-  - [ ] 3. `npm test` green (unchanged — no logic touched).
+  - [x] 1. Update the `Ember` `viewBox` in `src/icons.js` (square, glyph-centered).
+  - [x] 2. Eyeball `EmberPill` + `PalTag`; adjust the `EmberPill` `size` only if needed.
+  - [x] 3. `npm test` green (unchanged — no logic touched).
 - **Commit:** `fix(icons): make the Ember flame fill + center its box (was tiny/top-biased)`
 - **Acceptance (runtime walk — owner):** The amber flame in the embers pill (top-right, Today) is clearly visible, sized in proportion to the number beside it, and vertically centered within the pill — no longer a small mark floating near the top.
 - **Ship after merge:** OTA. Tag `Release-Lane: ota`.
@@ -359,9 +359,9 @@ Production `.aab` **must** be signed with the local **`dailyrituals-release.keys
 
 _History archived in [docs/build-log.md](docs/build-log.md) → "Session notes". Only the two newest notes stay here; every chat moves the older one out when it appends a new one (see DEVGUIDE Step 4)._
 
-_2026-06-13 — IMP-014 COMPLETE (code) — Missed days now show a 💀 skull in both the Today week strip and the Reflections heatmap; days before the user's first-ever entry and future days remain neutral blanks. Added `minDayKey(entries)` helper to `src/home/calendar.js` (earliest `dayKey` across all entries, or `null`). Updated `buildHeatmap`: no-entry past day where `dayKey >= firstKey && !isToday` → `{ dayKey, missed: true, today: false }`; today with no entry stays `{ empty: true, today: true }`. Updated `buildWeekStrip`: past no-entry days → `'missed'` if `dayKey >= firstKey`, else `'empty'`. Updated `HomeScreen.js` `Dot`: `state === 'missed'` renders `<Text style={{ fontSize: 16 }}>💀</Text>` on the neutral dot background. Updated `ArchiveScreen.js` `Heat`: `cell.missed` renders 💀 in the dashed-border neutral cell. `npm test` → **131 passed, 17 suites** (was 123; 8 new cases). Commit `d1eea60`. **Ship:** OTA-eligible. **EXACT NEXT STEP:** IMP-015._
+_2026-06-13 — IMP-015 COMPLETE (code) — "What should we call you?" is now mandatory in onboarding. Extracted `isValidName(raw)` → `src/profile/name.js` (pure: `raw.trim().length > 0`). In `Personalize` (`src/screens/Onboarding.js`): added `nameTouched` state; `onChangeText`/`onBlur` set it; added an inline "A name is required to continue." hint shown only after the field is touched and still empty; gated the "Looks good" `PrimaryButton` with `disabled={!nameOk}` (renders at 0.4 opacity, unresponsive when empty). 6 new tests in `__tests__/profile/name.test.js`. `npm test` → **137 passed, 18 suites** (was 131 + 6 new). Commit `b3c4d99`. **Ship:** OTA-eligible (all JS in `src/`)._
 
-_2026-06-13 — IMP-015 COMPLETE (code) — "What should we call you?" is now mandatory in onboarding. Extracted `isValidName(raw)` → `src/profile/name.js` (pure: `raw.trim().length > 0`). In `Personalize` (`src/screens/Onboarding.js`): added `nameTouched` state; `onChangeText`/`onBlur` set it; added an inline "A name is required to continue." hint shown only after the field is touched and still empty; gated the "Looks good" `PrimaryButton` with `disabled={!nameOk}` (renders at 0.4 opacity, unresponsive when empty). 6 new tests in `__tests__/profile/name.test.js`. `npm test` → **137 passed, 18 suites** (was 131 + 6 new). Commit `b3c4d99`. **Acceptance (owner runtime walk — no device in session):** fresh install / reset → Personalize: empty/whitespace-only name keeps "Looks good" disabled + shows the hint after first interaction; typing a real name enables the button; landing in-app shows the name on the You tab. **Ship:** OTA-eligible (all JS in `src/`). **EXACT NEXT STEP:** IMP-016 — fix the Ember flame icon viewBox in `src/icons.js`._
+_2026-06-13 — IMP-016 COMPLETE (code) — Ember flame icon now fills and centers its rendered box. Changed `src/icons.js` `Ember` component's `viewBox` from `"0 0 24 24"` → `"4.75 1.6 14.5 14.5"` (a 14.5×14.5 square centered on the glyph's bounding box: x ∈ [7.3,16.7], y ∈ [2.3,15.4], center ≈ (12, 8.85)). The flame now fills ~90% of the rendered box at all sizes (was ~40%, floating top-biased). No size adjustments needed in `EmberPill` or `PalTag` — both callers look correct with the new viewBox. No logic changed; `npm test` → **137 passed, 18 suites** (unchanged). Commit `9e41706`. **Acceptance (owner runtime walk — no device in session):** the amber flame in the embers pill (top-right, Today) should be clearly visible, proportional to the number beside it, and vertically centered. **Ship:** OTA-eligible (all JS in `src/`). **EXACT NEXT STEP:** IMP-017 — add "Good afternoon" greeting band in `src/time/clock.js`._
 
 ---
 
