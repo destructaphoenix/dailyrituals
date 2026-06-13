@@ -51,8 +51,9 @@ They are the same user story ("my memories are safe"); shipping only one would b
   too heavy for the first build).
 - Merge-on-import (replace is the right model for the primary "restore to a fresh phone" case).
 - File encryption / passphrase (acknowledged limitation in §6; possible future, not built now).
-- PDF "Export reflections" already exists (Plus-gated, prose → PDF) and is a **separate** feature
-  that stays as-is.
+- The PDF "Export reflections" row is currently an **unimplemented stub** (`onPress: () => {}`).
+  We do **not** implement PDF here — but we **relabel** it to "Save as PDF" so it never collides
+  with the backup feature (see §4.1). PDF remains a separate, later, Plus-gated feature.
 
 ---
 
@@ -141,9 +142,7 @@ keys for existing users.
 
 ## 4. UI — new "Your journal is safe" section on the You tab
 
-A dedicated section in `src/screens/YouScreen.js`, **visually distinct** from the existing
-Plus-gated PDF "Export reflections" row (that is prose → PDF, Plus only; this is data → JSON,
-free, everyone — conflating them would confuse users). Reuses the existing `Row` / `Card` /
+A dedicated section in `src/screens/YouScreen.js`, reusing the existing `Row` / `Card` /
 `Divider` components and the `Alert` confirm pattern already in the file. Icons `Download` and
 `Restore` already exist in `src/icons.js`.
 
@@ -154,16 +153,38 @@ Your journal is safe
 │    Included in Android's backup to   │
 │    your Google account. [How / check]│
 │ ───────────────────────────────────  │
-│ ↑  Export my journal                 │
-│    last exported: 12 days ago     ›  │
+│ ↑  Back up my journal                │
+│    A safety copy to keep off this    │
+│    phone · last backed up 12 days ago│
 │ ───────────────────────────────────  │
-│ ↓  Import a backup               ›   │
+│ ↓  Restore from a backup         ›   │
 └─────────────────────────────────────┘
 ```
 
-- `lastBackupAt` drives the "last exported: N days ago" subtitle and a gentle nudge when it's
+- `lastBackupAt` drives the "last backed up: N days ago" subtitle and a gentle nudge when it's
   been > 30 days (or never).
 - Free for all users (not Plus-gated) — data ownership is not a premium feature.
+
+### 4.1 UX disambiguation from the PDF feature (top priority)
+
+User experience is the priority, and the screen must never make a user wonder *"which export do
+I tap?"* Two rules enforce this:
+
+1. **No shared verb.** Backup uses **"Back up" / "Restore"**; the PDF stub is **relabeled
+   "Save as PDF"**. The word "Export" disappears from this screen entirely, so there is no
+   ambiguous "Export…" row to confuse.
+2. **Separated by section and intent.** They communicate different purposes and live apart:
+
+   | | Backup (this feature) | PDF (existing stub, relabeled only) |
+   | --- | --- | --- |
+   | Intent | Keep your data **safe** | Make a **keepsake to read / print** |
+   | Section | "Your journal is safe" | "General" (unchanged location) |
+   | Verbs | Back up / Restore | Save as PDF |
+   | Format | JSON (machine-readable, full restore) | PDF (human-readable document) |
+   | Price | Free, everyone | Plus |
+   | Subtitle | "A safety copy to keep off this phone." | "A printable keepsake of your writing." |
+
+   PDF stays an unimplemented stub here — we change its label/subtitle only, not its behavior.
 
 ---
 
