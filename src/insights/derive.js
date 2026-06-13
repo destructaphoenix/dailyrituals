@@ -1,3 +1,5 @@
+import { longestConsecutiveRun } from './dateKeys';
+
 const RHYTHM_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 const WEEKDAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -10,23 +12,6 @@ function localDate(dayKey) {
 // Mon-first weekday index (0=Mon … 6=Sun).
 function monFirstIndex(date) {
   return (date.getDay() + 6) % 7;
-}
-
-function longestConsecutiveRun(keys) {
-  if (!keys.length) return 0;
-  const utcMs = [...new Set(keys)]
-    .map((k) => {
-      const [y, m, d] = k.split('-').map(Number);
-      return Date.UTC(y, m - 1, d);
-    })
-    .sort((a, b) => a - b);
-
-  let best = 1, cur = 1;
-  for (let i = 1; i < utcMs.length; i++) {
-    cur = utcMs[i] - utcMs[i - 1] === 86400000 ? cur + 1 : 1;
-    if (cur > best) best = cur;
-  }
-  return best;
 }
 
 export function deriveInsights(entries, currentStreak, now = new Date()) {
