@@ -184,6 +184,7 @@ function Dot({ state, done, mode, children }) {
   }
   return (
     <View style={[{ width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: bg, borderWidth: 1.5, borderColor, borderStyle }, extra]}>
+      {state === 'missed' && <Text style={{ fontSize: 16 }}>💀</Text>}
       {children}
     </View>
   );

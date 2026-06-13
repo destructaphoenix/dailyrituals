@@ -1,7 +1,10 @@
 // Pure date-grid helpers for the Reflections heatmap and the Today week strip.
 // Both derive cells from real `entries` (each carrying a `dayKey` = YYYY-MM-DD,
 // produced the same UTC way as todayKey() in RitualsApp) and an injectable
-// `today` Date. No-entry days are neutral empties — never skulls.
+// `today` Date.
+//
+// Day states: done (entry exists), missed (past, no entry, on/after firstEntry),
+// empty (past, no entry, before firstEntry — or no entries at all), today, future.
 
 import { MOOD_EMOJI } from '../data';
 
@@ -28,10 +31,20 @@ function indexByDay(entries) {
   return map;
 }
 
+// Earliest dayKey across all entries, or null if none.
+function minDayKey(entries) {
+  let min = null;
+  for (const e of entries || []) {
+    if (e && e.dayKey && (min === null || e.dayKey < min)) min = e.dayKey;
+  }
+  return min;
+}
+
 // 35 cells (5 rows x 7), ending today (today = index 34).
 export function buildHeatmap(entries, today = new Date()) {
   const byDay = indexByDay(entries);
   const todayK = keyOf(today);
+  const firstKey = minDayKey(entries);
   const cells = [];
   for (let i = 34; i >= 0; i -= 1) {
     const dayKey = shiftKey(todayK, -i);
@@ -39,6 +52,8 @@ export function buildHeatmap(entries, today = new Date()) {
     const entry = byDay[dayKey];
     if (entry) {
       cells.push({ dayKey, mood: entry.mood, emoji: MOOD_EMOJI[entry.mood] || '', today: isToday });
+    } else if (!isToday && firstKey && dayKey >= firstKey) {
+      cells.push({ dayKey, missed: true, today: false });
     } else {
       cells.push({ dayKey, empty: true, today: isToday });
     }
@@ -53,13 +68,15 @@ export function buildWeekStrip(entries, today = new Date()) {
   const byDay = indexByDay(entries);
   const todayK = keyOf(today);
   const mondayK = shiftKey(todayK, -weekdayMon0(todayK));
+  const firstKey = minDayKey(entries);
   const cells = [];
   for (let i = 0; i < 7; i += 1) {
     const dayKey = shiftKey(mondayK, i);
     let state;
     if (dayKey === todayK) state = 'today';
     else if (dayKey > todayK) state = 'future';
-    else state = byDay[dayKey] ? 'done' : 'empty';
+    else if (byDay[dayKey]) state = 'done';
+    else state = (firstKey && dayKey >= firstKey) ? 'missed' : 'empty';
     cells.push({ l: WEEK_LABELS[i], state });
   }
   return cells;

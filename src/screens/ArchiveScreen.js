@@ -72,26 +72,31 @@ function Heat({ cells }) {
     <View style={{ gap: 6 }}>
       {rows.map((row, ri) => (
         <View key={ri} style={{ flexDirection: 'row', gap: 6 }}>
-          {row.map((cell, i) => (
-            <View
-              key={i}
-              style={{
-                flex: 1,
-                aspectRatio: 1,
-                borderRadius: 11,
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: cell.empty ? 'transparent' : c.accentSoft,
-                borderWidth: cell.empty ? 1.5 : cell.today ? 2 : 0,
-                borderColor: cell.empty ? c.border : c.accentDeep,
-                borderStyle: cell.empty ? 'dashed' : 'solid',
-              }}
-            >
-              {!cell.empty
-                ? <Text style={{ fontSize: 19, lineHeight: 23 }}>{cell.emoji}</Text>
-                : null}
-            </View>
-          ))}
+          {row.map((cell, i) => {
+            const isBlank = cell.empty || cell.missed;
+            return (
+              <View
+                key={i}
+                style={{
+                  flex: 1,
+                  aspectRatio: 1,
+                  borderRadius: 11,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: isBlank ? 'transparent' : c.accentSoft,
+                  borderWidth: isBlank ? 1.5 : cell.today ? 2 : 0,
+                  borderColor: isBlank ? c.border : c.accentDeep,
+                  borderStyle: isBlank ? 'dashed' : 'solid',
+                }}
+              >
+                {cell.missed
+                  ? <Text style={{ fontSize: 19, lineHeight: 23 }}>💀</Text>
+                  : !cell.empty
+                    ? <Text style={{ fontSize: 19, lineHeight: 23 }}>{cell.emoji}</Text>
+                    : null}
+              </View>
+            );
+          })}
         </View>
       ))}
     </View>
