@@ -116,17 +116,26 @@ export function makeTheme(mode = 'day', settings = DEFAULT_SETTINGS, _variant) {
   const base = mode === 'night'
     ? (nightVariant === 'v2' ? PALETTES.nightV2 : PALETTES.night)
     : PALETTES[mode];
-  // Day mode lets the accent triple be tweaked; night keeps its fixed amber.
-  const colors =
-    mode === 'night'
-      ? base
-      : {
-          ...base,
-          accent: settings.accent[0],
-          accentDeep: settings.accent[1],
-          accentSoft: settings.accent[2],
-          heat3: settings.accent[0],
-        };
+  // In night mode the "deep" token flips meaning: on a dark canvas the brighter
+  // shade is what gives contrast, not the darker one. Both accent tokens use
+  // accent[0] so every consumer (streak number, links, badges, orbs) gets a
+  // color that actually reads against the near-black surface.
+  // accentSoft stays as the dark palette's near-black tint — using the light-mode
+  // pastel (accent[2]) on a black card would look washed out.
+  const colors = mode === 'night'
+    ? {
+        ...base,
+        accent:      settings.accent[0],
+        accentDeep:  settings.accent[0],
+        heat3:       settings.accent[0],
+      }
+    : {
+        ...base,
+        accent:      settings.accent[0],
+        accentDeep:  settings.accent[1],
+        accentSoft:  settings.accent[2],
+        heat3:       settings.accent[0],
+      };
 
   const rk = settings.roundness;
   const dispMap = DISPLAY[settings.headlineFont] || DISPLAY['Baloo 2'];

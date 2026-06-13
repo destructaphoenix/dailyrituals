@@ -23,7 +23,7 @@ export default function HomeScreen({ copy, gamify, mode, streak, level, levelNam
   const keepsakes = deriveKeepsakes(entries || [], streak || 0);
   const streakShadow = { textShadowColor: 'rgba(0,0,0,0.7)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 10 };
   const isNightV2 = t.dark && DARK_THEME === 'v2';
-  const numberGlow = isNightV2 ? { textShadowColor: 'rgba(245,158,11,0.55)', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 16 } : {};
+  const numberGlow = isNightV2 ? { textShadowColor: c.accent + '8C', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 16 } : {};
 
   return (
     <ScrollView

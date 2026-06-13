@@ -170,15 +170,15 @@ export function NightRays({ size = 300 }) {
             <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} fill="none">{rays}</Svg>
           </AView>
         </AView>
-        {/* Soft central amber bloom — pool of warm light where the rays converge */}
+        {/* Soft central bloom — pool of light where the rays converge, tinted by accent */}
         <AView style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: bloomOpacity }}>
           <Svg width={size} height={size} viewBox="0 0 300 300" fill="none">
             <Defs>
               <RadialGradient id="nightRaysBloom" cx="50%" cy="50%" r="50%">
-                <Stop offset="0%"   stopColor="#fff7ea" stopOpacity="0.90" />
-                <Stop offset="22%"  stopColor="#f59e0b" stopOpacity="0.65" />
-                <Stop offset="60%"  stopColor="#f59e0b" stopOpacity="0.20" />
-                <Stop offset="100%" stopColor="#f59e0b" stopOpacity="0"    />
+                <Stop offset="0%"   stopColor="#ffffff"          stopOpacity="0.90" />
+                <Stop offset="22%"  stopColor={t.colors.accent}  stopOpacity="0.65" />
+                <Stop offset="60%"  stopColor={t.colors.accent}  stopOpacity="0.20" />
+                <Stop offset="100%" stopColor={t.colors.accent}  stopOpacity="0"    />
               </RadialGradient>
             </Defs>
             <Circle cx={150} cy={150} r={80} fill="url(#nightRaysBloom)" />
