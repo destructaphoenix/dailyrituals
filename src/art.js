@@ -154,13 +154,13 @@ function EmberParticle({ x, y, haloR, riseH, swayW, swayDur, dur, delay, coreCol
 
   useEffect(() => {
     // One-time stagger delay, then perpetual rise cycle.
-    // Opacity is 0 at riseV=0 and riseV=1, so the instant reset is invisible.
+    // Opacity is 0 at riseV=0 and riseV=1, so the 1ms reset is invisible.
     const riseAnim = Animated.sequence([
       Animated.delay(delay),
       Animated.loop(
         Animated.sequence([
           Animated.timing(riseV, { toValue: 1, duration: dur, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-          Animated.timing(riseV, { toValue: 0, duration: 0, useNativeDriver: true }),
+          Animated.timing(riseV, { toValue: 0, duration: 1, useNativeDriver: true }),
         ])
       ),
     ]);
@@ -284,6 +284,88 @@ export function EmberGlow({ size = 300 }) {
 
         {/* 16 glowing ember particles — staggered, rising, swaying */}
         {EMBER_PARTICLES.map((p, i) => (
+          <EmberParticle key={i} {...p} canvasSize={size} index={i} />
+        ))}
+
+      </View>
+    </View>
+  );
+}
+
+// ── Night-v2 hero: refined crescent accent + a few gentle embers (IMP-019 Round 3) ──
+// Thin luminous crescent in upper-right + ~6 sparse rising embers.
+// Crescent is built from a lit disc (gradient) + an occluding disc in AMOLED
+// black — the "carve" approach; zero path math, pixel-perfect on pure black.
+// Number glow + card sheen are applied by HomeScreen/ui.js via DARK_THEME flag.
+const CRESCENT_EMBERS = [
+  { x: 148, y: 175, r: 2.2, haloR: 13, riseH: 92,  swayW: 12, swayDur: 1200, dur: 3400, delay: 0,    coreColor: '#fff7ea', outerColor: '#fde68a' },
+  { x: 158, y: 178, r: 1.8, haloR: 11, riseH: 78,  swayW: 9,  swayDur: 1350, dur: 3800, delay: 900,  coreColor: '#fde68a', outerColor: '#f59e0b' },
+  { x: 141, y: 172, r: 1.5, haloR: 10, riseH: 68,  swayW: 14, swayDur: 1000, dur: 4200, delay: 1700, coreColor: '#fbbf24', outerColor: '#f59e0b' },
+  { x: 165, y: 174, r: 1.2, haloR: 8,  riseH: 85,  swayW: 8,  swayDur: 1500, dur: 3600, delay: 2400, coreColor: '#fde68a', outerColor: '#fbbf24' },
+  { x: 152, y: 181, r: 1.9, haloR: 12, riseH: 100, swayW: 11, swayDur: 1100, dur: 3100, delay: 600,  coreColor: '#fff7ea', outerColor: '#fde68a' },
+  { x: 136, y: 177, r: 1.4, haloR: 9,  riseH: 72,  swayW: 16, swayDur: 900,  dur: 4600, delay: 3100, coreColor: '#fbbf24', outerColor: '#f59e0b' },
+];
+
+export function NightCrescent({ size = 300 }) {
+  const breathe = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(breathe, { toValue: 1, duration: 4200, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+        Animated.timing(breathe, { toValue: 0, duration: 4200, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+      ])
+    );
+    anim.start();
+    return () => anim.stop();
+  }, [breathe]);
+
+  const haloOpacity    = breathe.interpolate({ inputRange: [0, 1], outputRange: [0.18, 0.32] });
+  const crescentOpacity = breathe.interpolate({ inputRange: [0, 1], outputRange: [0.80, 0.97] });
+
+  // Crescent geometry (300×300 canvas coords, top:-70 so card y≈40 = canvas y≈110).
+  // Main lit disc at upper-right; occluding disc in AMOLED black carves the crescent.
+  // Distance ≈ 56px → crescent thickness at equator ≈ 18px (thin, elegant).
+  const cx = 228, cy = 112, rMain = 38;
+  const cxOcc = 284, cyOcc = 108, rOcc = 36;
+
+  return (
+    <View pointerEvents="none" style={{ position: 'absolute', top: -70, left: 0, right: 0, height: size, alignItems: 'center' }}>
+      <View style={{ width: size, height: size }}>
+
+        {/* Soft ambient halo — amber bloom behind the crescent */}
+        <AView style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: haloOpacity }}>
+          <Svg width={size} height={size} viewBox="0 0 300 300" fill="none">
+            <Defs>
+              <RadialGradient id="crescHalo" cx="50%" cy="50%" r="50%">
+                <Stop offset="0%"   stopColor="#f59e0b" stopOpacity="0.90" />
+                <Stop offset="48%"  stopColor="#f59e0b" stopOpacity="0.28" />
+                <Stop offset="100%" stopColor="#f59e0b" stopOpacity="0"    />
+              </RadialGradient>
+            </Defs>
+            <Circle cx={cx} cy={cy} r={rMain + 30} fill="url(#crescHalo)" />
+          </Svg>
+        </AView>
+
+        {/* Luminous crescent: gradient lit disc + occluding disc in pure AMOLED black */}
+        <AView style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: crescentOpacity }}>
+          <Svg width={size} height={size} viewBox="0 0 300 300" fill="none">
+            <Defs>
+              {/* Gradient: pale-gold lit inner edge → warm amber at outer curve */}
+              <RadialGradient id="crescGrad" cx="22%" cy="28%" r="85%">
+                <Stop offset="0%"   stopColor="#fff7ea" stopOpacity="1.0"  />
+                <Stop offset="28%"  stopColor="#fde68a" stopOpacity="0.95" />
+                <Stop offset="68%"  stopColor="#f59e0b" stopOpacity="0.75" />
+                <Stop offset="100%" stopColor="#d97706" stopOpacity="0.45" />
+              </RadialGradient>
+            </Defs>
+            <Circle cx={cx}    cy={cy}    r={rMain} fill="url(#crescGrad)" />
+            <Circle cx={cxOcc} cy={cyOcc} r={rOcc}  fill="#000000" />
+          </Svg>
+        </AView>
+
+        {/* ~6 sparse embers drifting upward — supporting accent, not the show */}
+        {CRESCENT_EMBERS.map((p, i) => (
           <EmberParticle key={i} {...p} canvasSize={size} index={i} />
         ))}
 
