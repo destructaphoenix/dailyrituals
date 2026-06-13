@@ -2,7 +2,7 @@
 
 This project is built by **Opus** (planning) and executed by **Sonnet** across many chats, because credits/context run out. The whole system works only if **every Sonnet chat starts by reading the same two files** and **ends by updating one file**:
 
-- **Read first, every time:** [`PROGRESS.md`](PROGRESS.md) (where we are) + [`docs/superpowers/plans/2026-06-03-daily-rituals-expo-billing.md`](docs/superpowers/plans/2026-06-03-daily-rituals-expo-billing.md) (what to do, with full code per step).
+- **Read first, every time:** [`PROGRESS.md`](PROGRESS.md) (where we are — always). Open the [phase plan](docs/superpowers/plans/2026-06-03-daily-rituals-expo-billing.md) **only when the task is a phase-ladder phase (8/10b/11)** — its full per-step code lives there. The ACTIVE TRACK is the **IMP backlog**, whose specs are inline in PROGRESS.md (or archived in `docs/build-log.md`), so most chats never need the plan file.
 - **Update last, every time:** `PROGRESS.md` (tick boxes, set status, write the "Last session note").
 
 If you remember nothing else: **`PROGRESS.md` is the memory between chats.** The plan never changes; `PROGRESS.md` is the moving cursor.
@@ -29,16 +29,19 @@ You are continuing the Daily Rituals build. You have NO memory of previous chats
 the repo is your only source of truth.
 
 STEP 1 — Sync (do this before anything else):
-- Read PROGRESS.md in full.
-- Read docs/superpowers/plans/2026-06-03-daily-rituals-expo-billing.md (at least the
-  header + the phase you're about to work on).
+- Read PROGRESS.md in full. Follow its ▶️ ACTIVE TRACK callout: the live work is the
+  first unchecked IMP task in the Improvements backlog — its full spec is inline there.
+- Open the phase plan (docs/superpowers/plans/2026-06-03-daily-rituals-expo-billing.md)
+  ONLY if the backlog is empty and you're working a phase-ladder phase (8/10b/11) —
+  then read just that phase. Otherwise skip it (don't burn context on it).
 - Run `git log --oneline -15` to see what's actually been committed.
 - Reconcile: if PROGRESS.md and git disagree, trust git for "what exists" and tell me
   the discrepancy before proceeding.
 
 STEP 2 — Report, then wait:
 Tell me in 3-4 lines:
-  • The first unchecked phase/task in PROGRESS.md.
+  • The first unchecked IMP task in the backlog (or, if the backlog is empty, the first
+    unchecked phase-ladder task).
   • Whether the last note says a task was left half-done (resume) or clean (fresh start).
   • Exactly what you intend to do this chat.
 Then STOP and wait for my "go".
@@ -54,7 +57,10 @@ STEP 4 — Close out (CRITICAL — do this even if you're low on credits):
   "Last session note" dated today with: what you finished, the LAST command you ran and
   its result, and the EXACT next step (file + step number) for the next chat.
 - If you stopped mid-task, say which step number you completed last and which is next.
-- **Keep PROGRESS.md small (it's read in full every chat).** Once a task is ✅ *and shipped*, MOVE its full block out of PROGRESS.md into [`docs/build-log.md`](docs/build-log.md), leaving only its one-line row in the backlog/status table + a short pointer. Same for completed phase checklists. Live PROGRESS.md = active/pending tasks + the status tables + reference (config, signing, blockers, last note). History lives in the archive + git.
+- **Keep PROGRESS.md small (it's read in full every chat) — archive aggressively. Two moves, every chat:**
+  1. **Completed task specs:** the moment an IMP task is ✅ **code-complete** (do NOT wait for it to be shipped or runtime-walked — that gate is what made this file bloat), MOVE its full block out of PROGRESS.md into [`docs/build-log.md`](docs/build-log.md). Leave only its one-line row in the backlog table (status emoji carries "code ✅ / ship pending"). Same for completed phase checklists.
+  2. **Session notes:** PROGRESS.md keeps **only the two newest "Last session note" entries.** When you append today's note, MOVE the now-third-oldest note down into the "Session notes" section of `docs/build-log.md`. The log is append-only history — it belongs in the archive, not the live file.
+- Live PROGRESS.md = open/in-progress tasks + the status & backlog tables + reference (config, signing, blockers, release rules) + the 2 latest notes. Everything else → `docs/build-log.md`. Git is the full record.
 - Commit PROGRESS.md (and `docs/build-log.md` if you archived anything).
 
 STEP 5 — Ship (only if I asked you to release this change):
@@ -161,7 +167,7 @@ This guarantees the next chat (Prompt 3) can pick up cleanly.
 | Verify a finished phase | **Prompt 4** | Read-only checks, no feature code |
 | Running out of credits now | the snippet above | Stop cleanly, leave a precise breadcrumb |
 
-**Golden loop:** `Read PROGRESS.md + plan` → `do exactly one task` → `commit` → `update PROGRESS.md` → `ship if asked (Release-Lane: trailer + push; never run eas)` → end chat. Repeat in a fresh chat.
+**Golden loop:** `Read PROGRESS.md (+ plan only for phase work)` → `do exactly one task` → `commit` → `update + prune PROGRESS.md (archive finished specs & the 3rd-oldest note → build-log.md)` → `ship if asked (Release-Lane: trailer + push; never run eas)` → end chat. Repeat in a fresh chat.
 
 ---
 
