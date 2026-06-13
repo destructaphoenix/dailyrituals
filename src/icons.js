@@ -308,7 +308,7 @@ export const ACH_ICON = {
 // Ember — the soft currency mark (a small flame).
 export function Ember({ size = 18, deep = '#d97706' }) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Svg width={size} height={size} viewBox="4.75 1.6 14.5 14.5" fill="none">
       <Defs>
         <RadialGradient id={`ember${size}`} cx="50%" cy="64%" r="62%">
           <Stop offset="0%" stopColor="#fde68a" />
