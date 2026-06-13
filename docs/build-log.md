@@ -383,6 +383,8 @@ _2026-06-13 — IMP-014 COMPLETE (code) — Missed days now show a 💀 skull in
 
 _2026-06-13 — IMP-015 COMPLETE (code) — "What should we call you?" is now mandatory in onboarding. Extracted `isValidName(raw)` → `src/profile/name.js` (pure: `raw.trim().length > 0`). In `Personalize` (`src/screens/Onboarding.js`): added `nameTouched` state; `onChangeText`/`onBlur` set it; added an inline "A name is required to continue." hint shown only after the field is touched and still empty; gated the "Looks good" `PrimaryButton` with `disabled={!nameOk}` (renders at 0.4 opacity, unresponsive when empty). 6 new tests in `__tests__/profile/name.test.js`. `npm test` → **137 passed, 18 suites** (was 131 + 6 new). Commit `b3c4d99`. **Ship:** OTA-eligible (all JS in `src/`)._
 
+_2026-06-13 — IMP-016 COMPLETE (code) — Ember flame icon now fills and centers its rendered box. Changed `src/icons.js` `Ember` component's `viewBox` from `"0 0 24 24"` → `"4.75 1.6 14.5 14.5"` (a 14.5×14.5 square centered on the glyph's bounding box: x ∈ [7.3,16.7], y ∈ [2.3,15.4], center ≈ (12, 8.85)). The flame now fills ~90% of the rendered box at all sizes (was ~40%, floating top-biased). No size adjustments needed in `EmberPill` or `PalTag` — both callers look correct with the new viewBox. No logic changed; `npm test` → **137 passed, 18 suites** (unchanged). Commit `9e41706`. **Acceptance (owner runtime walk — no device in session):** the amber flame in the embers pill (top-right, Today) should be clearly visible, proportional to the number beside it, and vertically centered. **Ship:** OTA-eligible (all JS in `src/`)._
+
 ---
 
 ## Update workflow — superseded manual reference

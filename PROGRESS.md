@@ -121,7 +121,7 @@ _(Phase 9 complete — detailed checklist in [docs/build-log.md](docs/build-log.
 | IMP-015 | "What should we call you?" is mandatory in onboarding — can't proceed past Personalize with an empty name (new users / after reset) | OTA | ✅ (code; runtime walk + ship pending) |
 | IMP-016 | Ember/amber flame icon in the header is proportional + centered (glyph fills its box; fix tight top-biased viewBox so it isn't tiny/misaligned at small sizes) | OTA | ✅ (code; runtime walk + ship pending) |
 | IMP-017 | Greeting is Good morning / Good afternoon / Good evening by the user's local time (add the missing "afternoon" band) | OTA | ✅ (code; runtime walk + ship pending) |
-| IMP-018 | Today's reflection is editable — today ONLY — and editing pre-fills the existing text (with a "Start fresh" reset), never opens blank | OTA | ⬜ |
+| IMP-018 | Today's reflection is editable — today ONLY — and editing pre-fills the existing text (with a "Start fresh" reset), never opens blank | OTA | ✅ (code; runtime walk + ship pending) |
 
 ### Tasks
 _(Opus appends one block per issue, in priority order, using the template below. Sonnet works the first unchecked one.)_
@@ -262,12 +262,12 @@ _(IMP-009 – IMP-012 complete — full task detail archived in [docs/build-log.
 - **Edit-only-today enforcement:** the *only* ways into `WriteFlow` are the FAB (always today's context) and the new `ReadingSheet` Edit button (gated by `isEditableToday`). Past entries open read-only. `applyCompletion` is keyed on `dayKey`, so even a save only ever touches today's entry.
 - **TDD (write tests FIRST — RED → GREEN):** `__tests__/home/todaysEntry.test.js` — `findTodaysEntry` returns today's entry / `null` when none; picks the right one among many; `isEditableToday` true only for `dayKey === today`, false for a past entry, false for `null`. (The reward-dedup on save is already covered by `completeEntry.test.js` — don't duplicate; optionally add one assertion that re-saving via the edit path keeps streak/xp unchanged if not already covered.)
 - **Steps:**
-  - [ ] 1. RED: `__tests__/home/todaysEntry.test.js`.
-  - [ ] 2. Implement `src/home/todaysEntry.js` → GREEN.
-  - [ ] 3. `WriteFlow`: `initial` prop seeding + "Start fresh" reset.
-  - [ ] 4. `RitualsApp`: pass `initial={todaysEntry}`; wire `onEdit`/`canEdit` to `ReadingSheet`.
-  - [ ] 5. `ReadingSheet`: Edit button shown only when `canEdit`.
-  - [ ] 6. `npm test` green (≥ 123 + new cases).
+  - [x] 1. RED: `__tests__/home/todaysEntry.test.js`.
+  - [x] 2. Implement `src/home/todaysEntry.js` → GREEN.
+  - [x] 3. `WriteFlow`: `initial` prop seeding + "Start fresh" reset.
+  - [x] 4. `RitualsApp`: pass `initial={todaysEntry}`; wire `onEdit`/`canEdit` to `ReadingSheet`.
+  - [x] 5. `ReadingSheet`: Edit button shown only when `canEdit`.
+  - [x] 6. `npm test` green (149 passed, 19 suites — 9 new cases).
 - **Commit:** `feat(reflections): edit today's entry only — prefilled write flow with a "Start fresh" reset`
 - **Acceptance (runtime walk — owner):** After completing today's reflection, tapping the write FAB (or "Edit" on today's entry in Reflections) reopens the flow **with your text already there** and the mood pre-selected; "Start fresh" clears it. Saving updates today's entry **without** bumping streak/XP again. Opening a *previous* day's reflection shows it read-only (no Edit). 
 - **Ship after merge:** OTA — all JS in `src/`. Tag `Release-Lane: ota`.
@@ -359,9 +359,9 @@ Production `.aab` **must** be signed with the local **`dailyrituals-release.keys
 
 _History archived in [docs/build-log.md](docs/build-log.md) → "Session notes". Only the two newest notes stay here; every chat moves the older one out when it appends a new one (see DEVGUIDE Step 4)._
 
-_2026-06-13 — IMP-016 COMPLETE (code) — Ember flame icon now fills and centers its rendered box. Changed `src/icons.js` `Ember` component's `viewBox` from `"0 0 24 24"` → `"4.75 1.6 14.5 14.5"` (a 14.5×14.5 square centered on the glyph's bounding box: x ∈ [7.3,16.7], y ∈ [2.3,15.4], center ≈ (12, 8.85)). The flame now fills ~90% of the rendered box at all sizes (was ~40%, floating top-biased). No size adjustments needed in `EmberPill` or `PalTag` — both callers look correct with the new viewBox. No logic changed; `npm test` → **137 passed, 18 suites** (unchanged). Commit `9e41706`. **Acceptance (owner runtime walk — no device in session):** the amber flame in the embers pill (top-right, Today) should be clearly visible, proportional to the number beside it, and vertically centered. **Ship:** OTA-eligible (all JS in `src/`)._
+_2026-06-13 — IMP-017 COMPLETE (code) — "Good afternoon" greeting band added. `src/time/clock.js` `greetingFor` now returns three bands: `h < 12` → "Good morning"; `12 ≤ h < 17` → "Good afternoon"; `h ≥ 17` → "Good evening" (was binary morning/evening). Extended `__tests__/time/clock.test.js`: updated the noon assertion (was "Good evening" → "Good afternoon") and added 3 new cases (16:59 → afternoon, 17:00 → evening, 21:00 → evening). `npm test` → **140 passed, 18 suites** (was 137 + 3 new). Commit `f66b20c`. **Acceptance (owner runtime walk):** opening the app in the afternoon shows "Good afternoon."; morning "Good morning."; evening "Good evening." — all matching the device clock. **Ship:** OTA-eligible (all JS in `src/`)._
 
-_2026-06-13 — IMP-017 COMPLETE (code) — "Good afternoon" greeting band added. `src/time/clock.js` `greetingFor` now returns three bands: `h < 12` → "Good morning"; `12 ≤ h < 17` → "Good afternoon"; `h ≥ 17` → "Good evening" (was binary morning/evening). Extended `__tests__/time/clock.test.js`: updated the noon assertion (was "Good evening" → "Good afternoon") and added 3 new cases (16:59 → afternoon, 17:00 → evening, 21:00 → evening). `npm test` → **140 passed, 18 suites** (was 137 + 3 new). Commit `f66b20c`. **Acceptance (owner runtime walk):** opening the app in the afternoon shows "Good afternoon."; morning "Good morning."; evening "Good evening." — all matching the device clock. **Ship:** OTA-eligible (all JS in `src/`). **EXACT NEXT STEP:** IMP-018 — today's reflection is editable (prefilled write flow with "Start fresh" reset)._
+_2026-06-13 — IMP-018 COMPLETE (code) — Today's reflection is editable (prefilled WriteFlow + "Start fresh" reset). Added pure helper `src/home/todaysEntry.js` exporting `findTodaysEntry(entries, today)` (returns entry with `dayKey === today` or `null`) and `isEditableToday(entry, today)` (true only when entry exists + dayKey matches today). TDD'd in `__tests__/home/todaysEntry.test.js` FIRST (9 cases: RED → module-not-found → implement → GREEN). Updated `WriteFlow`: added optional `initial` prop (`{did, wished, mood}`); seeds `useState` from it; added "Start fresh" Pressable in the top-bar right slot (visible only when `initial` is set), which clears did/wished/mood and resets to step 0. Updated `RitualsApp`: added `import { findTodaysEntry, isEditableToday }`; WriteFlow now conditionally renders (`{writing && ...}`) so useState always seeds fresh from `initial`; `initial` is computed from `findTodaysEntry(entries, todayKey())` each time the modal opens. ReadingSheet receives `canEdit={isEditableToday(reading, todayKey())}` and `onEdit={() => { setReading(null); setWriting(true); }}`. Updated `ReadingSheet`: accepts `canEdit` + `onEdit` props; renders an "Edit" Pressable in the header only when `canEdit` is true — past entries show no Edit button and remain read-only. `npm test` → **149 passed, 19 suites** (was 140 + 9 new). Commit `267279d`. **Acceptance (owner runtime walk — no device in session):** After writing today's reflection, tapping the write FAB (or "Edit" on today's entry in Reflections) opens the flow with the prior text already filled and the mood pre-selected; "Start fresh" clears everything back to step 0. Saving updates today's entry without bumping streak/XP again. Past entries open read-only (no Edit). **Ship:** OTA-eligible (all JS in `src/`)._
 
 ---
 
