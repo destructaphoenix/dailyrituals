@@ -393,6 +393,8 @@ _2026-06-13 — 🚀 OTA SHIPPED — published the accumulated improvements (IMP
 
 _2026-06-13 (Opus, planning) — IMP-019 dark mode reviewed by owner → **v1 too plain / not premium**; scoped **Round 2 "rich & alive"** (no code written by Opus). Diagnosis from code: `EmberGlow` is one flat amber radial blob + 5 tiny 1–2px specks (with a `duration:1` hard reset) — no hot core, no structure, no layering, so it reads dim. Owner picked the **rich & alive** direction. Round-2 spec (inline under the IMP-019 task block): layered hot-core bloom + coal-bed + 16 glowing Svg embers + lit number + card sheen. All behind `DARK_THEME='v2'`, OTA, classic intact. (Round 2 was later built then **abandoned** — see the Round-3 crescent pivot.)_
 
+_2026-06-13 (Opus, planning) — Owner reviewed IMP-019 Round 2 (rich ember hero, commit `44bff07`) → **derailed / too busy, still not premium**. **Reverted `DARK_THEME` to `'classic'`** (commit `f3ca0e7`; updated the default-guard test; nothing had ever been OTA'd, so production was already on classic). New direction (owner pick): **crescent accent + a few embers** — a refined glowing gradient crescent (NOT the rejected flat cheese-disc moon) as a small upper-area accent, ~5–8 quiet embers, the lit streak number as hero; restrained, not a particle show. Scoped as **IMP-019 · Round 3** inline under the task block. **Reuse Round 2's good parts:** the streak-number text glow + the night-v2 `Card` sheen (both kept). **Flag discipline:** default stays `'classic'` while building; flip to `'v2'` + update the default-guard test only on owner approval, then OTA._
+
 ---
 
 ## Update workflow — superseded manual reference
