@@ -1,8 +1,8 @@
 import { makeTheme, PALETTES, DARK_THEME, DEFAULT_SETTINGS } from '../../src/theme';
 
 describe('dark theme resolution (IMP-019)', () => {
-  it('DARK_THEME defaults to classic (ember-hero direction reverted; redesigning hero)', () => {
-    expect(DARK_THEME).toBe('classic');
+  it('DARK_THEME is v2 (premium AMOLED dark, owner-approved IMP-019 Round 4)', () => {
+    expect(DARK_THEME).toBe('v2');
   });
 
   it('makeTheme("night") with v2 variant uses nightV2 palette', () => {
