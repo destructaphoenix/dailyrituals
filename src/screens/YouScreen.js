@@ -8,11 +8,13 @@ import { T, Card, ProgressBar } from '../ui';
 import { Bell, Contrast, Pencil, Diamond, Download, Info, Chevron, Sun, Moon, Bag, Ember, Restore } from '../icons';
 import { PlusBanner } from '../shopui';
 import { profileIdentity } from '../profile/identity';
+import { lastBackupLabel } from '../backup/lastBackupLabel';
 
 export default function YouScreen({
   mode, onToggleMode, settings, setSettings,
   streak, level, levelName, xpInto, xpToNext, entriesCount, badgesEarned, onOpenAchievements,
   embers, plus, onOpenShop, onOpenPaywall, onOpenManage, plusEnabled = true, onResetData,
+  lastBackupAt, onExportData, onImportData, onExplainAutoBackup,
 }) {
   const t = useTheme();
   const c = t.colors;
@@ -124,11 +126,26 @@ export default function YouScreen({
         </Card>
       </View>
 
+      {/* backup & restore — data safety (free, distinct from the Plus PDF below) */}
+      <View style={{ paddingHorizontal: 20 }}>
+        <T d w={700} color={c.ink} style={{ fontSize: 15, marginBottom: 10, marginLeft: 2 }}>Your journal is safe</T>
+        <Card>
+          <Row icon={<Info size={20} color={c.accentDeep} />} label="Automatic backup"
+            value="How it works" onPress={onExplainAutoBackup} />
+          <Divider />
+          <Row icon={<Download size={20} color={c.accentDeep} />} label="Back up my journal"
+            value={lastBackupLabel(lastBackupAt)} onPress={onExportData} />
+          <Divider />
+          <Row icon={<Restore size={20} color={c.accentDeep} />} label="Restore from a backup"
+            onPress={onImportData} />
+        </Card>
+      </View>
+
       {/* general */}
       <View style={{ paddingHorizontal: 20 }}>
         <T d w={700} color={c.ink} style={{ fontSize: 15, marginBottom: 10, marginLeft: 2 }}>General</T>
         <Card>
-          <Row icon={<Download size={20} color={c.accentDeep} />} label="Export reflections"
+          <Row icon={<Download size={20} color={c.accentDeep} />} label="Save as PDF"
             right={plus
               ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><T w={700} color={c.muted} style={{ fontSize: 14 }}>PDF</T><Chevron dir="right" size={18} color={c.muted} /></View>
               : plusEnabled
