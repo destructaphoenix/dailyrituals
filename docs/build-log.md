@@ -285,6 +285,229 @@ _Full inline specs moved here once code-complete (one-line status stays in the P
 
 ---
 
+## Improvements backlog — archived task specs (IMP-006, IMP-013 – IMP-019)
+
+_Full inline specs moved here once code-complete (one-line status stays in the PROGRESS.md backlog table). Runtime-walk / ship may still be pending — see the table + git for live status._
+
+### IMP-006 — Enable + verify Android Auto Backup (new-device restore, no login)   ·   Lane: Build (rides v5)   ·   Status: 🟡 (code done; device verification + data-safety pending owner)
+- **Goal:** A user's local data (journal, streak, settings — the AsyncStorage store) restores automatically onto a **new or reinstalled device** via Android Auto Backup to their own Google Drive — no accounts, no login, no PII handled by us. Covers "got a new phone, my stuff came back."
+- **Why / context:** Chosen (2026-06-07) as the zero-login, zero-legal alternative to cloud accounts (which the owner rejected — see [[daily-rituals-local-only-decision]] / IMP-005). **Expo defaults `android.allowBackup` to `true` and `app.config.js` doesn't override it**, so the capability is *very likely already active* on the current build — the app's data dir (incl. AsyncStorage's RKStorage SQLite DB) is eligible. So this task is mostly: lock the intent explicitly, then **actually verify** the backup→reinstall→restore cycle, plus a data-safety note.
+- **Files touched:** `app.config.js` (one line), `PROGRESS.md`.
+- **Approach (decided by Opus — do not re-litigate):**
+  - Add `allowBackup: true` explicitly to the `android` block in `app.config.js` so the intent is documented and can't silently regress if Expo's default ever changes. (Functionally identical to today's default — the value is the explicitness + the verification below.)
+  - **No custom backup rules.** There's nothing sensitive on-device to exclude (no auth tokens — the RevenueCat key ships in the binary/env, not in user data), so the default full-data backup is correct. *(Flag: if a future feature ever stores a secret/token on-device, add `dataExtractionRules`/`fullBackupContent` via a config plugin to exclude it — not needed now.)*
+  - **Restore robustness:** a restored backup from an older app version is handled by the persistence `migrate()` chain (schema `version`), so no special handling needed.
+- **TDD:** N/A — native/manifest config + manual device verification. `npm test` unaffected (green, unchanged count).
+- **Steps:**
+  - [x] 1. Add `allowBackup: true` to the `android` block in `app.config.js`. Commit.
+  - [ ] 2. **Device verification (owner or Sonnet-with-device; needs an emulator/device signed into a Google account with backup ON):** in the app, create data (write an entry, let streak/XP move) → force a backup `adb shell bmgr backupnow app.dailyrituals.mobile` (confirm backup manager is on: `adb shell bmgr enabled`) → `adb uninstall app.dailyrituals.mobile` → reinstall the same build → launch → **confirm the journal/streak/settings came back** with no login.
+  - [ ] 3. **Play data-safety:** confirm the form reflects reality — Auto Backup data goes to the *user's own* Google Drive, not collected/transferred to the developer (typically no "data collected" change; just confirm the backup question is answered honestly).
+  - [x] 4. `npm test` green (unchanged — no JS logic touched).
+- **Commit:** `build(android): enable Android Auto Backup explicitly (new-device restore, no login)`
+- **Acceptance (runtime walk):** After forcing a backup, uninstalling, and reinstalling on a backup-enabled device/account, the journal + streak + settings restore automatically with no sign-in. (If the device has backup disabled or no Google account, restore won't happen — that's expected OS behavior, not a bug.)
+- **Ship after merge:** Rides the **v5 full build** (it's a manifest/native change — not OTA-eligible — but v5 is already a full build, so no extra build needed). Ensure the v5 `versionCode` bump covers it. Known limits to set expectations: ~daily backup cadence (Wi-Fi/charging/idle, so the most recent entries may not be captured before a loss); restore only on reinstall/new-device setup; Android-only (iOS gets its own iCloud mechanism in Phase 11); not live multi-device sync.
+
+### IMP-013 — "Tend an old grave" rite must start at 0 (new user / after reset) + get a real completion trigger   ·   Lane: OTA   ·   Status: ✅ (shipped OTA 2026-06-13; runtime walk pending)
+- **Goal:** For a brand-new user, and after "Reset app data", **all three** of Today's rites read 0/1 — including "Tend an old grave". Nothing is pre-marked done. AND the revisit rite becomes genuinely completable (by revisiting a past entry) so the "all rites kept → daily keepsake" reward stays earnable.
+- **Why / context:** Owner-filed bug (2026-06-13): on a fresh install / after data reset, the **"Tend an old grave"** rite in **Today's rites** (Home tab) is already shown completed. Root cause is a hardcode: [`src/data.js:61`](src/data.js#L61) seeds the `revisit` quest with `cur: 1` (the comment literally says *"revisit starts done"*). Since `quests` defaults to `DAILY_QUESTS` for new users ([`src/RitualsApp.js:61`](src/RitualsApp.js#L61)) and reset-all-data clears persisted state → falls back to the same `DAILY_QUESTS`, a user who has tended *nothing* sees the rite as kept. Owner's rule: **when data is reset or for a new user, everything must be 0.**
+- **⚠️ Trap — do NOT just set `cur: 0` and stop.** `revisit` has **no completion trigger anywhere**: [`src/home/completeEntry.js:32-36`](src/home/completeEntry.js#L32-L36) only advances `write` and `feel`. It was hardcoded done purely to make the rites card look complete. So zeroing it alone makes the rite **permanently uncompletable**, and since "All rites kept" needs all three ([`src/gamify.js:66-67`](src/gamify.js#L66-L67)), that **regresses the daily keepsake to unearnable**. The fix must zero it *and* wire a real trigger.
+- **Files likely touched:** `src/data.js` (the hardcode + comment), a new pure helper `src/home/markRevisited.js`, `src/RitualsApp.js` (wire the trigger at the `setReading(e)` call site), `__tests__/home/markRevisited.test.js` (new), and a tiny zero-state guard test for `DAILY_QUESTS`.
+- **Approach (decided by Opus — do not re-litigate):**
+  1. **Zero the seed.** In [`src/data.js`](src/data.js#L57-L61), change the `revisit` quest `cur: 1 → cur: 0` and fix the now-wrong comment (*"revisit starts done"* → "all rites start undone; revisit is kept by revisiting a past entry"). This alone fixes the reported new-user / reset symptom, because daily-reset ([`src/RitualsApp.js:197`](src/RitualsApp.js#L197)) and reset-all-data both land everything on `cur: 0`.
+  2. **Give `revisit` a real trigger (a pure, tested helper).** "Tend an old grave" = open/read a **past** entry from Reflections. Add `src/home/markRevisited.js`:
+     - `markRevisited(quests, entry, today)` → returns a **new** quests array (immutable spread; never mutate). It sets the `revisit` quest's `cur` to its `goal` **only when** `entry.dayKey !== today` (a genuinely older entry) **and** it isn't already at goal. Today's-own entry, missing `dayKey`, or already-kept → return `quests` unchanged. Leave `write`/`feel` untouched.
+  3. **Wire it.** In [`src/RitualsApp.js`](src/RitualsApp.js), grep for every `setReading(` call site (currently the `onOpen={(e) => setReading(e)}` passed to `ArchiveScreen`, line ~240). At that site also do `setQuests((qs) => markRevisited(qs, e, todayKey()))`. `todayKey` is already imported and used in this file.
+- **Expected (correct, not a bug):** A day-1 user with no past entries can't complete "Tend an old grave" yet (there's no old grave to tend) — thematically correct. It becomes kept the moment they open any entry from a prior day; daily reset re-arms it each day. The daily keepsake now legitimately requires write + feel + revisit.
+- **TDD (write tests FIRST — RED → GREEN):**
+  - `__tests__/home/markRevisited.test.js`: (a) opening a past entry (`dayKey` ≠ today) sets `revisit.cur === goal`; (b) opening today's entry (`dayKey` === today) leaves quests **unchanged**; (c) entry with no `dayKey` → unchanged; (d) idempotent — already-kept revisit stays kept, same reference contents; (e) `write`/`feel` never altered; (f) immutability — returns a new array, input not mutated.
+  - Zero-state guard (add to an existing data test or a small new one): every quest in `DAILY_QUESTS` starts `cur: 0`. This locks the invariant so the hardcode can't silently come back.
+  - **Don't churn `__tests__/home/completeEntry.test.js`** — its `baseQuests` fixture (with `revisit cur:1`) is a hypothetical `prev` state, not the seed; those tests stay green untouched.
+  - **Steps:**
+  - [x] 1. Write the failing tests above (RED): `__tests__/home/markRevisited.test.js` + the `DAILY_QUESTS` all-zero guard.
+  - [x] 2. `src/data.js`: `revisit.cur 1 → 0`; correct the comment.
+  - [x] 3. Implement `src/home/markRevisited.js` (pure, immutable) → tests GREEN.
+  - [x] 4. Wire `setQuests((qs) => markRevisited(qs, e, todayKey()))` into the `setReading(e)` call site(s) in `src/RitualsApp.js`.
+  - [x] 5. `npm test` green (123 passed, 17 suites — 7 new tests added).
+- **Commit:** `fix(rites): zero "tend an old grave" for new/reset users; complete it by revisiting a past entry`
+- **Acceptance (runtime walk — owner, no device in agent session):** Fresh install (or You → Reset app data) → Today tab → **all three rites read 0/1**, none pre-kept, "0 of 3 kept". Write today's entry + name a mood → write/feel kept, revisit still 0. Open a *previous day's* entry from Reflections → revisit flips to kept; with all three kept the daily keepsake is offered. Next calendar day → all rites reset to 0.
+- **Ship after merge:** OTA — all changes are JS under `src/`. Tag the final commit `Release-Lane: ota` and push `main` when the owner is ready (reaches testers on v5+).
+
+### IMP-014 — Missed days show a skull 💀, not a blank cell (Today week strip + Reflections heatmap)   ·   Lane: OTA   ·   Status: ✅ (shipped OTA 2026-06-13; runtime walk pending)
+- **Goal:** A day the user *missed* (a past day with no entry, on/after the day they started using the app) renders a **💀 skull** instead of a neutral blank — in **both** the Today-screen week strip and the Reflections heatmap. Days the user could not have kept (before their first-ever entry, or in the future) stay neutral blanks — never skulls.
+- **Why / context:** Owner-filed (2026-06-13): a missed day currently shows as an empty cell on the Today screen and Reflections (and anywhere the day grid appears); owner wants a skull there. This was discussed before — note [`src/home/calendar.js:4`](src/home/calendar.js#L4) explicitly says *"No-entry days are neutral empties — never skulls."* **This task reverses that decision, but only for genuinely-missed days** — the original concern (don't demoralize users with skulls for days before they installed, or for the future) is preserved by anchoring "missed" to the first activity date.
+- **What "missed" means (precise — decide here, don't re-litigate):** For a day cell with key `dayKey` and the set of entry dayKeys, with `firstKey` = the earliest entry's dayKey:
+  - `today` → today (unchanged).
+  - `dayKey > today` → `future` (unchanged neutral).
+  - has an entry → `done` (unchanged).
+  - no entry **and** `dayKey < today` **and** `dayKey >= firstKey` → **`missed`** (skull). 
+  - no entry and `dayKey < firstKey` (before the user ever started) → `empty` (neutral, no skull).
+  - **New user / no entries at all → `firstKey` is undefined → there are no `missed` days** (nothing to miss). This satisfies "everything is clean for a new user".
+- **Files likely touched:** `src/home/calendar.js` (add the `missed` state to both `buildWeekStrip` and `buildHeatmap`), `src/screens/HomeScreen.js` (the `Dot` renders 💀 for `missed`), `src/screens/ArchiveScreen.js` (the `Heat` cell renders 💀 for `missed`), `__tests__/home/calendar.test.js` (extend).
+- **Approach (decided by Opus — do not re-litigate):**
+  1. **`calendar.js` (pure):** compute `firstKey = min(dayKeys)` once (entries are keyed by `dayKey`; `indexByDay` already exists). In `buildWeekStrip`, replace the `byDay[dayKey] ? 'done' : 'empty'` branch with: entry → `done`; else `dayKey >= firstKey` → `missed`; else `empty`. In `buildHeatmap`, the no-entry branch currently pushes `{ empty: true }`; split it into `{ missed: true }` when `dayKey >= firstKey && dayKey < todayK`, else keep `{ empty: true }` (and today with no entry stays `empty` + `today:true` as now — don't skull today). Update the file's header comment to describe the new rule.
+  2. **`HomeScreen.js` `Dot`:** add a `missed` branch — render a 💀 (a `<Text>` emoji, sized ~16–18 to match the `Check`/`Orb` glyphs) on a muted/neutral background (reuse the existing neutral dot bg; no accent). Keep the existing `done`/`today`/`future` visuals.
+  3. **`ArchiveScreen.js` `Heat`:** when `cell.missed`, render the 💀 `<Text>` (match the existing `fontSize: 19, lineHeight: 23` used for mood emoji) on the neutral cell style (solid faint bg or the dashed border — pick the dashed/empty look but with the skull inside; keep it visually quieter than a kept day).
+- **TDD (write tests FIRST — RED → GREEN), extend `__tests__/home/calendar.test.js`:** with a fixed `today` and a fixed entry set — (a) a past gap day on/after the first entry → `missed` in both builders; (b) a past day *before* the first entry → `empty`, not `missed`; (c) today with no entry → `today`/`empty`+today (never `missed`); (d) a future day → `future`/empty; (e) a day with an entry → `done`; (f) **no entries at all → zero `missed` cells** in both builders.
+- **Steps:**
+  - [x] 1. Extend `__tests__/home/calendar.test.js` with the cases above (RED).
+  - [x] 2. Add the `missed` state to `buildWeekStrip` + `buildHeatmap` in `src/home/calendar.js`; update the header comment → GREEN.
+  - [x] 3. Render 💀 for `missed` in `HomeScreen.js` `Dot` and `ArchiveScreen.js` `Heat`.
+  - [x] 4. `npm test` green (131 passed, 17 suites — 8 new cases).
+- **Commit:** `fix(calendar): show a skull for missed days (week strip + heatmap), never before first entry`
+- **Acceptance (runtime walk — owner):** With entries that have a gap (e.g. kept Mon + Wed, skipped Tue), Tuesday shows 💀 on both the Today week strip and the Reflections heatmap. A brand-new/reset user sees **no** skulls. Days earlier in the week than your first-ever entry, and future days, show the neutral blank — not a skull. Today never shows a skull.
+- **Known nuance (document, don't fix):** there's no per-day freeze record (`freezes` is just a count), so a missed day that a streak-freeze "saved" will still show a skull. Flagging for a future task if the owner wants freeze-aware cells.
+- **Ship after merge:** OTA — all JS in `src/`. Tag `Release-Lane: ota`.
+
+### IMP-015 — "What should we call you?" is mandatory (can't skip past Personalize blank)   ·   Lane: OTA   ·   Status: ✅ (shipped OTA 2026-06-13; runtime walk pending)
+- **Goal:** During onboarding (new user, or after Reset app data), the user **cannot leave the Personalize step without entering a name**. The "Looks good" button is disabled until a non-blank name is typed; a blank/whitespace-only name is rejected.
+- **Why / context:** Owner-filed (2026-06-13): the name question must be answered. Today [`src/screens/Onboarding.js:221`](src/screens/Onboarding.js#L221) lets "Looks good" proceed with an empty name (`name` defaults to `''`, no validation), so users land in the app nameless — which is why the You tab can show an empty identity. There is **no "Skip" on Personalize** (the only Skip is on the intro carousel, which is fine — that just skips the welcome slides, not the name). So the fix is purely: gate the "Looks good" CTA.
+- **Files likely touched:** `src/screens/Onboarding.js` (the `Personalize` component), optionally a tiny pure validator `src/profile/name.js`, `__tests__/profile/name.test.js` (new, optional).
+- **Approach (decided by Opus — do not re-litigate):**
+  - In `Personalize`, compute `const nameOk = name.trim().length > 0;` and pass `disabled={!nameOk}` to the "Looks good" `PrimaryButton` (the component already supports `disabled` — see its use in `WriteFlow`). Keep the existing `setSettings((s) => ({ ...s, name: name.trim() }))` on press.
+  - Add a small inline hint under the field shown only after the user has interacted and it's still empty (or always-muted helper text like "Required"), so the disabled button isn't a mystery. Keep it gentle/on-voice.
+  - **Don't** add any new step or remove the intro Skip. **Don't** make the reminder-time question mandatory — only the name.
+  - *(Optional, nicer)* extract `isValidName(raw)` → `raw.trim().length > 0` into `src/profile/name.js` and unit-test it; use it for `nameOk`. Lightweight; do it if it keeps the component clean.
+- **TDD:** If you extract `isValidName`, write `__tests__/profile/name.test.js` first (empty → false; whitespace-only → false; "  Sam  " → true). If you keep it inline (pure UI gating), TDD is N/A — note it.
+- **Steps:**
+  - [x] 1. (If extracting) RED test for `isValidName`.
+  - [x] 2. Gate "Looks good" with `disabled={!name.trim()}` + add the required-hint in `Personalize`.
+  - [x] 3. `npm test` green (137 passed, 18 suites — 6 new tests added).
+- **Commit:** `fix(onboarding): require a name before leaving Personalize`
+- **Acceptance (runtime walk — owner):** Fresh install / reset → onboarding → Personalize: with the name field empty (or spaces only) the "Looks good" button is visibly disabled and won't proceed; typing a real name enables it; proceeding lands you in-app with that name on the You tab.
+- **Ship after merge:** OTA. Tag `Release-Lane: ota`.
+
+### IMP-016 — Ember/amber flame icon must be proportional + centered in the header   ·   Lane: OTA   ·   Status: ✅ (shipped OTA 2026-06-13; runtime walk pending)
+- **Goal:** The amber **Ember** flame (the embers-balance pill, top-right of the Today header) looks correctly sized and vertically centered — not tiny and floating high in its slot.
+- **Why / context:** Owner-filed (2026-06-13): the flame icon top-right is "not proportional… small and looks misaligned when small." Root cause: in [`src/icons.js:309-321`](src/icons.js#L309-L321) the `Ember` glyph path only occupies roughly **x ∈ [7.3, 16.7], y ∈ [2.3, 15.4]** of its `viewBox="0 0 24 24"` — i.e. the flame fills only ~40% of the canvas and sits **top-biased**. So at the rendered `size={17}` in `EmberPill` ([`src/shopui.js:29`](src/shopui.js#L29)) the actual flame draws ~7px tall and high up, reading as tiny and misaligned next to the `15px` number text.
+- **Files likely touched:** `src/icons.js` (the `Ember` component's `viewBox` only), possibly `src/shopui.js` (a small `size` bump if still needed after the viewBox fix). **No path-data changes** (keep the flame shape + gradient identical).
+- **Approach (decided by Opus — do not re-litigate):**
+  - **Tighten the `viewBox` to the glyph's bounding box, kept square to avoid distortion** (the `Svg` is rendered square: `width=height=size`). Glyph center ≈ `(12, 8.85)`, max extent ≈ 13.1 (height). Use a square viewBox of side ≈ 14.5 centered on the glyph: **`viewBox="4.75 1.6 14.5 14.5"`** (start here; nudge if needed). This makes the flame fill ~90% of the rendered box and centers it. The gradient id `ember${size}` is unaffected.
+  - After the viewBox fix, re-check `EmberPill`: the flame should now visually match the `15px` number and the `+` chip. If it now looks slightly large, drop `size={17}` → `15–16`; if still small, that's fine. Verify vertical centering against the number (the pill row already uses `alignItems: 'center'`).
+  - Sanity-check the **other** `Ember` callsite — `PalTag` in `shopui.js` (`size={13}`) — still looks right (it will simply render a properly-filled small flame; no change expected).
+- **TDD:** N/A — pure SVG/cosmetic. Confirm `npm test` stays green (unchanged count). 
+- **Steps:**
+  - [x] 1. Update the `Ember` `viewBox` in `src/icons.js` (square, glyph-centered).
+  - [x] 2. Eyeball `EmberPill` + `PalTag`; adjust the `EmberPill` `size` only if needed.
+  - [x] 3. `npm test` green (unchanged — no logic touched).
+- **Commit:** `fix(icons): make the Ember flame fill + center its box (was tiny/top-biased)`
+- **Acceptance (runtime walk — owner):** The amber flame in the embers pill (top-right, Today) is clearly visible, sized in proportion to the number beside it, and vertically centered within the pill — no longer a small mark floating near the top.
+- **Ship after merge:** OTA. Tag `Release-Lane: ota`.
+
+### IMP-017 — Greeting: Good morning / afternoon / evening by the user's local time   ·   Lane: OTA   ·   Status: ✅ (shipped OTA 2026-06-13; runtime walk pending)
+- **Goal:** The Today-screen greeting reads **"Good morning"**, **"Good afternoon"**, or **"Good evening"** depending on the device's local hour.
+- **Why / context:** Owner-filed (2026-06-13): wants all three greetings, by the user's time. Today [`src/time/clock.js:5-7`](src/time/clock.js#L5-L7) `greetingFor()` only returns morning (`<12`) or evening (`>=12`) — **"afternoon" is missing entirely**. (The greeting is already wired to device time and rendered in `HomeScreen` line 21/35.)
+- **Files likely touched:** `src/time/clock.js` (`greetingFor`), `__tests__/time/clock.test.js` (extend).
+- **Approach (decided by Opus — do not re-litigate):** make `greetingFor(date = new Date())` return by local hour `h = date.getHours()`: `h < 12` → "Good morning"; `12 ≤ h < 17` → "Good afternoon"; `h ≥ 17` → "Good evening". (Boundaries: noon flips to afternoon, 5:00 PM flips to evening — standard, simple.) Pure function; no other change.
+- **TDD (write tests FIRST — RED → GREEN), extend `__tests__/time/clock.test.js`:** assert greeting at representative hours by passing a fixed `date` — e.g. 06:00 → morning, 12:00 → afternoon, 16:59 → afternoon, 17:00 → evening, 21:00 → evening, 00:00 → morning. (Construct dates so `getHours()` is deterministic regardless of TZ — e.g. `new Date(2026,0,1,6,0,0)`.)
+- **Steps:**
+  - [x] 1. Add the afternoon-band tests to `__tests__/time/clock.test.js` (RED).
+  - [x] 2. Update `greetingFor` with the three bands → GREEN.
+  - [x] 3. `npm test` green (140 passed, 18 suites — 3 new cases).
+- **Commit:** `fix(clock): add "Good afternoon" — greeting now morning/afternoon/evening by local time`
+- **Acceptance (runtime walk — owner):** Opening the app in the afternoon shows "Good afternoon."; morning shows "Good morning."; evening shows "Good evening." — matching the device clock.
+- **Ship after merge:** OTA. Tag `Release-Lane: ota`.
+
+### IMP-018 — Today's reflection is editable (today only), pre-filled, with a reset toggle   ·   Lane: OTA   ·   Status: ✅ (shipped OTA 2026-06-13; runtime walk pending)
+- **Goal:** A reflection written **today** can be edited **the same day only**. Choosing to edit opens the write flow **pre-filled** with the existing answers (did / wished / mood) — not blank — with an explicit **"Start fresh"** control to clear it if they want to rewrite from scratch. Entries from previous days are **not** editable.
+- **Why / context:** Owner-filed (2026-06-13). The same-day *replace* logic already exists ([`src/home/completeEntry.js:14-27`](src/home/completeEntry.js#L14-L27): when `prev.done`, a new write replaces today's entry with no extra reward), but the entry point — the write FAB — always opens `WriteFlow` **blank**, so "editing" silently wipes what you wrote. And there's no edit affordance from a reflection at all. We need: (a) prefill, (b) a reset control, (c) an Edit button on **today's** entry only.
+- **Files likely touched:** `src/screens/WriteFlow.js` (accept an `initial` entry; seed state; add "Start fresh"), `src/RitualsApp.js` (pass today's entry into `WriteFlow`; add an `onEdit` path from `ReadingSheet`), `src/screens/ReadingSheet.js` (show "Edit" only for today's entry), a tiny pure helper `src/home/todaysEntry.js` (find today's entry / is-editable), `__tests__/home/todaysEntry.test.js` (new).
+- **Approach (decided by Opus — do not re-litigate):**
+  1. **Pure helper `src/home/todaysEntry.js`:** `findTodaysEntry(entries, today)` → the entry whose `dayKey === today` (or `null`); `isEditableToday(entry, today)` → `!!entry && entry.dayKey === today`. Immutable/no side effects.
+  2. **`WriteFlow` prefill + reset:** add an optional `initial` prop (`{ did, wished, mood }`). Seed `useState` from it (`useState(initial?.did ?? '')`, etc.). Add a **"Start fresh"** text button in the top bar, visible only when `initial` is set, that clears `did`/`wished`/`mood` back to empty and returns to step 0. (Keep the existing 3-step flow; prefilling just pre-populates the fields so step 1/2 show prior text and the mood is pre-selected.) The epitaph header can stay today's date (it's an edit of *today*).
+  3. **`RitualsApp` wiring:** compute `const today = todayKey();` and `const todaysEntry = findTodaysEntry(entries, today);`. Pass `initial={todaysEntry}` into the `<WriteFlow … />` (so the FAB, when `done`, reopens prefilled; when not done, `todaysEntry` is null → blank as today). `complete()` already routes through `applyCompletion`, which replaces today's entry when `prev.done` — so saving an edit won't double-count streak/XP (that's IMP-007's guarantee; keep it).
+  4. **`ReadingSheet` edit affordance (today only):** pass `canEdit` (= `isEditableToday(entry, today)`) and an `onEdit` callback from `RitualsApp`. When `canEdit`, show an "Edit" button in the sheet header; pressing it closes the sheet and opens `WriteFlow` prefilled with that entry. For past entries, **no** Edit button (read-only) — this is what enforces "today only".
+- **Edit-only-today enforcement:** the *only* ways into `WriteFlow` are the FAB (always today's context) and the new `ReadingSheet` Edit button (gated by `isEditableToday`). Past entries open read-only. `applyCompletion` is keyed on `dayKey`, so even a save only ever touches today's entry.
+- **TDD (write tests FIRST — RED → GREEN):** `__tests__/home/todaysEntry.test.js` — `findTodaysEntry` returns today's entry / `null` when none; picks the right one among many; `isEditableToday` true only for `dayKey === today`, false for a past entry, false for `null`. (The reward-dedup on save is already covered by `completeEntry.test.js` — don't duplicate; optionally add one assertion that re-saving via the edit path keeps streak/xp unchanged if not already covered.)
+- **Steps:**
+  - [x] 1. RED: `__tests__/home/todaysEntry.test.js`.
+  - [x] 2. Implement `src/home/todaysEntry.js` → GREEN.
+  - [x] 3. `WriteFlow`: `initial` prop seeding + "Start fresh" reset.
+  - [x] 4. `RitualsApp`: pass `initial={todaysEntry}`; wire `onEdit`/`canEdit` to `ReadingSheet`.
+  - [x] 5. `ReadingSheet`: Edit button shown only when `canEdit`.
+  - [x] 6. `npm test` green (149 passed, 19 suites — 9 new cases).
+- **Commit:** `feat(reflections): edit today's entry only — prefilled write flow with a "Start fresh" reset`
+- **Acceptance (runtime walk — owner):** After completing today's reflection, tapping the write FAB (or "Edit" on today's entry in Reflections) reopens the flow **with your text already there** and the mood pre-selected; "Start fresh" clears it. Saving updates today's entry **without** bumping streak/XP again. Opening a *previous* day's reflection shows it read-only (no Edit). 
+- **Ship after merge:** OTA — all JS in `src/`. Tag `Release-Lane: ota`.
+
+### IMP-019 — Premium dark-mode redesign: "Embers in the Dark" (true-black AMOLED, behind a revert flag)   ·   Lane: OTA   ·   Status: ✅ (shipped OTA 2026-06-13; Round 4 NightRays hero owner-approved + promoted)
+- **Goal:** Replace the current flat, basic dark mode with a premium **true-black (AMOLED)** dark theme that looks great on OLED flagships (Galaxy Ultra / iPhone): an inky `#000000` canvas, **near-black elevated cards** for depth, amber-only accents, and a new **ember-glow hero** (a warm amber bloom + a few drifting sparks behind the streak number). **No brown anywhere. No moon.** **Hard requirement: fully revertible** to the exact existing dark design via a single flag, in case the redesign flops.
+- **Why / context:** Owner feedback (2026-06-13): the current dark mode is a genuine downgrade — the cheese-hole `NightSky` moon ([`src/art.js:43`](src/art.js#L43)) "feels like a kid's drawing", drop shadows don't render on black so cards look flat, and `accentSoft: '#2a2113'` is muddy. **Owner decisions this session (do not re-litigate):** (a) keep it **true black / AMOLED-friendly** — pure `#000` (pixels off on OLED = battery + inky premium look); the warm off-black/brown direction sketched earlier is **reversed** (no brown); (b) **drop the moon hero entirely**; (c) the night hero = **ember glow + rising sparks** (on-brand: the Embers currency, candles, "laying the day to rest"), which blooms beautifully on pure black. Full redesign (Direction A), built directly, behind a revert flag. (Planning-only discussion; specs below, no code written this session.)
+- **Hard constraints (do not violate):**
+  - **Revertibility:** keep the **existing** `night` palette **and** `NightSky` art fully intact and selectable. The new theme ships behind a flag; a flop = flip one constant + OTA. **Never delete or mutate** the current night tokens/art.
+  - **True-black / AMOLED:** the canvas stays pure `#000000`. **Do NOT add a global gradient/backdrop that lightens the canvas** — that defeats AMOLED. Depth comes from elevated cards + the hero glow, never from lifting the background.
+  - **No brown:** palette = neutral/near-black grays (a hint of warmth at most) + amber accent only. No espresso/brown fills.
+  - **"In line with light mode":** identical layout, spacing, radii, fonts, component structure, and copy. **Only** the palette + the night hero change.
+  - Lane **OTA** (palette + SVG/JS only; the revert is also OTA).
+- **Files likely touched:** `src/theme.js` (add `DARK_THEME` flag + `PALETTES.nightV2` + flag resolution in `makeTheme`; keep `night`), `src/art.js` (new `EmberGlow` hero; keep `NightSky`), `src/screens/HomeScreen.js` (+ `Celebration.js` / anywhere the night hero renders — select hero by flag), `__tests__/theme/darkTheme.test.js` (new — palette resolution / revert guard).
+- **Approach (decided by Opus — do not re-litigate the structure; exact hexes/intensities are dial-in values to tune on-device):**
+  1. **The revert flag (safety net):** add `export const DARK_THEME = 'v2'; // 'v2' (new premium) | 'classic' (original) — set to 'classic' to revert` in `theme.js`. In `makeTheme('night', …)` resolve `const base = (DARK_THEME === 'v2') ? PALETTES.nightV2 : PALETTES.night;`. `PALETTES.night` stays **byte-for-byte the classic**. Reverting = change that one constant, ship OTA. Nothing removed.
+  2. **`PALETTES.nightV2` — true-black AMOLED** (starting points; tune on-device):
+     - `cream` (canvas): **`#000000`** (keep pure black — AMOLED).
+     - `surface` (cards): a **near-black elevated** gray that lifts off pure black → ~ **`#0e0e10`** (add a deeper-elevation token ~ **`#161618`** if a screen needs two levels). A hint of warmth is OK; **not brown**.
+     - `border`: a faint **hairline** ~ **`#26241f`** — surface-vs-canvas contrast + this border is what reads as depth on OLED.
+     - `ink` `#f4eee4` (keep); `muted` ~ **`#8b857c`** for legibility on black.
+     - `accent`/`accentDeep` keep amber `#f59e0b`/`#fbbf24` (the only real color — glows pop on black).
+     - `accentSoft` `#2a2113` → a **near-black with an amber tint** ~ **`#1c160c`** so chips read crisp "amber-on-black" (not muddy, not brown).
+     - retune `dot`, heat levels, `navBg` (`rgba(0,0,0,…)`), `placeholder` to pure black (keep `heat3 = accent`).
+  3. **Depth without shadows (they're invisible on black):** elevation = **(pure-black canvas vs near-black card surface) contrast + 1px hairline borders** (+ optional subtle top-edge inner highlight on cards). Leave `t.shadow()` as-is. Selective amber glow only on the hero + key accents.
+  4. **New hero `EmberGlow`** (replaces the moon at night-v2; **keep `NightSky` for classic**): on pure black, render (a) a soft **radial amber→transparent bloom** behind the streak number (glowing coals/candlelight; gentle "breathe" of opacity/scale), and (b) **a few slow ember sparks** (~4–7) drifting upward and fading — reuse the `Confetti`/`Animated` particle approach but subtle + low-count (tasteful, not festive). Warm tones (`#fde68a`/`#f59e0b`/`#fbbf24`). A couple of faint static motes are fine; **no moon, no star-field hero**. **Keep the glow center / focal point at y ≈ 80px from card top** so the streak number stays centered (consistent with IMP-003).
+  5. **Promote only on owner approval:** build behind the flag, screenshot **Today / Reflections / You / Write / Celebration** in dark (ideally on an OLED device), iterate; keep `DARK_THEME='v2'` default once approved. If it flops → flip to `'classic'`.
+- **TDD:** mostly visual (owner screenshot review). Write one pure test `__tests__/theme/darkTheme.test.js`: `makeTheme('night')` returns the **nightV2** tokens when `DARK_THEME==='v2'` and the **classic** tokens when `'classic'` (locks both the resolution and the revert path). The rest (palette values, art) is visual — note N/A.
+- **Steps:**
+  - [x] 1. Add `DARK_THEME` flag + `PALETTES.nightV2` (true black); resolve in `makeTheme`; keep `night` classic intact. Add the resolution/revert test (RED → GREEN).
+  - [x] 2. Build the `EmberGlow` hero (amber bloom + drifting sparks), focal point y≈80; keep `NightSky`. Select the hero by flag in `HomeScreen` (+ `Celebration` if it uses the night hero).
+  - [x] 3. Retune elevation — near-black surface vs `#000` + hairline borders so cards read on OLED.
+  - [x] 4. `npm test` green (154 passed, 20 suites — 5 new tests). Owner screenshot review across all dark screens (ideally on OLED) before promoting.
+- **Commit:** `feat(theme): true-black AMOLED dark mode with ember-glow hero, behind DARK_THEME flag (revertible)`
+- **Acceptance (owner runtime walk + screenshots, ideally on an OLED device):** In dark mode — the canvas is **pure black** (AMOLED — inky/seamless on Galaxy Ultra/iPhone); cards visibly lift off the black via subtle elevation + hairline borders; the streak hero shows a **warm ember glow with a few drifting sparks** (no moon), centered on the number; chips/accents read crisp amber-on-black; **no brown anywhere**. Setting `DARK_THEME='classic'` instantly restores the **exact** original dark mode.
+- **Ship after merge:** OTA — tag `Release-Lane: ota`. (Revert, if ever needed, is also a one-line OTA: `DARK_THEME → 'classic'`.)
+
+#### IMP-019 · Round 2 — "Rich & alive" ember hero — ❌ ABANDONED (owner review 2026-06-13)
+- Built (commit `44bff07`) but owner reviewed it and it **derailed — too busy and still not premium**. Direction dropped; `DARK_THEME` reverted to `'classic'` (commit `f3ca0e7`). The Round-2 code (layered bloom, ~16 embers, number glow, card sheen) still lives in `src/art.js` / `HomeScreen` / `Card` behind the now-inactive `'v2'` flag. **Reuse the good parts** (the **streak-number text glow** + the **night-v2 card sheen** + the hot-core glow technique) for Round 3 below; the ember-only hero itself is superseded by the crescent.
+
+#### IMP-019 · Round 3 — Crescent accent — ❌ ABANDONED (owner review 2026-06-13)
+- Built `NightCrescent`, but the "crescent" rendered as a **fat gibbous ball clipped off the card's right edge**: the occluder disc (`cx=284,r=36`) only bit the right edge of the lit disc (`cx=228,r=38`), leaving a ~58px chunk (not a sliver), and the geometry sat half off the 300px canvas → reads as a planet, not premium. Direction dropped. **Lesson:** a side-placed literal moon reads as clip-art; the proven-premium element is the **rays**. (Owner confirmed the rest of the dark theme — palette, card depth, number glow, sheen — looks good; only the hero was failing.)
+
+#### IMP-019 · Round 4 — Rays on black (reuse the light-mode hero) — ✅ owner-approved + promoted 2026-06-13
+- **Concept (owner-chosen):** the dark hero = the **light-mode `RayFan`** (the slow rotating golden sunburst the owner loves) rendered on the **true-black** card, **behind the glowing streak number**, with a **soft central amber bloom** at the convergence so the middle reads warm. Symmetric, cohesive ("same brand at night"), and **low-risk because it reuses proven code**. The three prior hero attempts (plain glow → busy embers → ball-moon) all failed on craft; this stops reinventing and reuses the element that already reads premium.
+- **Files likely touched:** `src/art.js` (new thin `NightRays` wrapper composing the existing `RayFan` + a central bloom + optional faint embers; keep `NightSky` classic; you may delete the abandoned `NightCrescent` / `EmberGlow`), `src/screens/HomeScreen.js` (point the night+v2 hero at `NightRays`; keep the number glow), `src/ui.js` (keep the card sheen), `__tests__/theme/darkTheme.test.js` (default-guard stays `'classic'` until promotion).
+- **Approach (decided by Opus — reuse first, tune on-device):**
+  1. **Reuse `RayFan`.** It already renders 24 amber rays converging at the canvas centre (card y≈80, matching the number) and rotates over 60s. Compose it inside a new `NightRays` wrapper. On true black the amber rays read as a sunburst.
+  2. **Central amber bloom.** Add a soft radial-gradient bloom at the convergence (canvas ~150,150; r≈70–90; `#f59e0b`→transparent; low opacity ~0.3 with a gentle breathe) so the centre behind the number glows warm instead of empty — this is the premium depth.
+  3. **Tune rays for black only if a screenshot shows it's needed:** light `RayFan` uses opacity 0.5; on black consider ~0.55–0.65 and/or a radial fade (brighter near centre, fading out) for depth. Start by reusing `RayFan` as-is, then tune.
+  4. **Keep** the night-v2 number glow + card sheen.
+  5. **Optional faint embers:** ~4–6 very subtle `EmberParticle`s near the centre — include **only if they don't clutter**; rays + number must read first. Default to omitting if unsure.
+- **Hierarchy:** glowing number (centre, brightest, y≈80) sits *inside* the radiating sunburst + warm bloom. Fully symmetric — nothing off to the side.
+- **Keep:** number focal point y≈80; flag/revert; `PALETTES.night` + `NightSky` byte-for-byte; `useNativeDriver` (RayFan already uses it); don't touch light or classic-night.
+- **Promotion / flag discipline:** default `DARK_THEME` stays `'classic'` while building (main always shippable); preview by flipping to `'v2'` locally; only on owner approval set `'v2'` + update the default-guard test (`'classic'`→`'v2'`), commit, OTA.
+- **TDD:** visual — keep `__tests__/theme/darkTheme.test.js` green.
+- **Steps:**
+  - [x] 1. Add `NightRays` (compose `RayFan` + central amber bloom; optional faint embers); point night+v2 hero at it in `HomeScreen`; drop the abandoned `NightCrescent` from selection.
+  - [x] 2. Keep number glow + card sheen (already present from Round 2).
+  - [x] 3. `npm test` green (154 passed, 20 suites). Owner screenshot review on OLED (flip flag to `'v2'` to preview).
+  - [x] 4. **On owner approval only:** set `DARK_THEME='v2'`, update the default-guard test, commit, OTA (`Release-Lane: ota`).
+- **Commit (build):** `feat(theme): night hero = rays on black (reuse RayFan) + central bloom, behind DARK_THEME flag`
+- **Acceptance (owner screenshots, OLED):** the dark hero shows the **rotating golden sunburst on black behind the glowing number** with a warm central bloom — visibly the **same premium language as light mode**, symmetric, no clip-art object. `DARK_THEME='classic'` still restores classic exactly.
+- **Outcome:** owner-approved + promoted. `DARK_THEME` set to `'v2'`; default-guard test updated (`'classic'`→`'v2'`). Shipped OTA. Revert anytime: flip `DARK_THEME='classic'` + OTA.
+
+---
+
+### IMP-020 — Backup / Restore ("Your journal is safe")   ·   Lane: BUILD (rides IMP-006)   ·   Status: ✅ (code-complete; device smoke test owner-pending)
+
+First piece of the four-part "legacy" roadmap (D → A+B → C). Lets users keep their journal safe & portable **with no account** — a user-held JSON export (off-device via the OS share sheet) + restore-by-replace with an automatic on-device recovery copy, plus an honest in-app surface for Android Auto Backup.
+
+- **Full spec (the real source of truth):**
+  - Design (why): [`docs/superpowers/specs/2026-06-14-backup-restore-design.md`](superpowers/specs/2026-06-14-backup-restore-design.md)
+  - Plan (how — 8 tasks, exact code + commits): [`docs/superpowers/plans/2026-06-14-backup-restore.md`](superpowers/plans/2026-06-14-backup-restore.md)
+- **Architecture:** reuse `serialize`/`deserialize` (validation + forward-migration carry over). New **pure** core under `src/backup/` (`backup.js` envelope build+validating-parse — the single validation boundary; `lastBackupLabel.js` subtitle; `importFlow.js` recovery-before-replace guarantee) — all unit-tested. One **thin native wrapper** `src/backup/io.js` over `expo-file-system`/`expo-sharing`/`expo-document-picker` (no logic, not unit-tested). Wiring: `doExport`/`doImport`/`explainAutoBackup` in `RitualsApp.js`; `handleReplaceAllData` + remount `key` in `App.js`; new "Your journal is safe" section in `YouScreen.js`.
+- **Tasks shipped (commit per task):** 1 persist `lastBackupAt` (675e520) · 2 backup core (parse/build) · 3 `lastBackupLabel` · 4 `importFlow` (651eaf2) · 5 `io.js` + jest mocks + deps (579563f) · 6 wire handlers + replace-all remount (4dbf887) · 7 You-tab section + relabel PDF stub → "Save as PDF" (ac8d342) · 8 bump:build → versionCode 6 (08e3d2e).
+- **Key constraints honored:** import REPLACES (writes recovery envelope first — never replaces if the recovery write throws); the word "Export" appears nowhere on the You tab (backup = "Back up"/"Restore", PDF stub relabeled "Save as PDF", behavior unchanged); Auto Backup native `allowBackup` was already in `app.config.js` (IMP-006) — Task 6/7 only *surface* it via an honest explainer + deep-link (no faked live ON/OFF status). Backup file is plaintext journal content (encryption deferred — see design §6).
+- **Verification:** `npm test` → **171 passed, 23 suites** (3 new `__tests__/backup/*` suites: backup 9, lastBackupLabel 5, importFlow 2; + 1 new `state.test.js` case). `npx expo export --platform android` bundles clean. **Device/emulator smoke test (export → save → restore → recovery copy; non-backup-file error; settings deep-link) is owner-pending** — same gate as IMP-006's Auto Backup cycle; the two ride one BUILD shipment.
+- **Ship:** BUILD lane, no trailer applied (owner has not asked to release). When the owner ships, the final commit's last line is `Release-Lane: build` + `git push origin main`; never run `eas` by hand.
+- **Deferred (do not build now):** scheduled auto-export (v2), file encryption/passphrase (future), live OS-backup-status detection (needs a custom native module), merge-on-import (rejected — replace + recovery copy is the model).
+
+---
+
 ## Session notes (archived from PROGRESS.md)
 
 _Append-only handoff log moved out of PROGRESS.md to keep it light. Newest 1–2 notes stay live in PROGRESS.md; everything else is here. Git history is the full record._
@@ -422,3 +645,5 @@ Two ways to ship a change. **Pick by what changed:**
 - **CI is now automated** — see the **🤖 Release rules** section above. Agents tag a commit `Release-Lane: ota|build` and push; GitHub Actions runs the test gate, waits for the owner's one-tap approval, then ships (OTA) or builds + auto-submits to the `alpha` track. Rollback via the **Rollback OTA** workflow.
 
 _2026-06-13 (Opus, planning) — Two owner items this session. (1) **Streak-number centering check (no task filed):** verified against the code/math — horizontally the number IS centered (art SVG is `left:0,right:0,alignItems:center` so rays/moon converge on the card midline; the number block is `alignItems:center` + `textAlign:center` with symmetric 22px padding). Vertically it's tuned so the text **line-box** center lands exactly on the art focal point (card `paddingTop:26` + block `marginTop:13` + half `lineHeight:82`(41) = 80px; art container `top:-70` + SVG center 150 = 80px — matches IMP-003). Honest caveat told to owner: digit glyphs (no descenders) optically sit slightly above the line-box center, so it can *read* a few px high even though the box is centered; confirming needs a device screenshot, and the fix (if wanted) is a ~+2–4px `marginTop` nudge or baseline-anchored alignment. **No code changed; awaiting owner's go-ahead to verify on device.** (2) **Dark-mode redesign scoped as IMP-019** (planning only — no code). Owner chose **Direction A: full premium dark redesign, done directly, in line with light mode**, with a **hard revertability requirement** if it flops. Approach locked: build `PALETTES.nightV2` (true-black AMOLED) + `EmberGlow` hero behind `DARK_THEME = 'v2' | 'classic'` flag in `theme.js`. Revert = flip one constant + OTA._
+
+_2026-06-13 — IMP-019 COMPLETE (shipped OTA) — Round 4 `NightRays` hero owner-approved + promoted. `DARK_THEME` set to `'v2'`; default-guard test updated (`'classic'`→`'v2'`). `npm test` → **154 passed, 20 suites**. Committed with `Release-Lane: ota` trailer — CI will ship to `production` on owner approval. Dark mode is now: true-black AMOLED canvas, near-black elevated cards + hairline borders, amber-only accents, rotating golden sunburst + warm central bloom behind the glowing streak number. Revert anytime: flip `DARK_THEME='classic'` + OTA._

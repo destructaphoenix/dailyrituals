@@ -40,30 +40,11 @@ Opus scopes each owner-filed issue into a numbered `IMP-xxx` task (steps + commi
 | IMP-017 | Greeting is Good morning / afternoon / evening by the user's local time | OTA | ✅ |
 | IMP-018 | Today's reflection is editable — today only — prefilled, with a "Start fresh" reset | OTA | ✅ |
 | IMP-019 | Premium true-black AMOLED dark mode + rotating-rays hero, behind a one-line `DARK_THEME` revert flag | OTA | ✅ promoted |
-| IMP-020 | Backup / Restore — user-held JSON export (off-device) + restore-by-replace with auto safety copy; surface Android Auto Backup | **Build** | ⬜ open — first of the "legacy" roadmap |
+| IMP-020 | Backup / Restore — user-held JSON export (off-device) + restore-by-replace with auto safety copy; surface Android Auto Backup | Build | ✅ code-complete (device smoke test owner-pending) — full detail in build-log |
 
 ### Open task specs
 
-**IMP-020 — Backup / Restore ("Your journal is safe")** · Lane: **BUILD** (new native deps; rides IMP-006's build)
-
-> First piece of the four-part "legacy" roadmap (D → A+B → C). Lets users keep their journal safe & portable **with no account**. Full design + per-step TDD code live in dedicated docs — **read them, they ARE the spec for this task:**
-> - Design (the why): [`docs/superpowers/specs/2026-06-14-backup-restore-design.md`](docs/superpowers/specs/2026-06-14-backup-restore-design.md)
-> - Plan (the how — 8 tasks, exact code, commits): [`docs/superpowers/plans/2026-06-14-backup-restore.md`](docs/superpowers/plans/2026-06-14-backup-restore.md)
-
-Work the plan's tasks **in order**, committing per task with the message each task gives:
-
-- [ ] Task 1 — persist `lastBackupAt` (PERSISTED_KEYS) + test
-- [ ] Task 2 — pure backup core `src/backup/backup.js` (createBackup/readBackup/backupFilename) + tests
-- [ ] Task 3 — `lastBackupLabel` subtitle formatter + tests
-- [ ] Task 4 — `importFlow` (recovery-before-replace guarantee) + tests
-- [ ] Task 5 — install `expo-file-system`/`expo-sharing`/`expo-document-picker`; `io.js` wrapper; jest mocks
-- [ ] Task 6 — wire `doExport`/`doImport` into RitualsApp + replace-all remount in App.js
-- [ ] Task 7 — You-tab "Your journal is safe" section + relabel PDF stub → "Save as PDF"
-- [ ] Task 8 — full suite + manual smoke test + `npm run bump:build` + archive this block to build-log
-
-**Key constraints:** import REPLACES (writes a recovery copy first — see Task 4); the word "Export" must not appear twice in Settings (backup = "Back up"/"Restore", PDF = "Save as PDF"); Auto Backup native config (`allowBackup`) is already in `app.config.js` (IMP-006) — Task 6/7 only *surface* it. Ship lane is **BUILD**: `npm run bump:build`, `Release-Lane: build` trailer only if the owner asks to ship.
-
-When IMP-020 is code-complete, archive this whole block to [`docs/build-log.md`](docs/build-log.md), leaving only its backlog row.
+_None open — IMP-020 is code-complete and archived to [`docs/build-log.md`](docs/build-log.md). Awaiting the owner's next filed issue (Opus scopes it here as the next IMP block) or the legacy roadmap's next piece (A+B — days-captured hero + Lifetime Progress)._
 
 ---
 
@@ -71,6 +52,7 @@ When IMP-020 is code-complete, archive this whole block to [`docs/build-log.md`]
 
 - **⏳ CURRENT BLOCKER (Phase 10a.6):** Free release is in Play review; production publish is gated by the **closed-testing 12×14 requirement** (12 testers continuously opted in for 14 days). Owner recruiting testers since 2026-06-06 — nothing to code, purely a Play Console / community process. Production unlocks ≈ 14 days after 12 testers are continuously in. When back, owner may bring **bug fixes / improvements** rather than continuing the phase ladder.
 - **IMP-006 (Android Auto Backup):** code done; needs **owner device verification** of the backup → uninstall → reinstall → restore cycle + a Play data-safety confirm. Rides the v5 build. (Steps in build-log.)
+- **IMP-020 (Backup / Restore):** code-complete + unit-tested + bundles clean; needs the **owner device/emulator smoke test** (export → save → restore → recovery copy; non-backup-file error toast; settings deep-link). BUILD lane — rides the same build as IMP-006; no ship trailer applied yet.
 - **iOS (Phase 11):** ⛔ blocked on a Mac / EAS macOS + Apple Developer Program enrollment. Phase 6 iOS real-billing row is blocked on the same.
 
 ---
@@ -79,6 +61,6 @@ When IMP-020 is code-complete, archive this whole block to [`docs/build-log.md`]
 
 _History archived in [`docs/build-log.md`](docs/build-log.md) → "Session notes". Only the two newest notes stay here; every chat moves the older one out when it appends a new one (see DEVGUIDE Step 4)._
 
-_2026-06-13 — IMP-019 COMPLETE (shipped OTA) — Round 4 `NightRays` hero owner-approved + promoted. `DARK_THEME` set to `'v2'`; default-guard test updated (`'classic'`→`'v2'`). `npm test` → **154 passed, 20 suites**. Committed with `Release-Lane: ota` trailer — CI will ship to `production` on owner approval. Dark mode is now: true-black AMOLED canvas, near-black elevated cards + hairline borders, amber-only accents, rotating golden sunburst + warm central bloom behind the glowing streak number. Revert anytime: flip `DARK_THEME='classic'` + OTA._
-
 _2026-06-13 (workflow optimization, Opus) — Restructured the cross-chat docs to stop PROGRESS.md bloat: split into 3 tiers by read-frequency. PROGRESS.md = lean live cursor (backlog table + open specs + blockers + 2 notes). New `docs/playbook.md` = stable reference (locked decisions, release/signing rules, parked phases 8/10b/11, config, architecture, IMP template). `docs/build-log.md` = archive — moved IMP-006 + IMP-013–019 full specs there (they were code-complete but never archived → the bloat). DEVGUIDE updated for the new file map + a hard size budget. No progress lost (git is the full record). NEXT: owner is bringing a list of new things to add → Opus scopes them as new IMP blocks in the "Open task specs" section above._
+
+_2026-06-14 — IMP-020 COMPLETE (code-complete; device smoke test owner-pending). Backup / Restore — first piece of the "legacy" roadmap (D). Built the full 8-task plan TDD-first: pure core under `src/backup/` (`backup.js` envelope build + validating parse = the single validation boundary, reusing `serialize`/`deserialize`; `lastBackupLabel.js` subtitle; `importFlow.js` recovery-before-replace guarantee) all unit-tested, plus a thin native `io.js` over `expo-file-system`/`expo-sharing`/`expo-document-picker`. Wired `doExport`/`doImport`/`explainAutoBackup` into `RitualsApp.js`, `handleReplaceAllData` + remount `key` into `App.js`, and a new "Your journal is safe" section into `YouScreen.js` (PDF stub relabeled "Save as PDF" — the word "Export" now appears nowhere on the You tab). Import REPLACES but writes a recovery envelope FIRST (never replaces if that write throws). `npm test` → **171 passed, 23 suites** (3 new backup suites: 9+5+2, + 1 state case). `npx expo export --platform android` bundles clean. `npm run bump:build` → versionCode **6**. 8 commits 675e520…08e3d2e; **no `Release-Lane` trailer** (owner hasn't asked to ship). Full spec archived to build-log. NEXT: owner device/emulator smoke test (export→save→restore→recovery; non-backup error toast; settings deep-link) — same gate as IMP-006, the two ride one BUILD shipment. Then legacy roadmap A+B (days-captured hero + Lifetime Progress)._
