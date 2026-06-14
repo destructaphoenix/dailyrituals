@@ -171,6 +171,11 @@ Identical to a Backup Restore.
 
 ## Leak-proofing (the owner's hard requirement)
 
+`src/dev/` **is committed to the repo** (version-controlled + backed up); it is
+*not* gitignored. Keeping it out of shipped builds is the job of the `__DEV__`
+gate + sentinel grep below, which is independent of git — git has no bearing on
+what ends up in the bundle.
+
 Three layers guarantee the harness is **provably absent from any non-dev build**:
 
 1. **Single gate.** All entry points reference `DEV_TOOLS` (= `__DEV__`) from one
