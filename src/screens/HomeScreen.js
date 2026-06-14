@@ -16,7 +16,7 @@ import { deriveKeepsakes } from '../profile/achievements';
 import { StreakFreeze, DailyQuests } from '../gamify';
 import { EmberPill } from '../shopui';
 
-export default function HomeScreen({ copy, gamify, mode, streak, level, levelName, xpInto, xpToNext, entries, quests, freezes, onOpenAchievements, done, onWrite, onToggleMode, embers, plus, onOpenShop }) {
+export default function HomeScreen({ copy, gamify, mode, streak, level, levelName, xpInto, xpToNext, entries, quests, freezes, onOpenAchievements, done, onWrite, onToggleMode, embers, plus, onOpenShop, dailyPrompt = '' }) {
   const t = useTheme();
   const c = t.colors;
   const Orb = mode === 'night' ? Moon : Sun;
@@ -107,10 +107,10 @@ export default function HomeScreen({ copy, gamify, mode, streak, level, levelNam
         {!done ? (
           <Card style={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 22 }}>
             <T w={700} color={c.muted} style={{ fontSize: 12, letterSpacing: 1.7, textTransform: 'uppercase', marginBottom: 12 }}>
-              {copy.teaserKicker}
+              Today's reflection
             </T>
             <T d w={600} color={c.ink} style={{ fontSize: 19, lineHeight: 25 }}>
-              {copy.teaser[0]}<T d w={700} color={c.accentDeep} style={{ fontSize: 19 }}>{copy.teaser[1]}</T>{copy.teaser[2]}
+              {dailyPrompt || copy.teaser.join('')}
             </T>
             <PrimaryButton
               label={copy.cta}

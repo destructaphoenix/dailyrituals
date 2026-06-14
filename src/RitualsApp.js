@@ -41,6 +41,9 @@ import { findTodaysEntry, isEditableToday } from './home/todaysEntry';
 import { levelFromXp } from './profile/level';
 import { deriveAchievements } from './profile/achievements';
 import { entryDateParts } from './time/clock';
+import { dayNumber } from './time/dailyPick';
+import { selectPrompt } from './content/deck';
+import { PROMPTS } from './content/prompts';
 
 const XP_GAIN = 50;
 const APP_VERSION = Constants.expoConfig?.version || '1.0.0';
@@ -106,6 +109,8 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   const [subCanceled, setSubCanceled] = useState(initialState.subCanceled ?? false);
   const [activePlan, setActivePlan] = useState(initialState.activePlan ?? 'annual');
   const [lastActiveDay, setLastActiveDay] = useState(initialState.lastActiveDay ?? todayKey());
+  const [promptDeck, setPromptDeck] = useState(initialState.promptDeck ?? null);
+  const promptSel = useMemo(() => selectPrompt(PROMPTS, promptDeck, dayNumber()), [promptDeck]);
   const [liveEntitlement, setLiveEntitlement] = useState(null);
   const renewLabel = liveEntitlement ? formatRenewDate(liveEntitlement.renewISO) : RENEW_DATE;
   const livePlan = liveEntitlement ? liveEntitlement.plan : activePlan;
@@ -213,6 +218,12 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Advance + persist the prompt deck when the day rolls over. selectPrompt
+  // returns the same reference when nothing changed, so this is a no-op then.
+  React.useEffect(() => {
+    if (promptSel.state !== promptDeck) setPromptDeck(promptSel.state);
+  }, [promptSel, promptDeck]);
+
   // Debounced autosave — coalesces rapid state changes into one write.
   React.useEffect(() => {
     const id = setTimeout(() => {
@@ -220,13 +231,13 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
         onboarded: true, // RitualsApp only mounts after first-run; record it so we skip onboarding next launch
         entries, streak, xp, done, quests, freezes, embers, plus,
         activePalette, ownedPalettes, activeSky, ownedSkies,
-        subCanceled, activePlan, lastActiveDay, settings, lastBackupAt,
+        subCanceled, activePlan, lastActiveDay, settings, lastBackupAt, promptDeck,
       }));
     }, 400);
     return () => clearTimeout(id);
   }, [entries, streak, xp, done, quests, freezes, embers, plus,
     activePalette, ownedPalettes, activeSky, ownedSkies,
-    subCanceled, activePlan, lastActiveDay, settings, lastBackupAt]);
+    subCanceled, activePlan, lastActiveDay, settings, lastBackupAt, promptDeck]);
 
   const complete = ({ did, wished, mood }) => {
     const entry = { id: 'new' + Date.now(), ...entryDateParts(), dayKey: todayKey(), mood, did, wished, streak: true };
@@ -251,7 +262,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     onboarded: true,
     entries, streak, xp, done, quests, freezes, embers, plus,
     activePalette, ownedPalettes, activeSky, ownedSkies,
-    subCanceled, activePlan, lastActiveDay, settings, lastBackupAt,
+    subCanceled, activePlan, lastActiveDay, settings, lastBackupAt, promptDeck,
   });
 
   const doExport = async () => {
@@ -350,6 +361,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             quests={quests} freezes={freezes} onOpenAchievements={() => setShowAch(true)}
             embers={embers} plus={plus} onOpenShop={() => setShopOpen(true)}
             done={done} onWrite={() => setWriting(true)} onToggleMode={onToggleMode}
+            dailyPrompt={promptSel.item}
           />
         );
     }
