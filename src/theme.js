@@ -110,6 +110,19 @@ export const DEFAULT_SETTINGS = {
   storeRestore: 'empty',
 };
 
+// Mix a hex color toward white by `amount` (0–1). Used to derive the gradient
+// highlight stop from the chosen accent so gradients stay in-family for every
+// palette (marigold, rose, lavender…) instead of always topping out in amber.
+export function lighten(hex, amount = 0.25) {
+  const m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(hex);
+  if (!m) return hex;
+  const mix = (c) => Math.round(c + (255 - c) * amount);
+  const r = mix(parseInt(m[1], 16));
+  const g = mix(parseInt(m[2], 16));
+  const b = mix(parseInt(m[3], 16));
+  return `#${[r, g, b].map((c) => c.toString(16).padStart(2, '0')).join('')}`;
+}
+
 // _variant is a test seam ('v2'|'classic'); production code omits it (uses DARK_THEME).
 export function makeTheme(mode = 'day', settings = DEFAULT_SETTINGS, _variant) {
   const nightVariant = _variant ?? DARK_THEME;
@@ -127,6 +140,7 @@ export function makeTheme(mode = 'day', settings = DEFAULT_SETTINGS, _variant) {
         ...base,
         accent:      settings.accent[0],
         accentDeep:  settings.accent[0],
+        accentBright: lighten(settings.accent[0], 0.28),
         heat3:       settings.accent[0],
       }
     : {
@@ -134,6 +148,7 @@ export function makeTheme(mode = 'day', settings = DEFAULT_SETTINGS, _variant) {
         accent:      settings.accent[0],
         accentDeep:  settings.accent[1],
         accentSoft:  settings.accent[2],
+        accentBright: lighten(settings.accent[0], 0.28),
         heat3:       settings.accent[0],
       };
 

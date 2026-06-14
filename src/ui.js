@@ -71,7 +71,7 @@ export function PrimaryButton({ label, onPress, disabled, icon, style }) {
         disabled={disabled}
       >
         <LinearGradient
-          colors={['#fbbf24', t.colors.accent, t.colors.accentDeep]}
+          colors={[t.colors.accentBright, t.colors.accent, t.colors.accentDeep]}
           locations={[0, 0.55, 1]}
           start={{ x: 0.5, y: 0 }}
           end={{ x: 0.5, y: 1 }}
@@ -116,7 +116,7 @@ export function ProgressBar({ value }) {
     <View style={[styles.bar, { backgroundColor: t.colors.accentSoft }]}>
       <Animated.View style={{ width, height: '100%' }}>
         <LinearGradient
-          colors={['#fbbf24', t.colors.accent]}
+          colors={[t.colors.accentBright, t.colors.accent]}
           start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
           style={{ flex: 1, borderRadius: 999, overflow: 'hidden' }}
         >
