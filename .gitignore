@@ -43,6 +43,9 @@ credentials.json
 # EAS / Expo secrets
 .expo-shared/
 
+# Superpowers brainstorm mockups (local visual companion)
+.superpowers/
+
 # System / IDE Files
 .DS_Store
 Thumbs.db
