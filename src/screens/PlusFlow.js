@@ -42,7 +42,7 @@ function DangerButton({ label, onPress }) {
       width: '100%', paddingVertical: 16, borderRadius: t.radius.btn, backgroundColor: c.red,
       alignItems: 'center', justifyContent: 'center', transform: [{ scale: pressed ? 0.99 : 1 }],
     }, t.shadow(10, c.red, 0.5)]}>
-      <T d w={700} color="#fff" style={{ fontSize: 16 }}>{label}</T>
+      <T d w={700} color={c.onAccent} style={{ fontSize: 16 }}>{label}</T>
     </Pressable>
   );
 }
@@ -88,7 +88,7 @@ const RESULT_META = {
 function ResultIcon({ kind, c }) {
   if (kind === 'network') return <NoSignal size={30} color={c.accentDeep} />;
   if (kind === 'failed' || kind === 'restore-empty') return <Alert size={30} color={c.accentDeep} />;
-  return <Check size={30} color="#fff" />;
+  return <Check size={30} color={c.onAccent} />;
 }
 
 export function PurchaseOverlay({ flow, platform, onRetry, onDismiss, onComplete }) {
@@ -97,7 +97,7 @@ export function PurchaseOverlay({ flow, platform, onRetry, onDismiss, onComplete
   if (!flow) return null;
   const w = storeWords(platform);
 
-  const scrim = { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 30, alignItems: 'center', justifyContent: 'center', padding: 30, backgroundColor: 'rgba(20,16,12,0.5)' };
+  const scrim = { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 30, alignItems: 'center', justifyContent: 'center', padding: 30, backgroundColor: c.scrim };
   const card = [{ width: '100%', maxWidth: 340, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, borderRadius: t.radius.card, padding: 26, alignItems: 'center' }, t.shadow(30, '#000', 0.45)];
 
   if (flow.phase === 'pending') {
@@ -196,7 +196,7 @@ export function ManageSubscription({ insets, platform, plan, canceled, renewLabe
   return (
     <View style={{ flex: 1, backgroundColor: c.cream, paddingTop: insets.top }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingTop: 12, paddingBottom: 6 }}>
-        <Pressable onPress={onClose} hitSlop={8} style={({ pressed }) => ({ width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: t.dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', opacity: pressed ? 0.6 : 1 })}>
+        <Pressable onPress={onClose} hitSlop={8} style={({ pressed }) => ({ width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: c.ghostBtn, opacity: pressed ? 0.6 : 1 })}>
           <Chevron dir="left" size={22} color={c.ink} />
         </Pressable>
         <T d w={800} color={c.ink} style={{ fontSize: 19 }}>Subscription</T>
@@ -205,9 +205,9 @@ export function ManageSubscription({ insets, platform, plan, canceled, renewLabe
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36, paddingTop: 4 }} showsVerticalScrollIndicator={false}>
         {/* status header */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 13, padding: 15, borderRadius: t.radius.card, backgroundColor: c.surface, borderWidth: 1, borderColor: 'rgba(245,158,11,0.34)', marginTop: 4 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 13, padding: 15, borderRadius: t.radius.card, backgroundColor: c.surface, borderWidth: 1, borderColor: c.accentBorder, marginTop: 4 }}>
           <View style={[{ width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: c.accent }, t.shadow(8, c.accentDeep, 0.8)]}>
-            <Sun size={18} color="#fff" />
+            <Sun size={18} color={c.onAccent} />
           </View>
           <View style={{ flex: 1 }}>
             <T d w={800} color={c.ink} style={{ fontSize: 16 }}>Daily Rituals Plus</T>
@@ -215,8 +215,8 @@ export function ManageSubscription({ insets, platform, plan, canceled, renewLabe
               {canceled ? `Ends ${renew} · access until then` : `${p.label} · renews ${renew}`}
             </T>
           </View>
-          <View style={{ backgroundColor: canceled ? 'rgba(217,119,6,0.14)' : c.greenSoft, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999 }}>
-            <T d w={800} color={canceled ? '#b45309' : c.green} style={{ fontSize: 11, letterSpacing: 0.4 }}>{canceled ? 'ENDING' : 'ACTIVE'}</T>
+          <View style={{ backgroundColor: canceled ? c.cancelSoft : c.greenSoft, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999 }}>
+            <T d w={800} color={canceled ? c.accentDeep : c.green} style={{ fontSize: 11, letterSpacing: 0.4 }}>{canceled ? 'ENDING' : 'ACTIVE'}</T>
           </View>
         </View>
 
@@ -274,9 +274,9 @@ export function CancelSheet({ platform, onKeep, onConfirm }) {
   const c = t.colors;
   const w = storeWords(platform);
   return (
-    <Pressable onPress={onKeep} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 31, alignItems: 'center', justifyContent: 'flex-end', padding: 16, backgroundColor: 'rgba(20,16,12,0.5)' }}>
+    <Pressable onPress={onKeep} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 31, alignItems: 'center', justifyContent: 'flex-end', padding: 16, backgroundColor: c.scrim }}>
       <Pressable onPress={() => {}} style={[{ width: '100%', maxWidth: 400, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, borderRadius: t.radius.card, padding: 24, alignItems: 'center' }, t.shadow(30, '#000', 0.45)]}>
-        <View style={{ width: 54, height: 54, borderRadius: 27, alignItems: 'center', justifyContent: 'center', marginBottom: 16, backgroundColor: 'rgba(239,68,68,0.1)' }}>
+        <View style={{ width: 54, height: 54, borderRadius: 27, alignItems: 'center', justifyContent: 'center', marginBottom: 16, backgroundColor: c.redSoft }}>
           <Ban size={26} color={c.red} />
         </View>
         <T d w={800} color={c.ink} style={{ fontSize: 22, lineHeight: 26, textAlign: 'center' }}>Cancel Daily Rituals Plus?</T>

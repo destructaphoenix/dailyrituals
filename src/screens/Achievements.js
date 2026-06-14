@@ -19,7 +19,7 @@ export default function Achievements({ insets, onClose, entries = [], streak = 0
     <View style={{ flex: 1, backgroundColor: c.cream, paddingTop: insets.top }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingTop: 14, paddingBottom: 6 }}>
         <Pressable onPress={onClose} hitSlop={8}
-          style={({ pressed }) => ({ width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: t.dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', opacity: pressed ? 0.6 : 1 })}>
+          style={({ pressed }) => ({ width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: c.ghostBtn, opacity: pressed ? 0.6 : 1 })}>
           <Chevron dir="left" size={22} color={c.ink} />
         </Pressable>
         <T w={700} color={c.muted} style={{ fontSize: 12 }}>{earned} of {achievements.length} earned</T>
@@ -38,14 +38,14 @@ export default function Achievements({ insets, onClose, entries = [], streak = 0
             const done = a.done;
             return (
               <View key={a.id} style={[
-                { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14, borderRadius: t.radius.card, borderWidth: 1, borderColor: done ? 'rgba(245,158,11,0.35)' : c.border, backgroundColor: c.surface },
-                t.dark ? null : t.shadow(10, '#5b4a2a', 0.1),
+                { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14, borderRadius: t.radius.card, borderWidth: 1, borderColor: done ? c.accentBorder : c.border, backgroundColor: c.surface },
+                t.dark ? null : t.shadow(10, c.shadowColor, 0.1),
               ]}>
                 <View style={[
                   { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center', backgroundColor: done ? c.accent : c.dot, borderWidth: 1.5, borderColor: done ? c.accentDeep : c.border },
                   done && t.shadow(10, c.accentDeep, 0.7),
                 ]}>
-                  <Ic size={26} color={done ? '#7c2d12' : (t.dark ? '#6b6256' : '#c3bcb0')} />
+                  <Ic size={26} color={done ? c.onAccent : c.placeholder} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>

@@ -27,7 +27,7 @@ export default function Shop({
     : ownedSkies.includes(s.id) ? 'owned'
     : s.tier === 'plus' ? (plus ? 'owned' : 'plus') : 'buy';
 
-  const cardBase = [{ backgroundColor: c.surface, borderWidth: 1.5, borderColor: c.border }, t.dark ? null : t.shadow(8, '#5b4a2a', 0.08)];
+  const cardBase = [{ backgroundColor: c.surface, borderWidth: 1.5, borderColor: c.border }, t.dark ? null : t.shadow(8, c.shadowColor, 0.08)];
 
   const Sec = ({ title, right }) => (
     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
@@ -44,7 +44,7 @@ export default function Shop({
       {/* top bar */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingTop: 12, paddingBottom: 8 }}>
         <Pressable onPress={onClose} hitSlop={8}
-          style={({ pressed }) => ({ width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: t.dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', opacity: pressed ? 0.6 : 1 })}>
+          style={({ pressed }) => ({ width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: c.ghostBtn, opacity: pressed ? 0.6 : 1 })}>
           <Chevron dir="left" size={22} color={c.ink} />
         </Pressable>
         <T d w={800} color={c.ink} style={{ fontSize: 19 }}>Shop</T>
@@ -104,19 +104,19 @@ export default function Shop({
                     else if (st === 'plus') { if (plusEnabled) onOpenPaywall(); }
                     else onBuyPalette(p);
                   }}
-                  style={({ pressed }) => [{ width: '48%', marginBottom: 12, padding: 12, borderRadius: t.radius.card, transform: [{ scale: pressed ? 0.98 : 1 }] }, { backgroundColor: c.surface, borderWidth: 1.5, borderColor: st === 'active' ? c.accent : c.border }, t.dark ? null : t.shadow(8, '#5b4a2a', 0.08)]}>
+                  style={({ pressed }) => [{ width: '48%', marginBottom: 12, padding: 12, borderRadius: t.radius.card, transform: [{ scale: pressed ? 0.98 : 1 }] }, { backgroundColor: c.surface, borderWidth: 1.5, borderColor: st === 'active' ? c.accent : c.border }, t.dark ? null : t.shadow(8, c.shadowColor, 0.08)]}>
                   <View style={{ height: 64, borderRadius: 14, overflow: 'hidden', marginBottom: 10 }}>
                     <View style={{ flex: 1, backgroundColor: p.swatch[0] }} />
                     <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, top: '46%', backgroundColor: p.swatch[1], opacity: 0.55 }} />
                     <View style={{ position: 'absolute', right: 9, bottom: 9, width: 26, height: 26, borderRadius: 13, backgroundColor: p.swatch[2], borderWidth: 2, borderColor: 'rgba(255,255,255,0.7)' }} />
                     {st === 'plus' && (
                       <View style={{ position: 'absolute', top: 8, left: 8, width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.32)' }}>
-                        <Sun size={13} color="#fff" />
+                        <Sun size={13} color={c.onAccent} />
                       </View>
                     )}
                     {st === 'active' && (
-                      <View style={{ position: 'absolute', top: 8, left: 8, width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(217,119,6,0.92)' }}>
-                        <Check size={15} color="#fff" />
+                      <View style={{ position: 'absolute', top: 8, left: 8, width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: c.accentMark }}>
+                        <Check size={15} color={c.onAccent} />
                       </View>
                     )}
                   </View>
@@ -148,7 +148,7 @@ export default function Shop({
                     else if (st === 'plus') { if (plusEnabled) onOpenPaywall(); }
                     else onBuySky(s);
                   }}
-                  style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 12, borderRadius: t.radius.card, transform: [{ scale: pressed ? 0.99 : 1 }] }, { backgroundColor: c.surface, borderWidth: 1.5, borderColor: st === 'active' ? c.accent : c.border }, t.dark ? null : t.shadow(8, '#5b4a2a', 0.08)]}>
+                  style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 12, borderRadius: t.radius.card, transform: [{ scale: pressed ? 0.99 : 1 }] }, { backgroundColor: c.surface, borderWidth: 1.5, borderColor: st === 'active' ? c.accent : c.border }, t.dark ? null : t.shadow(8, c.shadowColor, 0.08)]}>
                   <SkyPreview kind={s.kind} />
                   <View style={{ flex: 1 }}>
                     <T d w={700} color={c.ink} style={{ fontSize: 15 }}>{s.name}</T>
@@ -189,7 +189,7 @@ export default function Shop({
 function PackTag({ label, c, soft }) {
   return (
     <View style={{ position: 'absolute', top: -8, alignSelf: 'center', backgroundColor: soft ? c.accentSoft : c.accentDeep, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 }}>
-      <T d w={800} color={soft ? c.accentDeep : '#fff'} style={{ fontSize: 9.5, letterSpacing: 0.3 }}>{label.toUpperCase()}</T>
+      <T d w={800} color={soft ? c.accentDeep : c.onAccent} style={{ fontSize: 9.5, letterSpacing: 0.3 }}>{label.toUpperCase()}</T>
     </View>
   );
 }

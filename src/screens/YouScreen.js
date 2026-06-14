@@ -45,7 +45,7 @@ export default function YouScreen({
         <Card style={{ padding: 20 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
             <View style={[{ width: 64, height: 64, borderRadius: 32, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }, t.shadow(12, c.accentDeep, 0.7)]}>
-              <T d w={800} color="#fff" style={{ fontSize: 26 }}>{initial}</T>
+              <T d w={800} color={c.onAccent} style={{ fontSize: 26 }}>{initial}</T>
             </View>
             <View style={{ flex: 1 }}>
               <T d w={800} color={c.ink} style={{ fontSize: 22 }}>{display}</T>
@@ -119,7 +119,7 @@ export default function YouScreen({
                 value={settings.gamify !== false}
                 onValueChange={setGamify}
                 trackColor={{ false: c.border, true: c.accent }}
-                thumbColor="#fff"
+                thumbColor={c.onAccent}
                 ios_backgroundColor={c.border}
               />
             } />
@@ -164,8 +164,8 @@ export default function YouScreen({
           {onResetData && (
             <>
               <Divider />
-              <Row icon={<Restore size={20} color="#ef4444" />} label="Reset all data"
-                labelColor="#ef4444" onPress={confirmReset} />
+              <Row icon={<Restore size={20} color={c.red} />} label="Reset all data"
+                labelColor={c.red} onPress={confirmReset} />
             </>
           )}
         </Card>

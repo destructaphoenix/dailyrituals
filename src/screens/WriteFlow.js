@@ -106,7 +106,7 @@ export default function WriteFlow({ copy, insets, onClose, onComplete, initial }
                     ]}
                   >
                     <Text style={{ fontSize: 16 }}>{moodEmoji(m)}</Text>
-                    <T w={700} color={sel ? '#fff' : c.ink} style={{ fontSize: 15 }}>{m}</T>
+                    <T w={700} color={sel ? c.onAccent : c.ink} style={{ fontSize: 15 }}>{m}</T>
                   </Pressable>
                 );
               })}
@@ -117,7 +117,7 @@ export default function WriteFlow({ copy, insets, onClose, onComplete, initial }
               label={copy.finish}
               onPress={next}
               disabled={!canNext}
-              icon={<Sun size={19} color="#fff" />}
+              icon={<Sun size={19} color={c.onAccent} />}
               style={{ flex: 1 }}
             />
           </Foot>
@@ -143,7 +143,7 @@ function Foot({ insets, children }) {
 function IconBtn({ onPress, children }) {
   const t = useTheme();
   return (
-    <Pressable onPress={onPress} style={{ width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: t.dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }}>
+    <Pressable onPress={onPress} style={{ width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: t.colors.ghostBtn }}>
       {children}
     </Pressable>
   );

@@ -110,9 +110,7 @@ export const DEFAULT_SETTINGS = {
   storeRestore: 'empty',
 };
 
-// Mix a hex color toward white by `amount` (0–1). Used to derive the gradient
-// highlight stop from the chosen accent so gradients stay in-family for every
-// palette (marigold, rose, lavender…) instead of always topping out in amber.
+// Mix a hex color toward white by `amount` (0–1).
 export function lighten(hex, amount = 0.25) {
   const m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(hex);
   if (!m) return hex;
@@ -121,6 +119,22 @@ export function lighten(hex, amount = 0.25) {
   const g = mix(parseInt(m[2], 16));
   const b = mix(parseInt(m[3], 16));
   return `#${[r, g, b].map((c) => c.toString(16).padStart(2, '0')).join('')}`;
+}
+
+// Mix a hex color toward black by `amount` (0–1).
+export function darken(hex, amount = 0.25) {
+  const m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(hex);
+  if (!m) return hex;
+  const mix = (c) => Math.round(c * (1 - amount));
+  return `#${[parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)]
+    .map((c) => mix(c).toString(16).padStart(2, '0')).join('')}`;
+}
+
+// Convert a hex color to an rgba() string with the given alpha (0–1).
+export function hexRgba(hex, alpha = 1) {
+  const m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(hex);
+  if (!m) return hex;
+  return `rgba(${parseInt(m[1], 16)},${parseInt(m[2], 16)},${parseInt(m[3], 16)},${alpha})`;
 }
 
 // _variant is a test seam ('v2'|'classic'); production code omits it (uses DARK_THEME).
@@ -135,22 +149,64 @@ export function makeTheme(mode = 'day', settings = DEFAULT_SETTINGS, _variant) {
   // color that actually reads against the near-black surface.
   // accentSoft stays as the dark palette's near-black tint — using the light-mode
   // pastel (accent[2]) on a black card would look washed out.
-  const colors = mode === 'night'
+  const palette = mode === 'night'
     ? {
         ...base,
-        accent:      settings.accent[0],
-        accentDeep:  settings.accent[0],
+        accent:       settings.accent[0],
+        accentDeep:   settings.accent[0],
         accentBright: lighten(settings.accent[0], 0.28),
-        heat3:       settings.accent[0],
+        accentSoft:   darken(settings.accent[0], 0.88),
+        heat0:        darken(settings.accent[0], 0.88),
+        heat1:        darken(settings.accent[0], 0.75),
+        heat2:        darken(settings.accent[0], 0.50),
+        heat3:        settings.accent[0],
       }
     : {
         ...base,
-        accent:      settings.accent[0],
-        accentDeep:  settings.accent[1],
-        accentSoft:  settings.accent[2],
+        accent:       settings.accent[0],
+        accentDeep:   settings.accent[1],
+        accentSoft:   settings.accent[2],
         accentBright: lighten(settings.accent[0], 0.28),
-        heat3:       settings.accent[0],
+        heat3:        settings.accent[0],
       };
+
+  // Derived semantic tokens — every consumer uses these instead of hardcoded values
+  // so custom palettes (Marigold, Rose Dusk, Lavender…) apply consistently.
+  const colors = {
+    ...palette,
+    // Text / icon on any filled accent surface (buttons, FAB, active chips)
+    onAccent: '#fff',
+    // Dark icon in light accent-tinted contexts (earned badge, quest done)
+    iconAccent: mode === 'night' ? palette.accentDeep : darken(settings.accent[1], 0.50),
+    // Ghost / back-button background — adapts to mode
+    ghostBtn: mode === 'night' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+    // Modal / sheet overlay scrim
+    scrim: 'rgba(0,0,0,0.50)',
+    // Accent at 35% opacity — for achievement/plus card borders
+    accentBorder: hexRgba(settings.accent[0], 0.35),
+    // Deep accent at 22% opacity — for ember pill, balance row borders
+    deepBorder: hexRgba(settings.accent[1], 0.22),
+    // Deep accent at 92% opacity — "active" check badge in shop palette cards
+    accentMark: hexRgba(settings.accent[1], 0.92),
+    // Accent at 32% opacity — NightSky moon haze gradient stop
+    accentHaze: hexRgba(settings.accent[0], 0.32),
+    // Accent at 10% opacity — ambient glow circles (onboarding, etc.)
+    glowSoft: hexRgba(settings.accent[0], 0.10),
+    // Warm shadow tint matched to palette
+    shadowColor: mode === 'night' ? '#000' : darken(settings.accent[1], 0.55),
+    // Secondary text on accent-tinted dark surface (streak subtitle in night mode)
+    dimText: mode === 'night' ? lighten(palette.muted, 0.50) : palette.muted,
+    // Danger action soft background
+    redSoft: hexRgba(palette.red, 0.10),
+    // Canceled subscription badge background
+    cancelSoft: hexRgba(settings.accent[1], 0.14),
+    // Plus upsell gradient (always a dark, palette-tinted bg for premium feel)
+    plusGradient: [darken(settings.accent[1], 0.78), darken(settings.accent[0], 0.88)],
+    // Text colors on the dark plus banner gradient
+    plusLight: lighten(settings.accent[0], 0.65),   // label / icon
+    plusWhite: lighten(settings.accent[2], 0.82),   // headline (near-white warm)
+    plusMuted: lighten(settings.accent[1], 0.45),   // body copy
+  };
 
   const rk = settings.roundness;
   const dispMap = DISPLAY[settings.headlineFont] || DISPLAY['Baloo 2'];

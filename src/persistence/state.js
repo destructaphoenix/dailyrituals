@@ -5,7 +5,7 @@ const migrators = {
 };
 
 export const PERSISTED_KEYS = [
-  'onboarded',
+  'onboarded', 'mode',
   'entries', 'streak', 'xp', 'done', 'quests', 'freezes', 'embers',
   'plus', 'activePalette', 'ownedPalettes', 'activeSky', 'ownedSkies',
   'subCanceled', 'activePlan', 'lastActiveDay', 'settings', 'lastBackupAt',

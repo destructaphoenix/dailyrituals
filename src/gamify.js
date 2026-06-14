@@ -66,7 +66,7 @@ export function DailyQuests({ quests }) {
   const kept = quests.filter((q) => q.cur >= q.goal).length;
   const allDone = kept === quests.length;
   return (
-    <View style={[{ backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, borderRadius: t.radius.card, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 14 }, t.dark ? null : t.shadow(14, '#5b4a2a', 0.16)]}>
+    <View style={[{ backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, borderRadius: t.radius.card, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 14 }, t.dark ? null : t.shadow(14, c.shadowColor, 0.16)]}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 14 }}>
         <GoalRing value={dx} goal={goal}>
           {dx >= goal ? (
@@ -91,7 +91,7 @@ export function DailyQuests({ quests }) {
           return (
             <View key={q.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 11 }}>
               <View style={{ width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: done ? c.accent : c.accentSoft }}>
-                <Ic size={18} color={done ? '#fff' : c.accentDeep} />
+                <Ic size={18} color={done ? c.onAccent : c.accentDeep} />
               </View>
               <View style={{ flex: 1 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 5 }}>
@@ -107,7 +107,7 @@ export function DailyQuests({ quests }) {
 
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9, marginTop: 14, paddingHorizontal: 13, paddingVertical: 11, borderRadius: 14, backgroundColor: c.accentSoft }}>
         <View style={{ width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: allDone ? c.accent : c.surface }}>
-          {allDone ? <Sun size={17} color="#7c2d12" /> : <Ring size={17} color={c.muted} />}
+          {allDone ? <Sun size={17} color={c.onAccent} /> : <Ring size={17} color={c.muted} />}
         </View>
         <T w={700} color={allDone ? c.accentDeep : c.muted} style={{ flex: 1, fontSize: 12.5, lineHeight: 17 }}>
           {allDone ? 'All rites kept — a keepsake is yours.' : `${kept} of ${quests.length} kept — finish to earn today\u2019s keepsake.`}

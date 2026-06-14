@@ -229,13 +229,14 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     const id = setTimeout(() => {
       saveState(pickPersisted({
         onboarded: true, // RitualsApp only mounts after first-run; record it so we skip onboarding next launch
+        mode,
         entries, streak, xp, done, quests, freezes, embers, plus,
         activePalette, ownedPalettes, activeSky, ownedSkies,
         subCanceled, activePlan, lastActiveDay, settings, lastBackupAt, promptDeck,
       }));
     }, 400);
     return () => clearTimeout(id);
-  }, [entries, streak, xp, done, quests, freezes, embers, plus,
+  }, [mode, entries, streak, xp, done, quests, freezes, embers, plus,
     activePalette, ownedPalettes, activeSky, ownedSkies,
     subCanceled, activePlan, lastActiveDay, settings, lastBackupAt, promptDeck]);
 
@@ -390,7 +391,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
                 theme.shadow(14, c.accentDeep, 0.9),
               ]}
             >
-              <Pencil size={26} color="#fff" />
+              <Pencil size={26} color={c.onAccent} />
             </Pressable>
             <T w={800} color={c.accentDeep} style={{ fontSize: 10, marginTop: 5 }}>Write</T>
           </View>

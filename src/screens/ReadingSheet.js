@@ -47,7 +47,7 @@ export default function ReadingSheet({ entry, copy, mode, insets, onClose, canEd
 function IconBtn({ onPress, children }) {
   const t = useTheme();
   return (
-    <Pressable onPress={onPress} style={{ width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: t.dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }}>
+    <Pressable onPress={onPress} style={{ width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: t.colors.ghostBtn }}>
       {children}
     </Pressable>
   );

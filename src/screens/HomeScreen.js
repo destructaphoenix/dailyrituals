@@ -59,7 +59,7 @@ export default function HomeScreen({ copy, gamify, mode, streak, level, levelNam
             <View style={{ zIndex: 1, alignItems: 'center', marginTop: 13 }}>
               <T d w={800} color={c.accentDeep} style={[{ fontSize: 76, lineHeight: 82, includeFontPadding: false, textAlign: 'center' }, numberGlow]}>{streak}</T>
               <T d w={700} color={c.ink} style={[{ fontSize: 16, marginTop: 2 }, t.dark && streakShadow]}>day streak</T>
-              <T w={600} color={t.dark ? '#d8c7a8' : c.muted} style={[{ fontSize: 13, marginTop: 4 }, t.dark && streakShadow]}>{streakSubtitle(streak)}</T>
+              <T w={600} color={c.dimText} style={[{ fontSize: 13, marginTop: 4 }, t.dark && streakShadow]}>{streakSubtitle(streak)}</T>
             </View>
             <View style={{ zIndex: 1, width: '100%', marginTop: 22 }}>
               <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 7 }}>
@@ -86,7 +86,7 @@ export default function HomeScreen({ copy, gamify, mode, streak, level, levelNam
             <PrimaryButton
               label={copy.cta}
               onPress={onWrite}
-              icon={<Pencil size={20} color="#fff" />}
+              icon={<Pencil size={20} color={c.onAccent} />}
               style={{ marginTop: 20 }}
             />
           </Card>
@@ -121,7 +121,7 @@ export default function HomeScreen({ copy, gamify, mode, streak, level, levelNam
                   <View key={i} style={{ flex: 1, alignItems: 'center', gap: 7 }}>
                     <T w={800} color={c.muted} style={{ fontSize: 11 }}>{d.l}</T>
                     <Dot state={d.state} done={done} mode={mode}>
-                      {isDone && <Check size={18} color="#fff" />}
+                      {isDone && <Check size={18} color={c.onAccent} />}
                       {d.state === 'today' && !done && <Orb size={17} color={c.accentDeep} />}
                     </Dot>
                   </View>
@@ -147,7 +147,7 @@ export default function HomeScreen({ copy, gamify, mode, streak, level, levelNam
               return (
                 <Pressable key={b.id} onPress={onOpenAchievements} style={{ width: 72, alignItems: 'center', gap: 6 }}>
                   <Medal earned={b.earned} mode={mode}>
-                    <Ic size={24} color={b.earned ? '#7c2d12' : (mode === 'night' ? '#6b6256' : '#c3bcb0')} />
+                    <Ic size={24} color={b.earned ? c.onAccent : c.placeholder} />
                   </Medal>
                   <T w={700} color={c.muted} style={{ fontSize: 10.5, textAlign: 'center', lineHeight: 12 }}>{b.label}</T>
                 </Pressable>

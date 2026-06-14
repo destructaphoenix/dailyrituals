@@ -36,7 +36,7 @@ export function Card({ style, children, padded, ...rest }) {
           // dark mode because t.shadow() returns null there (no Android elevation to lose).
           overflow: isNightV2 ? 'hidden' : undefined,
         },
-        t.dark ? null : t.shadow(14, '#5b4a2a', 0.16),
+        t.dark ? null : t.shadow(14, t.colors.shadowColor, 0.16),
         padded && { padding: 18 },
         style,
       ]}
@@ -82,7 +82,7 @@ export function PrimaryButton({ label, onPress, disabled, icon, style }) {
           ]}
         >
           {icon}
-          <T d w={700} color="#fff" style={styles.btnLabel}>{label}</T>
+          <T d w={700} color={t.colors.onAccent} style={styles.btnLabel}>{label}</T>
         </LinearGradient>
       </Pressable>
     </Animated.View>

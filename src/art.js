@@ -5,7 +5,7 @@
 import React, { useEffect, useRef, useMemo } from 'react';
 import { Animated, Easing, View, StyleSheet } from 'react-native';
 import Svg, { Circle, Line, G, Defs, RadialGradient, Stop, ClipPath, Path } from 'react-native-svg';
-import { useTheme } from './theme';
+import { useTheme, hexRgba } from './theme';
 
 const AView = Animated.View;
 
@@ -83,8 +83,8 @@ export function NightSky({ size = 300 }) {
             <Defs>
               <ClipPath id="moonClip"><Circle cx="150" cy="150" r="64" /></ClipPath>
               <RadialGradient id="moonHaze" cx="50%" cy="50%" r="50%">
-                <Stop offset="0%" stopColor="rgba(245,158,11,0.32)" />
-                <Stop offset="100%" stopColor="rgba(245,158,11,0)" />
+                <Stop offset="0%" stopColor={hexRgba(t.colors.accent, 0.32)} />
+                <Stop offset="100%" stopColor={hexRgba(t.colors.accent, 0)} />
               </RadialGradient>
               <RadialGradient id="moonDisc" cx="38%" cy="32%" r="82%">
                 <Stop offset="0%" stopColor="#fffaf2" />
@@ -207,8 +207,8 @@ export function BigSun({ size = 132 }) {
     <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} fill="none">
       <Defs>
         <RadialGradient id="bigSunG" cx="38%" cy="32%" r="75%">
-          <Stop offset="0%" stopColor="#fde68a" />
-          <Stop offset="100%" stopColor="#f59e0b" />
+          <Stop offset="0%" stopColor={t.colors.accentBright} />
+          <Stop offset="100%" stopColor={t.colors.accent} />
         </RadialGradient>
       </Defs>
       {rays}
@@ -224,8 +224,8 @@ export function BigMoon({ size = 132 }) {
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Defs>
         <RadialGradient id="bigMoonG" cx="36%" cy="30%" r="80%">
-          <Stop offset="0%" stopColor="#fde68a" />
-          <Stop offset="100%" stopColor="#f59e0b" />
+          <Stop offset="0%" stopColor={t.colors.accentBright} />
+          <Stop offset="100%" stopColor={t.colors.accent} />
         </RadialGradient>
       </Defs>
       <Circle cx="4.2" cy="5" r="0.7" fill={t.colors.accent} />
@@ -239,7 +239,8 @@ export function BigMoon({ size = 132 }) {
 
 // ── Confetti burst (celebration) ─────────────────────────────────────────────
 export function Confetti() {
-  const COLORS = ['#f59e0b', '#fbbf24', '#fde68a', '#22c55e', '#d97706'];
+  const { colors } = useTheme();
+  const COLORS = [colors.accent, colors.accentDeep, colors.accentBright, colors.green, colors.accentDeep];
   const bits = useMemo(() => (
     Array.from({ length: 28 }, (_, i) => {
       const ang = (Math.random() * Math.PI) - Math.PI; // upward-ish spread

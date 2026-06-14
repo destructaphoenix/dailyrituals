@@ -45,6 +45,7 @@ export default function App() {
     loadState().then((loaded) => {
       const s = loaded || {};
       setHydrated(s);
+      if (s.mode) setMode(s.mode);
       if (s.settings) setSettings(s.settings);
       // Show first-run onboarding only to genuinely new users. See
       // hasCompletedOnboarding — returning users (any persisted state, or the

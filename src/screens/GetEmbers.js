@@ -16,10 +16,10 @@ export default function GetEmbers({ insets, onClose, embers, onBuy }) {
     <View style={{ flex: 1, backgroundColor: c.cream, paddingTop: insets.top }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingTop: 12, paddingBottom: 4 }}>
         <Pressable onPress={onClose} hitSlop={8}
-          style={({ pressed }) => ({ width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: t.dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', opacity: pressed ? 0.6 : 1 })}>
+          style={({ pressed }) => ({ width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: c.ghostBtn, opacity: pressed ? 0.6 : 1 })}>
           <Close size={18} color={c.ink} />
         </Pressable>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, height: 38, paddingHorizontal: 12, borderRadius: 999, backgroundColor: c.accentSoft, borderWidth: 1, borderColor: 'rgba(217,119,6,0.22)' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, height: 38, paddingHorizontal: 12, borderRadius: 999, backgroundColor: c.accentSoft, borderWidth: 1, borderColor: c.deepBorder }}>
           <Ember size={18} deep={c.accentDeep} />
           <T d w={800} color={c.accentDeep} style={{ fontSize: 15 }}>{embers}</T>
         </View>
@@ -38,7 +38,7 @@ export default function GetEmbers({ insets, onClose, embers, onBuy }) {
         <View style={{ width: '100%', marginTop: 26, gap: 10 }}>
           {EMBER_PACKS.map((p) => (
             <Pressable key={p.id} onPress={() => onBuy(p)}
-              style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 15, borderRadius: t.radius.btn, backgroundColor: c.surface, borderWidth: 1.5, borderColor: c.border, transform: [{ scale: pressed ? 0.99 : 1 }] }, t.dark ? null : t.shadow(8, '#5b4a2a', 0.08)]}>
+              style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 15, borderRadius: t.radius.btn, backgroundColor: c.surface, borderWidth: 1.5, borderColor: c.border, transform: [{ scale: pressed ? 0.99 : 1 }] }, t.dark ? null : t.shadow(8, c.shadowColor, 0.08)]}>
               <View style={{ width: 38, height: 38, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: c.accentSoft }}>
                 <Ember size={22} deep={c.accentDeep} />
               </View>

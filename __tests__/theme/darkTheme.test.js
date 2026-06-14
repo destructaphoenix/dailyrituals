@@ -5,19 +5,20 @@ describe('dark theme resolution (IMP-019)', () => {
     expect(DARK_THEME).toBe('v2');
   });
 
-  it('makeTheme("night") with v2 variant uses nightV2 palette', () => {
+  it('makeTheme("night") with v2 variant uses nightV2 palette for structural tokens', () => {
     const result = makeTheme('night', DEFAULT_SETTINGS, 'v2');
     expect(result.colors.surface).toBe(PALETTES.nightV2.surface);
     expect(result.colors.cream).toBe(PALETTES.nightV2.cream);
-    expect(result.colors.accentSoft).toBe(PALETTES.nightV2.accentSoft);
+    // accentSoft is now derived from settings.accent[0] in night mode, not inherited from base
+    expect(result.colors.accentSoft).not.toBe(PALETTES.nightV2.accentSoft);
   });
 
   it('makeTheme("night") with classic variant uses classic palette (revert guard)', () => {
     const result = makeTheme('night', DEFAULT_SETTINGS, 'classic');
     expect(result.colors.surface).toBe(PALETTES.night.surface);
     expect(result.colors.surface).toBe('#16120d');
-    expect(result.colors.accentSoft).toBe(PALETTES.night.accentSoft);
-    expect(result.colors.accentSoft).toBe('#2a2113');
+    // accentSoft is now derived from settings.accent in night mode, not from the base palette
+    expect(result.colors.accentSoft).not.toBe(PALETTES.night.accentSoft);
   });
 
   it('v2 and classic have different surface tokens', () => {
@@ -32,6 +33,27 @@ describe('dark theme resolution (IMP-019)', () => {
     expect(PALETTES.night.accentSoft).toBe('#2a2113');
     expect(PALETTES.night.border).toBe('#2c261f');
     expect(PALETTES.night.muted).toBe('#9b9286');
+  });
+});
+
+describe('accentSoft adapts to palette in night mode (no hardcoded amber bleed)', () => {
+  it('night accentSoft is palette-derived, not a fixed amber tint', () => {
+    const rose = makeTheme('night', { ...DEFAULT_SETTINGS, accent: ['#fb7185', '#be123c', '#ffe4e6'] });
+    const amber = makeTheme('night', DEFAULT_SETTINGS);
+    // Rose and amber should produce different accentSoft values
+    expect(rose.colors.accentSoft).not.toBe(amber.colors.accentSoft);
+    // Neither should be the old hardcoded amber accentSoft values
+    expect(rose.colors.accentSoft).not.toBe('#1c160c');
+    expect(rose.colors.accentSoft).not.toBe('#2a2113');
+  });
+
+  it('night accentSoft, heat0, heat1, heat2 are all palette-derived', () => {
+    const lavender = makeTheme('night', { ...DEFAULT_SETTINGS, accent: ['#a78bfa', '#7c3aed', '#ede9fe'] });
+    // None of the heat levels should be hardcoded amber values
+    expect(lavender.colors.accentSoft).not.toBe('#1c160c');
+    expect(lavender.colors.heat0).not.toBe('#1c160c');
+    expect(lavender.colors.heat1).not.toBe('#3d2c10');
+    expect(lavender.colors.heat2).not.toBe('#7a5410');
   });
 });
 

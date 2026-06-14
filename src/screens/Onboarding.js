@@ -106,7 +106,7 @@ function ArrowBtn({ dir, onPress, disabled, side }) {
         opacity: disabled ? 0 : 1,
         transform: [{ scale: pressed && !disabled ? 0.9 : 1 }],
       },
-      !disabled && t.shadow(10, '#292524', 0.22),
+      !disabled && t.shadow(10, t.colors.shadowColor, 0.22),
     ])}>
       <Chevron dir={dir} size={22} color={t.colors.ink} />
     </Pressable>
@@ -115,13 +115,13 @@ function ArrowBtn({ dir, onPress, disabled, side }) {
 
 function Motif({ kind, size = 150 }) {
   const t = React.useContext(ThemeContext);
-  const glow = { position: 'absolute', width: 270, height: 270, borderRadius: 135, backgroundColor: 'rgba(245,158,11,0.10)' };
+  const glow = { position: 'absolute', width: 270, height: 270, borderRadius: 135, backgroundColor: t.colors.glowSoft };
   let inner;
   if (kind === 'sun') inner = <BigSun size={size} />;
   else if (kind === 'moon') inner = <BigMoon size={size} />;
   else inner = (
-    <View style={[{ width: 130, height: 130, borderRadius: 65, backgroundColor: '#f6b73a', alignItems: 'center', justifyContent: 'center' }, t.shadow(20, t.colors.accentDeep, 0.55)]}>
-      <Pencil size={62} color="#7c2d12" />
+    <View style={[{ width: 130, height: 130, borderRadius: 65, backgroundColor: t.colors.accent, alignItems: 'center', justifyContent: 'center' }, t.shadow(20, t.colors.accentDeep, 0.55)]}>
+      <Pencil size={62} color={t.colors.onAccent} />
     </View>
   );
   return (
@@ -176,7 +176,7 @@ function IntroSwipe({ onDone, onSkip, insets }) {
       </View>
       <View style={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 16 + insets.bottom }}>
         <PrimaryButton label={last ? 'Get started' : 'Next'} onPress={next}
-          icon={last ? <Pencil size={19} color="#fff" /> : null} />
+          icon={last ? <Pencil size={19} color={t.colors.onAccent} /> : null} />
       </View>
     </View>
   );
@@ -200,7 +200,7 @@ function Personalize({ settings, setSettings, onDone, onBack, insets }) {
           <T d w={700} color={t.colors.accentDeep} style={{ fontSize: 14, marginBottom: 9 }}>What should we call you?</T>
           <TextInput
             style={{ width: '100%', paddingVertical: 15, paddingHorizontal: 16, borderRadius: t.radius.btn, borderWidth: 1.5, borderColor: t.colors.border, backgroundColor: t.colors.surface, fontFamily: t.body(400), fontSize: 16, color: t.colors.ink }}
-            placeholder="Your name" placeholderTextColor="#c3bcb0" value={name}
+            placeholder="Your name" placeholderTextColor={t.colors.placeholder} value={name}
             onChangeText={(v) => { setName(v); setNameTouched(true); }}
             onBlur={() => setNameTouched(true)}
           />
@@ -218,7 +218,7 @@ function Personalize({ settings, setSettings, onDone, onBack, insets }) {
                   { paddingVertical: 11, paddingHorizontal: 16, borderRadius: 999, borderWidth: 1.5, borderColor: sel ? t.colors.accent : t.colors.border, backgroundColor: sel ? t.colors.accent : t.colors.surface },
                   sel && t.shadow(8, t.colors.accentDeep, 0.5),
                 ]}>
-                  <T w={700} color={sel ? '#fff' : t.colors.ink} style={{ fontSize: 15 }}>{tm}</T>
+                  <T w={700} color={sel ? t.colors.onAccent : t.colors.ink} style={{ fontSize: 15 }}>{tm}</T>
                 </Pressable>
               );
             })}
