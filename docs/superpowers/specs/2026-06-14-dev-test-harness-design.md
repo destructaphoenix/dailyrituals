@@ -67,14 +67,17 @@ Entry shape (from `RitualsApp.complete` + `src/time/clock.js`):
 
 ## Components (all new, under `src/dev/`)
 
-### `src/dev/enabled.js` — the single gate
-```js
-export const DEV_TOOLS = __DEV__;
-export const SENTINEL = 'DEV_HARNESS_SENTINEL_DO_NOT_SHIP';
-```
-Every entry point references only `DEV_TOOLS` — no scattered `__DEV__` checks.
-`SENTINEL` is exported (and referenced) from each dev module so the bundle-grep
-verification has something to find.
+### Guarding — the literal `__DEV__` (no gate file)
+
+Every guard site uses the **literal** `__DEV__` identifier directly. We do **not**
+introduce an aliased gate constant (e.g. `DEV_TOOLS = __DEV__`): Babel's
+constant-folding only recognizes the literal `__DEV__`, so aliasing it would
+prevent the dead-code elimination that strips the guarded `require` — defeating
+the entire leak guarantee. `DevPanel.js` defines
+`const SENTINEL = 'DEV_HARNESS_SENTINEL_DO_NOT_SHIP'` and uses it as a `testID`
+so the bundle-grep verification has a stable marker to search for. The sentinel
+lives in the lazy-required subtree (not in any statically-imported file), so it
+is absent from release bundles.
 
 ### `src/dev/generateEntries.js` — pure workhorse (tested)
 `buildEntries({ count, endDayKey, gaps = [], today })` → array of entries in the
@@ -111,9 +114,11 @@ Always sets `onboarded:true`, `lastActiveDay`, and `quests` consistent with
 ### `src/dev/scenarios.js` — named presets (tested)
 Each scenario is a knob-set fed to `buildState`. Initial library:
 
+A genuine brand-new first-run user is the panel's **Reset to fresh** button
+(it calls the app's real reset), so `scenarios.js` covers the non-trivial states:
+
 | Name | Intent |
 |---|---|
-| `fresh` | empty slice (equivalent to reset / brand-new user) |
 | `shortStreak` | 3-day streak, 3 consecutive entries, done today |
 | `notDoneToday` | entries through yesterday, `done:false` → write card + daily prompt visible |
 | `longLegacy` | ~120-day span, ~80 entries, high XP/level — exercises legacy/lifetime UI |
@@ -141,14 +146,13 @@ Wrap the existing version line in a `Pressable` whose `onLongPress` calls
 
 ### `src/RitualsApp.js`
 - `const [showDev, setShowDev] = useState(false)`.
-- Lazy require (NOT a static import):
+- Lazy require (NOT a static import), guarded by the literal `__DEV__`:
   ```js
-  import { DEV_TOOLS } from './dev/enabled';
   let DevPanel = null;
-  if (DEV_TOOLS) DevPanel = require('./dev/DevPanel').default;
+  if (__DEV__) DevPanel = require('./dev/DevPanel').default;
   ```
-- Pass `onOpenDev={DEV_TOOLS ? () => setShowDev(true) : undefined}` to YouScreen.
-- Render `{DEV_TOOLS && showDev && DevPanel && (<Modal …><DevPanel
+- Pass `onOpenDev={__DEV__ ? () => setShowDev(true) : undefined}` to YouScreen.
+- Render `{__DEV__ && showDev && DevPanel && (<Modal …><DevPanel
   onLoadState={(s) => { onReplaceAllData(s); setShowDev(false); }}
   onResetFresh={() => { onResetData(); setShowDev(false); }}
   onClose={() => setShowDev(false)} /></Modal>)}`.
@@ -178,12 +182,13 @@ what ends up in the bundle.
 
 Three layers guarantee the harness is **provably absent from any non-dev build**:
 
-1. **Single gate.** All entry points reference `DEV_TOOLS` (= `__DEV__`) from one
-   file. `__DEV__` is a compile-time constant: `true` under `expo start`,
-   `false` in release / `expo export` / EAS builds.
+1. **Literal `__DEV__` guards.** All entry points use the literal `__DEV__`
+   directly (never an alias). `__DEV__` is a compile-time constant: `true` under
+   `expo start`, `false` in release / `expo export` / EAS builds, and Babel folds
+   the false branches away.
 
 2. **Lazy `require`, not static `import`.** Because `DevPanel` is required inside
-   an `if (DEV_TOOLS)` branch, Metro's dead-code elimination **removes the entire
+   an `if (__DEV__)` branch, Metro's dead-code elimination **removes the entire
    `src/dev/` subtree from the production bundle** — not merely unreachable, but
    absent.
 
@@ -219,7 +224,6 @@ Pure cores get full coverage; dev-only UI chrome does not.
 ## Files summary
 
 **New**
-- `src/dev/enabled.js`
 - `src/dev/generateEntries.js`
 - `src/dev/buildState.js`
 - `src/dev/scenarios.js`
