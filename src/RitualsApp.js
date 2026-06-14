@@ -361,7 +361,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             quests={quests} freezes={freezes} onOpenAchievements={() => setShowAch(true)}
             embers={embers} plus={plus} onOpenShop={() => setShopOpen(true)}
             done={done} onWrite={() => setWriting(true)} onToggleMode={onToggleMode}
-            dailyPrompt={promptSel.item}
+            dailyPrompt={promptSel.item} userName={(settings.name || '').trim()}
           />
         );
     }

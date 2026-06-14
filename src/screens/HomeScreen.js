@@ -16,7 +16,7 @@ import { deriveKeepsakes } from '../profile/achievements';
 import { StreakFreeze, DailyQuests } from '../gamify';
 import { EmberPill } from '../shopui';
 
-export default function HomeScreen({ copy, gamify, mode, streak, level, levelName, xpInto, xpToNext, entries, quests, freezes, onOpenAchievements, done, onWrite, onToggleMode, embers, plus, onOpenShop, dailyPrompt = '' }) {
+export default function HomeScreen({ copy, gamify, mode, streak, level, levelName, xpInto, xpToNext, entries, quests, freezes, onOpenAchievements, done, onWrite, onToggleMode, embers, plus, onOpenShop, dailyPrompt = '', userName = '' }) {
   const t = useTheme();
   const c = t.colors;
   const Orb = mode === 'night' ? Moon : Sun;
@@ -30,25 +30,25 @@ export default function HomeScreen({ copy, gamify, mode, streak, level, levelNam
   return (
     <ScrollView
       style={{ flex: 1 }}
-      contentContainerStyle={{ paddingTop: 8, paddingBottom: 26, gap: 18 }}
+      contentContainerStyle={{ paddingTop: 4, paddingBottom: 26, gap: 14 }}
       showsVerticalScrollIndicator={false}
     >
-      {/* header: utility row + greeting (Layout A) */}
-      <View style={{ paddingHorizontal: 20, paddingTop: 8 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <EmberPill embers={embers} plus={plus} onPress={onOpenShop} />
-          <Pressable
-            onPress={onToggleMode}
-            accessibilityLabel={mode === 'night' ? 'Switch to light mode' : 'Switch to dark mode'}
-            style={({ pressed }) => [{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.accentSoft, borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center', transform: [{ scale: pressed ? 0.92 : 1 }] }]}
-          >
-            <Orb size={24} color={c.accentDeep} />
-          </Pressable>
+      {/* header: date left · icons right · greeting below */}
+      <View style={{ paddingHorizontal: 20 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <T w={600} color={c.muted} style={{ fontSize: 14, flex: 1 }}>{todayLabel()}</T>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <EmberPill embers={embers} plus={plus} onPress={onOpenShop} />
+            <Pressable
+              onPress={onToggleMode}
+              accessibilityLabel={mode === 'night' ? 'Switch to light mode' : 'Switch to dark mode'}
+              style={({ pressed }) => [{ width: 36, height: 36, borderRadius: 18, backgroundColor: c.accentSoft, borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center', transform: [{ scale: pressed ? 0.92 : 1 }] }]}
+            >
+              <Orb size={20} color={c.accentDeep} />
+            </Pressable>
+          </View>
         </View>
-        <View style={{ marginTop: 10 }}>
-          <T d w={700} color={c.ink} style={{ fontSize: 27, lineHeight: 32 }}>{hello}.</T>
-          <T w={600} color={c.muted} style={{ fontSize: 14, marginTop: 2 }}>{greetingFor()} · {todayLabel()}</T>
-        </View>
+        <T d w={700} color={c.ink} style={{ fontSize: 27, lineHeight: 32, marginTop: 2 }}>{userName ? `${hello}, ${userName}.` : `${hello}.`}</T>
       </View>
 
       {/* streak hero */}
@@ -69,35 +69,6 @@ export default function HomeScreen({ copy, gamify, mode, streak, level, levelNam
               <ProgressBar value={xpToNext == null ? 100 : Math.min(100, (xpInto / xpToNext) * 100)} />
             </View>
             {freezes != null && <StreakFreeze count={freezes} />}
-          </Card>
-        </View>
-      )}
-
-      {/* daily rites (quests) + goal ring */}
-      {gamify && quests && (
-        <View style={{ paddingHorizontal: 20 }}>
-          <DailyQuests quests={quests} />
-        </View>
-      )}
-
-      {/* week strip */}
-      {gamify && (
-        <View style={{ paddingHorizontal: 20 }}>
-          <Card style={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 14 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              {week.map((d, i) => {
-                const isDone = d.state === 'done' || (d.state === 'today' && done);
-                return (
-                  <View key={i} style={{ flex: 1, alignItems: 'center', gap: 7 }}>
-                    <T w={800} color={c.muted} style={{ fontSize: 11 }}>{d.l}</T>
-                    <Dot state={d.state} done={done} mode={mode}>
-                      {isDone && <Check size={18} color="#fff" />}
-                      {d.state === 'today' && !done && <Orb size={17} color={c.accentDeep} />}
-                    </Dot>
-                  </View>
-                );
-              })}
-            </View>
           </Card>
         </View>
       )}
@@ -131,6 +102,35 @@ export default function HomeScreen({ copy, gamify, mode, streak, level, levelNam
           </Card>
         )}
       </View>
+
+      {/* daily rites (quests) + goal ring */}
+      {gamify && quests && (
+        <View style={{ paddingHorizontal: 20 }}>
+          <DailyQuests quests={quests} />
+        </View>
+      )}
+
+      {/* week strip */}
+      {gamify && (
+        <View style={{ paddingHorizontal: 20 }}>
+          <Card style={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 14 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              {week.map((d, i) => {
+                const isDone = d.state === 'done' || (d.state === 'today' && done);
+                return (
+                  <View key={i} style={{ flex: 1, alignItems: 'center', gap: 7 }}>
+                    <T w={800} color={c.muted} style={{ fontSize: 11 }}>{d.l}</T>
+                    <Dot state={d.state} done={done} mode={mode}>
+                      {isDone && <Check size={18} color="#fff" />}
+                      {d.state === 'today' && !done && <Orb size={17} color={c.accentDeep} />}
+                    </Dot>
+                  </View>
+                );
+              })}
+            </View>
+          </Card>
+        </View>
+      )}
 
       {/* badges */}
       {gamify && (
