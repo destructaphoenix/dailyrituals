@@ -45,6 +45,13 @@ import { dayNumber } from './time/dailyPick';
 import { selectPrompt } from './content/deck';
 import { PROMPTS } from './content/prompts';
 
+// Dev-only test harness. The literal __DEV__ lets Metro strip this require (and
+// the entire src/dev subtree) from release bundles. Never alias __DEV__ here.
+let DevPanel = null;
+if (__DEV__) {
+  DevPanel = require('./dev/DevPanel').default;
+}
+
 const XP_GAIN = 50;
 const APP_VERSION = Constants.expoConfig?.version || '1.0.0';
 const IMPORT_ERROR = {
@@ -78,6 +85,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   const [freezes, setFreezes] = useState(initialState.freezes ?? 0);
   const [lastBackupAt, setLastBackupAt] = useState(initialState.lastBackupAt ?? null);
   const [showAch, setShowAch] = useState(false);
+  const [showDev, setShowDev] = useState(false);
 
   // Live level derived from total XP (no hardcoded level).
   const { level, name: levelName, into: xpInto, toNext: xpToNext } = levelFromXp(xp);
@@ -351,6 +359,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             onExportData={doExport}
             onImportData={doImport}
             onExplainAutoBackup={explainAutoBackup}
+            onOpenDev={__DEV__ ? () => setShowDev(true) : undefined}
           />
         );
       case 'today':
@@ -488,6 +497,16 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             {toast && <Toast key={toast.key} message={toast.msg} bottom={insets.bottom} />}
           </ThemeContext.Provider>
         </Modal>
+
+        {__DEV__ && DevPanel && (
+          <Modal visible={showDev} animationType="slide" presentationStyle="overFullScreen" onRequestClose={() => setShowDev(false)}>
+            <DevPanel
+              onLoadState={(state) => { setShowDev(false); onReplaceAllData(state); }}
+              onResetFresh={() => { setShowDev(false); onResetData(); }}
+              onClose={() => setShowDev(false)}
+            />
+          </Modal>
+        )}
 
         {toast && !shopOpen && <Toast key={toast.key} message={toast.msg} bottom={insets.bottom} />}
       </View>
