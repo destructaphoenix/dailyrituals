@@ -8,6 +8,8 @@ import { Sun, Moon, Check, Pencil, BADGE_ICON } from '../icons';
 import { RayFan, NightSky, NightRays } from '../art';
 import { SAMPLE_ENTRIES } from '../data';
 import { greetingFor, todayLabel } from '../time/clock';
+import { pickForDay } from '../time/dailyPick';
+import { HELLOS } from '../content/greetings';
 import { streakSubtitle } from '../home/streakCopy';
 import { buildWeekStrip } from '../home/calendar';
 import { deriveKeepsakes } from '../profile/achievements';
@@ -18,7 +20,7 @@ export default function HomeScreen({ copy, gamify, mode, streak, level, levelNam
   const t = useTheme();
   const c = t.colors;
   const Orb = mode === 'night' ? Moon : Sun;
-  const greeting = greetingFor();
+  const hello = pickForDay(HELLOS);
   const week = buildWeekStrip(entries || []);
   const keepsakes = deriveKeepsakes(entries || [], streak || 0);
   const streakShadow = { textShadowColor: 'rgba(0,0,0,0.7)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 10 };
@@ -31,13 +33,9 @@ export default function HomeScreen({ copy, gamify, mode, streak, level, levelNam
       contentContainerStyle={{ paddingTop: 8, paddingBottom: 26, gap: 18 }}
       showsVerticalScrollIndicator={false}
     >
-      {/* greeting */}
-      <View style={{ paddingHorizontal: 20, paddingTop: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <View>
-          <T d w={700} color={c.ink} style={{ fontSize: 27, lineHeight: 30 }}>{greeting}.</T>
-          <T w={600} color={c.muted} style={{ fontSize: 14, marginTop: 2 }}>{todayLabel()}</T>
-        </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9 }}>
+      {/* header: utility row + greeting (Layout A) */}
+      <View style={{ paddingHorizontal: 20, paddingTop: 8 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 9 }}>
           <EmberPill embers={embers} plus={plus} onPress={onOpenShop} />
           <Pressable
             onPress={onToggleMode}
@@ -46,6 +44,10 @@ export default function HomeScreen({ copy, gamify, mode, streak, level, levelNam
           >
             <Orb size={24} color={c.accentDeep} />
           </Pressable>
+        </View>
+        <View style={{ marginTop: 10 }}>
+          <T d w={700} color={c.ink} style={{ fontSize: 27, lineHeight: 32 }}>{hello}.</T>
+          <T w={600} color={c.muted} style={{ fontSize: 14, marginTop: 2 }}>{greetingFor()} · {todayLabel()}</T>
         </View>
       </View>
 
