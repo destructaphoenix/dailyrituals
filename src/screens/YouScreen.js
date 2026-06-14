@@ -14,7 +14,7 @@ export default function YouScreen({
   mode, onToggleMode, settings, setSettings,
   streak, level, levelName, xpInto, xpToNext, entriesCount, badgesEarned, onOpenAchievements,
   embers, plus, onOpenShop, onOpenPaywall, onOpenManage, plusEnabled = true, onResetData,
-  lastBackupAt, onExportData, onImportData, onExplainAutoBackup,
+  lastBackupAt, onExportData, onImportData, onExplainAutoBackup, onOpenDev,
 }) {
   const t = useTheme();
   const c = t.colors;
@@ -160,7 +160,7 @@ export default function YouScreen({
             onPress={plus ? () => {} : plusEnabled ? onOpenPaywall : undefined} />
           <Divider />
           <Row icon={<Info size={20} color={c.accentDeep} />} label="About Daily Rituals"
-            value="v1.0" onPress={() => {}} />
+            value="v1.0" onPress={() => {}} onLongPress={onOpenDev} />
           {onResetData && (
             <>
               <Divider />
@@ -174,13 +174,14 @@ export default function YouScreen({
   );
 }
 
-function Row({ icon, label, labelColor, value, right, onPress }) {
+function Row({ icon, label, labelColor, value, right, onPress, onLongPress }) {
   const t = useTheme();
   const c = t.colors;
   return (
     <Pressable
       onPress={onPress}
-      disabled={!onPress}
+      onLongPress={onLongPress}
+      disabled={!onPress && !onLongPress}
       style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 16, paddingVertical: 15, opacity: pressed && onPress ? 0.6 : 1 }]}
     >
       <View style={{ width: 36, height: 36, borderRadius: 11, backgroundColor: c.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
