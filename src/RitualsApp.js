@@ -264,14 +264,14 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
         showToast('Backup ready — save it somewhere off this phone.');
       }
     } catch (e) {
-      showToast(e.nativeUnavailable ? 'Backup needs a dev build — not available in Expo Go.' : "Couldn't create the backup. Please try again.");
+      showToast("Couldn't create the backup. Please try again.");
     }
   };
 
   const doImport = async () => {
     let raw;
     try { raw = await backupIO.pickFile(); }
-    catch (e) { showToast(e.nativeUnavailable ? 'Restore needs a dev build — not available in Expo Go.' : "Couldn't open that file."); return; }
+    catch (e) { showToast("Couldn't open that file."); return; }
     if (raw == null) return; // user cancelled the picker
 
     const res = readBackup(raw);
