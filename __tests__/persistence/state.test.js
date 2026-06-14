@@ -1,4 +1,4 @@
-import { SCHEMA_VERSION, serialize, deserialize, mergeWithDefaults, pickPersisted } from '../../src/persistence/state';
+import { SCHEMA_VERSION, serialize, deserialize, mergeWithDefaults, pickPersisted, PERSISTED_KEYS } from '../../src/persistence/state';
 import { SAMPLE_ENTRIES } from '../../src/data';
 
 const sample = { version: SCHEMA_VERSION, embers: 360, streak: 4, ownedSkies: ['classic'] };
@@ -76,6 +76,19 @@ describe('lastBackupAt persistence', () => {
   test('pickPersisted carries lastBackupAt', () => {
     expect(pickPersisted({ lastBackupAt: '2026-06-14T00:00:00.000Z', junk: 1 }))
       .toEqual({ lastBackupAt: '2026-06-14T00:00:00.000Z' });
+  });
+});
+
+describe('promptDeck persistence', () => {
+  test('promptDeck is a persisted key', () => {
+    expect(PERSISTED_KEYS).toContain('promptDeck');
+  });
+  test('pickPersisted carries promptDeck through', () => {
+    const deck = { day: 100, order: [2, 0, 1], pos: 1 };
+    expect(pickPersisted({ promptDeck: deck }).promptDeck).toEqual(deck);
+  });
+  test('pickPersisted omits promptDeck when undefined', () => {
+    expect('promptDeck' in pickPersisted({})).toBe(false);
   });
 });
 
