@@ -35,7 +35,7 @@ export default function HomeScreen({ copy, gamify, mode, streak, level, levelNam
     >
       {/* header: utility row + greeting (Layout A) */}
       <View style={{ paddingHorizontal: 20, paddingTop: 8 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 9 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <EmberPill embers={embers} plus={plus} onPress={onOpenShop} />
           <Pressable
             onPress={onToggleMode}
