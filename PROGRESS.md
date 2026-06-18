@@ -45,7 +45,7 @@ Opus scopes each owner-filed issue into a numbered `IMP-xxx` task (steps + commi
 | IMP-022 | Wire the two dead You-tab buttons: **Save as PDF** (real keepsake export, Plus-gated) + **About Daily Rituals** (real about sheet). Both are currently `onPress={() => {}}` no-ops | Build | ⬜ open — spec inline below |
 | IMP-023 | Dynamic daily text — rotating multilingual greeting (header, date-seeded) + daily reflection prompt (write card, no-repeat deck); fully offline; header → Layout A | OTA | ✅ code-complete — full detail in build-log |
 | IMP-024 | 🔴 Streak counts real consecutive days — derive from entries (breaks to 0 on a missed day; re-logging after a gap = 1, not prev+1) | OTA | ✅ code-complete — full detail in build-log |
-| IMP-025 | Edit your name in the app — make `settings.name` changeable from the You tab (currently only set once in onboarding) | OTA | ⬜ open — spec inline below |
+| IMP-025 | Edit your name in the app — make `settings.name` changeable from the You tab (currently only set once in onboarding) | OTA | ✅ code-complete — full detail in build-log |
 | IMP-026 | Remove the Gamification toggle entirely — gamification is always on; delete the setting + switch + all `gamify` gating, no residue | OTA | ⬜ open — spec inline below |
 
 ---
@@ -75,30 +75,6 @@ Opus scopes each owner-filed issue into a numbered `IMP-xxx` task (steps + commi
 **Commit message:** `feat(you): implement Save as PDF export + About sheet — wire the two no-op You-tab buttons (IMP-022)`
 
 **Ship lane:** **BUILD** (new `expo-print` native module). 006/020 already shipped in v1.0.1 / versionCode 7, so this rides the **next** build — batch it with the **Annual Recap** (also BUILD: `react-native-view-shot`) to avoid a one-feature build. No `Release-Lane` trailer until owner says ship. Smoke test after build: Plus user PDF export → share sheet opens → file opens; non-Plus still hits paywall; Expo Go shows the unavailable toast; About sheet opens with the real version string.
-
----
-
-## 📋 IMP-025 (OPEN SPEC) — edit your name in the app
-
-### IMP-025 — Editable display name   ·   Lane: OTA   ·   Status: ⬜
-- **Goal:** The user can change their name after onboarding. Editing it updates the You-tab profile header + the Home greeting, and persists across relaunch.
-- **Why / context:** `settings.name` is captured **once** in onboarding ("What should we call you?", made mandatory by IMP-015) and never editable afterward. `YouScreen` renders it via `profileIdentity(settings.name)` but offers no way to change it. `setSettings` is **already threaded into `YouScreen`** (immutable updater), and `name` already lives in `DEFAULT_SETTINGS` + persisted `settings` — so this is purely additive UI, no new persistence.
-- **Files likely touched:** `src/profile/identity.js` (new pure helper + tests), `src/screens/YouScreen.js` (new row + edit modal), maybe a small new `src/screens/NameEditModal.js`, `__tests__/profile/identity.test.js`.
-- **Approach (decided by Opus — do not re-litigate):**
-  - Add a **"Your name" Row** to the **Preferences** card in `YouScreen.js` (alongside Daily reminder / Appearance / Voice), `value` = current display name, `onPress` opens a small edit modal.
-  - **Do not use `Alert.prompt`** — it's iOS-only and Android is the launch platform. Build a small presentational `NameEditModal` (a `TextInput` prefilled with the current name + Save/Cancel), styled to match the app's existing modals (e.g. the About/Achievements sheet pattern). On Save → `setSettings(s => ({ ...s, name: clean }))`.
-  - **Pure validation** in `src/profile/identity.js` (already houses `profileIdentity`): `sanitizeName(input)` → trims, caps length (e.g. 40 chars), returns the cleaned string or `null` when blank. Caller keeps the prior name when result is `null` (blank not allowed — consistent with IMP-015 mandatory-name).
-  - The Home greeting already reads `userName={(settings.name || '').trim()}` ([`RitualsApp.js:374`](src/RitualsApp.js#L374)), so it updates automatically — no extra wiring.
-- **TDD:** RED first — `__tests__/profile/identity.test.js` for `sanitizeName`: trims surrounding space; caps overlong input; blank/whitespace → `null`; preserves unicode/emoji; leaves a normal name intact. The modal is presentational (untested).
-- **Steps:**
-  - [ ] 1. RED: `sanitizeName` tests.
-  - [ ] 2. GREEN: `sanitizeName` in `src/profile/identity.js`.
-  - [ ] 3. `NameEditModal` component (TextInput + Save/Cancel, themed).
-  - [ ] 4. `YouScreen.js`: add "Your name" Preferences row + modal state; Save → `setSettings` via `sanitizeName`.
-  - [ ] 5. `npm test` green (≥ 218 + new cases).
-- **Commit:** `feat(you): let the user edit their display name from the You tab (IMP-025)`
-- **Acceptance:** You tab → tap **Your name** → modal prefilled → change → Save → profile header + Home greeting both update; blank entry is rejected (keeps old name); relaunch shows the new name.
-- **Ship after merge:** OTA `eas update --branch production`.
 
 ---
 
@@ -143,6 +119,6 @@ Opus scopes each owner-filed issue into a numbered `IMP-xxx` task (steps + commi
 
 _History archived in [`docs/build-log.md`](docs/build-log.md) → "Session notes". Only the two newest notes stay here; every chat moves the older one out when it appends a new one (see DEVGUIDE Step 4)._
 
-_2026-06-14 — IMP-023 COMPLETE (code-complete; OTA lane; no ship trailer). Dynamic daily text — owner wanted the app to stay fully offline but have the greeting + some text vary daily. Brainstormed (visual companion) → scoped to **two offline rotating slots**: (1) **multilingual hello headline** — stateless date-seeded pick from `HELLOS` ×16; English time-of-day ("Good morning") demoted to the subtitle by the date; header rebuilt as **Layout A** (utility row w/ EmberPill+toggle on top, full-width greeting below) to fix the long-hello-vs-cluster crowding; (2) **daily reflection prompt** in the write card (only when `!done`; auto-hides at "Today is at rest.") via a persisted **no-repeat deck** (`promptDeck`) over `PROMPTS` ×60 (≈2-month recycle). New pure modules `src/time/dailyPick.js`, `src/content/{greetings,prompts,deck}.js` (all TDD'd); `promptDeck` added to `PERSISTED_KEYS` (no migration); `RitualsApp.js` computes+persists the deck and passes `dailyPrompt`; `HomeScreen.js` header+card. All new UI uses theme tokens (day/night/nightV2 + accent safe). `npm test` → **218 passed, 29 suites** (4 new suites). `npx expo export --platform android` bundles clean (exit 0). 7 commits f7ae548…5f686f8 (spec 6af3215), merged to main (fast-forward). Full spec archived to build-log. NEXT: owner manual smoke test (header both modes + custom accent; greeting/prompt stable within a day; prompt rotates daily no early repeats; auto-hide when done). No ship until owner says go._
-
 _2026-06-18 — IMP-024 COMPLETE (code-complete; OTA lane; no ship trailer). 🔴 Streak now **derives from real entries** instead of a persisted counter — a missed day breaks it to 0, re-logging after a gap restarts at 1, consecutive days count up. TDD-first: new pure `currentStreak(keys, todayKey)` in `src/insights/dateKeys.js` (anchor = today if logged else yesterday-still-alive else 0; counts consecutive days back; empty → 0). `RitualsApp.js` streak is now `useMemo(currentStreak(entries…))` — every screen prop + `deriveAchievements` corrects automatically; `setStreak` + streak persistence (PERSISTED_KEYS, autosave, currentSlice, v1 migrator) all removed (old stored streak ignored, no schema bump). `completeEntry.applyCompletion` derives `celebrate.streak` continuity-aware for the milestone lookup; dead top-level `streak` dropped from both branches. Dev harness `buildState.js` no longer emits a `streak` field (the Streak knob drives `entryCount`, so the run derives the right number). Updated 3 pre-existing tests that asserted the removed persisted streak (backup→xp; v1 migration; dev buildState→derived). `npm test` → **250 passed, 32 suites**. Commit `ac3f3c6`; full spec archived to build-log. NEXT: owner acceptance via dev harness (3-day run → 3; skip → 0; log again → 1; same-day re-write no bump). Then IMP-025 (editable name) / IMP-026 (remove gamify toggle). Ship OTA after branch merges._
+
+_2026-06-18 — IMP-025 COMPLETE (code-complete; OTA lane; no ship trailer). Editable display name — You tab Preferences now has a **"Your name"** row (UserIcon) that opens a bottom-sheet `NameEditModal`. TDD-first: `sanitizeName(input)` pure helper added to `src/profile/identity.js` (trim, cap 40 chars, null for blank) — 7 new cases. `NameEditModal.js` (new presentational component, slide modal, TextInput prefilled, Save disabled when blank, backdrop dismiss). `YouScreen.js`: added `UserIcon` + `NameEditModal` imports, local `editingName` state + `saveName` handler → `setSettings({ ...s, name: clean })`. Home greeting updates automatically (reads `settings.name`). `npm test` → **257 passed, 32 suites**. Commit `74965c8`. NEXT: IMP-026 (remove Gamification toggle, always on). Ship OTA after branch merges._
