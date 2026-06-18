@@ -71,7 +71,6 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   const insets = { top: safe.top || 12, bottom: safe.bottom || 8 };
 
   const copy = COPY[settings.tone] || COPY.gentle;
-  const gamify = settings.gamify !== false;
 
   const [tab, setTab] = useState('today');
   const [writing, setWriting] = useState(false);
@@ -344,7 +343,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
       case 'insights':
         return <InsightsScreen copy={copy} entries={entries} streak={streak} xp={xp} />;
       case 'archive':
-        return <ArchiveScreen copy={copy} gamify={gamify} mode={mode} entries={entries} onOpen={(e) => { setReading(e); setQuests((qs) => markRevisited(qs, e, todayKey())); }} />;
+        return <ArchiveScreen copy={copy} mode={mode} entries={entries} onOpen={(e) => { setReading(e); setQuests((qs) => markRevisited(qs, e, todayKey())); }} />;
       case 'you':
         return (
           <YouScreen
@@ -368,7 +367,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
       default:
         return (
           <HomeScreen
-            copy={copy} gamify={gamify} mode={mode}
+            copy={copy} mode={mode}
             streak={streak} level={level} levelName={levelName} xpInto={xpInto} xpToNext={xpToNext} entries={entries}
             quests={quests} freezes={freezes} onOpenAchievements={() => setShowAch(true)}
             embers={embers} plus={plus} onOpenShop={() => setShopOpen(true)}

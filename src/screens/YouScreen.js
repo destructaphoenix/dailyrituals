@@ -2,10 +2,10 @@
 // drive real app state (passed down from App.js).
 
 import React, { useState } from 'react';
-import { View, ScrollView, Pressable, Switch, Alert, Modal } from 'react-native';
+import { View, ScrollView, Pressable, Alert, Modal } from 'react-native';
 import { useTheme } from '../theme';
 import { T, Card, ProgressBar } from '../ui';
-import { Bell, Contrast, Pencil, Diamond, Download, Info, Chevron, Sun, Moon, Bag, Ember, Restore, UserIcon } from '../icons';
+import { Bell, Contrast, Pencil, Download, Info, Chevron, Sun, Moon, Bag, Ember, Restore, UserIcon } from '../icons';
 import { PlusBanner } from '../shopui';
 import { profileIdentity } from '../profile/identity';
 import { lastBackupLabel } from '../backup/lastBackupLabel';
@@ -35,8 +35,6 @@ export default function YouScreen({
       ]
     );
   };
-  const setGamify = (v) => setSettings((s) => ({ ...s, gamify: v }));
-
   return (
     <>
     <ScrollView
@@ -119,17 +117,6 @@ export default function YouScreen({
           <Divider />
           <Row icon={<UserIcon size={20} color={c.accentDeep} />} label="Your name"
             value={display} onPress={() => setEditingName(true)} />
-          <Divider />
-          <Row icon={<Diamond size={18} color={c.accentDeep} />} label="Gamification"
-            right={
-              <Switch
-                value={settings.gamify !== false}
-                onValueChange={setGamify}
-                trackColor={{ false: c.border, true: c.accent }}
-                thumbColor={c.onAccent}
-                ios_backgroundColor={c.border}
-              />
-            } />
         </Card>
       </View>
 

@@ -16,7 +16,7 @@ const todayKey = () => new Date().toISOString().slice(0, 10);
 const DEFAULT_KNOBS = {
   streak: 3, entryCount: 3, gaps: [], done: true, plus: false,
   embers: 0, palette: 'goldenhour', sky: 'classic', ownAll: false,
-  tone: 'gentle', gamify: true, freezes: 0,
+  tone: 'gentle', freezes: 0,
 };
 
 function Stepper({ label, value, onChange, step = 1 }) {
@@ -81,7 +81,6 @@ export default function DevPanel({ onLoadState, onResetFresh, onClose }) {
         <Stepper label="Freezes" value={knobs.freezes} onChange={(v) => set({ freezes: v })} />
         <Toggle label="Done today" value={knobs.done} onChange={(v) => set({ done: v })} />
         <Toggle label="Plus" value={knobs.plus} onChange={(v) => set({ plus: v })} />
-        <Toggle label="Gamify" value={knobs.gamify} onChange={(v) => set({ gamify: v })} />
         <Toggle label="Own all cosmetics" value={knobs.ownAll} onChange={(v) => set({ ownAll: v })} />
 
         <Pressable

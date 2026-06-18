@@ -102,7 +102,6 @@ export const DEFAULT_SETTINGS = {
   accent: ['#f59e0b', '#d97706', '#fef3c7'], // [accent, deep, soft] — day only
   roundness: 1, // 0.6 – 1.4
   tone: 'playful', // 'gentle' | 'playful'
-  gamify: true,
   // Store simulation — flip to exercise purchase/restore states without a live
   // billing backend. purchase: 'success'|'cancel'|'failed'|'network'|'owned';
   // restore: 'empty'|'found'. Replace with real RevenueCat results in prod.

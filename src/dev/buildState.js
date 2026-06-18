@@ -23,7 +23,6 @@ export function buildState(knobs = {}, today) {
     sky = 'classic',
     ownAll = false,
     tone = 'gentle',
-    gamify = true,
     freezes = 0,
   } = knobs;
 
@@ -61,7 +60,7 @@ export function buildState(knobs = {}, today) {
     ownedSkies,
     activePlan: plus ? 'yearly' : null,
     lastActiveDay: today,
-    settings: { ...DEFAULT_SETTINGS, tone, gamify },
+    settings: { ...DEFAULT_SETTINGS, tone },
     promptDeck: [],
   };
 }

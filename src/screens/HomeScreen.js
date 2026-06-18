@@ -6,7 +6,6 @@ import { useTheme, DARK_THEME } from '../theme';
 import { T, Card, PrimaryButton, ProgressBar } from '../ui';
 import { Sun, Moon, Check, Pencil, BADGE_ICON } from '../icons';
 import { RayFan, NightSky, NightRays } from '../art';
-import { SAMPLE_ENTRIES } from '../data';
 import { greetingFor, todayLabel } from '../time/clock';
 import { pickForDay } from '../time/dailyPick';
 import { HELLOS } from '../content/greetings';
@@ -16,7 +15,7 @@ import { deriveKeepsakes } from '../profile/achievements';
 import { StreakFreeze, DailyQuests } from '../gamify';
 import { EmberPill } from '../shopui';
 
-export default function HomeScreen({ copy, gamify, mode, streak, level, levelName, xpInto, xpToNext, entries, quests, freezes, onOpenAchievements, done, onWrite, onToggleMode, embers, plus, onOpenShop, dailyPrompt = '', userName = '' }) {
+export default function HomeScreen({ copy, mode, streak, level, levelName, xpInto, xpToNext, entries, quests, freezes, onOpenAchievements, done, onWrite, onToggleMode, embers, plus, onOpenShop, dailyPrompt = '', userName = '' }) {
   const t = useTheme();
   const c = t.colors;
   const Orb = mode === 'night' ? Moon : Sun;
@@ -52,26 +51,24 @@ export default function HomeScreen({ copy, gamify, mode, streak, level, levelNam
       </View>
 
       {/* streak hero */}
-      {gamify && (
-        <View style={{ paddingHorizontal: 20 }}>
-          <Card style={{ paddingHorizontal: 22, paddingTop: 26, paddingBottom: 22, alignItems: 'center', overflow: 'hidden' }}>
-            {mode === 'night' ? (DARK_THEME === 'v2' ? <NightRays /> : <NightSky />) : <RayFan />}
-            <View style={{ zIndex: 1, alignItems: 'center', marginTop: 13 }}>
-              <T d w={800} color={c.accentDeep} style={[{ fontSize: 76, lineHeight: 82, includeFontPadding: false, textAlign: 'center' }, numberGlow]}>{streak}</T>
-              <T d w={700} color={c.ink} style={[{ fontSize: 16, marginTop: 2 }, t.dark && streakShadow]}>day streak</T>
-              <T w={600} color={c.dimText} style={[{ fontSize: 13, marginTop: 4 }, t.dark && streakShadow]}>{streakSubtitle(streak)}</T>
+      <View style={{ paddingHorizontal: 20 }}>
+        <Card style={{ paddingHorizontal: 22, paddingTop: 26, paddingBottom: 22, alignItems: 'center', overflow: 'hidden' }}>
+          {mode === 'night' ? (DARK_THEME === 'v2' ? <NightRays /> : <NightSky />) : <RayFan />}
+          <View style={{ zIndex: 1, alignItems: 'center', marginTop: 13 }}>
+            <T d w={800} color={c.accentDeep} style={[{ fontSize: 76, lineHeight: 82, includeFontPadding: false, textAlign: 'center' }, numberGlow]}>{streak}</T>
+            <T d w={700} color={c.ink} style={[{ fontSize: 16, marginTop: 2 }, t.dark && streakShadow]}>day streak</T>
+            <T w={600} color={c.dimText} style={[{ fontSize: 13, marginTop: 4 }, t.dark && streakShadow]}>{streakSubtitle(streak)}</T>
+          </View>
+          <View style={{ zIndex: 1, width: '100%', marginTop: 22 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 7 }}>
+              <T d w={700} color={c.ink} style={{ fontSize: 14 }}>Lv {level} · {levelName}</T>
+              <T w={700} color={c.muted} style={{ fontSize: 12 }}>{xpToNext == null ? 'Max' : `${xpInto} / ${xpToNext} XP`}</T>
             </View>
-            <View style={{ zIndex: 1, width: '100%', marginTop: 22 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 7 }}>
-                <T d w={700} color={c.ink} style={{ fontSize: 14 }}>Lv {level} · {levelName}</T>
-                <T w={700} color={c.muted} style={{ fontSize: 12 }}>{xpToNext == null ? 'Max' : `${xpInto} / ${xpToNext} XP`}</T>
-              </View>
-              <ProgressBar value={xpToNext == null ? 100 : Math.min(100, (xpInto / xpToNext) * 100)} />
-            </View>
-            {freezes != null && <StreakFreeze count={freezes} />}
-          </Card>
-        </View>
-      )}
+            <ProgressBar value={xpToNext == null ? 100 : Math.min(100, (xpInto / xpToNext) * 100)} />
+          </View>
+          {freezes != null && <StreakFreeze count={freezes} />}
+        </Card>
+      </View>
 
       {/* today's ritual CTA */}
       <View style={{ paddingHorizontal: 20 }}>
@@ -104,71 +101,54 @@ export default function HomeScreen({ copy, gamify, mode, streak, level, levelNam
       </View>
 
       {/* daily rites (quests) + goal ring */}
-      {gamify && quests && (
+      {quests && (
         <View style={{ paddingHorizontal: 20 }}>
           <DailyQuests quests={quests} />
         </View>
       )}
 
       {/* week strip */}
-      {gamify && (
-        <View style={{ paddingHorizontal: 20 }}>
-          <Card style={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 14 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              {week.map((d, i) => {
-                const isDone = d.state === 'done' || (d.state === 'today' && done);
-                return (
-                  <View key={i} style={{ flex: 1, alignItems: 'center', gap: 7 }}>
-                    <T w={800} color={c.muted} style={{ fontSize: 11 }}>{d.l}</T>
-                    <Dot state={d.state} done={done} mode={mode}>
-                      {isDone && <Check size={18} color={c.onAccent} />}
-                      {d.state === 'today' && !done && <Orb size={17} color={c.accentDeep} />}
-                    </Dot>
-                  </View>
-                );
-              })}
-            </View>
-          </Card>
-        </View>
-      )}
-
-      {/* badges */}
-      {gamify && (
-        <View style={{ paddingHorizontal: 20 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <T d w={700} color={c.ink} style={{ fontSize: 17 }}>Keepsakes</T>
-            <Pressable onPress={onOpenAchievements} hitSlop={8}>
-              <T w={700} color={c.accentDeep} style={{ fontSize: 13 }}>All</T>
-            </Pressable>
-          </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingVertical: 2 }}>
-            {keepsakes.map((b) => {
-              const Ic = BADGE_ICON[b.icon];
+      <View style={{ paddingHorizontal: 20 }}>
+        <Card style={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 14 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            {week.map((d, i) => {
+              const isDone = d.state === 'done' || (d.state === 'today' && done);
               return (
-                <Pressable key={b.id} onPress={onOpenAchievements} style={{ width: 72, alignItems: 'center', gap: 6 }}>
-                  <Medal earned={b.earned} mode={mode}>
-                    <Ic size={24} color={b.earned ? c.onAccent : c.placeholder} />
-                  </Medal>
-                  <T w={700} color={c.muted} style={{ fontSize: 10.5, textAlign: 'center', lineHeight: 12 }}>{b.label}</T>
-                </Pressable>
+                <View key={i} style={{ flex: 1, alignItems: 'center', gap: 7 }}>
+                  <T w={800} color={c.muted} style={{ fontSize: 11 }}>{d.l}</T>
+                  <Dot state={d.state} done={done} mode={mode}>
+                    {isDone && <Check size={18} color={c.onAccent} />}
+                    {d.state === 'today' && !done && <Orb size={17} color={c.accentDeep} />}
+                  </Dot>
+                </View>
               );
             })}
-          </ScrollView>
-        </View>
-      )}
+          </View>
+        </Card>
+      </View>
 
-      {/* gentle peek when gamification is off */}
-      {!gamify && (
-        <View style={{ paddingHorizontal: 20 }}>
-          <T d w={700} color={c.ink} style={{ fontSize: 17, marginBottom: 12 }}>Yesterday</T>
-          <Card style={{ padding: 18 }}>
-            <T d w={700} color={c.accentDeep} style={{ fontSize: 14, marginBottom: 6 }}>What you did</T>
-            <T w={400} color={c.muted} style={{ fontSize: 13.5, lineHeight: 19.5 }} numberOfLines={2}>
-              {SAMPLE_ENTRIES[0].did}
-            </T>
-          </Card>
+      {/* badges */}
+      <View style={{ paddingHorizontal: 20 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <T d w={700} color={c.ink} style={{ fontSize: 17 }}>Keepsakes</T>
+          <Pressable onPress={onOpenAchievements} hitSlop={8}>
+            <T w={700} color={c.accentDeep} style={{ fontSize: 13 }}>All</T>
+          </Pressable>
         </View>
-      )}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingVertical: 2 }}>
+          {keepsakes.map((b) => {
+            const Ic = BADGE_ICON[b.icon];
+            return (
+              <Pressable key={b.id} onPress={onOpenAchievements} style={{ width: 72, alignItems: 'center', gap: 6 }}>
+                <Medal earned={b.earned} mode={mode}>
+                  <Ic size={24} color={b.earned ? c.onAccent : c.placeholder} />
+                </Medal>
+                <T w={700} color={c.muted} style={{ fontSize: 10.5, textAlign: 'center', lineHeight: 12 }}>{b.label}</T>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      </View>
     </ScrollView>
   );
 }
