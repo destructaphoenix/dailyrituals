@@ -35,7 +35,7 @@ describe('readBackup', () => {
   test('round-trips a good backup back to state', () => {
     const res = readBackup(good);
     expect(res.ok).toBe(true);
-    expect(res.state.streak).toBe(3);
+    expect(res.state.xp).toBe(150); // streak is derived from entries now, not persisted
     expect(res.state.settings).toEqual({ name: 'Maya' });
     expect(res.meta.counts).toEqual({ entries: 3, days: 2 });
   });

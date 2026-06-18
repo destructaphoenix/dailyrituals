@@ -1,13 +1,15 @@
 // __tests__/dev/buildState.test.js
 import { buildState } from '../../src/dev/buildState';
 import { PERSISTED_KEYS } from '../../src/persistence/state';
+import { currentStreak } from '../../src/insights/dateKeys';
 import { SHOP_PALETTES, SHOP_SKIES } from '../../src/data';
 
 const TODAY = '2026-06-14';
 
 test('done=true: streak/xp/entries wired, ends today, quests completed', () => {
   const s = buildState({ streak: 3, entryCount: 3, done: true }, TODAY);
-  expect(s.streak).toBe(3);
+  // streak is derived from entries now — the knob drives a 3-day run ending today.
+  expect(currentStreak(s.entries.map((e) => e.dayKey), TODAY)).toBe(3);
   expect(s.xp).toBe(150); // 3 * 50
   expect(s.done).toBe(true);
   expect(s.entries).toHaveLength(3);

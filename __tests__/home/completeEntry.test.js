@@ -13,18 +13,27 @@ const baseQuests = [
 ];
 
 const makeEntry = (overrides = {}) => ({
-  id: 'new1', day: '31', mon: 'May', wd: 'Saturday',
+  id: 'new1', day: '07', mon: 'Jun', wd: 'Sunday',
   dayKey: '2026-06-07', did: 'wrote', wished: '', streak: true, ...overrides,
 });
 
+// Newest-first entries on consecutive days ending the day BEFORE `todayKey`.
+const priorRun = (todayKey, n) => {
+  const [y, m, d] = todayKey.split('-').map(Number);
+  return Array.from({ length: n }, (_, i) => {
+    const dt = new Date(Date.UTC(y, m - 1, d - 1 - i));
+    const key = dt.toISOString().slice(0, 10);
+    return makeEntry({ id: 'prev' + i, dayKey: key });
+  });
+};
+
 describe('applyCompletion', () => {
   describe('first entry of the day (done: false)', () => {
-    const prev = { entries: [], streak: 3, xp: 100, embers: 200, done: false, quests: baseQuests };
+    const prev = { entries: [], xp: 100, embers: 200, done: false, quests: baseQuests };
 
-    test('rewards: streak +1, xp +gain, embers +gain, done true', () => {
+    test('rewards: xp +gain, embers +gain, done true, rewarded', () => {
       const next = applyCompletion(prev, makeEntry({ mood: 'Tender' }), { config });
       expect(next.rewarded).toBe(true);
-      expect(next.streak).toBe(4);
       expect(next.xp).toBe(150);
       expect(next.embers).toBe(215);
       expect(next.done).toBe(true);
@@ -41,9 +50,28 @@ describe('applyCompletion', () => {
       expect(next.entries[0].id).toBe('new1');
     });
 
-    test('celebrate carries gains + milestone lookup', () => {
-      const next = applyCompletion({ ...prev, streak: 6 }, makeEntry(), { config });
+    test('celebrate.streak is 1 for a first/lone entry', () => {
+      const next = applyCompletion(prev, makeEntry(), { config });
+      expect(next.celebrate.streak).toBe(1);
+    });
+
+    test('celebrate.streak counts consecutive prior days (continuity)', () => {
+      // 6 consecutive days before today + today = a run of 7 → milestone.
+      const next = applyCompletion(
+        { ...prev, entries: priorRun('2026-06-07', 6) },
+        makeEntry({ dayKey: '2026-06-07' }),
+        { config }
+      );
       expect(next.celebrate).toEqual({ streak: 7, xp: 50, embers: 15, milestone: 'Seven Suns' });
+    });
+
+    test('celebrate.streak resets to 1 when logging after a gap', () => {
+      const stale = [
+        makeEntry({ id: 'a', dayKey: '2026-06-01' }),
+        makeEntry({ id: 'b', dayKey: '2026-06-02' }),
+      ];
+      const next = applyCompletion({ ...prev, entries: stale }, makeEntry({ dayKey: '2026-06-07' }), { config });
+      expect(next.celebrate.streak).toBe(1);
     });
 
     test('celebrate milestone null when no milestone for that streak', () => {
@@ -73,13 +101,12 @@ describe('applyCompletion', () => {
     const todays = makeEntry({ id: 'first', dayKey: '2026-06-07' });
     const prev = {
       entries: [todays],
-      streak: 4, xp: 150, embers: 215, done: true, quests: baseQuests,
+      xp: 150, embers: 215, done: true, quests: baseQuests,
     };
 
-    test('does not reward: streak/xp/embers/done unchanged', () => {
+    test('does not reward: xp/embers/done unchanged, not rewarded', () => {
       const next = applyCompletion(prev, makeEntry({ id: 'second' }), { config });
       expect(next.rewarded).toBe(false);
-      expect(next.streak).toBe(4);
       expect(next.xp).toBe(150);
       expect(next.embers).toBe(215);
       expect(next.done).toBe(true);

@@ -1,22 +1,27 @@
+import { currentStreak } from '../insights/dateKeys';
+
 // Pure reward/dedup decision for completing the daily ritual.
 //
-// The daily ritual rewards ONCE per calendar day: streak/XP/embers apply only
-// on the first entry of the day (`prev.done` false). Writing again the same day
-// is treated as an EDIT — it replaces today's entry (matched by `dayKey`) with
-// no extra streak/XP/embers and no duplicate row.
+// The daily ritual rewards ONCE per calendar day: XP/embers apply only on the
+// first entry of the day (`prev.done` false). Writing again the same day is
+// treated as an EDIT — it replaces today's entry (matched by `dayKey`) with no
+// extra XP/embers and no duplicate row.
 //
-// `prev`  = { entries, streak, xp, embers, done, quests }
+// The celebrated streak is DERIVED from the resulting entries (continuity-aware,
+// IMP-024) — logging after a gap celebrates 1, not previous+1. The persisted
+// streak counter is gone; display derives it in RitualsApp the same way.
+//
+// `prev`  = { entries, xp, embers, done, quests }
 // `entry` = the fully-built new entry object (must carry a `dayKey`)
 // `opts`  = { config: { XP_GAIN, EMBER_GAIN, milestones } }
 //
-// Returns a new slice { entries, streak, xp, embers, done, quests, celebrate, rewarded }.
+// Returns a new slice { entries, xp, embers, done, quests, celebrate, rewarded }.
 export function applyCompletion(prev, entry, { config }) {
   if (prev.done) {
     // Already completed today — edit in place, no reward.
     const entries = [entry, ...prev.entries.filter((e) => e.dayKey !== entry.dayKey)];
     return {
       entries,
-      streak: prev.streak,
       xp: prev.xp,
       embers: prev.embers,
       done: prev.done,
@@ -26,7 +31,8 @@ export function applyCompletion(prev, entry, { config }) {
     };
   }
 
-  const streak = prev.streak + 1;
+  const entries = [entry, ...prev.entries];
+  const streak = currentStreak(entries.map((e) => e.dayKey), entry.dayKey);
   const xp = prev.xp + config.XP_GAIN;
   const embers = prev.embers + config.EMBER_GAIN;
   const quests = prev.quests.map((q) => {
@@ -36,8 +42,7 @@ export function applyCompletion(prev, entry, { config }) {
   });
 
   return {
-    entries: [entry, ...prev.entries],
-    streak,
+    entries,
     xp,
     embers,
     done: true,

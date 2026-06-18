@@ -1,12 +1,12 @@
 export const SCHEMA_VERSION = 2;
 
 const migrators = {
-  1: (data) => ({ ...data, entries: [], streak: 0, xp: 0, embers: 0, freezes: 0 }),
+  1: (data) => ({ ...data, entries: [], xp: 0, embers: 0, freezes: 0 }),
 };
 
 export const PERSISTED_KEYS = [
   'onboarded', 'mode',
-  'entries', 'streak', 'xp', 'done', 'quests', 'freezes', 'embers',
+  'entries', 'xp', 'done', 'quests', 'freezes', 'embers',
   'plus', 'activePalette', 'ownedPalettes', 'activeSky', 'ownedSkies',
   'subCanceled', 'activePlan', 'lastActiveDay', 'settings', 'lastBackupAt',
   'promptDeck',

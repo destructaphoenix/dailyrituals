@@ -41,6 +41,7 @@ import { findTodaysEntry, isEditableToday } from './home/todaysEntry';
 import { levelFromXp } from './profile/level';
 import { deriveAchievements } from './profile/achievements';
 import { entryDateParts } from './time/clock';
+import { currentStreak } from './insights/dateKeys';
 import { dayNumber } from './time/dailyPick';
 import { selectPrompt } from './content/deck';
 import { PROMPTS } from './content/prompts';
@@ -78,7 +79,9 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   const [celebrate, setCelebrate] = useState(null);
 
   const [entries, setEntries] = useState(initialState.entries ?? []);
-  const [streak, setStreak] = useState(initialState.streak ?? 0);
+  // Streak is DERIVED from real entries (IMP-024): a missed day breaks it to 0,
+  // re-logging after a gap restarts at 1. No persisted streak counter to drift.
+  const streak = useMemo(() => currentStreak(entries.map((e) => e.dayKey), todayKey()), [entries]);
   const [xp, setXp] = useState(initialState.xp ?? 0);
   const [done, setDone] = useState(initialState.done ?? false);
   const [quests, setQuests] = useState(initialState.quests ?? DAILY_QUESTS);
@@ -238,25 +241,24 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
       saveState(pickPersisted({
         onboarded: true, // RitualsApp only mounts after first-run; record it so we skip onboarding next launch
         mode,
-        entries, streak, xp, done, quests, freezes, embers, plus,
+        entries, xp, done, quests, freezes, embers, plus,
         activePalette, ownedPalettes, activeSky, ownedSkies,
         subCanceled, activePlan, lastActiveDay, settings, lastBackupAt, promptDeck,
       }));
     }, 400);
     return () => clearTimeout(id);
-  }, [mode, entries, streak, xp, done, quests, freezes, embers, plus,
+  }, [mode, entries, xp, done, quests, freezes, embers, plus,
     activePalette, ownedPalettes, activeSky, ownedSkies,
     subCanceled, activePlan, lastActiveDay, settings, lastBackupAt, promptDeck]);
 
   const complete = ({ did, wished, mood }) => {
     const entry = { id: 'new' + Date.now(), ...entryDateParts(), dayKey: todayKey(), mood, did, wished, streak: true };
     const next = applyCompletion(
-      { entries, streak, xp, embers, done, quests },
+      { entries, xp, embers, done, quests },
       entry,
       { config: { XP_GAIN, EMBER_GAIN, milestones: STREAK_MILESTONES } }
     );
     setEntries(next.entries);
-    setStreak(next.streak);
     setXp(next.xp);
     setEmbers(next.embers);
     setQuests(next.quests);
@@ -269,7 +271,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   // The exact persisted slice (mirrors the autosave object) — source for backups.
   const currentSlice = () => ({
     onboarded: true,
-    entries, streak, xp, done, quests, freezes, embers, plus,
+    entries, xp, done, quests, freezes, embers, plus,
     activePalette, ownedPalettes, activeSky, ownedSkies,
     subCanceled, activePlan, lastActiveDay, settings, lastBackupAt, promptDeck,
   });

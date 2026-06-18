@@ -46,7 +46,9 @@ export function buildState(knobs = {}, today) {
   return {
     onboarded: true,
     entries,
-    streak,
+    // No `streak` field: streak is derived from `entries` (IMP-024). The Streak
+    // knob drives entryCount (a run of consecutive days ending today/yesterday),
+    // so the app derives that exact streak from the generated entries.
     xp: resolvedXp,
     done,
     quests,

@@ -35,7 +35,7 @@ describe('v1→v2 migration', () => {
 
   test('progress fields are zeroed after migrating a v1 payload', () => {
     const result = deserialize(JSON.stringify(v1Payload));
-    expect(result.streak).toBe(0);
+    // streak is no longer persisted/migrated — it derives from entries (now []).
     expect(result.xp).toBe(0);
     expect(result.embers).toBe(0);
     expect(result.freezes).toBe(0);
