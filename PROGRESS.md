@@ -46,7 +46,7 @@ Opus scopes each owner-filed issue into a numbered `IMP-xxx` task (steps + commi
 | IMP-023 | Dynamic daily text — rotating multilingual greeting (header, date-seeded) + daily reflection prompt (write card, no-repeat deck); fully offline; header → Layout A | OTA | ✅ code-complete — full detail in build-log |
 | IMP-024 | 🔴 Streak counts real consecutive days — derive from entries (breaks to 0 on a missed day; re-logging after a gap = 1, not prev+1) | OTA | ✅ code-complete — full detail in build-log |
 | IMP-025 | Edit your name in the app — make `settings.name` changeable from the You tab (currently only set once in onboarding) | OTA | ✅ code-complete — full detail in build-log |
-| IMP-026 | Remove the Gamification toggle entirely — gamification is always on; delete the setting + switch + all `gamify` gating, no residue | OTA | ⬜ open — spec inline below |
+| IMP-026 | Remove the Gamification toggle entirely — gamification is always on; delete the setting + switch + all `gamify` gating, no residue | OTA | ✅ code-complete — full detail in build-log |
 
 ---
 
@@ -78,33 +78,6 @@ Opus scopes each owner-filed issue into a numbered `IMP-xxx` task (steps + commi
 
 ---
 
-## 📋 IMP-026 (OPEN SPEC) — remove the Gamification toggle entirely (always on)
-
-### IMP-026 — Delete the Gamification setting; gamification is always on   ·   Lane: OTA   ·   Status: ⬜
-- **Goal:** Gamification is **always on**. The "Gamification" switch, the `settings.gamify` setting, and **every** `gamify` gate are removed with **no residue** — the app behaves exactly as if `gamify` were permanently `true`.
-- **Why / context (owner request):** A "Gamification" `Switch` ([`src/screens/YouScreen.js:116-125`](src/screens/YouScreen.js#L116-L125)) toggles `settings.gamify`, which gates large parts of `HomeScreen` (rings, daily quests, achievements peek) and `ArchiveScreen` (mood display). Owner wants it permanent and the control + flag gone entirely.
-- **Files likely touched:** `src/screens/YouScreen.js`, `src/theme.js` (`DEFAULT_SETTINGS`), `src/RitualsApp.js`, `src/screens/HomeScreen.js`, `src/screens/ArchiveScreen.js`, `src/icons.js` (Diamond import only if newly-unused). Dev-only on this branch: `src/dev/DevPanel.js`, `src/dev/buildState.js`.
-- **Approach (decided by Opus — do not re-litigate):** Hardcode always-on by **deleting the conditionals**, not by passing `gamify={true}`.
-  - `YouScreen.js`: delete the Gamification `Row` (116-125) and the `setGamify` handler (line 35). Remove the now-unused `Diamond` import (verify no other consumer in this file). Fix the file-top comment (line 2) that references "Gamification rows".
-  - `theme.js`: delete `gamify: true` from `DEFAULT_SETTINGS` (line 105).
-  - `RitualsApp.js`: delete `const gamify = settings.gamify !== false;` (line 73). Stop passing `gamify` to `HomeScreen` and `ArchiveScreen` (lines ~369, 345).
-  - `HomeScreen.js`: remove the `gamify` param; **unwrap** every `{gamify && (…)}` block to always render (lines ~55, 107, 114, 136); **delete** the `{!gamify && (…)}` "gentle peek when gamification is off" fallback (lines ~160-161) — that branch is intentionally gone now.
-  - `ArchiveScreen.js`: remove the `gamify` param; unwrap `{gamify && (…)}` (line ~26); `{gamify && e.mood ? …}` → `{e.mood ? …}` (line ~50).
-  - **Persistence residue:** `gamify` lives inside the persisted `settings` blob, not in `PERSISTED_KEYS` directly. Old installs keep a dead `settings.gamify` value that nothing reads — harmless; **no migration / version bump** needed for it. (Note in the session note.)
-  - **Dev harness (this branch only):** remove the `gamify` knob from `DevPanel.js` (lines 19, 84) and `buildState.js` (lines 26, 62) so no control writes a setting that no longer exists.
-- **TDD:** N/A — structural UI removal, no new pure logic. Guard instead: existing suite must stay green, and a repo grep confirms no residue.
-- **Steps:**
-  - [ ] 1. Remove the Row + handler + setting (`YouScreen.js`, `theme.js`).
-  - [ ] 2. Remove `gamify` plumbing + unwrap all conditionals (`RitualsApp.js`, `HomeScreen.js`, `ArchiveScreen.js`); delete the off-state fallback UI.
-  - [ ] 3. Remove the dev-harness `gamify` knob (`DevPanel.js`, `buildState.js`).
-  - [ ] 4. Residue check: `grep -ri gamif src/` returns **nothing** except the unrelated `icons.js` "Gamification icons" section comment (a code-section header for shared icon defs — leave the icon definitions; the Diamond import in `YouScreen` must be gone). Clean up that comment too if desired.
-  - [ ] 5. `npm test` green (≥ 218); `npx expo export --platform android` clean.
-- **Commit:** `refactor(gamify): remove the Gamification toggle — always on, no residue (IMP-026)`
-- **Acceptance:** No "Gamification" row in You → Preferences; Home always shows the goal ring / quests / achievements regardless of any old saved state; Archive always shows moods; no crash for a returning user who previously had it off. Grep shows no live `gamify` references in `src/`.
-- **Ship after merge:** OTA `eas update --branch production`.
-
----
-
 ## Open items / blockers
 
 - **⏳ CURRENT BLOCKER (Phase 10a.6):** Free release is in Play review; production publish is gated by the **closed-testing 12×14 requirement** (12 testers continuously opted in for 14 days). Owner recruiting testers since 2026-06-06 — nothing to code, purely a Play Console / community process. Production unlocks ≈ 14 days after 12 testers are continuously in. When back, owner may bring **bug fixes / improvements** rather than continuing the phase ladder.
@@ -119,6 +92,6 @@ Opus scopes each owner-filed issue into a numbered `IMP-xxx` task (steps + commi
 
 _History archived in [`docs/build-log.md`](docs/build-log.md) → "Session notes". Only the two newest notes stay here; every chat moves the older one out when it appends a new one (see DEVGUIDE Step 4)._
 
-_2026-06-18 — IMP-024 COMPLETE (code-complete; OTA lane; no ship trailer). 🔴 Streak now **derives from real entries** instead of a persisted counter — a missed day breaks it to 0, re-logging after a gap restarts at 1, consecutive days count up. TDD-first: new pure `currentStreak(keys, todayKey)` in `src/insights/dateKeys.js` (anchor = today if logged else yesterday-still-alive else 0; counts consecutive days back; empty → 0). `RitualsApp.js` streak is now `useMemo(currentStreak(entries…))` — every screen prop + `deriveAchievements` corrects automatically; `setStreak` + streak persistence (PERSISTED_KEYS, autosave, currentSlice, v1 migrator) all removed (old stored streak ignored, no schema bump). `completeEntry.applyCompletion` derives `celebrate.streak` continuity-aware for the milestone lookup; dead top-level `streak` dropped from both branches. Dev harness `buildState.js` no longer emits a `streak` field (the Streak knob drives `entryCount`, so the run derives the right number). Updated 3 pre-existing tests that asserted the removed persisted streak (backup→xp; v1 migration; dev buildState→derived). `npm test` → **250 passed, 32 suites**. Commit `ac3f3c6`; full spec archived to build-log. NEXT: owner acceptance via dev harness (3-day run → 3; skip → 0; log again → 1; same-day re-write no bump). Then IMP-025 (editable name) / IMP-026 (remove gamify toggle). Ship OTA after branch merges._
+_2026-06-18 — IMP-025 COMPLETE (code-complete; OTA lane; no ship trailer). Editable display name — You tab Preferences now has a **"Your name"** row (UserIcon) that opens a bottom-sheet `NameEditModal`. TDD-first: `sanitizeName(input)` pure helper added to `src/profile/identity.js` (trim, cap 40 chars, null for blank) — 7 new cases. `NameEditModal.js` (new presentational component, slide modal, TextInput prefilled, Save disabled when blank, backdrop dismiss). `YouScreen.js`: added `UserIcon` + `NameEditModal` imports, local `editingName` state + `saveName` handler → `setSettings({ ...s, name: clean })`. Home greeting updates automatically (reads `settings.name`). `npm test` → **257 passed, 32 suites**. Commit `74965c8`._
 
-_2026-06-18 — IMP-025 COMPLETE (code-complete; OTA lane; no ship trailer). Editable display name — You tab Preferences now has a **"Your name"** row (UserIcon) that opens a bottom-sheet `NameEditModal`. TDD-first: `sanitizeName(input)` pure helper added to `src/profile/identity.js` (trim, cap 40 chars, null for blank) — 7 new cases. `NameEditModal.js` (new presentational component, slide modal, TextInput prefilled, Save disabled when blank, backdrop dismiss). `YouScreen.js`: added `UserIcon` + `NameEditModal` imports, local `editingName` state + `saveName` handler → `setSettings({ ...s, name: clean })`. Home greeting updates automatically (reads `settings.name`). `npm test` → **257 passed, 32 suites**. Commit `74965c8`. NEXT: IMP-026 (remove Gamification toggle, always on). Ship OTA after branch merges._
+_2026-06-18 — IMP-026 COMPLETE (code-complete; OTA lane; no ship trailer). Gamification is now always on — deleted the `Gamification` Switch row + `setGamify` handler + `Diamond`/`Switch` imports from `YouScreen.js`; `gamify: true` from `DEFAULT_SETTINGS` in `theme.js`; `const gamify = settings.gamify !== false;` from `RitualsApp.js`; and `gamify` prop from `HomeScreen` + `ArchiveScreen`. Unwrapped all 4 `{gamify && …}` blocks in `HomeScreen` (streak hero, quests, week strip, badges) to always render; deleted the `{!gamify && …}` "gentle peek" fallback + now-unused `SAMPLE_ENTRIES` import. `ArchiveScreen`: heatmap and mood chips always show. Dev harness: `gamify` knob removed from `DevPanel.js` + `buildState.js`. Old installs with a stale `settings.gamify` in AsyncStorage are harmless — nothing reads it (no migration needed). Residue check: `grep -ri gamif src/` returns only the always-used `gamify.js` component module + its imports. `npm test` → **257 passed, 32 suites** (unchanged). `npx expo export --platform android` clean. Commit `fd887c0`. NEXT: IMP-022 (Save as PDF + About sheet — BUILD lane; batch with Annual Recap)._
