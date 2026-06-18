@@ -1,14 +1,15 @@
-// YouScreen.js — profile + settings. New tab. The Appearance / Tone /
-// Gamification rows drive real app state (passed down from App.js).
+// YouScreen.js — profile + settings. New tab. The Appearance / Tone rows
+// drive real app state (passed down from App.js).
 
-import React from 'react';
-import { View, ScrollView, Pressable, Switch, Alert } from 'react-native';
+import React, { useState } from 'react';
+import { View, ScrollView, Pressable, Switch, Alert, Modal } from 'react-native';
 import { useTheme } from '../theme';
 import { T, Card, ProgressBar } from '../ui';
-import { Bell, Contrast, Pencil, Diamond, Download, Info, Chevron, Sun, Moon, Bag, Ember, Restore } from '../icons';
+import { Bell, Contrast, Pencil, Diamond, Download, Info, Chevron, Sun, Moon, Bag, Ember, Restore, UserIcon } from '../icons';
 import { PlusBanner } from '../shopui';
 import { profileIdentity } from '../profile/identity';
 import { lastBackupLabel } from '../backup/lastBackupLabel';
+import NameEditModal from './NameEditModal';
 
 export default function YouScreen({
   mode, onToggleMode, settings, setSettings,
@@ -21,7 +22,9 @@ export default function YouScreen({
   const dark = mode === 'night';
 
   const { display, initial } = profileIdentity(settings.name);
+  const [editingName, setEditingName] = useState(false);
   const setTone = () => setSettings((s) => ({ ...s, tone: s.tone === 'gentle' ? 'playful' : 'gentle' }));
+  const saveName = (clean) => { setSettings((s) => ({ ...s, name: clean })); setEditingName(false); };
   const confirmReset = () => {
     Alert.alert(
       'Reset all data',
@@ -35,6 +38,7 @@ export default function YouScreen({
   const setGamify = (v) => setSettings((s) => ({ ...s, gamify: v }));
 
   return (
+    <>
     <ScrollView
       style={{ flex: 1 }}
       contentContainerStyle={{ paddingTop: 8, paddingBottom: 26, gap: 18 }}
@@ -113,6 +117,9 @@ export default function YouScreen({
           <Row icon={<Pencil size={20} color={c.accentDeep} />} label="Voice"
             value={settings.tone === 'gentle' ? 'Gentle' : 'Playful'} onPress={setTone} />
           <Divider />
+          <Row icon={<UserIcon size={20} color={c.accentDeep} />} label="Your name"
+            value={display} onPress={() => setEditingName(true)} />
+          <Divider />
           <Row icon={<Diamond size={18} color={c.accentDeep} />} label="Gamification"
             right={
               <Switch
@@ -171,6 +178,15 @@ export default function YouScreen({
         </Card>
       </View>
     </ScrollView>
+
+      <Modal visible={editingName} animationType="slide" transparent onRequestClose={() => setEditingName(false)}>
+        <NameEditModal
+          currentName={settings.name}
+          onSave={saveName}
+          onClose={() => setEditingName(false)}
+        />
+      </Modal>
+    </>
   );
 }
 
