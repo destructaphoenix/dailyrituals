@@ -2,7 +2,7 @@ module.exports = {
   expo: {
     name: 'Daily Rituals',
     slug: 'daily-rituals',
-    version: '1.0.1',
+    version: '1.0.2',
     orientation: 'portrait',
     userInterfaceStyle: 'automatic',
     icon: './assets/icon.png',
@@ -31,7 +31,7 @@ module.exports = {
         backgroundColor: '#f9f7f4',
       },
       package: 'app.dailyrituals.mobile',
-      versionCode: 7,
+      versionCode: 8,
       // Android Auto Backup: user's local data (journal/streak/settings) backs
       // up to their own Google Drive and restores on a new/reinstalled device —
       // no accounts, no login. Explicit so it can't silently regress if Expo's
