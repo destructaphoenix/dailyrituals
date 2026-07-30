@@ -18,8 +18,11 @@ export function pickPersisted(state) {
   return out;
 }
 
-export function serialize(slice) {
-  return JSON.stringify({ version: SCHEMA_VERSION, ...slice });
+export function serialize(slice, now = Date.now()) {
+  // lastSavedAt always re-stamps to `now`, overriding any stale value already
+  // in `slice` — this is what lets restoreDetect.js infer a restore (see
+  // IMP-029) purely from firstInstallTime vs this stamp, with no extra flag.
+  return JSON.stringify({ version: SCHEMA_VERSION, ...slice, lastSavedAt: now });
 }
 
 export function deserialize(raw) {

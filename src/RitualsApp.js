@@ -21,6 +21,7 @@ import ArchiveScreen from './screens/ArchiveScreen';
 import InsightsScreen from './screens/InsightsScreen';
 import YouScreen from './screens/YouScreen';
 import ReadingSheet from './screens/ReadingSheet';
+import RestoreNotice from './screens/RestoreNotice';
 import WriteFlow from './screens/WriteFlow';
 import Celebration from './screens/Celebration';
 import Achievements from './screens/Achievements';
@@ -64,7 +65,7 @@ const IMPORT_ERROR = {
 const PLATFORM = Platform.OS === 'android' ? 'android' : 'ios';
 const todayKey = () => new Date().toISOString().slice(0, 10);
 
-export default function RitualsApp({ mode = 'day', settings, setSettings, onToggleMode, initialPlus = false, initialState = {}, onResetData, onReplaceAllData }) {
+export default function RitualsApp({ mode = 'day', settings, setSettings, onToggleMode, initialPlus = false, initialState = {}, onResetData, onReplaceAllData, restoredFromMs = null, onDismissRestoreNotice }) {
   const theme = useMemo(() => makeTheme(mode, settings), [mode, settings]);
   const c = theme.colors;
   const safe = useSafeAreaInsets();
@@ -510,6 +511,12 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
         )}
 
         {toast && !shopOpen && <Toast key={toast.key} message={toast.msg} bottom={insets.bottom} />}
+
+        <RestoreNotice
+          restoredAtMs={restoredFromMs}
+          onGotIt={onDismissRestoreNotice}
+          onRestoreFile={() => { onDismissRestoreNotice(); doImport(); }}
+        />
       </View>
     </ThemeContext.Provider>
   );

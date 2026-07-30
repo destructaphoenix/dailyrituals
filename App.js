@@ -7,6 +7,8 @@ import { RC_KEYS } from './src/billing/config';
 import { isBillingConfigured } from './src/billing';
 import { loadState, saveState, clearState } from './src/persistence/storage';
 import { hasCompletedOnboarding } from './src/persistence/onboarding';
+import { isRestoredInstall } from './src/persistence/restoreDetect';
+import * as Application from 'expo-application';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -35,6 +37,7 @@ export default function App() {
   const [startedPlus, setStartedPlus] = useState(false); // subscribed during onboarding
   const [hydrated, setHydrated] = useState(null); // null = still loading persisted state
   const [dataKey, setDataKey] = useState(0); // bump to remount RitualsApp with fresh state
+  const [restoredFromMs, setRestoredFromMs] = useState(null); // set once when this launch looks like a restore (IMP-029)
 
   React.useEffect(() => {
     const platform = Platform.OS === 'android' ? 'android' : 'ios';
@@ -42,7 +45,7 @@ export default function App() {
       const Purchases = require('react-native-purchases').default;
       Purchases.configure({ apiKey: platform === 'android' ? RC_KEYS.android : RC_KEYS.ios });
     }
-    loadState().then((loaded) => {
+    loadState().then(async (loaded) => {
       const s = loaded || {};
       setHydrated(s);
       if (s.mode) setMode(s.mode);
@@ -51,6 +54,17 @@ export default function App() {
       // hasCompletedOnboarding — returning users (any persisted state, or the
       // explicit flag) skip it, so updates never re-onboard existing testers.
       if (hasCompletedOnboarding(loaded)) setOnboarded(true);
+      // IMP-029: no lastSavedAt means this data predates the feature — stay silent.
+      if (s.lastSavedAt) {
+        try {
+          const installedAt = await Application.getInstallationTimeAsync();
+          if (isRestoredInstall({ lastSavedAt: s.lastSavedAt, installedAt: installedAt?.getTime() })) {
+            setRestoredFromMs(s.lastSavedAt);
+          }
+        } catch (e) {
+          // expo-application unavailable in this environment — no notice, no crash
+        }
+      }
     });
   }, []);
 
@@ -85,6 +99,13 @@ export default function App() {
     setDataKey((k) => k + 1); // forces RitualsApp to re-init useState from the restored slice
   };
 
+  // Re-stamps lastSavedAt to now (so the notice never reappears) and hides it.
+  // hydrated is the full loaded slice, unchanged in content — only the stamp moves.
+  const handleDismissRestoreNotice = () => {
+    saveState(hydrated);
+    setRestoredFromMs(null);
+  };
+
   const dark = mode === 'night';
 
   // First-run / signup flow hands off to the live app on completion.
@@ -110,6 +131,8 @@ export default function App() {
         initialState={hydrated}
         onResetData={handleResetData}
         onReplaceAllData={handleReplaceAllData}
+        restoredFromMs={restoredFromMs}
+        onDismissRestoreNotice={handleDismissRestoreNotice}
       />
     </SafeAreaProvider>
   );

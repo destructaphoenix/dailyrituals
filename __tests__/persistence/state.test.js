@@ -92,6 +92,34 @@ describe('promptDeck persistence', () => {
   });
 });
 
+describe('lastSavedAt stamp (IMP-029 restore detection)', () => {
+  test('serialize stamps lastSavedAt with the injected clock', () => {
+    const out = JSON.parse(serialize({ embers: 1 }, 1700000000000));
+    expect(out.lastSavedAt).toBe(1700000000000);
+  });
+  test('serialize defaults the clock to Date.now() when not injected', () => {
+    const before = Date.now();
+    const out = JSON.parse(serialize({ embers: 1 }));
+    const after = Date.now();
+    expect(out.lastSavedAt).toBeGreaterThanOrEqual(before);
+    expect(out.lastSavedAt).toBeLessThanOrEqual(after);
+  });
+  test('lastSavedAt survives a serialize/deserialize round-trip', () => {
+    const result = deserialize(serialize({ embers: 1 }, 1700000000000));
+    expect(result.lastSavedAt).toBe(1700000000000);
+  });
+  test('re-serializing always refreshes lastSavedAt, even over a stale input value', () => {
+    const stale = { lastSavedAt: 1000, embers: 5 };
+    const out = JSON.parse(serialize(stale, 2000));
+    expect(out.lastSavedAt).toBe(2000);
+  });
+  test('old payloads saved before this feature existed still deserialize, with no stamp', () => {
+    const result = deserialize(JSON.stringify({ version: SCHEMA_VERSION, embers: 7 }));
+    expect(result.embers).toBe(7);
+    expect(result.lastSavedAt).toBeUndefined();
+  });
+});
+
 describe('mergeWithDefaults', () => {
   test('fills missing keys from defaults but keeps loaded values', () => {
     const merged = mergeWithDefaults({ embers: 999 }, { embers: 360, streak: 4 });
