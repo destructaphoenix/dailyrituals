@@ -28,7 +28,7 @@ Opus scopes each owner-filed issue into a numbered `IMP-xxx` task (steps + commi
 | ID | Title | Lane | Status |
 | --- | --- | --- | --- |
 | IMP-001 – IMP-005 | Early post-launch fixes (name on You tab, local greeting/date, centered streak, zero-state + migration, drop login step) | OTA | ✅ shipped — full detail in build-log |
-| IMP-006 | Enable + verify Android Auto Backup (new-device restore, no login) | Build (rides v5) | 🟡 code done; device verification pending owner |
+| IMP-006 | Enable + verify Android Auto Backup (new-device restore, no login) | Build (rides v5) | ✅ shipped + **device-verified 2026-07-30** — full detail in build-log |
 | IMP-007 | 🔴 Streak no longer stacks on multiple same-day entries (reward once/day; same-day re-write edits) | OTA | ✅ |
 | IMP-008 | Real zero-state finish: level from XP, calendar + week strip from real entries, real entry dates | OTA | ✅ |
 | IMP-009 | Insights tab from real entries (kill hardcoded STATS/MOOD_MIX/RHYTHM); empty state | OTA | ✅ |
@@ -42,7 +42,7 @@ Opus scopes each owner-filed issue into a numbered `IMP-xxx` task (steps + commi
 | IMP-017 | Greeting is Good morning / afternoon / evening by the user's local time | OTA | ✅ |
 | IMP-018 | Today's reflection is editable — today only — prefilled, with a "Start fresh" reset | OTA | ✅ |
 | IMP-019 | Premium true-black AMOLED dark mode + rotating-rays hero, behind a one-line `DARK_THEME` revert flag | OTA | ✅ promoted |
-| IMP-020 | Backup / Restore — user-held JSON export (off-device) + restore-by-replace with auto safety copy; surface Android Auto Backup | Build | ✅ code-complete (device smoke test owner-pending) — full detail in build-log |
+| IMP-020 | Backup / Restore — user-held JSON export (off-device) + restore-by-replace with auto safety copy; surface Android Auto Backup | Build | ✅ shipped + **device-verified 2026-07-30** — full detail in build-log |
 | IMP-021 | Lifetime Progress — evolve Insights into "Your record" (days remembered + totals + adaptive heatmap) above "Your patterns"; Home hero untouched | OTA | ✅ code-complete — full detail in build-log |
 | IMP-022 | Wire the two dead You-tab buttons: **Save as PDF** (real keepsake export, Plus-gated) + **About Daily Rituals** (real about sheet). Both are currently `onPress={() => {}}` no-ops | Build | ⬜ open — spec inline below |
 | IMP-023 | Dynamic daily text — rotating multilingual greeting (header, date-seeded) + daily reflection prompt (write card, no-repeat deck); fully offline; header → Layout A | OTA | ✅ code-complete — full detail in build-log |
@@ -95,14 +95,20 @@ Opus scopes each owner-filed issue into a numbered `IMP-xxx` task (steps + commi
 - **v1.0.3 / versionCode 9 — awaiting Google production review** (submitted 2026-07-30). Carries IMP-027 (SDK 54 / API 36) + everything merged to `main` before it. Nothing to do but wait; if Google rejects, the reason lands in Play Console → Publishing overview.
 - **✅ Phase 10a COMPLETE.** 12×14 closed-testing gate cleared 2026-07-29; production access unlocked; free release applied for and submitted. **✅ API-36 compliance (deadline 2026-08-31) is met** — shipped inside this build, well ahead of the deadline.
 
-### 📱 Owner device verification (accumulated — walk these on the production build)
+### ✅ Owner device verification — WALKED 2026-07-30 (on v1.0.3)
 
-Nothing here blocks a release; these are unverified-at-runtime features that are already shipped or code-complete. Best done in one pass once v1.0.3 is live.
+- **IMP-027 (SDK 54) — ✅ PASSED.** Edge-to-edge is clean across the app; no status/nav-bar overlap on any custom header or the tab bar. This was the highest-risk item in the SDK 54 upgrade (Android 16 forces edge-to-edge and SDK 54 can no longer opt out) and it is now closed.
+- **IMP-020 (Backup / Restore) — ✅ PASSED.** JSON export → share out (owner uploads to Drive manually) → restore from the file all work.
+- **IMP-006 (Android Auto Backup) — ✅ PASSED, with a UX finding.** Uninstall → reinstall **did** auto-restore with no login, which is exactly the feature. The restored data was **stale ("older data before today")** — that is the documented Android Auto Backup contract, **not a defect**: it runs at most **once per 24h**, and only while the device is **idle + charging + on unmetered Wi-Fi**, so anything written since the last successful backup is not in it. Config is correct (`android:allowBackup="true"`, no custom rules, per the IMP-006 spec). **The real problem is that the restore is silent** — see the open finding below.
+- **IMP-021 (Lifetime Progress):** still unwalked; OTA lane, no ship trailer applied yet — owner decides when to push.
 
-- **IMP-027 (SDK 54):** the **edge-to-edge audit** is the important one — Android 16 forces edge-to-edge and SDK 54 can no longer opt out. Check every custom header + the tab bar for status/nav-bar overlap (top and bottom insets via `react-native-safe-area-context`). Plus the general smoke walk: launch, onboarding, entry write, backup/restore.
-- **IMP-006 (Android Auto Backup):** backup → uninstall → reinstall → restore cycle, + a Play data-safety confirm. Shipped in v1.0.1 / versionCode 7.
-- **IMP-020 (Backup / Restore):** export → save → restore → recovery copy; non-backup-file error toast; settings deep-link. Shipped in the same v1.0.1 build.
-- **IMP-021 (Lifetime Progress):** empty state; 1-entry heatmap; multi-week heatmap; "Your patterns" heading; no "Days kept"/"This month" tiles. OTA lane, no ship trailer applied yet — owner decides when to push.
+### 🔎 Open finding — the auto-restore is silent (candidate task, not yet scoped)
+
+On a reinstall the app simply opens with data. Nothing tells the user it came from a Google backup, or how old it is. Two consequences: (1) they may not notice the missing recent days at all; (2) worse, they may write today's entry on top of the stale restore and *then* remember their manual JSON backup — restoring it is restore-by-replace, which discards what they just wrote (IMP-020's automatic safety copy makes this recoverable, but it is confusing).
+
+The two backup paths are complementary and neither is redundant: **Auto Backup** = zero effort, ≤24h stale; **manual JSON export** = current to the second, but requires the user to act. The fix is to make that difference visible rather than to change either mechanism.
+
+**Sketch (needs owner sign-off before scoping).** Persist a `lastSavedAt` timestamp on every save, compare it against the app's installation time (`expo-application` → `getInstallationTimeAsync()`); if the install is *newer* than the data, this launch is a restore ⇒ show a one-time note naming the backup's date and pointing at the manual restore for anything after it. **BUILD lane** — `expo-application` is not currently a dependency. Batches naturally with IMP-022, which is already BUILD (`expo-print`) and whose About sheet wants `expo-application` for the version string anyway. ❌ **Rejected alternative:** calling `BackupManager.dataChanged()` after writes to trigger backups sooner — needs custom native code (no Expo API), and Android still throttles to ~once/day under the same idle/charging/Wi-Fi conditions, so it narrows the window without ever closing it. Not worth the native surface.
 
 ### 💳 Phase 10b — payments (the next real track, gated externally)
 

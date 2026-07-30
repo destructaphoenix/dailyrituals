@@ -289,7 +289,7 @@ _Full inline specs moved here once code-complete (one-line status stays in the P
 
 _Full inline specs moved here once code-complete (one-line status stays in the PROGRESS.md backlog table). Runtime-walk / ship may still be pending — see the table + git for live status._
 
-### IMP-006 — Enable + verify Android Auto Backup (new-device restore, no login)   ·   Lane: Build (rides v5)   ·   Status: 🟡 (code done; device verification + data-safety pending owner)
+### IMP-006 — Enable + verify Android Auto Backup (new-device restore, no login)   ·   Lane: Build (rides v5)   ·   Status: ✅ VERIFIED on device 2026-07-30 (uninstall → reinstall auto-restored with no login; restored data was ≤24h stale, which is the documented Auto Backup contract, not a defect — see PROGRESS.md "auto-restore is silent" finding). Play data-safety still to confirm.
 - **Goal:** A user's local data (journal, streak, settings — the AsyncStorage store) restores automatically onto a **new or reinstalled device** via Android Auto Backup to their own Google Drive — no accounts, no login, no PII handled by us. Covers "got a new phone, my stuff came back."
 - **Why / context:** Chosen (2026-06-07) as the zero-login, zero-legal alternative to cloud accounts (which the owner rejected — see [[daily-rituals-local-only-decision]] / IMP-005). **Expo defaults `android.allowBackup` to `true` and `app.config.js` doesn't override it**, so the capability is *very likely already active* on the current build — the app's data dir (incl. AsyncStorage's RKStorage SQLite DB) is eligible. So this task is mostly: lock the intent explicitly, then **actually verify** the backup→reinstall→restore cycle, plus a data-safety note.
 - **Files touched:** `app.config.js` (one line), `PROGRESS.md`.
@@ -492,7 +492,7 @@ _Full inline specs moved here once code-complete (one-line status stays in the P
 
 ---
 
-### IMP-020 — Backup / Restore ("Your journal is safe")   ·   Lane: BUILD (rides IMP-006)   ·   Status: ✅ (code-complete; device smoke test owner-pending)
+### IMP-020 — Backup / Restore ("Your journal is safe")   ·   Lane: BUILD (rides IMP-006)   ·   Status: ✅ shipped + **device-verified 2026-07-30** (export → share out → restore all work; owner uploads the JSON to Drive manually)
 
 First piece of the four-part "legacy" roadmap (D → A+B → C). Lets users keep their journal safe & portable **with no account** — a user-held JSON export (off-device via the OS share sheet) + restore-by-replace with an automatic on-device recovery copy, plus an honest in-app surface for Android Auto Backup.
 
