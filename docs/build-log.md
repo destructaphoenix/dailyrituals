@@ -622,9 +622,52 @@ Owner-found bug: the day-streak was a **persisted mutable counter** (`completeEn
 
 ---
 
+## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
+
+> Moved out of PROGRESS.md on 2026-07-31 to keep the live cursor lean once a second spec (IMP-032) opened. These are **not** finished work. If the owner revives one, lift the block back into PROGRESS.md as the ACTIVE TRACK.
+
+### IMP-022 — wire the two dead You-tab buttons (Save as PDF + About)   ·   Lane: BUILD   ·   Status: ⏸ deferred 2026-07-31 (owner)
+
+**Why it can't be dropped:** PDF export is *already sold* on the paywall ([`src/data.js:148`](../src/data.js#L148), `PLUS_PERKS`), so this must be built (or the perk line deleted) **before `PLUS_ENABLED` flips**. Part B (the About sheet, which also kills the hardcoded `v1.0`) can be lifted out and shipped separately if a build is going out anyway.
+
+**Problem (owner-found).** Two rows in the **General** card of [`src/screens/YouScreen.js`](../src/screens/YouScreen.js) render full UI but do nothing — their `onPress` is an empty `() => {}`:
+1. **"Save as PDF"** (line ~145–157) — for a **Plus** user it runs a no-op; non-Plus correctly routes to the paywall. There is **no PDF code anywhere** (no `expo-print` in `package.json`; the only "PDF" string in `data.js` is marketing copy). The UI (icon, "Plus" badge, paywall gate, chevron) was built but the export was never implemented.
+2. **"About Daily Rituals"** (line ~159–160, shows `v1.0`) — `onPress={() => {}}`; opens nothing.
+
+**Goal.** Make both buttons actually work, keeping every existing gate/style intact. **Two parts, one task** — Part A needs a new native module so the whole task is **BUILD lane**; Part B is JS-only but ships in the same shipment.
+
+> **⚠️ Baseline changed — this spec was written pre-IMP-027.** The app is now on **Expo SDK 54 / RN 0.81 / React 19**, not SDK 51. Install `expo-print` with **`npx expo install expo-print`** (never a bare `npm install`) so it resolves to the SDK-54-compatible version. Two knock-on facts for Part A: (1) SDK 54's `expo-file-system` default export is a new **File/Directory** API — the old string-based surface (`writeAsStringAsync`, `documentDirectory`, `EncodingType`) now lives at **`expo-file-system/legacy`**, which is what `src/backup/io.js` imports, so copy *that* import line, not the SDK-51 one; (2) `jest.setup.js` stubs **both** `expo-file-system` and `expo-file-system/legacy` from `test-mocks/expoFileSystemStub.js` — if `src/export/io.js` reaches for a different native path, add it there too, because Jest keys mocks on the literal module path and a missing stub is silent.
+
+#### Part A — Save as PDF (Plus-gated keepsake export)
+- Add **`expo-print`** dependency (new native module → forces a dev build; `expo-sharing` + `expo-file-system` already vendored by IMP-020, reuse them — see the `/legacy` note above).
+- **Pure core first (TDD):** new `src/export/pdf.js` → `buildKeepsakeHtml(entries, meta)` returning a self-contained HTML string (inline styles, no network assets) — title page + chronological entries (real device dates, same date helpers as `src/insights/dateKeys.js`), empty-state when no entries. Unit-test the builder (entry rendering, ordering, escaping of user text, empty state). **This is the single tested boundary** — mirror the `src/backup/` shape.
+- **Thin native wrapper:** `src/export/io.js` → `exportPdf()` = `Print.printToFileAsync({ html })` → `Sharing.shareAsync(uri)`. Lazy-require natives + reuse IMP-020's typed `nativeUnavailable` pattern so **Expo Go shows the toast** instead of crashing (see `src/backup/io.js` for the exact pattern after the 5e7132c revert).
+- **Wire-up:** in `YouScreen.js` replace the `plus ? () => {}` branch with `plus ? onExportPdf : …` (keep `plusEnabled ? onOpenPaywall : undefined` untouched). Thread `onExportPdf` from `RitualsApp.js` (build HTML from real entries + call `io.exportPdf`), with the same try/catch + toast wiring `doExport`/`doImport` use.
+- **Do not** change the paywall path, the "Plus" badge, or non-Plus behavior.
+
+#### Part B — About Daily Rituals
+- Replace its `onPress={() => {}}` with a real **About** sheet/modal (a small new component, OTA-able on its own): app name + tagline, **version pulled from `expo-application` / `Constants.expoConfig.version`** (kill the hardcoded `v1.0`), a one-line "Your journal lives only on this device" local-first note (consistent with the local-only decision), and a credits/"made by" line. No external links unless trivial.
+- Keep it a presentational component fed by props; no new persistence.
+- ⚠️ **Coordinate with IMP-032:** the dev harness is opened by a **long-press on this same row** (`onLongPress={onOpenDev}`). Keep that prop wired when you replace the `onPress` — losing it silently kills the harness entry point.
+
+#### Steps
+1. RED: `__tests__/export/pdf.test.js` for `buildKeepsakeHtml` (entries, order, escaping, empty). 2. GREEN: `src/export/pdf.js`. 3. `src/export/io.js` thin native wrapper (lazy-require + `nativeUnavailable` toast). 4. `RitualsApp.js` → `onExportPdf` handler + try/catch/toast; pass into `YouScreen`. 5. `YouScreen.js` → wire Part A onPress; build + wire **About** component for Part B (version from `Constants`). 6. `npm test` green; `npx expo export --platform android` clean. 7. `npx expo install expo-print` (**not** bare `npm install` — see the baseline note above); version bump per the rule below. 8. Commit.
+
+**Commit message:** `feat(you): implement Save as PDF export + About sheet — wire the two no-op You-tab buttons (IMP-022)`
+
+**Ship lane:** **BUILD** (new `expo-print` native module). No `Release-Lane` trailer until owner says ship. Batch with the **Annual Recap** (also BUILD: `react-native-view-shot`) to avoid a one-feature build.
+
+**Version bump:** the repo is already at **v1.0.5 / versionCode 11** (IMP-031's `bump:native`), which has not shipped. **One bump per shipment** — if IMP-022 lands before vc11 builds, it rides that bump and must NOT bump again. Only run `npm run bump:native` if vc11 has already been built and submitted.
+
+**Smoke test after build:** Plus user PDF export → share sheet opens → file opens; non-Plus still hits paywall; Expo Go shows the unavailable toast; About sheet opens with the real version string (from `Constants`, not a hardcoded `v1.0`).
+
+---
+
 ## Session notes (archived from PROGRESS.md)
 
 _Append-only handoff log moved out of PROGRESS.md to keep it light. Newest 1–2 notes stay live in PROGRESS.md; everything else is here. Git history is the full record._
+
+_2026-07-31 (ship + scope) — **shipped the backlog, scoped IMP-031.** No product code written. **(1) Tagged the v1.0.4 / vc10 shipment** — verified the lane rather than trusting the tracker: `git diff 4c44637 HEAD` (the last shipped build) touches `app.config.js`, `package.json`, `package-lock.json`, so **BUILD** is forced, and more importantly **the OTA lane is closed** — `version` is already 1.0.4 while live devices run 1.0.3 under the `appVersion` runtimeVersion policy, so IMP-030 Part A could NOT have gone OTA on its own as PROGRESS previously claimed (corrected in Open items). Pre-flighted locally: `npm test` → **312 passed, 40 suites**; billing preflight no-ops correctly (`PLUS_ENABLED = false`). Trailer `Release-Lane: build` on the closeout commit; CI test gate → owner one-tap approval → build + auto-submit to **`alpha`**, then owner promotes alpha → production in Play Console. **(2) Scoped IMP-031 (daily reminder)** as the new active track after the owner deferred IMP-022 (PDF). Found while reading `YouScreen.js`: the "Daily reminder" row at line 111 is a **third** dead button and the only dishonest one — hardcoded `value="8:30 PM"`, `onPress={() => {}}`, no `expo-notifications` in the tree, so every live user is told they have a reminder that does not exist. Spec calls for a rolling 7-day window of single-shot locals (not `repeats: true`, so it can skip a day the user already wrote), one pure core + one lazy-required native wrapper, and flags two repo-specific traps: `mergeWithDefaults` is a **shallow** top-level spread so existing users' `settings` will not gain the new `reminder` key without a hydration defaults-merge in `App.js`, and `POST_NOTIFICATIONS` makes this the app's **first runtime permission**, which changes the exact condition `scripts/patch-permissions.js` works around. NEXT: owner approves the CI build, walks IMP-029 + the IMP-030 anchor on device, promotes to production; Sonnet takes **IMP-031**._
 
 _2026-07-30 (layout) — **IMP-030: layout can't blow out, whatever the text** (Part A OTA / Part B BUILD; no ship trailer on Part B). Owner screenshots showed "Back up my journal" ballooning to ~18 lines with a long stale-backup string — `Row`'s `flex:1` label had no `numberOfLines`, so once the unshrinkable value container ate the free space Yoga wrapped the label one char per line; the same shape was reachable today via a long name. **Part A:** new pure `src/ui/rowFit.js` (`shouldStackRow`, calibrated glyph-width estimate, pinned by both screenshots + 5 more cases) drives a new shared `src/ui/Row.js` (extracted from `YouScreen.js`; the byte-identical duplicate in `PlusFlow.js` deleted) that auto-stacks label-over-value instead of truncating, with `numberOfLines` now on every flex-shrinking text in the row. Reconciled the 3 different name `maxLength`s to 40; added `flexShrink`+`numberOfLines` to 4 other unshrinkable `space-between` pairs (gamify quests, achievements, both Lv-N headers) and fixed 2 clipping fixed-width slots in `InsightsScreen`. **Part B:** new `src/ui/textScale.js` (`MAX_FONT_SCALE=1.5`, `CHROME_FONT_SCALE=1.2`); `T` (`src/ui.js`) now defaults every `<Text>` in the app to the cap via one new prop, with chrome (tab bar, FAB label, embers pill, PalTag, the You-tab Lv-N pill) opted into the tighter cap; nav bar got a `minHeight` so the FAB can't collide with scaled tab labels. `npm test` → **312 passed, 40 suites** (from 300/37; +12, zero product-logic changes); `expo export` clean after both parts. Commits `45e0f0c` (part A) and `c810915` (part B) — **no version bump**, already at v1.0.4/vc10 from IMP-029 in this shipment. **⚠️ Anchor 1 clears by only ~4%** (235 vs 245dp) — verify "Backed up today" stays inline on a real device before trusting the `0.48` glyph-ratio constant; if it stacks in reality, lower `0.48` rather than raising the chrome subtraction. Full detail in this file → IMP-030. NEXT: IMP-022 (Save as PDF + About sheet) — batches the IMP-030 part B build._
 
