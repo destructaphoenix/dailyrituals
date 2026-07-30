@@ -10,6 +10,7 @@ import { PlusBanner } from '../shopui';
 import { profileIdentity } from '../profile/identity';
 import { lastBackupLabel } from '../backup/lastBackupLabel';
 import NameEditModal from './NameEditModal';
+import Row from '../ui/Row';
 
 export default function YouScreen({
   mode, onToggleMode, settings, setSettings,
@@ -50,7 +51,7 @@ export default function YouScreen({
               <T d w={800} color={c.onAccent} style={{ fontSize: 26 }}>{initial}</T>
             </View>
             <View style={{ flex: 1 }}>
-              <T d w={800} color={c.ink} style={{ fontSize: 22 }}>{display}</T>
+              <T d w={800} color={c.ink} numberOfLines={2} style={{ fontSize: 22 }}>{display}</T>
               <View style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6, marginTop: 4, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, backgroundColor: c.accentSoft }}>
                 {dark ? <Moon size={13} color={c.accentDeep} /> : <Sun size={13} color={c.accentDeep} />}
                 <T w={800} color={c.accentDeep} style={{ fontSize: 12 }}>Lv {level} · {levelName}</T>
@@ -59,7 +60,7 @@ export default function YouScreen({
           </View>
           <View style={{ marginTop: 18 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 7 }}>
-              <T w={700} color={c.muted} style={{ fontSize: 12 }}>Next level</T>
+              <T w={700} color={c.muted} numberOfLines={1} style={{ fontSize: 12, flexShrink: 1 }}>Next level</T>
               <T w={700} color={c.muted} style={{ fontSize: 12 }}>{xpToNext == null ? 'Max' : `${xpInto} / ${xpToNext} XP`}</T>
             </View>
             <ProgressBar value={xpToNext == null ? 100 : Math.min(100, (xpInto / xpToNext) * 100)} />
@@ -174,30 +175,6 @@ export default function YouScreen({
         />
       </Modal>
     </>
-  );
-}
-
-function Row({ icon, label, labelColor, value, right, onPress, onLongPress }) {
-  const t = useTheme();
-  const c = t.colors;
-  return (
-    <Pressable
-      onPress={onPress}
-      onLongPress={onLongPress}
-      disabled={!onPress && !onLongPress}
-      style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 16, paddingVertical: 15, opacity: pressed && onPress ? 0.6 : 1 }]}
-    >
-      <View style={{ width: 36, height: 36, borderRadius: 11, backgroundColor: c.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
-        {icon}
-      </View>
-      <T w={700} color={labelColor || c.ink} style={{ flex: 1, fontSize: 15.5 }}>{label}</T>
-      {right || (
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          {value ? <T w={700} color={c.muted} style={{ fontSize: 14 }}>{value}</T> : null}
-          {onPress ? <Chevron dir="right" size={18} color={c.muted} /> : null}
-        </View>
-      )}
-    </Pressable>
   );
 }
 

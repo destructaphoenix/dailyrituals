@@ -49,7 +49,7 @@ export default function Achievements({ insets, onClose, entries = [], streak = 0
                 </View>
                 <View style={{ flex: 1 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                    <T d w={700} color={c.ink} style={{ fontSize: 16 }}>{a.label}</T>
+                    <T d w={700} color={c.ink} numberOfLines={1} style={{ fontSize: 16, flexShrink: 1 }}>{a.label}</T>
                     {done && (
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                         <Check size={14} color={c.green} />

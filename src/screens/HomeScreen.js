@@ -47,7 +47,7 @@ export default function HomeScreen({ copy, mode, streak, level, levelName, xpInt
             </Pressable>
           </View>
         </View>
-        <T d w={700} color={c.ink} style={{ fontSize: 27, lineHeight: 32, marginTop: 2 }}>{userName ? `${hello}, ${userName}.` : `${hello}.`}</T>
+        <T d w={700} color={c.ink} numberOfLines={3} style={{ fontSize: 27, lineHeight: 32, marginTop: 2 }}>{userName ? `${hello}, ${userName}.` : `${hello}.`}</T>
       </View>
 
       {/* streak hero */}
@@ -61,7 +61,7 @@ export default function HomeScreen({ copy, mode, streak, level, levelName, xpInt
           </View>
           <View style={{ zIndex: 1, width: '100%', marginTop: 22 }}>
             <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 7 }}>
-              <T d w={700} color={c.ink} style={{ fontSize: 14 }}>Lv {level} · {levelName}</T>
+              <T d w={700} color={c.ink} numberOfLines={1} style={{ fontSize: 14, flexShrink: 1 }}>Lv {level} · {levelName}</T>
               <T w={700} color={c.muted} style={{ fontSize: 12 }}>{xpToNext == null ? 'Max' : `${xpInto} / ${xpToNext} XP`}</T>
             </View>
             <ProgressBar value={xpToNext == null ? 100 : Math.min(100, (xpInto / xpToNext) * 100)} />

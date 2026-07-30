@@ -12,6 +12,7 @@ import { useTheme } from '../theme';
 import { T, PrimaryButton } from '../ui';
 import { Close, Check, Sun, Chevron, Alert, NoSignal, Restore, Shield, Receipt, Ban, Info } from '../icons';
 import { PLUS_PRICES, RENEW_DATE } from '../data';
+import Row from '../ui/Row';
 
 // Store wording flips with platform so the disclosure is truthful on both.
 export function storeWords(platform) {
@@ -184,16 +185,6 @@ export function ManageSubscription({ insets, platform, plan, canceled, renewLabe
   const priceText = priceString || p.price;
   const [cancelSheet, setCancelSheet] = useState(false);
 
-  const Row = ({ icon, label, value, onPress }) => (
-    <Pressable onPress={onPress} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 16, paddingVertical: 15, opacity: pressed ? 0.6 : 1 })}>
-      <View style={{ width: 36, height: 36, borderRadius: 11, backgroundColor: c.accentSoft, alignItems: 'center', justifyContent: 'center' }}>{icon}</View>
-      <T w={700} color={c.ink} style={{ flex: 1, fontSize: 15.5 }}>{label}</T>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-        {value ? <T w={700} color={c.muted} style={{ fontSize: 14 }}>{value}</T> : null}
-        <Chevron dir="right" size={18} color={c.muted} />
-      </View>
-    </Pressable>
-  );
   const Divider = () => <View style={{ height: 1, backgroundColor: c.border, marginLeft: 66 }} />;
 
   return (

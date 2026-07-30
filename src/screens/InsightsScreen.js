@@ -121,9 +121,9 @@ export default function InsightsScreen({ copy, entries = [], streak = 0, xp = 0 
             <View style={{ gap: 13 }}>
               {moodMix.map((x, i) => (
                 <View key={x.m} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                  <View style={{ width: 84, flexDirection: 'row', alignItems: 'center', gap: 7 }}>
+                  <View style={{ minWidth: 84, flexShrink: 1, flexDirection: 'row', alignItems: 'center', gap: 7 }}>
                     <Text style={{ fontSize: 15 }}>{moodEmoji(x.m)}</Text>
-                    <T w={700} color={c.ink} style={{ fontSize: 13.5 }}>{x.m}</T>
+                    <T w={700} color={c.ink} numberOfLines={1} style={{ fontSize: 13.5, flexShrink: 1 }}>{x.m}</T>
                   </View>
                   <View style={{ flex: 1, height: 12, borderRadius: 999, backgroundColor: c.accentSoft, overflow: 'hidden' }}>
                     <View style={{
@@ -131,7 +131,7 @@ export default function InsightsScreen({ copy, entries = [], streak = 0, xp = 0 
                       backgroundColor: c.accent, opacity: 1 - i * 0.1,
                     }} />
                   </View>
-                  <T w={700} color={c.muted} style={{ width: 18, fontSize: 12.5, textAlign: 'right' }}>{x.n}</T>
+                  <T w={700} color={c.muted} style={{ minWidth: 18, fontSize: 12.5, textAlign: 'right' }}>{x.n}</T>
                 </View>
               ))}
             </View>

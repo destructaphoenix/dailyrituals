@@ -95,7 +95,7 @@ export function DailyQuests({ quests }) {
               </View>
               <View style={{ flex: 1 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 5 }}>
-                  <T d w={700} color={done ? c.muted : c.ink} style={{ fontSize: 14.5 }}>{q.label}</T>
+                  <T d w={700} color={done ? c.muted : c.ink} numberOfLines={1} style={{ fontSize: 14.5, flexShrink: 1 }}>{q.label}</T>
                   <T d w={800} color={c.accentDeep} style={{ fontSize: 11.5 }}>+{q.xp} XP</T>
                 </View>
                 <ThinBar pct={(q.cur / q.goal) * 100} />

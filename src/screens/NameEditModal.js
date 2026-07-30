@@ -31,7 +31,7 @@ export default function NameEditModal({ currentName, onSave, onClose }) {
           value={draft}
           onChangeText={setDraft}
           autoFocus
-          maxLength={60}
+          maxLength={40}
         />
 
         <View style={{ flexDirection: 'row', gap: 12, marginTop: 20 }}>

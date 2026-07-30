@@ -203,6 +203,7 @@ function Personalize({ settings, setSettings, onDone, onBack, insets }) {
             placeholder="Your name" placeholderTextColor={t.colors.placeholder} value={name}
             onChangeText={(v) => { setName(v); setNameTouched(true); }}
             onBlur={() => setNameTouched(true)}
+            maxLength={40}
           />
           {nameTouched && !nameOk && (
             <T w={500} color={t.colors.muted} style={{ fontSize: 13, marginTop: 6 }}>A name is required to continue.</T>
