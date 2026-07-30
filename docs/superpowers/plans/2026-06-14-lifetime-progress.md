@@ -6,7 +6,7 @@
 
 **Architecture:** Two new **pure** modules derive everything from existing data (`entries` + `xp` + `streak`) — `src/insights/lifetime.js` for the stats and a new `buildLifetimeHeatmap` in the existing `src/home/calendar.js` for the adaptive grid. A small shared `src/insights/dateKeys.js` removes the duplicated longest-run logic. `InsightsScreen.js` is restructured to render both `deriveLifetime` (new) and the untouched `deriveInsights` (existing). No new persisted state, no native deps.
 
-**Tech Stack:** React Native 0.74 / Expo 51, Jest (jest-expo). Pure-logic unit tests; UI verified by manual smoke (matches the project's testing convention).
+**Tech Stack:** _⚠️ **Historical — this plan is complete and its stack line is stale.** The app now runs **Expo SDK 54 / React Native 0.81.5 / React 19.1.0** (IMP-027). Read the version below as a dated record, never as the current stack._ React Native 0.74 / Expo 51, Jest (jest-expo). Pure-logic unit tests; UI verified by manual smoke (matches the project's testing convention).
 
 **Design source:** `docs/superpowers/specs/2026-06-14-lifetime-progress-design.md`
 

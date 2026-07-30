@@ -82,7 +82,10 @@ Production `.aab` **must** be signed with the local **`dailyrituals-release.keys
 
 - This SHA1 is the cert **Play App Signing registered as the upload key**. Any build signed with a *different* key (e.g. an EAS auto-generated keystore) is **rejected** ("signed with the wrong key"). **Never let EAS auto-generate a new keystore for this app.**
 - Losing the keystore = forced Play **upload-key reset**. Keep it + its password backed up off-repo.
-- SDK versions are pinned via **`expo-build-properties`** in `app.config.js` (the `android.minSdkVersion`/etc. config keys are no-ops in Expo): `minSdkVersion 24` (RevenueCat), `compileSdkVersion`/`targetSdkVersion 35` (Play API-35 requirement). Bump `android.versionCode` on every Play upload (currently **4**).
+- SDK versions are pinned via **`expo-build-properties`** in `app.config.js` (the `android.minSdkVersion`/etc. config keys are no-ops in Expo): `minSdkVersion 24` (RevenueCat), `compileSdkVersion`/`targetSdkVersion 36` (Play API-36 / Android 16 requirement, mandatory for update publishing from **2026-08-31** — raised from 35 by IMP-027), `buildToolsVersion 36.0.0`. Bump `android.versionCode` on every Play upload (**currently 9**; version `1.0.3`).
+- **Architecture: Legacy, held deliberately.** Expo SDK 54 defaults New Architecture **ON**, so `newArchEnabled: false` is set explicitly at the **top level of `expo`** in `app.config.js` — the canonical SDK-54 field. The deprecated `expo-build-properties.android.newArchEnabled` is intentionally left unset so there is only one switch. `expo install --fix` / `prebuild` will silently flip this app to Fabric/TurboModules if that line is removed. SDK **55 drops Legacy Architecture entirely** — migrating is its own future task, not a side effect of a compliance bump.
+- **Current stack (post-IMP-027):** Expo SDK **54**, React Native **0.81.5**, React **19.1.0**, `jest-expo` **54**. `src/backup/io.js` imports **`expo-file-system/legacy`** — SDK 54's default export replaced the string-based API (`writeAsStringAsync`/`documentDirectory`/`EncodingType`) with a File/Directory API; `/legacy` re-exports the old surface unchanged.
+- **`postinstall` patches `expo-modules-core`** (`scripts/patch-permissions.js`): upstream still force-unwraps `requestedPermissions!!` in `PermissionsService.kt` as of `expo-modules-core@3.0.30`, which crashes on a permission check when the manifest declares no runtime permissions. The script fails **loudly** (non-zero exit) if neither the buggy nor the patched line is found — re-verify it on every SDK bump against the **pristine npm tarball**, not the installed copy (the installed copy is what the patch rewrites, so it can't answer the question).
 
 ---
 
@@ -103,7 +106,7 @@ Production `.aab` **must** be signed with the local **`dailyrituals-release.keys
 - [x] 10a.3 Expo/EAS account + `eas.json` (dev/preview/production profiles)
 - [x] 10a.4 Production `app.config.js` (version, versionCode autoincrement, icon/splash, runtimeVersion)
 - [x] 10a.5 `eas build -p android` ✅ (signed `.aab` built + uploaded; Play listing + data safety + content rating done; release **sent for review** 2026-06-06)
-- [ ] 10a.6 **Closed testing gate** — Play requires **12 testers opted-in for 14 continuous days** (individual accounts post-2023-11-13) before "Apply for production" unlocks. ⏳ Recruiting testers 2026-06-06; 14-day clock starts once 12 are opted in. Then apply for production → publish **FREE**.
+- [x] 10a.6 **Closed testing gate** — Play requires **12 testers opted-in for 14 continuous days** (individual accounts post-2023-11-13) before "Apply for production" unlocks. ✅ Cleared 2026-07-29 — production access now unlocked on Play Console. Next: apply for production → publish **FREE**.
 - _No payments, no BillDesk, no RevenueCat production key needed for 10a._
 
 ### Phase 10b — Enable monetization (turn Plus on → v1.1)

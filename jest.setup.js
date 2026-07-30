@@ -3,13 +3,13 @@
 // the jsdom test environment.
 jest.mock('react-native/Libraries/Animated/NativeAnimatedHelper', () => ({}), { virtual: true });
 
-jest.mock('expo-file-system', () => ({
-  cacheDirectory: 'file:///cache/',
-  documentDirectory: 'file:///docs/',
-  EncodingType: { UTF8: 'utf8' },
-  writeAsStringAsync: jest.fn(async () => {}),
-  readAsStringAsync: jest.fn(async () => '{}'),
-}));
+// SDK 54 moved the string-based file API to `expo-file-system/legacy`, which is
+// the path src/backup/io.js imports. Jest keys mocks on the literal module path,
+// so mocking only 'expo-file-system' would leave io.js unstubbed. Both paths get
+// the same stub: the legacy path is the one in use, the bare path covers anything
+// reaching for the current File/Directory API.
+jest.mock('expo-file-system/legacy', () => require('./test-mocks/expoFileSystemStub'));
+jest.mock('expo-file-system', () => require('./test-mocks/expoFileSystemStub'));
 
 jest.mock('expo-sharing', () => ({
   isAvailableAsync: jest.fn(async () => true),

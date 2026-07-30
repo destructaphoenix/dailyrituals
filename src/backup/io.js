@@ -1,7 +1,10 @@
 // io.js — the ONLY file that touches native file/share/pick modules. Keeps the
 // backup core pure and testable. No business logic lives here.
 
-import * as FileSystem from 'expo-file-system';
+// SDK 54's expo-file-system default export dropped the legacy string-based API
+// (EncodingType, writeAsStringAsync, documentDirectory) for a new File/Directory
+// API. /legacy re-exports the old surface unchanged — no rewrite needed here.
+import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
 

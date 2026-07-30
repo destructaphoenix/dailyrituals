@@ -2,7 +2,7 @@ module.exports = {
   expo: {
     name: 'Daily Rituals',
     slug: 'daily-rituals',
-    version: '1.0.2',
+    version: '1.0.3',
     orientation: 'portrait',
     userInterfaceStyle: 'automatic',
     icon: './assets/icon.png',
@@ -24,6 +24,16 @@ module.exports = {
     updates: {
       url: 'https://u.expo.dev/1a0f9b15-cb1a-4cec-9577-3cd66e9f1d36',
     },
+    // SDK 54 defaults New Architecture ON. This app stays on Legacy Architecture
+    // (decided, IMP-027) — API 36 compliance needs no New Arch, and migrating both
+    // at once against the Aug-31 deadline is unnecessary risk. Explicit so
+    // expo install --fix/prebuild can't silently flip it.
+    //
+    // This top-level `expo.newArchEnabled` is the canonical field in SDK 54. The
+    // `expo-build-properties` android option of the same name is deprecated and is
+    // intentionally NOT set below — one switch, one place, no ambiguity about which
+    // wins. SDK 55 removes Legacy Architecture entirely; migrating is its own task.
+    newArchEnabled: false,
     ios: { supportsTablet: false, bundleIdentifier: 'app.dailyrituals.mobile' },
     android: {
       adaptiveIcon: {
@@ -31,7 +41,7 @@ module.exports = {
         backgroundColor: '#f9f7f4',
       },
       package: 'app.dailyrituals.mobile',
-      versionCode: 8,
+      versionCode: 9,
       // Android Auto Backup: user's local data (journal/streak/settings) backs
       // up to their own Google Drive and restores on a new/reinstalled device —
       // no accounts, no login. Explicit so it can't silently regress if Expo's
@@ -40,13 +50,15 @@ module.exports = {
     },
     plugins: [
       'expo-dev-client',
+      'expo-font',
       [
         'expo-build-properties',
         {
           android: {
             minSdkVersion: 24,
-            compileSdkVersion: 35,
-            targetSdkVersion: 35,
+            compileSdkVersion: 36,
+            targetSdkVersion: 36,
+            buildToolsVersion: '36.0.0',
           },
         },
       ],

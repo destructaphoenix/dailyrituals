@@ -6,7 +6,7 @@
 
 **Architecture:** Reuse the existing `serialize`/`deserialize` engine in `src/persistence/state.js` (it already validates and migrates old payloads forward). Add a small **pure** core under `src/backup/` (envelope builder/parser, label formatter, import orchestration) that is fully unit-tested, plus one **thin native wrapper** (`io.js`) over `expo-file-system` / `expo-sharing` / `expo-document-picker` that holds no logic and is not unit-tested. Wire export/import handlers into `RitualsApp.js` (it owns all live state) and a "replace all data + remount" handler into `App.js` (it owns hydration). `YouScreen.js` stays presentational — it renders rows that call the injected handlers.
 
-**Tech Stack:** Expo 51 (bare/dev-client), React Native 0.74, AsyncStorage, Jest (jest-expo). New native deps: `expo-file-system`, `expo-sharing`, `expo-document-picker`.
+**Tech Stack:** _⚠️ **Historical — this plan is complete and its stack line is stale.** The app now runs **Expo SDK 54 / React Native 0.81.5 / React 19.1.0** (IMP-027). Most importantly for this plan: SDK 54 replaced `expo-file-system`'s string-based API with a File/Directory API, so `src/backup/io.js` now imports **`expo-file-system/legacy`**. Read the versions below as a dated record, never as the current stack._ Expo 51 (bare/dev-client), React Native 0.74, AsyncStorage, Jest (jest-expo). New native deps: `expo-file-system`, `expo-sharing`, `expo-document-picker`.
 
 **Design source:** `docs/superpowers/specs/2026-06-14-backup-restore-design.md`
 

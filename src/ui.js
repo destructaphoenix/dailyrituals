@@ -20,6 +20,22 @@ export function T({ d = false, w, italic, style, color, children, ...rest }) {
 }
 
 // ── Card ─────────────────────────────────────────────────────────────────────
+// The night-v2 card's top sheen. The ramp is a FIXED dp height rather than a
+// fraction of the card, because its alpha range is tiny: 6% → 0% is only ~15 of
+// 255 alpha steps. Stretched over half a tall card (the old `absoluteFill` +
+// `end.y: 0.5`) that is ~10dp per step, which Android's hardware draw path
+// renders as visible horizontal bands — and every card banded differently
+// because every card is a different height. It only ever looked smooth because
+// the SDK-51 draw path dithered it for us; SDK 54 / RN 0.81 does not. A short
+// fixed ramp puts each step at ~3dp, so it reads as one crisp highlight,
+// identically on every card. (IMP-027)
+export const CARD_SHEEN = {
+  height: 48,
+  colors: ['rgba(255,255,255,0.06)', 'rgba(255,255,255,0)'],
+  start: { x: 0.5, y: 0 },
+  end: { x: 0.5, y: 1 },
+};
+
 export function Card({ style, children, padded, ...rest }) {
   const t = useTheme();
   const isNightV2 = t.dark && DARK_THEME === 'v2';
@@ -44,10 +60,13 @@ export function Card({ style, children, padded, ...rest }) {
       {isNightV2 && (
         <LinearGradient
           pointerEvents="none"
-          colors={['rgba(255,255,255,0.06)', 'rgba(255,255,255,0)']}
-          start={{ x: 0.5, y: 0 }}
-          end={{ x: 0.5, y: 0.5 }}
-          style={StyleSheet.absoluteFill}
+          dither
+          colors={CARD_SHEEN.colors}
+          start={CARD_SHEEN.start}
+          end={CARD_SHEEN.end}
+          // Top strip only — see CARD_SHEEN. The parent's overflow:hidden clips
+          // this to the card's rounded corners.
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, height: CARD_SHEEN.height }}
         />
       )}
       {children}
