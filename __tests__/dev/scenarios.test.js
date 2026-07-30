@@ -44,3 +44,20 @@ test('emptyInsights has zero entries', () => {
 test('unknown scenario throws', () => {
   expect(() => buildScenario('nope', TODAY)).toThrow(/unknown scenario/);
 });
+
+test('canceledSub is Plus with subCanceled true', () => {
+  const s = buildScenario('canceledSub', TODAY);
+  expect(s.plus).toBe(true);
+  expect(s.subCanceled).toBe(true);
+});
+
+test('staleBackup / neverBackedUp drive lastBackupAt to the IMP-030 anchor-1 states', () => {
+  expect(buildScenario('staleBackup', TODAY).lastBackupAt).not.toBeNull();
+  expect(buildScenario('neverBackedUp', TODAY).lastBackupAt).toBeNull();
+});
+
+test('longName stresses a 40-char name in night mode with long-form text', () => {
+  const s = buildScenario('longName', TODAY);
+  expect(s.settings.name).toHaveLength(40);
+  expect(s.mode).toBe('night');
+});

@@ -44,4 +44,11 @@ describe('buildEntries', () => {
   test('returns [] for count 0', () => {
     expect(buildEntries({ count: 0, endDayKey: '2026-06-14' })).toEqual([]);
   });
+
+  test('textLength "long" pulls from a longer fixture pool than the default "short"', () => {
+    const [shortEntry] = buildEntries({ count: 1, endDayKey: '2026-06-14', textLength: 'short' });
+    const [longEntry] = buildEntries({ count: 1, endDayKey: '2026-06-14', textLength: 'long' });
+    expect(longEntry.did.length).toBeGreaterThan(shortEntry.did.length);
+    expect(longEntry.wished.length).toBeGreaterThan(shortEntry.wished.length);
+  });
 });
