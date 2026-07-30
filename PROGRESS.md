@@ -15,7 +15,7 @@
 
 The live work is the **first unchecked `IMP-xxx` task in the Improvements backlog** below — its full spec is inline (Opus scopes it there; no separate plan file). Work that, **not** the phase ladder (8 / 10b / 11), which is **parked in [`docs/playbook.md`](docs/playbook.md)** until the owner resumes it.
 
-**App status (2026-07-30): 🚀 v1.0.3 / versionCode 9 is submitted to PRODUCTION and awaiting Google review.** The closed-testing 12×14 gate was cleared 2026-07-29, production access unlocked, and the owner has now pushed the free public release. This supersedes build 8 (RevenueCat SDK bump), which never needed to publish on its own. Two consequences: **(1) Google Play API-36 compliance (deadline 2026-08-31) is ✅ SHIPPED** — IMP-027's Expo SDK 54 / `targetSdkVersion 36` upgrade is in the build under review, so the native build on `compileSdkVersion 36` demonstrably worked; **(2) the BillDesk deadlock is being unblocked** — once this release goes live it mints the public Play Store URL that BillDesk PA-CB verification is asking for, which is the gate on all of Phase 10b (payments). The app ships **free**: `PLUS_ENABLED = false`, so there is no payment surface in it at all.
+**App status (2026-07-30): 🟢 v1.0.3 / versionCode 9 is REVIEWED, APPROVED and LIVE on the Play Store.** The closed-testing 12×14 gate was cleared 2026-07-29, production access unlocked, the free public release was pushed, and Google has now passed it. This supersedes build 8 (RevenueCat SDK bump), which never needed to publish on its own. Three consequences: **(1) Google Play API-36 compliance (deadline 2026-08-31) is ✅ SHIPPED** — IMP-027's Expo SDK 54 / `targetSdkVersion 36` upgrade is live, so the native build on `compileSdkVersion 36` is proven in production; **(2) the BillDesk deadlock is ✅ UNBLOCKED** — the public Play Store URL that BillDesk PA-CB verification was asking for now exists, which was the gate on all of Phase 10b (payments); **(3) OTA now reaches real users** — `runtimeVersion` is `appVersion` = **1.0.3**, the live version, so an OTA lands on installed devices. Ship OTA fixes promptly and treat regressions as user-visible. The app ships **free**: `PLUS_ENABLED = false`, so there is no payment surface in it at all.
 
 **Current stack:** Expo SDK **54** · React Native **0.81.5** · React **19.1.0** · **Legacy Architecture** (`expo.newArchEnabled: false`, held deliberately — SDK 55 drops Legacy and that migration is its own future task) · `compileSdkVersion`/`targetSdkVersion` **36**, `minSdkVersion` **24** · `npm test` → **286 passed, 36 suites**. Details in [`docs/playbook.md`](docs/playbook.md).
 
@@ -52,6 +52,7 @@ Opus scopes each owner-filed issue into a numbered `IMP-xxx` task (steps + commi
 | IMP-027 | 🔴 Upgrade Expo SDK 51→54 to hit `targetSdkVersion 36` (Android 16) — Google Play compliance deadline Aug 31, 2026 | Build | ✅ **shipped** in v1.0.3 / vc 9 (production review) — full detail in build-log |
 | IMP-028 | 🔴 Billing correctness pass before any real transaction — live store prices on the paywall (kill hardcoded USD), build-time guard against shipping the purchase simulation, real renew date in the cancel sheet | OTA | ✅ code-complete — full detail in build-log |
 | IMP-029 | Tell the user when their data came from a Google backup — a one-time "restored, and it's from {date}" note with a one-tap route to the manual restore | Build | ⬜ open — spec inline below |
+| IMP-030 | 🔴 Layout can't blow out, whatever the text — settings rows auto-stack instead of collapsing to a 1-char-per-line column; app-wide font-scale cap | OTA (A) + Build (B) | ⬜ open — spec inline below |
 
 ---
 
@@ -131,12 +132,89 @@ Opus scopes each owner-filed issue into a numbered `IMP-xxx` task (steps + commi
 
 ---
 
+## 📋 IMP-030 (OPEN SPEC) — layout can't blow out, whatever the text
+
+**Problem (owner-found, live on v1.0.3).** The "Back up my journal" row in the **Your journal is safe** card renders correctly with `"Backed up today"`, but with `"Backed up 42 days ago — back up again soon"` the row becomes several times taller than its neighbours, the label vanishes, and the value is clipped mid-word (`"back up agai"`).
+
+**Root cause — one `Row`, three missing constraints.** In [`src/screens/YouScreen.js`](src/screens/YouScreen.js) `Row` (~line 180):
+
+- the label is `<T style={{ flex: 1 }}>`. In RN, `flex: 1` expands to `flexGrow: 1, flexShrink: 1, flexBasis: 0`, so the label's width is **only** the free space left over;
+- the value sits in a plain `<View style={{ flexDirection: 'row', gap: 4 }}>` with **no `flexShrink`**. Yoga's default is `flexShrink: 0`, so that container claims its full intrinsic width and refuses to give any back;
+- **neither `<T>` has `numberOfLines`.**
+
+With a long value the free space goes negative, the label collapses toward zero width, and — because Yoga does **not** implement CSS's `min-width: auto` automatic minimum size, so a flex item *may* shrink below its content — RN wraps `"Back up my journal"` at roughly **one character per line**. That invisible ~18-line column is the height. The value still overflows and `Card`'s `overflow: 'hidden'` (night-v2) clips it. `"Backed up today"` is simply short enough to fit; the `> 30` branch in [`src/backup/lastBackupLabel.js`](src/backup/lastBackupLabel.js#L10) appends `" — back up again soon"` and crosses the threshold.
+
+**This is a class of bug, not one row.** The same `Row` renders `value={display}` — **the user's own name**, up to 40 chars — so it is reachable *today* with no 42-day wait. There is a **second, byte-identical copy** of the broken `Row` in [`src/screens/PlusFlow.js`](src/screens/PlusFlow.js#L187) (dormant only because `PLUS_ENABLED = false`). The whole app contains exactly **one** `numberOfLines` ([`ArchiveScreen.js:47`](src/screens/ArchiveScreen.js#L47)) and **zero** font-scale caps.
+
+### Approach (decided by Opus — do not re-litigate)
+
+- **Auto-stack, don't truncate.** A row stays inline while the value fits and switches to label-over-value (Material 3 "list item with supporting text") when it doesn't. Height grows by exactly one line and no information is lost. ❌ Rejected: ellipsizing to a fixed one-line row — `"Backed up 42 days a…"` throws away the nudge that is the whole point of the string. ❌ Rejected: stacking every row — needless redesign of the many short rows (Night, Playful, Phx).
+- **Fit is decided by a pure function, not by measurement.** `shouldStackRow({ label, value, availableDp, fontScale })` in its own module — deterministic, no second render pass, no flicker, and unit-testable under jest-expo (layout callbacks don't fire there, so `onTextLayout` would be untestable). ❌ Rejected: an opt-in `stacked` prop — relying on the author to remember is exactly the failure that produced this bug.
+- **The heuristic is a safety *improvement*, never the safety *guarantee*.** Even inline, the value carries `numberOfLines={1}` and its container `flexShrink: 1`, and the label carries `numberOfLines={2}`. So a mis-calibrated threshold can only ever cost an ellipsis — **it can never reproduce the blowout.** This is what makes an estimate acceptable here.
+- **Width model.** `estWidth = fontScale * 0.48 * (15.5 · labelLen + 14 · valueLen)`; stack when it exceeds `availableDp`. `Row` computes `availableDp` from `useWindowDimensions()` minus its own chrome (screen padding 40 + card padding 32 + icon 36 + gaps 22 + chevron 18 ≈ **width − 148**), so small phones, tablets and foldables all get the right answer. The `0.48` is an average glyph-width ratio **calibrated against the two device screenshots** and pinned by the tests below — **re-pin it if the font family ever changes.**
+- **One `Row`, shared.** Extract to `src/ui/Row.js`; PlusFlow's duplicate is **deleted** and imports it. Fixing one copy and leaving the other is how this recurs.
+- **Icon circles need no change.** A fixed-size `<View>` already has Yoga's default `flexShrink: 0` and cannot be crushed. Do **not** add redundant `flexShrink: 0` to them.
+- **Part B is native.** `maxFontSizeMultiplier` changes native text measurement, so it **must not** ride an OTA.
+
+### TDD (the tested boundary is pure — mirror `src/backup/`)
+
+`__tests__/ui/rowFit.test.js` against `shouldStackRow`. The two calibration anchors are **non-negotiable regression cases**:
+
+| label | value | availableDp | fontScale | expect |
+|---|---|---|---|---|
+| `Back up my journal` | `Backed up today` | 245 | 1.0 | **inline** (the screenshot that works) |
+| `Back up my journal` | `Backed up 42 days ago — back up again soon` | 245 | 1.0 | **stacked** (the screenshot that broke) |
+| `Appearance` | `Night` | 245 | 1.0 | inline |
+| `Your name` | 40-char name | 245 | 1.0 | stacked |
+| `Daily reminder` | `8:30 PM` | 245 | 1.0 | inline |
+| `Daily reminder` | `8:30 PM` | 245 | **2.0** | **stacked** — same strings, scale alone forces it |
+| `Restore from a backup` | `''` / null | 245 | 1.0 | inline (no value ⇒ never stacks) |
+
+Worked values for `0.48`, so the constant is checkable rather than magic: anchor 1 = `0.48 × (15.5·18 + 14·15)` = **235** vs 245 ⇒ inline; anchor 2 = `0.48 × (15.5·18 + 14·42)` = **416** ⇒ stacked; `Daily reminder` = **151** ⇒ inline, **302** at scale 2.0 ⇒ stacked.
+
+⚠️ **Anchor 1 clears by only ~4% (235 of 245).** Verify it inline on a real device before trusting the constant, and if it stacks in reality, lower `0.48` rather than raising `availableDp` — the chrome subtraction is measured, the glyph ratio is the estimate. Either way the failure is cosmetic: a wrong call can only over-stack or ellipsize, never blow the row out again.
+
+Plus a `Row` render test asserting it never emits a `<T>` without `numberOfLines` beside a `flex: 1` label.
+
+### Steps — Part A (overflow, OTA)
+
+1. RED: `__tests__/ui/rowFit.test.js` per the table above.
+2. GREEN: `src/ui/rowFit.js` — `shouldStackRow`, pure, no RN imports.
+3. `src/ui/Row.js` — extract from `YouScreen`; value container `flexShrink: 1`; value `numberOfLines={1}`; label `numberOfLines={2}`; stacked branch (label over value in a `flex: 1` column, chevron pinned right). `YouScreen` imports it.
+4. Delete the duplicate `Row` in [`PlusFlow.js:187`](src/screens/PlusFlow.js#L187); import the shared one. Verify the Plus rows still render (`PLUS_ENABLED` toggled locally only — **do not commit the flag flipped**).
+5. Reconcile the three different name caps to **40**: [`Onboarding.js:201`](src/screens/Onboarding.js#L201) has **no `maxLength` at all** → add `maxLength={40}`; [`NameEditModal.js:34`](src/screens/NameEditModal.js#L34) `60` → `40`; `sanitizeName` is already 40 ✓.
+6. Unshrinkable `space-between` text pairs — add `flexShrink: 1` + `numberOfLines` to the left text at [`gamify.js:97`](src/gamify.js#L97) (quest label vs `+N XP`), [`Achievements.js:52`](src/screens/Achievements.js#L52) (badge label vs check), [`HomeScreen.js:64`](src/screens/HomeScreen.js#L64) (`Lv N · levelName` vs XP), [`YouScreen.js:62`](src/screens/YouScreen.js#L62).
+7. Fixed-width text slots at [`InsightsScreen.js:124`](src/screens/InsightsScreen.js#L124): `width: 84` mood label → `minWidth: 84` + `flexShrink: 1`; the `width: 18` count clips at 3 digits (100+ entries in one mood is reachable) → `minWidth: 18`.
+8. `numberOfLines={2}` on the profile name at [`YouScreen.js:53`](src/screens/YouScreen.js#L53) (fontSize 22, 40 chars) and `{3}` on the greeting headline at [`HomeScreen.js:50`](src/screens/HomeScreen.js#L50).
+9. `npm test` green (must stay ≥ 286); `npx expo export --platform android` clean.
+
+**Commit message:** `fix(ui): settings rows survive long values instead of collapsing (IMP-030 part A)`
+
+**Ship lane:** **OTA.** No native change, no bump — `runtimeVersion` is `appVersion` = **1.0.3**, which is the version live on Play, so this reaches current users directly. Ship as soon as it's green; the name trigger is live.
+
+### Steps — Part B (font scaling, Build)
+
+10. `src/ui/textScale.js` — `MAX_FONT_SCALE = 1.5` (body/content) and `CHROME_FONT_SCALE = 1.2` (tab labels, pills, badges).
+11. [`src/ui.js`](src/ui.js#L11) `T` takes `maxFontSizeMultiplier`, defaulting to `MAX_FONT_SCALE`, overridable per call. **This one line is most of Part B's value.**
+12. Apply `CHROME_FONT_SCALE` to the fixed-size chrome: `Tab` labels and the `Write` FAB label ([`RitualsApp.js:519,406`](src/RitualsApp.js#L519)), the ember pill, the `Lv N` pill, `PalTag`.
+13. `styles.nav` gets `minHeight` and `Tab` labels `numberOfLines={1}` — the 64dp FAB at `marginTop: -26` against `paddingTop: 10` collides with scaled 10.5px labels.
+14. `npm run bump:native` → **v1.0.4 / versionCode 10** (v1.0.3 / vc 9 is live). If IMP-022 + IMP-029 land in the same shipment, **one** bump for all of them — check whether it's already past vc 9 and skip if so.
+
+**Commit message:** `fix(ui): cap font scaling so chrome can't overflow at large display sizes (IMP-030 part B)`
+
+**Ship lane:** **BUILD** — `maxFontSizeMultiplier` is native text measurement and must not ride an OTA. Batch with IMP-022 + IMP-029 rather than building for this alone. No `Release-Lane` trailer until the owner says ship.
+
+**Smoke test after build:** set a 40-char name → **You** tab: "Your name" stacks, nothing clipped, no giant row. Set the device to **Settings → Display → Display size + Font size, both at max** → walk Today / Insights / Reflections / You: no clipped label, no row taller than ~2 lines of its own text, tab bar intact and the FAB not overlapping its label. Then set the backup date back 42 days (dev menu) and confirm the reported row stacks and reads in full.
+
+---
+
 ## Open items / blockers
 
 ### ⏳ In flight
 
-- **v1.0.3 / versionCode 9 — awaiting Google production review** (submitted 2026-07-30). Carries IMP-027 (SDK 54 / API 36) + everything merged to `main` before it. Nothing to do but wait; if Google rejects, the reason lands in Play Console → Publishing overview.
-- **✅ Phase 10a COMPLETE.** 12×14 closed-testing gate cleared 2026-07-29; production access unlocked; free release applied for and submitted. **✅ API-36 compliance (deadline 2026-08-31) is met** — shipped inside this build, well ahead of the deadline.
+- **✅ v1.0.3 / versionCode 9 — REVIEWED, APPROVED, LIVE on Play** (2026-07-30). Carries IMP-027 (SDK 54 / API 36) + everything merged to `main` before it. The next build is **v1.0.4 / versionCode 10**.
+- **✅ Phase 10a COMPLETE.** 12×14 closed-testing gate cleared 2026-07-29; production access unlocked; free release live. **✅ API-36 compliance (deadline 2026-08-31) is met** — live in production, a month ahead of the deadline.
+- **🔴 IMP-030 part A is the first thing to ship.** The row blowout is live and reachable today by any user with a long name — it does not need the 42-day backup condition from the screenshot.
 
 ### ✅ Owner device verification — WALKED 2026-07-30 (on v1.0.3)
 
@@ -149,7 +227,7 @@ Opus scopes each owner-filed issue into a numbered `IMP-xxx` task (steps + commi
 
 ### 💳 Phase 10b — payments (the next real track, gated externally)
 
-- **🔓 BillDesk deadlock broken — application SUBMITTED 2026-07-30, ⏳ awaiting verification.** The trap was circular: BillDesk PA-CB seller verification wants the **live app's Play Store URL**, payments need BillDesk, BillDesk needed a published listing. Shipping v1.0.3 to production broke the cycle, and the owner has now submitted the application with their details. **Submitted ≠ verified** — BillDesk/Google still have to approve the payments profile, and until they do, subscription products cannot be activated. Watch for mail from `onboarding@billdesk.com` and Play Console → **Payments profile**. Window opened 2026-06-04 (≤90 days ⇒ ~**2026-09-02**).
+- **🔓 BillDesk deadlock broken — application SUBMITTED 2026-07-30, ⏳ awaiting verification.** The trap was circular: BillDesk PA-CB seller verification wants the **live app's Play Store URL**, payments need BillDesk, BillDesk needed a published listing. Shipping v1.0.3 broke the cycle, and the owner has now submitted the application with their details. **v1.0.3 is now live and approved**, so the listing URL resolves publicly — if BillDesk queries it during verification it will no longer 404, and the URL can be re-supplied with confidence if they ask again. **Submitted ≠ verified** — BillDesk/Google still have to approve the payments profile, and until they do, subscription products cannot be activated. Watch for mail from `onboarding@billdesk.com` and Play Console → **Payments profile**. Window opened 2026-06-04 (≤90 days ⇒ ~**2026-09-02**).
 - **Owner to confirm once the profile verifies:** whether any Play subscription products exist yet — Play Console → **Monetize → Subscriptions** (any products, and are they *active*?) and RevenueCat → **Offerings** (does `current` list packages?). Playbook 10b.2–10b.5 are still unchecked and "Play product ids" is still `TBD`.
 - **⚠️ Before flipping `PLUS_ENABLED`: create the `RC_ANDROID_KEY` EAS env var AND GitHub repo secret.** `.env` is git-ignored and never reaches EAS Build (no `.easignore`, no `env` block in `eas.json`), so a cloud build would resolve the key to `''` → `isBillingConfigured()` false → `createPurchaseService` returns the **simulation** → the paywall fakes a purchase and grants Plus free, with no crash. IMP-028 added `scripts/check-billing-config.js` as a hard preflight in the build job, but it only arms once `PLUS_ENABLED` is true. Run `eas env:create --name RC_ANDROID_KEY --scope project --environment production` and add the repo secret of the same name (`release.yml` references it; the Actions linter flags it as undefined until it exists).
 - **⚠️ The "7-day free trial" claim is hardcoded** in the paywall CTA + legal footer ([`Paywall.js`](src/screens/Paywall.js), [`PlusFlow.js`](src/screens/PlusFlow.js) `LegalFooter`). Only truthful if the Play base plan actually carries a 7-day free-trial offer. **Decide the offer when creating the products**, then either configure the trial in Play or change the copy — do not ship the claim unverified. Left hardcoded deliberately: the correct fix reads the intro/trial period off the live offering, which cannot be built or tested until real products exist. Prices themselves are already live-driven (IMP-028).
