@@ -106,14 +106,19 @@ Production `.aab` **must** be signed with the local **`dailyrituals-release.keys
 - [x] 10a.3 Expo/EAS account + `eas.json` (dev/preview/production profiles)
 - [x] 10a.4 Production `app.config.js` (version, versionCode autoincrement, icon/splash, runtimeVersion)
 - [x] 10a.5 `eas build -p android` ✅ (signed `.aab` built + uploaded; Play listing + data safety + content rating done; release **sent for review** 2026-06-06)
-- [x] 10a.6 **Closed testing gate** — Play requires **12 testers opted-in for 14 continuous days** (individual accounts post-2023-11-13) before "Apply for production" unlocks. ✅ Cleared 2026-07-29 — production access now unlocked on Play Console. Next: apply for production → publish **FREE**.
+- [x] 10a.6 **Closed testing gate** — Play requires **12 testers opted-in for 14 continuous days** (individual accounts post-2023-11-13) before "Apply for production" unlocks. ✅ Cleared 2026-07-29 — production access unlocked on Play Console.
+- [x] 10a.7 **Apply for production + submit.** ✅ **v1.0.3 / versionCode 9 submitted to production review 2026-07-30.** Ships FREE (`PLUS_ENABLED = false` ⇒ no payment surface). Carries IMP-027 (SDK 54 / API 36). ⏳ Awaiting Google review.
 - _No payments, no BillDesk, no RevenueCat production key needed for 10a._
+- **⭐ 10a is what unblocks 10b.** BillDesk verification asks for the live app's Play Store URL — see 10b.1.
 
 ### Phase 10b — Enable monetization (turn Plus on → v1.1)
-- [ ] 10b.1 BillDesk PA-CB seller verification (India payouts; up-to-90-day window — start early, finish before 10b)
-- [ ] 10b.2 Live Play subscription products (annual + monthly) + swap `test_…` → production RevenueCat key
-- [ ] 10b.3 Attach products to RevenueCat `plus` / `current`; confirm offerings return live prices
-- [ ] 10b.4 Flip `PLUS_ENABLED = true`; `eas build`; internal-track verify real purchase (all states); promote → v1.1
+> **Order matters and is not obvious.** BillDesk needs a published listing; payments need BillDesk. So the *free* launch (10a.7) is the unblock for this entire phase — "hold the launch until payments work" is a deadlock, not a plan. Recorded 2026-07-30.
+- [x] 10b.1a BillDesk PA-CB seller verification — **application submitted 2026-07-30** with the owner's details, after the 10a.7 production push supplied the live Play Store URL it required.
+- [ ] 10b.1b ⏳ **BillDesk/Google verify the payments profile.** Submitted is not approved — subscription products cannot be activated until this clears. Watch mail from `onboarding@billdesk.com` + Play Console → Payments profile. Window opened **2026-06-04**, ≤90 days ⇒ ~**2026-09-02**.
+- [ ] 10b.2 Live Play subscription products (annual + monthly). **Decide the free-trial offer here** — the paywall's "7-day free trial" copy is currently hardcoded and is only truthful if the base plan carries that offer (see IMP-028). RevenueCat production key was already swapped 2026-06-06.
+- [ ] 10b.3 Attach products to RevenueCat `plus` / `current`; confirm offerings return live prices. The paywall now renders whatever the offering returns (IMP-028) — so an empty/misconfigured offering shows the fallback constants, not a crash. Verify the real prices actually appear.
+- [ ] 10b.4 **Create the `RC_ANDROID_KEY` EAS env var + GitHub repo secret** — `.env` is git-ignored and never reaches EAS Build, so without this a cloud build silently ships the purchase *simulation*. `eas env:create --name RC_ANDROID_KEY --scope project --environment production`, plus a repo secret of the same name for `release.yml`. `scripts/check-billing-config.js` fails the build if this is missed once Plus is on.
+- [ ] 10b.5 Flip `PLUS_ENABLED = true`; `eas build`; internal-track verify real purchase (all states, via a Play **license tester** = full flow, no charge); then one real transaction, refunded; promote → v1.1
 
 ### Phase 11 — iOS parity — ⛔ blocked (needs Mac or EAS macOS + Apple Developer Program)
 - [ ] 11.1 Apple Developer + App Store Connect app record + bundle id
@@ -125,8 +130,8 @@ Production `.aab` **must** be signed with the local **`dailyrituals-release.keys
 
 ### Per-phase entry decisions (resolved / still open)
 - **Phase 9:** persistence engine ✅ confirmed AsyncStorage (2026-06-04). "Reset app data" control (9.6) — built.
-- **Phase 10a:** package id ✅ `app.dailyrituals.mobile`. Needs Expo/EAS account, Google Play Developer account ($25), hosted privacy+terms page (built 10a.2). No payments/BillDesk/production RevenueCat key here.
-- **Phase 10b:** **BillDesk PA-CB seller verification** (India — *initiated* 2026-06-04 via Google Play; finish within the 90-day window), live Play subscription products. RevenueCat production key already swapped 2026-06-06. Full enablement step list (Google service account JSON → RevenueCat, products → entitlement/offering, flip `PLUS_ENABLED`) is in the 2026-06-05 session note (build-log).
+- **Phase 10a:** package id ✅ `app.dailyrituals.mobile`. Needs Expo/EAS account, Google Play Developer account ($25), hosted privacy+terms page (built 10a.2). No payments/BillDesk/production RevenueCat key here. ✅ **Complete — submitted to production review 2026-07-30.**
+- **Phase 10b:** **BillDesk PA-CB seller verification** (India — *initiated* 2026-06-04 via Google Play; ≤90-day window ⇒ ~2026-09-02) — **it requires the live Play Store URL, which is why 10a had to ship first**. Then live Play subscription products. RevenueCat production key already swapped 2026-06-06. Full enablement step list (Google service account JSON → RevenueCat, products → entitlement/offering, flip `PLUS_ENABLED`) is in the 2026-06-05 session note (build-log). ⚠️ Two traps recorded by IMP-028: `RC_ANDROID_KEY` must exist as an **EAS env var** (`.env` never reaches EAS Build, and the fallback is a silent purchase *simulation*), and the **"7-day free trial" copy is hardcoded** — configure that offer in Play or change the copy.
 
 ---
 
@@ -148,11 +153,11 @@ Fill these in `.env` (copy from `.env.example`, created in Phase 4) and record t
 | --- | --- | --- |
 | RevenueCat entitlement id | RevenueCat dashboard | `plus` (must match `ENTITLEMENT_ID`) |
 | RevenueCat offering | dashboard | `current` (annual + monthly packages) |
-| `RC_ANDROID_KEY` | RevenueCat → API keys | ✅ **Production `goog_…` key now set in `.env`** (2026-06-06; publishable, not committed). Was sandbox `test_…`. |
+| `RC_ANDROID_KEY` | RevenueCat → API keys | ✅ **Production `goog_…` key set in `.env`** (2026-06-06; publishable, not committed). Was sandbox `test_…`. ⚠️ **`.env` is git-ignored ⇒ it never reaches EAS Build.** Before 10b, also create it as an **EAS env var** (`eas env:create --name RC_ANDROID_KEY --scope project --environment production`) **and** a GitHub repo secret of the same name for `release.yml`. Without it a cloud build falls back to the purchase *simulation* silently — `scripts/check-billing-config.js` now fails the build instead. |
 | `RC_IOS_KEY` | RevenueCat → API keys | _TBD (Phase 11 / iOS)_ |
-| Play product ids | Play Console | _TBD (Phase **10b** — live subscription products; not needed for the free 10a launch)_ |
 | `TERMS_URL` / `PRIVACY_URL` | the minimal website (Task **10a.2**, free-hosted) | `https://destructaphoenix.github.io/dailyrituals-website.github.io/terms.html` / `…/privacy.html` — ✅ live (GitHub Pages) |
-| BillDesk PA-CB verification | email from `onboarding@billdesk.com` | _TBD (Phase **10b** — India payout verification; up-to-90-day window once started)_ |
+| Play product ids | Play Console | _TBD (Phase **10b.2**) — decide the **free-trial offer** at the same time; the paywall's "7-day free trial" copy is hardcoded_ |
+| BillDesk PA-CB verification | email from `onboarding@billdesk.com` | initiated 2026-06-04 · **application submitted 2026-07-30** (the 10a.7 production push supplied the live Play Store URL it required) · ⏳ **awaiting verification** — products cannot be activated until the payments profile is approved. Window ≤90 days ⇒ ~**2026-09-02** |
 
 ---
 
