@@ -17,7 +17,7 @@ The live work is the **first unchecked `IMP-xxx` task in the Improvements backlo
 
 **App status (2026-07-30): 🟢 v1.0.3 / versionCode 9 is REVIEWED, APPROVED and LIVE on the Play Store.** The closed-testing 12×14 gate was cleared 2026-07-29, production access unlocked, the free public release was pushed, and Google has now passed it. This supersedes build 8 (RevenueCat SDK bump), which never needed to publish on its own. Three consequences: **(1) Google Play API-36 compliance (deadline 2026-08-31) is ✅ SHIPPED** — IMP-027's Expo SDK 54 / `targetSdkVersion 36` upgrade is live, so the native build on `compileSdkVersion 36` is proven in production; **(2) the BillDesk deadlock is ✅ UNBLOCKED** — the public Play Store URL that BillDesk PA-CB verification was asking for now exists, which was the gate on all of Phase 10b (payments); **(3) OTA now reaches real users** — `runtimeVersion` is `appVersion` = **1.0.3**, the live version, so an OTA lands on installed devices. Ship OTA fixes promptly and treat regressions as user-visible. The app ships **free**: `PLUS_ENABLED = false`, so there is no payment surface in it at all.
 
-**Current stack:** Expo SDK **54** · React Native **0.81.5** · React **19.1.0** · **Legacy Architecture** (`expo.newArchEnabled: false`, held deliberately — SDK 55 drops Legacy and that migration is its own future task) · `compileSdkVersion`/`targetSdkVersion` **36**, `minSdkVersion` **24** · `npm test` → **286 passed, 36 suites**. Details in [`docs/playbook.md`](docs/playbook.md).
+**Current stack:** Expo SDK **54** · React Native **0.81.5** · React **19.1.0** · **Legacy Architecture** (`expo.newArchEnabled: false`, held deliberately — SDK 55 drops Legacy and that migration is its own future task) · `compileSdkVersion`/`targetSdkVersion` **36**, `minSdkVersion` **24** · `npm test` → **300 passed, 37 suites**. Details in [`docs/playbook.md`](docs/playbook.md).
 
 ---
 
@@ -51,7 +51,7 @@ Opus scopes each owner-filed issue into a numbered `IMP-xxx` task (steps + commi
 | IMP-026 | Remove the Gamification toggle entirely — gamification is always on; delete the setting + switch + all `gamify` gating, no residue | OTA | ✅ code-complete — full detail in build-log |
 | IMP-027 | 🔴 Upgrade Expo SDK 51→54 to hit `targetSdkVersion 36` (Android 16) — Google Play compliance deadline Aug 31, 2026 | Build | ✅ **shipped** in v1.0.3 / vc 9 (production review) — full detail in build-log |
 | IMP-028 | 🔴 Billing correctness pass before any real transaction — live store prices on the paywall (kill hardcoded USD), build-time guard against shipping the purchase simulation, real renew date in the cancel sheet | OTA | ✅ code-complete — full detail in build-log |
-| IMP-029 | Tell the user when their data came from a Google backup — a one-time "restored, and it's from {date}" note with a one-tap route to the manual restore | Build | ⬜ open — spec inline below |
+| IMP-029 | Tell the user when their data came from a Google backup — a one-time "restored, and it's from {date}" note with a one-tap route to the manual restore | Build | ✅ code-complete — full detail in build-log |
 | IMP-030 | 🔴 Layout can't blow out, whatever the text — settings rows auto-stack instead of collapsing to a 1-char-per-line column; app-wide font-scale cap | OTA (A) + Build (B) | ⬜ open — spec inline below |
 
 ---
@@ -87,48 +87,6 @@ Opus scopes each owner-filed issue into a numbered `IMP-xxx` task (steps + commi
 **Version bump — RESOLVED (2026-07-30): you must bump.** This rule used to be conditional on whether versionCode 9 had shipped. It has — v1.0.3 / vc 9 was uploaded and submitted to production review on 2026-07-30 — so IMP-022 **cannot ride it**. Run **`npm run bump:native`** (not `bump:build`): adding the `expo-print` native module makes the JS bundle incompatible with older builds, so `version` must move to keep the `appVersion` runtimeVersion policy honest. **One bump for the whole IMP-022 + IMP-029 shipment** — if IMP-029 has already moved past v1.0.3 / versionCode 9, skip the bump rather than burning a second version.
 
 **Smoke test after build:** Plus user PDF export → share sheet opens → file opens; non-Plus still hits paywall; Expo Go shows the unavailable toast; About sheet opens with the real version string (should read **1.0.3**, from `Constants`, not a hardcoded `v1.0`).
-
----
-
-## 📋 IMP-029 (OPEN SPEC) — tell the user their data came from a Google backup
-
-**Problem (owner-found on the 2026-07-30 device walk).** Uninstall → reinstall auto-restores via Android Auto Backup (IMP-006, working correctly), but the restored data was **stale** — "older data before today". That staleness is the platform contract, **not a defect**: Auto Backup runs at most **once per 24h** and only while the device is **idle + charging + on unmetered Wi-Fi**. The defect is that the restore is **silent** — the app just opens with data, and nothing says where it came from or how old it is. Two consequences: (1) the user may never notice the missing recent days; (2) worse, they write today's entry on top of the stale restore and *then* remember their manual JSON backup — restoring it is restore-by-replace, which discards what they just wrote (IMP-020's automatic recovery copy makes this survivable, but it is a bad hole to fall into).
-
-**Goal.** On the first launch of a restored install, show a one-time, calm note naming the backup's date, with a one-tap route into the existing manual restore. Change neither backup mechanism — they are complementary (**Auto Backup** = zero effort, ≤24h stale; **manual JSON** = current to the second, requires action). Make the difference *visible*.
-
-### Approach (decided by Opus — do not re-litigate)
-
-- **Detection = `lastSavedAt` vs install time.** `serialize()` stamps `lastSavedAt: Date.now()` into the persisted envelope on **every** save; `deserialize()` strips `version` as it does today but **keeps `lastSavedAt`** on the returned slice. On launch, compare it against the app's first-install time (`expo-application`). **Install newer than the data ⇒ this data outlived an install ⇒ it was restored.**
-  - Android's `firstInstallTime` does **not** change on app *update*, so Play updates and OTA updates cannot false-positive. It **does** reset on uninstall→reinstall, which is exactly the case we want.
-  - Stamping inside `saveState`/`serialize` (not at call sites) means the **manual** restore path also refreshes it — `handleReplaceAllData` already calls `saveState`, so importing a JSON backup whose file contains an old `lastSavedAt` cannot false-positive.
-- **Absent `lastSavedAt` ⇒ show nothing.** Data backed up by a version older than this feature has no timestamp, and "restored from a backup dated unknown" is worse than silence. Consequence to accept: **the very first reinstall after this ships will not show the notice.** Correct and self-healing.
-- **Self-clearing, no new flag.** Dismissing calls `saveState(hydrated)`, which re-stamps `lastSavedAt` to now and makes the condition false forever after. Do **not** add a `noticeSeen` key.
-- **Host it in `RitualsApp`, detect in `App.js`.** A restored install has `onboarded` true, so it lands in `RitualsApp` — which is also where `doImport` (the manual restore, line ~292) lives, so the secondary action wires up locally. `App.js` computes the flag during hydration and passes it down as a prop; no new persistence, no new context.
-- **Do not** touch `allowBackup`, the backup rules, `PERSISTED_KEYS`, or `SCHEMA_VERSION` — `lastSavedAt` rides the envelope beside `version`, not the state slice, so **no migrator is needed**.
-- ❌ **Rejected: `BackupManager.dataChanged()`** to force fresher backups. Needs custom native code (no Expo API) and Android still throttles to ~once/day under the same idle/charging/Wi-Fi conditions — it narrows the staleness window without ever closing it. Not worth the native surface; visibility is strictly better value.
-
-### TDD (the tested boundary is pure — mirror `src/backup/`)
-
-`src/persistence/restoreDetect.js` → `isRestoredInstall({ lastSavedAt, installedAt })` and `formatBackupDate(ms)`. Cases: install newer than data ⇒ true; data newer ⇒ false; **equal ⇒ false**; missing `lastSavedAt` ⇒ false; missing/invalid `installedAt` ⇒ false; non-numeric junk ⇒ false. Plus `serialize`/`deserialize` round-trip: the stamp is written, survives a round-trip, is refreshed on re-save, and old payloads without it still deserialize (inject the clock — `serialize(slice, now)` — so tests are deterministic).
-
-### Steps
-
-1. RED: `__tests__/persistence/restoreDetect.test.js` + extend `__tests__/persistence/` for the `serialize`/`deserialize` stamp.
-2. GREEN: `src/persistence/restoreDetect.js`; stamp in `src/persistence/state.js` (`serialize` takes an injectable `now`); keep `lastSavedAt` through `deserialize`.
-3. `npx expo install expo-application` (**not** bare `npm install`). **Verify the export name against the installed version** before using it — confirm `getInstallationTimeAsync()` (returns a `Date`) is what SDK 54's copy ships; adjust if renamed.
-4. `App.js`: during hydration, read the install time, compute `restoredFromMs` (null when not a restore), pass to `RitualsApp`.
-5. `src/screens/RestoreNotice.js` — presentational card matching the `PurchaseOverlay`/`CancelSheet` shape. Copy: title **"Welcome back."**; body "Your journal was restored from your Google backup, saved **{date}**. Anything written after that isn't here." Primary **"Got it"**; secondary **"Restore from a file"**.
-6. `RitualsApp.js`: render it when the prop is set; "Got it" → dismiss + `saveState`; "Restore from a file" → dismiss + existing `doImport`.
-7. `npm test` green (must stay ≥ prior count); `npx expo export --platform android` clean.
-8. Version bump — see below. Commit.
-
-**Commit message:** `feat(backup): tell the user when their data was restored from a Google backup (IMP-029)`
-
-**Ship lane:** **BUILD** (new `expo-application` native module). **Batch with IMP-022** (already BUILD for `expo-print`) so this is not a one-feature build. IMP-029 **owns the `expo-application` install**; IMP-022's About sheet takes its version string from `expo-constants`, which is already vendored. No `Release-Lane` trailer until the owner says ship.
-
-**Version bump:** one `npm run bump:native` for the **combined** IMP-022 + IMP-029 shipment — not one each. Whichever task lands second checks whether the other already bumped past **v1.0.3 / versionCode 9** (shipped 2026-07-30) and skips if so.
-
-**Smoke test after build:** write an entry → wait for a real Auto Backup (idle + charging + Wi-Fi) → uninstall → reinstall → notice appears naming the backup's date → "Restore from a file" opens the picker → "Got it" dismisses and **does not** reappear on relaunch. Also confirm the negative cases: a normal launch, a Play/OTA update, and a fresh install all show **nothing**.
 
 ---
 
@@ -212,9 +170,10 @@ Plus a `Row` render test asserting it never emits a `<T>` without `numberOfLines
 
 ### ⏳ In flight
 
-- **✅ v1.0.3 / versionCode 9 — REVIEWED, APPROVED, LIVE on Play** (2026-07-30). Carries IMP-027 (SDK 54 / API 36) + everything merged to `main` before it. The next build is **v1.0.4 / versionCode 10**.
+- **✅ v1.0.3 / versionCode 9 — REVIEWED, APPROVED, LIVE on Play** (2026-07-30). Carries IMP-027 (SDK 54 / API 36) + everything merged to `main` before it. The next build is **v1.0.4 / versionCode 10** — bumped by IMP-029 (`expo-application`); IMP-022 (`expo-print`) rides the same shipment without bumping again.
 - **✅ Phase 10a COMPLETE.** 12×14 closed-testing gate cleared 2026-07-29; production access unlocked; free release live. **✅ API-36 compliance (deadline 2026-08-31) is met** — live in production, a month ahead of the deadline.
 - **🔴 IMP-030 part A is the first thing to ship.** The row blowout is live and reachable today by any user with a long name — it does not need the 42-day backup condition from the screenshot.
+- **IMP-029 is code-complete, not yet built/shipped.** Needs a real Auto Backup + uninstall/reinstall device walk (see its smoke test in build-log) before it can be trusted in production; batch the build with IMP-022.
 
 ### ✅ Owner device verification — WALKED 2026-07-30 (on v1.0.3)
 
@@ -223,7 +182,7 @@ Plus a `Row` render test asserting it never emits a `<T>` without `numberOfLines
 - **IMP-006 (Android Auto Backup) — ✅ PASSED, with a UX finding.** Uninstall → reinstall **did** auto-restore with no login, which is exactly the feature. The restored data was **stale ("older data before today")** — that is the documented Android Auto Backup contract, **not a defect**: it runs at most **once per 24h**, and only while the device is **idle + charging + on unmetered Wi-Fi**, so anything written since the last successful backup is not in it. Config is correct (`android:allowBackup="true"`, no custom rules, per the IMP-006 spec). **The real problem is that the restore is silent** — see the open finding below.
 - **IMP-021 (Lifetime Progress):** still unwalked; OTA lane, no ship trailer applied yet — owner decides when to push.
 
-### 🔎 The auto-restore is silent — ✅ scoped as **IMP-029** (spec inline below)
+### 🔎 The auto-restore is silent — ✅ scoped and code-complete as **IMP-029** (full detail in build-log; unwalked on-device)
 
 ### 💳 Phase 10b — payments (the next real track, gated externally)
 
@@ -244,4 +203,4 @@ _History archived in [`docs/build-log.md`](docs/build-log.md) → "Session notes
 
 _2026-07-30 (billing) — **IMP-028: billing correctness pass** (OTA lane; no ship trailer). Owner asked to enable + real-transaction-test payments before the public push, so the whole billing seam was audited. The seam itself is sound (`Purchases.configure()` correctly called + gated in `App.js`; metro purchases stub is web-only). **Three real defects found and fixed:** the paywall rendered **hardcoded USD** while Google charges the local Play price and `getPrices()` was dead code (now live-driven via new `src/billing/prices.js` + `useLivePrices.js`); an **EAS cloud build would have silently shipped the purchase simulation**, faking successful purchases and granting Plus free (now a hard `scripts/check-billing-config.js` preflight in `release.yml`); and `CancelSheet` showed a hardcoded renew date. The **"7-day free trial" claim was deliberately left hardcoded** — the correct fix reads the trial period off a live offering, which cannot exist until Play products do. `npm test` → **286 passed, 36 suites** (+24, zero product-logic changes); `expo export` clean. **Headline finding was not code:** BillDesk wants the live Play Store URL, which deadlocked "hold the launch until payments work". Full detail in [`docs/build-log.md`](docs/build-log.md) → IMP-028._
 
-_2026-07-30 (launch) — **🚀 v1.0.3 / versionCode 9 submitted to PRODUCTION review** (owner) + a docs reconciliation pass. This is the free public launch: `PLUS_ENABLED = false`, so the build carries no payment surface at all. Three facts changed by it and now reflected everywhere: **(1) IMP-027 is SHIPPED, not code-complete** — the native build on `compileSdkVersion 36` demonstrably worked, so the `~/.gradle/init.d` kapt tmpdir fix held on SDK 54's newer Kotlin/kapt without a rewrite, and **API-36 compliance is met a month ahead of the 2026-08-31 deadline**; build 8 is superseded and no longer waiting on anything. **(2) The BillDesk deadlock is unblocking** — this upload is what mints the public Play Store URL BillDesk PA-CB verification wants; hand it `https://play.google.com/store/apps/details?id=app.dailyrituals.mobile` (worth trying before review completes). **(3) IMP-022's conditional version-bump rule is now RESOLVED to "must bump"** — it was written as "ride versionCode 9 if it hasn't shipped"; 9 has shipped, so IMP-022 runs `npm run bump:native`. Open items were restructured from a flat list into **In flight / Owner device verification / Phase 10b / Parked**, because the accumulated per-IMP device-verification items (IMP-006, 020, 021, 027) are one runtime walk on the live build, not four separate blockers — the edge-to-edge audit is the one that matters most. IMP-028's full detail archived to build-log per the size budget. No code changed this session; `npm test` still **286 passed, 36 suites**. Also this session: **the BillDesk application was submitted** (2026-07-30) now that the production push supplied the Play Store URL it wanted — recorded as submitted-not-yet-verified, since products cannot be activated until the payments profile is actually approved. The owner then walked the production build: **edge-to-edge ✅, manual backup/restore ✅, and Android Auto Backup ✅** — uninstall→reinstall auto-restored with no login, closing IMP-006, IMP-020 and IMP-027. The restored data was stale ("older data before today"), which is the **documented Auto Backup contract** (≤once/24h, idle+charging+Wi-Fi), **not a defect** — but it surfaced that the restore is **silent**, now scoped as **IMP-029**. NEXT: IMP-022 then IMP-029, shipped in one BUILD._
+_2026-07-30 (backup) — **IMP-029: tell the user their data was restored from a Google backup** (BUILD lane; no ship trailer — batch with IMP-022). The 2026-07-30 device walk found Auto Backup restoring correctly but silently and with data up to 24h stale; this makes that visible. **Detection is inferred, not native:** `serialize()` (`src/persistence/state.js`) now stamps `lastSavedAt: now` (injectable clock) on every save, always overriding any stale value in the slice, so a manual JSON import re-stamps too and can't false-positive; pure `src/persistence/restoreDetect.js` (`isRestoredInstall`, `formatBackupDate`) compares that stamp against `expo-application`'s `getInstallationTimeAsync()` — install newer than the data ⇒ restored. `App.js` computes the flag during hydration (skipping the native call entirely when `lastSavedAt` is absent — the common fresh-install path) and passes it to `RitualsApp`; new presentational `src/screens/RestoreNotice.js` (mirrors `PurchaseOverlay`/`CancelSheet`) offers **Got it** / **Restore from a file**, wired to the existing `doImport`. Self-clearing — dismissing re-stamps via `saveState`, no new persisted flag. `npm test` → **300 passed, 37 suites** (from 286/36; +14, zero product-logic changes); `expo export` clean. `npm run bump:native` → **v1.0.4 / versionCode 10** (IMP-029 lands first of the IMP-022+IMP-029 pair, so it owns this bump). Full detail in [`docs/build-log.md`](docs/build-log.md) → IMP-029. NEXT: IMP-022 (Save as PDF + About sheet), then batch-build both for IMP-030 part B too._
