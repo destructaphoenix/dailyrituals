@@ -571,6 +571,10 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
               onLoadState={(state) => { setShowDev(false); onReplaceAllData(state); }}
               onResetFresh={() => { setShowDev(false); onResetData(); }}
               onClose={() => setShowDev(false)}
+              settings={settings}
+              setSettings={setSettings}
+              onRearmReminders={rearmReminders}
+              wroteToday={!!findTodaysEntry(entries, todayKey())}
             />
           </Modal>
         )}

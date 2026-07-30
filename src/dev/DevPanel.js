@@ -8,6 +8,7 @@ import { useTheme } from '../theme';
 import { T } from '../ui';
 import { buildState } from './buildState';
 import { SCENARIOS_LIST } from './scenarios';
+import NotifySection from './panel/NotifySection';
 
 const SENTINEL = 'DEV_HARNESS_SENTINEL_DO_NOT_SHIP';
 
@@ -47,7 +48,7 @@ function Toggle({ label, value, onChange }) {
   );
 }
 
-export default function DevPanel({ onLoadState, onResetFresh, onClose }) {
+export default function DevPanel({ onLoadState, onResetFresh, onClose, settings, setSettings, onRearmReminders, wroteToday }) {
   const c = useTheme().colors;
   const [knobs, setKnobs] = useState(DEFAULT_KNOBS);
   const set = (patch) => setKnobs((k) => ({ ...k, ...patch }));
@@ -93,6 +94,15 @@ export default function DevPanel({ onLoadState, onResetFresh, onClose }) {
         <Pressable onPress={onResetFresh} style={{ paddingVertical: 14, alignItems: 'center', marginTop: 8 }}>
           <T w={700} color={c.red} style={{ fontSize: 15 }}>Reset to fresh</T>
         </Pressable>
+
+        {settings && setSettings && (
+          <NotifySection
+            settings={settings}
+            setSettings={setSettings}
+            onRearmReminders={onRearmReminders}
+            wroteToday={wroteToday}
+          />
+        )}
       </ScrollView>
     </View>
   );
