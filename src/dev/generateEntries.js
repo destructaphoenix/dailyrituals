@@ -5,6 +5,9 @@
 import { DAY_MS, dayKeyToUtcMs } from '../insights/dateKeys';
 import { entryDateParts } from '../time/clock';
 import { MOODS } from '../data';
+import { SENTINEL } from './sentinel';
+
+export const DEV_ID = `${SENTINEL}/generateEntries`;
 
 const DIDS = [
   'walked at dawn', 'wrote three pages', 'called an old friend', 'sat in the sun',

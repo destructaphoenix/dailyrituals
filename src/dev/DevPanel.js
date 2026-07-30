@@ -1,57 +1,60 @@
 // src/dev/DevPanel.js
-// DEV-ONLY. Reached only via a __DEV__-guarded require in RitualsApp, so this
-// whole file (and its imports) is stripped from release bundles. SENTINEL is the
-// marker the verification step greps for — it must be ABSENT from prod bundles.
+// DEV-ONLY shell — collapsible sections only; the actual controls live in
+// src/dev/panel/*.js. Reached only via a __DEV__-guarded require in
+// RitualsApp, so this whole file (and its imports) is stripped from release
+// bundles. SENTINEL is the marker the verification step greps for — it must
+// be ABSENT from prod bundles. Every dev module's DEV_ID is imported and
+// rendered in the footer below: rendering (not just exporting) is what stops
+// the minifier dropping an unreferenced constant, so the grep covers every
+// dev module, not just this one.
 import React, { useState } from 'react';
-import { View, ScrollView, Pressable, Switch, Text } from 'react-native';
+import { View, ScrollView, Pressable } from 'react-native';
 import { useTheme } from '../theme';
 import { T } from '../ui';
-import { buildState } from './buildState';
-import { SCENARIOS_LIST } from './scenarios';
-import NotifySection from './panel/NotifySection';
+import { SENTINEL } from './sentinel';
+import { DEV_ID as BUILD_STATE_ID } from './buildState';
+import { DEV_ID as GENERATE_ENTRIES_ID } from './generateEntries';
+import { DEV_ID as SCENARIOS_ID } from './scenarios';
+import { DEV_ID as NOTIFY_PROBE_ID } from './notifyProbe';
+import { DEV_ID as INSPECT_NOTIFY_ID } from './inspectNotify';
+import { DEV_ID as INSPECT_ID } from './inspect';
+import { DEV_ID as CONTROLS_ID } from './panel/controls';
+import StateSection, { DEV_ID as STATE_SECTION_ID } from './panel/StateSection';
+import NotifySection, { DEV_ID as NOTIFY_SECTION_ID } from './panel/NotifySection';
+import InspectSection, { DEV_ID as INSPECT_SECTION_ID } from './panel/InspectSection';
+import LaunchSection, { DEV_ID as LAUNCH_SECTION_ID } from './panel/LaunchSection';
 
-const SENTINEL = 'DEV_HARNESS_SENTINEL_DO_NOT_SHIP';
+export const DEV_ID = `${SENTINEL}/DevPanel`;
 
-const todayKey = () => new Date().toISOString().slice(0, 10);
+const MODULE_IDS = [
+  DEV_ID, BUILD_STATE_ID, GENERATE_ENTRIES_ID, SCENARIOS_ID, NOTIFY_PROBE_ID,
+  INSPECT_NOTIFY_ID, INSPECT_ID, CONTROLS_ID, STATE_SECTION_ID, NOTIFY_SECTION_ID,
+  INSPECT_SECTION_ID, LAUNCH_SECTION_ID,
+];
 
-const DEFAULT_KNOBS = {
-  streak: 3, entryCount: 3, gaps: [], done: true, plus: false,
-  embers: 0, palette: 'goldenhour', sky: 'classic', ownAll: false,
-  tone: 'gentle', freezes: 0,
-};
-
-function Stepper({ label, value, onChange, step = 1 }) {
+function Collapsible({ title, defaultOpen = false, children }) {
   const c = useTheme().colors;
+  const [open, setOpen] = useState(defaultOpen);
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8 }}>
-      <T w={700} color={c.ink} style={{ fontSize: 15 }}>{label}</T>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-        <Pressable onPress={() => onChange(Math.max(0, value - step))} hitSlop={10}>
-          <T w={800} color={c.accentDeep} style={{ fontSize: 22 }}>−</T>
-        </Pressable>
-        <T w={700} color={c.ink} style={{ fontSize: 15, minWidth: 44, textAlign: 'center' }}>{value}</T>
-        <Pressable onPress={() => onChange(value + step)} hitSlop={10}>
-          <T w={800} color={c.accentDeep} style={{ fontSize: 22 }}>+</T>
-        </Pressable>
-      </View>
+    <View style={{ marginBottom: 8, borderRadius: 12, borderWidth: 1, borderColor: c.border }}>
+      <Pressable onPress={() => setOpen((o) => !o)} style={{ paddingVertical: 12, paddingHorizontal: 14 }}>
+        <T w={800} color={c.ink} style={{ fontSize: 15 }}>{open ? '▾ ' : '▸ '}{title}</T>
+      </Pressable>
+      {open && <View style={{ paddingHorizontal: 14, paddingBottom: 14 }}>{children}</View>}
     </View>
   );
 }
 
-function Toggle({ label, value, onChange }) {
+export default function DevPanel({
+  onLoadState, onResetFresh, onClose, settings, setSettings, onRearmReminders, wroteToday,
+  getSlice, appVersion, onOpenCelebration, onOpenAchievements, onOpenShop, onOpenGetEmbers,
+  onOpenReminder, onShowToast, onOpenReading, onOpenRestoreNotice, plusFlow, insets,
+}) {
   const c = useTheme().colors;
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8 }}>
-      <T w={700} color={c.ink} style={{ fontSize: 15 }}>{label}</T>
-      <Switch value={value} onValueChange={onChange} />
-    </View>
-  );
-}
-
-export default function DevPanel({ onLoadState, onResetFresh, onClose, settings, setSettings, onRearmReminders, wroteToday }) {
-  const c = useTheme().colors;
-  const [knobs, setKnobs] = useState(DEFAULT_KNOBS);
-  const set = (patch) => setKnobs((k) => ({ ...k, ...patch }));
+  // Closes the harness before opening whatever was launched — RN Modals are
+  // separate native windows, so an overlay opened underneath a still-open
+  // full-screen Dev Modal would be invisible until this one closes.
+  const launch = (fn) => (...args) => { onClose(); if (fn) fn(...args); };
 
   return (
     <View testID={SENTINEL} style={{ flex: 1, backgroundColor: c.bg }}>
@@ -61,48 +64,38 @@ export default function DevPanel({ onLoadState, onResetFresh, onClose, settings,
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48 }}>
-        <T w={800} color={c.muted} style={{ fontSize: 12, letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 8 }}>Scenarios</T>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
-          {SCENARIOS_LIST.map((s) => (
-            <Pressable
-              key={s.key}
-              onPress={() => set({ ...DEFAULT_KNOBS, ...s.knobs })}
-              style={{ backgroundColor: c.accentSoft, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 10 }}
-            >
-              <T w={700} color={c.accentDeep} style={{ fontSize: 13 }}>{s.label}</T>
-            </Pressable>
-          ))}
-        </View>
-
-        <T w={800} color={c.muted} style={{ fontSize: 12, letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 4 }}>Knobs</T>
-        <Stepper label="Streak" value={knobs.streak} onChange={(v) => set({ streak: v })} />
-        <Stepper label="Entries" value={knobs.entryCount} onChange={(v) => set({ entryCount: v })} />
-        <Stepper label="Embers" value={knobs.embers} step={50} onChange={(v) => set({ embers: v })} />
-        <Stepper label="XP (0 = derive)" value={knobs.xp ?? 0} step={50} onChange={(v) => set({ xp: v === 0 ? undefined : v })} />
-        <Stepper label="Freezes" value={knobs.freezes} onChange={(v) => set({ freezes: v })} />
-        <Toggle label="Done today" value={knobs.done} onChange={(v) => set({ done: v })} />
-        <Toggle label="Plus" value={knobs.plus} onChange={(v) => set({ plus: v })} />
-        <Toggle label="Own all cosmetics" value={knobs.ownAll} onChange={(v) => set({ ownAll: v })} />
-
-        <Pressable
-          onPress={() => onLoadState(buildState(knobs, todayKey()))}
-          style={{ backgroundColor: c.accentDeep, borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginTop: 24 }}
-        >
-          <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>Apply</Text>
-        </Pressable>
-
-        <Pressable onPress={onResetFresh} style={{ paddingVertical: 14, alignItems: 'center', marginTop: 8 }}>
-          <T w={700} color={c.red} style={{ fontSize: 15 }}>Reset to fresh</T>
-        </Pressable>
+        <Collapsible title="State" defaultOpen>
+          <StateSection onLoadState={onLoadState} onResetFresh={onResetFresh} getSlice={getSlice} appVersion={appVersion} />
+        </Collapsible>
 
         {settings && setSettings && (
-          <NotifySection
-            settings={settings}
-            setSettings={setSettings}
-            onRearmReminders={onRearmReminders}
-            wroteToday={wroteToday}
-          />
+          <Collapsible title="Notifications">
+            <NotifySection settings={settings} setSettings={setSettings} onRearmReminders={onRearmReminders} wroteToday={wroteToday} />
+          </Collapsible>
         )}
+
+        <Collapsible title="Inspector">
+          <InspectSection getSlice={getSlice} />
+        </Collapsible>
+
+        <Collapsible title="Launch overlays">
+          <LaunchSection
+            onOpenCelebration={launch(onOpenCelebration)}
+            onOpenAchievements={launch(onOpenAchievements)}
+            onOpenShop={launch(onOpenShop)}
+            onOpenGetEmbers={launch(onOpenGetEmbers)}
+            onOpenReminder={launch(onOpenReminder)}
+            onShowToast={launch(onShowToast)}
+            onOpenReading={launch(onOpenReading)}
+            onOpenRestoreNotice={launch(onOpenRestoreNotice)}
+            plusFlow={plusFlow}
+            insets={insets}
+          />
+        </Collapsible>
+
+        <T color={c.muted} style={{ fontSize: 9, marginTop: 12, textAlign: 'center' }}>
+          {MODULE_IDS.join(' · ')}
+        </T>
       </ScrollView>
     </View>
   );

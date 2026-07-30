@@ -5,8 +5,10 @@
 // import here would reintroduce that crash. Zero business logic: scheduling
 // decisions stay in src/reminders/schedule.js; this only talks to the OS.
 import { NATIVE_UNAVAILABLE } from '../reminders/io';
+import { SENTINEL } from './sentinel';
 
 export { NATIVE_UNAVAILABLE };
+export const DEV_ID = `${SENTINEL}/notifyProbe`;
 
 let cached;
 function load() {

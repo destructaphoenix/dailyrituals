@@ -184,3 +184,14 @@ This guarantees the next chat (Prompt 3) can pick up cleanly.
 - **Commit often.** The plan specifies a commit per task. Commits are the durable record; `git log` is a backstop if `PROGRESS.md` ever drifts.
 - **Use Prompt 4 sparingly** — only when you want confidence before a risky phase (e.g., before Phase 6 real billing).
 - If a chat starts behaving oddly or hallucinating file contents, that's a context/credit signal: stop it, start a fresh chat with Prompt 1.
+
+---
+
+## Dev harness (dev builds only — IMP-032)
+
+Long-press **"About Daily Rituals"** on the You tab to open it. It never ships: the whole `src/dev/` subtree is `__DEV__`-guarded and stripped from release bundles (verified by a sentinel-string grep against `npx expo export`).
+
+- **State** — scenario presets + a control for every persisted/settings knob (streak, mode, name, reminder, store simulation, backup age, …). Apply/Reset both write a recovery copy first, the same safety guarantee as a real restore.
+- **Notifications** — live permission status, the app's real reminder settings, and an intended-vs-pending diff against what `expo-notifications` actually scheduled.
+- **Inspector** — read-only: every derived stat (streak, level, achievements) computed through the app's own real helpers, plus device facts (font-scale cap, OTA channel/runtimeVersion) and a JSON export of the current state.
+- **Launch overlays** — direct-open buttons for celebration/paywall/manage/achievements/shop/reminder/toast/reading/restore-notice — states otherwise reachable only via a real trigger.

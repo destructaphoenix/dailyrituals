@@ -6,6 +6,9 @@ import { buildEntries, shiftDayKey } from './generateEntries';
 import { DAILY_QUESTS, SHOP_PALETTES, SHOP_SKIES } from '../data';
 import { DEFAULT_SETTINGS } from '../theme';
 import { dayKeyToUtcMs, DAY_MS } from '../insights/dateKeys';
+import { SENTINEL } from './sentinel';
+
+export const DEV_ID = `${SENTINEL}/buildState`;
 
 const XP_PER_DAY = 50; // mirrors XP_GAIN in RitualsApp.js
 

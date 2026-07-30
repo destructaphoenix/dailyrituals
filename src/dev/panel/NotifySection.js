@@ -11,6 +11,9 @@ import * as notifyProbe from '../notifyProbe';
 import { reminderCopy } from '../../content/reminders';
 import { nextOccurrences, reminderRowValue, formatReminderTime } from '../../reminders/schedule';
 import { describePending, diffIntendedVsPending } from '../inspectNotify';
+import { SENTINEL } from '../sentinel';
+
+export const DEV_ID = `${SENTINEL}/panel/NotifySection`;
 
 function SectionLabel({ children }) {
   const c = useTheme().colors;

@@ -96,6 +96,11 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   const [showDev, setShowDev] = useState(false);
   const [reminderOpen, setReminderOpen] = useState(false);
   const [reminderPermission, setReminderPermission] = useState('undetermined');
+  // Dev harness only (IMP-032 Part D): lets the "Restore notice" launcher show
+  // IMP-029's notice without a real uninstall/reinstall cycle. This is the
+  // ONLY prod-visible cost of the whole dev harness v2 task — one inert
+  // useState, always null outside a dev session.
+  const [devRestoreMs, setDevRestoreMs] = useState(null);
 
   // Live level derived from total XP (no hardcoded level).
   const { level, name: levelName, into: xpInto, toNext: xpToNext } = levelFromXp(xp);
@@ -575,6 +580,22 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
               setSettings={setSettings}
               onRearmReminders={rearmReminders}
               wroteToday={!!findTodaysEntry(entries, todayKey())}
+              getSlice={currentSlice}
+              appVersion={APP_VERSION}
+              insets={insets}
+              onOpenCelebration={(opts) => setCelebrate({ streak: opts.streak, xp: XP_GAIN, embers: EMBER_GAIN, milestone: opts.milestone || null })}
+              onOpenAchievements={() => setShowAch(true)}
+              onOpenShop={() => setShopOpen(true)}
+              onOpenGetEmbers={() => setGetEmbersOpen(true)}
+              onOpenReminder={() => setReminderOpen(true)}
+              onShowToast={(msg) => showToast(msg)}
+              onOpenReading={(entry) => setReading(entry)}
+              onOpenRestoreNotice={(daysAgo) => setDevRestoreMs(Date.now() - (daysAgo || 0) * 86400000)}
+              plusFlow={{
+                platform: PLATFORM, service, plus, livePlan, subCanceled, renewLabel, livePrice,
+                openLink, onSubscribe: subscribe, onRestore: doRestore, onCancel: doCancel,
+                onResume: doResume, onGetHelp: doGetHelp,
+              }}
             />
           </Modal>
         )}
@@ -582,9 +603,9 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
         {toast && !shopOpen && <Toast key={toast.key} message={toast.msg} bottom={insets.bottom} />}
 
         <RestoreNotice
-          restoredAtMs={restoredFromMs}
-          onGotIt={onDismissRestoreNotice}
-          onRestoreFile={() => { onDismissRestoreNotice(); doImport(); }}
+          restoredAtMs={devRestoreMs ?? restoredFromMs}
+          onGotIt={() => (devRestoreMs ? setDevRestoreMs(null) : onDismissRestoreNotice())}
+          onRestoreFile={() => { (devRestoreMs ? setDevRestoreMs(null) : onDismissRestoreNotice()); doImport(); }}
         />
       </View>
     </ThemeContext.Provider>

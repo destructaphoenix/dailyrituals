@@ -1,6 +1,9 @@
 // src/dev/scenarios.js
 // Named knob-set presets for the dev harness. Each is fed to buildState.
 import { buildState } from './buildState';
+import { SENTINEL } from './sentinel';
+
+export const DEV_ID = `${SENTINEL}/scenarios`;
 
 export const SCENARIOS_LIST = [
   { key: 'shortStreak',  label: '3-day streak (done today)', knobs: { streak: 3, entryCount: 3, done: true } },

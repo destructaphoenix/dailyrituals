@@ -4,6 +4,9 @@
 // actually returned). Expo's returned trigger shape differs by platform/SDK,
 // so normalising defensively is the point — an "unreadable trigger" fallback
 // row beats a crash.
+import { SENTINEL } from './sentinel';
+
+export const DEV_ID = `${SENTINEL}/inspectNotify`;
 
 function extractWhen(trigger, now) {
   if (!trigger) return null;
