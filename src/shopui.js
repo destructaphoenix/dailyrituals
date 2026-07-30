@@ -7,6 +7,7 @@ import { View, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from './theme';
 import { T } from './ui';
+import { CHROME_FONT_SCALE } from './ui/textScale';
 import { Ember, Lock, Check, Sun, Moon, Chevron } from './icons';
 import { RENEW_DATE } from './data';
 
@@ -27,9 +28,9 @@ export function EmberPill({ embers, plus, onPress, lg }) {
         </View>
       )}
       <Ember size={17} deep={c.accentDeep} />
-      <T d w={800} color={c.accentDeep} style={{ fontSize: 15 }}>{embers}</T>
+      <T d w={800} color={c.accentDeep} maxFontSizeMultiplier={CHROME_FONT_SCALE} numberOfLines={1} style={{ fontSize: 15 }}>{embers}</T>
       <View style={{ width: 17, height: 17, borderRadius: 9, marginLeft: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: c.accent }}>
-        <T d w={800} color={c.onAccent} style={{ fontSize: 13, lineHeight: 15 }}>+</T>
+        <T d w={800} color={c.onAccent} maxFontSizeMultiplier={CHROME_FONT_SCALE} numberOfLines={1} style={{ fontSize: 13, lineHeight: 15 }}>+</T>
       </View>
     </Pressable>
   );
@@ -114,22 +115,22 @@ export function SkyPreview({ kind }) {
 // ── Price / state tag (palette + sky cards) ───────────────────────────────────
 export function PalTag({ st, tier }) {
   const c = useTheme().colors;
-  if (st === 'active') return <T d w={800} color={c.accentDeep} style={{ fontSize: 12 }}>Applied</T>;
+  if (st === 'active') return <T d w={800} color={c.accentDeep} maxFontSizeMultiplier={CHROME_FONT_SCALE} numberOfLines={1} style={{ fontSize: 12 }}>Applied</T>;
   if (st === 'owned') return (
     <View style={{ alignSelf: 'flex-start', backgroundColor: c.accent, paddingHorizontal: 11, paddingVertical: 5, borderRadius: 999 }}>
-      <T d w={800} color={c.onAccent} style={{ fontSize: 12 }}>Apply</T>
+      <T d w={800} color={c.onAccent} maxFontSizeMultiplier={CHROME_FONT_SCALE} numberOfLines={1} style={{ fontSize: 12 }}>Apply</T>
     </View>
   );
   if (st === 'plus') return (
     <View style={{ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: c.accentSoft, paddingHorizontal: 11, paddingVertical: 5, borderRadius: 999 }}>
       <Sun size={11} color={c.accentDeep} />
-      <T d w={800} color={c.accentDeep} style={{ fontSize: 12 }}>Plus</T>
+      <T d w={800} color={c.accentDeep} maxFontSizeMultiplier={CHROME_FONT_SCALE} numberOfLines={1} style={{ fontSize: 12 }}>Plus</T>
     </View>
   );
   return (
     <View style={{ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: c.accentSoft, paddingHorizontal: 11, paddingVertical: 5, borderRadius: 999 }}>
       <Ember size={13} deep={c.accentDeep} />
-      <T d w={800} color={c.accentDeep} style={{ fontSize: 12 }}>{tier}</T>
+      <T d w={800} color={c.accentDeep} maxFontSizeMultiplier={CHROME_FONT_SCALE} numberOfLines={1} style={{ fontSize: 12 }}>{tier}</T>
     </View>
   );
 }

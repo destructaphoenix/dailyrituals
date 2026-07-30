@@ -6,14 +6,15 @@ import React, { useEffect, useRef } from 'react';
 import { View, Text, Pressable, Animated, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme, DARK_THEME } from './theme';
+import { MAX_FONT_SCALE } from './ui/textScale';
 
 // Themed <Text> wrappers. `w` = weight; `d` = use the display family.
-export function T({ d = false, w, italic, style, color, children, ...rest }) {
+export function T({ d = false, w, italic, style, color, maxFontSizeMultiplier = MAX_FONT_SCALE, children, ...rest }) {
   const t = useTheme();
   const weight = w != null ? w : d ? 700 : 400;
   const fontFamily = d ? t.display(weight) : t.body(weight);
   return (
-    <Text {...rest} style={[{ fontFamily, color: color || t.colors.ink, fontStyle: italic ? 'italic' : 'normal' }, style]}>
+    <Text {...rest} maxFontSizeMultiplier={maxFontSizeMultiplier} style={[{ fontFamily, color: color || t.colors.ink, fontStyle: italic ? 'italic' : 'normal' }, style]}>
       {children}
     </Text>
   );

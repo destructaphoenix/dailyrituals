@@ -14,6 +14,7 @@ import { runConfirmedImport } from './backup/importFlow';
 import * as backupIO from './backup/io';
 import { ThemeContext, makeTheme } from './theme';
 import { T } from './ui';
+import { CHROME_FONT_SCALE } from './ui/textScale';
 import { HomeIcon, BookIcon, Pencil, ChartIcon, UserIcon } from './icons';
 import { COPY, DAILY_QUESTS, STREAK_MILESTONES, SHOP_PALETTES, EMBER_GAIN, RENEW_DATE } from './data';
 import HomeScreen from './screens/HomeScreen';
@@ -404,7 +405,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             >
               <Pencil size={26} color={c.onAccent} />
             </Pressable>
-            <T w={800} color={c.accentDeep} style={{ fontSize: 10, marginTop: 5 }}>Write</T>
+            <T w={800} color={c.accentDeep} maxFontSizeMultiplier={CHROME_FONT_SCALE} numberOfLines={1} style={{ fontSize: 10, marginTop: 5 }}>Write</T>
           </View>
 
           <Tab active={tab === 'archive'} label="Reflections" onPress={() => setTab('archive')}
@@ -527,7 +528,7 @@ function Tab({ active, label, icon, onPress }) {
   return (
     <Pressable onPress={onPress} style={{ flex: 1, alignItems: 'center', gap: 4, paddingVertical: 2 }}>
       {icon}
-      <T w={700} color={active ? t.colors.accentDeep : t.colors.muted} style={{ fontSize: 10.5 }}>{label}</T>
+      <T w={700} color={active ? t.colors.accentDeep : t.colors.muted} maxFontSizeMultiplier={CHROME_FONT_SCALE} numberOfLines={1} style={{ fontSize: 10.5 }}>{label}</T>
     </Pressable>
   );
 }
@@ -539,6 +540,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     borderTopWidth: 1,
     paddingTop: 10,
+    minHeight: 78,
   },
   fab: {
     width: 64, height: 64, borderRadius: 32, marginTop: -26,

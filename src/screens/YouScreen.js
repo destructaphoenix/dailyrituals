@@ -11,6 +11,7 @@ import { profileIdentity } from '../profile/identity';
 import { lastBackupLabel } from '../backup/lastBackupLabel';
 import NameEditModal from './NameEditModal';
 import Row from '../ui/Row';
+import { CHROME_FONT_SCALE } from '../ui/textScale';
 
 export default function YouScreen({
   mode, onToggleMode, settings, setSettings,
@@ -54,7 +55,7 @@ export default function YouScreen({
               <T d w={800} color={c.ink} numberOfLines={2} style={{ fontSize: 22 }}>{display}</T>
               <View style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6, marginTop: 4, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, backgroundColor: c.accentSoft }}>
                 {dark ? <Moon size={13} color={c.accentDeep} /> : <Sun size={13} color={c.accentDeep} />}
-                <T w={800} color={c.accentDeep} style={{ fontSize: 12 }}>Lv {level} · {levelName}</T>
+                <T w={800} color={c.accentDeep} maxFontSizeMultiplier={CHROME_FONT_SCALE} numberOfLines={1} style={{ fontSize: 12 }}>Lv {level} · {levelName}</T>
               </View>
             </View>
           </View>
