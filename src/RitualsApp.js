@@ -23,6 +23,7 @@ import InsightsScreen from './screens/InsightsScreen';
 import YouScreen from './screens/YouScreen';
 import ReadingSheet from './screens/ReadingSheet';
 import RestoreNotice from './screens/RestoreNotice';
+import ReminderSheet from './screens/ReminderSheet';
 import WriteFlow from './screens/WriteFlow';
 import Celebration from './screens/Celebration';
 import Achievements from './screens/Achievements';
@@ -47,6 +48,9 @@ import { currentStreak } from './insights/dateKeys';
 import { dayNumber } from './time/dailyPick';
 import { selectPrompt } from './content/deck';
 import { PROMPTS } from './content/prompts';
+import { reminderCopy } from './content/reminders';
+import { nextOccurrences, reminderRowValue } from './reminders/schedule';
+import * as reminderIO from './reminders/io';
 
 // Dev-only test harness. The literal __DEV__ lets Metro strip this require (and
 // the entire src/dev subtree) from release bundles. Never alias __DEV__ here.
@@ -90,6 +94,8 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   const [lastBackupAt, setLastBackupAt] = useState(initialState.lastBackupAt ?? null);
   const [showAch, setShowAch] = useState(false);
   const [showDev, setShowDev] = useState(false);
+  const [reminderOpen, setReminderOpen] = useState(false);
+  const [reminderPermission, setReminderPermission] = useState('undetermined');
 
   // Live level derived from total XP (no hardcoded level).
   const { level, name: levelName, into: xpInto, toNext: xpToNext } = levelFromXp(xp);
@@ -219,6 +225,49 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     });
     return () => sub.remove();
   }, [plus, service]);
+
+  // Rolling-window reminder scheduling (IMP-031). A repeating OS trigger can't
+  // be conditional, so instead we keep the next 7 single-shot notifications
+  // pending and cancel + re-derive the whole window on every trigger below —
+  // cheap and idempotent. wroteToday skips today's slot even if its time
+  // hasn't passed yet, so writing early cancels tonight's nudge.
+  const rearmReminders = React.useCallback(async () => {
+    const r = settings.reminder;
+    if (!r || !r.enabled) { await reminderIO.cancelAll(); return; }
+    const status = await reminderIO.getPermissionStatus();
+    setReminderPermission(status);
+    await reminderIO.cancelAll();
+    if (status !== 'granted') return;
+    const wroteToday = !!findTodaysEntry(entries, todayKey());
+    const occurrences = nextOccurrences(new Date(), r, { wroteToday, count: 7 });
+    const notif = reminderCopy(settings.tone);
+    for (const date of occurrences) await reminderIO.scheduleAt(date, notif);
+  }, [settings.reminder, settings.tone, entries]);
+
+  React.useEffect(() => { rearmReminders(); }, [rearmReminders]);
+
+  React.useEffect(() => {
+    const sub = AppState.addEventListener('change', (s) => { if (s === 'active') rearmReminders(); });
+    return () => sub.remove();
+  }, [rearmReminders]);
+
+  // Permission is requested only from this tap (first enable) — never at
+  // launch. If the native module isn't there (Expo Go), stay off and say so.
+  const onReminderToggle = async (nextEnabled) => {
+    if (nextEnabled) {
+      const status = await reminderIO.ensurePermission();
+      setReminderPermission(status);
+      if (status === reminderIO.NATIVE_UNAVAILABLE) {
+        showToast('Reminders need a build with notifications — not available here.');
+        return;
+      }
+    }
+    setSettings((s) => ({ ...s, reminder: { ...s.reminder, enabled: nextEnabled } }));
+  };
+  const onReminderTimeChange = (hour, minute) => {
+    setSettings((s) => ({ ...s, reminder: { ...s.reminder, hour, minute } }));
+  };
+  const onOpenReminderSettings = () => Linking.openSettings();
 
   // Daily reset: clear done + quest progress when the calendar day rolls over.
   React.useEffect(() => {
@@ -363,6 +412,8 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             onImportData={doImport}
             onExplainAutoBackup={explainAutoBackup}
             onOpenDev={__DEV__ ? () => setShowDev(true) : undefined}
+            reminderValue={reminderRowValue(settings.reminder, reminderPermission)}
+            onOpenReminder={() => setReminderOpen(true)}
           />
         );
       case 'today':
@@ -498,6 +549,19 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
               onGetHelp={doGetHelp}
             />
             {toast && <Toast key={toast.key} message={toast.msg} bottom={insets.bottom} />}
+          </ThemeContext.Provider>
+        </Modal>
+
+        <Modal visible={reminderOpen} animationType="slide" transparent onRequestClose={() => setReminderOpen(false)}>
+          <ThemeContext.Provider value={theme}>
+            <ReminderSheet
+              reminder={settings.reminder}
+              permission={reminderPermission}
+              onToggle={onReminderToggle}
+              onTimeChange={onReminderTimeChange}
+              onOpenSettings={onOpenReminderSettings}
+              onClose={() => setReminderOpen(false)}
+            />
           </ThemeContext.Provider>
         </Modal>
 

@@ -18,6 +18,7 @@ export default function YouScreen({
   streak, level, levelName, xpInto, xpToNext, entriesCount, badgesEarned, onOpenAchievements,
   embers, plus, onOpenShop, onOpenPaywall, onOpenManage, plusEnabled = true, onResetData,
   lastBackupAt, onExportData, onImportData, onExplainAutoBackup, onOpenDev,
+  reminderValue, onOpenReminder,
 }) {
   const t = useTheme();
   const c = t.colors;
@@ -109,7 +110,7 @@ export default function YouScreen({
         <T d w={700} color={c.ink} style={{ fontSize: 15, marginBottom: 10, marginLeft: 2 }}>Preferences</T>
         <Card>
           <Row icon={<Bell size={20} color={c.accentDeep} />} label="Daily reminder"
-            value="8:30 PM" onPress={() => {}} />
+            value={reminderValue} onPress={onOpenReminder} />
           <Divider />
           <Row icon={<Contrast size={20} color={c.accentDeep} />} label="Appearance"
             value={dark ? 'Night' : 'Day'} onPress={onToggleMode} />

@@ -107,6 +107,10 @@ export const DEFAULT_SETTINGS = {
   // restore: 'empty'|'found'. Replace with real RevenueCat results in prod.
   storePurchase: 'success',
   storeRestore: 'empty',
+  // Local, offline, opt-in daily reminder (IMP-031). Off by default — existing
+  // users previously saw a hardcoded (fake) "8:30 PM"; this is the honest
+  // correction, not a silently-armed notification nobody asked for.
+  reminder: { enabled: false, hour: 20, minute: 30 },
 };
 
 // Mix a hex color toward white by `amount` (0–1).

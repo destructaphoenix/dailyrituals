@@ -1,5 +1,6 @@
 import { SCHEMA_VERSION, serialize, deserialize, mergeWithDefaults, pickPersisted, PERSISTED_KEYS } from '../../src/persistence/state';
 import { SAMPLE_ENTRIES } from '../../src/data';
+import { DEFAULT_SETTINGS } from '../../src/theme';
 
 const sample = { version: SCHEMA_VERSION, embers: 360, streak: 4, ownedSkies: ['classic'] };
 
@@ -130,5 +131,15 @@ describe('mergeWithDefaults', () => {
     const merged = mergeWithDefaults(null, defaults);
     expect(merged).toEqual(defaults);
     expect(merged).not.toBe(defaults);
+  });
+  // IMP-031 regression: a settings object persisted before the reminder
+  // feature existed must not crash every read of settings.reminder.enabled
+  // on hydration (App.js merges via mergeWithDefaults, not a raw assign).
+  test('a pre-IMP-031 persisted settings object gains the new reminder key on hydration', () => {
+    const preExisting = { name: 'Riya', tone: 'gentle', headlineFont: 'Fredoka' };
+    const merged = mergeWithDefaults(preExisting, DEFAULT_SETTINGS);
+    expect(merged.reminder).toEqual({ enabled: false, hour: 20, minute: 30 });
+    expect(merged.name).toBe('Riya');
+    expect(merged.tone).toBe('gentle');
   });
 });

@@ -29,6 +29,7 @@ import { useFonts } from 'expo-font';
 import RitualsApp from './src/RitualsApp';
 import Onboarding from './src/screens/Onboarding';
 import { DEFAULT_SETTINGS } from './src/theme';
+import { mergeWithDefaults } from './src/persistence/state';
 
 export default function App() {
   const [mode, setMode] = useState('day');
@@ -49,7 +50,10 @@ export default function App() {
       const s = loaded || {};
       setHydrated(s);
       if (s.mode) setMode(s.mode);
-      if (s.settings) setSettings(s.settings);
+      // Shallow merge, not a raw assign: a persisted `settings` object predates
+      // any settings key added since it was saved (e.g. `reminder`, IMP-031) and
+      // would otherwise come back without it, crashing every read of that key.
+      if (s.settings) setSettings(mergeWithDefaults(s.settings, DEFAULT_SETTINGS));
       // Show first-run onboarding only to genuinely new users. See
       // hasCompletedOnboarding — returning users (any persisted state, or the
       // explicit flag) skip it, so updates never re-onboard existing testers.
@@ -95,7 +99,7 @@ export default function App() {
   const handleReplaceAllData = async (restoredSlice) => {
     await saveState(restoredSlice);
     setHydrated(restoredSlice);
-    if (restoredSlice.settings) setSettings(restoredSlice.settings);
+    if (restoredSlice.settings) setSettings(mergeWithDefaults(restoredSlice.settings, DEFAULT_SETTINGS));
     setDataKey((k) => k + 1); // forces RitualsApp to re-init useState from the restored slice
   };
 
