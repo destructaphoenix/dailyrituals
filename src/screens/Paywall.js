@@ -9,13 +9,17 @@ import { useTheme } from '../theme';
 import { T, PrimaryButton } from '../ui';
 import { Close, Check, Sun, Restore } from '../icons';
 import { BigSun } from '../art';
-import { PLUS_PRICES, PLUS_PERKS } from '../data';
+import { PLUS_PERKS } from '../data';
+import { useLivePrices } from '../billing/useLivePrices';
 import { LegalFooter, usePurchaseFlow } from './PlusFlow';
 
 export default function Paywall({ insets, platform = 'ios', service, alreadyPlus, onClose, onSubscribe, onLink }) {
   const t = useTheme();
   const c = t.colors;
   const [plan, setPlan] = useState('annual');
+  // The store's localized prices, falling back to the design constants. Never
+  // render PLUS_PRICES directly here — Google charges the store price, not ours.
+  const prices = useLivePrices(service);
   const flow = usePurchaseFlow({
     service,
     platform,
@@ -61,7 +65,7 @@ export default function Paywall({ insets, platform = 'ios', service, alreadyPlus
         {/* plan selector */}
         <View style={{ flexDirection: 'row', gap: 12, width: '100%' }}>
           {['annual', 'monthly'].map((k) => {
-            const pl = PLUS_PRICES[k];
+            const pl = prices[k];
             const sel = plan === k;
             return (
               <Pressable key={k} onPress={() => setPlan(k)}
@@ -86,7 +90,7 @@ export default function Paywall({ insets, platform = 'ios', service, alreadyPlus
       {/* footer CTA + legal */}
       <View style={{ paddingHorizontal: 26, paddingTop: 14, paddingBottom: 14 + insets.bottom, borderTopWidth: 1, borderTopColor: c.border, backgroundColor: c.surface }}>
         <PrimaryButton label="Start 7-day free trial" onPress={() => flow.buy(plan)} />
-        <LegalFooter platform={platform} plan={plan}
+        <LegalFooter platform={platform} plan={plan} prices={prices}
           onLink={(k) => (k === 'restore' ? flow.restore() : onLink && onLink(k))} />
       </View>
 

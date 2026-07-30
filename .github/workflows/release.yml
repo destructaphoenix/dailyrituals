@@ -96,5 +96,11 @@ jobs:
         env:
           SA_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
         run: printf '%s' "$SA_JSON" > play-service-account.json
+      # Refuses to build a paid release wired to the purchase simulation. No-op
+      # while PLUS_ENABLED is false. See scripts/check-billing-config.js.
+      - name: Billing preflight
+        env:
+          RC_ANDROID_KEY: ${{ secrets.RC_ANDROID_KEY }}
+        run: node scripts/check-billing-config.js
       - name: Build + auto-submit to closed testing
         run: eas build -p android --profile production --auto-submit --non-interactive

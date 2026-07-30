@@ -48,10 +48,13 @@ function DangerButton({ label, onPress }) {
 }
 
 // ── Compliant legal footer (paywall) ──────────────────────────────────────────
-export function LegalFooter({ platform, plan, onLink }) {
+// `prices` carries the store's live localized prices (see billing/useLivePrices).
+// It defaults to the design constants so non-purchase callers keep working, but
+// the paywall must pass the live set — this text is the binding price disclosure.
+export function LegalFooter({ platform, plan, prices = PLUS_PRICES, onLink }) {
   const c = useTheme().colors;
   const w = storeWords(platform);
-  const p = PLUS_PRICES[plan] || PLUS_PRICES.annual;
+  const p = prices[plan] || prices.annual;
   const link = (k, label) => (
     <Pressable onPress={() => onLink && onLink(k)} hitSlop={6}>
       <T w={800} color={c.accentDeep} style={{ fontSize: 12, textDecorationLine: 'underline' }}>{label}</T>
@@ -260,7 +263,7 @@ export function ManageSubscription({ insets, platform, plan, canceled, renewLabe
       </ScrollView>
 
       {cancelSheet && (
-        <CancelSheet platform={platform}
+        <CancelSheet platform={platform} renewLabel={renew}
           onKeep={() => setCancelSheet(false)}
           onConfirm={() => { setCancelSheet(false); onCancel(); }} />
       )}
@@ -269,10 +272,11 @@ export function ManageSubscription({ insets, platform, plan, canceled, renewLabe
 }
 
 // Confirm sheet — Apple/Google route cancellation through system settings.
-export function CancelSheet({ platform, onKeep, onConfirm }) {
+export function CancelSheet({ platform, renewLabel, onKeep, onConfirm }) {
   const t = useTheme();
   const c = t.colors;
   const w = storeWords(platform);
+  const renew = renewLabel || RENEW_DATE;
   return (
     <Pressable onPress={onKeep} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 31, alignItems: 'center', justifyContent: 'flex-end', padding: 16, backgroundColor: c.scrim }}>
       <Pressable onPress={() => {}} style={[{ width: '100%', maxWidth: 400, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, borderRadius: t.radius.card, padding: 24, alignItems: 'center' }, t.shadow(30, '#000', 0.45)]}>
@@ -282,7 +286,7 @@ export function CancelSheet({ platform, onKeep, onConfirm }) {
         <T d w={800} color={c.ink} style={{ fontSize: 22, lineHeight: 26, textAlign: 'center' }}>Cancel Daily Rituals Plus?</T>
         <T w={600} color={c.muted} style={{ fontSize: 14.5, lineHeight: 21, textAlign: 'center', marginTop: 9 }}>
           Subscriptions are managed by {w.store}. We'll open your subscription settings so you can cancel — you'll keep
-          Plus until {RENEW_DATE}.
+          Plus until {renew}.
         </T>
         <View style={{ width: '100%', gap: 9, marginTop: 22 }}>
           <DangerButton label={`Open ${w.storeShort} settings`} onPress={onConfirm} />

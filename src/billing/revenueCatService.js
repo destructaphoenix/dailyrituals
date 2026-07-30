@@ -63,9 +63,22 @@ export function createRevenueCatService() {
         const offerings = await Purchases.getOfferings();
         const current = offerings && offerings.current;
         if (!current) return {};
+        // Both forms matter: priceString is the store's localized display text
+        // (never format it ourselves), price is the numeric used to compute the
+        // real annual saving. See src/billing/prices.js.
         const out = {};
-        if (current.annual) out.annual = { priceString: current.annual.product.priceString };
-        if (current.monthly) out.monthly = { priceString: current.monthly.product.priceString };
+        if (current.annual) {
+          out.annual = {
+            priceString: current.annual.product.priceString,
+            price: current.annual.product.price,
+          };
+        }
+        if (current.monthly) {
+          out.monthly = {
+            priceString: current.monthly.product.priceString,
+            price: current.monthly.product.price,
+          };
+        }
         return out;
       } catch (e) {
         return {};
