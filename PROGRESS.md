@@ -86,9 +86,11 @@ There are **two different restore paths** and they have opposite consent propert
 
 So the honest case for IMP-033 is *not* "Android never asks". It is: **the reinstall path has no consent whatsoever, and neither path ever discloses staleness.** The disclosure half is the larger win, and it applies to both paths.
 
-### ⚠️ Trade-off, stated plainly
+### ⚠️ Trade-off, stated plainly — and REAFFIRMED by the owner
 
 On a genuine **new phone**, the user today gets their journal back with zero friction — arguably the delight IMP-006 was built for. Under IMP-033 they do **onboarding first**, then get offered it. That is a real regression in the new-phone path, bought to gain consent in the reinstall path. Mitigate with warm, unmistakable copy — the offer must read as "your journal is here, want it back?" and never as an error.
+
+**Decision is settled — do not reopen it.** On 2026-08-02 the owner challenged the premise directly ("android asks restore from backup? if it does then why are we even bothering?"), was shown the full counter-case — that new-phone setup *does* ask, that a cheaper **disclosure-only** alternative (keep the restore, add a "Start fresh" action + the newer-export comparison to the existing notice) would capture most of the value at roughly half the work and with no new-phone regression, and that this was the recommendation — and **chose quarantine + offer anyway.** Build it as specced.
 
 ### 🚫 What this task does NOT do — it cannot guarantee the backup is current
 
