@@ -628,6 +628,16 @@ adb shell bmgr list transports          # note the '*' transport (Google's, via 
   `adb shell bmgr wipe <transport-from-step-0> app.dailyrituals.mobile`, then uninstall + install. No persisted data ⇒ no `lastSavedAt` ⇒ `App.js` skips the `expo-application` call entirely ⇒ silent.
 - **N5 manual JSON restore** — You tab → restore from a file. `handleReplaceAllData` saves through `serialize`, which re-stamps `lastSavedAt` to now, so this must **not** trip the notice on the next launch.
 
+**No-adb variant (owner's real device, app already installed from the Play closed-testing track).** Same test, GUI only — and installing from Play both times satisfies the signing-cert prerequisite automatically.
+- **First, protect the real journal.** Uninstalling deletes local data; if the restore doesn't come back you have lost it. You tab → **Back up my journal** → share the JSON off-device (Drive/email) *before* anything else.
+- Settings → search **"Backup"** → **Backup by Google One** must be **On** (OEM menus differ; the search shortcut is reliable. On Samsung this is the *Google* backup, not Samsung Cloud — Samsung Cloud is irrelevant here).
+- Plug in + join Wi-Fi, then **Back up now**. Wait for the **"Last backup"** timestamp to actually change — that, not the button tap, is the completion signal.
+- Confirm the app's data is in it: **Google One app → Storage → Backups → this device → App data** → *Daily Rituals* present.
+- Uninstall via long-press the icon → **Uninstall** (a plain uninstall — *not* "Clear data", which leaves `firstInstallTime` untouched and proves nothing).
+- Reinstall from **Play → Library** (or the tester opt-in link; it can take a few minutes to reappear). Let the install-time restore finish before launching.
+- Launch → the notice must appear and name the backup's date.
+- **Negatives reachable without adb:** normal launch (force-stop + reopen ×3); manual JSON restore from the You tab must not trip it on the next launch; **update-over-the-top** is checkable for free the next time a build ships to `alpha` — update from Play and confirm silence; **genuinely-fresh-install** is cleanest via a **second Android user profile / guest** on the same device (no backup data for that account), since per-app backup data cannot be wiped from the GUI — `bmgr wipe` is the only route, and this negative is the lowest-value of the five (no persisted data ⇒ no `lastSavedAt` ⇒ `App.js` never even calls `expo-application`).
+
 **If P fails but the sheet renders from the harness**, the bug is in detection, not UI: check `s.lastSavedAt` is actually present in the restored slice (old pre-IMP-029 payloads have none — that's the deliberate silent case) and that `getInstallationTimeAsync()` resolved rather than throwing into the silent `catch` at [`App.js:68`](../App.js#L68).
 
 ### IMP-030 — Layout can't blow out, whatever the text   ·   Lane: OTA (A) + Build (B)   ·   Status: ✅ code-complete
