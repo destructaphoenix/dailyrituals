@@ -15,7 +15,7 @@
 
 The live work is the **first unchecked `IMP-xxx` task in the Improvements backlog** below — its full spec is inline (Opus scopes it there; no separate plan file). Work that, **not** the phase ladder (8 / 10b / 11), which is **parked in [`docs/playbook.md`](docs/playbook.md)** until the owner resumes it.
 
-> **The Improvements backlog has NO open IMP task.** Everything through IMP-032 is code-complete, and **v1.0.5 / vc11 is live to testers** (see App status below). IMP-022 (Save as PDF + About) stays **⏸ deferred by owner decision**; its spec sits in [`docs/build-log.md`](docs/build-log.md) → "⏸ Deferred specs" (still valid, not history) — do not start it without the owner reviving it. **Next Sonnet chat:** no spec to pick up. Either take a new task from the owner/Opus, or spend the chat on the **real-device walk** of the closed-testing build — IMP-021 (never walked at all), IMP-029, IMP-030 anchor 1, IMP-031 (backgrounded), IMP-032's own harness walk. All detailed under "Open items / blockers".
+> **The open task is [IMP-033](#imp-033--the-restore-is-offered-not-imposed-quarantine--post-onboarding-offer) — full spec inline at the bottom of the backlog.** It came out of the 2026-08-02 real-device walk: the OS restores a Google backup silently and without consent, and the app's notice only offers acceptance. IMP-022 (Save as PDF + About) stays **⏸ deferred by owner decision**; its spec sits in [`docs/build-log.md`](docs/build-log.md) → "⏸ Deferred specs" (still valid, not history) — do not start it without the owner reviving it. The **real-device walk is now DONE** for IMP-029/030/031/032; only **IMP-021** is outstanding there, rejected by the owner as "not properly completed" and awaiting a decision on which shortfall to fix.
 
 **App status (2026-08-02): two tracks are live at once — mind which one you mean.**
 - **Production (the public): 🟢 v1.0.3 / versionCode 9**, approved and live since 2026-07-30. Carries IMP-027 (SDK 54 / API 36). **Google Play API-36 compliance (deadline 2026-08-31) is ✅ SHIPPED** — proven in production, a month early. The **BillDesk deadlock is ✅ UNBLOCKED**: the public Play Store URL PA-CB verification was asking for now exists.
@@ -61,6 +61,90 @@ Opus scopes each owner-filed issue into a numbered `IMP-xxx` task (steps + commi
 | IMP-030 | 🔴 Layout can't blow out, whatever the text — settings rows auto-stack instead of collapsing to a 1-char-per-line column; app-wide font-scale cap | OTA (A) + Build (B) → rode vc11 | ✅ **DONE** — shipped vc11 + **real-device verified 2026-08-02** — build-log |
 | IMP-031 | 🔴 **Daily reminder is real** — the You-tab row advertises "8:30 PM" to every live user and schedules nothing. Local, offline, opt-in reminder notifications | Build | ✅ **DONE** — shipped vc11 + **real-device verified 2026-08-02** — build-log |
 | IMP-032 | **Dev harness v2 — total control + inspection.** Every persisted/settings key reachable from a knob; the notification subsystem drivable *and observable*; hard-to-reach overlays openable; read-only inspector. Dev-only, never ships | Dev-only (no ship) | ✅ **DONE** — code-complete + **real-device walked 2026-08-02** — build-log |
+| IMP-033 | 🔴 **The restore is offered, not imposed** — quarantine an OS-restored backup, run the app as a genuine first install (onboarding and all), then offer the backup with fair warnings once onboarding is done | OTA | ⬜ **OPEN — spec inline below** |
+
+---
+
+## IMP-033 — the restore is offered, not imposed (quarantine + post-onboarding offer)
+
+**Lane: OTA** (pure JS — no new native module; `expo-application` is already in the tree since IMP-029). Reaches **testers only** until vc11 is promoted.
+
+**Owner's ask, verbatim (2026-08-02, after the IMP-029 device walk):** *"The app should run as if it was installed for the first time, with the welcome and everything. And then once that is done, the user should be given a pop up or prompt that there is a backup detected — would they like to load that up instead? Along with the fair warnings."*
+
+### Why this replaces the current behaviour
+
+IMP-029 detects an OS restore and shows a notice — but by then the restored data **is already the app's live state**, and the notice's only two actions are *Got it* (accept) and *Restore from a file* (replace from JSON). There is no way to decline. The walk proved the failure mode is real and not rare: the restore was **stale (2 entries against the 5 that were live)**, imposed without a prompt, and the user's only escape was to go hunting for You tab → Reset all data.
+
+**What is NOT fixable, and must not be attempted:** intercepting the restore itself. Android Auto Backup writes the data at **install time, inside the OS**, before the app's first line of JS runs; `BackupAgent.onRestoreFinished()` fires only *after* it has landed. There is no prompt-before-restore API. The only OS lever is `allowBackup: false` ([`app.config.js:49`](app.config.js#L49)), which would delete IMP-006 entirely. So the fix is to **quarantine** what the OS forced on us and hand the decision back to the user.
+
+### ⚠️ Trade-off the owner has accepted, stated plainly
+
+On a genuine **new phone**, the user currently gets their journal back with zero friction — that silent restore is arguably the delight IMP-006 was built for. After IMP-033 they will do **onboarding first**, then be offered their journal. That is a real regression in the new-phone path, traded for consent in the reinstall path (which the OS never asks about). Android's own new-device setup flow does ask "restore from backup?", so the new-phone user has already consented once — this makes them consent twice. **Accepted deliberately; do not re-litigate.** Mitigate with warm, unmistakable copy on the offer sheet — it must read as "your journal is here, want it back?" and never as an error.
+
+### Design
+
+**1. Quarantine on launch — [`App.js`](App.js), inside the existing load effect (~lines 55–75).**
+
+The `isRestoredInstall` check already there stops calling `setRestoredFromMs` and instead quarantines. **Order is safety-critical — the stash must be durable before anything is cleared:**
+
+1. Read the **raw** payload string (`AsyncStorage.getItem(KEY)`), not the deserialized slice — stash it losslessly.
+2. Write it to a new key `dailyrituals:v1:pendingRestore`.
+3. **Read it back and verify it parses.** If the write or the read-back fails, **abort the quarantine entirely** and fall through to today's IMP-029 behaviour (live data + the old notice). Never clear the main key on an unverified stash. This mirrors `runConfirmedImport`'s existing "recovery copy must succeed before the destructive step" guarantee.
+4. `clearState()` the main key.
+5. Hydrate as a fresh install — `onboarded` stays `false`, `hydrated` is the default slice. `hasCompletedOnboarding(null)` already returns `false` ([`onboarding.js:11`](src/persistence/onboarding.js#L11)), so onboarding shows with no change to that module.
+
+**Idempotent by construction.** Killed between steps 2 and 4? Next launch still sees `installedAt > lastSavedAt`, re-stashes (overwriting), and proceeds. Killed after step 4? Main key is empty, so there is no `lastSavedAt`, no re-detection — and the offer fires off **stash presence**, not session state (see below), so nothing is lost.
+
+**2. The offer — fires on stash presence AND onboarding complete, never on session state.**
+
+Condition: `pendingRestore` exists && `onboarded === true`. Evaluate it on every launch and on the `onDone` transition at [`App.js:120`](App.js#L120) — so a user who is killed mid-onboarding, or who declines and relaunches, still gets it. Do **not** tie it to the same session that quarantined.
+
+**3. New sheet `src/screens/RestoreOffer.js`** — presentational, props in / callbacks out, same scrim-and-card shape as [`RestoreNotice.js`](src/screens/RestoreNotice.js) (reuse its `GhostButton`; extract to `src/ui.js` if it's now shared).
+
+Copy — warm, and every warning stated:
+- Title: **"We found your journal."**
+- Body: `Your journal was backed up to your Google account on {formatBackupDate(stash.lastSavedAt)}. You can load it now.` then, as distinct warning lines: **it replaces everything you've just set up** (your name, theme, and anything written since installing) · **it's from {date}** — anything written after that isn't in it.
+- Actions: **Load my journal** (primary) · **Keep this fresh start** (ghost).
+
+**4. Actions.**
+- **Load** → `Alert.alert` confirm → `backupIO.writeRecovery(createBackup(currentSlice))` **before** anything is replaced (same guarantee as above) → `deserialize(stash)` → route through the existing `handleReplaceAllData` (it already saves + bumps `dataKey` to remount) → delete the stash → done.
+- **Keep this fresh start** → **do not delete the stash.** Surface it instead as a new row in the You tab's "Your journal is safe" card: `Google backup — {date}` → reopens this same sheet, plus a **Discard it** action (confirmed) that deletes the stash. A one-shot destructive dismissal is exactly the trap this task exists to remove.
+
+**5. IMP-029's `RestoreNotice` stays** — it is still the correct surface for the abort path in step 3, and for old installs whose payload predates the `lastSavedAt` stamp. Do not delete it.
+
+### Steps
+
+- [ ] 1. New pure `src/persistence/restoreQuarantine.js`: `shouldQuarantine({ lastSavedAt, installedAt })` (delegates to `isRestoredInstall`) and `shouldOfferRestore({ hasStash, onboarded })`. **RED first.**
+- [ ] 2. Stash IO in `src/persistence/storage.js`: `readPendingRestore()` / `writePendingRestore(raw)` / `clearPendingRestore()` / `readRawState()`, each `try/catch` → falsy on failure, matching the file's existing shape. No throwing.
+- [ ] 3. `App.js` quarantine sequence per Design §1, with the verified-read-back abort.
+- [ ] 4. `src/screens/RestoreOffer.js` + wire the offer condition per §2.
+- [ ] 5. Load / decline / discard actions per §4, including the You-tab row.
+- [ ] 6. Copy fix (bundled, from the same walk): the export flow never says the Google backup is a **separate** system. Add one line to the `explainAutoBackup` alert ([`RitualsApp.js:385`](src/RitualsApp.js#L385)) and to the export confirmation making clear that **"Back up my journal" does not refresh the Google backup** — the owner hit exactly this and misread a correct restore as a stale-data bug.
+- [ ] 7. `npm test` (expect **367 + new**), `npx expo export --platform android` clean, update PROGRESS + archive this spec to build-log.
+
+### Tests (pure only, per project convention)
+
+`shouldQuarantine` (inherits `isRestoredInstall`'s 7 cases — assert delegation, don't duplicate) · `shouldOfferRestore` (stash+onboarded → true; stash+not-onboarded → false; no stash → false either way) · a `storage` round-trip case (write → read → clear) · a regression case asserting a **failed stash write leaves the main key intact**. No render tests for the sheet (same non-goal as every other sheet in the app).
+
+### Commit message
+
+```
+feat(restore): offer an OS-restored backup instead of imposing it (IMP-033)
+
+Android Auto Backup restores at install time, inside the OS, with no
+way to prompt first. Quarantine what it forces on us: stash the raw
+payload, clear the live key, run a genuine first install, then offer
+the backup once onboarding is done, with the staleness and
+replacement warnings stated.
+
+The stash is verified readable before the live key is cleared, and
+declining keeps it — reachable later from the You tab — so no single
+tap can destroy a journal.
+
+Release-Lane: ota
+```
+
+**Ship:** OTA. No `bump:*`. The trailer above ships it **to testers only** (`runtimeVersion` = `appVersion` = 1.0.5). Omit the trailer for WIP.
 
 ---
 
@@ -85,13 +169,15 @@ Opus scopes each owner-filed issue into a numbered `IMP-xxx` task (steps + commi
 The owner's words: *"the app is restored automatically (with no option given to me, it was done without permission — definitely need to change this)."* The complaint is legitimate, but only half of it is fixable:
 
 - **Not fixable — the restore itself.** Android Auto Backup restore happens **at install time, inside the OS**, before the app's first line of JS runs. There is no API to prompt before it, intercept it, or defer it. `BackupAgent.onRestoreFinished()` fires *after* the data has already landed. The only OS-level lever is `allowBackup: false` in [`app.config.js:49`](app.config.js#L49), which deletes the whole "new phone, my journal came back" feature IMP-006 was built for. **Do not propose an "ask before restoring" flow — it cannot be built.**
-- **Fixable — what happens next.** [`RestoreNotice.js`](../src/screens/RestoreNotice.js) offers exactly two actions: **Got it** (accept) and **Restore from a file** (replace from JSON). There is **no way to reject the restored data**. A user handed a stale restore who wants to start clean has to find You tab → Reset all data on their own, and the notice never mentions it. That is the real gap, and it is what makes the restore *feel* non-consensual: the OS decided, and the app only offers acceptance. **Candidate IMP-033: a third "Start fresh" action** on the notice, with `Alert.alert` confirm + a `backupIO.writeRecovery` copy written *before* the wipe (mirroring `runConfirmedImport`'s existing guarantee), so consent is given after the fact but genuinely given.
+- **Fixable — what happens next.** [`RestoreNotice.js`](../src/screens/RestoreNotice.js) offers exactly two actions: **Got it** (accept) and **Restore from a file** (replace from JSON). There is **no way to reject the restored data**. A user handed a stale restore who wants to start clean has to find You tab → Reset all data on their own, and the notice never mentions it.
+
+**✅ RESOLVED — scoped as [IMP-033](#imp-033--the-restore-is-offered-not-imposed-quarantine--post-onboarding-offer), the open task.** The owner rejected a mere "Start fresh" button in favour of a stronger design: **quarantine** the OS-restored payload, run the app as a genuine first install (onboarding and all), then **offer** the backup with fair warnings once onboarding is done. Full spec inline above.
 
 ### 🟡 Finding 2026-08-02 — "Back up my journal" says nothing about the Google backup at the moment of use
 
 Owner: *"When I press 'Backup my journal' it gives me the option to send or share it… but no mention of a 'google backup'."* The surface **does** exist — [`YouScreen.js:130`](../src/screens/YouScreen.js#L130) renders an **"Automatic backup / How it works"** row directly *above* "Back up my journal" in the same "Your journal is safe" card, wired to `explainAutoBackup` ([`RitualsApp.js:385`](../src/RitualsApp.js#L385)). So this is discoverability, not absence: the two backups are separate systems and the export flow never says so at the moment the user is thinking about backups. Small copy fix, bundle with IMP-033.
 
-**⚠️ The trap this walk exposed, worth stating plainly:** the in-app **"Back up my journal" (JSON export) has ZERO effect on the Google backup.** They are unrelated systems. Exporting a JSON does not refresh what Auto Backup holds, and the Google copy only refreshes on the OS's own schedule (≤once/24h, idle + charging + unmetered Wi-Fi) or via **Settings → Google → Backup → Back up now**. Any future staleness report must first establish *which* backup was taken.
+**⚠️ The trap this walk exposed — and the confirmed cause of the "2 entries vs 5" staleness.** The owner tapped the in-app **"Back up my journal"** before uninstalling, which is the **JSON export and has ZERO effect on the Google backup.** They are unrelated systems. Exporting a JSON does not refresh what Auto Backup holds; the Google copy refreshes only on the OS's own schedule (≤once/24h, idle + charging + unmetered Wi-Fi) or via **Settings → Google → Backup → Back up now**. So the restore returned whatever the OS last took on its own — **correct behaviour, correctly announced by the notice.** If a naming-literate owner misread this, users certainly will: the copy fix is step 6 of IMP-033. Any future staleness report must first establish *which* backup was taken.
 - **▶️ NEXT DECISION FOR THE OWNER: promote vc11 alpha → production, or hold.** Testers have five unreleased features; the public has none of them. Nothing blocks the promotion technically — it is a judgement call about how much tester feedback to collect first. Until it happens, treat every vc11 feature as unshipped from the public's point of view.
 
 ### ✅ Owner device verification — WALKED 2026-07-30 (on v1.0.3)
