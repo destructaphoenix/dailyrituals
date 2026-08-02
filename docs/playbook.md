@@ -39,6 +39,46 @@ This line is also the structural defence against money grievances: a user who st
 
 ---
 
+## 🌱 What users GROW, and what we compute on it (2026-08-03)
+
+Follows directly from the thesis above. The owner asked: *"what else can I let users grow that I can compute and sell?"* — reaching for a FIFA-style collect-and-spend loop. **Two different things are being conflated, and only one of them is worth money.**
+
+| | **Currency (embers)** | **Record (entries, moods, days, time)** |
+| --- | --- | --- |
+| What it is | a game loop we invented | the user's actual life, accumulated |
+| Can be rushed? | yes (that was the cash SKU) | **no — only by showing up** |
+| Who values it | us, as a retention lever | **the user, more every single day** |
+| Worth selling compute on? | no — a closed loop we both make and sink | **yes. This is the entire moat.** |
+
+**Embers are engagement, not value.** Keep them; they work. But the thing to build the paid tier on is the **record**, because it is the only asset that cannot be bought, cannot be rushed, and is worth more on day 400 than day 40.
+
+⚠️ **Two traps in the FIFA framing.** (1) FIFA's collection monetises through **randomised packs** — gambling-adjacent, requires odds disclosure under Play policy, and is tonally indefensible in an app about grief and reflection. **Never build randomised paid rewards here.** (2) FIFA has an infinite catalogue; **this shop does not.** At `EMBER_GAIN = 15`/day the entire ember-purchasable catalogue is **1,620 embers ≈ 108 days**, after which candles are the only repeating sink and embers become worthless. **The shop runs out around day 110** — a live engagement problem independent of the money question, and it needs either more sinks or a rotating catalogue. Not scoped (owner has deferred design work), but do not forget it.
+
+### Accumulators worth adding — prefer PASSIVE ones
+
+Every *active* accumulator (something the user must remember to do) adds friction to a habit app whose primary enemy is dropout. **Passive accumulators cost the user nothing and still compound.** Ranked by value-per-unit-of-friction:
+
+| Accumulator | Effort | What it lets us compute and sell |
+| --- | --- | --- |
+| **Time-of-day of each entry** (passive — just stamp it) | none | "You write best at 9pm" · "Your Sunday mornings are your most hopeful" · rhythm insight |
+| **Word count over time** (already computable — `totalWords` exists) | none | "Your entries got 3× longer this year" · depth-of-reflection trend |
+| **Active span + coverage density** (already there) | none | milestone timeline (the piece deferred out of IMP-021) · "your 100th day" |
+| **Moods, multiple + custom** (IMP-037) | tiny | mood correlations, seasonal patterns — makes the **dead** `PLUS_PERKS` #5 real |
+| **Tags** — `#mom`, `#work` (the ONE active accumulator worth adding) | small, optional | "you mentioned work 40% less this autumn" · smart collections · the strongest feature in comparable journals |
+| **Monthly one-question check-in** (1–5, ten seconds) | small | a year-long line graph from almost no input |
+
+**Explicitly rejected:** photos (backup bloat — the whole store rides Android Auto Backup) · weather/location (needs network + permissions, breaks the offline promise) · a **second currency** (dilutes embers) · on-device NLP name extraction (unreliable; tags do the same job honestly).
+
+### The paid layer, as one coherent story
+
+Plus = **memory and meaning**, computed over the record: **"On this day"** (IMP-038) · **Annual Recap / Time Capsule** (roadmap C) · **mood correlations & seasonal patterns** (perk #5) · **keepsake PDF** (perk #4, IMP-022) · **rhythm insight** (time-of-day + length) · **tag analytics** · **milestone timeline** · **smart collections** (saved searches — built free in IMP-035, *saved* ones are Plus).
+
+Note how much of that list is **already sold on the paywall and not built**. Building it is not adding scope; it is paying a debt.
+
+**North star for when design work resumes:** the app's metaphor is a memorial *garden*. The most powerful accumulator available is **the garden itself visibly growing** with the record — more graves, more flowers, seasons turning. That is the record made visible, in the app's own voice, and no competitor can copy it because it is not a feature, it is the theme.
+
+---
+
 ## Locked decisions (2026-06-03)
 
 | Decision | Choice |
