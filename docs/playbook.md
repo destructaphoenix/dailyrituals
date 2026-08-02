@@ -8,6 +8,37 @@
 
 ---
 
+## 🧭 Product thesis — why anyone would pay (written 2026-08-03)
+
+The owner asked: *"What value does Daily Rituals add to a user's life that they would give us money? Even a dollar is money and it needs to be justified."* This section is the answer, and it should govern what gets built and what gets charged for.
+
+**Nobody pays for a text box.** People pay a journal for exactly two things:
+1. **Continuity** — the app is *the reason they kept going*. Streaks, embers, levels, the memorial-garden voice, the reminder. **Daily Rituals is strong here.**
+2. **Retrieval** — the app *hands their past back to them*. Search, resurfacing, recap, keepsakes. **Daily Rituals has almost none of this.**
+
+**Value in a journal accumulates — this is the central fact.** On day 1 the app is worth **$0 to anyone**; an empty journal has no value and no feature changes that. By day 30 it is "a streak I don't want to break." By day 400 it is "a record of my life I cannot replace." So:
+
+- **The paying moment is not signup. It is month 2–3, when the user first has something to lose.**
+- Therefore the **free tier must be good enough to carry someone to ~day 60**, or there is never a paying moment at all.
+- Therefore the **paid tier should be things that are worthless on day 1 and priceless on day 400** — Annual Recap, "On this day", keepsake export, deeper insight. This is not a coincidence; it is why the "legacy" roadmap was always the right instinct.
+
+**The uncomfortable finding (audited 2026-08-03).** The app is **all continuity and no retrieval**:
+- **No search anywhere.** Zero. A user cannot find anything they have written.
+- **Editing is today-only** — `canEdit={isEditableToday(reading, todayKey())}` ([`RitualsApp.js:489`](../src/RitualsApp.js#L489)). A typo from yesterday is permanent.
+- **No delete.** A user cannot remove something they regret writing.
+
+For a journal this means **the archive is write-only** — words go in and cannot come back out. That is a category-level failure, not a polish gap, and it is precisely the "basic and fundamental" work to do before any design work. It also **blocks the paid thesis**: you cannot sell "revisit your past" on top of an archive nobody can navigate.
+
+**The line for what is free forever vs what is paid.** Test every feature with: *am I charging for their words, or for my work on their words?* Only the second is defensible.
+- **Free forever — custody of their own words:** write, read, **search**, edit, delete, full history, raw export.
+- **Paid — the app doing work for them:** recap, resurfacing, deeper analysis, keepsake artifacts, cosmetics, convenience.
+
+This line is also the structural defence against money grievances: a user who stops paying never loses access to anything they wrote.
+
+**One sentence:** *Daily Rituals makes you keep going, then gives you your years back.* Today it does the first half only — and the first half alone is not something people pay for (Duolingo's streaks are free; you pay for what surrounds them).
+
+---
+
 ## Locked decisions (2026-06-03)
 
 | Decision | Choice |
