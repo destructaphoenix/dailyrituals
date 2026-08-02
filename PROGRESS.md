@@ -15,7 +15,7 @@
 
 The live work is the **first unchecked `IMP-xxx` task in the Improvements backlog** below — its full spec is inline (Opus scopes it there; no separate plan file). Work that, **not** the phase ladder (8 / 10b / 11), which is **parked in [`docs/playbook.md`](docs/playbook.md)** until the owner resumes it.
 
-> **The open task is [IMP-033](#imp-033--the-restore-is-offered-not-imposed-quarantine--post-onboarding-offer) — full spec inline at the bottom of the backlog.** It came out of the 2026-08-02 real-device walk: the OS restores a Google backup silently and without consent, and the app's notice only offers acceptance. IMP-022 (Save as PDF + About) stays **⏸ deferred by owner decision**; its spec sits in [`docs/build-log.md`](docs/build-log.md) → "⏸ Deferred specs" (still valid, not history) — do not start it without the owner reviving it. The **real-device walk is now DONE** for IMP-029/030/031/032; only **IMP-021** is outstanding there, rejected by the owner as "not properly completed" and awaiting a decision on which shortfall to fix.
+> **Two open tasks, in this order: [IMP-034](#imp-034--hide-gather-embers-while-the-app-ships-free) first (small, live in production right now), then [IMP-033](#imp-033--the-restore-is-offered-not-imposed-quarantine--post-onboarding-offer).** Both specs are inline at the bottom of the backlog. There is also an **open strategic decision** under Open items — whether to sell a consumable currency at all — which does not block either task but must be settled before `PLUS_ENABLED` flips. It came out of the 2026-08-02 real-device walk: the OS restores a Google backup silently and without consent, and the app's notice only offers acceptance. IMP-022 (Save as PDF + About) stays **⏸ deferred by owner decision**; its spec sits in [`docs/build-log.md`](docs/build-log.md) → "⏸ Deferred specs" (still valid, not history) — do not start it without the owner reviving it. The **real-device walk is now DONE** for IMP-029/030/031/032; only **IMP-021** is outstanding there, rejected by the owner as "not properly completed" and awaiting a decision on which shortfall to fix.
 
 **App status (2026-08-02): two tracks are live at once — mind which one you mean.**
 - **Production (the public): 🟢 v1.0.3 / versionCode 9**, approved and live since 2026-07-30. Carries IMP-027 (SDK 54 / API 36). **Google Play API-36 compliance (deadline 2026-08-31) is ✅ SHIPPED** — proven in production, a month early. The **BillDesk deadlock is ✅ UNBLOCKED**: the public Play Store URL PA-CB verification was asking for now exists.
@@ -62,6 +62,7 @@ Opus scopes each owner-filed issue into a numbered `IMP-xxx` task (steps + commi
 | IMP-031 | 🔴 **Daily reminder is real** — the You-tab row advertises "8:30 PM" to every live user and schedules nothing. Local, offline, opt-in reminder notifications | Build | ✅ **DONE** — shipped vc11 + **real-device verified 2026-08-02** — build-log |
 | IMP-032 | **Dev harness v2 — total control + inspection.** Every persisted/settings key reachable from a knob; the notification subsystem drivable *and observable*; hard-to-reach overlays openable; read-only inspector. Dev-only, never ships | Dev-only (no ship) | ✅ **DONE** — code-complete + **real-device walked 2026-08-02** — build-log |
 | IMP-033 | 🔴 **The restore is offered, not imposed** — quarantine an OS-restored backup, run the app as a genuine first install (onboarding and all), then offer the backup with fair warnings once onboarding is done | OTA | ⬜ **OPEN — spec inline below** |
+| IMP-034 | 🔴 **Hide "Gather Embers" while the app ships free** — the Shop sells ember packs at real cash prices ($1.99–$9.99) wired to no IAP at all, and the section is not gated by `PLUS_ENABLED`. Wrap it, exactly like the Plus banner beside it | OTA | ⬜ **OPEN — small; take before IMP-033** |
 
 ---
 
@@ -172,6 +173,35 @@ Release-Lane: ota
 
 ---
 
+## IMP-034 — hide "Gather Embers" while the app ships free
+
+**Lane: OTA.** Small — take this **before** IMP-033; it is minutes of work and it is live in production right now.
+
+**Problem.** [`Shop.js:166–170`](src/screens/Shop.js#L166) renders the "Gather Embers" section — `EMBER_PACKS` at `$1.99 / $4.99 / $9.99`, labelled "bought with cash" in [`data.js:132`](src/data.js#L132) — with **no `plusEnabled &&` wrapper**, unlike the Plus banner ten lines above it at [`Shop.js:56`](src/screens/Shop.js#L56). The buy handler ([`RitualsApp.js:532`](src/RitualsApp.js#L532), and `getEmbers` at [`RitualsApp.js:173`](src/RitualsApp.js#L173)) is a bare `setEmbers((e) => e + pack.amount)` — **no `purchaseService`, no RevenueCat, no IAP.** So the shipping free build **displays cash prices for something that is free** and hands out 1,500 embers for a tap on "$9.99". Nobody is charged, so no money is at risk; it is a price misrepresentation of the same class IMP-028 fixed on the paywall.
+
+**Scope — gate, do not build billing.** Wrap the "Gather Embers" section in `plusEnabled &&`. Then check every path that *opens* the ember screen when the user is short — `buyPalette` / `buySky` / `buyCandles` all call `setGetEmbersOpen(true)` ([`RitualsApp.js:153/161/168`](src/RitualsApp.js#L153)) — and the `EmberPill` in the Shop header ([`Shop.js:51`](src/screens/Shop.js#L51)). With the section hidden, those must **not** open a purchase surface: show a toast explaining embers are earned daily, matching the existing copy *"Embers also gather on their own — one for every day you keep"*. Also gate the `getEmbersOpen` Modal itself ([`RitualsApp.js:529`](src/RitualsApp.js#L529)) so no route can reach it. Wiring real consumable IAP is explicitly **out of scope** — and may never happen, pending the strategic decision under Open items.
+
+⚠️ **Reach caveat:** OTA lands on **testers only** (`runtimeVersion` 1.0.5 ≠ the public's 1.0.3). The public keeps the free-embers Shop until vc11 (or later) is **promoted to production**. That is an argument for promoting sooner, not for skipping this.
+
+**Tests:** the gating is JSX, so assert it where it is cheap — a `Shop` render case with `plusEnabled={false}` asserting no `EMBER_PACKS` price string appears, and one with `true` asserting they do. Keep it to that; render tests are otherwise a non-goal in this codebase.
+
+```
+fix(shop): hide the cash ember packs while the app ships free (IMP-034)
+
+The Gather Embers section renders EMBER_PACKS at $1.99-$9.99 with no
+plusEnabled gate, and its buy handler is a bare counter increment with
+no IAP call — so the free build shows prices for something that costs
+nothing and grants embers for a tap.
+
+Gate the section, the header pill and the modal, and route the
+insufficient-embers paths to a toast instead of a purchase surface.
+Wiring real consumable IAP is out of scope and may never happen.
+
+Release-Lane: ota
+```
+
+---
+
 ## Open items / blockers
 
 ### ⏳ In flight
@@ -225,6 +255,26 @@ Not defects, by explicit design decision — do not "fix" these: the **milestone
 ### 🔔 New finding 2026-07-31 — no `setNotificationHandler` anywhere in the tree
 
 `grep -rn "setNotificationHandler"` returns **zero matches**. Under `expo-notifications`' default behaviour that means a reminder firing while the app is **foregrounded displays nothing on Android**. For a daily reminder that is mostly harmless (the app is normally backgrounded when it fires), but it is a real product decision that was never made, and it changes how IMP-031 must be tested: a test notification only proves anything if the app is backgrounded before it fires. **Deliberately out of scope for IMP-032** (that task must not change shipping behaviour) — scope it as its own small task if the owner wants foreground reminders to surface.
+
+### 🧭 OPEN STRATEGIC DECISION (owner, 2026-08-02) — "was local-only the right call?"
+
+The owner asked this after the purchase-recovery audit: *"I am questioning if I made the right choice by going completely offline… any user grievances (especially related to money) will have huge repercussions."*
+
+**The local-only decision is not the problem, and should not be reversed.** It was taken 2026-06-07 for the **journal** — PII, GDPR/India-DPDP deletion-and-export duties, and onboarding friction (see the `daily-rituals-local-only-decision` memory). Every one of those reasons still holds exactly as written. Nothing found in this audit touches them.
+
+**The actual flaw is narrower: selling a CONSUMABLE currency from an app with no server.** These two are fundamentally incompatible, by Google's design, not by ours — once a consumable is consumed, Play's `queryPurchasesAsync` no longer returns it, so there is **nothing left to restore**. Restoring a spent currency requires *your* server holding the balance. That is what makes ember purchases a genuine one-way lane: if a user pays for embers and loses local state, you cannot make them whole. You cannot grant remotely. The only lever is a Play refund — manual, and rating-damaging.
+
+**Subscriptions and NON-consumables do not have this problem, and need no accounts.** Play holds a durable record tied to the user's Google account, and RevenueCat restores it against **anonymous app user IDs** — no login, no email, no PII, no backend of yours. So "local-only" and "purchases that survive a wipe" are **not** in conflict. Only *consumables* are.
+
+So the fix is to change **what is sold**, not the architecture:
+
+| | Option | Consequence |
+| --- | --- | --- |
+| **A** ⭐ | **Stop selling embers.** Embers become purely earned; sell only Plus. | Kills the entire problem class. The Shop copy already leans this way — *"Embers also gather on their own — one for every day you keep"* ([`Shop.js:167`](../src/screens/Shop.js#L167)) — and `PLUS_PERKS` already promises *"Every palette & sky — unlocked forever"*. Every money grievance becomes a RevenueCat restore, which already works. |
+| **B** | **Sell cosmetics as one-time NON-consumable IAP** ("this palette, $1.99"). | Keeps à-la-carte revenue. Durable and restorable with no accounts. More Play products to configure and maintain. |
+| **C** | **Add a server** to hold balances. | Reverses the local-only decision and reimports the PII/legal/friction burden it was taken to avoid. Only justified if the currency is core to the business model — it is not. **Not recommended.** |
+
+**Timing is the good news.** `PLUS_ENABLED = false` ⇒ **zero paying users, zero refunds owed, zero support tickets, nothing shipped.** This is the cheapest possible moment to find it; after 10b it would be genuinely expensive. **No code decision is blocked on this today** — but it must be settled before `PLUS_ENABLED` flips, because it determines which Play products get created (playbook 10b.2–10b.5, still `TBD`).
 
 ### 💳 Phase 10b — payments (the next real track, gated externally)
 
