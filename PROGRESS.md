@@ -15,7 +15,11 @@
 
 The live work is the **first unchecked `IMP-xxx` task in the Improvements backlog** below — its full spec is inline (Opus scopes it there; no separate plan file). Work that, **not** the phase ladder (8 / 10b / 11), which is **parked in [`docs/playbook.md`](docs/playbook.md)** until the owner resumes it.
 
-> **Two open tasks, in this order: [IMP-034](#imp-034--hide-gather-embers-while-the-app-ships-free) first (small, live in production right now), then [IMP-033](#imp-033--the-restore-is-offered-not-imposed-quarantine--post-onboarding-offer).** Both specs are inline at the bottom of the backlog. There is also an **open strategic decision** under Open items — whether to sell a consumable currency at all — which does not block either task but must be settled before `PLUS_ENABLED` flips. It came out of the 2026-08-02 real-device walk: the OS restores a Google backup silently and without consent, and the app's notice only offers acceptance. IMP-022 (Save as PDF + About) stays **⏸ deferred by owner decision**; its spec sits in [`docs/build-log.md`](docs/build-log.md) → "⏸ Deferred specs" (still valid, not history) — do not start it without the owner reviving it. The **real-device walk is now DONE** for IMP-029/030/031/032; only **IMP-021** is outstanding there, rejected by the owner as "not properly completed" and awaiting a decision on which shortfall to fix.
+> **Six open tasks, all specced inline below. Recommended order:**
+> **IMP-034** (minutes, and it is live in production right now) → **IMP-035 search** (the biggest single value gain in the codebase; everything else in the retrieval story sits on it) → **IMP-036 edit/delete** → **IMP-037 moods** → **IMP-033 restore consent** (bigger build, already settled) → **IMP-038 "On this day"** (must come last — it depends on 035 and 037).
+> Sonnet takes **one** spec per chat, in this order, unless the owner says otherwise.
+>
+> **Two owner decisions are still open and do NOT block the queue:** which IMP-021 shortfall to fix, and the **alpha → production promotion**. A third — whether to sell a consumable currency at all — is settled in principle (ember purchasing dropped, 2026-08-03) and must be finalised before `PLUS_ENABLED` flips. Product thesis governing all of this: [`docs/playbook.md`](docs/playbook.md) → "Why anyone would pay". It came out of the 2026-08-02 real-device walk: the OS restores a Google backup silently and without consent, and the app's notice only offers acceptance. IMP-022 (Save as PDF + About) stays **⏸ deferred by owner decision**; its spec sits in [`docs/build-log.md`](docs/build-log.md) → "⏸ Deferred specs" (still valid, not history) — do not start it without the owner reviving it. The **real-device walk is now DONE** for IMP-029/030/031/032; only **IMP-021** is outstanding there, rejected by the owner as "not properly completed" and awaiting a decision on which shortfall to fix.
 
 **App status (2026-08-02): two tracks are live at once — mind which one you mean.**
 - **Production (the public): 🟢 v1.0.3 / versionCode 9**, approved and live since 2026-07-30. Carries IMP-027 (SDK 54 / API 36). **Google Play API-36 compliance (deadline 2026-08-31) is ✅ SHIPPED** — proven in production, a month early. The **BillDesk deadlock is ✅ UNBLOCKED**: the public Play Store URL PA-CB verification was asking for now exists.
@@ -62,7 +66,11 @@ Opus scopes each owner-filed issue into a numbered `IMP-xxx` task (steps + commi
 | IMP-031 | 🔴 **Daily reminder is real** — the You-tab row advertises "8:30 PM" to every live user and schedules nothing. Local, offline, opt-in reminder notifications | Build | ✅ **DONE** — shipped vc11 + **real-device verified 2026-08-02** — build-log |
 | IMP-032 | **Dev harness v2 — total control + inspection.** Every persisted/settings key reachable from a knob; the notification subsystem drivable *and observable*; hard-to-reach overlays openable; read-only inspector. Dev-only, never ships | Dev-only (no ship) | ✅ **DONE** — code-complete + **real-device walked 2026-08-02** — build-log |
 | IMP-033 | 🔴 **The restore is offered, not imposed** — quarantine an OS-restored backup, run the app as a genuine first install (onboarding and all), then offer the backup with fair warnings once onboarding is done | OTA | ⬜ **OPEN — spec inline below** |
-| IMP-034 | 🔴 **Hide "Gather Embers" while the app ships free** — the Shop sells ember packs at real cash prices ($1.99–$9.99) wired to no IAP at all, and the section is not gated by `PLUS_ENABLED`. Wrap it, exactly like the Plus banner beside it | OTA | ⬜ **OPEN — small; take before IMP-033** |
+| IMP-034 | 🔴 **Hide "Gather Embers" while the app ships free** — the Shop sells ember packs at real cash prices ($1.99–$9.99) wired to no IAP at all, and the section is not gated by `PLUS_ENABLED`. Wrap it, exactly like the Plus banner beside it | OTA | ⬜ **OPEN — small; take first** |
+| IMP-035 | 🔴 **Search your journal** — there is no search anywhere; the archive is write-only. Full-text over `did`/`wished`, filter by mood and date. **Free forever** | OTA | ⬜ **OPEN — spec inline below** |
+| IMP-036 | **Custody of your words** — edit any past entry (not just today), delete an entry, and a 30-day trash. Core is **free**; *restoring* from trash is the Plus half | OTA | ⬜ **OPEN — spec inline below** |
+| IMP-037 | **Moods: custom + multiple per entry** — `mood: string` → `moods: string[]` plus user-defined feelings. **Free** (it is stored content). Makes the dead `PLUS_PERKS` #5 buildable | OTA | ⬜ **OPEN — spec inline below** |
+| IMP-038 | ✨ **"On this day"** — resurface what you wrote a year / months ago. **The first real Plus feature.** Needs IMP-035's retrieval layer first | OTA | ⬜ **OPEN — spec inline below** |
 
 ---
 
@@ -199,6 +207,58 @@ Wiring real consumable IAP is out of scope and may never happen.
 
 Release-Lane: ota
 ```
+
+---
+
+## IMP-035 — search your journal   ·   Lane: OTA   ·   **FREE forever**
+
+**Why first among the new work:** there is **no search anywhere** in the tree. A user with 400 entries cannot find one. The archive is write-only — a category-level failure for a journal, and it blocks every "revisit your past" sale built on top of it (product thesis: [`docs/playbook.md`](docs/playbook.md)).
+
+- **Pure core:** `src/insights/search.js` — `searchEntries(entries, { text, moods, from, to })` → filtered, newest-first. Case- and diacritic-insensitive substring over `did` + `wished`; `moods` matches any; `from`/`to` are inclusive `dayKey` bounds. Empty query returns everything (the list *is* the default view). **No regex built from user input**, no fuzzy matching in v1 — a normalised `includes` is correct, fast at journal scale, and cheap to test.
+- **UI:** search field at the top of the Reflections tab, a mood chip row, a date-range control. Results reuse the existing entry row + `ReadingSheet`. Empty-result copy on-voice, not an error. Match highlighting is **out of scope** for v1.
+- **Never gate this.** It is custody of the user's own words — free even after `PLUS_ENABLED` flips.
+- **Tests:** empty query returns all · text matches across both fields · case/diacritic folding · mood filter single + multi · date bounds inclusive both ends · combined filters · no matches → `[]` · malformed entries (missing `did`/`wished`/`mood`) never throw.
+- **Commit:** `feat(search): full-text + mood + date search over the journal (IMP-035)` · `Release-Lane: ota`
+
+---
+
+## IMP-036 — custody of your words: edit any day, delete, 30-day trash   ·   Lane: OTA
+
+**Answers the owner's question — "how do you edit/delete a day that's already gone?"** Mechanically trivial: entries are `dayKey`-keyed objects in an array, so edit replaces one and delete removes one. The spec exists for the **derived state**:
+
+- **Editing text is completely safe.** Nothing derived reads entry *text*, so changing `did`/`wished`/`moods` on any past day has zero side effects. Ship without ceremony.
+- **Deleting is not, and the app must say so.** `currentStreak` is **derived from entries** (IMP-024), so deleting a mid-run entry **retroactively breaks the streak** — drop one entry from three days ago and a 40-day streak becomes 3. That is *correct* (the alternative is storing a lie, which is exactly what IMP-024 removed) but it will feel punitive, so the delete confirm must **state the consequence with the real new number**, computed before the user commits. `deriveAchievements` can un-earn a badge the same way — same warning.
+- **Do NOT claw back XP or embers.** They are persisted counters, not derived, and the user genuinely lived that day. The asymmetry with the streak is deliberate — comment it in code so nobody "fixes" it later.
+- **🚫 Editing is NOT back-filling.** A user may edit a day they *wrote*; they may **not create** an entry for a day they missed. Back-filling would let anyone fabricate a streak — precisely what IMP-024 exists to prevent — and would make the 💀 missed-day marker (IMP-014) a lie. Enforce structurally: the edit path opens only from an existing entry.
+- **The Plus half is UNDELETE, not delete.** Deleted entries go to a **30-day trash** (new `trash` key in `PERSISTED_KEYS`, pruned on launch). **Deleting is free. Restoring from trash is Plus** — keeping a safety copy is genuinely our work, whereas charging to delete would be charging someone to un-write their own grief. Restoring re-derives the streak automatically; no special case.
+- **Tests:** `pruneTrash` drops >30d and keeps the exact 30d boundary · `applyDelete` moves the entry and leaves xp/embers untouched · a `currentStreak` case proving a mid-run delete breaks the run · an edit-text case proving streak/xp are unaffected · back-fill unreachable through the exposed API.
+- **Commit:** `feat(entries): edit any past entry, delete with a 30-day trash (IMP-036)` · `Release-Lane: ota`
+
+---
+
+## IMP-037 — moods: custom feelings + multiple per entry   ·   Lane: OTA   ·   **FREE**
+
+**The owner asked for this as a Plus feature. Recommendation: build it FREE.** Reverse it if you disagree — but read the trap first.
+
+- **Model change:** `mood: string` → `moods: string[]`. `MOODS` ([`data.js:38`](src/data.js#L38)) stays the suggested 8; users may add their own. `moodEmoji` already returns `''` for unknown values ([`data.js:51`](src/data.js#L51)), so custom feelings degrade to no-emoji rather than breaking. Persist the user's custom list in `settings` so it is offered again.
+- **⚠️ Migration is the whole risk.** Every existing entry has a single `mood` string, and `mergeWithDefaults` is a shallow top-level spread that will **not** reach inside `entries` — so this needs a real migrator (`mood: 'Tender'` → `moods: ['Tender']`) plus every reader updated in the same pass: Insights mood mix, all `moodEmoji` call sites, `ReadingSheet`, the write flow. **An entry is the user's writing; a botched migration is unrecoverable.** A `serialize`/`deserialize` round-trip test is mandatory, and so is a case for an entry that already has `moods`.
+- **Insights:** mood mix counts one mood per entry today; with arrays an entry contributes to several. Say the denominator honestly in the UI — percentages will no longer sum to 100.
+- **⚠️ Why NOT Plus — the downgrade cliff.** A mood is **stored content**, part of what the user wrote. If custom/multi moods are paid, a lapsed subscriber's entry tagged `['restless','proud']` renders as… what? One mood? None? Every answer either lies about their entry or hides it — breaking the "never lose access to what you wrote" line that is this app's structural defence against exactly the money grievances raised earlier. **Principle worth locking: gate compute, never content.**
+- **✅ Charge for interpretation instead — it is the better business.** Build expression free, then sell **analysis**: mood correlations, seasonal patterns, "your year in feelings" in the Annual Recap. That is `PLUS_PERKS` #5 *("Deeper insights — moods & seasonal themes")*, **currently dead** — so shipping this free is what finally makes an already-sold perk real. Richer input *feeds* the paid layer instead of competing with it.
+- **Commit:** `feat(moods): multiple + custom feelings per entry, with migration (IMP-037)` · `Release-Lane: ota`
+
+---
+
+## IMP-038 — "On this day"   ·   Lane: OTA   ·   ✨ **the first real Plus feature**
+
+**Build last of this group** — depends on IMP-035's retrieval layer and IMP-037's mood model.
+
+- **What:** on opening the app, surface what the user wrote on this date in previous years — and, until they have a year of history, at 6 / 3 / 1 months back. Pure lookup: `onThisDay(entries, todayKey)` → matching entries plus a human label ("A year ago today", "6 months ago").
+- **Why this one is worth money.** It is **worthless on day 1 and priceless on day 400** — exactly the shape the product thesis requires of the paid tier. It is the most-loved feature in comparable journals, and it is already in this app's voice: IMP-013's *"Tend an old grave"* rite gestures straight at it.
+- **Free/paid line:** a user can always *reach* any past entry — that is IMP-035, free. Plus is the app **bringing it to them unprompted**: the surfacing, the anniversary framing, and later a reminder that says "a year ago today you wrote…". Our work, not their words.
+- **Placement:** a card on Home above the write card, shown only on days with a match — never an empty state. Dismissible per day.
+- **Tests:** exact year-ago match · multiple years at once · month fallbacks · leap day (29 Feb must not false-match 28 Feb) · empty history · same-day-multiple-entries.
+- **Commit:** `feat(memory): "On this day" resurfacing (IMP-038)` · `Release-Lane: ota`
 
 ---
 
