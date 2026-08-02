@@ -77,6 +77,40 @@ Note how much of that list is **already sold on the paywall and not built**. Bui
 
 **North star for when design work resumes:** the app's metaphor is a memorial *garden*. The most powerful accumulator available is **the garden itself visibly growing** with the record — more graves, more flowers, seasons turning. That is the record made visible, in the app's own voice, and no competitor can copy it because it is not a feature, it is the theme.
 
+### More offerings (2026-08-03) — ranked, with the warning first
+
+⚠️ **The bar is depth, not count.** Duolingo Super is roughly *no ads · unlimited hearts · some practice* — a short list people actually want. A paywall listing fifteen shallow items converts **worse** than three good ones, and this app is already carrying **four sold-but-unbuilt promises**. Build the debt first; treat the list below as a menu to choose 2–3 from, not a backlog to clear.
+
+**Tier 1 — strongest, and cheap:**
+- **🕯️ Time capsule / letter to your future self.** Write an entry sealed until a date you choose; it surfaces on that day. Store an `unsealAt` on the entry — that is nearly the whole build. **It is the only idea here that *creates* accumulation rather than computing on it**, the emotional payoff is enormous, and it is perfectly in the memorial-garden voice. Strongest single candidate.
+- **🔥 Streak insurance.** Auto-spend a candle when a day is missed, instead of making the user notice and act. Duolingo-proven as one of the highest-converting subscription perks, and it gives candles (currently the only repeating ember sink) a real job.
+- **⏰ Reminder at your best hour.** Computed from the time-of-day accumulator — "you write most at 21:40, so we'll nudge you at 21:20". Pure compute over the record, and it makes the existing IMP-031 reminder smarter rather than adding a new surface.
+- **📚 Prompt packs.** Themed decks — grief, gratitude, transitions, new parent. IMP-023's deck architecture already supports it; new pools are **pure data**, no new mechanism.
+
+**Tier 2 — real, but more work:**
+- **🗂️ Multiple journals** (work / personal / a person you're grieving) — common paid feature, but it touches every screen and the whole persistence shape. Not cheap.
+- **🎂 Anniversary notifications** — "a year ago today you wrote…" as a push. Natural extension of IMP-038 once that exists.
+- **🏅 Milestone keepsakes** — a real artifact at 100 days / one year. Pairs with the deferred milestone timeline and the keepsake PDF.
+- **🖼️ Shareable year card** — an image for social, which is also the only organic growth loop here. **Must never include entry content by default** — opt-in, numbers only.
+
+**Should be FREE, deliberately** — the free tier has to carry someone to ~day 60 or there is never a paying moment: search (IMP-035) · edit/delete (IMP-036) · reminder · backup/export · **biometric app lock** (table stakes for trusting a journal at all) · basic insights.
+
+**⚠️ Handle with care:** mood *prediction* or warnings ("your Februaries are hard") is powerful and tonally dangerous — it edges into mental-health inference for a product with no clinical basis. If ever built, describe the past, never forecast the future.
+
+### 🔒 Analytics — the owner asked whether to collect behaviour data. Three tiers, one line
+
+The word "collect" hides a decision. Separate it:
+
+1. **Content** — entries, moods, tags. **Never leaves the device. Non-negotiable.** For a journal, privacy *is* the product; this is the one thing no better-funded competitor can take away. Shipping content analytics would be a trust catastrophe the day anyone noticed.
+2. **Behaviour** — screens opened, features used, retention. Technically possible, but it **reverses the local-only decision**: Play Data Safety re-declaration, privacy-policy rewrite, DPDP/GDPR consent + deletion duties, and the loss of the "nothing you write leaves your phone" claim.
+3. **Crashes** — stack traces. Most defensible, still requires disclosure.
+
+**Recommendation: personalise entirely ON-DEVICE, and add no analytics SDK yet.**
+- Every personalisation idea in this document — best writing hour, mood patterns, recap, resurfacing — needs data **that is already on the device**. On-device is not a compromise here; it is **strictly better**: complete data instead of sampled, no latency, no consent friction, no legal surface. There is no product reason to ship it anywhere.
+- For *product* decisions, the cost/benefit is bad right now regardless: at closed-testing volume, behavioural analytics tells you **nothing** statistically, while costing the differentiator permanently.
+- **You already have analytics you are not reading.** Play Console gives installs, uninstalls, retention cohorts and ratings; **Android vitals** gives crash-free rate, ANRs and stability — **zero code, zero SDK, zero privacy cost, no disclosure change**. Exhaust that before considering anything else.
+- If usage analytics is ever genuinely needed: **opt-in, off by default, aggregate counts only, never content, and stated plainly in onboarding.** Anything less contradicts what this app sells.
+
 ---
 
 ## Locked decisions (2026-06-03)
