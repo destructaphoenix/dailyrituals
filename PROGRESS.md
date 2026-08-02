@@ -77,9 +77,26 @@ IMP-029 detects an OS restore and shows a notice — but by then the restored da
 
 **What is NOT fixable, and must not be attempted:** intercepting the restore itself. Android Auto Backup writes the data at **install time, inside the OS**, before the app's first line of JS runs; `BackupAgent.onRestoreFinished()` fires only *after* it has landed. There is no prompt-before-restore API. The only OS lever is `allowBackup: false` ([`app.config.js:49`](app.config.js#L49)), which would delete IMP-006 entirely. So the fix is to **quarantine** what the OS forced on us and hand the decision back to the user.
 
-### ⚠️ Trade-off the owner has accepted, stated plainly
+### Does Android already ask? Only in one of the two paths — get this right
 
-On a genuine **new phone**, the user currently gets their journal back with zero friction — that silent restore is arguably the delight IMP-006 was built for. After IMP-033 they will do **onboarding first**, then be offered their journal. That is a real regression in the new-phone path, traded for consent in the reinstall path (which the OS never asks about). Android's own new-device setup flow does ask "restore from backup?", so the new-phone user has already consented once — this makes them consent twice. **Accepted deliberately; do not re-litigate.** Mitigate with warm, unmistakable copy on the offer sheet — it must read as "your journal is here, want it back?" and never as an error.
+There are **two different restore paths** and they have opposite consent properties. An earlier note in this file blurred them; the precise position:
+
+- **New phone / post-factory-reset.** Android's setup wizard **does** show a restore screen ("Copy apps & data" → pick a source device → optionally deselect apps). So there *is* consent — but it is a **device-level bulk choice about dozens of apps at once**, made by a user who is not thinking about this app, and it says **nothing about how old the data is**. Most people tap through it.
+- **Reinstalling on the same device** — uninstall, then install again. **Android asks nothing at all.** The restore is completely silent. **This is the path the owner hit on 2026-08-02**, and it is the one with genuinely zero consent.
+
+So the honest case for IMP-033 is *not* "Android never asks". It is: **the reinstall path has no consent whatsoever, and neither path ever discloses staleness.** The disclosure half is the larger win, and it applies to both paths.
+
+### ⚠️ Trade-off, stated plainly
+
+On a genuine **new phone**, the user today gets their journal back with zero friction — arguably the delight IMP-006 was built for. Under IMP-033 they do **onboarding first**, then get offered it. That is a real regression in the new-phone path, bought to gain consent in the reinstall path. Mitigate with warm, unmistakable copy — the offer must read as "your journal is here, want it back?" and never as an error.
+
+### 🚫 What this task does NOT do — it cannot guarantee the backup is current
+
+**Android Auto Backup hands the app exactly one copy: the last one the OS uploaded.** There is no version history, no "fetch the newest" API, no way to list or choose among backups — and the app does not even receive it, it is simply *already in AsyncStorage* at first launch. The OS uploads at most **once per 24h** and only while **idle + charging + on unmetered Wi-Fi**, so a copy that is 24h — or many days — behind is the normal case, not the exception. There is also **no way to force a fresh backup from inside the app**: native `BackupManager.dataChanged()` only *requests* one and is still subject to the same throttle and conditions, and Expo does not expose it.
+
+**Therefore "make sure the restore is the latest" is not achievable by any design.** The only honest remedy is disclosure, which is what both IMP-029 and this task do — and the only genuinely user-controlled fresh copy is the **JSON export**, which is why step 6's copy fix matters more than it looks.
+
+**Consequence for the offer sheet (do not drop this):** the stash carries the persisted `lastBackupAt` (the user's last JSON export) alongside `lastSavedAt` (the Google copy's age). When the export is the **newer** of the two, the sheet must say so and lead with the file route — otherwise the app would talk a user into loading the staler of two backups it can see.
 
 ### Design
 
@@ -104,7 +121,8 @@ Condition: `pendingRestore` exists && `onboarded === true`. Evaluate it on every
 Copy — warm, and every warning stated:
 - Title: **"We found your journal."**
 - Body: `Your journal was backed up to your Google account on {formatBackupDate(stash.lastSavedAt)}. You can load it now.` then, as distinct warning lines: **it replaces everything you've just set up** (your name, theme, and anything written since installing) · **it's from {date}** — anything written after that isn't in it.
-- Actions: **Load my journal** (primary) · **Keep this fresh start** (ghost).
+- **Three** actions, not two: **Load my journal** (primary) · **Restore from a file** (ghost — routes to the existing `doImport` picker) · **Keep this fresh start** (ghost). Dropping the file route would make this sheet strictly worse than the IMP-029 notice it replaces.
+- **Freshness comparison (required).** Read `stash.lastBackupAt` (the user's last JSON export) next to `stash.lastSavedAt` (the Google copy). When the export is **newer**, invert the emphasis: say so in one line — `You also exported a file on {date}, which is newer` — and promote **Restore from a file** to primary. The app must never talk a user into loading the staler of two backups it can already see.
 
 **4. Actions.**
 - **Load** → `Alert.alert` confirm → `backupIO.writeRecovery(createBackup(currentSlice))` **before** anything is replaced (same guarantee as above) → `deserialize(stash)` → route through the existing `handleReplaceAllData` (it already saves + bumps `dataKey` to remount) → delete the stash → done.
@@ -124,7 +142,7 @@ Copy — warm, and every warning stated:
 
 ### Tests (pure only, per project convention)
 
-`shouldQuarantine` (inherits `isRestoredInstall`'s 7 cases — assert delegation, don't duplicate) · `shouldOfferRestore` (stash+onboarded → true; stash+not-onboarded → false; no stash → false either way) · a `storage` round-trip case (write → read → clear) · a regression case asserting a **failed stash write leaves the main key intact**. No render tests for the sheet (same non-goal as every other sheet in the app).
+`shouldQuarantine` (inherits `isRestoredInstall`'s 7 cases — assert delegation, don't duplicate) · `shouldOfferRestore` (stash+onboarded → true; stash+not-onboarded → false; no stash → false either way) · **`preferredSource({ lastSavedAt, lastBackupAt })` → `'google' | 'file'`** (export newer → `'file'`; Google newer → `'google'`; export missing/equal → `'google'`; non-numeric either side → `'google'`, no coercion) · a `storage` round-trip case (write → read → clear) · a regression case asserting a **failed stash write leaves the main key intact**. No render tests for the sheet (same non-goal as every other sheet in the app).
 
 ### Commit message
 
