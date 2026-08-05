@@ -71,6 +71,10 @@ Opus scopes each owner-filed issue into a numbered `IMP-xxx` task (steps + commi
 | IMP-036 | **Custody of your words** — edit any past entry (not just today), delete an entry, and a 30-day trash. Core is **free**; *restoring* from trash is the Plus half | OTA | ⬜ **OPEN — spec inline below** |
 | IMP-037 | **Moods: custom + multiple per entry** — `mood: string` → `moods: string[]` plus user-defined feelings. **Free** (it is stored content). Makes the dead `PLUS_PERKS` #5 buildable | OTA | ⬜ **OPEN — spec inline below** |
 | IMP-038 | ✨ **"On this day"** — resurface what you wrote a year / months ago. **The first real Plus feature.** Needs IMP-035's retrieval layer first | OTA | ⬜ **OPEN — spec inline below** |
+| IMP-039 | 🔴 **Streak-freeze candles do NOTHING** — nothing in the tree ever spends a freeze, and `currentStreak` has no freeze awareness at all. Buy 5 for 450 embers, miss a day, streak still breaks to 0. Two false claims in one Shop line | OTA | ⬜ **OPEN — audited 2026-08-04, see below** |
+| IMP-040 | 🟡 **"Keepsake" means three different things** — the daily-rites footer, the Achievements screen title, and the unbuilt PDF perk. Pick one meaning, rename the others | OTA | ⬜ **OPEN** |
+| IMP-041 | 🟡 **Teach the app** — no tutorial beyond first-run onboarding; embers, candles, quests, levels and every Plus perk are unexplained and unlisted anywhere in-app | OTA | ⬜ **OPEN** |
+| IMP-042 | 🐛 **Modal screens clip at the bottom** — likely `insets.bottom` missing from ScrollView `contentContainerStyle` under SDK 54's forced edge-to-edge. Owner reports "the page doesn't scroll" | OTA | ⬜ **OPEN — needs repro** |
 
 ---
 
@@ -262,6 +266,41 @@ Release-Lane: ota
 
 ---
 
+## IMP-039 — streak-freeze candles do nothing   ·   Lane: OTA
+
+**Audited 2026-08-04 after the owner said "I don't even know how the candles work… not sure it even works." It doesn't.** `grep -n "freeze"` over `src/` finds `freezes` **incremented** in two places (`buyCandles` [`RitualsApp.js:170`](src/RitualsApp.js#L170), `subscribe` [`:183`](src/RitualsApp.js#L183)), **displayed** in two (`StreakFreeze` on Home, "N kept" in Shop), and **persisted**. **Nothing anywhere decrements it, and nothing consumes it.** `currentStreak` derives purely from entry `dayKey`s (IMP-024) and has **no concept of a freeze**. So a user spends 450 embers on 5 candles, misses a day, and the streak still breaks to 0.
+
+**Two false claims in one line** — [`Shop.js:70`](src/screens/Shop.js#L70): *"Light one on a missed day and your streak holds."* (it does not) *"Plus gives you 3 free each month."* (granted **once**, at subscribe). Same defect class as the fake 8:30 PM reminder and the fake PDF button.
+
+**Two ways out — owner picks:**
+- **(a) Make them real ⭐.** `currentStreak(keys, todayKey, { frozenDays })` gains a set of forgiven day-keys; a new persisted `frozenDays: string[]` records which missed days were covered. Spend automatically at the moment a miss is detected (**streak insurance** — the Duolingo-proven, highest-converting form, and it gives candles their only real job). Manual "light a candle" is worse UX: it requires the user to open the app on a day they already failed to open it. **This also becomes a genuine Plus perk** — free users spend embers on candles; Plus gets a monthly allowance that actually recurs.
+- **(b) Delete them.** Remove candles, `CANDLE_PACKS`, the Shop section and perk #2, and refund nothing (no real money was ever involved). Honest, and smaller. But it removes the **only repeating ember sink**, which worsens the "shop runs out at ~day 110" problem in the playbook.
+- Either way **the Shop copy is false today and must change in the same shipment.**
+
+---
+
+## IMP-040 — "keepsake" means three different things   ·   Lane: OTA
+
+Why it doesn't make sense: the word is used for three unrelated concepts. (1) The daily-rites footer — *"finish to earn today's keepsake"* ([`gamify.js:113`](src/gamify.js#L113)) — where nothing called a keepsake is actually granted; completing quests pays XP/embers. (2) The **Achievements** screen, whose kicker is literally "Keepsakes" ([`Achievements.js:29`](src/screens/Achievements.js#L29)) and which is reached from a Home row and a You tile of the same name. (3) The unbuilt **keepsake PDF** perk ([`data.js:148`](src/data.js#L148)).
+
+**Fix: pick ONE.** Recommendation — reserve "keepsake" for **the exported artifact** (meaning 3, the thing a user can hold), because that is the word doing real emotional work and it is what the paywall sells. Rename (2) to plain **Achievements** and rewrite (1) to name the actual reward (*"finish all three to earn today's embers"*). One word, one meaning, everywhere.
+
+---
+
+## IMP-041 — teach the app   ·   Lane: OTA
+
+Owner: *"need to make the app easy to use for everyone. Need tutorials and stuff, same for the perks that are not listed anywhere in the app right now."* Confirmed: beyond first-run `Onboarding.js` there is **no explanatory surface anywhere** — embers, candles, quests, XP/levels, achievements, the streak rules and every Plus perk are unexplained. `PLUS_PERKS` renders **only inside the paywall**, which is hidden entirely while `PLUS_ENABLED = false` — so today a user cannot discover what Plus even is.
+
+Scope, cheapest first: **(1)** a "How it works" section in the You tab — one short explainer per concept (streak · embers · candles · rites · levels · achievements), reusing the `explainAutoBackup` `Alert` pattern already in the tree. **(2)** First-use coach marks on the three screens users land on, dismissed permanently via a persisted `seenTips` set. **(3)** A **"What's in Plus"** page reachable *outside* the paywall, so the offer is discoverable before there is a price attached. **(4)** Empty states that teach rather than apologise. **Do not** build a multi-step tutorial carousel — this is a journaling app; the fastest path to value is writing one entry.
+
+---
+
+## IMP-042 — modal screens clip at the bottom   ·   Lane: OTA   ·   ⬜ needs repro
+
+Owner reports "the page itself doesn't scroll." **Hypothesis, not yet confirmed:** the full-screen modals apply `paddingTop: insets.top` but pad the bottom with a **fixed constant and no `insets.bottom`** — [`Achievements.js:19/28`](src/screens/Achievements.js#L19) (`paddingBottom: 30`) and [`Shop.js:54`](src/screens/Shop.js#L54) (`paddingBottom: 36`). Under SDK 54 / Android 16 edge-to-edge is **forced and cannot be opted out of** (IMP-027), so the last item sits behind the system nav bar — which reads as "I can't get to the bottom" rather than "it doesn't scroll". **First step is repro, not code:** owner confirms *which* screen and whether it scrolls at all or merely ends too early. Both structures look correct for scrolling, so a total scroll failure would point somewhere else entirely.
+
+---
+
 ## Open items / blockers
 
 ### ⏳ In flight
@@ -349,6 +388,21 @@ The owner asked this after the purchase-recovery audit: *"I am questioning if I 
 
 **⚠️ Promote vc11 EARLY, not late.** `runtimeVersion` = `appVersion` = 1.0.5, so every OTA lands on **testers only** while the public sits on 1.0.3. All the perk work below is OTA-lane — meaning **none of it reaches real users until vc11 is promoted.** Promotion is not a "later" decision; it is a prerequisite for this whole track mattering.
 
+**🔴 PROPOSED FINAL PERK LIST (owner to approve — this is step A2).** Every line below is either already real or has a specced task. Nothing is aspirational.
+
+| # | The line the paywall carries | Backed by | State |
+| --- | --- | --- | --- |
+| 1 | **Every palette & sky — unlocked forever** | `tier: 'plus'` items | ✅ already real |
+| 2 | **Streak insurance — a candle spends itself when you miss a day** | IMP-039 (a) | ⬜ replaces the false "3 candles every month" |
+| 3 | **On this day — your own words, brought back to you** | IMP-038 | ⬜ specced |
+| 4 | **Your year, remembered — the Annual Recap** | roadmap C | ⬜ unspecced |
+| 5 | **Deeper insights — moods, seasons and your rhythms** | IMP-037 → analysis layer | ⬜ makes dead perk #5 real |
+| 6 | **A keepsake PDF — your days, as a book** | IMP-022 Part A (BUILD lane) | ⬜ deferred, revive |
+
+**Cut outright: "Your whole graveyard, kept forever"** — no history limit exists, so it sells relief from a restriction that was never built, and building one would violate the never-gate-their-words line. **Cut, do not implement.**
+
+**Note the shape:** one cosmetic perk, one retention perk, four memory perks. That is the thesis — *free helps you write today, Plus gives you your years back* — expressed as a purchasable list. Keep it at six; a longer list converts worse.
+
 **A — do now, nothing blocks these:**
 1. **IMP-034** — gate the fake cash ember prices. Minutes, and it is live in production right now.
 2. **🔴 OWNER DECISION: fix the perk list.** Only the owner can choose what Plus promises. Two of the five are fixed by **editing copy, not building**: cut *"Your whole graveyard, kept forever"* (it sells relief from a restriction that does not exist), and either make the monthly candles recurring or reword to *"three candles when you join"*. This decision gates everything downstream — the build order, the price, and the Play product config.
@@ -377,7 +431,8 @@ The owner asked this after the purchase-recovery audit: *"I am questioning if I 
 
 ### 💳 Phase 10b — payments (the next real track, gated externally)
 
-- **🔓 BillDesk deadlock broken — application SUBMITTED 2026-07-30, ⏳ awaiting verification.** The trap was circular: BillDesk PA-CB seller verification wants the **live app's Play Store URL**, payments need BillDesk, BillDesk needed a published listing. Shipping v1.0.3 broke the cycle, and the owner has now submitted the application with their details. **v1.0.3 is now live and approved**, so the listing URL resolves publicly — if BillDesk queries it during verification it will no longer 404, and the URL can be re-supplied with confidence if they ask again. **Submitted ≠ verified** — BillDesk/Google still have to approve the payments profile, and until they do, subscription products cannot be activated. Watch for mail from `onboarding@billdesk.com` and Play Console → **Payments profile**. Window opened 2026-06-04 (≤90 days ⇒ ~**2026-09-02**).
+- **✅✅ BillDesk APPROVED (owner reported 2026-08-04).** PA-CB seller verification is **done**; BillDesk is now working on the payment setup itself. **The 90-day window (~2026-09-02) is no longer a threat and the external gate on Phase 10b is lifted.** What this unblocks: a payments profile means Play subscription **products can be created, priced and activated** (playbook 10b.2–10b.5, still `TBD`) and RevenueCat Offerings can be wired. What it does *not* change: `PLUS_ENABLED` still must not flip until gate **D** below is fully true — approval removes the *external* blocker, not the four unbuilt perks. Remaining wait is BillDesk finishing payment setup; confirm in Play Console → **Payments profile** before creating products.
+- **Historical (resolved) — the deadlock that was:** application SUBMITTED 2026-07-30, verified 2026-08-04. The trap was circular: BillDesk PA-CB seller verification wants the **live app's Play Store URL**, payments need BillDesk, BillDesk needed a published listing. Shipping v1.0.3 broke the cycle, and the owner has now submitted the application with their details. **v1.0.3 is now live and approved**, so the listing URL resolves publicly — if BillDesk queries it during verification it will no longer 404, and the URL can be re-supplied with confidence if they ask again. **Submitted ≠ verified** — BillDesk/Google still have to approve the payments profile, and until they do, subscription products cannot be activated. Watch for mail from `onboarding@billdesk.com` and Play Console → **Payments profile**. Window opened 2026-06-04 (≤90 days ⇒ ~**2026-09-02**).
 - **Owner to confirm once the profile verifies:** whether any Play subscription products exist yet — Play Console → **Monetize → Subscriptions** (any products, and are they *active*?) and RevenueCat → **Offerings** (does `current` list packages?). Playbook 10b.2–10b.5 are still unchecked and "Play product ids" is still `TBD`.
 - **🔴🔴 HARD BLOCKER before `PLUS_ENABLED` — FOUR of the FIVE advertised Plus perks are not real.** Audited 2026-08-03 against `PLUS_PERKS` ([`data.js:144`](../src/data.js#L144)), the list the paywall sells:
 
