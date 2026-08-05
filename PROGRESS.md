@@ -341,6 +341,40 @@ The owner asked this after the purchase-recovery audit: *"I am questioning if I 
 
 **Timing is the good news.** `PLUS_ENABLED = false` ⇒ **zero paying users, zero refunds owed, zero support tickets, nothing shipped.** This is the cheapest possible moment to find it; after 10b it would be genuinely expensive. **No code decision is blocked on this today** — but it must be settled before `PLUS_ENABLED` flips, because it determines which Play products get created (playbook 10b.2–10b.5, still `TBD`).
 
+### 🚀 SUBSCRIPTION TRACK — ordered next steps (owner asked 2026-08-04)
+
+**The governing fact: BillDesk is the hard external gate, and it is ~4 weeks from expiry (window opened 2026-06-04, ≤90 days ⇒ ~2026-09-02). Play subscription products cannot be created or priced without a verified payments profile — so nothing commercial ships before it. But NONE of the product work is blocked by it.** Treat the wait as the build window; do not idle.
+
+**⚠️ Sequencing trap — flipping `PLUS_ENABLED` is a BUILD, not an OTA.** The RevenueCat key reaches the app through `app.config.js` → `expo-constants` `extra`, which is resolved from `process.env` **at build time in the EAS environment**. `scripts/check-billing-config.js` is already wired as a preflight in the build job for exactly this reason. Do not plan the flip as a JS-only OTA.
+
+**⚠️ Promote vc11 EARLY, not late.** `runtimeVersion` = `appVersion` = 1.0.5, so every OTA lands on **testers only** while the public sits on 1.0.3. All the perk work below is OTA-lane — meaning **none of it reaches real users until vc11 is promoted.** Promotion is not a "later" decision; it is a prerequisite for this whole track mattering.
+
+**A — do now, nothing blocks these:**
+1. **IMP-034** — gate the fake cash ember prices. Minutes, and it is live in production right now.
+2. **🔴 OWNER DECISION: fix the perk list.** Only the owner can choose what Plus promises. Two of the five are fixed by **editing copy, not building**: cut *"Your whole graveyard, kept forever"* (it sells relief from a restriction that does not exist), and either make the monthly candles recurring or reword to *"three candles when you join"*. This decision gates everything downstream — the build order, the price, and the Play product config.
+3. **Create `RC_ANDROID_KEY`** as an EAS env var **and** a GitHub repo secret. Independent of BillDesk, and the Actions linter flags the workflow as broken until it exists. `eas env:create --name RC_ANDROID_KEY --scope project --environment production`.
+4. **Promote vc11 → production** (see above).
+
+**B — the build window (spend the BillDesk wait here), in order:**
+5. **IMP-035 search** — free; the free tier must carry someone to ~day 60 or there is no paying moment.
+6. **IMP-036 edit/delete** · 7. **IMP-037 moods** — the second unlocks the dead perk #5.
+8. **Make perk #5 real** — deeper insights: mood correlations + seasonal patterns, computed over IMP-037's data.
+9. **Revive IMP-022 Part A** — the keepsake PDF, i.e. perk #4. Already sold; still no PDF code in the tree. **BUILD lane** (new native module).
+10. **IMP-038 "On this day"** — the first genuinely *new* paid feature. Everything above it is debt repayment.
+
+**C — owner/commercial, in parallel with B:**
+11. **Chase BillDesk.** Watch `onboarding@billdesk.com` and Play Console → Payments profile. This is the critical path; everything else is slack.
+12. **Decide pricing, including the India tier.** $29.99/yr is not defensible for today's Plus; it is defensible for the one B produces. ≈₹2,500 needs its own thought — Play local tiers, not just the USD figure.
+13. **Decide the trial.** The "7-day free trial" claim is hardcoded in `Paywall.js` + `PlusFlow.js` `LegalFooter`. Either configure a real 7-day offer on the Play base plan or change the copy. **Never ship it unverified.**
+
+**D — the gate before `PLUS_ENABLED` flips. All must be true:**
+- [ ] Every line in `PLUS_PERKS` is real (or deleted)
+- [ ] Play subscription products created **and active**; RevenueCat → Offerings shows `current` with packages
+- [ ] `RC_ANDROID_KEY` present in the EAS **production** environment (else the build silently ships `simService` and fakes purchases)
+- [ ] Trial copy matches the configured Play offer
+- [ ] A **real transaction** tested end-to-end on a real device via a licence tester account
+- [ ] vc11 (or later) is on the production track, so the paying public can actually reach it
+
 ### 💳 Phase 10b — payments (the next real track, gated externally)
 
 - **🔓 BillDesk deadlock broken — application SUBMITTED 2026-07-30, ⏳ awaiting verification.** The trap was circular: BillDesk PA-CB seller verification wants the **live app's Play Store URL**, payments need BillDesk, BillDesk needed a published listing. Shipping v1.0.3 broke the cycle, and the owner has now submitted the application with their details. **v1.0.3 is now live and approved**, so the listing URL resolves publicly — if BillDesk queries it during verification it will no longer 404, and the URL can be re-supplied with confidence if they ask again. **Submitted ≠ verified** — BillDesk/Google still have to approve the payments profile, and until they do, subscription products cannot be activated. Watch for mail from `onboarding@billdesk.com` and Play Console → **Payments profile**. Window opened 2026-06-04 (≤90 days ⇒ ~**2026-09-02**).
