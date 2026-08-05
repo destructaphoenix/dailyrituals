@@ -97,6 +97,25 @@ Note how much of that list is **already sold on the paywall and not built**. Bui
 
 **⚠️ Handle with care:** mood *prediction* or warnings ("your Februaries are hard") is powerful and tonally dangerous — it edges into mental-health inference for a product with no clinical basis. If ever built, describe the past, never forecast the future.
 
+### 🔐 Backup tampering — asked 2026-08-04. Fix the entitlement, NOT the file.
+
+Owner: *"no matter what, no one should be able to manipulate the backup. Right now the backup has a .json option. People can easily manipulate it."* True — and the response should be narrow, because the concern contains two very different problems.
+
+**Start from a fact that decides the approach: a client-side-only file CANNOT be made tamper-proof.** Any signing key, HMAC secret or encryption key must ship inside the APK, where it can be extracted from the bundle in minutes. Signing the JSON is **security theatre** — it stops nobody determined, while making the file worse for everyone honest. There is no server to sign against, and adding one to defend a streak counter is not a trade worth making.
+
+**Sort what tampering actually gains:**
+
+| Forged field | Real consequence | Response |
+| --- | --- | --- |
+| **`plus: true`** | 🔴 **Free access to paid features — actual lost revenue** | **Fix properly** — make RevenueCat authoritative. See IMP-043 §1b. |
+| `xp`, `embers`, `freezes`, `activePalette` | Cosmetic. There is no leaderboard, no multiplayer, no competitive integrity — a user who inflates their own numbers has cheated **only themselves** | **Ignore deliberately.** Not worth one line of defence. |
+| Fabricated `entries` / streak | The user lied to themselves in a private diary | **Ignore.** (Note the app already refuses *back-filling* through the UI — IMP-036 — because that protects the streak's meaning, not against file editing.) |
+| Corrupted / truncated file | 🟡 The realistic failure, and it is **accidental, not malicious** | **Already handled** — the importer validates and returns `not-json` / `not-backup` / `too-new` / `unreadable` ([`RitualsApp.js:65–69`](../src/RitualsApp.js#L65)). A plain checksum could be added for *accident detection*, clearly labelled as that and never sold as tamper-proofing. |
+
+**So: fix exactly one thing — the entitlement — and leave the file open.**
+
+**And the file being plain, readable JSON is a FEATURE, not a weakness.** It is the strongest possible expression of the custody principle this playbook is built on — *their words are theirs, portable, inspectable, and readable without our app*. Encrypting or signing it would contradict the free/paid line ("never gate their own writing"), work against the user's interest, and defend nothing that matters. Obsidian's entire pitch is plain files; Day One exports plain. **Keep it open on purpose, and say so.**
+
 ### 🆘 "A paying customer who loses their phone gets nothing from me" (owner, 2026-08-04)
 
 The owner's discomfort, verbatim: *"A paying customer who somehow loses their data or phone and wants the reload on the new device will not get it. Even though they paid me, I have kept the onus on them."* **This is the most important strategic concern raised so far and it should not be soothed away.** Precise position:
