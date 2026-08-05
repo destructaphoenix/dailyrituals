@@ -15,9 +15,14 @@
 
 The live work is the **first unchecked `IMP-xxx` task in the Improvements backlog** below — its full spec is inline (Opus scopes it there; no separate plan file). Work that, **not** the phase ladder (8 / 10b / 11), which is **parked in [`docs/playbook.md`](docs/playbook.md)** until the owner resumes it.
 
-> **Six open tasks, all specced inline below. Recommended order:**
-> **IMP-034** (minutes, and it is live in production right now) → **IMP-035 search** (the biggest single value gain in the codebase; everything else in the retrieval story sits on it) → **IMP-036 edit/delete** → **IMP-037 moods** → **IMP-033 restore consent** (bigger build, already settled) → **IMP-038 "On this day"** (must come last — it depends on 035 and 037).
-> Sonnet takes **one** spec per chat, in this order, unless the owner says otherwise.
+> **Eleven open tasks, all specced inline below. Recommended order — revised 2026-08-04:**
+>
+> **Quick + already broken in production:** **IMP-034** (fake ember prices, minutes) → **IMP-042** (Keepsakes screen doesn't scroll) → **IMP-040** (keepsake naming, copy-only).
+> **Before anyone can pay:** **IMP-043** (recoverability — the lost-phone bug) → **IMP-039** (candles are fake *and* advertised) → **IMP-041** (nothing in the app explains itself, and Plus is undiscoverable).
+> **The retrieval track:** **IMP-035 search** (the biggest single value gain in the codebase) → **IMP-036 edit/delete** → **IMP-037 moods**.
+> **Then:** **IMP-033** (restore consent, bigger build, already settled) → **IMP-038 "On this day"** (last — depends on 035 and 037).
+>
+> Sonnet takes **one** spec per chat, in this order, unless the owner says otherwise. **`PLUS_ENABLED` must not flip until IMP-039, -041 and -043 are done and every line of the perk table is true.**
 >
 > **Two owner decisions are still open and do NOT block the queue:** which IMP-021 shortfall to fix, and the **alpha → production promotion**. A third — whether to sell a consumable currency at all — is settled in principle (ember purchasing dropped, 2026-08-03) and must be finalised before `PLUS_ENABLED` flips. Product thesis governing all of this: [`docs/playbook.md`](docs/playbook.md) → "Why anyone would pay". It came out of the 2026-08-02 real-device walk: the OS restores a Google backup silently and without consent, and the app's notice only offers acceptance. IMP-022 (Save as PDF + About) stays **⏸ deferred by owner decision**; its spec sits in [`docs/build-log.md`](docs/build-log.md) → "⏸ Deferred specs" (still valid, not history) — do not start it without the owner reviving it. The **real-device walk is now DONE** for IMP-029/030/031/032; only **IMP-021** is outstanding there, rejected by the owner as "not properly completed" and awaiting a decision on which shortfall to fix.
 
@@ -74,7 +79,8 @@ Opus scopes each owner-filed issue into a numbered `IMP-xxx` task (steps + commi
 | IMP-039 | 🔴 **Streak-freeze candles do NOTHING** — nothing in the tree ever spends a freeze, and `currentStreak` has no freeze awareness at all. Buy 5 for 450 embers, miss a day, streak still breaks to 0. Two false claims in one Shop line | OTA | ⬜ **OPEN — audited 2026-08-04, see below** |
 | IMP-040 | 🟡 **"Keepsake" means three different things** — the daily-rites footer, the Achievements screen title, and the unbuilt PDF perk. Pick one meaning, rename the others | OTA | ⬜ **OPEN** |
 | IMP-041 | 🟡 **Teach the app** — no tutorial beyond first-run onboarding; embers, candles, quests, levels and every Plus perk are unexplained and unlisted anywhere in-app | OTA | ⬜ **OPEN** |
-| IMP-042 | 🐛 **Modal screens clip at the bottom** — likely `insets.bottom` missing from ScrollView `contentContainerStyle` under SDK 54's forced edge-to-edge. Owner reports "the page doesn't scroll" | OTA | ⬜ **OPEN — needs repro** |
+| IMP-042 | 🐛 **The Keepsakes screen (from Home) does not scroll** — every other screen does; static reading does not explain it, so measure before theorising | OTA | ⬜ **OPEN — spec inline below** |
+| IMP-043 | 🔴 **Recoverability pass** — a returning subscriber is shown as non-Plus and never re-checked; backup health is silent; the purchase makes an implied promise about data that is not kept | OTA | ⬜ **OPEN — spec inline below; do BEFORE `PLUS_ENABLED`** |
 
 ---
 
@@ -321,6 +327,23 @@ Scope, cheapest first: **(1)** a "How it works" section in the You tab — one s
 
 ---
 
+## IMP-043 — recoverability pass (do BEFORE `PLUS_ENABLED` flips)   ·   Lane: OTA
+
+**Why this exists.** The owner, 2026-08-04: *"A paying customer who somehow loses their data or phone and wants the reload on the new device will not get it. Even though they paid me, I have kept the onus on them."* Correct, and partly a **bug** rather than a philosophy. Full strategic answer — including encrypted Drive backup as the eventual flagship Plus feature — is in [`docs/playbook.md`](docs/playbook.md) → *"A paying customer who loses their phone"*. This task is the cheap half, and it must land **before** anyone pays.
+
+**1. 🔴 The lost-phone bug.** The Plus entitlement *does* survive a lost phone — it lives with RevenueCat / the Google account. But the AppState refresh early-returns `if (!plus)` ([`RitualsApp.js:222–228`](src/RitualsApp.js#L222)), so when the local cache is false **the app never asks RevenueCat at all**, and the only recovery route is "Restore purchases" **behind the paywall** — the one screen a user who looks non-Plus has no reason to open. **Fix:** call `service.getEntitlement()` once at launch whenever local `plus` is false (silent, failure-tolerant, no UI on the empty case), and surface a manual **"Restore purchases"** row in the You tab *outside* the paywall. `doRestore()` ([`RitualsApp.js:211`](src/RitualsApp.js#L211)) already works — it just needs to be reachable.
+
+**2. Make backup health loud instead of silent.** `lastBackupAt` is already persisted and already rendered via `lastBackupLabel`. Add: a visible warning when the last export is **older than 30 days** (or never), a prompt to export at real milestones (100 days, one year — moments when the archive has become irreplaceable), and keep the existing `explainAutoBackup` route to check the OS toggle. Silence is what turned a correct restore into a false bug report on 2026-08-02.
+
+**3. Say it plainly at the point of purchase.** One line on the paywall — *"Your journal lives on your device. Plus adds memory, not storage."* Selling Plus creates **no obligation to host anyone's data**; it creates an obligation to be honest about what is bought. The discomfort here comes from an *implied* promise, and the fix is to stop implying it.
+
+**4. Give yourself a goodwill channel.** A support address in the About sheet (IMP-022 Part B), plus **Play promo codes** — issued from Play Console, no infrastructure — so an unlucky paying user can actually be given something. "I cannot help you" is the part that is genuinely indefensible; this makes it untrue.
+
+- **Tests:** entitlement re-check fires exactly once when `plus` is false and **not** when true · a failed/empty entitlement call is silent and never downgrades a real subscriber · `backupHealth(lastBackupAt, now)` → `'never' | 'stale' | 'ok'` with the 30-day boundary pinned.
+- **Commit:** `feat(recovery): restore Plus on a new device, warn on stale backups (IMP-043)` · `Release-Lane: ota`
+
+---
+
 ## Open items / blockers
 
 ### ⏳ In flight
@@ -422,6 +445,16 @@ The owner asked this after the purchase-recovery audit: *"I am questioning if I 
 **Cut outright: "Your whole graveyard, kept forever"** — no history limit exists, so it sells relief from a restriction that was never built, and building one would violate the never-gate-their-words line. **Cut, do not implement.**
 
 **Note the shape:** one cosmetic perk, one retention perk, four memory perks. That is the thesis — *free helps you write today, Plus gives you your years back* — expressed as a purchasable list. Keep it at six; a longer list converts worse.
+
+**PRICING TIERS (decided 2026-08-04) — three products, not four. No family plan** (a journal shares nothing, and a family tier would force accounts and reverse the local-only decision; full reasoning in [`docs/playbook.md`](docs/playbook.md)).
+
+| Product | Play type | Why |
+| --- | --- | --- |
+| **Monthly** | subscription | low-commitment entry |
+| **Annual** | subscription | the default; price it so the monthly looks expensive |
+| **Lifetime / "forever"** ⭐ | **non-consumable** (one-time) | ~2.5–3× the annual. Fits the *legacy* theme exactly, **restores with no accounts** (durable Play record), anchors the annual so it reads cheap, and captures the high-intent buyer a family tier was reaching for. **Non-consumable, never consumable** — that is what makes it restorable. |
+
+Also worth doing and nearly free: **"gift a year" via Play promo codes** — no accounts, no infrastructure, and it is the real family use case (giving a journal to someone you love).
 
 **A — do now, nothing blocks these:**
 1. **IMP-034** — gate the fake cash ember prices. Minutes, and it is live in production right now.

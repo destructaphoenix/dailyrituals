@@ -97,6 +97,32 @@ Note how much of that list is **already sold on the paywall and not built**. Bui
 
 **⚠️ Handle with care:** mood *prediction* or warnings ("your Februaries are hard") is powerful and tonally dangerous — it edges into mental-health inference for a product with no clinical basis. If ever built, describe the past, never forecast the future.
 
+### 🆘 "A paying customer who loses their phone gets nothing from me" (owner, 2026-08-04)
+
+The owner's discomfort, verbatim: *"A paying customer who somehow loses their data or phone and wants the reload on the new device will not get it. Even though they paid me, I have kept the onus on them."* **This is the most important strategic concern raised so far and it should not be soothed away.** Precise position:
+
+**What is already recoverable (the fear is smaller than it feels):**
+- **The subscription always survives.** The entitlement lives with RevenueCat / the user's Google account, not the device. New phone, sign in, restore → Plus returns. ⚠️ **But the app currently will not notice** — the AppState refresh early-returns when the local `plus` cache is false ([`RitualsApp.js:222–228`](../src/RitualsApp.js#L222)), so a returning subscriber sees a downgraded app until they find "Restore purchases" *behind the paywall*. **This exact scenario is the bug.** Logged as a 10b blocker; fixed in IMP-043.
+- **The journal usually survives too.** Android Auto Backup restores onto a new device signed into the same Google account with **no login** — that is precisely the case IMP-006 was built and device-verified for.
+
+**What is genuinely not covered:** Google backup switched off · a switch to iOS · staleness (the Google copy is ≤24h old *at best*, and only refreshes on idle + charging + unmetered Wi-Fi) · and above all **the owner can do nothing when any of that fails.**
+
+**So the accurate statement is not "there is no recourse" — it is "there is no recourse *from you*."** Every recovery path is in the user's hands. That is a defensible engineering position and an uncomfortable *commercial* one, because "I cannot help you" is a bad thing to say to someone who paid.
+
+**Two things resolve it, and they are not the same size.**
+
+**1. Now, cheap — close the gaps and stop implying a promise you are not making (IMP-043).** Selling Plus does **not** create an obligation to host anyone's data; it creates an obligation to be *honest* about what is bought. Fix the entitlement re-check, make backup health loud instead of silent, say plainly at the point of purchase that the journal lives on the device, and give yourself a **goodwill channel** (support address + Play promo codes, which cost nothing and let you actually do *something* for an unlucky user).
+
+**2. Later, the flagship — encrypted backup to the user's OWN Google Drive, as a Plus feature. ⭐**
+This is the honest resolution of the owner's discomfort, and it is strategically the strongest feature on any list in this playbook:
+- **Sync/backup is the single most-paid-for feature in this category** (it is most of what Day One's subscription actually sells). The owner's instinct here is not anxiety — it has correctly identified that the thing being refused is the thing the category monetises best.
+- **It needs no backend of yours.** Google Drive's `appDataFolder` via the Drive REST API + `expo-auth-session`: the file lands in **the user's own Drive**, invisible to them and to you, and **you store nothing and hold no PII**. Same trust model as Auto Backup, but *explicit, on demand, and restorable at will* rather than ≤24h stale and silent.
+- **It does not reverse the local-only decision.** That decision rejected *accounts on our server* for PII and legal reasons ([[daily-rituals-local-only-decision]]). Signing into **their** Google account to write to **their** Drive keeps every one of those reasons satisfied. The privacy-policy delta is small; there is no controller relationship over stored content.
+- **It is squarely paid, by our own test** — *"am I charging for their words, or for my work on their words?"* Their words stay free and exportable; the **service of keeping a restorable copy** is our work.
+- ⚠️ Real costs: it is the first true network dependency, an OAuth flow to build and maintain, and it must fail gracefully offline. Not small. But it converts the owner's biggest liability into the paywall's strongest line.
+
+**Recommended sequencing: IMP-043 now; Drive backup after the six perks ship, as the headline of the *next* Plus tier — and it is the natural anchor for the Lifetime price.**
+
 ### 👨‍👩‍👧 Family plan — asked 2026-08-04. Answer: no. Build **Lifetime** instead.
 
 **A journal is the least shareable product there is.** Spotify Family shares a catalogue; Duolingo Family shares accountability; Notion shares documents. This app shares **nothing** — its entire value is privacy and solitude. There is no shared artifact to justify a shared price.
