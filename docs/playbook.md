@@ -111,6 +111,22 @@ The word "collect" hides a decision. Separate it:
 - **You already have analytics you are not reading.** Play Console gives installs, uninstalls, retention cohorts and ratings; **Android vitals** gives crash-free rate, ANRs and stability — **zero code, zero SDK, zero privacy cost, no disclosure change**. Exhaust that before considering anything else.
 - If usage analytics is ever genuinely needed: **opt-in, off by default, aggregate counts only, never content, and stated plainly in onboarding.** Anything less contradicts what this app sells.
 
+### 📺 Ads — asked 2026-08-03. Answer: no banners or interstitials, ever. Rewarded video *maybe*, later.
+
+**First, an audited fact that decides most of this.** `grep` for `fetch(` / `axios` / `XMLHttpRequest` across `src/` returns **zero in-app network calls**. The only URLs in the codebase are external links handed to the browser ([`billing/config.js:23–27`](../src/billing/config.js#L23)), and `Purchases.configure()` never runs in the shipping free build (`PLUS_ENABLED = false`, no key). **The app today talks to no server at all.** An ad SDK would be the *first* thing that ever did — and ad SDKs are the most data-hungry category available: device advertising ID, IP, and behavioural signals for targeting.
+
+**The revenue maths, honestly.** Ads pay at scale and are a rounding error below it. India-weighted, non-gaming eCPM is roughly $0.10–$0.50 banner, $0.50–$2 interstitial, $1–$5 rewarded. At **1,000 DAU** — far above where this app is — banners at 5 impressions/user/day yield on the order of **$45/month**. At 100 DAU it is under $5. Meanwhile 100 DAU converting at 2% to $29.99/yr is comparable *immediately* and, unlike ads, **compounds with retention and costs nothing in trust**. Ads only become real money in the tens of thousands of DAU.
+
+**The four costs, in order of severity:**
+1. **It destroys the only differentiator.** "Nothing you write leaves your phone" is the one claim a better-funded competitor cannot copy. An ad SDK ends it — Play Data Safety must declare collection for advertising, the privacy policy is rewritten, and EEA/UK need a UMP consent flow. This is strictly worse than the analytics question, not a variation of it.
+2. **Tonal catastrophe.** This is an app about grief and remembrance where entries are graves you tend. A banner for a mobile game or a loan app under someone's reflection on a dead parent is not squeamishness — it is product incoherence, and users feel it before they can name it.
+3. **It cannibalises the subscription.** With ads in the free tier, "remove ads" becomes the de facto reason to subscribe — a **weak** reason that retrains the paywall away from memory and meaning toward making an annoyance stop. Duolingo can carry both because of scale; at indie scale you get the trust cost without the revenue.
+4. **More compliance surface** (ad content rating, families policy, placement rules) at exactly the moment API-36, BillDesk and an untruthful paywall are already in flight.
+
+**The one defensible form, if it ever happens: rewarded video in the Shop.** *"Watch an ad, get 15 embers."* Opt-in, never interrupts, never appears near an entry, and it monetises the free users who will never subscribe. It also patches a real hole: dropping cash ember packs (2026-08-03) removed the only cash-in for the currency, and rewarded video restores one without an unrestorable purchase. **Still not now** — it carries costs 1 and 4 in full.
+
+**The strategic point that actually answers the question.** The instinct here was to add a *second* revenue surface while the first one sells **four things that do not exist** (`PLUS_PERKS` audit, 2026-08-03). That is not a monetisation-surface problem, it is a **delivery** problem. Adding ads before the paywall is truthful is adding a second leaky bucket. **Ship the promised perks, then judge whether revenue is still missing.**
+
 ---
 
 ## Locked decisions (2026-06-03)
