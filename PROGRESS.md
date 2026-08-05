@@ -272,8 +272,10 @@ Release-Lane: ota
 
 **Two false claims in one line** — [`Shop.js:70`](src/screens/Shop.js#L70): *"Light one on a missed day and your streak holds."* (it does not) *"Plus gives you 3 free each month."* (granted **once**, at subscribe). Same defect class as the fake 8:30 PM reminder and the fake PDF button.
 
+**✅ OWNER DECIDED 2026-08-04: option (a) — make them real.** *"We need a streak freeze equivalent in our app."* Build (a); (b) is recorded only so nobody re-opens it.
+
 **Two ways out — owner picks:**
-- **(a) Make them real ⭐.** `currentStreak(keys, todayKey, { frozenDays })` gains a set of forgiven day-keys; a new persisted `frozenDays: string[]` records which missed days were covered. Spend automatically at the moment a miss is detected (**streak insurance** — the Duolingo-proven, highest-converting form, and it gives candles their only real job). Manual "light a candle" is worse UX: it requires the user to open the app on a day they already failed to open it. **This also becomes a genuine Plus perk** — free users spend embers on candles; Plus gets a monthly allowance that actually recurs.
+- **(a) Make them real ⭐ — CHOSEN.** `currentStreak(keys, todayKey, { frozenDays })` gains a set of forgiven day-keys; a new persisted `frozenDays: string[]` records which missed days were covered. Spend automatically at the moment a miss is detected (**streak insurance** — the Duolingo-proven, highest-converting form, and it gives candles their only real job). Manual "light a candle" is worse UX: it requires the user to open the app on a day they already failed to open it. **This also becomes a genuine Plus perk** — free users spend embers on candles; Plus gets a monthly allowance that actually recurs.
 - **(b) Delete them.** Remove candles, `CANDLE_PACKS`, the Shop section and perk #2, and refund nothing (no real money was ever involved). Honest, and smaller. But it removes the **only repeating ember sink**, which worsens the "shop runs out at ~day 110" problem in the playbook.
 - Either way **the Shop copy is false today and must change in the same shipment.**
 
@@ -283,7 +285,15 @@ Release-Lane: ota
 
 Why it doesn't make sense: the word is used for three unrelated concepts. (1) The daily-rites footer — *"finish to earn today's keepsake"* ([`gamify.js:113`](src/gamify.js#L113)) — where nothing called a keepsake is actually granted; completing quests pays XP/embers. (2) The **Achievements** screen, whose kicker is literally "Keepsakes" ([`Achievements.js:29`](src/screens/Achievements.js#L29)) and which is reached from a Home row and a You tile of the same name. (3) The unbuilt **keepsake PDF** perk ([`data.js:148`](src/data.js#L148)).
 
-**Fix: pick ONE.** Recommendation — reserve "keepsake" for **the exported artifact** (meaning 3, the thing a user can hold), because that is the word doing real emotional work and it is what the paywall sells. Rename (2) to plain **Achievements** and rewrite (1) to name the actual reward (*"finish all three to earn today's embers"*). One word, one meaning, everywhere.
+**✅ DECIDED 2026-08-04 (owner asked for the recommendation; the app keeps BOTH an achievements system and a daily-missions system, so all three concepts need distinct names).** Earlier draft said to reserve "keepsake" for the PDF — **reversed after weighing it properly.** A keepsake is *a small thing kept in memory*, which describes an earned honour far better than a document, and "Keepsakes" is already the label users know on the Home row and the You tile. Renaming it would churn the surface users already navigate, to free a word for a feature that does not exist yet.
+
+| Concept | Name | Change needed |
+| --- | --- | --- |
+| The three **daily missions/goals** | **Daily rites** (already the in-app name — on-voice, keep it) | Footer must name the **real** reward: *"finish all three to earn today's embers"* — today it says "keepsake" and grants XP/embers ([`gamify.js:113`](src/gamify.js#L113)) |
+| The **achievements** system | **Keepsakes** — *"small honours for showing up — earned, never bought"* | Drop the redundant second title: the screen currently shows kicker "Keepsakes" **and** headline "Achievements" ([`Achievements.js:29–30`](src/screens/Achievements.js#L29)). One screen, one name. |
+| The **PDF export** | **Your Book** — *"your days, as a book"* | Never call it a keepsake. Update `PLUS_PERKS` [`data.js:148`](src/data.js#L148) and the IMP-022 spec. |
+
+Net: **one word, one meaning**, and the only user-visible rename lands on a feature that has not shipped yet.
 
 ---
 
@@ -295,9 +305,19 @@ Scope, cheapest first: **(1)** a "How it works" section in the You tab — one s
 
 ---
 
-## IMP-042 — modal screens clip at the bottom   ·   Lane: OTA   ·   ⬜ needs repro
+## IMP-042 — the Keepsakes/Achievements screen does not scroll   ·   Lane: OTA
 
-Owner reports "the page itself doesn't scroll." **Hypothesis, not yet confirmed:** the full-screen modals apply `paddingTop: insets.top` but pad the bottom with a **fixed constant and no `insets.bottom`** — [`Achievements.js:19/28`](src/screens/Achievements.js#L19) (`paddingBottom: 30`) and [`Shop.js:54`](src/screens/Shop.js#L54) (`paddingBottom: 36`). Under SDK 54 / Android 16 edge-to-edge is **forced and cannot be opted out of** (IMP-027), so the last item sits behind the system nav bar — which reads as "I can't get to the bottom" rather than "it doesn't scroll". **First step is repro, not code:** owner confirms *which* screen and whether it scrolls at all or merely ends too early. Both structures look correct for scrolling, so a total scroll failure would point somewhere else entirely.
+**Narrowed 2026-08-04:** owner confirms it is **specifically the Keepsakes screen opened from Home** ([`Achievements.js`](src/screens/Achievements.js)); **every other screen scrolls fine.**
+
+**⚠️ Static reading does NOT explain this — do not start by trusting a theory.** Three things were checked and each *weakens* the obvious guesses:
+- **Structure is materially identical to `Shop.js`, which scrolls.** Both are `<View flex:1 paddingTop:insets.top>` → header row → `<ScrollView contentContainerStyle={{paddingHorizontal, paddingBottom}}>` with **no `style` prop on either ScrollView** ([`Achievements.js:19/28`](src/screens/Achievements.js#L19) vs [`Shop.js:43/54`](src/screens/Shop.js#L43)). Both mount in identical `<Modal animationType="slide" presentationStyle="overFullScreen">` wrappers ([`RitualsApp.js:507`](src/RitualsApp.js#L507) / [`:513`](src/RitualsApp.js#L513)). So "missing `flex: 1`" cannot be the whole answer — Shop would fail too.
+- **It is not "content already fits".** `deriveAchievements` yields **11** items at roughly 92dp each ≈ 1,010dp, plus header and title block ≈ **~1,190dp of content** against a ~650–900dp viewport. There is plenty to scroll.
+- **Nothing follows the ScrollView** — it is the last child, closed at [`Achievements.js:72`](src/screens/Achievements.js#L72).
+
+**Approach: two correct-anyway fixes first, then instrument.**
+1. Add `style={{ flex: 1 }}` to the ScrollView, and add `insets.bottom` to its `contentContainerStyle.paddingBottom` (currently a bare `30`). **Both are correct regardless of this bug** — under SDK 54 edge-to-edge is forced and cannot be opted out of (IMP-027), so the last card currently sits behind the system nav bar on every device. Audit **every** modal for the same two omissions while in there; `Shop.js` has both.
+2. If it still does not scroll, **stop guessing and measure**: log the ScrollView's `onLayout` height against `onContentSizeChange`. If content height ≤ frame height, the frame is wrong (a layout problem); if content exceeds it and scrolling is still dead, it is a touch/gesture problem, not layout.
+3. Worth ruling out early because it is free: confirm the owner's build is current — this project has already lost a session to an APK that silently failed to install (2026-08-02 session note).
 
 ---
 

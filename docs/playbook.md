@@ -97,6 +97,18 @@ Note how much of that list is **already sold on the paywall and not built**. Bui
 
 **⚠️ Handle with care:** mood *prediction* or warnings ("your Februaries are hard") is powerful and tonally dangerous — it edges into mental-health inference for a product with no clinical basis. If ever built, describe the past, never forecast the future.
 
+### 👨‍👩‍👧 Family plan — asked 2026-08-04. Answer: no. Build **Lifetime** instead.
+
+**A journal is the least shareable product there is.** Spotify Family shares a catalogue; Duolingo Family shares accountability; Notion shares documents. This app shares **nothing** — its entire value is privacy and solitude. There is no shared artifact to justify a shared price.
+
+**And it would force accounts.** A family plan needs identity: who is in the family, and which device gets the entitlement. RevenueCat cannot link devices without a user ID, and Play's family sharing still requires per-user entitlement resolution. So a family tier **reverses the local-only decision** — the thing this app's whole privacy claim rests on — for the least valuable feature available. That trade is indefensible.
+
+**The revenue logic is also backwards.** Family plans are a *discount* instrument: you trade ARPU for household penetration. That works when the marginal user is free to serve **and** has a reason to adopt. Here you would be discounting to reach people who have no reason to journal merely because a relative does.
+
+**✅ Build these instead — same goals, no accounts:**
+- **Lifetime / "forever" purchase** ⭐ — a one-time **non-consumable** (~2.5–3× the annual). It fits the app's *legacy* theme exactly ("keep this forever"), **restores cleanly with no accounts** (durable Play record via RevenueCat, per the consumables note above), anchors the annual price so it looks cheap, and appeals precisely to the person who journals for years. This captures the high-intent buyer a family tier was reaching for.
+- **Gift a year** — via Play promo codes; no accounts, no infrastructure. This is the *actual* family use case — giving a journal to someone you love — without multi-user plumbing.
+
 ### 🔒 Analytics — the owner asked whether to collect behaviour data. Three tiers, one line
 
 The word "collect" hides a decision. Separate it:
