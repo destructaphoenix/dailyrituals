@@ -97,7 +97,32 @@ Note how much of that list is **already sold on the paywall and not built**. Bui
 
 **⚠️ Handle with care:** mood *prediction* or warnings ("your Februaries are hard") is powerful and tonally dangerous — it edges into mental-health inference for a product with no clinical basis. If ever built, describe the past, never forecast the future.
 
+### 👥 Social / leaderboards / friends — owner's stated v2 direction (2026-08-04)
+
+Owner: *"I am planning to make it a little bit social as we develop this further… progress and leaderboards and streaks and friends etc (like Duolingo). In that case the numbers and the embers and the candles mean a lot."* **Correct — and it retroactively changes two decisions in this playbook. Read this before hardening anything.**
+
+**1. It voids the "cheating only hurts themselves" argument.** The tamper table below is written for a **single-player** app. The moment a number is *comparable between users*, forged XP/embers/streaks stop being self-deception and start being fraud against other players. Every "ignore deliberately" row flips.
+
+**2. But do NOT harden the client now — it would be wasted work.** The correct answer under social is **server authority**, which supersedes any client-side defence built today. **A client can never be trusted about its own score.** Signing the JSON, obfuscating fields, checksumming state — all of it is thrown away the moment a server exists. **Build none of it. Ship the entitlement fix (IMP-043 §1b) and nothing else**, because entitlement is server-authoritative *already* via RevenueCat.
+
+**3. Social requires a server and accounts. There is no offline version of a leaderboard.** This genuinely reverses the local-only decision ([[daily-rituals-local-only-decision]]) rather than sidestepping it as the Drive-backup idea does. The full bill, stated so it is not discovered late: identity/accounts · a backend a solo dev must host, pay for and keep up · PII + DPDP/GDPR duties (the exact burden rejected in June 2026) · Play Data Safety re-declaration · **moderation obligations** the moment usernames or any user-visible text exists · and server-authoritative game state.
+
+**4. The design that keeps most of the privacy promise — a contentless heartbeat. ⭐**
+The instinct will be to sync everything. Do not. **Split content from score:**
+- **Never leaves the device:** entries, moods, tags, prompts — every word the user writes.
+- **Syncs, opt-in:** a **daily "wrote today" ping** carrying *no content* (just a date), plus display name and derived totals.
+- **The server derives the streak itself from the pings it received.** This is the key move: the streak becomes **server-authoritative without the server ever seeing a single word**. Cheating requires faking pings in real time across real days, which is far more effort than editing a JSON file and self-limiting in practice.
+- The claim stays honest and marketable: **"your words never leave your device — your streak does, only if you ask it to."**
+
+**5. Keep the social layer FREE.** Duolingo's leaderboards are free precisely because they drive engagement; Super sells convenience *around* them. Paywalling friends would throttle the network effect that is the entire reason to build it.
+
+**6. ⚠️ Tonal risk — the one thing to genuinely worry about.** Duolingo works competitively because language learning is a skill with objective progress. **This app is a memorial garden where entries are graves you tend.** "Who journaled more this week" could read as grotesque to exactly the grieving user this app's voice attracts. Mitigation, and it should be a hard rule: **compete on consistency (showing up), never on content, volume, or mood.** Friends see streaks and days kept — never words, never how someone felt, never word counts. Ship it **opt-in and invisible by default**, so the solitary user never sees a leaderboard they did not ask for.
+
+**Sequencing: this is v2 and must not reshape the current phase.** Its only effect on today's work is the "build no client-side hardening" ruling above.
+
 ### 🔐 Backup tampering — asked 2026-08-04. Fix the entitlement, NOT the file.
+
+> ⚠️ **Scoped to the single-player app as it exists today.** If the social direction above is taken, the "ignore deliberately" rows flip and the answer becomes server authority — not a hardened file. The conclusion "fix only the entitlement" holds in **both** worlds, which is why it is safe to act on now.
 
 Owner: *"no matter what, no one should be able to manipulate the backup. Right now the backup has a .json option. People can easily manipulate it."* True — and the response should be narrow, because the concern contains two very different problems.
 
