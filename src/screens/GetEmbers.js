@@ -26,7 +26,7 @@ export default function GetEmbers({ insets, onClose, embers, onBuy }) {
         <View style={{ width: 38 }} />
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 26, paddingTop: 24, paddingBottom: 30, alignItems: 'center' }} showsVerticalScrollIndicator={false}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 26, paddingTop: 24, paddingBottom: 30 + insets.bottom, alignItems: 'center' }} showsVerticalScrollIndicator={false}>
         <View style={[{ width: 104, height: 104, borderRadius: 52, alignItems: 'center', justifyContent: 'center', backgroundColor: c.accentSoft }, t.shadow(20, c.accentDeep, 0.5)]}>
           <Ember size={52} deep={c.accentDeep} />
         </View>

@@ -28,7 +28,7 @@ export default function ReadingSheet({ entry, copy, mode, insets, onClose, canEd
         ) : null}
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 6, paddingBottom: 30 }} showsVerticalScrollIndicator={false}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 6, paddingBottom: 30 + insets.bottom }} showsVerticalScrollIndicator={false}>
         <T d w={600} color={c.muted} style={{ fontSize: 13, letterSpacing: 0.5, textTransform: 'uppercase' }}>{copy.epitaph}</T>
         <T d w={800} color={c.ink} style={{ fontSize: 26, marginTop: 8, marginBottom: 2 }}>{entry.wd}, {entry.day} {entry.mon}</T>
 

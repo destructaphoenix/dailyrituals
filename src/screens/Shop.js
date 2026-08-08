@@ -51,7 +51,7 @@ export default function Shop({
         <EmberPill embers={embers} onPress={() => onGetEmbers()} lg />
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36 }} showsVerticalScrollIndicator={false}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36 + insets.bottom }} showsVerticalScrollIndicator={false}>
         {/* Plus upsell / status */}
         {plusEnabled && (
           <View style={{ marginTop: 4 }}>

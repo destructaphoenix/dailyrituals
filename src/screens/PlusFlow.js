@@ -197,7 +197,7 @@ export function ManageSubscription({ insets, platform, plan, canceled, renewLabe
         <View style={{ width: 38 }} />
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36, paddingTop: 4 }} showsVerticalScrollIndicator={false}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36 + insets.bottom, paddingTop: 4 }} showsVerticalScrollIndicator={false}>
         {/* status header */}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 13, padding: 15, borderRadius: t.radius.card, backgroundColor: c.surface, borderWidth: 1, borderColor: c.accentBorder, marginTop: 4 }}>
           <View style={[{ width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: c.accent }, t.shadow(8, c.accentDeep, 0.8)]}>
