@@ -15,10 +15,10 @@
 
 The live work is the **first unchecked `IMP-xxx` task in the Improvements backlog** below — its full spec is inline (Opus scopes it there; no separate plan file). Work that, **not** the phase ladder (8 / 10b / 11), which is **parked in [`docs/playbook.md`](docs/playbook.md)** until the owner resumes it.
 
-> **Eleven open tasks, all specced inline below. Recommended order — revised 2026-08-04:**
+> **Eight open tasks, all specced inline below. Recommended order — revised 2026-08-04:**
 >
-> **Quick + already broken in production:** **IMP-034** (fake ember prices, minutes) → **IMP-042** (Keepsakes screen doesn't scroll) → **IMP-040** (keepsake naming, copy-only).
-> **Before anyone can pay:** **IMP-043** (recoverability — the lost-phone bug) → **IMP-039** (candles are fake *and* advertised) → **IMP-041** (nothing in the app explains itself, and Plus is undiscoverable).
+> **Quick + already broken in production: ✅ ALL DONE** (IMP-034, IMP-042, IMP-040 — code-complete, not yet shipped).
+> **Before anyone can pay — NEXT:** **IMP-043** (recoverability — the lost-phone bug) → **IMP-039** (candles are fake *and* advertised) → **IMP-041** (nothing in the app explains itself, and Plus is undiscoverable).
 > **The retrieval track:** **IMP-035 search** (the biggest single value gain in the codebase) → **IMP-036 edit/delete** → **IMP-037 moods**.
 > **Then:** **IMP-033** (restore consent, bigger build, already settled) → **IMP-038 "On this day"** (last — depends on 035 and 037).
 >
@@ -34,7 +34,7 @@ The live work is the **first unchecked `IMP-xxx` task in the Improvements backlo
 
 **Consequence for OTA:** `runtimeVersion` is `appVersion` = **1.0.5**, so an `eas update` lands on **testers only** — the public on 1.0.3 is OTA-unreachable until vc11 is promoted to production. Treat tester-visible regressions as real but contained. The app ships **free**: `PLUS_ENABLED = false`, so there is no payment surface in it at all.
 
-**Current stack:** Expo SDK **54** · React Native **0.81.5** · React **19.1.0** · **Legacy Architecture** (`expo.newArchEnabled: false`, held deliberately — SDK 55 drops Legacy and that migration is its own future task) · `compileSdkVersion`/`targetSdkVersion` **36**, `minSdkVersion` **24** · `npm test` → **367 passed, 43 suites**. Details in [`docs/playbook.md`](docs/playbook.md).
+**Current stack:** Expo SDK **54** · React Native **0.81.5** · React **19.1.0** · **Legacy Architecture** (`expo.newArchEnabled: false`, held deliberately — SDK 55 drops Legacy and that migration is its own future task) · `compileSdkVersion`/`targetSdkVersion` **36**, `minSdkVersion` **24** · `npm test` → **369 passed, 44 suites**. Details in [`docs/playbook.md`](docs/playbook.md).
 
 ---
 
@@ -79,7 +79,7 @@ Opus scopes each owner-filed issue into a numbered `IMP-xxx` task (steps + commi
 | IMP-037 | **Moods: custom + multiple per entry** — `mood: string` → `moods: string[]` plus user-defined feelings. **Free** (it is stored content). Makes the dead `PLUS_PERKS` #5 buildable | OTA | ⬜ **OPEN — spec inline below** |
 | IMP-038 | ✨ **"On this day"** — resurface what you wrote a year / months ago. **The first real Plus feature.** Needs IMP-035's retrieval layer first | OTA | ⬜ **OPEN — spec inline below** |
 | IMP-039 | 🔴 **Streak-freeze candles do NOTHING** — nothing in the tree ever spends a freeze, and `currentStreak` has no freeze awareness at all. Buy 5 for 450 embers, miss a day, streak still breaks to 0. Two false claims in one Shop line | OTA | ⬜ **OPEN — audited 2026-08-04, see below** |
-| IMP-040 | 🟡 **"Keepsake" means three different things** — the daily-rites footer, the Achievements screen title, and the unbuilt PDF perk. Pick one meaning, rename the others | OTA | ⬜ **OPEN** |
+| IMP-040 | 🟡 "Keepsake" means three different things — the daily-rites footer, the Achievements screen title, and the unbuilt PDF perk. Pick one meaning, rename the others | OTA | ✅ code-complete — full detail in build-log |
 | IMP-041 | 🟡 **Teach the app** — no tutorial beyond first-run onboarding; embers, candles, quests, levels and every Plus perk are unexplained and unlisted anywhere in-app | OTA | ⬜ **OPEN** |
 | IMP-042 | 🐛 **The Keepsakes screen (from Home) does not scroll** — every other screen does; static reading does not explain it, so measure before theorising | OTA | ✅ code-complete — full detail in build-log |
 | IMP-043 | 🔴 **Recoverability pass** — a returning subscriber is shown as non-Plus and never re-checked; backup health is silent; the purchase makes an implied promise about data that is not kept | OTA | ⬜ **OPEN — spec inline below; do BEFORE `PLUS_ENABLED`** |
@@ -261,22 +261,6 @@ Release-Lane: ota
 
 ---
 
-## IMP-040 — "keepsake" means three different things   ·   Lane: OTA
-
-Why it doesn't make sense: the word is used for three unrelated concepts. (1) The daily-rites footer — *"finish to earn today's keepsake"* ([`gamify.js:113`](src/gamify.js#L113)) — where nothing called a keepsake is actually granted; completing quests pays XP/embers. (2) The **Achievements** screen, whose kicker is literally "Keepsakes" ([`Achievements.js:29`](src/screens/Achievements.js#L29)) and which is reached from a Home row and a You tile of the same name. (3) The unbuilt **keepsake PDF** perk ([`data.js:148`](src/data.js#L148)).
-
-**✅ DECIDED 2026-08-04 (owner asked for the recommendation; the app keeps BOTH an achievements system and a daily-missions system, so all three concepts need distinct names).** Earlier draft said to reserve "keepsake" for the PDF — **reversed after weighing it properly.** A keepsake is *a small thing kept in memory*, which describes an earned honour far better than a document, and "Keepsakes" is already the label users know on the Home row and the You tile. Renaming it would churn the surface users already navigate, to free a word for a feature that does not exist yet.
-
-| Concept | Name | Change needed |
-| --- | --- | --- |
-| The three **daily missions/goals** | **Daily rites** (already the in-app name — on-voice, keep it) | Footer must name the **real** reward: *"finish all three to earn today's embers"* — today it says "keepsake" and grants XP/embers ([`gamify.js:113`](src/gamify.js#L113)) |
-| The **achievements** system | **Keepsakes** — *"small honours for showing up — earned, never bought"* | Drop the redundant second title: the screen currently shows kicker "Keepsakes" **and** headline "Achievements" ([`Achievements.js:29–30`](src/screens/Achievements.js#L29)). One screen, one name. |
-| The **PDF export** | **Your Book** — *"your days, as a book"* | Never call it a keepsake. Update `PLUS_PERKS` [`data.js:148`](src/data.js#L148) and the IMP-022 spec. |
-
-Net: **one word, one meaning**, and the only user-visible rename lands on a feature that has not shipped yet.
-
----
-
 ## IMP-041 — teach the app   ·   Lane: OTA
 
 Owner: *"need to make the app easy to use for everyone. Need tutorials and stuff, same for the perks that are not listed anywhere in the app right now."* Confirmed: beyond first-run `Onboarding.js` there is **no explanatory surface anywhere** — embers, candles, quests, XP/levels, achievements, the streak rules and every Plus perk are unexplained. `PLUS_PERKS` renders **only inside the paywall**, which is hidden entirely while `PLUS_ENABLED = false` — so today a user cannot discover what Plus even is.
@@ -408,7 +392,7 @@ The owner asked this after the purchase-recovery audit: *"I am questioning if I 
 | 3 | **On this day — your own words, brought back to you** | IMP-038 | ⬜ specced |
 | 4 | **Your year, remembered — the Annual Recap** | roadmap C | ⬜ unspecced |
 | 5 | **Deeper insights — moods, seasons and your rhythms** | IMP-037 → analysis layer | ⬜ makes dead perk #5 real |
-| 6 | **A keepsake PDF — your days, as a book** | IMP-022 Part A (BUILD lane) | ⬜ deferred, revive |
+| 6 | **Your Book — your days, as a PDF** | IMP-022 Part A (BUILD lane) | ⬜ deferred, revive |
 
 **Cut outright: "Your whole graveyard, kept forever"** — no history limit exists, so it sells relief from a restriction that was never built, and building one would violate the never-gate-their-words line. **Cut, do not implement.**
 
@@ -434,7 +418,7 @@ Also worth doing and nearly free: **"gift a year" via Play promo codes** — no 
 5. **IMP-035 search** — free; the free tier must carry someone to ~day 60 or there is no paying moment.
 6. **IMP-036 edit/delete** · 7. **IMP-037 moods** — the second unlocks the dead perk #5.
 8. **Make perk #5 real** — deeper insights: mood correlations + seasonal patterns, computed over IMP-037's data.
-9. **Revive IMP-022 Part A** — the keepsake PDF, i.e. perk #4. Already sold; still no PDF code in the tree. **BUILD lane** (new native module).
+9. **Revive IMP-022 Part A** — Your Book (the PDF export), i.e. perk #4. Already sold; still no PDF code in the tree. **BUILD lane** (new native module).
 10. **IMP-038 "On this day"** — the first genuinely *new* paid feature. Everything above it is debt repayment.
 
 **C — owner/commercial, in parallel with B:**
@@ -486,6 +470,6 @@ Also worth doing and nearly free: **"gift a year" via Play promo codes** — no 
 
 _History archived in [`docs/build-log.md`](docs/build-log.md) → "Session notes". Only the two newest notes stay here; every chat moves the older one out when it appends a new one (see DEVGUIDE Step 4)._
 
-_2026-08-08 (IMP-034, gate the fake ember prices) — **code-complete, committed, not shipped.** `Shop.js`'s "Gather Embers" section (`EMBER_PACKS` at real cash prices $1.99–$9.99, wired to a bare counter increment with no IAP) had no `plusEnabled` gate, unlike the Plus banner beside it — so the free-shipping build displayed real prices for something free. Wrapped the section in `plusEnabled &&`. In `RitualsApp.js`, added `openGetEmbers()`: opens the Get-Embers modal when `PLUS_ENABLED`, otherwise shows a toast ("Embers also gather on their own…"); routed `buyPalette`/`buySky`/`buyCandles`'s insufficient-embers branch and the header `EmberPill`'s no-pack tap through it, and gated the `getEmbersOpen` `Modal` itself (`PLUS_ENABLED && getEmbersOpen`) so no path reaches a purchase surface. Added `src/screens/Shop.test.js` — the **first render test in this codebase** (`@testing-library/react-native` was an unused devDependency until now); `useTheme()`'s `ThemeContext` default meant no `Provider` wrapper was needed. `npm test` → **369 passed, 44 suites** (367 + 2 new). Committed **without** a `Release-Lane` trailer — owner said "go" on implementation, not ship; first attempt included the trailer by mistake, corrected via `git commit --amend` (unpushed, safe). Full spec archived to `docs/build-log.md`; backlog row set to code-complete. NEXT: **IMP-042** (Keepsakes screen doesn't scroll) is next in the "quick + already broken in production" order, then IMP-040 (keepsake naming). IMP-033 (recoverability offer) and the rest of the OTA queue remain open; alpha → production promotion still untaken._
-
 _2026-08-08 (IMP-042, Keepsakes screen doesn't scroll) — **code-complete, committed, not shipped.** Static reading ruled out the obvious theories (spec's own checks confirmed: `Achievements.js` is structurally near-identical to `Shop.js`, which the owner said scrolls fine; content genuinely overflows the viewport; nothing trails the ScrollView). Root cause: neither screen's `ScrollView` carries `style={{flex:1}}`, so — per a well-known RN gotcha — the ScrollView sizes to its **content's** intrinsic height instead of the parent's available viewport, never perceives an internal overflow, and the outer `flex:1` View just visually clips the excess with nothing left to scroll. `Shop.js` has the same omission and was likely never actually pushed past enough content to expose it. Fixed **every modal screen sharing this exact shape** (bare `View flex:1` → header → single content `ScrollView`, no separate footer bar), not just Achievements: `Achievements.js`, `Shop.js`, `ReadingSheet.js`, `GetEmbers.js`, `ManageSubscription` (`PlusFlow.js`) — each ScrollView gained `style={{flex:1}}` and each `contentContainerStyle.paddingBottom` now adds `insets.bottom` (previously a bare number, so the last row sat behind the SDK-54-forced edge-to-edge nav bar on every one of these screens). Left `Paywall.js` alone — it has a separate fixed footer bar already carrying `insets.bottom` correctly. Five one-line diffs, no logic changed. **No real device/emulator was available this session** to visually confirm the scroll now works — the fix targets a standard, well-documented RN sizing behaviour rather than a guess, but per the spec's own instruction this still wants a walk; if a screen still doesn't scroll after shipping, the spec's fallback (`onLayout`/`onContentSizeChange` instrumentation) is the next move, not another theory. `npm test` → **369 passed, 44 suites**, unchanged baseline (layout-only change, no pure-logic surface). Full spec archived to `docs/build-log.md`; backlog row set to code-complete. NEXT: **IMP-040** (keepsake naming, copy-only) is next in the "quick + already broken in production" order. IMP-033/-043/-039/-041/-035/-036/-037/-038 and the rest of the OTA queue remain open; alpha → production promotion still untaken._
+
+_2026-08-08 (IMP-040, "keepsake" means three different things) — **code-complete, committed, not shipped.** Owner had already settled the naming split 2026-08-04 (Keepsakes = achievements, Daily rites = quests, Your Book = the unbuilt PDF export); this session just executed it. Three copy-only diffs: `gamify.js:113` — the daily-rites footer's two branches ("All rites kept" / "N of M kept") now name the real reward, embers, instead of a "keepsake" nothing actually grants. `Achievements.js:29` — dropped the redundant second title (screen showed kicker "Keepsakes" *and* headline "Achievements"); now a single "Keepsakes" headline, matching the Home row and You tile users already navigate by that name. `data.js:148` — the `PLUS_PERKS` PDF line reworded from "Export your days as a keepsake PDF" to "Your Book — export your days as a PDF"; carried the rename into the deferred IMP-022 spec (Part A heading, `buildKeepsakeHtml` → `buildBookHtml`) and the two perk-list references in PROGRESS.md's still-open subscription-track section, so nothing left in the tree calls the PDF a keepsake. **Editing three separate string literals hit an Edit-tool quirk worth knowing:** the full-line `old_string` (spanning the ternary) repeatedly failed to match despite `Read`/`Grep` showing identical text — isolating each edit to a short substring inside the line (`'a keepsake is yours'`, `'earn today's keepsake.'`) worked immediately; likely an invisible-character or escape-normalization mismatch on the longer span, not a real content difference. `npm test` → **369 passed, 44 suites**, unchanged baseline (no logic touched). Full spec archived to `docs/build-log.md`; backlog row set to code-complete. **This closes out the "quick + already broken in production" group (IMP-034 → IMP-042 → IMP-040), all three code-complete and none yet shipped.** NEXT: **IMP-043** (recoverability — the lost-phone bug) is first in the "before anyone can pay" group, per the ACTIVE TRACK order. IMP-033/-035/-036/-037/-038/-039/-041 remain open; alpha → production promotion still untaken._
