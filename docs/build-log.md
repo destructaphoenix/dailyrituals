@@ -888,6 +888,70 @@ inside the array without throwing. `npm test` → **482 passed, 51 suites** (465
 
 ---
 
+### IMP-033 — the restore is offered, not imposed   ·   Lane: OTA   ·   Status: ✅ code-complete
+
+**Why:** the IMP-029 walk (2026-08-02) proved the failure mode was real, not rare — Android Auto Backup
+restored **stale** data with zero consent on the reinstall path, and the notice it triggered offered only
+*Got it* or *Restore from a file*, no way to decline. Android's restore can't be intercepted (it lands at
+install time, inside the OS, before JS runs) — so the fix quarantines what it forces on us instead.
+
+**Pure core.** New `src/persistence/restoreQuarantine.js`: `shouldQuarantine` (delegates to IMP-029's
+`isRestoredInstall`, just names the decision for this flow) · `shouldOfferRestore({ hasStash, onboarded })`
+· `preferredSource({ lastSavedAt, lastBackupAt })` → `'google' | 'file'`, ties and unparseable input favour
+`'google'` (no coercion — a non-finite `lastSavedAt` or an unparseable ISO `lastBackupAt` is treated as
+absent, never as 0) · `runQuarantine({ readRawState, writePendingRestore, readPendingRestore, clearState })`
+orchestrates the verified stash-before-clear sequence with fully injected IO, mirroring
+`backup/importFlow.js`'s shape — the live key is **never** cleared unless the stash write is confirmed
+readable back · `pendingRestoreInventory(stash)` formats the paid-inventory line (embers/palettes/skies/
+candles) shared by the offer sheet and the discard confirm.
+
+**Stash IO** in `src/persistence/storage.js`: `readRawState()` (the undeserialized string — a
+forward-migration must never mutate what a decline later restores), `writePendingRestore` /
+`readPendingRestore` / `clearPendingRestore`, each `try/catch` → falsy on failure, no throwing. Added the
+package's own in-memory `AsyncStorage` mock to `jest.setup.js` (the file had never been unit-tested before —
+IMP-033 is its first real round-trip test).
+
+**Sequencing** in `App.js`'s existing load effect: `shouldQuarantine` runs on the same `lastSavedAt` check
+IMP-029 already made; on quarantine success the app hydrates as `{}`/`onboarded: false` (a genuine first
+install — `Onboarding` shows with no change there) and stashes the parsed payload in a new `pendingRestore`
+state; on an aborted quarantine (unverified write) it falls straight through to IMP-029's existing
+`RestoreNotice` path, live data untouched. `pendingRestore` and a new `onConsumePendingRestore` (clears the
+stash both in storage and in state) are passed down to `RitualsApp` alongside the existing IMP-029 props.
+
+**UI.** New `src/screens/RestoreOffer.js` — presentational scrim-and-card sheet, same shape as
+`RestoreNotice.js` (its local `GhostButton` is now extracted to `src/ui.js` and shared by both). States
+every warning from the spec: replaces the fresh start · dated staleness · paid-inventory-at-risk · and, when
+`preferredSource` says the JSON export is newer, inverts emphasis to lead with **Restore from a file**.
+Three actions always present: **Load my journal** / **Restore from a file** (whichever leads) / **Keep this
+fresh start**. Mounted from `RitualsApp.js` when `pendingRestore && !restoreOfferDismissed` — the local
+`restoreOfferDismissed` flag is what lets "Keep this fresh start" hide the sheet **without discarding the
+stash**, per the owner's explicit rejection of a one-tap destructive dismissal.
+
+**Actions (`RitualsApp.js`).** `handleLoadPendingRestore` confirms, then writes a recovery copy of the
+*current* (fresh) state before replacing — via the existing `runConfirmedImport` orchestration, the same
+safety guarantee `doImport` already had — then calls `onConsumePendingRestore`. `handleDiscardPendingRestore`
+confirms with the inventory line repeated, then consumes. Declining ("Keep this fresh start") surfaces a new
+row in the You tab's "Your journal is safe" card — `Google backup — {date}` reopens the sheet, a separate
+"Discard" pressable (not a hidden long-press — spec called for a real, discoverable action) deletes it.
+
+**Copy fix (bundled from the same walk).** Both the `explainAutoBackup` alert and the export success toast
+now say plainly that the JSON export and the Google Auto Backup are separate systems and neither refreshes
+the other — the owner hit exactly this and misread a correct restore as a stale-data bug.
+
+**Tests:** `__tests__/persistence/restoreQuarantine.test.js` (21 cases) — `shouldQuarantine` delegation ·
+`shouldOfferRestore`'s four stash/onboarded combinations · `preferredSource`'s newer-file/newer-google/
+missing/tie/non-numeric cases · `runQuarantine`'s happy path plus every abort path (no raw state, failed
+write, null read-back, unparseable read-back) each asserting `clearState` was never called ·
+`pendingRestoreInventory`'s joining, singular/plural and empty cases. `__tests__/persistence/storage.test.js`
+(5 cases, new file) — stash round trip, stash/live-key independence in both directions, `readRawState`
+returning the exact raw string. `npm test` → **508 passed, 53 suites** (482 + 26 new). `npx expo export
+--platform android` clean.
+
+**Ship:** OTA, no bump. Reaches **testers only** (`runtimeVersion` = `appVersion` = 1.0.5). **Commit:**
+`feat(restore): offer an OS-restored backup instead of imposing it (IMP-033)`.
+
+---
+
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
 
 > Moved out of PROGRESS.md on 2026-07-31 to keep the live cursor lean once a second spec (IMP-032) opened. These are **not** finished work. If the owner revives one, lift the block back into PROGRESS.md as the ACTIVE TRACK.
@@ -932,6 +996,8 @@ inside the array without throwing. `npm test` → **482 passed, 51 suites** (465
 ## Session notes (archived from PROGRESS.md)
 
 _Append-only handoff log moved out of PROGRESS.md to keep it light. Newest 1–2 notes stay live in PROGRESS.md; everything else is here. Git history is the full record._
+
+_2026-08-08 (IMP-037, moods: custom + multiple per entry) — **code-complete, committed, not shipped.** Full TDD, migration tests written RED-first. `SCHEMA_VERSION` 2 → 3 in `src/persistence/state.js` with a real migrator `2:` (`mergeWithDefaults` is a shallow top-level spread and never reaches inside `entries`, so a versioned migrator was the only safe path): `{ mood: 'Tender' }` → `{ moods: ['Tender'] }`, no-mood → `moods: []`, idempotent on entries that already carry `moods`. Every reader from the spec's exhaustive list updated in one pass: `derive.js` (mood mix counts each mood in an entry's array separately, new `moodEntryCount` — entries with ≥1 mood — is the honest denominator since percentages no longer sum to 100), `search.js` (mood filter is any-of over `e.moods`), `calendar.js` (heatmap/week-strip cells use `moods[0]`), `completeEntry.js` (`feel` rite checks `moods.length > 0`), `mutate.js` (`applyEdit`'s patch takes `moods`). `WriteFlow.js`'s mood step is now multi-select (tap to toggle) plus a "Name your own…" field wired to a new `onAddCustomMood` prop; `RitualsApp.js` adds `addCustomMood()` which dedups into `settings.customMoods`, and `DEFAULT_SETTINGS` gains `customMoods: []` (no migration needed — settings aren't schema-versioned, `mergeWithDefaults` fills it in). `ArchiveScreen.js`/`ReadingSheet.js` now render one chip per mood instead of one chip total; `InsightsScreen.js` adds the honest `across {n} reflections` line. **A reader the spec's list missed, caught by the first full suite run, not by planning:** `__tests__/profile/achievements.test.js`'s own fixtures used singular `mood:` for the `moodsLogged` stat — `achievements.js` itself needed no change (it already reads `derive.js`'s `moodMix`), only its test fixtures did. Final `grep -rn "\.mood\b|mood:" src/` → zero singular-`mood` readers left, only the migrator's own comment. `npm test` → **465 passed, 50 suites** (453 + 12 new); `npx expo export --platform android` clean. Full spec archived to `docs/build-log.md`; backlog row set to code-complete; `docs/specs-open.md`'s index and every "Depends on: IMP-037" mention across IMP-038/046/047 updated to reflect it's done. NEXT: **IMP-047** (deeper insights — the analysis layer, perk #5) is next per the ACTIVE TRACK order — it was blocked on this task and now isn't. IMP-033/-038/-045/-046/-047 remain open; `internal` → production promotion still untaken._
 
 _2026-08-08 (IMP-036, custody of your words — edit/delete/trash) — **code-complete, committed, not shipped.** Full TDD (22 new cases). New pure `src/entries/mutate.js` — `applyEdit(entries, dayKey, {did, wished, mood})` (in-place replace, same-reference no-op on an absent `dayKey` — structurally makes back-filling unreachable), `applyDelete({entries, trash}, dayKey, nowMs)` (moves the entry to trash stamped `deletedAt`; deliberately takes no `xp`/`embers` params at all, so it's structurally incapable of clawing them back), `applyRestore({entries, trash}, dayKey)` (re-inserts in `dayKey` order, matching the newest-first convention every other producer already uses), `pruneTrash(trash, nowMs, days=30)` (exact 30-day boundary kept), `streakAfterDelete(...)` (confirm-copy only, mirrors `currentStreak`). **Routed around the `applyCompletion` trap the spec called out:** editing a past day while today is unwritten would otherwise fall into `applyCompletion`'s reward branch and double-award XP/embers plus a duplicate row — `RitualsApp.js` now tracks `editingDayKey` alongside `writing`, and past-day `WriteFlow` completions call a new `editPastEntry` (→ `applyEdit`) instead of `complete` (→ `applyCompletion`); `closeWriting()` clears both together so they can't drift. `trash` threaded through `RitualsApp.js` exactly like `frozenDays`/`seenTips` (`useState`, autosave deps, `currentSlice()`, `PERSISTED_KEYS` — no schema bump), with a mount-only prune effect shaped like IMP-039's freeze catch-up. `ReadingSheet.js`'s edit gate loosened to any existing entry, plus a new destructive "Delete this day" row → `RitualsApp.js`'s `confirmDeleteEntry` computes the real post-delete streak and whether an achievement would be un-earned *before* showing the `Alert.alert`, appending "One of your keepsakes may go with it." only when true. New `src/screens/TrashSheet.js` — "Recently deleted" list with **Restore** (real when `plus`; opens the paywall when `plusEnabled && !plus`; shows a "coming soon" toast when `!plusEnabled`, since there's no Plus to sell yet) and **Delete forever** (free, confirmed) — opened from a new row in `YouScreen.js`'s "Your journal is safe" card. `npm test` → **453 passed, 50 suites** (431 + 22 new); `npx expo export --platform android` clean. Full spec archived to `docs/build-log.md`; backlog row set to code-complete; `docs/specs-open.md`'s index and IMP-037's "Depends on" updated to reflect it's done. NEXT: **IMP-037** (moods: custom + multiple per entry) continues the retrieval track, per the ACTIVE TRACK order. IMP-033/-037/-038/-045/-046/-047 remain open; `internal` → production promotion still untaken._
 
