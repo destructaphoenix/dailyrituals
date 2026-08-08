@@ -13,8 +13,8 @@
 > re-litigate a "why", and do not improve the scope.** If a step turns out to be impossible or the code
 > contradicts the spec, **STOP** and log it to `PROGRESS.md` → Open items rather than inventing a fix.
 >
-> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **417 passed,
-> 48 suites**), `npx expo export --platform android` clean, commit with the **exact** message given, then
+> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **431 passed,
+> 49 suites**), `npx expo export --platform android` clean, commit with the **exact** message given, then
 > update `PROGRESS.md` (tick the backlog row, write the session note) and **move the finished spec from
 > this file into `docs/build-log.md`**.
 >
@@ -25,13 +25,12 @@
 
 | # | Spec | Lane | Free / Plus | Depends on |
 | --- | --- | --- | --- | --- |
-| 1 | [IMP-035 — search your journal](#imp-035--search-your-journal) | OTA | **Free forever** | — |
-| 2 | [IMP-036 — custody of your words](#imp-036--custody-of-your-words-edit-delete-30-day-trash) | OTA | Free (undelete = Plus) | IMP-035 |
-| 3 | [IMP-037 — moods: custom + multiple](#imp-037--moods-custom-feelings--multiple-per-entry) | OTA | **Free** | IMP-035, IMP-036 |
-| 4 | [IMP-047 — deeper insights](#imp-047--deeper-insights-the-analysis-layer-perk-5) | OTA | **Plus** (perk #5) | **IMP-037** |
-| 5 | [IMP-033 — the restore is offered, not imposed](#imp-033--the-restore-is-offered-not-imposed) | OTA | Free | — |
-| 6 | [IMP-038 — "On this day"](#imp-038--on-this-day) | OTA | **Plus** (perk #3) | IMP-035, IMP-037 |
-| 7 | [IMP-046 — Annual Recap](#imp-046--annual-recap-your-year-remembered-perk-4) | OTA | **Plus** (perk #4) | **IMP-037, IMP-047** |
+| 1 | [IMP-036 — custody of your words](#imp-036--custody-of-your-words-edit-delete-30-day-trash) | OTA | Free (undelete = Plus) | — (IMP-035 ✅ done) |
+| 2 | [IMP-037 — moods: custom + multiple](#imp-037--moods-custom-feelings--multiple-per-entry) | OTA | **Free** | IMP-036 |
+| 3 | [IMP-047 — deeper insights](#imp-047--deeper-insights-the-analysis-layer-perk-5) | OTA | **Plus** (perk #5) | **IMP-037** |
+| 4 | [IMP-033 — the restore is offered, not imposed](#imp-033--the-restore-is-offered-not-imposed) | OTA | Free | — |
+| 5 | [IMP-038 — "On this day"](#imp-038--on-this-day) | OTA | **Plus** (perk #3) | IMP-037 |
+| 6 | [IMP-046 — Annual Recap](#imp-046--annual-recap-your-year-remembered-perk-4) | OTA | **Plus** (perk #4) | **IMP-037, IMP-047** |
 | — | [IMP-045 — finish Lifetime Progress](#imp-045--finish-lifetime-progress-the-imp-021-shortfall) | OTA | Free | — · **no queue slot** |
 
 **IMP-045 does not claim a slot.** It is small, independent and fixes a live tester complaint — take it in any
@@ -39,85 +38,9 @@ chat where the queued task is blocked, or as its own short chat. Same treatment 
 
 ---
 
-## IMP-035 — search your journal
-
-**Lane:** OTA · **Status:** ⬜ OPEN · **Depends on:** nothing · **FREE FOREVER**
-
-**Goal:** a user with 400 entries can find one, by text, mood or date, from the Reflections tab.
-
-**Why (settled — do not re-litigate):** there is **no search anywhere** in the tree. The archive is
-write-only — a category-level failure for a journal, and it blocks every "revisit your past" sale built on
-top of it (product thesis: [`docs/playbook.md`](playbook.md) → "Why anyone would pay").
-
-**Never gate this.** It is custody of the user's own words — free even after `PLUS_ENABLED` flips.
-
-### Decided design (Opus — do not redesign)
-
-- **Pure core:** `src/insights/search.js` → `searchEntries(entries, { text, moods, from, to })` →
-  a filtered array, **newest-first** (sort by `dayKey` descending). Case- and diacritic-insensitive
-  substring over `did` + `wished`; `moods` matches **any** of the given moods; `from`/`to` are **inclusive**
-  `dayKey` bounds. An empty/omitted query returns everything — the list *is* the default view.
-- **No regex built from user input**, and **no fuzzy matching in v1**. A normalised `includes` is correct,
-  fast at journal scale, and cheap to test. Match highlighting is **out of scope for v1**.
-- **⚠️ Diacritic folding must not assume Hermes.** `String.prototype.normalize` is not guaranteed on every
-  Hermes build in this app's range. Write `foldDiacritics(s)` **defensively**: use
-  `s.normalize('NFD').replace(/[̀-ͯ]/g, '')` inside a `try`, and `return s` from the `catch`.
-  Search must degrade to case-insensitive-only, never throw. There is a test for this.
-- **⚠️ Read `e.mood` (singular), not `e.moods`.** This ships **before** IMP-037. IMP-037 owns the switch
-  to arrays and its Steps include updating this file — do not pre-empt it here.
-
-### Steps
-
-- [ ] 1. **RED first.** `__tests__/insights/search.test.js` covering every case in Tests below.
-- [ ] 2. `src/insights/search.js` — `foldDiacritics(s)`, `normalize(s)` (fold + lowercase + trim) and
-      `searchEntries(entries, query = {})`. Pure, no imports from screens.
-- [ ] 3. `src/screens/ArchiveFilters.js` — presentational, props in / callbacks out:
-      `{ text, moods, from, to, onChange, resultCount }`. A `TextInput` search field, a horizontally
-      scrolling mood chip row built from `MOODS` ([`data.js:38`](../src/data.js#L38)), and two date
-      buttons. **No date-picker library** — reuse the existing `Modal` + list pattern; a month/year list is
-      enough for v1.
-- [ ] 4. Wire into [`ArchiveScreen.js`](../src/screens/ArchiveScreen.js): one `useState` query object,
-      `ArchiveFilters` under the header, and `searchEntries(entries, query)` feeding the existing entry-row
-      `.map`. **The heatmap keeps using the full `entries`, not the results** — it is a record of the year,
-      not of the query.
-- [ ] 5. Empty-result copy, on-voice and not an error: **"Nothing matches that yet. Try fewer words, or a
-      wider stretch of days."**
-- [ ] 6. `npm test` green (406 + new), `npx expo export --platform android` clean, commit, update
-      `PROGRESS.md`, archive this spec to `docs/build-log.md`.
-
-### Tests
-
-Empty/omitted query returns everything · text matches across **both** `did` and `wished` · case folding
-(`"MARKET"` finds `"market"`) · diacritic folding (`"cafe"` finds `"café"`) · `foldDiacritics` returns the
-input unchanged when `normalize` throws (stub it) · mood filter, single and multi · date bounds inclusive
-at **both** ends · combined text + mood + date · no matches → `[]` · results are newest-first · malformed
-entries (missing `did`, `wished` or `mood`; `null` in the array) never throw.
-
-### Commit message
-
-```
-feat(search): full-text + mood + date search over the journal (IMP-035)
-
-There was no search anywhere in the app, which made the archive
-write-only — a category failure for a journal, and the thing blocking
-every "revisit your past" feature above it.
-
-Adds a pure searchEntries() over did/wished with case- and
-diacritic-insensitive matching, any-of mood filtering and inclusive date
-bounds, wired into the Reflections tab. Diacritic folding degrades to
-case-only rather than throwing where String.normalize is unavailable.
-
-Free forever — this is custody of the user's own words, not our work on
-them.
-```
-
-**Ship:** OTA. No `bump:*`.
-
----
-
 ## IMP-036 — custody of your words: edit, delete, 30-day trash
 
-**Lane:** OTA · **Status:** ⬜ OPEN · **Depends on:** IMP-035 · **Free (undelete is the Plus half)**
+**Lane:** OTA · **Status:** ⬜ OPEN · **Depends on:** nothing (IMP-035 ✅ done) · **Free (undelete is the Plus half)**
 
 **Goal:** any past entry can be edited or deleted; deletes go to a 30-day trash; the delete confirm states
 the real consequence to the streak before the user commits.
@@ -228,7 +151,7 @@ so no streak can be fabricated and the missed-day skull stays honest.
 
 ## IMP-037 — moods: custom feelings + multiple per entry
 
-**Lane:** OTA · **Status:** ⬜ OPEN · **Depends on:** IMP-035, IMP-036 · **FREE**
+**Lane:** OTA · **Status:** ⬜ OPEN · **Depends on:** IMP-036 (IMP-035 ✅ done) · **FREE**
 
 **Goal:** an entry carries `moods: string[]` instead of `mood: string`, users can add their own feelings,
 and every existing entry migrates losslessly.
@@ -597,7 +520,7 @@ tap can destroy a journal.
 
 ## IMP-038 — "On this day"
 
-**Lane:** OTA · **Status:** ⬜ OPEN · **Depends on:** IMP-035, IMP-037 · **PLUS — perk #3 of the
+**Lane:** OTA · **Status:** ⬜ OPEN · **Depends on:** IMP-037 (IMP-035 ✅ done) · **PLUS — perk #3 of the
 proposed final list** (PROGRESS.md → "PROPOSED FINAL PERK LIST")
 
 > **⚠️ Perk numbering — read this before touching `data.js`.** The live `PLUS_PERKS` array
@@ -607,7 +530,7 @@ proposed final list** (PROGRESS.md → "PROPOSED FINAL PERK LIST")
 > history limit that has never existed). Step 6 below replaces that slot. **Do not renumber anything
 > else.**
 
-**Build after the retrieval group.** Depends on IMP-035's retrieval layer and IMP-037's mood model.
+**Build after the retrieval group.** IMP-035's retrieval layer is done; still depends on IMP-037's mood model.
 
 **Goal:** on opening the app, the user is shown what they wrote on this date in previous years — and,
 until they have a year of history, at 6 / 3 / 1 months back.

@@ -794,6 +794,22 @@ Net: one word, one meaning, and the only user-visible rename landed on a feature
 
 ---
 
+### IMP-035 — search your journal   ·   Lane: OTA   ·   Status: ✅ code-complete
+
+**Why:** there was no search anywhere in the tree — the archive was write-only, a category-level failure for a journal, and the thing blocking every "revisit your past" sale built on top of it. Never gated — this is custody of the user's own words, free even after `PLUS_ENABLED` flips.
+
+**Pure core.** New `src/insights/search.js` — `foldDiacritics(s)` tries `s.normalize('NFD').replace(/[̀-ͯ]/g, '')` and falls back to `s` unchanged if `normalize` throws (Hermes doesn't guarantee it across this app's range); `normalize(s)` folds + lowercases + trims; `searchEntries(entries, { text, moods, from, to } = {})` filters nullish entries first, then applies a case/diacritic-insensitive substring match over `did` + `wished` combined, an any-of match against `moods`, and inclusive `dayKey` bounds on `from`/`to` — sorted newest-first. Reads `e.mood` (singular) deliberately; IMP-037 owns the switch to `e.moods` and updates this file when it lands. No regex built from user input, no fuzzy matching in v1.
+
+**UI.** New `src/screens/ArchiveFilters.js` — presentational, props in/callbacks out (`{ text, moods, from, to, onChange, resultCount }`): a `TextInput` search field, a horizontally scrolling mood-chip row built from `MOODS` (same chip shape as `WriteFlow.js`'s mood picker, multi-select instead of single), and two date buttons that open a `Modal` + scrollable month list (last 24 months, "Any time" to clear) — no date-picker library, built from primitives already used elsewhere in the app (`Modal`, `ScrollView`, `Pressable`). Selecting a month sets `from` to its first day or `to` to its last day.
+
+**Wired into `ArchiveScreen.js`.** One `useState` query object (`{ text: '', moods: [], from: null, to: null }`), `ArchiveFilters` rendered under the header only when `entries.length > 0`, and `searchEntries(entries, query)` feeds the entry-row `.map` in place of the raw `entries`. The heatmap keeps using the full `entries` — it's a record of the year, not of the query. A distinct empty-result state — *"Nothing matches that yet. Try fewer words, or a wider stretch of days."* — renders only when a filter is active and yields zero results, separate from the existing zero-entries "Nothing here yet." state.
+
+**Tests:** `__tests__/insights/search.test.js` — empty/omitted query returns everything · text matches across both `did` and `wished` · case folding · diacritic folding · `foldDiacritics` returns the input unchanged when `normalize` throws (stubbed) · mood filter single and multi · date bounds inclusive at both ends · combined text + mood + date · no matches → `[]` · results newest-first · malformed entries (missing fields, `null` in the array) never throw. `npm test` → **431 passed, 49 suites** (417 + 14 new). `npx expo export --platform android` clean.
+
+**Ship:** OTA, no bump. **Commit:** `feat(search): full-text + mood + date search over the journal (IMP-035)`.
+
+---
+
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
 
 > Moved out of PROGRESS.md on 2026-07-31 to keep the live cursor lean once a second spec (IMP-032) opened. These are **not** finished work. If the owner revives one, lift the block back into PROGRESS.md as the ACTIVE TRACK.
