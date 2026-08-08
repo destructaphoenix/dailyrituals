@@ -25,104 +25,11 @@
 
 | # | Spec | Lane | Free / Plus | Depends on |
 | --- | --- | --- | --- | --- |
-| 1 | [IMP-038 — "On this day"](#imp-038--on-this-day) | OTA | **Plus** (perk #3) | — (IMP-037 ✅ done) |
-| 2 | [IMP-046 — Annual Recap](#imp-046--annual-recap-your-year-remembered-perk-4) | OTA | **Plus** (perk #4) | — (IMP-037 ✅, IMP-047 ✅ both done) |
+| 1 | [IMP-046 — Annual Recap](#imp-046--annual-recap-your-year-remembered-perk-4) | OTA | **Plus** (perk #4) | — (IMP-037 ✅, IMP-047 ✅ both done) |
 | — | [IMP-045 — finish Lifetime Progress](#imp-045--finish-lifetime-progress-the-imp-021-shortfall) | OTA | Free | — · **no queue slot** |
 
 **IMP-045 does not claim a slot.** It is small, independent and fixes a live tester complaint — take it in any
 chat where the queued task is blocked, or as its own short chat. Same treatment as IMP-044.
-
----
-
-## IMP-038 — "On this day"
-
-**Lane:** OTA · **Status:** ⬜ OPEN · **Depends on:** — (IMP-035 ✅ done, IMP-037 ✅ done) · **PLUS — perk #3 of the
-proposed final list** (PROGRESS.md → "PROPOSED FINAL PERK LIST")
-
-> **⚠️ Perk numbering — read this before touching `data.js`.** The live `PLUS_PERKS` array
-> ([`data.js:144`](../src/data.js#L144)) has **5** entries and does **not** match the 6-line proposed
-> table in `PROGRESS.md`. "On this day" is **not in the array at all** today, and array slot #3 is the
-> line the owner decided to **cut**: *"Your whole graveyard, kept forever"* (it sells relief from a
-> history limit that has never existed). Step 6 below replaces that slot. **Do not renumber anything
-> else.**
-
-**Build after the retrieval group.** IMP-035's retrieval layer and IMP-037's mood model are both done.
-
-**Goal:** on opening the app, the user is shown what they wrote on this date in previous years — and,
-until they have a year of history, at 6 / 3 / 1 months back.
-
-**Why this one is worth money (settled):** it is **worthless on day 1 and priceless on day 400** — exactly
-the shape the product thesis requires of the paid tier. It is the most-loved feature in comparable
-journals, and it is already in this app's voice: IMP-013's *"Tend an old grave"* rite gestures straight at
-it.
-
-**Free/paid line:** a user can always *reach* any past entry — that is IMP-035, free. Plus is the app
-**bringing it to them unprompted**: the surfacing, the anniversary framing, and later a reminder that says
-"a year ago today you wrote…". **Our work, not their words.**
-
-### Decided design (Opus — do not redesign)
-
-- **Pure core:** `src/memory/onThisDay.js` → `onThisDay(entries, todayKey)` →
-  `[{ entry, label, monthsBack }]`, newest match first. Labels are exact strings: `'A year ago today'`,
-  `` `${n} years ago today` ``, `'6 months ago'`, `'3 months ago'`, `'A month ago'`.
-- **Year matches take priority over month fallbacks**, and month fallbacks are shown **only** when there
-  is no year match at all. Never show both.
-- **🔴 Leap day.** 29 Feb must **not** false-match 28 Feb, in either direction. Do the comparison on the
-  `YYYY-MM-DD` string components, not by adding milliseconds to a `Date`. There is a test for exactly this.
-- **Placement:** a card on Home **above** the write card, shown **only on days with a match — never an
-  empty state.** Dismissible per day: persist `onThisDayDismissed: <dayKey>` in `settings` (a single string,
-  not a set — yesterday's dismissal is irrelevant, and this keeps it self-pruning, same
-  derived-not-accumulated discipline as IMP-021/024).
-- **Gating:** rendered when `plus`. When `plusEnabled && !plus`, render a locked teaser **only on days
-  that actually have a match** — a card that says the app found something without showing it is the
-  strongest honest pitch this feature has, and showing it on empty days would be noise. When
-  `!plusEnabled`, render **nothing**.
-
-### Steps
-
-- [ ] 1. **RED first.** `__tests__/memory/onThisDay.test.js` covering every case in Tests below.
-- [ ] 2. `src/memory/onThisDay.js` — `onThisDay(entries, todayKey)`, pure, no `Date` arithmetic across
-      the leap boundary.
-- [ ] 3. `src/screens/OnThisDayCard.js` — presentational: `{ matches, locked, onOpen, onDismiss,
-      onOpenPaywall }`. Reuses the existing entry-row shape from `ArchiveScreen.js`.
-- [ ] 4. Mount in [`HomeScreen.js`](../src/screens/HomeScreen.js) above the write card; thread `plus`,
-      `plusEnabled` and the dismissal from `RitualsApp.js` (`plus` is already a `HomeScreen` prop).
-- [ ] 5. Opening a match routes through the existing `setReading(e)` path, which also credits the
-      `revisit` rite via `markRevisited` — confirm it does, and do not duplicate that logic.
-- [ ] 6. **Make the perk line true.** In [`data.js:147`](../src/data.js#L147), **replace** the cut line
-      `'Your whole graveyard, kept forever'` with
-      `'On this day — your own words, brought back to you'`. The array stays 5 long; nothing else moves.
-      Then update `PROGRESS.md` → Phase 10b's perk-reality table: the old #3 row is struck as **cut**, and
-      the new "On this day" row is ✅ **REAL**.
-- [ ] 7. `npm test` green (406 + new), `npx expo export --platform android` clean, commit, update
-      `PROGRESS.md`, archive this spec to `docs/build-log.md`.
-
-### Tests
-
-Exact year-ago match · **multiple years at once**, ordered newest first · month fallbacks at 6 / 3 / 1
-months · month fallbacks are suppressed when a year match exists · **leap day: 29 Feb does not match
-28 Feb, and 28 Feb does not match 29 Feb** · a 31-day month falling back into a 30-day month does not
-false-match · empty history → `[]` · same-day-multiple-entries returns each · malformed entries (missing
-`dayKey`, `null` in the array) never throw.
-
-### Commit message
-
-```
-feat(memory): "On this day" resurfacing (IMP-038)
-
-Surfaces what the user wrote on this date in previous years — and, until
-there is a year of history, at 6, 3 and 1 months back. Shown on Home only
-on days that actually have a match, dismissible for that day.
-
-The first genuinely new Plus feature rather than debt repayment. Reaching
-any past entry stays free (that is search); what Plus buys is the app
-bringing one back unprompted.
-
-Date matching is done on the YYYY-MM-DD components rather than by adding
-milliseconds, so 29 Feb never false-matches 28 Feb in either direction.
-```
-
-**Ship:** OTA. No `bump:*`.
 
 ---
 

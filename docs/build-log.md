@@ -952,6 +952,60 @@ returning the exact raw string. `npm test` → **508 passed, 53 suites** (482 + 
 
 ---
 
+### IMP-038 — "On this day"   ·   Lane: OTA   ·   Status: ✅ code-complete
+
+**Why:** `PLUS_PERKS[2]` sold a meaningless line — *"Your whole graveyard, kept forever"* — relief from a
+history limit that never existed. "On this day" is the first genuinely **new** Plus feature in the queue
+rather than debt repayment: worthless on day 1, priceless on day 400, and already in the app's voice
+(IMP-013's "Tend an old grave" rite gestures straight at it).
+
+**Pure core.** New `src/memory/onThisDay.js` → `onThisDay(entries, todayKey)` → `[{ entry, label,
+monthsBack }]`. Year matches (same month-day, any past year) take strict priority over month fallbacks —
+month fallbacks at 6/3/1 months back are only computed when zero year matches exist. Both orders are
+newest-first (`n` ascending for years; offset ascending 1→3→6 for months). All comparisons are done on the
+`YYYY-MM-DD` string components (`parts(dayKey)` + a `daysInMonth(y, m)` helper), never by adding
+milliseconds to a `Date` — that's what makes 29 Feb never false-match 28 Feb in either direction, and a
+31-day month falling back into a shorter one skip the offset entirely rather than rolling over into the
+next month. Malformed entries (`null`, missing `dayKey`) are filtered out up front and never throw.
+
+**UI.** New `src/screens/OnThisDayCard.js` — presentational, `{ matches, locked, onOpen, onDismiss,
+onOpenPaywall }`. Returns `null` on an empty `matches` (the caller is expected to only mount it on days
+with a match — "never an empty state" from the spec). `locked` renders a one-card teaser ("The app found
+something you wrote on a day like this" + a `Sun`-icon "Unlock with Plus" pill, same shape as
+`DeeperInsights.js`'s locked branch) instead of revealing anything. The unlocked branch reuses
+`ArchiveScreen.js`'s day/mon-numeral entry-row shape, one row per match, each labelled with its own
+`onThisDay()` string. A dismiss (✕) sits in the shared header for **both** branches, per the spec's single
+prop set — dismissing is not gated behind having Plus.
+
+**Wiring.** `HomeScreen.js` computes `onThisDay(entries, todayK)` itself (own `todayK =
+new Date().toISOString().slice(0,10)`, matching the UTC-day convention `home/calendar.js`'s pure helpers
+already default to) and gates it on a new `onThisDayDismissed` prop — matches are suppressed entirely once
+`onThisDayDismissed === todayK`. Mounted above the "Today's reflection" card. New `HomeScreen` props:
+`plusEnabled`, `onThisDayDismissed`, `onDismissOnThisDay`, `onOpenOnThisDay`, `onOpenPaywall`. `locked` is
+derived as `!plus`, matching every other perk gate in the tree. `RitualsApp.js` threads all five: `plus`/
+`plusEnabled` already existed in scope; `onDismissOnThisDay` writes `settings.onThisDayDismissed =
+todayKey()` (a single string, not a set — self-pruning the moment the day changes, same discipline as
+IMP-021/024); `onOpenOnThisDay` reuses the **exact** `onOpen` handler `ArchiveScreen.js` already gets
+(`setReading(e)` + `setQuests((qs) => markRevisited(qs, e, todayKey()))`) rather than duplicating the
+revisit-rite logic; `onOpenPaywall` follows the standing `PLUS_ENABLED ? () => setPaywall(true) : () =>
+{}` pattern. `DEFAULT_SETTINGS` (`src/theme.js`) gained `onThisDayDismissed: ''`; no migration needed
+(settings aren't schema-versioned, `mergeWithDefaults` fills it in for existing installs).
+
+**Perk copy:** `PLUS_PERKS[2]` (`src/data.js`) — the cut line `'Your whole graveyard, kept forever'` →
+`'On this day — your own words, brought back to you'`. Array stays 5 long; no other slot moved.
+
+**Tests:** `__tests__/memory/onThisDay.test.js` (11 cases) — exact year-ago match · non-matching
+month/day excluded · multiple years at once, newest first · month fallbacks at 6/3/1, newest first ·
+month fallbacks suppressed when any year match exists · leap day non-match in both directions (2024-02-29
+vs 2027-02-28, and the reverse) · 31→28/29-day rollover produces no false match · empty history → `[]` ·
+same-day multiple entries each returned · malformed entries (`null`, missing `dayKey`) never throw. `npm
+test` → **519 passed, 54 suites** (508 + 11 new). `npx expo export --platform android` clean.
+
+**Ship:** OTA, no bump. Reaches **testers only** (`runtimeVersion` = `appVersion` = 1.0.5). **Commit:**
+`feat(memory): "On this day" resurfacing (IMP-038)`.
+
+---
+
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
 
 > Moved out of PROGRESS.md on 2026-07-31 to keep the live cursor lean once a second spec (IMP-032) opened. These are **not** finished work. If the owner revives one, lift the block back into PROGRESS.md as the ACTIVE TRACK.
@@ -996,6 +1050,8 @@ returning the exact raw string. `npm test` → **508 passed, 53 suites** (482 + 
 ## Session notes (archived from PROGRESS.md)
 
 _Append-only handoff log moved out of PROGRESS.md to keep it light. Newest 1–2 notes stay live in PROGRESS.md; everything else is here. Git history is the full record._
+
+_2026-08-08 (IMP-047, deeper insights — the analysis layer, perk #5) — **code-complete, committed, not shipped.** Full TDD (17 new cases). New pure `src/insights/deeper.js` — `moodByWeekday(entries)` → 7 Mon-first buckets `{l, top, n, total}` (top mood per weekday, `null` on a tie or empty bucket — reuses `derive.js`'s private `localDate`/Mon-first-index pattern rather than sharing it, matching how each insights module already owns its own date helpers), `moodByMonth(entries)` → 12 calendar-month buckets aggregated across years for the "seasonal" read, `moods` sorted by count descending, `moodPairings(entries)` → co-occurring mood pairs `{a,b,n}` (alphabetically normalised so `[a,b]`/`[b,a]` count once, `[]` for all-single-mood entries — the function that justifies IMP-037's multi-mood model), `hasEnoughFor(kind, entries)` gates each at 14 entries / 3 distinct months / 5 multi-mood entries so nothing renders a chart from three data points. New presentational `src/screens/DeeperInsights.js` reuses `InsightsScreen.js`'s existing bar/mood-row shapes; `locked` prop renders a one-card teaser with a `Sun`-icon "Unlock with Plus" pill instead of computing anything. `InsightsScreen` gained `plus`/`plusEnabled`/`onOpenPaywall` props threaded from `RitualsApp.js` (`onOpenPaywall` follows the existing `PLUS_ENABLED ? () => setPaywall(true) : () => {}` pattern); mounts full section when `plus`, locked teaser when `plusEnabled && !plus`, nothing when `!plusEnabled` — same discipline as IMP-034/IMP-041. `PLUS_PERKS[4]` copy checked against the build and left unchanged — it already matched. `npm test` → **482 passed, 51 suites** (465 + 17 new); `npx expo export --platform android` clean. Full spec archived to `docs/build-log.md`; backlog row set to code-complete; `docs/specs-open.md`'s index and IMP-046's "Depends on" updated to reflect it's done; PROGRESS.md's Phase 10b perk-reality table updated to 3 of 5 real (#1, #2, #5). NEXT: per the ACTIVE TRACK order, **IMP-033** (the restore is offered, not imposed) is next — a bigger build than the retrieval-track tasks, already settled by the owner. IMP-033/-038/-045/-046 remain open; `internal` → production promotion still untaken._
 
 _2026-08-08 (IMP-037, moods: custom + multiple per entry) — **code-complete, committed, not shipped.** Full TDD, migration tests written RED-first. `SCHEMA_VERSION` 2 → 3 in `src/persistence/state.js` with a real migrator `2:` (`mergeWithDefaults` is a shallow top-level spread and never reaches inside `entries`, so a versioned migrator was the only safe path): `{ mood: 'Tender' }` → `{ moods: ['Tender'] }`, no-mood → `moods: []`, idempotent on entries that already carry `moods`. Every reader from the spec's exhaustive list updated in one pass: `derive.js` (mood mix counts each mood in an entry's array separately, new `moodEntryCount` — entries with ≥1 mood — is the honest denominator since percentages no longer sum to 100), `search.js` (mood filter is any-of over `e.moods`), `calendar.js` (heatmap/week-strip cells use `moods[0]`), `completeEntry.js` (`feel` rite checks `moods.length > 0`), `mutate.js` (`applyEdit`'s patch takes `moods`). `WriteFlow.js`'s mood step is now multi-select (tap to toggle) plus a "Name your own…" field wired to a new `onAddCustomMood` prop; `RitualsApp.js` adds `addCustomMood()` which dedups into `settings.customMoods`, and `DEFAULT_SETTINGS` gains `customMoods: []` (no migration needed — settings aren't schema-versioned, `mergeWithDefaults` fills it in). `ArchiveScreen.js`/`ReadingSheet.js` now render one chip per mood instead of one chip total; `InsightsScreen.js` adds the honest `across {n} reflections` line. **A reader the spec's list missed, caught by the first full suite run, not by planning:** `__tests__/profile/achievements.test.js`'s own fixtures used singular `mood:` for the `moodsLogged` stat — `achievements.js` itself needed no change (it already reads `derive.js`'s `moodMix`), only its test fixtures did. Final `grep -rn "\.mood\b|mood:" src/` → zero singular-`mood` readers left, only the migrator's own comment. `npm test` → **465 passed, 50 suites** (453 + 12 new); `npx expo export --platform android` clean. Full spec archived to `docs/build-log.md`; backlog row set to code-complete; `docs/specs-open.md`'s index and every "Depends on: IMP-037" mention across IMP-038/046/047 updated to reflect it's done. NEXT: **IMP-047** (deeper insights — the analysis layer, perk #5) is next per the ACTIVE TRACK order — it was blocked on this task and now isn't. IMP-033/-038/-045/-046/-047 remain open; `internal` → production promotion still untaken._
 
