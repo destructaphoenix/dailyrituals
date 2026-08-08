@@ -109,6 +109,22 @@ export function PrimaryButton({ label, onPress, disabled, icon, style }) {
   );
 }
 
+// ── Ghost button ─────────────────────────────────────────────────────────────
+// Secondary action for scrim sheets (RestoreNotice, RestoreOffer) — outlined,
+// no fill, sits below a PrimaryButton.
+export function GhostButton({ label, onPress }) {
+  const t = useTheme();
+  const c = t.colors;
+  return (
+    <Pressable onPress={onPress} style={({ pressed }) => ({
+      width: '100%', paddingVertical: 16, borderRadius: 18, borderWidth: 1.5, borderColor: c.border,
+      alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1,
+    })}>
+      <T d w={700} color={c.accentDeep} style={{ fontSize: 16 }}>{label}</T>
+    </Pressable>
+  );
+}
+
 // ── XP / progress bar with shimmer ───────────────────────────────────────────
 export function ProgressBar({ value }) {
   const t = useTheme();

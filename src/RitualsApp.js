@@ -23,6 +23,7 @@ import InsightsScreen from './screens/InsightsScreen';
 import YouScreen from './screens/YouScreen';
 import ReadingSheet from './screens/ReadingSheet';
 import RestoreNotice from './screens/RestoreNotice';
+import RestoreOffer from './screens/RestoreOffer';
 import ReminderSheet from './screens/ReminderSheet';
 import WriteFlow from './screens/WriteFlow';
 import TrashSheet from './screens/TrashSheet';
@@ -40,6 +41,7 @@ import { formatRenewDate } from './billing/format';
 import { checkEntitlement, nextPlusState, useLaunchEntitlementCheck } from './billing/entitlementSync';
 import { saveState } from './persistence/storage';
 import { pickPersisted } from './persistence/state';
+import { pendingRestoreInventory } from './persistence/restoreQuarantine';
 import { applyCompletion } from './home/completeEntry';
 import { applyAutoFreeze } from './home/streakFreeze';
 import { applyEdit, applyDelete, applyRestore, pruneTrash, streakAfterDelete } from './entries/mutate';
@@ -77,7 +79,7 @@ const IMPORT_ERROR = {
 const PLATFORM = Platform.OS === 'android' ? 'android' : 'ios';
 const todayKey = () => new Date().toISOString().slice(0, 10);
 
-export default function RitualsApp({ mode = 'day', settings, setSettings, onToggleMode, initialPlus = false, initialState = {}, onResetData, onReplaceAllData, restoredFromMs = null, onDismissRestoreNotice }) {
+export default function RitualsApp({ mode = 'day', settings, setSettings, onToggleMode, initialPlus = false, initialState = {}, onResetData, onReplaceAllData, restoredFromMs = null, onDismissRestoreNotice, pendingRestore = null, onConsumePendingRestore }) {
   const theme = useMemo(() => makeTheme(mode, settings), [mode, settings]);
   const c = theme.colors;
   const safe = useSafeAreaInsets();
@@ -124,6 +126,9 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   // ONLY prod-visible cost of the whole dev harness v2 task — one inert
   // useState, always null outside a dev session.
   const [devRestoreMs, setDevRestoreMs] = useState(null);
+  // "Keep this fresh start" hides the offer without discarding the stash
+  // (IMP-033) — it's still reachable from the You tab's backup card.
+  const [restoreOfferDismissed, setRestoreOfferDismissed] = useState(false);
 
   // Live level derived from total XP (no hardcoded level).
   const { level, name: levelName, into: xpInto, toNext: xpToNext } = levelFromXp(xp);
@@ -470,7 +475,9 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
       const shared = await backupIO.exportFile(backupFilename(), JSON.stringify(env));
       if (shared) {
         setLastBackupAt(new Date().toISOString());
-        showToast('Backup ready — save it somewhere off this phone.');
+        // IMP-033: this file and the Google Auto Backup are separate systems —
+        // this export never refreshes that copy, so say so at the moment of use.
+        showToast("Backup ready — save it somewhere off this phone. This doesn't update your Google backup.");
       }
     } catch (e) {
       showToast("Couldn't create the backup. Please try again.");
@@ -513,12 +520,59 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     );
   };
 
+  // IMP-033: load the quarantined OS-restored stash. The CURRENT (fresh,
+  // just-onboarded) state gets a recovery copy first — same safety guarantee
+  // as doImport, via the same runConfirmedImport orchestration.
+  const handleLoadPendingRestore = () => {
+    if (!pendingRestore) return;
+    const count = (pendingRestore.entries || []).length;
+    Alert.alert(
+      'Load this journal?',
+      `This backup has ${count} ${count === 1 ? 'entry' : 'entries'}. ` +
+      "It will replace everything you've set up since installing. We'll save a recovery copy of your fresh start first.",
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Load', style: 'destructive',
+          onPress: async () => {
+            try {
+              await runConfirmedImport({
+                currentEnvelopeText: JSON.stringify(createBackup(currentSlice(), { appVersion: APP_VERSION })),
+                restoredState: pendingRestore,
+                writeRecovery: (text) => backupIO.writeRecovery(text),
+                replaceAll: (state) => onReplaceAllData(state),
+              });
+              await onConsumePendingRestore();
+            } catch (e) {
+              showToast("Load failed — your fresh start is unchanged.");
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleKeepFreshStart = () => setRestoreOfferDismissed(true);
+
+  const handleDiscardPendingRestore = () => {
+    const inventory = pendingRestoreInventory(pendingRestore);
+    Alert.alert(
+      'Discard this backup?',
+      `This permanently deletes the Google backup${inventory ? ` — including ${inventory}` : ''}. This can't be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Discard', style: 'destructive', onPress: () => onConsumePendingRestore() },
+      ]
+    );
+  };
+
   // Honest Auto Backup explainer (we can't read the OS-level Google toggle).
   const explainAutoBackup = () => {
     Alert.alert(
       'Automatic backup',
       "Your journal is included in Android's automatic backup to your Google account, so it can be restored when you set up a new phone.\n\n" +
-      "We can't see whether device backup is switched on, so it's worth checking: Settings › Google › Backup. For full control, also export your own copy.",
+      "We can't see whether device backup is switched on, so it's worth checking: Settings › Google › Backup.\n\n" +
+      "This is separate from \"Back up my journal\" below — exporting a file does not refresh your Google backup, and vice versa. For full control, export your own copy too.",
       [
         { text: 'Open phone settings', onPress: () => Linking.openSettings() },
         { text: 'OK', style: 'cancel' },
@@ -561,6 +615,9 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             onExportData={doExport}
             onImportData={doImport}
             onExplainAutoBackup={explainAutoBackup}
+            pendingRestore={pendingRestore}
+            onReopenPendingRestore={() => setRestoreOfferDismissed(false)}
+            onDiscardPendingRestore={handleDiscardPendingRestore}
             trashCount={trash.length} onOpenTrash={() => setTrashOpen(true)}
             onOpenDev={__DEV__ ? () => setShowDev(true) : undefined}
             reminderValue={reminderRowValue(settings.reminder, reminderPermission)}
@@ -787,6 +844,15 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
           onGotIt={() => (devRestoreMs ? setDevRestoreMs(null) : onDismissRestoreNotice())}
           onRestoreFile={() => { (devRestoreMs ? setDevRestoreMs(null) : onDismissRestoreNotice()); doImport(); }}
         />
+
+        {pendingRestore && !restoreOfferDismissed && (
+          <RestoreOffer
+            stash={pendingRestore}
+            onLoad={handleLoadPendingRestore}
+            onRestoreFile={() => { setRestoreOfferDismissed(true); doImport(); }}
+            onKeepFreshStart={handleKeepFreshStart}
+          />
+        )}
       </View>
     </ThemeContext.Provider>
   );

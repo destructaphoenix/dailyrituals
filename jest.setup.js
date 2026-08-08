@@ -3,6 +3,12 @@
 // the jsdom test environment.
 jest.mock('react-native/Libraries/Animated/NativeAnimatedHelper', () => ({}), { virtual: true });
 
+// The package's own in-memory mock — needed now that src/persistence/storage.js
+// gets a real round-trip test (IMP-033's pending-restore stash).
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock')
+);
+
 // SDK 54 moved the string-based file API to `expo-file-system/legacy`, which is
 // the path src/backup/io.js imports. Jest keys mocks on the literal module path,
 // so mocking only 'expo-file-system' would leave io.js unstubbed. Both paths get

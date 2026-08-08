@@ -10,6 +10,7 @@ import { PlusBanner } from '../shopui';
 import { profileIdentity } from '../profile/identity';
 import { lastBackupLabel } from '../backup/lastBackupLabel';
 import { backupHealth } from '../backup/backupHealth';
+import { formatBackupDate } from '../persistence/restoreDetect';
 import NameEditModal from './NameEditModal';
 import TipCard from './TipCard';
 import Row from '../ui/Row';
@@ -21,6 +22,7 @@ export default function YouScreen({
   streak, level, levelName, xpInto, xpToNext, entriesCount, badgesEarned, onOpenAchievements,
   embers, plus, onOpenShop, onOpenPaywall, onOpenManage, onRestorePurchases, plusEnabled = true, onResetData,
   lastBackupAt, onExportData, onImportData, onExplainAutoBackup, onOpenDev,
+  pendingRestore, onReopenPendingRestore, onDiscardPendingRestore,
   reminderValue, onOpenReminder, onOpenPlusPerks,
   trashCount = 0, onOpenTrash,
   tip, onDismissTip,
@@ -183,6 +185,23 @@ export default function YouScreen({
           <Divider />
           <Row icon={<Restore size={20} color={c.accentDeep} />} label="Restore from a backup"
             onPress={onImportData} />
+          {pendingRestore && (
+            <>
+              <Divider />
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 16, paddingVertical: 15 }}>
+                <View style={{ width: 36, height: 36, borderRadius: 11, backgroundColor: c.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
+                  <Restore size={20} color={c.accentDeep} />
+                </View>
+                <Pressable onPress={onReopenPendingRestore} style={({ pressed }) => ({ flex: 1, opacity: pressed ? 0.6 : 1 })}>
+                  <T w={700} color={c.ink} numberOfLines={1} style={{ fontSize: 15.5 }}>Google backup</T>
+                  <T w={700} color={c.muted} numberOfLines={1} style={{ fontSize: 13, marginTop: 2 }}>{formatBackupDate(pendingRestore.lastSavedAt)}</T>
+                </Pressable>
+                <Pressable onPress={onDiscardPendingRestore} style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}>
+                  <T w={700} color={c.red} numberOfLines={1} style={{ fontSize: 13.5 }}>Discard</T>
+                </Pressable>
+              </View>
+            </>
+          )}
           {onOpenTrash && (
             <>
               <Divider />

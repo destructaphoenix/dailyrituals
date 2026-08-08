@@ -5,9 +5,12 @@ import React, { useState } from 'react';
 import { View, ActivityIndicator, Platform } from 'react-native';
 import { RC_KEYS } from './src/billing/config';
 import { isBillingConfigured } from './src/billing';
-import { loadState, saveState, clearState } from './src/persistence/storage';
+import {
+  loadState, saveState, clearState,
+  readRawState, writePendingRestore, readPendingRestore, clearPendingRestore,
+} from './src/persistence/storage';
 import { hasCompletedOnboarding } from './src/persistence/onboarding';
-import { isRestoredInstall } from './src/persistence/restoreDetect';
+import { shouldQuarantine, runQuarantine } from './src/persistence/restoreQuarantine';
 import * as Application from 'expo-application';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -29,7 +32,7 @@ import { useFonts } from 'expo-font';
 import RitualsApp from './src/RitualsApp';
 import Onboarding from './src/screens/Onboarding';
 import { DEFAULT_SETTINGS } from './src/theme';
-import { mergeWithDefaults } from './src/persistence/state';
+import { mergeWithDefaults, deserialize } from './src/persistence/state';
 
 export default function App() {
   const [mode, setMode] = useState('day');
@@ -39,6 +42,7 @@ export default function App() {
   const [hydrated, setHydrated] = useState(null); // null = still loading persisted state
   const [dataKey, setDataKey] = useState(0); // bump to remount RitualsApp with fresh state
   const [restoredFromMs, setRestoredFromMs] = useState(null); // set once when this launch looks like a restore (IMP-029)
+  const [pendingRestore, setPendingRestore] = useState(null); // parsed OS-restored stash, offered post-onboarding (IMP-033)
 
   React.useEffect(() => {
     const platform = Platform.OS === 'android' ? 'android' : 'ios';
@@ -48,6 +52,33 @@ export default function App() {
     }
     loadState().then(async (loaded) => {
       const s = loaded || {};
+      // IMP-033: no lastSavedAt means this data predates the feature — stay
+      // silent and hydrate normally, same as IMP-029 always did.
+      if (s.lastSavedAt) {
+        try {
+          const installedAt = await Application.getInstallationTimeAsync();
+          if (shouldQuarantine({ lastSavedAt: s.lastSavedAt, installedAt: installedAt?.getTime() })) {
+            const quarantined = await runQuarantine({
+              readRawState, writePendingRestore, readPendingRestore, clearState,
+            });
+            if (quarantined) {
+              // Genuine first install from here — onboarding runs with no
+              // change, and the stash is offered once it's done (App render).
+              setHydrated({});
+              setOnboarded(false);
+              const stashRaw = await readPendingRestore();
+              setPendingRestore(deserialize(stashRaw));
+              return;
+            }
+            // Stash write or read-back failed — never clear an unverified
+            // stash. Fall through to today's IMP-029 notice; live data is
+            // untouched.
+            setRestoredFromMs(s.lastSavedAt);
+          }
+        } catch (e) {
+          // expo-application unavailable in this environment — no notice, no crash
+        }
+      }
       setHydrated(s);
       if (s.mode) setMode(s.mode);
       // Shallow merge, not a raw assign: a persisted `settings` object predates
@@ -58,17 +89,6 @@ export default function App() {
       // hasCompletedOnboarding — returning users (any persisted state, or the
       // explicit flag) skip it, so updates never re-onboard existing testers.
       if (hasCompletedOnboarding(loaded)) setOnboarded(true);
-      // IMP-029: no lastSavedAt means this data predates the feature — stay silent.
-      if (s.lastSavedAt) {
-        try {
-          const installedAt = await Application.getInstallationTimeAsync();
-          if (isRestoredInstall({ lastSavedAt: s.lastSavedAt, installedAt: installedAt?.getTime() })) {
-            setRestoredFromMs(s.lastSavedAt);
-          }
-        } catch (e) {
-          // expo-application unavailable in this environment — no notice, no crash
-        }
-      }
     });
   }, []);
 
@@ -110,6 +130,13 @@ export default function App() {
     setRestoredFromMs(null);
   };
 
+  // Forgets the OS-restored stash for good — after a successful Load (the
+  // stash has done its job) or a confirmed Discard (IMP-033).
+  const handleConsumePendingRestore = async () => {
+    await clearPendingRestore();
+    setPendingRestore(null);
+  };
+
   const dark = mode === 'night';
 
   // First-run / signup flow hands off to the live app on completion.
@@ -137,6 +164,8 @@ export default function App() {
         onReplaceAllData={handleReplaceAllData}
         restoredFromMs={restoredFromMs}
         onDismissRestoreNotice={handleDismissRestoreNotice}
+        pendingRestore={pendingRestore}
+        onConsumePendingRestore={handleConsumePendingRestore}
       />
     </SafeAreaProvider>
   );

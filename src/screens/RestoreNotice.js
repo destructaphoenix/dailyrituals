@@ -3,23 +3,11 @@
 // one-tap route into the existing manual restore. Presentational only —
 // RitualsApp owns visibility + the actions (see restoreDetect.js for detection).
 import React from 'react';
-import { View, Pressable } from 'react-native';
+import { View } from 'react-native';
 import { useTheme } from '../theme';
-import { T, PrimaryButton } from '../ui';
+import { T, PrimaryButton, GhostButton } from '../ui';
 import { Restore } from '../icons';
 import { formatBackupDate } from '../persistence/restoreDetect';
-
-function GhostButton({ label, onPress }) {
-  const c = useTheme().colors;
-  return (
-    <Pressable onPress={onPress} style={({ pressed }) => ({
-      width: '100%', paddingVertical: 16, borderRadius: 18, borderWidth: 1.5, borderColor: c.border,
-      alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1,
-    })}>
-      <T d w={700} color={c.accentDeep} style={{ fontSize: 16 }}>{label}</T>
-    </Pressable>
-  );
-}
 
 export default function RestoreNotice({ restoredAtMs, onGotIt, onRestoreFile }) {
   const t = useTheme();
