@@ -147,10 +147,18 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   );
   const openLink = (k) => { openExternal(k, PLATFORM); };
 
+  // While the app ships free (PLUS_ENABLED = false, IMP-034) there is no cash
+  // ember purchase to route to — say so instead of opening the shop.
+  const EMBERS_ARE_FREE_COPY = 'Embers also gather on their own — one for every day you keep';
+  const openGetEmbers = () => {
+    if (PLUS_ENABLED) setGetEmbersOpen(true);
+    else showToast(EMBERS_ARE_FREE_COPY);
+  };
+
   const retint = (swatch) => setSettings && setSettings((s) => ({ ...s, accent: swatch }));
   const applyPalette = (p) => { setActivePalette(p.id); retint(p.swatch); showToast(p.name + ' applied'); };
   const buyPalette = (p) => {
-    if (embers < p.tier) { setGetEmbersOpen(true); return; }
+    if (embers < p.tier) { openGetEmbers(); return; }
     setEmbers((e) => e - p.tier);
     setOwnedPalettes((o) => [...o, p.id]);
     setActivePalette(p.id); retint(p.swatch);
@@ -158,21 +166,21 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   };
   const applySky = (s) => { setActiveSky(s.id); showToast(s.name + ' applied'); };
   const buySky = (s) => {
-    if (embers < s.tier) { setGetEmbersOpen(true); return; }
+    if (embers < s.tier) { openGetEmbers(); return; }
     setEmbers((e) => e - s.tier);
     setOwnedSkies((o) => [...o, s.id]);
     setActiveSky(s.id);
     showToast(s.name + ' unlocked');
   };
   const buyCandles = (pack) => {
-    if (embers < pack.price) { setGetEmbersOpen(true); return; }
+    if (embers < pack.price) { openGetEmbers(); return; }
     setEmbers((e) => e - pack.price);
     setFreezes((f) => f + pack.count);
     showToast(pack.count + (pack.count > 1 ? ' candles lit' : ' candle lit'));
   };
   const getEmbers = (pack) => {
     if (pack && pack.amount) { setEmbers((e) => e + pack.amount); showToast('+' + pack.amount + ' Embers'); setGetEmbersOpen(false); }
-    else { setGetEmbersOpen(true); }
+    else { openGetEmbers(); }
   };
   const subscribe = (plan, entitlement) => {
     setPlus(true); setSubCanceled(false);
@@ -526,7 +534,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
           </ThemeContext.Provider>
         </Modal>
 
-        <Modal visible={getEmbersOpen} animationType="slide" presentationStyle="overFullScreen" onRequestClose={() => setGetEmbersOpen(false)}>
+        <Modal visible={PLUS_ENABLED && getEmbersOpen} animationType="slide" presentationStyle="overFullScreen" onRequestClose={() => setGetEmbersOpen(false)}>
           <ThemeContext.Provider value={theme}>
             <GetEmbers insets={insets} onClose={() => setGetEmbersOpen(false)} embers={embers}
               onBuy={(pack) => { setEmbers((e) => e + pack.amount); showToast('+' + pack.amount + ' Embers'); setGetEmbersOpen(false); }} />

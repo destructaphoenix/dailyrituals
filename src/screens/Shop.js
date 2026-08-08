@@ -161,22 +161,24 @@ export default function Shop({
           </View>
         </View>
 
-        {/* Gather embers */}
-        <View style={{ marginTop: 26 }}>
-          <Sec title="Gather Embers" />
-          <Note>Embers also gather on their own — one for every day you keep.</Note>
-          <View style={{ flexDirection: 'row', gap: 11 }}>
-            {EMBER_PACKS.map((p) => (
-              <Pressable key={p.id} onPress={() => onGetEmbers(p)}
-                style={({ pressed }) => [{ flex: 1, alignItems: 'center', paddingTop: 16, paddingBottom: 12, paddingHorizontal: 6, borderRadius: t.radius.sm, transform: [{ scale: pressed ? 0.97 : 1 }] }, ...cardBase]}>
-                {p.tag && <PackTag label={p.tag} c={c} soft />}
-                <View style={{ marginBottom: 4 }}><Ember size={26} deep={c.accentDeep} /></View>
-                <T d w={800} color={c.ink} style={{ fontSize: 17 }}>{p.amount}</T>
-                <T d w={800} color={c.accentDeep} style={{ fontSize: 12.5, marginTop: 1 }}>{p.price}</T>
-              </Pressable>
-            ))}
+        {/* Gather embers — cash top-ups; hidden while the app ships free (IMP-034) */}
+        {plusEnabled && (
+          <View style={{ marginTop: 26 }}>
+            <Sec title="Gather Embers" />
+            <Note>Embers also gather on their own — one for every day you keep.</Note>
+            <View style={{ flexDirection: 'row', gap: 11 }}>
+              {EMBER_PACKS.map((p) => (
+                <Pressable key={p.id} onPress={() => onGetEmbers(p)}
+                  style={({ pressed }) => [{ flex: 1, alignItems: 'center', paddingTop: 16, paddingBottom: 12, paddingHorizontal: 6, borderRadius: t.radius.sm, transform: [{ scale: pressed ? 0.97 : 1 }] }, ...cardBase]}>
+                  {p.tag && <PackTag label={p.tag} c={c} soft />}
+                  <View style={{ marginBottom: 4 }}><Ember size={26} deep={c.accentDeep} /></View>
+                  <T d w={800} color={c.ink} style={{ fontSize: 17 }}>{p.amount}</T>
+                  <T d w={800} color={c.accentDeep} style={{ fontSize: 12.5, marginTop: 1 }}>{p.price}</T>
+                </Pressable>
+              ))}
+            </View>
           </View>
-        </View>
+        )}
 
         <View style={{ marginTop: 30, paddingTop: 18, borderTopWidth: 1, borderTopColor: c.border }}>
           <T w={700} color={c.muted} style={{ fontSize: 12, textAlign: 'center' }}>Cosmetics only. Achievements stay earned, never bought.</T>
