@@ -147,6 +147,7 @@ export const PLUS_PERKS = [
   'On this day — your own words, brought back to you',
   'Your Book — export your days as a PDF',
   'Deeper insights — moods & seasonal themes',
+  'Your year, remembered — the Annual Recap',
 ];
 
 // Next renewal date shown across the member status + manage surfaces.

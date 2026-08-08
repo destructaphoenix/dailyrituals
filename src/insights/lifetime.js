@@ -1,11 +1,6 @@
 import { levelFromXp } from '../profile/level';
 import { longestConsecutiveRun, dayKeyToUtcMs, DAY_MS } from './dateKeys';
-
-function countWords(s) {
-  if (!s || typeof s !== 'string') return 0;
-  const t = s.trim();
-  return t ? t.split(/\s+/).length : 0;
-}
+import { countWords } from './words';
 
 function activeSpanLabel(dayKeys, now) {
   if (!dayKeys.length) return null;

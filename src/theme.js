@@ -117,6 +117,9 @@ export const DEFAULT_SETTINGS = {
   // Last dayKey the "On this day" card (IMP-038) was dismissed for — a single
   // string, not a set, so a past dismissal is irrelevant once the day changes.
   onThisDayDismissed: '',
+  // Last year the Annual Recap Home card (IMP-046) was dismissed for — a
+  // single number, not a set, so an old dismissal never hides a later year.
+  recapSeen: null,
 };
 
 // Mix a hex color toward white by `amount` (0–1).

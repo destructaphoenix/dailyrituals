@@ -15,10 +15,16 @@ import { deriveKeepsakes } from '../profile/achievements';
 import { StreakFreeze, DailyQuests } from '../gamify';
 import { EmberPill } from '../shopui';
 import { onThisDay } from '../memory/onThisDay';
+import { recapYears } from '../recap/annualRecap';
 import TipCard from './TipCard';
 import OnThisDayCard from './OnThisDayCard';
+import AnnualRecapCard from './AnnualRecapCard';
 
-export default function HomeScreen({ copy, mode, streak, level, levelName, xpInto, xpToNext, entries, quests, freezes, onOpenAchievements, done, onWrite, onToggleMode, embers, plus, plusEnabled = false, onOpenShop, dailyPrompt = '', userName = '', tip, onDismissTip, onThisDayDismissed = '', onDismissOnThisDay, onOpenOnThisDay, onOpenPaywall }) {
+// The Annual Recap Home card only shows in this window — see annualRecap.js
+// for why (a "year in review" outside Dec–Jan is either premature or stale).
+const RECAP_WINDOW_MONTHS = [11, 0]; // Dec, Jan
+
+export default function HomeScreen({ copy, mode, streak, level, levelName, xpInto, xpToNext, entries, quests, freezes, onOpenAchievements, done, onWrite, onToggleMode, embers, plus, plusEnabled = false, onOpenShop, dailyPrompt = '', userName = '', tip, onDismissTip, onThisDayDismissed = '', onDismissOnThisDay, onOpenOnThisDay, onOpenPaywall, recapSeen = null, onDismissAnnualRecap, onOpenAnnualRecap }) {
   const t = useTheme();
   const c = t.colors;
   const Orb = mode === 'night' ? Moon : Sun;
@@ -27,6 +33,10 @@ export default function HomeScreen({ copy, mode, streak, level, levelName, xpInt
   const keepsakes = deriveKeepsakes(entries || [], streak || 0);
   const todayK = new Date().toISOString().slice(0, 10);
   const onThisDayMatches = plusEnabled && onThisDayDismissed !== todayK ? onThisDay(entries || [], todayK) : [];
+  const now = new Date();
+  const inRecapWindow = RECAP_WINDOW_MONTHS.includes(now.getMonth());
+  const topRecapYear = plusEnabled && inRecapWindow ? (recapYears(entries || [], now)[0] ?? null) : null;
+  const showRecapCard = topRecapYear != null && recapSeen !== topRecapYear;
   const streakShadow = { textShadowColor: 'rgba(0,0,0,0.7)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 10 };
   const isNightV2 = t.dark && DARK_THEME === 'v2';
   const numberGlow = isNightV2 ? { textShadowColor: c.accent + '8C', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 16 } : {};
@@ -89,6 +99,19 @@ export default function HomeScreen({ copy, mode, streak, level, levelName, xpInt
             locked={!plus}
             onOpen={onOpenOnThisDay}
             onDismiss={onDismissOnThisDay}
+            onOpenPaywall={onOpenPaywall}
+          />
+        </View>
+      )}
+
+      {/* annual recap (IMP-046, Plus perk #4) — 1 Dec – 31 Jan only */}
+      {showRecapCard && (
+        <View style={{ paddingHorizontal: 20 }}>
+          <AnnualRecapCard
+            year={topRecapYear}
+            locked={!plus}
+            onOpen={() => onOpenAnnualRecap(topRecapYear)}
+            onDismiss={() => onDismissAnnualRecap(topRecapYear)}
             onOpenPaywall={onOpenPaywall}
           />
         </View>

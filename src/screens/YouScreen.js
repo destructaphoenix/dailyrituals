@@ -5,12 +5,13 @@ import React, { useState } from 'react';
 import { View, ScrollView, Pressable, Alert, Modal } from 'react-native';
 import { useTheme } from '../theme';
 import { T, Card, ProgressBar } from '../ui';
-import { Bell, Contrast, Pencil, Download, Info, Chevron, Sun, Moon, Bag, Ember, Restore, UserIcon, Alert as AlertIcon } from '../icons';
+import { Bell, Contrast, Pencil, Download, Info, Chevron, Sun, Moon, Bag, Ember, Restore, UserIcon, Alert as AlertIcon, ChartIcon } from '../icons';
 import { PlusBanner } from '../shopui';
 import { profileIdentity } from '../profile/identity';
 import { lastBackupLabel } from '../backup/lastBackupLabel';
 import { backupHealth } from '../backup/backupHealth';
 import { formatBackupDate } from '../persistence/restoreDetect';
+import { recapYears } from '../recap/annualRecap';
 import NameEditModal from './NameEditModal';
 import TipCard from './TipCard';
 import Row from '../ui/Row';
@@ -26,6 +27,7 @@ export default function YouScreen({
   reminderValue, onOpenReminder, onOpenPlusPerks,
   trashCount = 0, onOpenTrash,
   tip, onDismissTip,
+  entries = [], onOpenAnnualRecap,
 }) {
   const t = useTheme();
   const c = t.colors;
@@ -34,6 +36,7 @@ export default function YouScreen({
   const { display, initial } = profileIdentity(settings.name);
   const [editingName, setEditingName] = useState(false);
   const health = backupHealth(lastBackupAt);
+  const offerableYears = plusEnabled ? recapYears(entries, new Date()) : [];
   // A milestone reads as "exactly N" rather than "N or more" so it needs no
   // dismissal state — it naturally stops firing the day after, same spirit
   // as every other derived-not-persisted signal in this app.
@@ -141,6 +144,40 @@ export default function YouScreen({
           </Card>
         </Pressable>
       </View>
+
+      {/* Annual Recap (IMP-046, Plus perk #4) — permanent, so it doesn't
+          disappear for the eleven months the Home card is out of its window */}
+      {plusEnabled && (
+        <View style={{ paddingHorizontal: 20 }}>
+          <T d w={700} color={c.ink} style={{ fontSize: 15, marginBottom: 10, marginLeft: 2 }}>Your years</T>
+          <Card>
+            {!plus ? (
+              <Row icon={<ChartIcon size={20} color={c.accentDeep} />} label="Annual Recap"
+                right={
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: c.accentSoft, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 999 }}>
+                      <Sun size={11} color={c.accentDeep} />
+                      <T d w={800} color={c.accentDeep} style={{ fontSize: 12.5 }}>Plus</T>
+                    </View>
+                    <Chevron dir="right" size={18} color={c.muted} />
+                  </View>
+                }
+                onPress={onOpenPaywall} />
+            ) : offerableYears.length === 0 ? (
+              <Row icon={<ChartIcon size={20} color={c.accentDeep} />} label="Annual Recap"
+                value="Unlocks after your first full year" />
+            ) : (
+              offerableYears.map((y, i) => (
+                <React.Fragment key={y}>
+                  {i > 0 && <Divider />}
+                  <Row icon={<ChartIcon size={20} color={c.accentDeep} />} label={String(y)}
+                    value="View" onPress={() => onOpenAnnualRecap(y)} />
+                </React.Fragment>
+              ))
+            )}
+          </Card>
+        </View>
+      )}
 
       {/* preferences */}
       <View style={{ paddingHorizontal: 20 }}>

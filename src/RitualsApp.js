@@ -58,6 +58,8 @@ import { reminderCopy } from './content/reminders';
 import { pendingTip, markTipSeen } from './content/tips';
 import TipCard from './screens/TipCard';
 import PlusPerks from './screens/PlusPerks';
+import AnnualRecap from './screens/AnnualRecap';
+import { buildRecap } from './recap/annualRecap';
 import { nextOccurrences, reminderRowValue } from './reminders/schedule';
 import * as reminderIO from './reminders/io';
 
@@ -166,6 +168,8 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   const [seenTips, setSeenTips] = useState(initialState.seenTips ?? []);
   const dismissTip = (id) => setSeenTips((s) => markTipSeen(s, id));
   const [plusPerksOpen, setPlusPerksOpen] = useState(false);
+  // Which year's Annual Recap (IMP-046) is open, if any — null means closed.
+  const [openRecapYear, setOpenRecapYear] = useState(null);
   const [liveEntitlement, setLiveEntitlement] = useState(null);
   const renewLabel = liveEntitlement ? formatRenewDate(liveEntitlement.renewISO) : RENEW_DATE;
   const livePlan = liveEntitlement ? liveEntitlement.plan : activePlan;
@@ -624,6 +628,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             onOpenReminder={() => setReminderOpen(true)}
             onOpenPlusPerks={() => setPlusPerksOpen(true)}
             tip={pendingTip('you', seenTips)} onDismissTip={dismissTip}
+            entries={entries} onOpenAnnualRecap={(year) => setOpenRecapYear(year)}
           />
         );
       case 'today':
@@ -641,6 +646,9 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             onDismissOnThisDay={() => setSettings((s) => ({ ...s, onThisDayDismissed: todayKey() }))}
             onOpenOnThisDay={(e) => { setReading(e); setQuests((qs) => markRevisited(qs, e, todayKey())); }}
             onOpenPaywall={PLUS_ENABLED ? () => setPaywall(true) : () => {}}
+            recapSeen={settings.recapSeen ?? null}
+            onDismissAnnualRecap={(year) => setSettings((s) => ({ ...s, recapSeen: year }))}
+            onOpenAnnualRecap={(year) => setOpenRecapYear(year)}
           />
         );
     }
@@ -795,6 +803,17 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
         <Modal visible={PLUS_ENABLED && plusPerksOpen} animationType="slide" presentationStyle="overFullScreen" onRequestClose={() => setPlusPerksOpen(false)}>
           <ThemeContext.Provider value={theme}>
             <PlusPerks insets={insets} onClose={() => setPlusPerksOpen(false)} />
+          </ThemeContext.Provider>
+        </Modal>
+
+        <Modal visible={PLUS_ENABLED && openRecapYear != null} animationType="slide" presentationStyle="overFullScreen" onRequestClose={() => setOpenRecapYear(null)}>
+          <ThemeContext.Provider value={theme}>
+            {openRecapYear != null && (
+              <AnnualRecap
+                insets={insets} onClose={() => setOpenRecapYear(null)}
+                recap={buildRecap(entries, openRecapYear, { xp })}
+              />
+            )}
           </ThemeContext.Provider>
         </Modal>
 
