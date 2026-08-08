@@ -8,6 +8,7 @@ import { ChartIcon } from '../icons';
 import { moodEmoji } from '../data';
 import { deriveInsights } from '../insights/derive';
 import { deriveLifetime } from '../insights/lifetime';
+import { cellState, monthLabelsForRows } from '../insights/heatCells';
 import { buildLifetimeHeatmap } from '../home/calendar';
 import DeeperInsights from './DeeperInsights';
 
@@ -81,7 +82,7 @@ export default function InsightsScreen({ copy, entries = [], streak = 0, xp = 0,
             <T d w={800} color={c.accentDeep} style={{ fontSize: 56, lineHeight: 60 }}>{fmt(life.daysRemembered)}</T>
             <T w={700} color={c.ink} style={{ fontSize: 15, marginTop: 2 }}>days remembered</T>
             <T w={600} color={c.muted} style={{ fontSize: 12.5, marginTop: 4 }}>
-              Lv {life.level} · {life.levelName}{life.activeSpan ? ` · ${life.activeSpan}` : ''}
+              Lv {life.level} · {life.levelName}{life.activeSpan ? ` · ${life.activeSpan}` : ''} · {fmt(life.xpEarned)} XP
             </T>
           </View>
 
@@ -189,30 +190,64 @@ export default function InsightsScreen({ copy, entries = [], streak = 0, xp = 0,
   );
 }
 
+const LEGEND = [
+  { state: 'done', label: 'kept' },
+  { state: 'missed', label: 'missed' },
+  { state: 'empty', label: 'not yet started' },
+];
+
+function heatCellStyle(state, c, today) {
+  if (state === 'done') {
+    return {
+      backgroundColor: c.accent,
+      borderWidth: today ? 2 : 0,
+      borderColor: today ? c.accentDeep : 'transparent',
+    };
+  }
+  if (state === 'missed') {
+    return { backgroundColor: c.accentSoft, borderWidth: 1, borderColor: c.border };
+  }
+  if (state === 'empty') {
+    return { backgroundColor: 'transparent', borderWidth: 1, borderColor: c.border, borderStyle: 'dashed' };
+  }
+  return { backgroundColor: 'transparent', borderWidth: 0, borderColor: 'transparent' };
+}
+
 function LifetimeHeat({ rows }) {
   const c = useTheme().colors;
+  const monthLabels = monthLabelsForRows(rows);
   return (
-    <View style={{ gap: 4 }}>
-      {rows.map((row, ri) => (
-        <View key={ri} style={{ flexDirection: 'row', gap: 4 }}>
-          {row.map((cell, i) => {
-            const has = !(cell.missed || cell.empty || cell.future);
-            return (
-              <View
-                key={i}
-                style={{
-                  flex: 1,
-                  aspectRatio: 1,
-                  borderRadius: 4,
-                  backgroundColor: has ? c.accent : 'transparent',
-                  borderWidth: cell.today ? 2 : has ? 0 : 1,
-                  borderColor: cell.today ? c.accentDeep : c.border,
-                }}
-              />
-            );
-          })}
-        </View>
-      ))}
+    <View>
+      <View style={{ gap: 4 }}>
+        {rows.map((row, ri) => (
+          <View key={ri} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <View style={{ width: 24 }}>
+              <T w={700} color={c.muted} style={{ fontSize: 9.5 }}>{monthLabels[ri]}</T>
+            </View>
+            <View style={{ flex: 1, flexDirection: 'row', gap: 4 }}>
+              {row.map((cell, i) => (
+                <View
+                  key={i}
+                  style={{
+                    flex: 1,
+                    aspectRatio: 1,
+                    borderRadius: 4,
+                    ...heatCellStyle(cellState(cell), c, cell.today),
+                  }}
+                />
+              ))}
+            </View>
+          </View>
+        ))}
+      </View>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 14, marginTop: 12, paddingLeft: 28 }}>
+        {LEGEND.map((l) => (
+          <View key={l.state} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <View style={{ width: 10, height: 10, borderRadius: 3, ...heatCellStyle(l.state, c, false) }} />
+            <T w={600} color={c.muted} style={{ fontSize: 11 }}>{l.label}</T>
+          </View>
+        ))}
+      </View>
     </View>
   );
 }
