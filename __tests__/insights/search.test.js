@@ -1,10 +1,10 @@
 import { foldDiacritics, normalize, searchEntries } from '../../src/insights/search';
 
 const entries = [
-  { id: '1', dayKey: '2026-06-01', did: 'Went to the market', wished: 'Rested more', mood: 'Tired' },
-  { id: '2', dayKey: '2026-06-03', did: 'Had café con leche', wished: 'A slower morning', mood: 'Grateful' },
-  { id: '3', dayKey: '2026-06-02', did: 'Fixed the fence', wished: 'To see the market again', mood: 'Proud' },
-  { id: '4', dayKey: '2026-06-05', did: 'Quiet day', wished: 'Nothing much', mood: 'Grateful' },
+  { id: '1', dayKey: '2026-06-01', did: 'Went to the market', wished: 'Rested more', moods: ['Tired'] },
+  { id: '2', dayKey: '2026-06-03', did: 'Had café con leche', wished: 'A slower morning', moods: ['Grateful'] },
+  { id: '3', dayKey: '2026-06-02', did: 'Fixed the fence', wished: 'To see the market again', moods: ['Proud'] },
+  { id: '4', dayKey: '2026-06-05', did: 'Quiet day', wished: 'Nothing much', moods: ['Grateful'] },
 ];
 
 describe('foldDiacritics', () => {
@@ -61,6 +61,12 @@ describe('searchEntries', () => {
     expect(result.map((e) => e.id).sort()).toEqual(['1', '3']);
   });
 
+  test('mood filter matches an entry carrying several moods', () => {
+    const multi = [...entries, { id: '5', dayKey: '2026-06-06', did: 'x', wished: 'y', moods: ['Restless', 'Proud'] }];
+    const result = searchEntries(multi, { moods: ['Restless'] });
+    expect(result.map((e) => e.id)).toEqual(['5']);
+  });
+
   test('date bounds are inclusive at both ends', () => {
     const result = searchEntries(entries, { from: '2026-06-02', to: '2026-06-03' });
     expect(result.map((e) => e.id).sort()).toEqual(['2', '3']);
@@ -84,7 +90,7 @@ describe('searchEntries', () => {
     const malformed = [
       { id: 'a', dayKey: '2026-06-01' }, // missing did, wished, mood
       null,
-      { id: 'b', dayKey: '2026-06-02', did: 'ok', wished: null, mood: undefined },
+      { id: 'b', dayKey: '2026-06-02', did: 'ok', wished: null, moods: undefined },
     ];
     expect(() => searchEntries(malformed, { text: 'ok' })).not.toThrow();
     expect(() => searchEntries(malformed, { moods: ['Tired'] })).not.toThrow();

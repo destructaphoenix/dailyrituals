@@ -111,6 +111,9 @@ export const DEFAULT_SETTINGS = {
   // users previously saw a hardcoded (fake) "8:30 PM"; this is the honest
   // correction, not a silently-armed notification nobody asked for.
   reminder: { enabled: false, hour: 20, minute: 30 },
+  // User-added feelings beyond the suggested MOODS list (IMP-037), offered
+  // again in every future WriteFlow session.
+  customMoods: [],
 };
 
 // Mix a hex color toward white by `amount` (0–1).

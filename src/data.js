@@ -69,27 +69,27 @@ export const STREAK_MILESTONES = { 7: 'Seven Suns', 30: 'Streak Society', 100: '
 
 export const SAMPLE_ENTRIES = [
   {
-    id: 'e1', day: '30', mon: 'May', wd: 'Friday', mood: 'Tender', streak: true,
+    id: 'e1', day: '30', mon: 'May', wd: 'Friday', moods: ['Tender'], streak: true,
     did: 'Took the long way home from the market just to walk under the planes trees. Cooked the lentil thing properly for once and ate it slowly. Watched half a film and let the other half go.',
     wished: "I'd called my brother back. He left a voicemail on Tuesday and it's still sitting there, blinking at me.",
   },
   {
-    id: 'e2', day: '29', mon: 'May', wd: 'Thursday', mood: 'Proud',
+    id: 'e2', day: '29', mon: 'May', wd: 'Thursday', moods: ['Proud'],
     did: 'Shipped the thing I had been dreading for two weeks. Closed the laptop at six and actually meant it.',
     wished: 'I had stretched in the morning instead of going straight to the inbox.',
   },
   {
-    id: 'e3', day: '28', mon: 'May', wd: 'Wednesday', mood: 'Restless',
+    id: 'e3', day: '28', mon: 'May', wd: 'Wednesday', moods: ['Restless'],
     did: 'A lot of small errands that felt bigger than they were. Sat in the park at lunch and people-watched.',
     wished: 'I had read instead of scrolling before bed. The book is right there.',
   },
   {
-    id: 'e4', day: '27', mon: 'May', wd: 'Tuesday', mood: 'Grateful',
+    id: 'e4', day: '27', mon: 'May', wd: 'Tuesday', moods: ['Grateful'],
     did: 'Long coffee with Maya that ran an hour over. Laughed until it hurt about nothing.',
     wished: 'Nothing, honestly. It was a good one. I want to remember that this is possible.',
   },
   {
-    id: 'e5', day: '26', mon: 'May', wd: 'Monday', mood: 'Tired',
+    id: 'e5', day: '26', mon: 'May', wd: 'Monday', moods: ['Tired'],
     did: 'Pushed through a heavy day. Made dinner from whatever was in the fridge and called it a win.',
     wished: 'I had gone to bed an hour earlier instead of chasing a second wind that never came.',
   },

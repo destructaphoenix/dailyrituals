@@ -6,13 +6,13 @@ const NOW = new Date(2026, 5, 8);
 // 7 entries spanning May 28–Jun 5 with a gap after Jun 2.
 // Days: Thu 28-May, Fri 29-May, Sat 30-May, Sun 31-May, Mon 1-Jun, Tue 2-Jun, Fri 5-Jun.
 const entries = [
-  { dayKey: '2026-05-28', mood: 'Grateful' },
-  { dayKey: '2026-05-29', mood: 'Tender' },
-  { dayKey: '2026-05-30', mood: 'Grateful' },
-  { dayKey: '2026-05-31', mood: 'Hopeful' },
-  { dayKey: '2026-06-01', mood: 'Proud' },
-  { dayKey: '2026-06-02' },                // no mood
-  { dayKey: '2026-06-05', mood: 'Grateful' },
+  { dayKey: '2026-05-28', moods: ['Grateful'] },
+  { dayKey: '2026-05-29', moods: ['Tender'] },
+  { dayKey: '2026-05-30', moods: ['Grateful'] },
+  { dayKey: '2026-05-31', moods: ['Hopeful'] },
+  { dayKey: '2026-06-01', moods: ['Proud'] },
+  { dayKey: '2026-06-02', moods: [] },                // no mood
+  { dayKey: '2026-06-05', moods: ['Grateful'] },
 ];
 
 describe('deriveInsights', () => {
@@ -90,6 +90,22 @@ describe('deriveInsights', () => {
     test('only includes moods with n > 0', () => {
       const { moodMix } = deriveInsights(entries, 3, NOW);
       expect(moodMix.every((x) => x.n > 0)).toBe(true);
+    });
+
+    test('moodEntryCount is the honest denominator — entries with >=1 mood, not the mood tag total', () => {
+      const { moodEntryCount } = deriveInsights(entries, 3, NOW);
+      expect(moodEntryCount).toBe(6); // 7 entries, 1 has no mood
+    });
+
+    test('an entry with two moods contributes once per mood, and once to moodEntryCount', () => {
+      const twoMoods = [
+        { dayKey: '2026-06-01', moods: ['Grateful', 'Tender'] },
+        { dayKey: '2026-06-02', moods: ['Grateful'] },
+      ];
+      const { moodMix, moodEntryCount } = deriveInsights(twoMoods, 0, NOW);
+      expect(moodMix.find((x) => x.m === 'Grateful').n).toBe(2);
+      expect(moodMix.find((x) => x.m === 'Tender').n).toBe(1);
+      expect(moodEntryCount).toBe(2);
     });
   });
 

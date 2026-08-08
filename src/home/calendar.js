@@ -51,7 +51,8 @@ export function buildHeatmap(entries, today = new Date()) {
     const isToday = dayKey === todayK;
     const entry = byDay[dayKey];
     if (entry) {
-      cells.push({ dayKey, mood: entry.mood, emoji: MOOD_EMOJI[entry.mood] || '', today: isToday });
+      const mood = entry.moods && entry.moods[0];
+      cells.push({ dayKey, mood, emoji: MOOD_EMOJI[mood] || '', today: isToday });
     } else if (!isToday && firstKey && dayKey >= firstKey) {
       cells.push({ dayKey, missed: true, today: false });
     } else {
@@ -78,8 +79,10 @@ export function buildLifetimeHeatmap(entries, today = new Date()) {
       const dayKey = shiftKey(weekStart, i);
       const isToday = dayKey === todayK;
       const entry = byDay[dayKey];
-      if (entry) row.push({ dayKey, mood: entry.mood, emoji: MOOD_EMOJI[entry.mood] || '', today: isToday });
-      else if (dayKey > todayK) row.push({ dayKey, future: true });
+      if (entry) {
+        const mood = entry.moods && entry.moods[0];
+        row.push({ dayKey, mood, emoji: MOOD_EMOJI[mood] || '', today: isToday });
+      } else if (dayKey > todayK) row.push({ dayKey, future: true });
       else if (dayKey >= firstKey) row.push({ dayKey, missed: true, today: isToday });
       else row.push({ dayKey, empty: true, today: isToday });
     }

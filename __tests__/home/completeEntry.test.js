@@ -32,7 +32,7 @@ describe('applyCompletion', () => {
     const prev = { entries: [], xp: 100, embers: 200, done: false, quests: baseQuests };
 
     test('rewards: xp +gain, embers +gain, done true, rewarded', () => {
-      const next = applyCompletion(prev, makeEntry({ mood: 'Tender' }), { config });
+      const next = applyCompletion(prev, makeEntry({ moods: ['Tender'] }), { config });
       expect(next.rewarded).toBe(true);
       expect(next.xp).toBe(150);
       expect(next.embers).toBe(215);
@@ -100,14 +100,14 @@ describe('applyCompletion', () => {
       expect(next.xp).toBe(530);
     });
 
-    test('feel quest completes only when entry.mood is set', () => {
-      const withMood = applyCompletion(prev, makeEntry({ mood: 'Tender' }), { config });
+    test('feel quest completes only when entry.moods is non-empty', () => {
+      const withMood = applyCompletion(prev, makeEntry({ moods: ['Tender'] }), { config });
       const writeQ = withMood.quests.find((q) => q.id === 'write');
       const feelQ = withMood.quests.find((q) => q.id === 'feel');
       expect(writeQ.cur).toBe(writeQ.goal);
       expect(feelQ.cur).toBe(feelQ.goal);
 
-      const noMood = applyCompletion(prev, makeEntry({ mood: undefined }), { config });
+      const noMood = applyCompletion(prev, makeEntry({ moods: [] }), { config });
       expect(noMood.quests.find((q) => q.id === 'write').cur).toBe(1);
       expect(noMood.quests.find((q) => q.id === 'feel').cur).toBe(0);
     });

@@ -1,7 +1,17 @@
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
+
+// v2→v3 (IMP-037): mood: string -> moods: string[]. Idempotent — an entry
+// that already carries `moods` is left exactly as-is, so re-running this on
+// an already-migrated payload (e.g. a v1 payload passing through) is safe.
+function migrateMoods(entry) {
+  if (!entry || 'moods' in entry) return entry;
+  const { mood, ...rest } = entry;
+  return { ...rest, moods: mood ? [mood] : [] };
+}
 
 const migrators = {
   1: (data) => ({ ...data, entries: [], xp: 0, embers: 0, freezes: 0 }),
+  2: (data) => ({ ...data, entries: (data.entries || []).map(migrateMoods) }),
 };
 
 export const PERSISTED_KEYS = [

@@ -65,7 +65,7 @@ export function buildEntries({ count, endDayKey, gaps = [], textLength = 'short'
         id: `dev-${dayKey}`,
         ...entryDateParts(localNoon(dayKey)),
         dayKey,
-        mood: MOODS[made % MOODS.length],
+        moods: [MOODS[made % MOODS.length]],
         did: dids[made % dids.length],
         wished: wishes[made % wishes.length],
         streak: true,

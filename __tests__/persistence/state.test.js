@@ -49,18 +49,71 @@ describe('v1→v2 migration', () => {
     expect(result.ownedSkies).toEqual(['classic', 'crescent']);
   });
 
-  test('a v2 payload passes through unchanged (no double-reset)', () => {
+  test('a v2 payload passes through the v2→v3 step unchanged apart from the moods migration', () => {
     const v2Payload = { version: 2, streak: 7, xp: 100, embers: 50, freezes: 1, entries: [], settings: { name: 'Ravi' } };
     const result = deserialize(JSON.stringify(v2Payload));
     expect(result.streak).toBe(7);
     expect(result.xp).toBe(100);
     expect(result.settings).toEqual({ name: 'Ravi' });
   });
+});
 
-  test('serialize stamps version 2', () => {
-    expect(SCHEMA_VERSION).toBe(2);
-    const out = JSON.parse(serialize({ streak: 0 }));
-    expect(out.version).toBe(2);
+describe('v2→v3 migration (IMP-037 — mood: string → moods: string[])', () => {
+  test('serialize stamps version 3', () => {
+    expect(SCHEMA_VERSION).toBe(3);
+    const out = JSON.parse(serialize({ entries: [] }));
+    expect(out.version).toBe(3);
+  });
+
+  test('an entry with mood set migrates to a single-element moods array', () => {
+    const v2Payload = { version: 2, entries: [{ id: 'e1', dayKey: '2026-06-01', mood: 'Tender' }] };
+    const result = deserialize(JSON.stringify(v2Payload));
+    expect(result.entries).toEqual([{ id: 'e1', dayKey: '2026-06-01', moods: ['Tender'] }]);
+  });
+
+  test('an entry with no mood migrates to an empty moods array', () => {
+    const v2Payload = { version: 2, entries: [{ id: 'e1', dayKey: '2026-06-01' }] };
+    const result = deserialize(JSON.stringify(v2Payload));
+    expect(result.entries).toEqual([{ id: 'e1', dayKey: '2026-06-01', moods: [] }]);
+  });
+
+  test('an entry that already has moods is left exactly as-is (idempotent)', () => {
+    const v2Payload = { version: 2, entries: [{ id: 'e1', dayKey: '2026-06-01', moods: ['Proud', 'Tired'] }] };
+    const result = deserialize(JSON.stringify(v2Payload));
+    expect(result.entries).toEqual([{ id: 'e1', dayKey: '2026-06-01', moods: ['Proud', 'Tired'] }]);
+  });
+
+  test('a v3 payload passes through unchanged (no double-migration)', () => {
+    const v3Payload = { version: 3, entries: [{ id: 'e1', dayKey: '2026-06-01', moods: ['Grateful'] }], xp: 50 };
+    const result = deserialize(JSON.stringify(v3Payload));
+    expect(result.entries).toEqual([{ id: 'e1', dayKey: '2026-06-01', moods: ['Grateful'] }]);
+    expect(result.xp).toBe(50);
+  });
+
+  test('a v1 payload migrates all the way through v2 to v3 without losing entries', () => {
+    // v1→v2 zeroes entries entirely (pre-existing rule), so a v1 payload
+    // legitimately arrives at v3 with an empty entries array, not an error.
+    const v1Payload = { version: 1, entries: [{ id: 'old', dayKey: '2026-01-01', mood: 'Heavy' }], xp: 10 };
+    const result = deserialize(JSON.stringify(v1Payload));
+    expect(result.entries).toEqual([]);
+    expect(result.xp).toBe(0);
+  });
+
+  test('every other persisted key survives the v2→v3 migration untouched', () => {
+    const v2Payload = {
+      version: 2, entries: [], xp: 320, embers: 360, settings: { name: 'Maya' }, ownedSkies: ['classic'],
+    };
+    const result = deserialize(JSON.stringify(v2Payload));
+    expect(result.xp).toBe(320);
+    expect(result.embers).toBe(360);
+    expect(result.settings).toEqual({ name: 'Maya' });
+    expect(result.ownedSkies).toEqual(['classic']);
+  });
+
+  test('a full serialize → deserialize round-trip preserves the moods array', () => {
+    const slice = { entries: [{ id: 'e1', dayKey: '2026-06-01', moods: ['Hopeful', 'Tired'] }] };
+    const result = deserialize(serialize(slice));
+    expect(result.entries).toEqual(slice.entries);
   });
 });
 

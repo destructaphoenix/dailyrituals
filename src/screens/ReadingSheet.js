@@ -15,10 +15,14 @@ export default function ReadingSheet({ entry, copy, mode, insets, onClose, canEd
     <View style={{ flex: 1, backgroundColor: c.cream, paddingTop: insets.top }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingTop: 14, paddingBottom: 6 }}>
         <IconBtn onPress={onClose}><Chevron dir="left" size={22} color={c.ink} /></IconBtn>
-        {entry.mood ? (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 999, backgroundColor: c.accentSoft }}>
-            <Text style={{ fontSize: 13 }}>{moodEmoji(entry.mood)}</Text>
-            <T w={800} color={c.accentDeep} style={{ fontSize: 11 }}>{entry.mood}</T>
+        {entry.moods && entry.moods.length > 0 ? (
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, flexShrink: 1, justifyContent: 'center' }}>
+            {entry.moods.map((m) => (
+              <View key={m} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 999, backgroundColor: c.accentSoft }}>
+                <Text style={{ fontSize: 13 }}>{moodEmoji(m)}</Text>
+                <T w={800} color={c.accentDeep} style={{ fontSize: 11 }}>{m}</T>
+              </View>
+            ))}
           </View>
         ) : null}
         {canEdit ? (

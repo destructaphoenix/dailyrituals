@@ -41,7 +41,7 @@ export function applyCompletion(prev, entry, { config, frozenDays = [] }) {
   const embers = prev.embers + config.EMBER_GAIN;
   const quests = prev.quests.map((q) => {
     if (q.id === 'write') return { ...q, cur: q.goal };
-    if (q.id === 'feel' && entry.mood) return { ...q, cur: q.goal };
+    if (q.id === 'feel' && entry.moods && entry.moods.length > 0) return { ...q, cur: q.goal };
     return q;
   });
 

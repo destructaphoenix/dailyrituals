@@ -19,19 +19,26 @@ describe('buildHeatmap', () => {
     expect(cells[34]).toEqual({ dayKey: '2026-06-07', empty: true, today: true });
   });
 
-  it('places an entry on its real date with the mood emoji', () => {
-    const cells = buildHeatmap([{ dayKey: '2026-06-01', mood: 'Proud' }], sun);
+  it('places an entry on its real date with the first mood\'s emoji', () => {
+    const cells = buildHeatmap([{ dayKey: '2026-06-01', moods: ['Proud'] }], sun);
     const cell = cells.find((c) => c.dayKey === '2026-06-01');
     expect(cell).toEqual({ dayKey: '2026-06-01', mood: 'Proud', emoji: '😌', today: false });
   });
 
   it('marks today when an entry exists for today', () => {
-    const cells = buildHeatmap([{ dayKey: '2026-06-07', mood: 'Tender' }], sun);
+    const cells = buildHeatmap([{ dayKey: '2026-06-07', moods: ['Tender'] }], sun);
     expect(cells[34]).toEqual({ dayKey: '2026-06-07', mood: 'Tender', emoji: '🫶', today: true });
   });
 
+  it('uses only the first mood when an entry carries several', () => {
+    const cells = buildHeatmap([{ dayKey: '2026-06-01', moods: ['Proud', 'Tender'] }], sun);
+    const cell = cells.find((c) => c.dayKey === '2026-06-01');
+    expect(cell.mood).toBe('Proud');
+    expect(cell.emoji).toBe('😌');
+  });
+
   it('entry outside the 35-day window does not render but sets firstKey (past in-window days become missed)', () => {
-    const cells = buildHeatmap([{ dayKey: '2026-01-01', mood: 'Proud' }], sun);
+    const cells = buildHeatmap([{ dayKey: '2026-01-01', moods: ['Proud'] }], sun);
     expect(cells.some((c) => c.mood === 'Proud')).toBe(false); // entry itself not shown
     expect(cells.slice(0, 34).every((c) => c.missed)).toBe(true); // past days all missed
     expect(cells[34]).toEqual({ dayKey: '2026-06-07', empty: true, today: true }); // today unchanged
@@ -39,7 +46,7 @@ describe('buildHeatmap', () => {
 
   it('keeps the newest entry when two share a dayKey', () => {
     const cells = buildHeatmap(
-      [{ dayKey: '2026-06-05', mood: 'Tender' }, { dayKey: '2026-06-05', mood: 'Proud' }],
+      [{ dayKey: '2026-06-05', moods: ['Tender'] }, { dayKey: '2026-06-05', moods: ['Proud'] }],
       sun
     );
     expect(cells.find((c) => c.dayKey === '2026-06-05').mood).toBe('Tender');
@@ -52,7 +59,7 @@ describe('buildWeekStrip', () => {
   });
 
   it('marks today, future, done and empty states', () => {
-    const cells = buildWeekStrip([{ dayKey: '2026-06-02', mood: 'Proud' }], wed);
+    const cells = buildWeekStrip([{ dayKey: '2026-06-02', moods: ['Proud'] }], wed);
     expect(cells.map((c) => c.state)).toEqual([
       'empty',   // Mon 06-01, before firstKey (Tue 06-02)
       'done',    // Tue 06-02, has entry
@@ -68,20 +75,20 @@ describe('buildWeekStrip', () => {
 describe('buildHeatmap — missed days', () => {
   it('marks a past gap day on/after the first entry as missed', () => {
     // entry on Jun 1; Jun 2–6 are missed; today (Jun 7) stays empty+today
-    const cells = buildHeatmap([{ dayKey: '2026-06-01', mood: 'Proud' }], sun);
+    const cells = buildHeatmap([{ dayKey: '2026-06-01', moods: ['Proud'] }], sun);
     const cell = cells.find((c) => c.dayKey === '2026-06-02');
     expect(cell).toEqual({ dayKey: '2026-06-02', missed: true, today: false });
   });
 
   it('leaves a past day before the first entry as empty (not missed)', () => {
     // entry on Jun 1; May 31 is before firstKey → empty
-    const cells = buildHeatmap([{ dayKey: '2026-06-01', mood: 'Proud' }], sun);
+    const cells = buildHeatmap([{ dayKey: '2026-06-01', moods: ['Proud'] }], sun);
     const cell = cells.find((c) => c.dayKey === '2026-05-31');
     expect(cell).toEqual({ dayKey: '2026-05-31', empty: true, today: false });
   });
 
   it('today with no entry is empty+today, never missed', () => {
-    const cells = buildHeatmap([{ dayKey: '2026-06-01', mood: 'Proud' }], sun);
+    const cells = buildHeatmap([{ dayKey: '2026-06-01', moods: ['Proud'] }], sun);
     expect(cells[34]).toEqual({ dayKey: '2026-06-07', empty: true, today: true });
   });
 
@@ -94,7 +101,7 @@ describe('buildHeatmap — missed days', () => {
 describe('buildWeekStrip — missed days', () => {
   it('marks a past gap day on/after the first entry as missed', () => {
     // entry on Mon 06-01; Tue 06-02 is missed (>= firstKey, no entry)
-    const cells = buildWeekStrip([{ dayKey: '2026-06-01', mood: 'Proud' }], wed);
+    const cells = buildWeekStrip([{ dayKey: '2026-06-01', moods: ['Proud'] }], wed);
     expect(cells.map((c) => c.state)).toEqual([
       'done',    // Mon 06-01, has entry
       'missed',  // Tue 06-02, no entry, >= firstKey
@@ -108,12 +115,12 @@ describe('buildWeekStrip — missed days', () => {
 
   it('leaves a past day before the first entry as empty (not missed)', () => {
     // entry on Tue 06-02; Mon 06-01 < firstKey → empty
-    const cells = buildWeekStrip([{ dayKey: '2026-06-02', mood: 'Proud' }], wed);
+    const cells = buildWeekStrip([{ dayKey: '2026-06-02', moods: ['Proud'] }], wed);
     expect(cells[0].state).toBe('empty'); // Mon 06-01 before firstKey
   });
 
   it('today is never missed regardless of entries', () => {
-    const cells = buildWeekStrip([{ dayKey: '2026-06-01', mood: 'Proud' }], wed);
+    const cells = buildWeekStrip([{ dayKey: '2026-06-01', moods: ['Proud'] }], wed);
     expect(cells[2].state).toBe('today'); // Wed = index 2
   });
 
@@ -143,7 +150,7 @@ describe('buildLifetimeHeatmap', () => {
   });
 
   test('cell states: done where an entry exists, missed for a gap day before today', () => {
-    const rows = buildLifetimeHeatmap([{ dayKey: '2026-06-08', mood: 'calm' }], today);
+    const rows = buildLifetimeHeatmap([{ dayKey: '2026-06-08', moods: ['calm'] }], today);
     // week of 06-08 (Mon) .. 06-14 (Sun). 06-08 has an entry; 06-09 is a past gap.
     const flat = rows.flat();
     const mon = flat.find((c) => c.dayKey === '2026-06-08');

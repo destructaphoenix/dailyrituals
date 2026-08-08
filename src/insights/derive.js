@@ -20,6 +20,7 @@ export function deriveInsights(entries, currentStreak, now = new Date()) {
       empty: true,
       stats: { currentStreak, longestStreak: 0, daysKept: 0, thisMonth: 0 },
       moodMix: [],
+      moodEntryCount: 0,
       rhythm: RHYTHM_LABELS.map((l) => ({ l, n: 0 })),
       peakWeekday: null,
     };
@@ -33,11 +34,16 @@ export function deriveInsights(entries, currentStreak, now = new Date()) {
   const derivedLongest = longestConsecutiveRun(uniqueKeys);
   const longestStreak = Math.max(derivedLongest, currentStreak);
 
-  // Mood counts
+  // Mood counts — an entry can carry several moods, so it contributes to
+  // several buckets at once. moodEntryCount (entries with >=1 mood) is the
+  // honest denominator: percentages of moodMix no longer sum to 100.
   const moodMap = {};
+  let moodEntryCount = 0;
   entries.forEach((e) => {
-    if (!e.mood) return;
-    moodMap[e.mood] = (moodMap[e.mood] || 0) + 1;
+    const moods = e.moods || [];
+    if (!moods.length) return;
+    moodEntryCount += 1;
+    moods.forEach((m) => { moodMap[m] = (moodMap[m] || 0) + 1; });
   });
   const moodMix = Object.entries(moodMap)
     .map(([m, n]) => ({ m, n }))
@@ -61,6 +67,7 @@ export function deriveInsights(entries, currentStreak, now = new Date()) {
     empty: false,
     stats: { currentStreak, longestStreak, daysKept, thisMonth },
     moodMix,
+    moodEntryCount,
     rhythm: buckets,
     peakWeekday,
   };

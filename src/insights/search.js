@@ -1,6 +1,6 @@
 // src/insights/search.js — pure full-text + mood + date search over the
-// journal (IMP-035). No imports from screens. Reads `e.mood` (singular) —
-// IMP-037 owns the switch to `e.moods` and updates this file when it lands.
+// journal (IMP-035). No imports from screens. Reads `e.moods` (array,
+// IMP-037) — the mood filter matches any element.
 
 // String.prototype.normalize isn't guaranteed on every Hermes build in this
 // app's range, so diacritic folding must degrade to case-only, never throw.
@@ -28,7 +28,7 @@ export function searchEntries(entries, query = {}) {
         const haystack = normalize(`${e.did || ''} ${e.wished || ''}`);
         if (!haystack.includes(needle)) return false;
       }
-      if (moodSet && !moodSet.has(e.mood)) return false;
+      if (moodSet && !(e.moods || []).some((m) => moodSet.has(m))) return false;
       if (from && e.dayKey < from) return false;
       if (to && e.dayKey > to) return false;
       return true;

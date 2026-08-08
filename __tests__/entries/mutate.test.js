@@ -1,36 +1,42 @@
 import { applyEdit, applyDelete, applyRestore, pruneTrash, streakAfterDelete } from '../../src/entries/mutate';
 import { currentStreak, DAY_MS } from '../../src/insights/dateKeys';
 
-const entry = (dayKey, extra = {}) => ({ id: dayKey, dayKey, did: 'did ' + dayKey, wished: 'wished ' + dayKey, mood: 'calm', streak: true, ...extra });
+const entry = (dayKey, extra = {}) => ({ id: dayKey, dayKey, did: 'did ' + dayKey, wished: 'wished ' + dayKey, moods: ['calm'], streak: true, ...extra });
 
 describe('applyEdit — IMP-036', () => {
   test('replaces the day in place, preserving id/dayKey/array position', () => {
     const entries = [entry('2026-06-14'), entry('2026-06-13'), entry('2026-06-12')];
-    const next = applyEdit(entries, '2026-06-13', { did: 'new did', wished: 'new wished', mood: 'joyful' });
+    const next = applyEdit(entries, '2026-06-13', { did: 'new did', wished: 'new wished', moods: ['joyful'] });
     expect(next).toHaveLength(3);
     expect(next[0]).toEqual(entries[0]);
     expect(next[2]).toEqual(entries[2]);
-    expect(next[1]).toEqual({ id: '2026-06-13', dayKey: '2026-06-13', did: 'new did', wished: 'new wished', mood: 'joyful', streak: true });
+    expect(next[1]).toEqual({ id: '2026-06-13', dayKey: '2026-06-13', did: 'new did', wished: 'new wished', moods: ['joyful'], streak: true });
+  });
+
+  test('replaces the day with several moods', () => {
+    const entries = [entry('2026-06-14')];
+    const next = applyEdit(entries, '2026-06-14', { did: 'x', wished: 'y', moods: ['joyful', 'tired'] });
+    expect(next[0].moods).toEqual(['joyful', 'tired']);
   });
 
   test('does not mutate the input array or its objects', () => {
     const entries = [entry('2026-06-14')];
     const snapshot = JSON.parse(JSON.stringify(entries));
-    applyEdit(entries, '2026-06-14', { did: 'changed', wished: 'changed', mood: 'sad' });
+    applyEdit(entries, '2026-06-14', { did: 'changed', wished: 'changed', moods: ['sad'] });
     expect(entries).toEqual(snapshot);
   });
 
   test('editing text does not affect streak or xp — only the entry text changes', () => {
     const entries = [entry('2026-06-14'), entry('2026-06-13')];
     const before = currentStreak(entries.map((e) => e.dayKey), '2026-06-14', {});
-    const next = applyEdit(entries, '2026-06-13', { did: 'x', wished: 'y', mood: 'calm' });
+    const next = applyEdit(entries, '2026-06-13', { did: 'x', wished: 'y', moods: ['calm'] });
     const after = currentStreak(next.map((e) => e.dayKey), '2026-06-14', {});
     expect(after).toBe(before);
   });
 
   test('on an absent dayKey returns entries unchanged (same reference) — back-fill is unreachable', () => {
     const entries = [entry('2026-06-14')];
-    const next = applyEdit(entries, '2026-05-01', { did: 'x', wished: 'y', mood: 'calm' });
+    const next = applyEdit(entries, '2026-05-01', { did: 'x', wished: 'y', moods: ['calm'] });
     expect(next).toBe(entries);
   });
 });

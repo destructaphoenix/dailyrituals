@@ -26,7 +26,7 @@ describe('buildEntries', () => {
     expect(typeof first.id).toBe('string');
     expect(typeof first.did).toBe('string');
     expect(typeof first.wished).toBe('string');
-    expect(MOODS).toContain(first.mood);
+    expect(MOODS).toContain(first.moods[0]);
     expect(WEEKDAYS).toContain(first.wd);
   });
 
@@ -37,8 +37,8 @@ describe('buildEntries', () => {
 
   test('moods cycle through MOODS', () => {
     const e = buildEntries({ count: MOODS.length + 1, endDayKey: '2026-06-14' });
-    expect(e[0].mood).toBe(MOODS[0]);
-    expect(e[MOODS.length].mood).toBe(MOODS[0]); // wraps
+    expect(e[0].moods[0]).toBe(MOODS[0]);
+    expect(e[MOODS.length].moods[0]).toBe(MOODS[0]); // wraps
   });
 
   test('returns [] for count 0', () => {

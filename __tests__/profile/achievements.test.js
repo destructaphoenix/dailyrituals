@@ -30,9 +30,9 @@ describe('deriveAchievements', () => {
 
   describe('a fixed entry set (Jun 1–3 consecutive, 2 of 3 with a mood)', () => {
     const entries = [
-      { dayKey: '2026-06-01', mood: 'Grateful' },
-      { dayKey: '2026-06-02', mood: 'Proud' },
-      { dayKey: '2026-06-03' }, // no mood
+      { dayKey: '2026-06-01', moods: ['Grateful'] },
+      { dayKey: '2026-06-02', moods: ['Proud'] },
+      { dayKey: '2026-06-03', moods: [] }, // no mood
     ];
     const ach = deriveAchievements(entries, 0, NOW);
     const byId = (id) => ach.find((a) => a.id === id);
@@ -81,7 +81,7 @@ describe('deriveAchievements', () => {
       const many = Array.from({ length: 100 }, (_, i) => {
         const d = new Date(2026, 2, 1 + i); // start 1 Mar 2026
         const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        return { dayKey: key, mood: 'Proud' };
+        return { dayKey: key, moods: ['Proud'] };
       });
       const ach = deriveAchievements(many, 0, new Date(2026, 11, 1));
       ach.forEach((a) => expect(a.cur).toBeLessThanOrEqual(a.goal));
@@ -104,7 +104,7 @@ describe('deriveKeepsakes (Home medal strip)', () => {
   });
 
   test('first entry lights First Light only', () => {
-    const k = deriveKeepsakes([{ dayKey: '2026-06-01', mood: 'Grateful' }], 0, NOW);
+    const k = deriveKeepsakes([{ dayKey: '2026-06-01', moods: ['Grateful'] }], 0, NOW);
     const byId = (id) => k.find((m) => m.id === id);
     expect(byId('firstlight').earned).toBe(true);
     expect(byId('seven').earned).toBe(false);

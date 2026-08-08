@@ -87,10 +87,14 @@ export default function ArchiveScreen({ copy, mode, entries, onOpen, tip, onDism
                   <View style={{ flex: 1 }}>
                     <T d w={700} color={c.ink} style={{ fontSize: 15, marginBottom: 3 }}>{e.wd}</T>
                     <T w={400} color={c.muted} style={{ fontSize: 13.5, lineHeight: 19.5 }} numberOfLines={2}>{e.did}</T>
-                    {e.mood ? (
-                      <View style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 5, marginTop: 8, paddingHorizontal: 9, paddingVertical: 3, borderRadius: 999, backgroundColor: c.accentSoft }}>
-                        <Text style={{ fontSize: 12 }}>{moodEmoji(e.mood)}</Text>
-                        <T w={800} color={c.accentDeep} style={{ fontSize: 11 }}>{e.mood}</T>
+                    {e.moods && e.moods.length > 0 ? (
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+                        {e.moods.map((m) => (
+                          <View key={m} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 9, paddingVertical: 3, borderRadius: 999, backgroundColor: c.accentSoft }}>
+                            <Text style={{ fontSize: 12 }}>{moodEmoji(m)}</Text>
+                            <T w={800} color={c.accentDeep} style={{ fontSize: 11 }}>{m}</T>
+                          </View>
+                        ))}
                       </View>
                     ) : null}
                   </View>

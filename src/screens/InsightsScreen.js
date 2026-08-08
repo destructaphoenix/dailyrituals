@@ -46,7 +46,7 @@ export default function InsightsScreen({ copy, entries = [], streak = 0, xp = 0 
     );
   }
 
-  const { moodMix, rhythm, peakWeekday } = data;
+  const { moodMix, moodEntryCount, rhythm, peakWeekday } = data;
   const moodMax = moodMix.length ? Math.max(...moodMix.map((x) => x.n)) : 1;
   const rhythmMax = Math.max(1, ...rhythm.map((x) => x.n));
 
@@ -117,27 +117,32 @@ export default function InsightsScreen({ copy, entries = [], streak = 0, xp = 0 
       {/* mood mix */}
       <View style={{ paddingHorizontal: 20 }}>
         <Card style={{ padding: 18 }}>
-          <T d w={700} color={c.ink} style={{ fontSize: 17, marginBottom: 16 }}>Mood mix</T>
+          <T d w={700} color={c.ink} style={{ fontSize: 17 }}>Mood mix</T>
           {moodMix.length === 0 ? (
-            <T w={600} color={c.muted} style={{ fontSize: 14 }}>No moods logged yet.</T>
+            <T w={600} color={c.muted} style={{ fontSize: 14, marginTop: 16 }}>No moods logged yet.</T>
           ) : (
-            <View style={{ gap: 13 }}>
-              {moodMix.map((x, i) => (
-                <View key={x.m} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                  <View style={{ minWidth: 84, flexShrink: 1, flexDirection: 'row', alignItems: 'center', gap: 7 }}>
-                    <Text style={{ fontSize: 15 }}>{moodEmoji(x.m)}</Text>
-                    <T w={700} color={c.ink} numberOfLines={1} style={{ fontSize: 13.5, flexShrink: 1 }}>{x.m}</T>
+            <>
+              <T w={600} color={c.muted} style={{ fontSize: 12, marginTop: 2, marginBottom: 14 }}>
+                across {moodEntryCount} reflections
+              </T>
+              <View style={{ gap: 13 }}>
+                {moodMix.map((x, i) => (
+                  <View key={x.m} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                    <View style={{ minWidth: 84, flexShrink: 1, flexDirection: 'row', alignItems: 'center', gap: 7 }}>
+                      <Text style={{ fontSize: 15 }}>{moodEmoji(x.m)}</Text>
+                      <T w={700} color={c.ink} numberOfLines={1} style={{ fontSize: 13.5, flexShrink: 1 }}>{x.m}</T>
+                    </View>
+                    <View style={{ flex: 1, height: 12, borderRadius: 999, backgroundColor: c.accentSoft, overflow: 'hidden' }}>
+                      <View style={{
+                        width: `${(x.n / moodMax) * 100}%`, height: '100%', borderRadius: 999,
+                        backgroundColor: c.accent, opacity: 1 - i * 0.1,
+                      }} />
+                    </View>
+                    <T w={700} color={c.muted} style={{ minWidth: 18, fontSize: 12.5, textAlign: 'right' }}>{x.n}</T>
                   </View>
-                  <View style={{ flex: 1, height: 12, borderRadius: 999, backgroundColor: c.accentSoft, overflow: 'hidden' }}>
-                    <View style={{
-                      width: `${(x.n / moodMax) * 100}%`, height: '100%', borderRadius: 999,
-                      backgroundColor: c.accent, opacity: 1 - i * 0.1,
-                    }} />
-                  </View>
-                  <T w={700} color={c.muted} style={{ minWidth: 18, fontSize: 12.5, textAlign: 'right' }}>{x.n}</T>
-                </View>
-              ))}
-            </View>
+                ))}
+              </View>
+            </>
           )}
         </Card>
       </View>

@@ -383,8 +383,8 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     activePalette, ownedPalettes, activeSky, ownedSkies,
     subCanceled, activePlan, lastActiveDay, settings, lastBackupAt, promptDeck, seenTips, trash]);
 
-  const complete = ({ did, wished, mood }) => {
-    const entry = { id: 'new' + Date.now(), ...entryDateParts(), dayKey: todayKey(), mood, did, wished, streak: true };
+  const complete = ({ did, wished, moods }) => {
+    const entry = { id: 'new' + Date.now(), ...entryDateParts(), dayKey: todayKey(), moods, did, wished, streak: true };
     const next = applyCompletion(
       { entries, xp, embers, done, quests },
       entry,
@@ -406,10 +406,17 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   // path only skips its reward branch when `prev.done` is true, so an
   // untouched today would fall into the reward branch and double-award XP
   // + embers plus a duplicate row. applyEdit never touches xp/embers.
-  const editPastEntry = (dayKey, { did, wished, mood }) => {
-    setEntries((es) => applyEdit(es, dayKey, { did, wished, mood }));
+  const editPastEntry = (dayKey, { did, wished, moods }) => {
+    setEntries((es) => applyEdit(es, dayKey, { did, wished, moods }));
     closeWriting();
     showToast('Entry updated');
+  };
+
+  // Persists a user-typed feeling so it's offered again next time (IMP-037).
+  const addCustomMood = (m) => {
+    setSettings((s) => (
+      (s.customMoods || []).includes(m) ? s : { ...s, customMoods: [...(s.customMoods || []), m] }
+    ));
   };
 
   const confirmDeleteEntry = (entry) => {
@@ -612,9 +619,14 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             {writing && (() => {
               const editEntry = editingDayKey ? entries.find((e) => e.dayKey === editingDayKey) : null;
               const te = editEntry || findTodaysEntry(entries, todayKey());
-              const initial = te ? { did: te.did, wished: te.wished, mood: te.mood } : null;
+              const initial = te ? { did: te.did, wished: te.wished, moods: te.moods } : null;
               const onCompleteFlow = editEntry ? (vals) => editPastEntry(editEntry.dayKey, vals) : complete;
-              return <WriteFlow copy={copy} insets={insets} onClose={closeWriting} onComplete={onCompleteFlow} initial={initial} />;
+              return (
+                <WriteFlow
+                  copy={copy} insets={insets} onClose={closeWriting} onComplete={onCompleteFlow} initial={initial}
+                  customMoods={settings.customMoods || []} onAddCustomMood={addCustomMood}
+                />
+              );
             })()}
           </ThemeContext.Provider>
         </Modal>

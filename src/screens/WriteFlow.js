@@ -11,16 +11,17 @@ import { todayLabel } from '../time/clock';
 
 const countWords = (s) => (s.trim() ? s.trim().split(/\s+/).length : 0);
 
-export default function WriteFlow({ copy, insets, onClose, onComplete, initial }) {
+export default function WriteFlow({ copy, insets, onClose, onComplete, initial, customMoods = [], onAddCustomMood }) {
   const t = useTheme();
   const c = t.colors;
 
   const [step, setStep] = useState(0);
   const [did, setDid] = useState(initial?.did ?? '');
   const [wished, setWished] = useState(initial?.wished ?? '');
-  const [mood, setMood] = useState(initial?.mood ?? null);
+  const [moods, setMoods] = useState(initial?.moods ?? []);
+  const [customInput, setCustomInput] = useState('');
 
-  const startFresh = () => { setDid(''); setWished(''); setMood(null); setStep(0); };
+  const startFresh = () => { setDid(''); setWished(''); setMoods([]); setCustomInput(''); setStep(0); };
 
   const steps = [
     { q: copy.q1, help: copy.q1help, val: did, set: setDid, ph: 'Start anywhere…' },
@@ -29,9 +30,19 @@ export default function WriteFlow({ copy, insets, onClose, onComplete, initial }
   const isMood = step === 2;
   const cur = steps[step];
   const last = step === 2;
-  const canNext = isMood ? !!mood : countWords(cur ? cur.val : '') >= 1;
+  const canNext = isMood ? moods.length > 0 : countWords(cur ? cur.val : '') >= 1;
 
-  const next = () => { if (last) onComplete({ did, wished, mood }); else setStep(step + 1); };
+  const toggleMood = (m) => setMoods((ms) => (ms.includes(m) ? ms.filter((x) => x !== m) : [...ms, m]));
+
+  const addCustomMood = () => {
+    const m = customInput.trim();
+    if (!m) return;
+    if (!moods.includes(m)) setMoods((ms) => [...ms, m]);
+    if (onAddCustomMood) onAddCustomMood(m);
+    setCustomInput('');
+  };
+
+  const next = () => { if (last) onComplete({ did, wished, moods }); else setStep(step + 1); };
   const back = () => { if (step === 0) onClose(); else setStep(step - 1); };
 
   return (
@@ -91,12 +102,12 @@ export default function WriteFlow({ copy, insets, onClose, onComplete, initial }
             <T d w={700} color={c.ink} style={{ fontSize: 27, lineHeight: 32, marginTop: 8, marginBottom: 4 }}>{copy.moodQ}</T>
             <T w={600} color={c.muted} style={{ fontSize: 14, lineHeight: 19.6 }}>{copy.moodHelp}</T>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 22 }}>
-              {MOODS.map((m) => {
-                const sel = mood === m;
+              {[...MOODS, ...customMoods].map((m) => {
+                const sel = moods.includes(m);
                 return (
                   <Pressable
                     key={m}
-                    onPress={() => setMood(m)}
+                    onPress={() => toggleMood(m)}
                     style={[
                       { flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 15, paddingVertical: 11, borderRadius: 999, borderWidth: 1.5 },
                       sel
@@ -110,6 +121,30 @@ export default function WriteFlow({ copy, insets, onClose, onComplete, initial }
                   </Pressable>
                 );
               })}
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 16 }}>
+              <TextInput
+                value={customInput}
+                onChangeText={setCustomInput}
+                placeholder="Name your own…"
+                placeholderTextColor={c.placeholder}
+                onSubmitEditing={addCustomMood}
+                style={{
+                  flex: 1, paddingHorizontal: 15, paddingVertical: 11, borderRadius: 999,
+                  borderWidth: 1.5, borderColor: c.border, backgroundColor: c.surface,
+                  fontFamily: t.body(600), fontSize: 14, color: c.ink,
+                }}
+              />
+              <Pressable
+                onPress={addCustomMood}
+                disabled={!customInput.trim()}
+                style={{
+                  paddingHorizontal: 16, paddingVertical: 11, borderRadius: 999,
+                  backgroundColor: customInput.trim() ? c.accent : c.border,
+                }}
+              >
+                <T w={700} color={customInput.trim() ? c.onAccent : c.muted} style={{ fontSize: 14 }}>Add</T>
+              </Pressable>
             </View>
           </ScrollView>
           <Foot insets={insets}>

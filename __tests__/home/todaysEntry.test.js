@@ -3,8 +3,8 @@ import { findTodaysEntry, isEditableToday } from '../../src/home/todaysEntry';
 const TODAY = '2026-06-13';
 const YESTERDAY = '2026-06-12';
 
-const ENTRY_TODAY = { id: 'e1', dayKey: TODAY, did: 'worked', wished: 'more rest', mood: 'Calm' };
-const ENTRY_PAST  = { id: 'e2', dayKey: YESTERDAY, did: 'old', wished: 'old wish', mood: 'Tired' };
+const ENTRY_TODAY = { id: 'e1', dayKey: TODAY, did: 'worked', wished: 'more rest', moods: ['Calm'] };
+const ENTRY_PAST  = { id: 'e2', dayKey: YESTERDAY, did: 'old', wished: 'old wish', moods: ['Tired'] };
 
 describe('findTodaysEntry', () => {
   it('returns the entry whose dayKey matches today', () => {
@@ -23,7 +23,7 @@ describe('findTodaysEntry', () => {
   });
 
   it('picks the correct entry among many', () => {
-    const another = { id: 'e3', dayKey: '2026-06-11', did: 'x', wished: 'y', mood: 'Happy' };
+    const another = { id: 'e3', dayKey: '2026-06-11', did: 'x', wished: 'y', moods: ['Happy'] };
     const result = findTodaysEntry([another, ENTRY_PAST, ENTRY_TODAY], TODAY);
     expect(result).toBe(ENTRY_TODAY);
   });

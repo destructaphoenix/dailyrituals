@@ -6,14 +6,14 @@
 
 import { currentStreak, DAY_MS } from '../insights/dateKeys';
 
-// Replaces the day's text/mood in place (same array position, same id/day/
+// Replaces the day's text/moods in place (same array position, same id/day/
 // mon/wd/dayKey). A no-op — same reference back — when the day doesn't
 // exist, so a caller can never back-fill a day that was never written.
-export function applyEdit(entries, dayKey, { did, wished, mood }) {
+export function applyEdit(entries, dayKey, { did, wished, moods }) {
   const idx = entries.findIndex((e) => e.dayKey === dayKey);
   if (idx === -1) return entries;
   const next = [...entries];
-  next[idx] = { ...next[idx], ...{ did, wished, mood } };
+  next[idx] = { ...next[idx], ...{ did, wished, moods } };
   return next;
 }
 
