@@ -1006,6 +1006,88 @@ test` → **519 passed, 54 suites** (508 + 11 new). `npx expo export --platform 
 
 ---
 
+### IMP-046 — Annual Recap: "your year, remembered" (perk #4)   ·   Lane: OTA   ·   Status: ✅ code-complete
+
+**Why:** roadmap piece C, and the paywall line *"Your year, remembered"* that had no code behind it. A
+recap is the emotional payoff of a whole year — the single most quotable thing this app can produce — and
+it absorbs the milestone timeline IMP-021 deliberately deferred to "roadmap piece C". This is that piece.
+
+**Extraction first.** `countWords` moved out of `src/insights/lifetime.js` into new `src/insights/words.js`
+and re-imported there, so the recap and Lifetime Progress can never drift apart. `lifetime.test.js` stayed
+green untouched.
+
+**Pure core.** New `src/recap/annualRecap.js`:
+- `recapYears(entries, now)` → offerable years, newest first. A year is offerable from **1 December of
+  that year onward** (checked via `now.getMonth() === 11`, any day in December) and **every earlier year
+  forever after** (`y < nowYear`, unconditionally). Both are filtered to years with **≥ 10 entries** — the
+  same floor `buildRecap` enforces, so a filtered-in year is always buildable.
+- `buildRecap(entries, year, { xp, now })` → `{ year, daysRemembered, totalWords, longestStreak,
+  firstEntry, lastEntry, topMoods, peakMonth, quietestMonth, milestones }`, or `null` below the 10-entry
+  floor — a recap of four days is worse than no recap. Entries are filtered strictly to the target year
+  (`dayKey.slice(0,4)`) before every year-scoped stat, so a 31 Dec / 1 Jan entry on either boundary is
+  correctly excluded, and `longestStreak` (via `longestConsecutiveRun`, reused from `dateKeys.js`) is
+  computed **within the year only** — a run spanning the year boundary is NOT credited to either year in
+  full.
+- `topMoods` reuses IMP-047's `moodByMonth` counting rather than writing a second mood counter — the
+  year's entries go through `moodByMonth`, and its 12 per-month buckets are merged into one set of mood
+  totals, sorted by count then alphabetically on a tie, top 3 kept.
+- `peakMonth`/`quietestMonth` scan the same `moodByMonth` buckets' `.total` field for the strict max/min,
+  so a tie always keeps the **earlier** month (only a strict improvement moves the pointer).
+- **Milestones — where IMP-021's deferred timeline lives, and nowhere else.** A local day-by-day walk over
+  the **full account history** (not just the target year — a streak can start in December and cross a
+  threshold in January) tracks the running consecutive-day count using `dayKeyToUtcMs`/`DAY_MS` from
+  `dateKeys.js`; whenever that running count lands on a `STREAK_MILESTONES` key (7/30/100) **and** the
+  crossing day falls inside the target year, it's recorded. A `'First entry of the year'` entry for the
+  year's own `firstEntry` is always prepended, then the list is sorted chronologically. A crossing that
+  happens in the prior year (even mid-run, continuing into the target year) is correctly excluded.
+
+**Screen.** New `src/screens/AnnualRecap.js` — presentational, `{ recap, onClose, insets }`. Sectioned like
+`InsightsScreen`'s "Your record" card: hero number (days remembered) + a 2×2 totals grid (words, longest
+streak, busiest/quietest month), a top-moods bar card (reusing the `InsightsScreen`/`DeeperInsights` bar
+shape), and a milestone timeline card ("The year, marked") — one dot-and-label row per entry in
+`recap.milestones`, date formatted via a local `localDate`/`shortDate` pair (same UTC-off-by-one-avoiding
+convention as `insights/deeper.js`).
+
+**Home card.** New `src/screens/AnnualRecapCard.js`, mirroring `OnThisDayCard.js`'s shape exactly:
+`{ year, locked, onOpen, onDismiss, onOpenPaywall }`, returns `null` on no year, `locked` renders the same
+`Sun`-icon "Unlock with Plus" teaser pattern. `HomeScreen.js` mounts it only in the **1 Dec – 31 Jan**
+window (`RECAP_WINDOW_MONTHS = [11, 0]`) when `recapYears(entries, now)[0]` exists and hasn't already been
+dismissed for that year (`recapSeen !== topRecapYear`); new `HomeScreen` props: `recapSeen`,
+`onDismissAnnualRecap`, `onOpenAnnualRecap`.
+
+**You-tab row.** New "Your years" section in `YouScreen.js` — **permanent**, not window-gated, "what stops
+the feature disappearing for eleven months of the year." `!plusEnabled` → section doesn't render at all.
+`plusEnabled && !plus` → one locked row with a Plus chip routing to the paywall (same visual pattern as the
+"Save as PDF" row already there). `plus` with zero offerable years → one informational row ("Unlocks after
+your first full year"). `plus` with years available → one tappable row per year, opening that year's
+recap. New `YouScreen` props: `entries`, `onOpenAnnualRecap`.
+
+**RitualsApp wiring.** New `openRecapYear` state (`null` = closed) opened by either surface via
+`onOpenAnnualRecap(year)`; a single `Modal` (matching every other full-screen sheet's
+`animationType="slide" presentationStyle="overFullScreen"` shape) lazily computes
+`buildRecap(entries, openRecapYear, { xp })` only while open. `onDismissAnnualRecap(year)` writes
+`settings.recapSeen = year` — a single number, not a set, so an old dismissal can never hide a later year
+(same discipline as IMP-038's `onThisDayDismissed`). `DEFAULT_SETTINGS` (`src/theme.js`) gained
+`recapSeen: null`.
+
+**Perk copy:** `PLUS_PERKS` (`src/data.js`) — **appended** `'Your year, remembered — the Annual Recap'` as
+a new 6th entry, per the spec's explicit instruction not to renumber the existing five (the dead PDF perk
+stays at its own slot, untouched — that's IMP-022's territory, still deferred).
+
+**Tests:** `__tests__/recap/annualRecap.test.js` (13 cases, RED-first) — the Dec-1/Nov-30 offer boundary on
+both sides · every prior year offered forever · a sub-10-entry year omitted · empty history → `[]` ·
+newest-first ordering · `buildRecap` returns `null` below the floor · year-boundary entries excluded from
+both neighbours · `longestStreak` computed within the year (a 6-day cross-boundary run reads as 3) ·
+`topMoods` capped at 3, alphabetical on a tie · `peakMonth`/`quietestMonth` tie-break to the earlier month
+· a milestone crossing in the prior year excluded from the target year, a same-year crossing included with
+the correct day · malformed entries never throw. `npm test` → **532 passed, 55 suites** (519 + 13 new).
+`npx expo export --platform android` clean.
+
+**Ship:** OTA, no bump. Reaches **testers only** (`runtimeVersion` = `appVersion` = 1.0.5). **Commit:**
+`feat(recap): the Annual Recap — your year, remembered (IMP-046)`.
+
+---
+
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
 
 > Moved out of PROGRESS.md on 2026-07-31 to keep the live cursor lean once a second spec (IMP-032) opened. These are **not** finished work. If the owner revives one, lift the block back into PROGRESS.md as the ACTIVE TRACK.
@@ -1050,6 +1132,8 @@ test` → **519 passed, 54 suites** (508 + 11 new). `npx expo export --platform 
 ## Session notes (archived from PROGRESS.md)
 
 _Append-only handoff log moved out of PROGRESS.md to keep it light. Newest 1–2 notes stay live in PROGRESS.md; everything else is here. Git history is the full record._
+
+_2026-08-08 (IMP-033, the restore is offered, not imposed) — **code-complete, committed, not shipped.** Full TDD (26 new cases). New pure `src/persistence/restoreQuarantine.js` — `shouldQuarantine` (delegates to IMP-029's `isRestoredInstall`), `shouldOfferRestore({hasStash, onboarded})`, `preferredSource({lastSavedAt, lastBackupAt})` → `'google'|'file'` (ties/unparseable → `'google'`, no coercion), `runQuarantine({readRawState, writePendingRestore, readPendingRestore, clearState})` (injected-IO orchestration mirroring `backup/importFlow.js` — the live key is never cleared unless the stash write is verified readable back), `pendingRestoreInventory(stash)` (paid-inventory line shared by the offer sheet and the discard confirm). Stash IO added to `src/persistence/storage.js` (`readRawState`/`writePendingRestore`/`readPendingRestore`/`clearPendingRestore`, try/catch → falsy, no throwing) — its first-ever unit test, so `jest.setup.js` gained the package's own in-memory `AsyncStorage` mock. `App.js`'s load effect now runs `shouldQuarantine` on the same `lastSavedAt` check IMP-029 already made; on success it hydrates as a genuine first install (`{}`/`onboarded: false`) and stashes the parsed payload in a new `pendingRestore` state; on an aborted quarantine it falls straight through to IMP-029's existing notice, live data untouched. New `src/screens/RestoreOffer.js` (presentational, same scrim-and-card shape as `RestoreNotice.js` — its `GhostButton` is now extracted to `src/ui.js` and shared) states every warning (replaces the fresh start, dated staleness, paid-inventory-at-risk) and inverts emphasis to lead with "Restore from a file" when `preferredSource` says the export is newer. `RitualsApp.js`'s `handleLoadPendingRestore` reuses the existing `runConfirmedImport` safety guarantee (recovery copy of the *current* fresh state before replacing); "Keep this fresh start" only hides the sheet (`restoreOfferDismissed`), never discards the stash — it resurfaces as a `Google backup — {date}` row in the You tab's "Your journal is safe" card, with a separate (not hidden-behind-long-press) "Discard" action. Bundled copy fix: `explainAutoBackup` and the export success toast now both say plainly that the JSON export and the Google Auto Backup are separate systems, neither refreshing the other. `npm test` → **508 passed, 53 suites** (482 + 26 new); `npx expo export --platform android` clean. Full spec archived to `docs/build-log.md`; backlog row set to code-complete; `docs/specs-open.md`'s index updated (IMP-033 removed, 3 tasks renumbered to 2). NEXT: **IMP-038 "On this day"** (perk #3) is next per the ACTIVE TRACK order. IMP-038/-045/-046 remain open; `internal` → production promotion still untaken._
 
 _2026-08-08 (IMP-047, deeper insights — the analysis layer, perk #5) — **code-complete, committed, not shipped.** Full TDD (17 new cases). New pure `src/insights/deeper.js` — `moodByWeekday(entries)` → 7 Mon-first buckets `{l, top, n, total}` (top mood per weekday, `null` on a tie or empty bucket — reuses `derive.js`'s private `localDate`/Mon-first-index pattern rather than sharing it, matching how each insights module already owns its own date helpers), `moodByMonth(entries)` → 12 calendar-month buckets aggregated across years for the "seasonal" read, `moods` sorted by count descending, `moodPairings(entries)` → co-occurring mood pairs `{a,b,n}` (alphabetically normalised so `[a,b]`/`[b,a]` count once, `[]` for all-single-mood entries — the function that justifies IMP-037's multi-mood model), `hasEnoughFor(kind, entries)` gates each at 14 entries / 3 distinct months / 5 multi-mood entries so nothing renders a chart from three data points. New presentational `src/screens/DeeperInsights.js` reuses `InsightsScreen.js`'s existing bar/mood-row shapes; `locked` prop renders a one-card teaser with a `Sun`-icon "Unlock with Plus" pill instead of computing anything. `InsightsScreen` gained `plus`/`plusEnabled`/`onOpenPaywall` props threaded from `RitualsApp.js` (`onOpenPaywall` follows the existing `PLUS_ENABLED ? () => setPaywall(true) : () => {}` pattern); mounts full section when `plus`, locked teaser when `plusEnabled && !plus`, nothing when `!plusEnabled` — same discipline as IMP-034/IMP-041. `PLUS_PERKS[4]` copy checked against the build and left unchanged — it already matched. `npm test` → **482 passed, 51 suites** (465 + 17 new); `npx expo export --platform android` clean. Full spec archived to `docs/build-log.md`; backlog row set to code-complete; `docs/specs-open.md`'s index and IMP-046's "Depends on" updated to reflect it's done; PROGRESS.md's Phase 10b perk-reality table updated to 3 of 5 real (#1, #2, #5). NEXT: per the ACTIVE TRACK order, **IMP-033** (the restore is offered, not imposed) is next — a bigger build than the retrieval-track tasks, already settled by the owner. IMP-033/-038/-045/-046 remain open; `internal` → production promotion still untaken._
 
