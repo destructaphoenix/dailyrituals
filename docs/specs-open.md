@@ -25,11 +25,10 @@
 
 | # | Spec | Lane | Free / Plus | Depends on |
 | --- | --- | --- | --- | --- |
-| 1 | [IMP-037 — moods: custom + multiple](#imp-037--moods-custom-feelings--multiple-per-entry) | OTA | **Free** | — (IMP-036 ✅ done) |
-| 2 | [IMP-047 — deeper insights](#imp-047--deeper-insights-the-analysis-layer-perk-5) | OTA | **Plus** (perk #5) | **IMP-037** |
-| 3 | [IMP-033 — the restore is offered, not imposed](#imp-033--the-restore-is-offered-not-imposed) | OTA | Free | — |
-| 4 | [IMP-038 — "On this day"](#imp-038--on-this-day) | OTA | **Plus** (perk #3) | IMP-037 |
-| 5 | [IMP-046 — Annual Recap](#imp-046--annual-recap-your-year-remembered-perk-4) | OTA | **Plus** (perk #4) | **IMP-037, IMP-047** |
+| 1 | [IMP-047 — deeper insights](#imp-047--deeper-insights-the-analysis-layer-perk-5) | OTA | **Plus** (perk #5) | — (IMP-037 ✅ done) |
+| 2 | [IMP-033 — the restore is offered, not imposed](#imp-033--the-restore-is-offered-not-imposed) | OTA | Free | — |
+| 3 | [IMP-038 — "On this day"](#imp-038--on-this-day) | OTA | **Plus** (perk #3) | — (IMP-037 ✅ done) |
+| 4 | [IMP-046 — Annual Recap](#imp-046--annual-recap-your-year-remembered-perk-4) | OTA | **Plus** (perk #4) | **IMP-047** (IMP-037 ✅ done) |
 | — | [IMP-045 — finish Lifetime Progress](#imp-045--finish-lifetime-progress-the-imp-021-shortfall) | OTA | Free | — · **no queue slot** |
 
 **IMP-045 does not claim a slot.** It is small, independent and fixes a live tester complaint — take it in any
@@ -37,113 +36,9 @@ chat where the queued task is blocked, or as its own short chat. Same treatment 
 
 ---
 
-## IMP-037 — moods: custom feelings + multiple per entry
-
-**Lane:** OTA · **Status:** ⬜ OPEN · **Depends on:** — (IMP-036 ✅ done) · **FREE**
-
-**Goal:** an entry carries `moods: string[]` instead of `mood: string`, users can add their own feelings,
-and every existing entry migrates losslessly.
-
-**Why FREE (settled — do not reverse):** the owner asked for this as a Plus feature. **A mood is stored
-content** — part of what the user wrote. If custom/multi moods were paid, a lapsed subscriber's entry
-tagged `['restless','proud']` renders as… what? One mood? None? Every answer either lies about their entry
-or hides it, breaking the "never lose access to what you wrote" line that is this app's structural defence
-against money grievances. **Principle locked: gate compute, never content.** Charge for *interpretation*
-instead — that is IMP-047, which this task unblocks.
-
-### Decided design (Opus — do not redesign)
-
-- **Model:** `mood: string` → `moods: string[]`. `MOODS` ([`data.js:38`](../src/data.js#L38)) stays the
-  suggested 8; users may add their own. `moodEmoji` already returns `''` for unknown values
-  ([`data.js:51`](../src/data.js#L51)), so custom feelings degrade to no-emoji rather than breaking.
-  Persist the user's custom list in `settings.customMoods` so it is offered again.
-- **⚠️ Migration is the entire risk of this task.** `mergeWithDefaults` is a **shallow top-level spread**
-  ([`state.js:50`](../src/persistence/state.js#L50)) and will **not** reach inside `entries`. This needs a
-  real schema migrator. **An entry is the user's writing; a botched migration is unrecoverable.**
-  - Bump `SCHEMA_VERSION` **2 → 3** and add migrator `2:` in
-    [`state.js:3`](../src/persistence/state.js#L3): map every entry `{ mood: 'Tender' }` →
-    `{ moods: ['Tender'] }`, dropping the old key. An entry with **no** mood → `moods: []`. An entry that
-    **already** has `moods` is left exactly as-is (idempotent).
-- **Insights:** mood mix counts one mood per entry today; with arrays an entry contributes to several.
-  **Say the denominator honestly in the UI** — add `` `across {n} reflections` `` under the Mood mix title,
-  because percentages will no longer sum to 100.
-- **Write flow:** mood selection becomes multi-select (tap to toggle), plus an "Add your own" field. The
-  `feel` rite ([`completeEntry.js:44`](../src/home/completeEntry.js#L44)) is kept when
-  `entry.moods.length > 0`.
-
-### 🔴 Every reader — update all of these in the same pass. This list is exhaustive; verify with a final `grep -rn "\.mood\b" src/`
-
-| File | What changes |
-| --- | --- |
-| [`src/persistence/state.js`](../src/persistence/state.js) | `SCHEMA_VERSION` → 3, migrator `2:` |
-| [`src/insights/derive.js:38-45`](../src/insights/derive.js#L38) | mood mix counts each mood in the array |
-| [`src/insights/search.js`](../src/insights/search.js) | mood filter reads `e.moods` (any-of over the array) — **from IMP-035** |
-| [`src/home/calendar.js:54,81`](../src/home/calendar.js#L54) | cell `mood`/`emoji` use the **first** mood |
-| [`src/home/completeEntry.js:44`](../src/home/completeEntry.js#L44) | `feel` rite checks `entry.moods.length` |
-| [`src/entries/mutate.js`](../src/entries/mutate.js) | `applyEdit` patch takes `moods` — **from IMP-036** |
-| [`src/screens/WriteFlow.js`](../src/screens/WriteFlow.js) | multi-select + custom entry; `onComplete({ did, wished, moods })` |
-| [`src/screens/ArchiveScreen.js:48-53`](../src/screens/ArchiveScreen.js#L48) | render a chip per mood |
-| [`src/screens/ReadingSheet.js:18-22`](../src/screens/ReadingSheet.js#L18) | render a chip per mood |
-| [`src/screens/InsightsScreen.js`](../src/screens/InsightsScreen.js) | honest denominator line |
-| [`src/RitualsApp.js:361,530`](../src/RitualsApp.js#L361) | entry construction + `initial` both use `moods` |
-| [`src/data.js:70-96`](../src/data.js#L70) | `SAMPLE_ENTRIES` use `moods` |
-| [`src/dev/generateEntries.js:68`](../src/dev/generateEntries.js#L68) | generated entries use `moods` |
-
-### Steps
-
-- [ ] 1. **RED first**, and the migration tests come first of all —
-      `__tests__/persistence/state.test.js` gains the v2→v3 cases below.
-- [ ] 2. `state.js`: `SCHEMA_VERSION` → 3 + migrator `2:`. **Nothing else until these tests are green.**
-- [ ] 3. Pure readers: `derive.js`, `search.js`, `calendar.js`, `completeEntry.js`, `mutate.js` — with
-      their existing test files updated in the same commit.
-- [ ] 4. `WriteFlow.js` multi-select + "Add your own", persisting to `settings.customMoods`.
-- [ ] 5. Display surfaces: `ArchiveScreen`, `ReadingSheet`, `InsightsScreen` (incl. the honest
-      denominator), `RitualsApp` entry construction, `SAMPLE_ENTRIES`, `generateEntries`.
-- [ ] 6. Final `grep -rn "\.mood\b\|mood:" src/` and confirm **zero** singular-`mood` readers remain.
-- [ ] 7. `npm test` green (406 + new), `npx expo export --platform android` clean, commit, update
-      `PROGRESS.md`, archive this spec to `docs/build-log.md`.
-
-### Tests
-
-**Migration (mandatory, write these first):** a full `serialize` → `deserialize` **round-trip** ·
-`{ mood: 'Tender' }` → `{ moods: ['Tender'] }` · an entry with **no** mood → `moods: []` · an entry that
-**already has `moods`** is untouched (idempotent) · a v3 payload passes through unchanged · a v1 payload
-migrates through v2 to v3 without losing entries · every other persisted key survives the migration
-untouched.
-
-**Readers:** mood mix counts an entry with two moods **once per mood** · `searchEntries` mood filter
-matches any element of `moods` · heatmap cell emoji uses the first mood · the `feel` rite is kept for a
-non-empty `moods` and not for `[]` · an unknown custom mood yields `''` from `moodEmoji` and does not throw
-anywhere.
-
-### Commit message
-
-```
-feat(moods): multiple + custom feelings per entry, with migration (IMP-037)
-
-A day rarely feels like one thing. Entries now carry moods: string[]
-instead of mood: string, and a user can add feelings of their own beyond
-the suggested eight.
-
-Free, deliberately: a mood is stored content, part of what the user
-wrote. Gating it would mean a lapsed subscriber's own entry rendering
-wrong or not at all. Gate compute, never content — the paid layer is the
-analysis over these moods, not the moods themselves.
-
-Schema 2 -> 3 with a real migrator, because mergeWithDefaults is a shallow
-top-level spread and never reaches inside entries. The migrator is
-idempotent and leaves entries that already carry moods alone. Mood mix now
-states its denominator honestly, since an entry can contribute to several
-and the percentages no longer sum to 100.
-```
-
-**Ship:** OTA. No `bump:*`.
-
----
-
 ## IMP-047 — deeper insights: the analysis layer (perk #5)
 
-**Lane:** OTA · **Status:** ⬜ OPEN · **Depends on: IMP-037 (hard — do not start before it)** ·
+**Lane:** OTA · **Status:** ⬜ OPEN · **Depends on: — (IMP-037 ✅ done)** ·
 **PLUS — this is `PLUS_PERKS` #5**
 
 **Goal:** `PLUS_PERKS` #5 *"Deeper insights — moods & seasonal themes"* stops being a lie. Plus users get a
@@ -408,7 +303,7 @@ tap can destroy a journal.
 
 ## IMP-038 — "On this day"
 
-**Lane:** OTA · **Status:** ⬜ OPEN · **Depends on:** IMP-037 (IMP-035 ✅ done) · **PLUS — perk #3 of the
+**Lane:** OTA · **Status:** ⬜ OPEN · **Depends on:** — (IMP-035 ✅ done, IMP-037 ✅ done) · **PLUS — perk #3 of the
 proposed final list** (PROGRESS.md → "PROPOSED FINAL PERK LIST")
 
 > **⚠️ Perk numbering — read this before touching `data.js`.** The live `PLUS_PERKS` array
@@ -418,7 +313,7 @@ proposed final list** (PROGRESS.md → "PROPOSED FINAL PERK LIST")
 > history limit that has never existed). Step 6 below replaces that slot. **Do not renumber anything
 > else.**
 
-**Build after the retrieval group.** IMP-035's retrieval layer is done; still depends on IMP-037's mood model.
+**Build after the retrieval group.** IMP-035's retrieval layer and IMP-037's mood model are both done.
 
 **Goal:** on opening the app, the user is shown what they wrote on this date in previous years — and,
 until they have a year of history, at 6 / 3 / 1 months back.
@@ -500,8 +395,8 @@ milliseconds, so 29 Feb never false-matches 28 Feb in either direction.
 
 ## IMP-046 — Annual Recap: "your year, remembered" (perk #4)
 
-**Lane:** OTA · **Status:** ⬜ OPEN · **Depends on: IMP-037 and IMP-047 (hard — do not start before
-both)** · **PLUS — perk #4 of the proposed final list**
+**Lane:** OTA · **Status:** ⬜ OPEN · **Depends on: IMP-047 (hard — do not start before it; IMP-037 ✅ done)** ·
+**PLUS — perk #4 of the proposed final list**
 
 > **⚠️ Perk numbering.** "Your year, remembered" is **not in `PLUS_PERKS` at all** today
 > ([`data.js:144`](../src/data.js#L144) has 5 entries and none of them is the recap). Step 6 **appends**
