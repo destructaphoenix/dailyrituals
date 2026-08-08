@@ -62,6 +62,10 @@ export default function Paywall({ insets, platform = 'ios', service, alreadyPlus
           ))}
         </View>
 
+        <T w={600} color={c.muted} style={{ fontSize: 12, lineHeight: 17, textAlign: 'center', marginTop: -10, marginBottom: 18 }}>
+          Your journal lives on your device. Plus adds memory, not storage.
+        </T>
+
         {/* plan selector */}
         <View style={{ flexDirection: 'row', gap: 12, width: '100%' }}>
           {['annual', 'monthly'].map((k) => {

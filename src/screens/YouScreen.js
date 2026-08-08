@@ -5,10 +5,11 @@ import React, { useState } from 'react';
 import { View, ScrollView, Pressable, Alert, Modal } from 'react-native';
 import { useTheme } from '../theme';
 import { T, Card, ProgressBar } from '../ui';
-import { Bell, Contrast, Pencil, Download, Info, Chevron, Sun, Moon, Bag, Ember, Restore, UserIcon } from '../icons';
+import { Bell, Contrast, Pencil, Download, Info, Chevron, Sun, Moon, Bag, Ember, Restore, UserIcon, Alert as AlertIcon } from '../icons';
 import { PlusBanner } from '../shopui';
 import { profileIdentity } from '../profile/identity';
 import { lastBackupLabel } from '../backup/lastBackupLabel';
+import { backupHealth } from '../backup/backupHealth';
 import NameEditModal from './NameEditModal';
 import Row from '../ui/Row';
 import { CHROME_FONT_SCALE } from '../ui/textScale';
@@ -16,7 +17,7 @@ import { CHROME_FONT_SCALE } from '../ui/textScale';
 export default function YouScreen({
   mode, onToggleMode, settings, setSettings,
   streak, level, levelName, xpInto, xpToNext, entriesCount, badgesEarned, onOpenAchievements,
-  embers, plus, onOpenShop, onOpenPaywall, onOpenManage, plusEnabled = true, onResetData,
+  embers, plus, onOpenShop, onOpenPaywall, onOpenManage, onRestorePurchases, plusEnabled = true, onResetData,
   lastBackupAt, onExportData, onImportData, onExplainAutoBackup, onOpenDev,
   reminderValue, onOpenReminder,
 }) {
@@ -26,6 +27,11 @@ export default function YouScreen({
 
   const { display, initial } = profileIdentity(settings.name);
   const [editingName, setEditingName] = useState(false);
+  const health = backupHealth(lastBackupAt);
+  // A milestone reads as "exactly N" rather than "N or more" so it needs no
+  // dismissal state — it naturally stops firing the day after, same spirit
+  // as every other derived-not-persisted signal in this app.
+  const atBackupMilestone = entriesCount === 100 || entriesCount === 365;
   const setTone = () => setSettings((s) => ({ ...s, tone: s.tone === 'gentle' ? 'playful' : 'gentle' }));
   const saveName = (clean) => { setSettings((s) => ({ ...s, name: clean })); setEditingName(false); };
   const confirmReset = () => {
@@ -89,6 +95,15 @@ export default function YouScreen({
       {/* Plus + Shop */}
       <View style={{ paddingHorizontal: 20, gap: 12 }}>
         {plusEnabled && <PlusBanner plus={plus} onOpenPaywall={onOpenPaywall} onManage={onOpenManage} compact />}
+        {/* Reachable outside the paywall (IMP-043) — the one place a returning
+            subscriber who looks non-Plus has a reason to look. Once `plus` is
+            true, this same action lives in Manage subscription instead. */}
+        {plusEnabled && !plus && onRestorePurchases && (
+          <Card>
+            <Row icon={<Restore size={20} color={c.accentDeep} />} label="Restore purchases"
+              value="Already Plus?" onPress={onRestorePurchases} />
+          </Card>
+        )}
         <Pressable onPress={onOpenShop} style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.99 : 1 }] })}>
           <Card>
             <Row icon={<Bag size={20} color={c.accentDeep} />} label="Shop"
@@ -136,6 +151,19 @@ export default function YouScreen({
           <Row icon={<Restore size={20} color={c.accentDeep} />} label="Restore from a backup"
             onPress={onImportData} />
         </Card>
+        {health !== 'ok' ? (
+          <BackupNudge
+            icon={<AlertIcon size={16} color={c.accentDeep} />}
+            text={health === 'never'
+              ? "You haven't backed up your journal yet — if this device is lost, there's nothing to bring back."
+              : "Your last backup was over 30 days ago. A lot has been written since."}
+          />
+        ) : atBackupMilestone ? (
+          <BackupNudge
+            icon={<Download size={16} color={c.accentDeep} />}
+            text={`${entriesCount} days remembered — a good moment to back them up.`}
+          />
+        ) : null}
       </View>
 
       {/* general */}
@@ -183,4 +211,15 @@ export default function YouScreen({
 function Divider() {
   const t = useTheme();
   return <View style={{ height: 1, backgroundColor: t.colors.border, marginLeft: 66 }} />;
+}
+
+function BackupNudge({ icon, text }) {
+  const t = useTheme();
+  const c = t.colors;
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10, paddingHorizontal: 4 }}>
+      {icon}
+      <T w={600} color={c.muted} numberOfLines={2} style={{ flex: 1, fontSize: 12.5, lineHeight: 17 }}>{text}</T>
+    </View>
+  );
 }

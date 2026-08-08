@@ -54,8 +54,11 @@ export function createRevenueCatService() {
         return { kind: kind === 'owned' ? 'restored' : kind === 'network' ? 'network' : 'restore-empty' };
       }
     },
+    // Deliberately does NOT swallow the error (IMP-043): a failed call must be
+    // distinguishable from a successful one that finds no entitlement — see
+    // src/billing/entitlementSync.js, which is the only caller that matters.
     async getEntitlement() {
-      const info = await Purchases.getCustomerInfo().catch(() => null);
+      const info = await Purchases.getCustomerInfo();
       return toEntitlement(info);
     },
     async getPrices() {

@@ -36,6 +36,7 @@ import { openExternal } from './billing/links';
 import { createPurchaseService, isBillingConfigured } from './billing';
 import { PLUS_ENABLED } from './billing/config';
 import { formatRenewDate } from './billing/format';
+import { checkEntitlement, nextPlusState, useLaunchEntitlementCheck } from './billing/entitlementSync';
 import { saveState } from './persistence/storage';
 import { pickPersisted } from './persistence/state';
 import { applyCompletion } from './home/completeEntry';
@@ -227,17 +228,39 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     }
   };
 
+  // Store, not the local cache, is authoritative (IMP-043): only a verified
+  // "no entitlement" answer downgrades; a failed/unreachable check changes
+  // nothing (offline-first — never strand a real subscriber without a signal).
   React.useEffect(() => {
     const sub = AppState.addEventListener('change', async (s) => {
       if (s !== 'active' || !plus) return;
-      const ent = await service.getEntitlement();
-      if (!ent) return;
-      setLiveEntitlement(ent);
-      setSubCanceled(ent.willRenew === false);
-      setActivePlan(ent.plan);
+      const result = await checkEntitlement(service);
+      if (result.entitlement) {
+        setLiveEntitlement(result.entitlement);
+        setSubCanceled(result.entitlement.willRenew === false);
+        setActivePlan(result.entitlement.plan);
+      }
+      const next = nextPlusState(plus, result);
+      if (next !== plus) setPlus(next);
     });
     return () => sub.remove();
   }, [plus, service]);
+
+  // The lost-phone bug: a returning subscriber whose local cache reads false
+  // (fresh install, an IMP-033 quarantine, a corrected forged flag, ...) was
+  // never re-asked — "Restore purchases" lived only behind the paywall, the
+  // one screen a non-Plus-looking user has no reason to open. Silent,
+  // failure-tolerant, once per launch.
+  useLaunchEntitlementCheck({
+    plus,
+    service,
+    onEntitlementFound: (entitlement) => {
+      setPlus(true);
+      setLiveEntitlement(entitlement);
+      setActivePlan(entitlement.plan);
+      setSubCanceled(entitlement.willRenew === false);
+    },
+  });
 
   // Rolling-window reminder scheduling (IMP-031). A repeating OS trigger can't
   // be conditional, so instead we keep the next 7 single-shot notifications
@@ -418,6 +441,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             plusEnabled={PLUS_ENABLED}
             onOpenPaywall={PLUS_ENABLED ? () => setPaywall(true) : () => {}}
             onOpenManage={PLUS_ENABLED ? () => setManageOpen(true) : () => {}}
+            onRestorePurchases={() => doRestore()}
             onOpenAchievements={() => setShowAch(true)}
             onResetData={onResetData}
             lastBackupAt={lastBackupAt}
