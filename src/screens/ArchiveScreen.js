@@ -1,17 +1,24 @@
 // ArchiveScreen.js — reflections list + heatmap. Ported from ArchiveScreen.
 
-import React from 'react';
+import React, { useState } from 'react';
 import { View, ScrollView, Pressable, Text } from 'react-native';
 import { useTheme } from '../theme';
 import { T, Card } from '../ui';
 import { moodEmoji } from '../data';
 import { buildHeatmap } from '../home/calendar';
+import { searchEntries } from '../insights/search';
+import ArchiveFilters from './ArchiveFilters';
 import TipCard from './TipCard';
+
+const EMPTY_QUERY = { text: '', moods: [], from: null, to: null };
 
 export default function ArchiveScreen({ copy, mode, entries, onOpen, tip, onDismissTip }) {
   const t = useTheme();
   const c = t.colors;
+  const [query, setQuery] = useState(EMPTY_QUERY);
   const heat = buildHeatmap(entries);
+  const results = searchEntries(entries, query);
+  const filtering = !!(query.text || query.moods.length || query.from || query.to);
 
   return (
     <ScrollView
@@ -29,6 +36,15 @@ export default function ArchiveScreen({ copy, mode, entries, onOpen, tip, onDism
         <T d w={800} color={c.ink} style={{ fontSize: 24 }}>Reflections</T>
         <T w={600} color={c.muted} style={{ fontSize: 14, marginTop: 2 }}>{copy.arcSub}</T>
       </View>
+
+      {entries.length > 0 && (
+        <View style={{ paddingHorizontal: 20 }}>
+          <ArchiveFilters
+            text={query.text} moods={query.moods} from={query.from} to={query.to}
+            onChange={setQuery} resultCount={results.length}
+          />
+        </View>
+      )}
 
       <View style={{ paddingHorizontal: 20 }}>
         <Card style={{ padding: 16 }}>
@@ -50,9 +66,17 @@ export default function ArchiveScreen({ copy, mode, entries, onOpen, tip, onDism
             </T>
           </Card>
         </View>
+      ) : filtering && results.length === 0 ? (
+        <View style={{ paddingHorizontal: 20 }}>
+          <Card style={{ padding: 24, alignItems: 'center' }}>
+            <T d w={700} color={c.ink} style={{ fontSize: 16, textAlign: 'center' }}>
+              Nothing matches that yet. Try fewer words, or a wider stretch of days.
+            </T>
+          </Card>
+        </View>
       ) : (
         <View style={{ paddingHorizontal: 20, gap: 12 }}>
-          {entries.map((e) => (
+          {results.map((e) => (
             <Pressable key={e.id} onPress={() => onOpen(e)}>
               {({ pressed }) => (
                 <Card style={{ padding: 16, flexDirection: 'row', gap: 14, transform: [{ scale: pressed ? 0.99 : 1 }] }}>
