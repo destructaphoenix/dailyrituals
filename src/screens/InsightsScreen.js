@@ -9,8 +9,9 @@ import { moodEmoji } from '../data';
 import { deriveInsights } from '../insights/derive';
 import { deriveLifetime } from '../insights/lifetime';
 import { buildLifetimeHeatmap } from '../home/calendar';
+import DeeperInsights from './DeeperInsights';
 
-export default function InsightsScreen({ copy, entries = [], streak = 0, xp = 0 }) {
+export default function InsightsScreen({ copy, entries = [], streak = 0, xp = 0, plus = false, plusEnabled = false, onOpenPaywall = () => {} }) {
   const t = useTheme();
   const c = t.colors;
 
@@ -177,6 +178,13 @@ export default function InsightsScreen({ copy, entries = [], streak = 0, xp = 0 
           </View>
         </Card>
       </View>
+
+      {/* Deeper — the analysis layer (IMP-047, PLUS_PERKS #5) */}
+      {plus ? (
+        <DeeperInsights entries={entries} onOpenPaywall={onOpenPaywall} />
+      ) : plusEnabled ? (
+        <DeeperInsights entries={entries} onOpenPaywall={onOpenPaywall} locked />
+      ) : null}
     </ScrollView>
   );
 }

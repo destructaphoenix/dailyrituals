@@ -529,7 +529,13 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   const screen = () => {
     switch (tab) {
       case 'insights':
-        return <InsightsScreen copy={copy} entries={entries} streak={streak} xp={xp} />;
+        return (
+          <InsightsScreen
+            copy={copy} entries={entries} streak={streak} xp={xp}
+            plus={plus} plusEnabled={PLUS_ENABLED}
+            onOpenPaywall={PLUS_ENABLED ? () => setPaywall(true) : () => {}}
+          />
+        );
       case 'archive':
         return (
           <ArchiveScreen
