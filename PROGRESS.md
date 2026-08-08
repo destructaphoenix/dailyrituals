@@ -34,9 +34,19 @@ The live work is the **first unchecked `IMP-xxx` task in the Improvements backlo
 
 **App status (2026-08-02): two tracks are live at once — mind which one you mean.**
 - **Production (the public): 🟢 v1.0.3 / versionCode 9**, approved and live since 2026-07-30. Carries IMP-027 (SDK 54 / API 36). **Google Play API-36 compliance (deadline 2026-08-31) is ✅ SHIPPED** — proven in production, a month early. The **BillDesk deadlock is ✅ UNBLOCKED**: the public Play Store URL PA-CB verification was asking for now exists.
-- **Closed testing (`alpha`): 🟢 v1.0.5 / versionCode 11**, built and submitted 2026-08-02. Five features the public does not have yet (IMP-021/028/029/030/031).
+- **Closed testing (`alpha`): 🟢 v1.0.5 / versionCode 11**, built and submitted 2026-08-02. Five features the public does not have yet (IMP-021/028/029/030/031). **This track is now frozen** — see the track change below.
+
+**🔀 Build submissions now go to `internal`, not `alpha` (changed 2026-08-08).** `eas.json` →
+`submit.production.android.track` is `"internal"`. Internal testing serves the owner only, publishes in
+**minutes**, and normally skips the full app review that closed testing goes through. Consequences:
+- **The next build lands on `internal`, not `alpha`.** `alpha` stays at vc11 and goes stale by design. That is safe — vc11 is `targetSdkVersion 36`, so a frozen `alpha` cannot re-trigger the compliance banner (unlike `beta`/vc8 and the old `internal`/vc5, which can and do).
+- **Bonus: this fixes half the compliance banner automatically.** The next build overwrites `internal`'s ancient **vc5 / API 35**. Only `beta` (vc8 / API 35) will still need vc9 promoted onto it.
+- **Reaching the public is unchanged and still manual:** promote `internal` → `production` in Play Console. That promotion *does* get the full review.
+- **Nothing changed for OTA** — `eas update` never touches a Play track. See below.
 
 **Consequence for OTA:** `runtimeVersion` is `appVersion` = **1.0.5**, so an `eas update` lands on **testers only** — the public on 1.0.3 is OTA-unreachable until vc11 is promoted to production. Treat tester-visible regressions as real but contained. The app ships **free**: `PLUS_ENABLED = false`, so there is no payment surface in it at all.
+
+**⚠️ OTA has no Play track, and never did.** `eas update` publishes a JS bundle to Expo's CDN — Google is not involved, there is no review, and `internal`/`alpha`/`beta` are meaningless to it. Delivery is gated by exactly two things: the **channel** (`production`, set in `eas.json` → `build.production.channel`) and a **matching `runtimeVersion`**. An installed build receives an OTA regardless of which Play track it was installed from. So "send OTA to internal instead of closed testing" is not a setting that exists — and OTA is already faster than any track, which is the whole reason the lane exists.
 
 **Current stack:** Expo SDK **54** · React Native **0.81.5** · React **19.1.0** · **Legacy Architecture** (`expo.newArchEnabled: false`, held deliberately — SDK 55 drops Legacy and that migration is its own future task) · `compileSdkVersion`/`targetSdkVersion` **36**, `minSdkVersion` **24** · `npm test` → **406 passed, 47 suites**. Details in [`docs/playbook.md`](docs/playbook.md).
 

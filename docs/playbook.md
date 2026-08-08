@@ -246,19 +246,39 @@ Shipping is automated (GitHub Actions + one-tap owner approval). **Agents NEVER 
 3. **Tag the final commit** of the shippable unit with the trailer as the last line(s) of the commit message, exactly:
    - `Release-Lane: ota`  — or —  `Release-Lane: build`
    (Putting it on the PROGRESS.md closeout commit is fine; CI reads the trailer from HEAD and diffs the whole push.)
-4. **Push `main`.** CI runs the test gate, then waits for the owner's one-tap approval, then ships: OTA (`eas update`) or build + auto-submit to closed testing (`alpha` track).
+4. **Push `main`.** CI runs the test gate, then waits for the owner's one-tap approval, then ships: OTA (`eas update`) or build + auto-submit to **internal testing** (`internal` track — changed 2026-08-08 from `alpha`/closed testing, because internal publishes in minutes and normally skips the full app review).
 5. **No trailer = nothing ships** — safe for work-in-progress pushes.
+6. **Reaching the public is a separate, manual act.** `internal` serves the owner only. Promote **internal → production** by hand in Play Console when a build is ready; that promotion *does* get the full review.
 
 Guardrails: a commit tagged `ota` that touched native files is auto-rejected by CI's backstop (re-tag as `build`). OTA reaches testers on **v5+** only. Rollback: owner runs the **Rollback OTA** workflow (Actions tab). Owner one-time setup (tokens/secrets/approval environment) is in the pipeline plan, [`docs/superpowers/plans/2026-06-07-streamlined-release-pipeline.md`](superpowers/plans/2026-06-07-streamlined-release-pipeline.md), Task 8.
 
 ### Ship lane — which fix ships how (decide per task)
 | What changed | Lane | Command | Play review? |
 | --- | --- | --- | --- |
-| JS / UI / copy / logic / JS assets only | **OTA** | `eas update --branch production --message "…"` | ❌ none (minutes) |
-| Native dep, permission, SDK/target, icon/splash, `app.config` native field, version bump | **Full build** | bump `android.versionCode` → `eas build -p android` → upload `.aab` | ✅ required |
+| JS / UI / copy / logic / JS assets only | **OTA** | `eas update --branch production --message "…"` | ❌ **never** — OTA does not touch Play at all (minutes) |
+| Native dep, permission, SDK/target, icon/splash, `app.config` native field, version bump | **Full build** | bump `android.versionCode` → `eas build -p android` → auto-submit to `internal` | 🟡 normally skipped on `internal`; ✅ required when promoted to production |
 
 - OTA only reaches builds **≥ versionCode 5**. The v4 build in review can't receive it — so the **first full build we push for improvements (versionCode 5) is what turns the OTA lane on** for everything after.
 - Tag every task with its lane so we batch OTA-able fixes and only rebuild when something native actually changes.
+
+### Play tracks — what each one is for (set 2026-08-08)
+
+| Track | Who | Review | Used for |
+| --- | --- | --- | --- |
+| `internal` | the owner only (cap 100) | normally none — live in minutes | **every automated build.** `eas.json` → `submit.production.android.track` |
+| `alpha` (closed testing) | the 12×14 gate cohort | ✅ hours–days | **frozen at vc11.** Gate already cleared 2026-07-29; kept, not fed |
+| `beta` (open testing) | public opt-in | ✅ hours–days | **abandoned at vc8.** See the compliance trap below |
+| `production` | the public | ✅ up to ~7 days | promoted **by hand** from `internal`, never automatically |
+
+**🔴 The trap that already bit once:** Play evaluates compliance against **the active release on every
+track**, not just the one you last shipped. Abandoned `beta`/vc8 and `internal`/vc5 (both `targetSdkVersion
+35`) are what kept the API-36 banner firing long after production was compliant. **Whenever a track stops
+being fed, either retire it or promote a current build onto it.** Feeding `internal` fixes its half
+automatically from the next build onward.
+
+**⚠️ `internal` is not a guarantee of no review.** Google still runs automated scans on every upload
+regardless of track — including the deprecated-API scan that flagged IMP-044 — and reserves the right to
+review any release. Treat "no review" as "usually none, and far faster", not as a contract.
 
 ### Release invariants (don't relearn these)
 - **runtimeVersion policy = `appVersion`, NOT `fingerprint`.** `fingerprint` is non-deterministic between this Windows dev machine and EAS's Linux servers (absolute paths + CRLF-hashed `node_modules` → mismatched hashes → OTA rejected). So OTA targets runtimeVersion = the `version` string.

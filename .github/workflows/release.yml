@@ -102,5 +102,9 @@ jobs:
         env:
           RC_ANDROID_KEY: ${{ secrets.RC_ANDROID_KEY }}
         run: node scripts/check-billing-config.js
-      - name: Build + auto-submit to closed testing
+      # Track is set in eas.json -> submit.production.android.track ("internal").
+      # Internal testing publishes in minutes and normally skips the full app
+      # review that closed/open/production go through. Promote internal ->
+      # production by hand in Play Console when a build is ready for the public.
+      - name: Build + auto-submit to internal testing
         run: eas build -p android --profile production --auto-submit --non-interactive
