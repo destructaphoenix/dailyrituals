@@ -1,32 +1,36 @@
 # Daily Rituals — Build Progress (live cursor)
 
 > **The memory between chats. Read top-to-bottom every chat — and keep it SMALL.** This file is only:
-> the backlog table, any **open** IMP spec(s), live blockers, and the **2 newest** session notes.
+> the backlog table, live blockers, and the **2 newest** session notes.
 >
+> - **Open IMP specs → [`docs/specs-open.md`](docs/specs-open.md).** The backlog table below links to each
+>   one. **Open the ONE spec you are building and no others** — every other spec in that file is for a
+>   different chat and reading it is wasted context.
 > - Stable reference (locked decisions, release + signing rules, parked phases 8/10b/11, config, architecture) → [`docs/playbook.md`](docs/playbook.md) — open only when you need it.
 > - Finished IMP specs + older session notes → [`docs/build-log.md`](docs/build-log.md). Git is the full record.
 > - How to drive a Sonnet chat → [`DEVGUIDE.md`](DEVGUIDE.md).
 >
-> **Size budget (hard rule):** the moment an IMP task is **code-complete** (don't wait for ship / runtime-walk), MOVE its full block to [`docs/build-log.md`](docs/build-log.md) and leave only its one-line row in the backlog table. If you ever see a ✅ task's full spec still inline here, archive it **before** committing. This is what keeps the file from bloating.
+> **Size budget (hard rule):** the moment an IMP task is **code-complete** (don't wait for ship / runtime-walk), MOVE its spec from [`docs/specs-open.md`](docs/specs-open.md) to [`docs/build-log.md`](docs/build-log.md) and leave only its one-line row in the backlog table below. Specs never live inline in this file. This is what keeps it from bloating.
 
 ---
 
 ## ▶️ ACTIVE TRACK
 
-The live work is the **first unchecked `IMP-xxx` task in the Improvements backlog** below — its full spec is inline (Opus scopes it there; no separate plan file). Work that, **not** the phase ladder (8 / 10b / 11), which is **parked in [`docs/playbook.md`](docs/playbook.md)** until the owner resumes it.
+The live work is the **first unchecked `IMP-xxx` task in the Improvements backlog** below — its full spec is in [`docs/specs-open.md`](docs/specs-open.md), linked from its backlog row. Work that, **not** the phase ladder (8 / 10b / 11), which is **parked in [`docs/playbook.md`](docs/playbook.md)** until the owner resumes it.
 
-> **Eight open tasks, all specced inline below. Recommended order — revised 2026-08-04:**
+> **Nine open tasks, all fully specced in [`docs/specs-open.md`](docs/specs-open.md). Recommended order — revised 2026-08-08:**
 >
 > **Quick + already broken in production: ✅ ALL DONE** (IMP-034, IMP-042, IMP-040 — code-complete, not yet shipped).
 > **Before anyone can pay:** **IMP-043** (recoverability — the lost-phone bug) ✅ **code-complete**, **IMP-039** (candles were fake, now real streak insurance) ✅ **code-complete** → **NEXT: IMP-041** (nothing in the app explains itself, and Plus is undiscoverable).
-> **The retrieval track:** **IMP-035 search** (the biggest single value gain in the codebase) → **IMP-036 edit/delete** → **IMP-037 moods**.
-> **Then:** **IMP-033** (restore consent, bigger build, already settled) → **IMP-038 "On this day"** (last — depends on 035 and 037).
+> **The retrieval track:** **IMP-035 search** (the biggest single value gain in the codebase) → **IMP-036 edit/delete** → **IMP-037 moods** → **IMP-047 deeper insights** (makes dead perk #5 real; needs 037).
+> **Then:** **IMP-033** (restore consent, bigger build, already settled) → **IMP-038 "On this day"** (perk #3) → **IMP-046 Annual Recap** (perk #4; needs 037 + 047).
+> **IMP-045 takes no queue slot** — small, independent, fixes the live "IMP-021 not properly completed" complaint. Take it in any chat where the queued task is blocked, or as its own short chat.
 >
 > **IMP-044 does NOT claim a slot in this queue.** It is config-only, already code-complete, and unbumped on purpose — it simply **rides whichever build is cut next**. Do not "start" it; the only thing it still needs is the device walk logged under Open items. Its existence changes exactly one thing for the tasks below: **the OTA lane is still open, so keep landing OTA work — the moment a `bump:native` happens, IMP-044 goes with it.**
 >
 > Sonnet takes **one** spec per chat, in this order, unless the owner says otherwise. **`PLUS_ENABLED` must not flip until IMP-039, -041 and -043 are done and every line of the perk table is true.**
 >
-> **Two owner decisions are still open and do NOT block the queue:** which IMP-021 shortfall to fix, and the **alpha → production promotion**. A third — whether to sell a consumable currency at all — is settled in principle (ember purchasing dropped, 2026-08-03) and must be finalised before `PLUS_ENABLED` flips. Product thesis governing all of this: [`docs/playbook.md`](docs/playbook.md) → "Why anyone would pay". It came out of the 2026-08-02 real-device walk: the OS restores a Google backup silently and without consent, and the app's notice only offers acceptance. IMP-022 (Save as PDF + About) stays **⏸ deferred by owner decision**; its spec sits in [`docs/build-log.md`](docs/build-log.md) → "⏸ Deferred specs" (still valid, not history) — do not start it without the owner reviving it. The **real-device walk is now DONE** for IMP-029/030/031/032; only **IMP-021** is outstanding there, rejected by the owner as "not properly completed" and awaiting a decision on which shortfall to fix.
+> **One owner decision is still open and does NOT block the queue:** the **alpha → production promotion**. (The IMP-021 shortfall question is **settled 2026-08-08** — the owner chose "fix both", now scoped as **IMP-045**.) A second — whether to sell a consumable currency at all — is settled in principle (ember purchasing dropped, 2026-08-03) and must be finalised before `PLUS_ENABLED` flips. Product thesis governing all of this: [`docs/playbook.md`](docs/playbook.md) → "Why anyone would pay". It came out of the 2026-08-02 real-device walk: the OS restores a Google backup silently and without consent, and the app's notice only offers acceptance. IMP-022 (Save as PDF + About) stays **⏸ deferred by owner decision**; its spec sits in [`docs/build-log.md`](docs/build-log.md) → "⏸ Deferred specs" (still valid, not history) — do not start it without the owner reviving it. The **real-device walk is now DONE** for IMP-029/030/031/032; only **IMP-021** is outstanding there, rejected by the owner as "not properly completed" — now scoped as **IMP-045**, both shortfalls in scope.
 
 **App status (2026-08-02): two tracks are live at once — mind which one you mean.**
 - **Production (the public): 🟢 v1.0.3 / versionCode 9**, approved and live since 2026-07-30. Carries IMP-027 (SDK 54 / API 36). **Google Play API-36 compliance (deadline 2026-08-31) is ✅ SHIPPED** — proven in production, a month early. The **BillDesk deadlock is ✅ UNBLOCKED**: the public Play Store URL PA-CB verification was asking for now exists.
@@ -40,7 +44,7 @@ The live work is the **first unchecked `IMP-xxx` task in the Improvements backlo
 
 ## 🔧 Improvements backlog (post-launch — ACTIVE TRACK)
 
-Opus scopes each owner-filed issue into a numbered `IMP-xxx` task (steps + commit message + ship lane all inline). Sonnet picks the **first unchecked** one, executes its steps in order, commits with the given message, ticks the boxes, archives the finished spec, and writes the Last session note.
+Opus scopes each owner-filed issue into a numbered `IMP-xxx` task — steps, tests, commit message and ship lane all written out in [`docs/specs-open.md`](docs/specs-open.md). Sonnet picks the **first unchecked** row, opens **only that one spec**, executes its steps in order, commits with the exact message given, ticks the row, moves the spec to `docs/build-log.md`, and writes the Last session note.
 
 | ID | Title | Lane | Status |
 | --- | --- | --- | --- |
@@ -60,7 +64,7 @@ Opus scopes each owner-filed issue into a numbered `IMP-xxx` task (steps + commi
 | IMP-018 | Today's reflection is editable — today only — prefilled, with a "Start fresh" reset | OTA | ✅ |
 | IMP-019 | Premium true-black AMOLED dark mode + rotating-rays hero, behind a one-line `DARK_THEME` revert flag | OTA | ✅ promoted |
 | IMP-020 | Backup / Restore — user-held JSON export (off-device) + restore-by-replace with auto safety copy; surface Android Auto Backup | Build | ✅ shipped + **device-verified 2026-07-30** — full detail in build-log |
-| IMP-021 | Lifetime Progress — evolve Insights into "Your record" (days remembered + totals + adaptive heatmap) above "Your patterns"; Home hero untouched | OTA→rode vc11 | 🟡 shipped vc11, **walked 2026-08-02 — owner: "not properly completed"**. Renders, but under review; see Open items |
+| IMP-021 | Lifetime Progress — evolve Insights into "Your record" (days remembered + totals + adaptive heatmap) above "Your patterns"; Home hero untouched | OTA→rode vc11 | 🟡 shipped vc11, walked 2026-08-02 — owner: "not properly completed". **Shortfall now scoped as [IMP-045](docs/specs-open.md#imp-045--finish-lifetime-progress-the-imp-021-shortfall)** |
 | IMP-022 | Wire the two dead You-tab buttons: **Save as PDF** (real keepsake export, Plus-gated) + **About Daily Rituals** (real about sheet). Both are currently `onPress={() => {}}` no-ops | Build | ⏸ **deferred 2026-07-31** (owner) — spec parked in build-log → "⏸ Deferred specs", still valid; not the active track |
 | IMP-023 | Dynamic daily text — rotating multilingual greeting (header, date-seeded) + daily reflection prompt (write card, no-repeat deck); fully offline; header → Layout A | OTA | ✅ code-complete — full detail in build-log |
 | IMP-024 | 🔴 Streak counts real consecutive days — derive from entries (breaks to 0 on a missed day; re-logging after a gap = 1, not prev+1) | OTA | ✅ code-complete — full detail in build-log |
@@ -72,185 +76,21 @@ Opus scopes each owner-filed issue into a numbered `IMP-xxx` task (steps + commi
 | IMP-030 | 🔴 Layout can't blow out, whatever the text — settings rows auto-stack instead of collapsing to a 1-char-per-line column; app-wide font-scale cap | OTA (A) + Build (B) → rode vc11 | ✅ **DONE** — shipped vc11 + **real-device verified 2026-08-02** — build-log |
 | IMP-031 | 🔴 **Daily reminder is real** — the You-tab row advertises "8:30 PM" to every live user and schedules nothing. Local, offline, opt-in reminder notifications | Build | ✅ **DONE** — shipped vc11 + **real-device verified 2026-08-02** — build-log |
 | IMP-032 | **Dev harness v2 — total control + inspection.** Every persisted/settings key reachable from a knob; the notification subsystem drivable *and observable*; hard-to-reach overlays openable; read-only inspector. Dev-only, never ships | Dev-only (no ship) | ✅ **DONE** — code-complete + **real-device walked 2026-08-02** — build-log |
-| IMP-033 | 🔴 **The restore is offered, not imposed** — quarantine an OS-restored backup, run the app as a genuine first install (onboarding and all), then offer the backup with fair warnings once onboarding is done | OTA | ⬜ **OPEN — spec inline below** |
+| IMP-033 | 🔴 **The restore is offered, not imposed** — quarantine an OS-restored backup, run the app as a genuine first install (onboarding and all), then offer the backup with fair warnings once onboarding is done | OTA | ⬜ **OPEN** → [spec](docs/specs-open.md#imp-033--the-restore-is-offered-not-imposed) |
 | IMP-034 | 🔴 **Hide "Gather Embers" while the app ships free** — the Shop sells ember packs at real cash prices ($1.99–$9.99) wired to no IAP at all, and the section is not gated by `PLUS_ENABLED`. Wrap it, exactly like the Plus banner beside it | OTA | ✅ code-complete — full detail in build-log |
-| IMP-035 | 🔴 **Search your journal** — there is no search anywhere; the archive is write-only. Full-text over `did`/`wished`, filter by mood and date. **Free forever** | OTA | ⬜ **OPEN — spec inline below** |
-| IMP-036 | **Custody of your words** — edit any past entry (not just today), delete an entry, and a 30-day trash. Core is **free**; *restoring* from trash is the Plus half | OTA | ⬜ **OPEN — spec inline below** |
-| IMP-037 | **Moods: custom + multiple per entry** — `mood: string` → `moods: string[]` plus user-defined feelings. **Free** (it is stored content). Makes the dead `PLUS_PERKS` #5 buildable | OTA | ⬜ **OPEN — spec inline below** |
-| IMP-038 | ✨ **"On this day"** — resurface what you wrote a year / months ago. **The first real Plus feature.** Needs IMP-035's retrieval layer first | OTA | ⬜ **OPEN — spec inline below** |
+| IMP-035 | 🔴 **Search your journal** — there is no search anywhere; the archive is write-only. Full-text over `did`/`wished`, filter by mood and date. **Free forever** | OTA | ⬜ **OPEN** → [spec](docs/specs-open.md#imp-035--search-your-journal) |
+| IMP-036 | **Custody of your words** — edit any past entry (not just today), delete an entry, and a 30-day trash. Core is **free**; *restoring* from trash is the Plus half | OTA | ⬜ **OPEN** → [spec](docs/specs-open.md#imp-036--custody-of-your-words-edit-delete-30-day-trash) |
+| IMP-037 | **Moods: custom + multiple per entry** — `mood: string` → `moods: string[]` plus user-defined feelings. **Free** (it is stored content). Unblocks IMP-047 | OTA | ⬜ **OPEN** → [spec](docs/specs-open.md#imp-037--moods-custom-feelings--multiple-per-entry) |
+| IMP-038 | ✨ **"On this day"** — resurface what you wrote a year / months ago. **Plus perk #3.** Needs IMP-035's retrieval layer + IMP-037's mood model | OTA | ⬜ **OPEN** → [spec](docs/specs-open.md#imp-038--on-this-day) |
 | IMP-039 | 🔴 **Streak-freeze candles do NOTHING** — nothing in the tree ever spends a freeze, and `currentStreak` has no freeze awareness at all. Buy 5 for 450 embers, miss a day, streak still breaks to 0. Two false claims in one Shop line | OTA | ✅ code-complete — full detail in build-log |
 | IMP-040 | 🟡 "Keepsake" means three different things — the daily-rites footer, the Achievements screen title, and the unbuilt PDF perk. Pick one meaning, rename the others | OTA | ✅ code-complete — full detail in build-log |
-| IMP-041 | 🟡 **Teach the app** — no tutorial beyond first-run onboarding; embers, candles, quests, levels and every Plus perk are unexplained and unlisted anywhere in-app | OTA | ⬜ **OPEN** |
+| IMP-041 | 🟡 **Teach the app** — no tutorial beyond first-run onboarding; embers, candles, quests, levels and every Plus perk are unexplained and unlisted anywhere in-app | OTA | ⬜ **OPEN — NEXT** → [spec](docs/specs-open.md#imp-041--teach-the-app) |
 | IMP-042 | 🐛 **The Keepsakes screen (from Home) does not scroll** — every other screen does; static reading does not explain it, so measure before theorising | OTA | ✅ code-complete — full detail in build-log |
 | IMP-043 | 🔴 **Recoverability pass** — a returning subscriber is shown as non-Plus and never re-checked; backup health is silent; the purchase makes an implied promise about data that is not kept | OTA | ✅ code-complete — full detail in build-log |
 | IMP-044 | 🟡 **The dev client ships to the public** — `expo-dev-launcher` bytecode (incl. its Compose UI) is inside the production AAB; Play's deprecated-API scan flagged it. Enable R8 so release builds drop unreachable code | Build | 🟢 **code-complete, NOT bumped, NOT walked** — config-only, rides the next build. **Not the active track** — full detail + walk checklist in build-log |
-
----
-
-## IMP-033 — the restore is offered, not imposed (quarantine + post-onboarding offer)
-
-**Lane: OTA** (pure JS — no new native module; `expo-application` is already in the tree since IMP-029). Reaches **testers only** until vc11 is promoted.
-
-**Owner's ask, verbatim (2026-08-02, after the IMP-029 device walk):** *"The app should run as if it was installed for the first time, with the welcome and everything. And then once that is done, the user should be given a pop up or prompt that there is a backup detected — would they like to load that up instead? Along with the fair warnings."*
-
-### Why this replaces the current behaviour
-
-IMP-029 detects an OS restore and shows a notice — but by then the restored data **is already the app's live state**, and the notice's only two actions are *Got it* (accept) and *Restore from a file* (replace from JSON). There is no way to decline. The walk proved the failure mode is real and not rare: the restore was **stale (2 entries against the 5 that were live)**, imposed without a prompt, and the user's only escape was to go hunting for You tab → Reset all data.
-
-**What is NOT fixable, and must not be attempted:** intercepting the restore itself. Android Auto Backup writes the data at **install time, inside the OS**, before the app's first line of JS runs; `BackupAgent.onRestoreFinished()` fires only *after* it has landed. There is no prompt-before-restore API. The only OS lever is `allowBackup: false` ([`app.config.js:49`](app.config.js#L49)), which would delete IMP-006 entirely. So the fix is to **quarantine** what the OS forced on us and hand the decision back to the user.
-
-### Does Android already ask? Only in one of the two paths — get this right
-
-There are **two different restore paths** and they have opposite consent properties. An earlier note in this file blurred them; the precise position:
-
-- **New phone / post-factory-reset.** Android's setup wizard **does** show a restore screen ("Copy apps & data" → pick a source device → optionally deselect apps). So there *is* consent — but it is a **device-level bulk choice about dozens of apps at once**, made by a user who is not thinking about this app, and it says **nothing about how old the data is**. Most people tap through it.
-- **Reinstalling on the same device** — uninstall, then install again. **Android asks nothing at all.** The restore is completely silent. **This is the path the owner hit on 2026-08-02**, and it is the one with genuinely zero consent.
-
-So the honest case for IMP-033 is *not* "Android never asks". It is: **the reinstall path has no consent whatsoever, and neither path ever discloses staleness.** The disclosure half is the larger win, and it applies to both paths.
-
-### ⚠️ Trade-off, stated plainly — and REAFFIRMED by the owner
-
-On a genuine **new phone**, the user today gets their journal back with zero friction — arguably the delight IMP-006 was built for. Under IMP-033 they do **onboarding first**, then get offered it. That is a real regression in the new-phone path, bought to gain consent in the reinstall path. Mitigate with warm, unmistakable copy — the offer must read as "your journal is here, want it back?" and never as an error.
-
-**Decision is settled — do not reopen it.** On 2026-08-02 the owner challenged the premise directly ("android asks restore from backup? if it does then why are we even bothering?"), was shown the full counter-case — that new-phone setup *does* ask, that a cheaper **disclosure-only** alternative (keep the restore, add a "Start fresh" action + the newer-export comparison to the existing notice) would capture most of the value at roughly half the work and with no new-phone regression, and that this was the recommendation — and **chose quarantine + offer anyway.** Build it as specced.
-
-### 🚫 What this task does NOT do — it cannot guarantee the backup is current
-
-**Android Auto Backup hands the app exactly one copy: the last one the OS uploaded.** There is no version history, no "fetch the newest" API, no way to list or choose among backups — and the app does not even receive it, it is simply *already in AsyncStorage* at first launch. The OS uploads at most **once per 24h** and only while **idle + charging + on unmetered Wi-Fi**, so a copy that is 24h — or many days — behind is the normal case, not the exception. There is also **no way to force a fresh backup from inside the app**: native `BackupManager.dataChanged()` only *requests* one and is still subject to the same throttle and conditions, and Expo does not expose it.
-
-**Therefore "make sure the restore is the latest" is not achievable by any design.** The only honest remedy is disclosure, which is what both IMP-029 and this task do — and the only genuinely user-controlled fresh copy is the **JSON export**, which is why step 6's copy fix matters more than it looks.
-
-**Consequence for the offer sheet (do not drop this):** the stash carries the persisted `lastBackupAt` (the user's last JSON export) alongside `lastSavedAt` (the Google copy's age). When the export is the **newer** of the two, the sheet must say so and lead with the file route — otherwise the app would talk a user into loading the staler of two backups it can see.
-
-### Design
-
-**1. Quarantine on launch — [`App.js`](App.js), inside the existing load effect (~lines 55–75).**
-
-The `isRestoredInstall` check already there stops calling `setRestoredFromMs` and instead quarantines. **Order is safety-critical — the stash must be durable before anything is cleared:**
-
-1. Read the **raw** payload string (`AsyncStorage.getItem(KEY)`), not the deserialized slice — stash it losslessly.
-2. Write it to a new key `dailyrituals:v1:pendingRestore`.
-3. **Read it back and verify it parses.** If the write or the read-back fails, **abort the quarantine entirely** and fall through to today's IMP-029 behaviour (live data + the old notice). Never clear the main key on an unverified stash. This mirrors `runConfirmedImport`'s existing "recovery copy must succeed before the destructive step" guarantee.
-4. `clearState()` the main key.
-5. Hydrate as a fresh install — `onboarded` stays `false`, `hydrated` is the default slice. `hasCompletedOnboarding(null)` already returns `false` ([`onboarding.js:11`](src/persistence/onboarding.js#L11)), so onboarding shows with no change to that module.
-
-**Idempotent by construction.** Killed between steps 2 and 4? Next launch still sees `installedAt > lastSavedAt`, re-stashes (overwriting), and proceeds. Killed after step 4? Main key is empty, so there is no `lastSavedAt`, no re-detection — and the offer fires off **stash presence**, not session state (see below), so nothing is lost.
-
-**2. The offer — fires on stash presence AND onboarding complete, never on session state.**
-
-Condition: `pendingRestore` exists && `onboarded === true`. Evaluate it on every launch and on the `onDone` transition at [`App.js:120`](App.js#L120) — so a user who is killed mid-onboarding, or who declines and relaunches, still gets it. Do **not** tie it to the same session that quarantined.
-
-**3. New sheet `src/screens/RestoreOffer.js`** — presentational, props in / callbacks out, same scrim-and-card shape as [`RestoreNotice.js`](src/screens/RestoreNotice.js) (reuse its `GhostButton`; extract to `src/ui.js` if it's now shared).
-
-Copy — warm, and every warning stated:
-- Title: **"We found your journal."**
-- Body: `Your journal was backed up to your Google account on {formatBackupDate(stash.lastSavedAt)}. You can load it now.` then, as distinct warning lines: **it replaces everything you've just set up** (your name, theme, and anything written since installing) · **it's from {date}** — anything written after that isn't in it.
-- **Three** actions, not two: **Load my journal** (primary) · **Restore from a file** (ghost — routes to the existing `doImport` picker) · **Keep this fresh start** (ghost). Dropping the file route would make this sheet strictly worse than the IMP-029 notice it replaces.
-- **Freshness comparison (required).** Read `stash.lastBackupAt` (the user's last JSON export) next to `stash.lastSavedAt` (the Google copy). When the export is **newer**, invert the emphasis: say so in one line — `You also exported a file on {date}, which is newer` — and promote **Restore from a file** to primary. The app must never talk a user into loading the staler of two backups it can already see.
-
-**4. Actions.**
-- **Load** → `Alert.alert` confirm → `backupIO.writeRecovery(createBackup(currentSlice))` **before** anything is replaced (same guarantee as above) → `deserialize(stash)` → route through the existing `handleReplaceAllData` (it already saves + bumps `dataKey` to remount) → delete the stash → done.
-
-**🔴 The sheet MUST name the paid inventory in the stash.** `embers`, `ownedPalettes`, `ownedSkies` and `freezes` are **local-only with no recovery path of any kind** (see the 10b blockers under Open items) — no server holds them, so a user who declines and later discards the stash has destroyed purchased goods permanently. The offer must read the stash and say what is in it — e.g. *"including 1,500 Embers, 4 palettes and 3 candles"* — so "Keep this fresh start" is an **informed** choice, and the discard confirm must repeat it. This is why the decline path keeps the stash rather than deleting it; that rule is not negotiable. (Costs nothing today — `PLUS_ENABLED = false` ⇒ zero paying users — but IMP-033 ships before 10b and must not be the thing that eats someone's purchase later.)
-
-**Plus subscriptions are NOT affected and must not be "restored" from the stash.** The entitlement lives with RevenueCat / the user's Google account, so it survives the quarantine independently. Do not copy `plus` out of the stash as though it were authoritative — re-query the entitlement instead. The related launch-time re-check gap is logged as its own 10b blocker; **if it is still open when this task is built, the offer sheet is the wrong place to paper over it.**
-- **Keep this fresh start** → **do not delete the stash.** Surface it instead as a new row in the You tab's "Your journal is safe" card: `Google backup — {date}` → reopens this same sheet, plus a **Discard it** action (confirmed) that deletes the stash. A one-shot destructive dismissal is exactly the trap this task exists to remove.
-
-**5. IMP-029's `RestoreNotice` stays** — it is still the correct surface for the abort path in step 3, and for old installs whose payload predates the `lastSavedAt` stamp. Do not delete it.
-
-### Steps
-
-- [ ] 1. New pure `src/persistence/restoreQuarantine.js`: `shouldQuarantine({ lastSavedAt, installedAt })` (delegates to `isRestoredInstall`) and `shouldOfferRestore({ hasStash, onboarded })`. **RED first.**
-- [ ] 2. Stash IO in `src/persistence/storage.js`: `readPendingRestore()` / `writePendingRestore(raw)` / `clearPendingRestore()` / `readRawState()`, each `try/catch` → falsy on failure, matching the file's existing shape. No throwing.
-- [ ] 3. `App.js` quarantine sequence per Design §1, with the verified-read-back abort.
-- [ ] 4. `src/screens/RestoreOffer.js` + wire the offer condition per §2.
-- [ ] 5. Load / decline / discard actions per §4, including the You-tab row.
-- [ ] 6. Copy fix (bundled, from the same walk): the export flow never says the Google backup is a **separate** system. Add one line to the `explainAutoBackup` alert ([`RitualsApp.js:385`](src/RitualsApp.js#L385)) and to the export confirmation making clear that **"Back up my journal" does not refresh the Google backup** — the owner hit exactly this and misread a correct restore as a stale-data bug.
-- [ ] 7. `npm test` (expect **367 + new**), `npx expo export --platform android` clean, update PROGRESS + archive this spec to build-log.
-
-### Tests (pure only, per project convention)
-
-`shouldQuarantine` (inherits `isRestoredInstall`'s 7 cases — assert delegation, don't duplicate) · `shouldOfferRestore` (stash+onboarded → true; stash+not-onboarded → false; no stash → false either way) · **`preferredSource({ lastSavedAt, lastBackupAt })` → `'google' | 'file'`** (export newer → `'file'`; Google newer → `'google'`; export missing/equal → `'google'`; non-numeric either side → `'google'`, no coercion) · a `storage` round-trip case (write → read → clear) · a regression case asserting a **failed stash write leaves the main key intact**. No render tests for the sheet (same non-goal as every other sheet in the app).
-
-### Commit message
-
-```
-feat(restore): offer an OS-restored backup instead of imposing it (IMP-033)
-
-Android Auto Backup restores at install time, inside the OS, with no
-way to prompt first. Quarantine what it forces on us: stash the raw
-payload, clear the live key, run a genuine first install, then offer
-the backup once onboarding is done, with the staleness and
-replacement warnings stated.
-
-The stash is verified readable before the live key is cleared, and
-declining keeps it — reachable later from the You tab — so no single
-tap can destroy a journal.
-
-Release-Lane: ota
-```
-
-**Ship:** OTA. No `bump:*`. The trailer above ships it **to testers only** (`runtimeVersion` = `appVersion` = 1.0.5). Omit the trailer for WIP.
-
----
-
-## IMP-035 — search your journal   ·   Lane: OTA   ·   **FREE forever**
-
-**Why first among the new work:** there is **no search anywhere** in the tree. A user with 400 entries cannot find one. The archive is write-only — a category-level failure for a journal, and it blocks every "revisit your past" sale built on top of it (product thesis: [`docs/playbook.md`](docs/playbook.md)).
-
-- **Pure core:** `src/insights/search.js` — `searchEntries(entries, { text, moods, from, to })` → filtered, newest-first. Case- and diacritic-insensitive substring over `did` + `wished`; `moods` matches any; `from`/`to` are inclusive `dayKey` bounds. Empty query returns everything (the list *is* the default view). **No regex built from user input**, no fuzzy matching in v1 — a normalised `includes` is correct, fast at journal scale, and cheap to test.
-- **UI:** search field at the top of the Reflections tab, a mood chip row, a date-range control. Results reuse the existing entry row + `ReadingSheet`. Empty-result copy on-voice, not an error. Match highlighting is **out of scope** for v1.
-- **Never gate this.** It is custody of the user's own words — free even after `PLUS_ENABLED` flips.
-- **Tests:** empty query returns all · text matches across both fields · case/diacritic folding · mood filter single + multi · date bounds inclusive both ends · combined filters · no matches → `[]` · malformed entries (missing `did`/`wished`/`mood`) never throw.
-- **Commit:** `feat(search): full-text + mood + date search over the journal (IMP-035)` · `Release-Lane: ota`
-
----
-
-## IMP-036 — custody of your words: edit any day, delete, 30-day trash   ·   Lane: OTA
-
-**Answers the owner's question — "how do you edit/delete a day that's already gone?"** Mechanically trivial: entries are `dayKey`-keyed objects in an array, so edit replaces one and delete removes one. The spec exists for the **derived state**:
-
-- **Editing text is completely safe.** Nothing derived reads entry *text*, so changing `did`/`wished`/`moods` on any past day has zero side effects. Ship without ceremony.
-- **Deleting is not, and the app must say so.** `currentStreak` is **derived from entries** (IMP-024), so deleting a mid-run entry **retroactively breaks the streak** — drop one entry from three days ago and a 40-day streak becomes 3. That is *correct* (the alternative is storing a lie, which is exactly what IMP-024 removed) but it will feel punitive, so the delete confirm must **state the consequence with the real new number**, computed before the user commits. `deriveAchievements` can un-earn a badge the same way — same warning.
-- **Do NOT claw back XP or embers.** They are persisted counters, not derived, and the user genuinely lived that day. The asymmetry with the streak is deliberate — comment it in code so nobody "fixes" it later.
-- **🚫 Editing is NOT back-filling.** A user may edit a day they *wrote*; they may **not create** an entry for a day they missed. Back-filling would let anyone fabricate a streak — precisely what IMP-024 exists to prevent — and would make the 💀 missed-day marker (IMP-014) a lie. Enforce structurally: the edit path opens only from an existing entry.
-- **The Plus half is UNDELETE, not delete.** Deleted entries go to a **30-day trash** (new `trash` key in `PERSISTED_KEYS`, pruned on launch). **Deleting is free. Restoring from trash is Plus** — keeping a safety copy is genuinely our work, whereas charging to delete would be charging someone to un-write their own grief. Restoring re-derives the streak automatically; no special case.
-- **Tests:** `pruneTrash` drops >30d and keeps the exact 30d boundary · `applyDelete` moves the entry and leaves xp/embers untouched · a `currentStreak` case proving a mid-run delete breaks the run · an edit-text case proving streak/xp are unaffected · back-fill unreachable through the exposed API.
-- **Commit:** `feat(entries): edit any past entry, delete with a 30-day trash (IMP-036)` · `Release-Lane: ota`
-
----
-
-## IMP-037 — moods: custom feelings + multiple per entry   ·   Lane: OTA   ·   **FREE**
-
-**The owner asked for this as a Plus feature. Recommendation: build it FREE.** Reverse it if you disagree — but read the trap first.
-
-- **Model change:** `mood: string` → `moods: string[]`. `MOODS` ([`data.js:38`](src/data.js#L38)) stays the suggested 8; users may add their own. `moodEmoji` already returns `''` for unknown values ([`data.js:51`](src/data.js#L51)), so custom feelings degrade to no-emoji rather than breaking. Persist the user's custom list in `settings` so it is offered again.
-- **⚠️ Migration is the whole risk.** Every existing entry has a single `mood` string, and `mergeWithDefaults` is a shallow top-level spread that will **not** reach inside `entries` — so this needs a real migrator (`mood: 'Tender'` → `moods: ['Tender']`) plus every reader updated in the same pass: Insights mood mix, all `moodEmoji` call sites, `ReadingSheet`, the write flow. **An entry is the user's writing; a botched migration is unrecoverable.** A `serialize`/`deserialize` round-trip test is mandatory, and so is a case for an entry that already has `moods`.
-- **Insights:** mood mix counts one mood per entry today; with arrays an entry contributes to several. Say the denominator honestly in the UI — percentages will no longer sum to 100.
-- **⚠️ Why NOT Plus — the downgrade cliff.** A mood is **stored content**, part of what the user wrote. If custom/multi moods are paid, a lapsed subscriber's entry tagged `['restless','proud']` renders as… what? One mood? None? Every answer either lies about their entry or hides it — breaking the "never lose access to what you wrote" line that is this app's structural defence against exactly the money grievances raised earlier. **Principle worth locking: gate compute, never content.**
-- **✅ Charge for interpretation instead — it is the better business.** Build expression free, then sell **analysis**: mood correlations, seasonal patterns, "your year in feelings" in the Annual Recap. That is `PLUS_PERKS` #5 *("Deeper insights — moods & seasonal themes")*, **currently dead** — so shipping this free is what finally makes an already-sold perk real. Richer input *feeds* the paid layer instead of competing with it.
-- **Commit:** `feat(moods): multiple + custom feelings per entry, with migration (IMP-037)` · `Release-Lane: ota`
-
----
-
-## IMP-038 — "On this day"   ·   Lane: OTA   ·   ✨ **the first real Plus feature**
-
-**Build last of this group** — depends on IMP-035's retrieval layer and IMP-037's mood model.
-
-- **What:** on opening the app, surface what the user wrote on this date in previous years — and, until they have a year of history, at 6 / 3 / 1 months back. Pure lookup: `onThisDay(entries, todayKey)` → matching entries plus a human label ("A year ago today", "6 months ago").
-- **Why this one is worth money.** It is **worthless on day 1 and priceless on day 400** — exactly the shape the product thesis requires of the paid tier. It is the most-loved feature in comparable journals, and it is already in this app's voice: IMP-013's *"Tend an old grave"* rite gestures straight at it.
-- **Free/paid line:** a user can always *reach* any past entry — that is IMP-035, free. Plus is the app **bringing it to them unprompted**: the surfacing, the anniversary framing, and later a reminder that says "a year ago today you wrote…". Our work, not their words.
-- **Placement:** a card on Home above the write card, shown only on days with a match — never an empty state. Dismissible per day.
-- **Tests:** exact year-ago match · multiple years at once · month fallbacks · leap day (29 Feb must not false-match 28 Feb) · empty history · same-day-multiple-entries.
-- **Commit:** `feat(memory): "On this day" resurfacing (IMP-038)` · `Release-Lane: ota`
-
----
-
-## IMP-041 — teach the app   ·   Lane: OTA
-
-Owner: *"need to make the app easy to use for everyone. Need tutorials and stuff, same for the perks that are not listed anywhere in the app right now."* Confirmed: beyond first-run `Onboarding.js` there is **no explanatory surface anywhere** — embers, candles, quests, XP/levels, achievements, the streak rules and every Plus perk are unexplained. `PLUS_PERKS` renders **only inside the paywall**, which is hidden entirely while `PLUS_ENABLED = false` — so today a user cannot discover what Plus even is.
-
-Scope, cheapest first: **(1)** a "How it works" section in the You tab — one short explainer per concept (streak · embers · candles · rites · levels · achievements), reusing the `explainAutoBackup` `Alert` pattern already in the tree. **(2)** First-use coach marks on the three screens users land on, dismissed permanently via a persisted `seenTips` set. **(3)** A **"What's in Plus"** page reachable *outside* the paywall, so the offer is discoverable before there is a price attached. **(4)** Empty states that teach rather than apologise. **Do not** build a multi-step tutorial carousel — this is a journaling app; the fastest path to value is writing one entry.
+| IMP-045 | 🟡 **Finish Lifetime Progress** — the IMP-021 shortfall the owner rejected on the device walk: the heatmap paints missed days and never-started days identically (contradicting IMP-014), and `xpEarned` is computed but never rendered. **Both** are in scope | OTA | ⬜ **OPEN — no queue slot** → [spec](docs/specs-open.md#imp-045--finish-lifetime-progress-the-imp-021-shortfall) |
+| IMP-046 | ✨ **Annual Recap — "your year, remembered"** — roadmap piece C. One page per completed year: days, words, longest streak, top moods, milestones. **Plus perk #4.** Absorbs IMP-021's deferred milestone timeline | OTA | ⬜ **OPEN** — needs IMP-037 + IMP-047 → [spec](docs/specs-open.md#imp-046--annual-recap-your-year-remembered-perk-4) |
+| IMP-047 | ✨ **Deeper insights — the analysis layer** — `InsightsScreen` has **zero** `plus` checks; free and Plus see identical insights. Mood-by-weekday, seasonal patterns, mood pairings. **Plus perk #5** | OTA | ⬜ **OPEN** — needs IMP-037 → [spec](docs/specs-open.md#imp-047--deeper-insights-the-analysis-layer-perk-5) |
 
 ---
 
@@ -267,7 +107,7 @@ Scope, cheapest first: **(1)** a "How it works" section in the You tab — one s
   - ✅ **IMP-030 — PASSED on a real device.** The ~4% anchor-1 margin (235 vs 245dp) held on real font metrics; no need to lower the `0.48` glyph ratio.
   - ✅ **IMP-031 — PASSED on a real device**, including the backgrounded case (the one the emulator could not settle, since without `setNotificationHandler` a foregrounded reminder shows nothing on Android).
   - ✅ **IMP-032 — harness walked on a real device.** Sections, knobs, Apply/confirm and the Inspector all exercised.
-  - 🟡 **IMP-021 — walked, but the owner reports it is "not properly completed."** It renders and shows real progress; the exact shortfall is being pinned down (see the dedicated block below). Do **not** treat this row as done.
+  - 🟡 **IMP-021 — walked, but the owner reports it is "not properly completed."** It renders and shows real progress; **both shortfalls are now pinned down and scoped as [IMP-045](docs/specs-open.md#imp-045--finish-lifetime-progress-the-imp-021-shortfall)** (see the dedicated block below). Do **not** treat this row as done until IMP-045 ships.
   - 🆕 **IMP-044 — a NEW walk debt, and a different kind: the first minified build.** R8 is now on for release builds only (config-only change, 2026-08-08). `npm test` cannot prove it — Jest never exercises R8, and **the failure mode is silent stripping at runtime, not a compile error.** Whenever the next build is cut, the walk must cover every reflection-facing surface: reminder fires + tap routes (IMP-031) · paywall live prices + Restore purchases (IMP-028) · JSON export **and** restore (IMP-020) · `eas update` applies · SVG icons · fonts · restore notice (IMP-029). Also confirm the win: bundle explorer shows **no `expo.modules.devlauncher` classes**. Checklist + full rationale in [`docs/build-log.md`](docs/build-log.md) → IMP-044.
   - ✅ **IMP-029 — PASSED on a real device.** The owner ran a true uninstall → reinstall cycle; Auto Backup restored silently at install time and the app fired the "Welcome back." notice naming the backup's date. The restored data was **stale (2 entries vs the 5 that were live)** — which is the feature working, not failing: that staleness is exactly the hazard the notice exists to announce. Two follow-on findings came out of the walk (see below). Procedure kept in [`docs/build-log.md`](docs/build-log.md) → IMP-029 → "Device-walk procedure" for future regressions.
 
@@ -278,7 +118,7 @@ The owner's words: *"the app is restored automatically (with no option given to 
 - **Not fixable — the restore itself.** Android Auto Backup restore happens **at install time, inside the OS**, before the app's first line of JS runs. There is no API to prompt before it, intercept it, or defer it. `BackupAgent.onRestoreFinished()` fires *after* the data has already landed. The only OS-level lever is `allowBackup: false` in [`app.config.js:49`](app.config.js#L49), which deletes the whole "new phone, my journal came back" feature IMP-006 was built for. **Do not propose an "ask before restoring" flow — it cannot be built.**
 - **Fixable — what happens next.** [`RestoreNotice.js`](../src/screens/RestoreNotice.js) offers exactly two actions: **Got it** (accept) and **Restore from a file** (replace from JSON). There is **no way to reject the restored data**. A user handed a stale restore who wants to start clean has to find You tab → Reset all data on their own, and the notice never mentions it.
 
-**✅ RESOLVED — scoped as [IMP-033](#imp-033--the-restore-is-offered-not-imposed-quarantine--post-onboarding-offer), the open task.** The owner rejected a mere "Start fresh" button in favour of a stronger design: **quarantine** the OS-restored payload, run the app as a genuine first install (onboarding and all), then **offer** the backup with fair warnings once onboarding is done. Full spec inline above.
+**✅ RESOLVED — scoped as [IMP-033](docs/specs-open.md#imp-033--the-restore-is-offered-not-imposed), an open task.** The owner rejected a mere "Start fresh" button in favour of a stronger design: **quarantine** the OS-restored payload, run the app as a genuine first install (onboarding and all), then **offer** the backup with fair warnings once onboarding is done. Full spec in [`docs/specs-open.md`](docs/specs-open.md).
 
 ### 🟡 Finding 2026-08-02 — "Back up my journal" says nothing about the Google backup at the moment of use
 
@@ -292,16 +132,16 @@ Owner: *"When I press 'Backup my journal' it gives me the option to send or shar
 - **IMP-027 (SDK 54) — ✅ PASSED.** Edge-to-edge is clean across the app; no status/nav-bar overlap on any custom header or the tab bar. This was the highest-risk item in the SDK 54 upgrade (Android 16 forces edge-to-edge and SDK 54 can no longer opt out) and it is now closed.
 - **IMP-020 (Backup / Restore) — ✅ PASSED.** JSON export → share out (owner uploads to Drive manually) → restore from the file all work.
 - **IMP-006 (Android Auto Backup) — ✅ PASSED, with a UX finding.** Uninstall → reinstall **did** auto-restore with no login, which is exactly the feature. The restored data was **stale ("older data before today")** — that is the documented Android Auto Backup contract, **not a defect**: it runs at most **once per 24h**, and only while the device is **idle + charging + on unmetered Wi-Fi**, so anything written since the last successful backup is not in it. Config is correct (`android:allowBackup="true"`, no custom rules, per the IMP-006 spec). **The real problem is that the restore is silent** — see the open finding below.
-### 🟡 IMP-021 (Lifetime Progress) — walked 2026-08-02, owner says it is NOT properly done
+### ✅ IMP-021 (Lifetime Progress) — walked 2026-08-02, owner says it is NOT properly done → **scoped 2026-08-08 as [IMP-045](docs/specs-open.md#imp-045--finish-lifetime-progress-the-imp-021-shortfall)**
 
-The section **renders** and the owner "sees some progress," so this is a completeness question, not a crash. Two concrete deviations from the approved design ([`docs/superpowers/specs/2026-06-14-lifetime-progress-design.md`](superpowers/specs/2026-06-14-lifetime-progress-design.md)) were found by re-reading the code against the spec — either may be what looks unfinished:
+The section **renders** and the owner "sees some progress," so this is a completeness question, not a crash. Two concrete deviations from the approved design ([`docs/superpowers/specs/2026-06-14-lifetime-progress-design.md`](superpowers/specs/2026-06-14-lifetime-progress-design.md)) were found by re-reading the code against the spec. **The owner chose to fix BOTH (2026-08-08), so there is no decision left here** — both are in IMP-045's Steps:
 
 1. **`xpEarned` is computed and never rendered.** Design §4 says "`xpEarned` is surfaced quietly (e.g. in the level context line or a tile subtitle)". `deriveLifetime` returns it; [`InsightsScreen.js:80`](../src/screens/InsightsScreen.js#L80) prints only `Lv N · levelName · activeSpan`. Nothing in the app shows lifetime XP on this screen.
 2. **The heatmap draws `missed` and `empty` identically** — [`LifetimeHeat`](../src/screens/InsightsScreen.js#L176) computes `has = !(missed || empty || future)` and paints every non-`has` cell as the same transparent bordered box. So a genuinely-missed day is indistinguishable from a day before the user started, and there are **no month/date labels and no legend**. On a short history this reads as a wall of blank squares — plausibly the "doesn't look finished" impression. It also contradicts IMP-014, which established 💀 for genuinely-missed days on the *other* two grids (week strip + Reflections heatmap).
 
-Not defects, by explicit design decision — do not "fix" these: the **milestone timeline is deferred to roadmap piece C** (Annual Recap), the **Home hero is untouched on owner constraint**, and the **"Days kept" / "This month" tiles were deliberately removed** (spec §2). Row count is uncapped (one week-row per week since the first entry) — intended "grows over time", but worth a look on a long history.
+Not defects, by explicit design decision — do not "fix" these: the **milestone timeline is deferred to roadmap piece C**, now scoped as **IMP-046** (Annual Recap), the **Home hero is untouched on owner constraint**, and the **"Days kept" / "This month" tiles were deliberately removed** (spec §2). Row count is uncapped (one week-row per week since the first entry) — intended "grows over time", but worth a look on a long history.
 
-**Next step:** owner confirms which of the above (or something else) is the shortfall, then Opus scopes it as IMP-033.
+**Next step:** build **IMP-045** — it takes no queue slot, so any chat can pick it up.
 
 ### 🔎 The auto-restore is silent — ✅ scoped and code-complete as **IMP-029** (full detail in build-log; unwalked on-device)
 
@@ -349,8 +189,8 @@ The owner asked this after the purchase-recovery audit: *"I am questioning if I 
 | 1 | **Every palette & sky — unlocked forever** | `tier: 'plus'` items | ✅ already real |
 | 2 | **Streak insurance — a candle spends itself when you miss a day** | IMP-039 (a) | ✅ built — replaces the false "3 candles every month" |
 | 3 | **On this day — your own words, brought back to you** | IMP-038 | ⬜ specced |
-| 4 | **Your year, remembered — the Annual Recap** | roadmap C | ⬜ unspecced |
-| 5 | **Deeper insights — moods, seasons and your rhythms** | IMP-037 → analysis layer | ⬜ makes dead perk #5 real |
+| 4 | **Your year, remembered — the Annual Recap** | **IMP-046** (was "roadmap C, unspecced") | ⬜ specced 2026-08-08 |
+| 5 | **Deeper insights — moods, seasons and your rhythms** | **IMP-047**, over IMP-037's data | ⬜ specced 2026-08-08 — makes dead perk #5 real |
 | 6 | **Your Book — your days, as a PDF** | IMP-022 Part A (BUILD lane) | ⬜ deferred, revive |
 
 **Cut outright: "Your whole graveyard, kept forever"** — no history limit exists, so it sells relief from a restriction that was never built, and building one would violate the never-gate-their-words line. **Cut, do not implement.**
@@ -376,14 +216,15 @@ Also worth doing and nearly free: **"gift a year" via Play promo codes** — no 
 **B — the build window (spend the BillDesk wait here), in order:**
 5. **IMP-035 search** — free; the free tier must carry someone to ~day 60 or there is no paying moment.
 6. **IMP-036 edit/delete** · 7. **IMP-037 moods** — the second unlocks the dead perk #5.
-8. **Make perk #5 real** — deeper insights: mood correlations + seasonal patterns, computed over IMP-037's data.
-9. **Revive IMP-022 Part A** — Your Book (the PDF export), i.e. perk #4. Already sold; still no PDF code in the tree. **BUILD lane** (new native module).
-10. **IMP-038 "On this day"** — the first genuinely *new* paid feature. Everything above it is debt repayment.
+8. **IMP-047 — deeper insights** (perk #5 made real): mood-by-weekday, seasonal patterns, mood pairings over IMP-037's data. **Specced 2026-08-08.**
+9. **Revive IMP-022 Part A** — Your Book (the PDF export), i.e. perk #6. Already sold; still no PDF code in the tree. **BUILD lane** (new native module).
+10. **IMP-038 "On this day"** (perk #3) — the first genuinely *new* paid feature. Everything above it is debt repayment.
+11. **IMP-046 — Annual Recap** (perk #4). Last of the perk work: it needs both IMP-037's moods and IMP-047's counting, and it absorbs IMP-021's deferred milestone timeline. **Specced 2026-08-08.**
 
 **C — owner/commercial, in parallel with B:**
-11. **Chase BillDesk.** Watch `onboarding@billdesk.com` and Play Console → Payments profile. This is the critical path; everything else is slack.
-12. **Decide pricing, including the India tier.** $29.99/yr is not defensible for today's Plus; it is defensible for the one B produces. ≈₹2,500 needs its own thought — Play local tiers, not just the USD figure.
-13. **Decide the trial.** The "7-day free trial" claim is hardcoded in `Paywall.js` + `PlusFlow.js` `LegalFooter`. Either configure a real 7-day offer on the Play base plan or change the copy. **Never ship it unverified.**
+12. **Chase BillDesk.** Watch `onboarding@billdesk.com` and Play Console → Payments profile. This is the critical path; everything else is slack.
+13. **Decide pricing, including the India tier.** $29.99/yr is not defensible for today's Plus; it is defensible for the one B produces. ≈₹2,500 needs its own thought — Play local tiers, not just the USD figure.
+14. **Decide the trial.** The "7-day free trial" claim is hardcoded in `Paywall.js` + `PlusFlow.js` `LegalFooter`. Either configure a real 7-day offer on the Play base plan or change the copy. **Never ship it unverified.**
 
 **D — the gate before `PLUS_ENABLED` flips. All must be true:**
 - [ ] Every line in `PLUS_PERKS` is real (or deleted)

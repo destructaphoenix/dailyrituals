@@ -364,7 +364,13 @@ Fill these in `.env` (copy from `.env.example`, created in Phase 4) and record t
 
 ---
 
-## IMP task template (Opus copies this per issue into PROGRESS.md, fills it, adds a backlog-table row, hands to Sonnet)
+## IMP task template (Opus copies this per issue into `docs/specs-open.md`, fills it, adds a backlog-table row in `PROGRESS.md` linking to it, hands to Sonnet)
+
+**Minimum bar for a spec Sonnet can execute without deciding anything** — every one of these must be
+present, or it is not ready to hand over: a **numbered Steps checklist** (RED-first where there is logic),
+an explicit **Tests** paragraph naming each case, the **exact commit message**, the **ship lane**, and any
+copy strings written out verbatim rather than described. Judgement calls belong in the spec, not in the
+chat that executes it.
 
 ```
 ### IMP-00X — <short title>   ·   Lane: OTA | full-build   ·   Status: ⬜

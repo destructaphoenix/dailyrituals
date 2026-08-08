@@ -2,13 +2,14 @@
 
 This project is built by **Opus** (planning) and executed by **Sonnet** across many chats, because credits/context run out. The whole system works only if **every Sonnet chat starts by reading the same two files** and **ends by updating one file**:
 
-- **Read first, every time:** [`PROGRESS.md`](PROGRESS.md) (where we are — always; it's now a lean live cursor). The ACTIVE TRACK is the **IMP backlog**, whose open spec is inline in PROGRESS.md (finished ones archived in `docs/build-log.md`), so most chats need nothing else.
+- **Read first, every time:** [`PROGRESS.md`](PROGRESS.md) (where we are — always; it's a lean live cursor). The ACTIVE TRACK is the **IMP backlog**; each open row links to its full spec in [`docs/specs-open.md`](docs/specs-open.md).
+- **Then read exactly ONE spec:** open [`docs/specs-open.md`](docs/specs-open.md) at the heading your backlog row links to, and **no other heading in that file**. Every other spec there is for a different chat; reading them is wasted context. Finished specs are archived in `docs/build-log.md`.
 - **Open only when you need it:** [`docs/playbook.md`](docs/playbook.md) = stable reference (release + signing rules, config, architecture, parked phases 8/10b/11, locked decisions, IMP template). The [phase plan](docs/superpowers/plans/2026-06-03-daily-rituals-expo-billing.md) = full per-step code, **only for a phase-ladder phase (8/10b/11)**.
-- **Update last, every time:** `PROGRESS.md` (tick boxes, set status, write the "Last session note", **archive finished specs to build-log.md**).
+- **Update last, every time:** `PROGRESS.md` (tick the row, set status, write the "Last session note") **and move the finished spec from `docs/specs-open.md` into `docs/build-log.md`**.
 
-If you remember nothing else: **`PROGRESS.md` is the memory between chats — keep it small.** The plan + playbook never change; `PROGRESS.md` is the moving cursor.
+If you remember nothing else: **`PROGRESS.md` is the memory between chats — keep it small.** The plan + playbook never change; `PROGRESS.md` is the moving cursor and `docs/specs-open.md` is the work queue.
 
-**The three files, by how often you read them:** `PROGRESS.md` (every chat — live cursor) → `docs/playbook.md` (when shipping or doing phase work — stable reference) → `docs/build-log.md` (rarely — append-only archive).
+**The four files, by how often you read them:** `PROGRESS.md` (every chat — live cursor) → `docs/specs-open.md` (every chat — but one heading only) → `docs/playbook.md` (when shipping or doing phase work — stable reference) → `docs/build-log.md` (rarely — append-only archive).
 
 ---
 
@@ -33,8 +34,11 @@ the repo is your only source of truth.
 
 STEP 1 — Sync (do this before anything else):
 - Read PROGRESS.md in full (it's lean — that's the point). Follow its ▶️ ACTIVE TRACK
-  callout: the live work is the first unchecked IMP task in the Improvements backlog —
-  its full spec is inline in the "Open task specs" section.
+  callout: the live work is the first unchecked IMP task in the Improvements backlog.
+- Open docs/specs-open.md at ONLY that task's heading (the backlog row links to it).
+  Do not read the other specs in that file — they belong to other chats.
+  That spec is the design: execute its Steps in order, do not redesign, and if it
+  turns out to be wrong or impossible, STOP and log it rather than inventing a fix.
 - docs/playbook.md (reference) and the phase plan are NOT needed for normal IMP work —
   open them only when shipping (playbook → Release rules) or working a phase-ladder phase
   8/10b/11 (plan → that phase only). Don't burn context on them otherwise.
@@ -62,11 +66,11 @@ STEP 4 — Close out (CRITICAL — do this even if you're low on credits):
   its result, and the EXACT next step (file + step number) for the next chat.
 - If you stopped mid-task, say which step number you completed last and which is next.
 - **Keep PROGRESS.md small (it's read in full every chat) — archive aggressively. Two moves, every chat:**
-  1. **Completed task specs:** the moment an IMP task is ✅ **code-complete** (do NOT wait for it to be shipped or runtime-walked — that gate is what made this file bloat), MOVE its full block out of PROGRESS.md into [`docs/build-log.md`](docs/build-log.md). Leave only its one-line row in the backlog table. Same for completed phase checklists.
+  1. **Completed task specs:** the moment an IMP task is ✅ **code-complete** (do NOT wait for it to be shipped or runtime-walked — that gate is what made this file bloat), MOVE its whole block out of [`docs/specs-open.md`](docs/specs-open.md) into [`docs/build-log.md`](docs/build-log.md), and drop its row from the specs-open index table. Leave only its one-line row in PROGRESS.md's backlog table. Same for completed phase checklists.
   2. **Session notes:** PROGRESS.md keeps **only the two newest "Last session note" entries.** When you append today's note, MOVE the now-third-oldest note down into the "Session notes" section of `docs/build-log.md`. The log is append-only history — it belongs in the archive, not the live file.
-- **Live PROGRESS.md = ONLY: the backlog table + any OPEN IMP spec + Open items/blockers + the 2 latest notes.** Stable reference lives in `docs/playbook.md` (don't copy it back in); finished specs + old notes in `docs/build-log.md`. Git is the full record.
-- **Size check before you commit:** run `wc -l PROGRESS.md` — target **≤ ~120 lines**. If it's bigger, you almost certainly left a ✅ task's full spec inline — archive it now. A file with no open IMP task and one or two notes should be well under that.
-- Commit PROGRESS.md (and `docs/build-log.md` if you archived anything).
+- **Live PROGRESS.md = ONLY: the backlog table + Open items/blockers + the 2 latest notes.** Specs never live inline in it — open ones are in `docs/specs-open.md`, finished ones (plus old notes) in `docs/build-log.md`, stable reference in `docs/playbook.md` (don't copy it back in). Git is the full record.
+- **Size check before you commit:** run `wc -l PROGRESS.md docs/specs-open.md`. PROGRESS.md target **≤ ~250 lines**; if it's bigger, something that belongs in a spec, the build-log or the playbook has leaked back in. `docs/specs-open.md` shrinks by one whole spec every time a task finishes — if it didn't, you forgot to archive.
+- Commit PROGRESS.md (and `docs/specs-open.md` / `docs/build-log.md` if you archived anything).
 
 STEP 5 — Ship (only if I asked you to release this change):
 - Follow the "🤖 Release rules" section in docs/playbook.md. In short:
@@ -173,14 +177,14 @@ This guarantees the next chat (Prompt 3) can pick up cleanly.
 | Verify a finished phase | **Prompt 4** | Read-only checks, no feature code |
 | Running out of credits now | the snippet above | Stop cleanly, leave a precise breadcrumb |
 
-**Golden loop:** `Read PROGRESS.md (playbook/plan only when shipping or doing phase work)` → `do exactly one task` → `commit` → `update + prune PROGRESS.md (archive finished specs & the 3rd-oldest note → build-log.md; keep it ≤ ~120 lines)` → `ship if asked (Release-Lane: trailer + push; never run eas)` → end chat. Repeat in a fresh chat.
+**Golden loop:** `Read PROGRESS.md` → `open the ONE spec its backlog row links to in docs/specs-open.md` → `do exactly that task` → `commit` → `update PROGRESS.md + move the finished spec specs-open.md → build-log.md (and the 3rd-oldest note too)` → `ship if asked (Release-Lane: trailer + push; never run eas)` → end chat. Repeat in a fresh chat. (playbook/plan only when shipping or doing phase work.)
 
 ---
 
 ## Tips for keeping costs/context low
 
 - **One task per chat** when possible. Tasks in the plan are deliberately small (2-5 min of work each). Small chats = less context = fewer credits burned re-reading.
-- **Don't pull in reference you don't need.** Normal IMP work needs only PROGRESS.md. Open `docs/playbook.md` only to ship (Release rules) or check signing/config; open the phase plan only for a phase-ladder phase (8/10b/11), and read just that phase.
+- **Don't pull in reference you don't need.** Normal IMP work needs PROGRESS.md plus **one heading** of `docs/specs-open.md`. Open `docs/playbook.md` only to ship (Release rules) or check signing/config; open the phase plan only for a phase-ladder phase (8/10b/11), and read just that phase.
 - **Commit often.** The plan specifies a commit per task. Commits are the durable record; `git log` is a backstop if `PROGRESS.md` ever drifts.
 - **Use Prompt 4 sparingly** — only when you want confidence before a risky phase (e.g., before Phase 6 real billing).
 - If a chat starts behaving oddly or hallucinating file contents, that's a context/credit signal: stop it, start a fresh chat with Prompt 1.
