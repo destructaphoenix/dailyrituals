@@ -846,6 +846,48 @@ Net: one word, one meaning, and the only user-visible rename landed on a feature
 
 ---
 
+### IMP-047 — deeper insights: the analysis layer (perk #5)   ·   Lane: OTA   ·   Status: ✅ code-complete
+
+**Why:** `PLUS_PERKS` #5 ("Deeper insights — moods & seasonal themes") was sold with zero backing —
+`InsightsScreen.js` had no `plus` checks at all, so free and Plus users saw identical insights. This is
+the third of five perks made real, over IMP-037's mood arrays.
+
+**Pure core.** New `src/insights/deeper.js`, three functions plus an honesty gate, all reusing the
+`localDate`/Mon-first-index pattern already established in `derive.js` (each insights module owns its own
+small date helpers rather than sharing them): `moodByWeekday(entries)` → 7 Mon-first buckets
+`{ l, top, n, total }` (`top` the modal mood for that weekday, `null` on a tie or an empty bucket — a tie
+never guesses); `moodByMonth(entries)` → 12 calendar-month buckets `{ month, moods: [{m,n}], total }`
+aggregated across years (the "seasonal" read), sorted by count descending; `moodPairings(entries)` → mood
+pairs that co-occur within one entry, `[{a,b,n}]`, pair order normalised alphabetically so `[a,b]`/`[b,a]`
+count once — `[]` for entries that are all single-mood, which is the function that makes IMP-037's
+multi-mood model worth having built. `hasEnoughFor(kind, entries)` gates each: `weekday` needs **≥14**
+entries, `month` needs **≥3** distinct months, `pairings` needs **≥5** multi-mood entries — below the
+threshold the UI shows "Not enough days yet" instead of a chart drawn from three data points.
+
+**UI.** New `src/screens/DeeperInsights.js` — presentational, `{ entries, onOpenPaywall, locked }`. Reuses
+`InsightsScreen.js`'s existing bar-chart and mood-mix-row shapes rather than inventing a new chart idiom.
+`locked` renders a single teaser card (title, one line, a `Sun`-icon "Unlock with Plus" pill routing to the
+paywall) instead of computing anything. Mounted from `InsightsScreen.js` beneath "Your patterns": `plus` →
+full section, `plusEnabled && !plus` → locked teaser, `!plusEnabled` → nothing (same discipline as
+IMP-034/IMP-041). `InsightsScreen` gained `plus`/`plusEnabled`/`onOpenPaywall` props, threaded from
+`RitualsApp.js` where both already exist in scope — `onOpenPaywall` follows the same
+`PLUS_ENABLED ? () => setPaywall(true) : () => {}` pattern used at every other paywall entry point.
+
+**Perk copy:** `PLUS_PERKS[4]` ("Deeper insights — moods & seasonal themes") already matched what shipped
+(weekday, season/month, pairings) — no string change needed.
+
+**Tests:** `__tests__/insights/deeper.test.js` (17 cases) — 7 Mon-first buckets · modal mood per weekday ·
+`top: null` on a tie · `top: null` for an empty weekday · 12 month buckets sorted by count · empty months
+→ `total: 0` · a 3-mood entry counts as its 3 pairs · `[b,a]`/`[a,b]` normalise to one row · pairs sorted
+by `n` descending · all-single-mood entries → `[]` · `hasEnoughFor` at each threshold, exactly at the
+boundary and one below (14/13, 3/2, 5/4) · every function tolerates `moods: []`, missing `moods`, or `null`
+inside the array without throwing. `npm test` → **482 passed, 51 suites** (465 + 17 new). `npx expo export
+--platform android` clean.
+
+**Ship:** OTA, no bump. **Commit:** `feat(insights): the deeper analysis layer — mood by weekday, season, pairing (IMP-047)`.
+
+---
+
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
 
 > Moved out of PROGRESS.md on 2026-07-31 to keep the live cursor lean once a second spec (IMP-032) opened. These are **not** finished work. If the owner revives one, lift the block back into PROGRESS.md as the ACTIVE TRACK.
@@ -890,6 +932,8 @@ Net: one word, one meaning, and the only user-visible rename landed on a feature
 ## Session notes (archived from PROGRESS.md)
 
 _Append-only handoff log moved out of PROGRESS.md to keep it light. Newest 1–2 notes stay live in PROGRESS.md; everything else is here. Git history is the full record._
+
+_2026-08-08 (IMP-036, custody of your words — edit/delete/trash) — **code-complete, committed, not shipped.** Full TDD (22 new cases). New pure `src/entries/mutate.js` — `applyEdit(entries, dayKey, {did, wished, mood})` (in-place replace, same-reference no-op on an absent `dayKey` — structurally makes back-filling unreachable), `applyDelete({entries, trash}, dayKey, nowMs)` (moves the entry to trash stamped `deletedAt`; deliberately takes no `xp`/`embers` params at all, so it's structurally incapable of clawing them back), `applyRestore({entries, trash}, dayKey)` (re-inserts in `dayKey` order, matching the newest-first convention every other producer already uses), `pruneTrash(trash, nowMs, days=30)` (exact 30-day boundary kept), `streakAfterDelete(...)` (confirm-copy only, mirrors `currentStreak`). **Routed around the `applyCompletion` trap the spec called out:** editing a past day while today is unwritten would otherwise fall into `applyCompletion`'s reward branch and double-award XP/embers plus a duplicate row — `RitualsApp.js` now tracks `editingDayKey` alongside `writing`, and past-day `WriteFlow` completions call a new `editPastEntry` (→ `applyEdit`) instead of `complete` (→ `applyCompletion`); `closeWriting()` clears both together so they can't drift. `trash` threaded through `RitualsApp.js` exactly like `frozenDays`/`seenTips` (`useState`, autosave deps, `currentSlice()`, `PERSISTED_KEYS` — no schema bump), with a mount-only prune effect shaped like IMP-039's freeze catch-up. `ReadingSheet.js`'s edit gate loosened to any existing entry, plus a new destructive "Delete this day" row → `RitualsApp.js`'s `confirmDeleteEntry` computes the real post-delete streak and whether an achievement would be un-earned *before* showing the `Alert.alert`, appending "One of your keepsakes may go with it." only when true. New `src/screens/TrashSheet.js` — "Recently deleted" list with **Restore** (real when `plus`; opens the paywall when `plusEnabled && !plus`; shows a "coming soon" toast when `!plusEnabled`, since there's no Plus to sell yet) and **Delete forever** (free, confirmed) — opened from a new row in `YouScreen.js`'s "Your journal is safe" card. `npm test` → **453 passed, 50 suites** (431 + 22 new); `npx expo export --platform android` clean. Full spec archived to `docs/build-log.md`; backlog row set to code-complete; `docs/specs-open.md`'s index and IMP-037's "Depends on" updated to reflect it's done. NEXT: **IMP-037** (moods: custom + multiple per entry) continues the retrieval track, per the ACTIVE TRACK order. IMP-033/-037/-038/-045/-046/-047 remain open; `internal` → production promotion still untaken._
 
 _2026-08-08 (IMP-041, teach the app) — **code-complete, committed, not shipped.** Full TDD. New pure `src/content/tips.js` — `TIPS` (3, one per `today`/`archive`/`you`), `EXPLAINERS` (6, one per mechanic), `pendingTip(screen, seenTips)` and `markTipSeen(seenTips, id)` (never mutates) — all copy verbatim from the spec, verified against code (XP 50, rites +10, embers 15, candles 120/300/450). `src/screens/TipCard.js` is presentational only (`Card` + `Info` icon + `Close` button). `seenTips` wired through `RitualsApp.js` exactly like `frozenDays` (IMP-039): `useState`, autosave dep array, `currentSlice()`, `PERSISTED_KEYS`. `screen()`'s three cases each compute `pendingTip(tab, seenTips)` and pass `tip`/`onDismissTip` down; `HomeScreen`, `ArchiveScreen`, `YouScreen` render `<TipCard>` as the first child of their `ScrollView` when one is pending. New "How it works" card in `YouScreen.js` (six `Row`s over `EXPLAINERS`, `Alert.alert` per tap — same pattern as `explainAutoBackup`), placed directly above "Your journal is safe". New `src/screens/PlusPerks.js` — a full-screen sheet over `PLUS_PERKS`, opened from a `YouScreen` row mounted **only when `plusEnabled`** (per the decided design — `PLUS_PERKS` still carries untrue lines while the app ships free, so the sheet must not exist outside a build where every line is honest). Teaching empty states: `ArchiveScreen.js` at zero entries now shows "Nothing here yet." copy instead of a bare list; `InsightsScreen.js`'s empty state gained a second line. Bundled truth fix: `gamify.js`'s rites card claimed embers are earned by finishing the rites (false — embers come from writing the day; rites award XP only) → replaced with `'All rites kept — a full day.'` / `` `${kept} of ${quests.length} kept today.` ``. **One tool snag, no content impact:** the Edit tool couldn't match the original curly-quote/`'`-escape mix in `gamify.js`'s ternary line no matter how it was copied; fell back to a Node one-liner to rewrite the line directly, which briefly emptied the ternary's second branch before a follow-up `Edit` restored it correctly — caught immediately by re-reading the file, not by a test. `npm test` → **417 passed, 48 suites** (406 + 11 new); `npx expo export --platform android` clean. Full spec archived to `docs/build-log.md`; backlog row set to code-complete. NEXT: **IMP-035** (search your journal) opens the retrieval track, per the ACTIVE TRACK order. IMP-033/-035/-036/-037/-038/-045/-046/-047 remain open; `internal` → production promotion still untaken._
 

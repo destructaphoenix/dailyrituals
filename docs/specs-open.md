@@ -13,8 +13,8 @@
 > re-litigate a "why", and do not improve the scope.** If a step turns out to be impossible or the code
 > contradicts the spec, **STOP** and log it to `PROGRESS.md` → Open items rather than inventing a fix.
 >
-> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **453 passed,
-> 50 suites**), `npx expo export --platform android` clean, commit with the **exact** message given, then
+> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **482 passed,
+> 51 suites**), `npx expo export --platform android` clean, commit with the **exact** message given, then
 > update `PROGRESS.md` (tick the backlog row, write the session note) and **move the finished spec from
 > this file into `docs/build-log.md`**.
 >
@@ -25,95 +25,13 @@
 
 | # | Spec | Lane | Free / Plus | Depends on |
 | --- | --- | --- | --- | --- |
-| 1 | [IMP-047 — deeper insights](#imp-047--deeper-insights-the-analysis-layer-perk-5) | OTA | **Plus** (perk #5) | — (IMP-037 ✅ done) |
-| 2 | [IMP-033 — the restore is offered, not imposed](#imp-033--the-restore-is-offered-not-imposed) | OTA | Free | — |
-| 3 | [IMP-038 — "On this day"](#imp-038--on-this-day) | OTA | **Plus** (perk #3) | — (IMP-037 ✅ done) |
-| 4 | [IMP-046 — Annual Recap](#imp-046--annual-recap-your-year-remembered-perk-4) | OTA | **Plus** (perk #4) | **IMP-047** (IMP-037 ✅ done) |
+| 1 | [IMP-033 — the restore is offered, not imposed](#imp-033--the-restore-is-offered-not-imposed) | OTA | Free | — |
+| 2 | [IMP-038 — "On this day"](#imp-038--on-this-day) | OTA | **Plus** (perk #3) | — (IMP-037 ✅ done) |
+| 3 | [IMP-046 — Annual Recap](#imp-046--annual-recap-your-year-remembered-perk-4) | OTA | **Plus** (perk #4) | — (IMP-037 ✅, IMP-047 ✅ both done) |
 | — | [IMP-045 — finish Lifetime Progress](#imp-045--finish-lifetime-progress-the-imp-021-shortfall) | OTA | Free | — · **no queue slot** |
 
 **IMP-045 does not claim a slot.** It is small, independent and fixes a live tester complaint — take it in any
 chat where the queued task is blocked, or as its own short chat. Same treatment as IMP-044.
-
----
-
-## IMP-047 — deeper insights: the analysis layer (perk #5)
-
-**Lane:** OTA · **Status:** ⬜ OPEN · **Depends on: — (IMP-037 ✅ done)** ·
-**PLUS — this is `PLUS_PERKS` #5**
-
-**Goal:** `PLUS_PERKS` #5 *"Deeper insights — moods & seasonal themes"* stops being a lie. Plus users get a
-"Deeper" section on the Insights tab computed over IMP-037's mood arrays; free users see today's "Your
-patterns" cards, unchanged.
-
-**Why (settled):** audited 2026-08-03 — `InsightsScreen.js` contains **zero** `plus` checks; free and Plus
-see identical insights. This is one of the three false perks blocking `PLUS_ENABLED` (PROGRESS.md → Phase
-10b). It is also the *right* thing to charge for: IMP-037 gives the words away free, and this sells the
-app's **work on** them.
-
-### Decided design (Opus — do not redesign)
-
-- **Pure core:** `src/insights/deeper.js`, three functions, all pure, all `now`-injectable:
-  - `moodByWeekday(entries)` → 7 Mon-first buckets `{ l, top, n, total }` — `top` is the most frequent
-    mood on that weekday, `null` on a tie or an empty bucket. **Never guess a tie-break.**
-  - `moodByMonth(entries)` → 12 buckets `{ month, moods: [{ m, n }], total }`, moods sorted by `n`
-    descending. Months with no entries return `total: 0` and `moods: []`.
-  - `moodPairings(entries)` → the mood pairs that co-occur within one entry, `[{ a, b, n }]` sorted by `n`
-    descending, `a` < `b` alphabetically so a pair is counted once. **This is the function that justifies
-    IMP-037 having been built** — it is meaningless on single-mood entries and returns `[]` for them.
-- **Honesty gate — do not skip.** Each of the three needs enough history to say anything true. Export
-  `hasEnoughFor(kind, entries)` → boolean: `weekday` needs **≥ 14** entries, `month` needs entries in
-  **≥ 3** distinct months, `pairings` needs **≥ 5** multi-mood entries. Below the threshold the UI shows
-  *"Not enough days yet — this fills in as you write."* and **not** a chart drawn from three data points.
-- **Free/Plus rendering:** the existing "Your patterns" cards stay exactly as they are for everyone. Add a
-  **"Deeper"** section below them, rendered when `plus`. When `plusEnabled && !plus`, render a locked
-  teaser card — a title, one line, and a Plus chip routing to the paywall. When `!plusEnabled`, render
-  **nothing** (same discipline as IMP-034 and IMP-041's What's-in-Plus).
-- `InsightsScreen` currently takes no `plus`/`plusEnabled` props — thread them from
-  [`RitualsApp.js:451`](../src/RitualsApp.js#L451), where both already exist in scope.
-
-### Steps
-
-- [ ] 1. **RED first.** `__tests__/insights/deeper.test.js` covering every case in Tests below.
-- [ ] 2. `src/insights/deeper.js` — the three functions plus `hasEnoughFor`.
-- [ ] 3. `src/screens/DeeperInsights.js` — presentational, `{ entries, onOpenPaywall, locked }`. Three
-      cards, reusing the existing bar shapes in `InsightsScreen.js` (do not invent a new chart idiom).
-- [ ] 4. Thread `plus` + `plusEnabled` into `InsightsScreen` from `RitualsApp.js` and mount the section
-      per Decided design.
-- [ ] 5. **Make the perk line true:** confirm `PLUS_PERKS` #5 text matches what shipped; if it does not,
-      change the string in [`data.js:149`](../src/data.js#L149) to match the build — **never the reverse.**
-- [ ] 6. Update `PROGRESS.md` → Phase 10b's perk-reality table: #5 becomes ✅ REAL.
-- [ ] 7. `npm test` green (406 + new), `npx expo export --platform android` clean, commit, update
-      `PROGRESS.md`, archive this spec to `docs/build-log.md`.
-
-### Tests
-
-`moodByWeekday` returns 7 Mon-first buckets · picks the most frequent mood per weekday · returns
-`top: null` on a tie · returns `top: null` for an empty weekday · `moodByMonth` returns 12 buckets sorted
-by count · empty months return `total: 0` · `moodPairings` counts a 3-mood entry as its 3 pairs ·
-normalises pair order so `['b','a']` and `['a','b']` are one row · returns `[]` for entries that all have a
-single mood · `hasEnoughFor` at each threshold, **exactly at the boundary and one below** · every function
-tolerates entries with `moods: []`, missing `moods`, or `null` in the array without throwing.
-
-### Commit message
-
-```
-feat(insights): the deeper analysis layer — mood by weekday, season, pairing (IMP-047)
-
-PLUS_PERKS #5 promised "deeper insights — moods & seasonal themes" and
-InsightsScreen contained zero plus checks: free and Plus saw identical
-insights. This makes the line true.
-
-Three pure functions over IMP-037's mood arrays — moodByWeekday,
-moodByMonth and moodPairings — behind hasEnoughFor() thresholds, so a
-chart is never drawn from three data points. Free users keep "Your
-patterns" unchanged; Plus adds "Deeper" beneath it.
-
-This is the honest half of the IMP-037 bargain: the moods themselves are
-free because they are the user's own writing, and what we compute from
-them is what Plus buys.
-```
-
-**Ship:** OTA. No `bump:*`.
 
 ---
 
@@ -395,7 +313,7 @@ milliseconds, so 29 Feb never false-matches 28 Feb in either direction.
 
 ## IMP-046 — Annual Recap: "your year, remembered" (perk #4)
 
-**Lane:** OTA · **Status:** ⬜ OPEN · **Depends on: IMP-047 (hard — do not start before it; IMP-037 ✅ done)** ·
+**Lane:** OTA · **Status:** ⬜ OPEN · **Depends on: — (IMP-037 ✅, IMP-047 ✅ both done)** ·
 **PLUS — perk #4 of the proposed final list**
 
 > **⚠️ Perk numbering.** "Your year, remembered" is **not in `PLUS_PERKS` at all** today
