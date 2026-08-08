@@ -67,7 +67,7 @@ export default function Shop({
               <T d w={800} color={c.accentDeep} style={{ fontSize: 13 }}>{freezes} kept</T>
             </View>
           } />
-          <Note>Light one on a missed day and your streak holds.{plus ? ' Plus gives you 3 free each month.' : ''}</Note>
+          <Note>A candle spends itself the moment you miss a day, keeping your streak alive.</Note>
           <View style={{ flexDirection: 'row', gap: 11 }}>
             {CANDLE_PACKS.map((p) => {
               const afford = embers >= p.price;

@@ -40,6 +40,7 @@ import { checkEntitlement, nextPlusState, useLaunchEntitlementCheck } from './bi
 import { saveState } from './persistence/storage';
 import { pickPersisted } from './persistence/state';
 import { applyCompletion } from './home/completeEntry';
+import { applyAutoFreeze } from './home/streakFreeze';
 import { markRevisited } from './home/markRevisited';
 import { findTodaysEntry, isEditableToday } from './home/todaysEntry';
 import { levelFromXp } from './profile/level';
@@ -85,13 +86,20 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   const [celebrate, setCelebrate] = useState(null);
 
   const [entries, setEntries] = useState(initialState.entries ?? []);
+  const [freezes, setFreezes] = useState(initialState.freezes ?? 0);
+  // Missed days a candle has already covered (IMP-039 streak insurance) — see
+  // applyAutoFreeze. Forgiven, not journaled: never becomes an `entries` row.
+  const [frozenDays, setFrozenDays] = useState(initialState.frozenDays ?? []);
   // Streak is DERIVED from real entries (IMP-024): a missed day breaks it to 0,
-  // re-logging after a gap restarts at 1. No persisted streak counter to drift.
-  const streak = useMemo(() => currentStreak(entries.map((e) => e.dayKey), todayKey()), [entries]);
+  // re-logging after a gap restarts at 1 — UNLESS a candle froze the gap.
+  // No persisted streak counter to drift.
+  const streak = useMemo(
+    () => currentStreak(entries.map((e) => e.dayKey), todayKey(), { frozenDays }),
+    [entries, frozenDays]
+  );
   const [xp, setXp] = useState(initialState.xp ?? 0);
   const [done, setDone] = useState(initialState.done ?? false);
   const [quests, setQuests] = useState(initialState.quests ?? DAILY_QUESTS);
-  const [freezes, setFreezes] = useState(initialState.freezes ?? 0);
   const [lastBackupAt, setLastBackupAt] = useState(initialState.lastBackupAt ?? null);
   const [showAch, setShowAch] = useState(false);
   const [showDev, setShowDev] = useState(false);
@@ -315,6 +323,18 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Streak insurance (IMP-039): catch up on any day that has fully passed
+  // with no entry since we last checked, spending a candle per missed day.
+  // Mount-only like the reset above — the gap only grows one day at a time,
+  // and applyAutoFreeze is idempotent, so the next launch catches up fine.
+  React.useEffect(() => {
+    const result = applyAutoFreeze(entries, frozenDays, freezes, todayKey());
+    if (result.spent > 0) {
+      setFrozenDays(result.frozenDays);
+      setFreezes(result.freezes);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Advance + persist the prompt deck when the day rolls over. selectPrompt
   // returns the same reference when nothing changed, so this is a no-op then.
   React.useEffect(() => {
@@ -327,13 +347,13 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
       saveState(pickPersisted({
         onboarded: true, // RitualsApp only mounts after first-run; record it so we skip onboarding next launch
         mode,
-        entries, xp, done, quests, freezes, embers, plus,
+        entries, xp, done, quests, freezes, frozenDays, embers, plus,
         activePalette, ownedPalettes, activeSky, ownedSkies,
         subCanceled, activePlan, lastActiveDay, settings, lastBackupAt, promptDeck,
       }));
     }, 400);
     return () => clearTimeout(id);
-  }, [mode, entries, xp, done, quests, freezes, embers, plus,
+  }, [mode, entries, xp, done, quests, freezes, frozenDays, embers, plus,
     activePalette, ownedPalettes, activeSky, ownedSkies,
     subCanceled, activePlan, lastActiveDay, settings, lastBackupAt, promptDeck]);
 
@@ -342,7 +362,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     const next = applyCompletion(
       { entries, xp, embers, done, quests },
       entry,
-      { config: { XP_GAIN, EMBER_GAIN, milestones: STREAK_MILESTONES } }
+      { config: { XP_GAIN, EMBER_GAIN, milestones: STREAK_MILESTONES }, frozenDays }
     );
     setEntries(next.entries);
     setXp(next.xp);
@@ -357,7 +377,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   // The exact persisted slice (mirrors the autosave object) — source for backups.
   const currentSlice = () => ({
     onboarded: true,
-    entries, xp, done, quests, freezes, embers, plus,
+    entries, xp, done, quests, freezes, frozenDays, embers, plus,
     activePalette, ownedPalettes, activeSky, ownedSkies,
     subCanceled, activePlan, lastActiveDay, settings, lastBackupAt, promptDeck,
   });

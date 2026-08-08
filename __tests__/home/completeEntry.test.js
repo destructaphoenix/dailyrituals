@@ -74,6 +74,22 @@ describe('applyCompletion', () => {
       expect(next.celebrate.streak).toBe(1);
     });
 
+    test('celebrate.streak counts a frozen gap day (IMP-039 streak insurance)', () => {
+      // 06-05 real, 06-06 frozen (candle covered the miss), today 06-07 → 3.
+      const withGap = [makeEntry({ id: 'a', dayKey: '2026-06-05' })];
+      const next = applyCompletion(
+        { ...prev, entries: withGap },
+        makeEntry({ dayKey: '2026-06-07' }),
+        { config, frozenDays: ['2026-06-06'] }
+      );
+      expect(next.celebrate.streak).toBe(3);
+    });
+
+    test('celebrate.streak ignores frozenDays that do not connect to today', () => {
+      const next = applyCompletion(prev, makeEntry({ dayKey: '2026-06-07' }), { config, frozenDays: ['2026-01-01'] });
+      expect(next.celebrate.streak).toBe(1);
+    });
+
     test('celebrate milestone null when no milestone for that streak', () => {
       const next = applyCompletion(prev, makeEntry(), { config });
       expect(next.celebrate.milestone).toBeNull();

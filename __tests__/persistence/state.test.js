@@ -93,6 +93,18 @@ describe('promptDeck persistence', () => {
   });
 });
 
+describe('frozenDays persistence (IMP-039 streak insurance)', () => {
+  test('frozenDays is a persisted key', () => {
+    expect(PERSISTED_KEYS).toContain('frozenDays');
+  });
+  test('pickPersisted carries frozenDays through', () => {
+    expect(pickPersisted({ frozenDays: ['2026-06-13'], junk: 1 })).toEqual({ frozenDays: ['2026-06-13'] });
+  });
+  test('pickPersisted omits frozenDays when undefined', () => {
+    expect('frozenDays' in pickPersisted({})).toBe(false);
+  });
+});
+
 describe('lastSavedAt stamp (IMP-029 restore detection)', () => {
   test('serialize stamps lastSavedAt with the injected clock', () => {
     const out = JSON.parse(serialize({ embers: 1 }, 1700000000000));

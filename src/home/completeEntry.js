@@ -13,10 +13,14 @@ import { currentStreak } from '../insights/dateKeys';
 //
 // `prev`  = { entries, xp, embers, done, quests }
 // `entry` = the fully-built new entry object (must carry a `dayKey`)
-// `opts`  = { config: { XP_GAIN, EMBER_GAIN, milestones } }
+// `opts`  = { config: { XP_GAIN, EMBER_GAIN, milestones }, frozenDays }
+//
+// `frozenDays` (IMP-039 streak insurance) are missed days already covered by
+// a candle — read-only here, passed straight to currentStreak so the
+// celebrated number matches what the rest of the app displays.
 //
 // Returns a new slice { entries, xp, embers, done, quests, celebrate, rewarded }.
-export function applyCompletion(prev, entry, { config }) {
+export function applyCompletion(prev, entry, { config, frozenDays = [] }) {
   if (prev.done) {
     // Already completed today — edit in place, no reward.
     const entries = [entry, ...prev.entries.filter((e) => e.dayKey !== entry.dayKey)];
@@ -32,7 +36,7 @@ export function applyCompletion(prev, entry, { config }) {
   }
 
   const entries = [entry, ...prev.entries];
-  const streak = currentStreak(entries.map((e) => e.dayKey), entry.dayKey);
+  const streak = currentStreak(entries.map((e) => e.dayKey), entry.dayKey, { frozenDays });
   const xp = prev.xp + config.XP_GAIN;
   const embers = prev.embers + config.EMBER_GAIN;
   const quests = prev.quests.map((q) => {

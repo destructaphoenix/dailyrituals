@@ -1,4 +1,4 @@
-import { longestConsecutiveRun, currentStreak, dayKeyToUtcMs, DAY_MS } from '../../src/insights/dateKeys';
+import { longestConsecutiveRun, currentStreak, dayKeyToUtcMs, utcMsToDayKey, DAY_MS } from '../../src/insights/dateKeys';
 
 describe('longestConsecutiveRun', () => {
   test('empty → 0', () => {
@@ -49,5 +49,41 @@ describe('currentStreak', () => {
 describe('dayKeyToUtcMs', () => {
   test('two adjacent days differ by exactly DAY_MS', () => {
     expect(dayKeyToUtcMs('2026-06-02') - dayKeyToUtcMs('2026-06-01')).toBe(DAY_MS);
+  });
+});
+
+describe('utcMsToDayKey', () => {
+  test('inverts dayKeyToUtcMs', () => {
+    expect(utcMsToDayKey(dayKeyToUtcMs('2026-06-14'))).toBe('2026-06-14');
+  });
+});
+
+describe('currentStreak — frozenDays (IMP-039 streak insurance)', () => {
+  const TODAY = '2026-06-14';
+
+  test('a frozen gap day bridges an older run to today', () => {
+    // 06-12 real, 06-13 frozen (missed, covered by a candle), 06-14 real → 3
+    expect(currentStreak(['2026-06-12', '2026-06-14'], TODAY, { frozenDays: ['2026-06-13'] })).toBe(3);
+  });
+
+  test('multiple consecutive frozen days bridge a bigger gap', () => {
+    expect(currentStreak(['2026-06-10', '2026-06-14'], TODAY, {
+      frozenDays: ['2026-06-11', '2026-06-12', '2026-06-13'],
+    })).toBe(5);
+  });
+
+  test('a frozen yesterday keeps the run alive before today is logged', () => {
+    // today not logged yet; yesterday (06-13) was frozen, connects to a real run.
+    expect(currentStreak(['2026-06-10', '2026-06-11', '2026-06-12'], TODAY, {
+      frozenDays: ['2026-06-13'],
+    })).toBe(4);
+  });
+
+  test('a frozen day that is not adjacent to the anchor does nothing', () => {
+    expect(currentStreak(['2026-06-14'], TODAY, { frozenDays: ['2026-06-10'] })).toBe(1);
+  });
+
+  test('no frozenDays option behaves exactly as before (backward compatible)', () => {
+    expect(currentStreak(['2026-06-10', '2026-06-11'], TODAY)).toBe(0);
   });
 });
