@@ -145,7 +145,7 @@ export const PLUS_PERKS = [
   'Every palette & sky — unlocked forever',
   'Three streak-freeze candles, every month',
   'Your whole graveyard, kept forever',
-  'Export your days as a keepsake PDF',
+  'Your Book — export your days as a PDF',
   'Deeper insights — moods & seasonal themes',
 ];
 

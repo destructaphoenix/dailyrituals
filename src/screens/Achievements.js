@@ -26,8 +26,7 @@ export default function Achievements({ insets, onClose, entries = [], streak = 0
       </View>
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 30 + insets.bottom }} showsVerticalScrollIndicator={false}>
-        <T d w={700} color={c.accentDeep} style={{ fontSize: 14, marginTop: 6 }}>Keepsakes</T>
-        <T d w={800} color={c.ink} style={{ fontSize: 26, marginTop: 2 }}>Achievements</T>
+        <T d w={800} color={c.ink} style={{ fontSize: 26, marginTop: 6 }}>Keepsakes</T>
         <T w={600} color={c.muted} style={{ fontSize: 14, marginTop: 4, marginBottom: 18, lineHeight: 20 }}>
           Small honours for showing up — earned, never bought.
         </T>
