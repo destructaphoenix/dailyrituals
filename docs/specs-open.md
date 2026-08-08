@@ -13,8 +13,8 @@
 > re-litigate a "why", and do not improve the scope.** If a step turns out to be impossible or the code
 > contradicts the spec, **STOP** and log it to `PROGRESS.md` → Open items rather than inventing a fix.
 >
-> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **431 passed,
-> 49 suites**), `npx expo export --platform android` clean, commit with the **exact** message given, then
+> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **453 passed,
+> 50 suites**), `npx expo export --platform android` clean, commit with the **exact** message given, then
 > update `PROGRESS.md` (tick the backlog row, write the session note) and **move the finished spec from
 > this file into `docs/build-log.md`**.
 >
@@ -25,12 +25,11 @@
 
 | # | Spec | Lane | Free / Plus | Depends on |
 | --- | --- | --- | --- | --- |
-| 1 | [IMP-036 — custody of your words](#imp-036--custody-of-your-words-edit-delete-30-day-trash) | OTA | Free (undelete = Plus) | — (IMP-035 ✅ done) |
-| 2 | [IMP-037 — moods: custom + multiple](#imp-037--moods-custom-feelings--multiple-per-entry) | OTA | **Free** | IMP-036 |
-| 3 | [IMP-047 — deeper insights](#imp-047--deeper-insights-the-analysis-layer-perk-5) | OTA | **Plus** (perk #5) | **IMP-037** |
-| 4 | [IMP-033 — the restore is offered, not imposed](#imp-033--the-restore-is-offered-not-imposed) | OTA | Free | — |
-| 5 | [IMP-038 — "On this day"](#imp-038--on-this-day) | OTA | **Plus** (perk #3) | IMP-037 |
-| 6 | [IMP-046 — Annual Recap](#imp-046--annual-recap-your-year-remembered-perk-4) | OTA | **Plus** (perk #4) | **IMP-037, IMP-047** |
+| 1 | [IMP-037 — moods: custom + multiple](#imp-037--moods-custom-feelings--multiple-per-entry) | OTA | **Free** | — (IMP-036 ✅ done) |
+| 2 | [IMP-047 — deeper insights](#imp-047--deeper-insights-the-analysis-layer-perk-5) | OTA | **Plus** (perk #5) | **IMP-037** |
+| 3 | [IMP-033 — the restore is offered, not imposed](#imp-033--the-restore-is-offered-not-imposed) | OTA | Free | — |
+| 4 | [IMP-038 — "On this day"](#imp-038--on-this-day) | OTA | **Plus** (perk #3) | IMP-037 |
+| 5 | [IMP-046 — Annual Recap](#imp-046--annual-recap-your-year-remembered-perk-4) | OTA | **Plus** (perk #4) | **IMP-037, IMP-047** |
 | — | [IMP-045 — finish Lifetime Progress](#imp-045--finish-lifetime-progress-the-imp-021-shortfall) | OTA | Free | — · **no queue slot** |
 
 **IMP-045 does not claim a slot.** It is small, independent and fixes a live tester complaint — take it in any
@@ -38,120 +37,9 @@ chat where the queued task is blocked, or as its own short chat. Same treatment 
 
 ---
 
-## IMP-036 — custody of your words: edit, delete, 30-day trash
-
-**Lane:** OTA · **Status:** ⬜ OPEN · **Depends on:** nothing (IMP-035 ✅ done) · **Free (undelete is the Plus half)**
-
-**Goal:** any past entry can be edited or deleted; deletes go to a 30-day trash; the delete confirm states
-the real consequence to the streak before the user commits.
-
-**Why (settled):** answers the owner's *"how do you edit/delete a day that's already gone?"* Entries are
-`dayKey`-keyed objects in an array, so the mechanics are trivial. **This spec exists for the derived
-state**, which is not.
-
-### Decided design (Opus — do not redesign)
-
-- **Editing text is completely safe.** Nothing derived reads entry *text*, so changing `did`/`wished`/mood
-  on any past day has zero side effects. Ship it without ceremony.
-- **🔴 Deleting is not — and there is a trap in `applyCompletion` you must route around.**
-  [`applyCompletion`](../src/home/completeEntry.js) only takes its no-reward edit branch when `prev.done`
-  is true. Editing a **past** day while today is unwritten would fall into the reward branch and award
-  50 XP + 15 embers **and prepend a duplicate row**. **Past-day edits must never go through
-  `applyCompletion`.** They go through `applyEdit`, which is the whole reason it exists.
-- **The delete confirm must state the real new streak number.** `currentStreak` is derived from entries
-  (IMP-024), so deleting a mid-run entry **retroactively breaks the streak** — drop one entry from three
-  days ago and a 40-day streak becomes 3. That is *correct* (the alternative is storing a lie, which is
-  what IMP-024 removed) but it will feel punitive. Compute it **before** the user commits and put the real
-  number in the alert. `deriveAchievements` can un-earn a badge the same way — same warning line.
-- **Do NOT claw back XP or embers.** They are persisted counters, not derived, and the user genuinely lived
-  that day. **The asymmetry with the streak is deliberate — comment it in `applyDelete` so nobody "fixes"
-  it later.**
-- **🚫 Editing is NOT back-filling.** A user may edit a day they *wrote*; they may **not create** an entry
-  for a day they missed. Back-filling would let anyone fabricate a streak — precisely what IMP-024 prevents
-  — and would make the 💀 missed-day marker (IMP-014) a lie. **Enforce structurally:** `applyEdit` returns
-  `entries` unchanged when no entry with that `dayKey` exists, and the edit path opens only from an
-  existing entry. There is a test asserting back-fill is unreachable through the exposed API.
-- **The Plus half is UNDELETE, not delete.** Deleting is **free**; restoring from trash is **Plus** —
-  keeping a safety copy is genuinely our work, whereas charging someone to un-write their own grief is not
-  a business. Restoring re-derives the streak automatically; no special case.
-- **Trash entries keep the whole original entry object** plus `deletedAt` (ms). Pruned on launch.
-
-### New persisted key
-
-`trash: []` — add to `PERSISTED_KEYS` in [`state.js:7`](../src/persistence/state.js#L7). No schema bump
-(`mergeWithDefaults` supplies the `[]` default).
-
-### Steps
-
-- [ ] 1. **RED first.** `__tests__/entries/mutate.test.js` covering every case in Tests below.
-- [ ] 2. New pure `src/entries/mutate.js`, all returning **new** objects, never mutating:
-      - `applyEdit(entries, dayKey, { did, wished, mood })` → entries with that day replaced **in place**
-        (same array position, same `id`/`day`/`mon`/`wd`/`dayKey`); unchanged if the day is absent.
-      - `applyDelete({ entries, trash }, dayKey, nowMs)` → `{ entries, trash }` with the entry moved and
-        stamped `deletedAt: nowMs`. **Never touches xp or embers.**
-      - `applyRestore({ entries, trash }, dayKey)` → `{ entries, trash }`, re-inserted in `dayKey` order.
-      - `pruneTrash(trash, nowMs, days = 30)` → drops items older than the window, **keeping the exact
-        30-day boundary**.
-      - `streakAfterDelete(entries, dayKey, todayKey, frozenDays)` → the number
-        `currentStreak` would return after the delete. Used for the confirm copy only.
-- [ ] 3. `ReadingSheet.js` already carries `canEdit` / `onEdit`
-      ([`RitualsApp.js:541`](../src/RitualsApp.js#L541)). Change the gate from
-      `isEditableToday(reading, todayKey())` to **any existing entry**, and add an `onDelete` callback +
-      a destructive row in the sheet.
-- [ ] 4. Route the edit: opening `WriteFlow` for a past day must pass that day's `initial` and, on
-      `onComplete`, call `applyEdit` — **not** `complete()` / `applyCompletion` (see Decided design).
-- [ ] 5. Delete confirm — `Alert.alert` with the real numbers:
-      **"Delete this day?"** / `` `This removes {date} from your journal for good — you'll have 30 days to
-      change your mind. Your streak becomes {n}.` `` Append **"One of your keepsakes may go with it."**
-      only when `deriveAchievements` actually loses one.
-- [ ] 6. Trash surface: a **"Recently deleted"** row in the You tab's "Your journal is safe" card, showing
-      the count. Opens a list; each item has **Restore** (Plus-gated when `plusEnabled`) and **Delete
-      forever** (free, confirmed). Prune on launch in the same mount-only effect shape as IMP-039's
-      `applyAutoFreeze`.
-- [ ] 7. Thread `trash` through `RitualsApp.js` exactly like `frozenDays`: `useState`, autosave dep array,
-      `currentSlice()`, `PERSISTED_KEYS`.
-- [ ] 8. `npm test` green (406 + new), `npx expo export --platform android` clean, commit, update
-      `PROGRESS.md`, archive this spec to `docs/build-log.md`.
-
-### Tests
-
-`pruneTrash` drops >30d and **keeps the exact 30d boundary** · `applyDelete` moves the entry into trash and
-leaves `xp`/`embers` untouched · a `currentStreak` case proving a **mid-run delete breaks the run** ·
-`streakAfterDelete` matches what `currentStreak` returns on the post-delete entries · an edit-text case
-proving streak and xp are unaffected · `applyEdit` preserves `id`/`dayKey`/array position · **`applyEdit`
-on an absent `dayKey` returns entries unchanged — back-fill is unreachable** · `applyRestore` puts the
-entry back in `dayKey` order and empties it from trash · every function returns a new object and does not
-mutate its input.
-
-### Commit message
-
-```
-feat(entries): edit any past entry, delete with a 30-day trash (IMP-036)
-
-Entries were write-once: only today could be edited and nothing could be
-deleted. Adds applyEdit/applyDelete/applyRestore/pruneTrash as pure
-functions over the entries array, with a 30-day trash.
-
-Deleting is free; restoring from trash is the Plus half — keeping a safety
-copy is our work, charging someone to un-write their own grief is not.
-
-Because currentStreak is derived (IMP-024), deleting a mid-run day
-retroactively breaks the streak. That is correct rather than storing a
-lie, so the confirm states the real resulting number before the user
-commits. XP and embers are deliberately NOT clawed back — they are
-counters, not derived, and the day was genuinely lived.
-
-Editing is not back-filling: applyEdit is a no-op on a day with no entry,
-so no streak can be fabricated and the missed-day skull stays honest.
-```
-
-**Ship:** OTA. No `bump:*`.
-
----
-
 ## IMP-037 — moods: custom feelings + multiple per entry
 
-**Lane:** OTA · **Status:** ⬜ OPEN · **Depends on:** IMP-036 (IMP-035 ✅ done) · **FREE**
+**Lane:** OTA · **Status:** ⬜ OPEN · **Depends on:** — (IMP-036 ✅ done) · **FREE**
 
 **Goal:** an entry carries `moods: string[]` instead of `mood: string`, users can add their own feelings,
 and every existing entry migrates losslessly.
