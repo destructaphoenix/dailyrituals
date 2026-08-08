@@ -1088,6 +1088,48 @@ the correct day · malformed entries never throw. `npm test` → **532 passed, 5
 
 ---
 
+### IMP-045 — finish Lifetime Progress (the IMP-021 shortfall)   ·   Lane: OTA   ·   Status: ✅ code-complete
+
+**Why:** closed the two deviations from the approved 2026-06-14 Lifetime Progress design that made the
+owner call IMP-021 "not properly completed" on the 2026-08-02 device walk. Not a crash — a completeness
+gap. Both shortfalls were in scope by owner decision (2026-08-08); no design choice left to make.
+
+**Pure core first (RED-first).** New `src/insights/heatCells.js`, no theme imports:
+- `cellState(cell)` → `'done' | 'missed' | 'empty' | 'future'`, precedence `future` > `missed` > `empty` >
+  `done` (a `done` cell that is also `today` still reads `done`; a `future` cell that also carries `empty`
+  stays `future`).
+- `monthLabelsForRows(rows)` → one string per row, the short month name (`'Jan'`) on the row whose first
+  cell begins a new month, `''` otherwise, always attempting a label on row 0. Rows/cells missing a
+  parseable `dayKey` return `''` rather than throwing.
+
+**Screen.** `InsightsScreen.js`'s `LifetimeHeat` now consumes `cellState` for four-way styling instead of
+the old binary `has` check: `done` = filled `c.accent` (2px `c.accentDeep` border if `today`), `missed` =
+`c.accentSoft` fill with a 1px `c.border` border (visibly a day, visibly empty — matches IMP-014's meaning
+without using the skull glyph, which is unreadable at this cell size), `empty` = transparent with a dashed
+1px `c.border` border, `future` = fully transparent, no border. A month-label gutter runs down the left of
+the grid (one `monthLabelsForRows` entry per row) and a three-item legend ("kept · missed · not yet
+started") sits beneath, reusing the same `heatCellStyle` swatches so the legend can never drift from the
+grid. `buildLifetimeHeatmap` (`src/home/calendar.js`) was untouched — its cell shape already carried
+everything needed.
+
+**xpEarned.** The level context line at `InsightsScreen.js` (inside the "Your record" hero) went from
+`` `Lv {level} · {levelName}{activeSpan}` `` to `` `Lv {level} · {levelName}{activeSpan} · {fmt(xpEarned)}
+XP` ``, reusing the screen's existing `fmt` thousands-formatter and `numberOfLines`/font-scale behaviour
+(IMP-030) unchanged. `deriveLifetime` already returned `xpEarned` — nothing in its logic changed.
+
+**Not touched, by design:** the milestone timeline (deferred to IMP-046, now built), the Home hero, and the
+removed "Days kept"/"This month" tiles. Row count stays uncapped.
+
+**Tests:** `__tests__/insights/heatCells.test.js` (13 new cases) — all four states · both precedence rules
+· row 0 always labelled · labels only on month-change rows · an all-same-month run yields blanks after row
+0 · a single-row grid · an empty `rows` array → `[]` · malformed rows/cells without `dayKey` never throw.
+`npm test` → **545 passed, 56 suites** (532 + 13 new). `npx expo export --platform android` clean.
+
+**Ship:** OTA, no bump. **Commit:** `fix(insights): finish Lifetime Progress — missed vs never-started, and
+lifetime XP (IMP-045)`.
+
+---
+
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
 
 > Moved out of PROGRESS.md on 2026-07-31 to keep the live cursor lean once a second spec (IMP-032) opened. These are **not** finished work. If the owner revives one, lift the block back into PROGRESS.md as the ACTIVE TRACK.
@@ -1132,6 +1174,8 @@ the correct day · malformed entries never throw. `npm test` → **532 passed, 5
 ## Session notes (archived from PROGRESS.md)
 
 _Append-only handoff log moved out of PROGRESS.md to keep it light. Newest 1–2 notes stay live in PROGRESS.md; everything else is here. Git history is the full record._
+
+_2026-08-08 (IMP-038, "On this day") — **code-complete, committed, not shipped.** Full TDD (11 new cases, RED-first). New pure `src/memory/onThisDay.js` → `onThisDay(entries, todayKey)` — year matches (same month-day, any past year, newest-first) strictly take priority over 6/3/1-month fallbacks, which only compute when zero year matches exist; every comparison is on the `YYYY-MM-DD` string components via a `parts()`/`daysInMonth()` helper, never `Date` millisecond math, so 29 Feb never false-matches 28 Feb in either direction and a 31-day month falling back into a shorter one skips the offset rather than rolling into the next month. New presentational `src/screens/OnThisDayCard.js` — `{ matches, locked, onOpen, onDismiss, onOpenPaywall }`, returns `null` on empty `matches`, reuses `ArchiveScreen.js`'s day/mon-numeral row shape; `locked` renders a `DeeperInsights.js`-style teaser ("The app found something…" + Sun-icon "Unlock with Plus" pill) with the same dismiss control in the shared header for both branches. Mounted in `HomeScreen.js` above "Today's reflection"; `HomeScreen` computes `onThisDay()` itself off its own `entries` prop and a locally-computed `todayK` (same UTC-day convention `home/calendar.js` already defaults to), gated on 4 new props (`plusEnabled`, `onThisDayDismissed`, `onDismissOnThisDay`, `onOpenOnThisDay`) plus `onOpenPaywall`; `locked = !plus`. `RitualsApp.js` threads all five — `onOpenOnThisDay` reuses `ArchiveScreen`'s exact `onOpen` handler (`setReading` + `markRevisited`) rather than duplicating the revisit-rite credit, `onDismissOnThisDay` writes `settings.onThisDayDismissed = todayKey()` (single string, self-pruning, no migration needed). `PLUS_PERKS[2]`'s cut line *"Your whole graveyard, kept forever"* → *"On this day — your own words, brought back to you"*; array stays 5 long. `npm test` → **519 passed, 54 suites** (508 + 11 new); `npx expo export --platform android` clean. Full spec archived to `docs/build-log.md`; backlog row set to code-complete; `docs/specs-open.md`'s index updated (IMP-038 removed, 1 task left); both Phase 10b perk-reality tables updated to 4 of 5 real (#1, #2, #3, #5). NEXT: **IMP-046 Annual Recap** (perk #4) is the last item in the open queue, per the ACTIVE TRACK order. IMP-045/-046 remain open; `internal` → production promotion still untaken._
 
 _2026-08-08 (IMP-033, the restore is offered, not imposed) — **code-complete, committed, not shipped.** Full TDD (26 new cases). New pure `src/persistence/restoreQuarantine.js` — `shouldQuarantine` (delegates to IMP-029's `isRestoredInstall`), `shouldOfferRestore({hasStash, onboarded})`, `preferredSource({lastSavedAt, lastBackupAt})` → `'google'|'file'` (ties/unparseable → `'google'`, no coercion), `runQuarantine({readRawState, writePendingRestore, readPendingRestore, clearState})` (injected-IO orchestration mirroring `backup/importFlow.js` — the live key is never cleared unless the stash write is verified readable back), `pendingRestoreInventory(stash)` (paid-inventory line shared by the offer sheet and the discard confirm). Stash IO added to `src/persistence/storage.js` (`readRawState`/`writePendingRestore`/`readPendingRestore`/`clearPendingRestore`, try/catch → falsy, no throwing) — its first-ever unit test, so `jest.setup.js` gained the package's own in-memory `AsyncStorage` mock. `App.js`'s load effect now runs `shouldQuarantine` on the same `lastSavedAt` check IMP-029 already made; on success it hydrates as a genuine first install (`{}`/`onboarded: false`) and stashes the parsed payload in a new `pendingRestore` state; on an aborted quarantine it falls straight through to IMP-029's existing notice, live data untouched. New `src/screens/RestoreOffer.js` (presentational, same scrim-and-card shape as `RestoreNotice.js` — its `GhostButton` is now extracted to `src/ui.js` and shared) states every warning (replaces the fresh start, dated staleness, paid-inventory-at-risk) and inverts emphasis to lead with "Restore from a file" when `preferredSource` says the export is newer. `RitualsApp.js`'s `handleLoadPendingRestore` reuses the existing `runConfirmedImport` safety guarantee (recovery copy of the *current* fresh state before replacing); "Keep this fresh start" only hides the sheet (`restoreOfferDismissed`), never discards the stash — it resurfaces as a `Google backup — {date}` row in the You tab's "Your journal is safe" card, with a separate (not hidden-behind-long-press) "Discard" action. Bundled copy fix: `explainAutoBackup` and the export success toast now both say plainly that the JSON export and the Google Auto Backup are separate systems, neither refreshing the other. `npm test` → **508 passed, 53 suites** (482 + 26 new); `npx expo export --platform android` clean. Full spec archived to `docs/build-log.md`; backlog row set to code-complete; `docs/specs-open.md`'s index updated (IMP-033 removed, 3 tasks renumbered to 2). NEXT: **IMP-038 "On this day"** (perk #3) is next per the ACTIVE TRACK order. IMP-038/-045/-046 remain open; `internal` → production promotion still untaken._
 
