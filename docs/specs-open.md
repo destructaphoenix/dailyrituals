@@ -13,8 +13,8 @@
 > re-litigate a "why", and do not improve the scope.** If a step turns out to be impossible or the code
 > contradicts the spec, **STOP** and log it to `PROGRESS.md` → Open items rather than inventing a fix.
 >
-> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **406 passed,
-> 47 suites**), `npx expo export --platform android` clean, commit with the **exact** message given, then
+> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **417 passed,
+> 48 suites**), `npx expo export --platform android` clean, commit with the **exact** message given, then
 > update `PROGRESS.md` (tick the backlog row, write the session note) and **move the finished spec from
 > this file into `docs/build-log.md`**.
 >
@@ -25,168 +25,17 @@
 
 | # | Spec | Lane | Free / Plus | Depends on |
 | --- | --- | --- | --- | --- |
-| 1 | [IMP-041 — teach the app](#imp-041--teach-the-app) | OTA | Free | — |
-| 2 | [IMP-035 — search your journal](#imp-035--search-your-journal) | OTA | **Free forever** | — |
-| 3 | [IMP-036 — custody of your words](#imp-036--custody-of-your-words-edit-delete-30-day-trash) | OTA | Free (undelete = Plus) | IMP-035 |
-| 4 | [IMP-037 — moods: custom + multiple](#imp-037--moods-custom-feelings--multiple-per-entry) | OTA | **Free** | IMP-035, IMP-036 |
-| 5 | [IMP-047 — deeper insights](#imp-047--deeper-insights-the-analysis-layer-perk-5) | OTA | **Plus** (perk #5) | **IMP-037** |
-| 6 | [IMP-033 — the restore is offered, not imposed](#imp-033--the-restore-is-offered-not-imposed) | OTA | Free | — |
-| 7 | [IMP-038 — "On this day"](#imp-038--on-this-day) | OTA | **Plus** (perk #3) | IMP-035, IMP-037 |
-| 8 | [IMP-046 — Annual Recap](#imp-046--annual-recap-your-year-remembered-perk-4) | OTA | **Plus** (perk #4) | **IMP-037, IMP-047** |
+| 1 | [IMP-035 — search your journal](#imp-035--search-your-journal) | OTA | **Free forever** | — |
+| 2 | [IMP-036 — custody of your words](#imp-036--custody-of-your-words-edit-delete-30-day-trash) | OTA | Free (undelete = Plus) | IMP-035 |
+| 3 | [IMP-037 — moods: custom + multiple](#imp-037--moods-custom-feelings--multiple-per-entry) | OTA | **Free** | IMP-035, IMP-036 |
+| 4 | [IMP-047 — deeper insights](#imp-047--deeper-insights-the-analysis-layer-perk-5) | OTA | **Plus** (perk #5) | **IMP-037** |
+| 5 | [IMP-033 — the restore is offered, not imposed](#imp-033--the-restore-is-offered-not-imposed) | OTA | Free | — |
+| 6 | [IMP-038 — "On this day"](#imp-038--on-this-day) | OTA | **Plus** (perk #3) | IMP-035, IMP-037 |
+| 7 | [IMP-046 — Annual Recap](#imp-046--annual-recap-your-year-remembered-perk-4) | OTA | **Plus** (perk #4) | **IMP-037, IMP-047** |
 | — | [IMP-045 — finish Lifetime Progress](#imp-045--finish-lifetime-progress-the-imp-021-shortfall) | OTA | Free | — · **no queue slot** |
 
 **IMP-045 does not claim a slot.** It is small, independent and fixes a live tester complaint — take it in any
 chat where the queued task is blocked, or as its own short chat. Same treatment as IMP-044.
-
----
-
-## IMP-041 — teach the app
-
-**Lane:** OTA · **Status:** ⬜ OPEN · **Depends on:** nothing · **Free**
-
-**Goal:** every mechanic the app already runs — streak, embers, candles, rites, XP/levels, keepsakes —
-has one honest explanation reachable from inside the app, and a first-time user on Today / Reflections /
-You gets one short, permanently-dismissible tip instead of an unexplained number.
-
-**Why (settled — do not re-litigate):** Owner, verbatim — *"need to make the app easy to use for
-everyone. Need tutorials and stuff, same for the perks that are not listed anywhere in the app right
-now."* Confirmed by reading the tree: beyond first-run [`Onboarding.js`](../src/screens/Onboarding.js)
-there is **no explanatory surface anywhere**.
-
-### Decided design (Opus — do not redesign)
-
-**A. Tip cards, NOT anchored coach marks.** A coach mark anchored to a live UI element needs `onLayout`
-measurement, survives neither font-scale nor rotation, and is the single most fragile thing this task
-could contain. **Build a dismissible tip card that renders at the top of the screen's ScrollView**, in the
-shape of `BackupNudge` ([`YouScreen.js:216`](../src/screens/YouScreen.js#L216)) but with a close button.
-**Anchored/overlay coach marks are explicitly out of scope. Do not build them.**
-
-**B. The three screens are `today`, `archive` and `you`.** Named exactly, no interpretation: the `tab`
-values in [`RitualsApp.js:83`](../src/RitualsApp.js#L83). **`insights` is deliberately excluded** — it is
-already self-describing, and IMP-045 is separately fixing what is unclear on it.
-
-**C. "What's in Plus" is gated behind `PLUS_ENABLED`, on purpose.** `PLUS_PERKS`
-([`data.js:144`](../src/data.js#L144)) currently contains **three untrue lines** (#3 meaningless, #4 and
-#5 dead — see PROGRESS.md → Phase 10b). Surfacing that list *outside* the paywall today would spread the
-false advertising to a wider surface, not fix it. So: **build the sheet, mount its entry row only when
-`PLUS_ENABLED` is true.** Gate D already requires every `PLUS_PERKS` line to be real before the flip, so
-the page lights up exactly when it becomes honest. **Do not ship it visible in the free build.**
-
-**D. Bundled truth fix (small, and this task is the one that owns it).** The rites card in
-[`gamify.js`](../src/gamify.js) claims embers are earned by finishing the rites — *"All rites kept —
-today's embers are yours."* and *"finish to earn today's embers."* **Both are false.** Embers come from
-`applyCompletion` for writing the day ([`completeEntry.js:41`](../src/home/completeEntry.js#L41)); the
-rites award **XP only** (`+10` each, already shown per-row). Writing an explainer that contradicts the
-code is exactly the IMP-031 / IMP-039 defect class, so fix the copy in the same pass — replace with
-`'All rites kept — a full day.'` and `` `${kept} of ${quests.length} kept today.` ``.
-
-**E. Every explainer must be true against the code.** The facts, already verified — use these, do not
-invent numbers: XP_GAIN = **50** per day written ([`RitualsApp.js:64`](../src/RitualsApp.js#L64)) ·
-rites = **+10 XP each** ([`data.js:59`](../src/data.js#L59)) · EMBER_GAIN = **15** per day kept
-([`data.js:102`](../src/data.js#L102)) · candles cost **120 / 300 / 450 embers**
-([`data.js:126`](../src/data.js#L126)) and spend themselves **one per missed day**, covering only the
-prefix they can afford (IMP-039, `src/home/streakFreeze.js`) · levels run **Waking → Keeper of Days**
-([`level.js`](../src/profile/level.js)). **Do not mention cash ember packs** — that surface is hidden by
-IMP-034.
-
-### New persisted key
-
-`seenTips: []` — add to `PERSISTED_KEYS` in [`state.js:7`](../src/persistence/state.js#L7) (a plain
-string array; no schema bump needed, `mergeWithDefaults` supplies the `[]` default).
-
-### Steps
-
-- [ ] 1. **RED first.** `__tests__/content/tips.test.js` against a new pure `src/content/tips.js`:
-      `pendingTip(screen, seenTips)` → the first `TIPS` entry whose `screen` matches and whose `id` is not
-      in `seenTips`, else `null`; `markTipSeen(seenTips, id)` → a **new** array, deduplicated (never mutate).
-- [ ] 2. `src/content/tips.js` — export `TIPS` (exactly three entries, shape
-      `{ id, screen, title, body }`) and `EXPLAINERS` (exactly six, shape `{ id, label, title, body }`),
-      plus the two functions. Copy below, verbatim.
-- [ ] 3. `src/screens/TipCard.js` — presentational: `{ title, body, onDismiss }`, `Card`-shaped, an
-      `Info` icon, a `Close` button. Props in / callback out, no state.
-- [ ] 4. Wire `seenTips` through [`RitualsApp.js`](../src/RitualsApp.js) exactly like `frozenDays`
-      (IMP-039): `useState` from `initialState`, into the autosave effect's dep array and `currentSlice()`,
-      and into `PERSISTED_KEYS`. Render `<TipCard>` at the top of `HomeScreen`, `ArchiveScreen` and
-      `YouScreen` when `pendingTip(tab, seenTips)` is non-null; dismiss calls
-      `setSeenTips((s) => markTipSeen(s, id))`.
-- [ ] 5. **"How it works"** — a new section in `YouScreen.js`, placed **directly above "Your journal is
-      safe"**: one `Card` with six `Row`s, one per `EXPLAINERS` entry, each `onPress` firing
-      `Alert.alert(title, body, [{ text: 'OK', style: 'cancel' }])` — the exact pattern of
-      `explainAutoBackup` ([`RitualsApp.js:436`](../src/RitualsApp.js#L436)). Pass one
-      `onExplain={(id) => …}` callback down; do not put `Alert` copy in the screen.
-- [ ] 6. **"What's in Plus"** — new `src/screens/PlusPerks.js`, a full-screen sheet rendering `PLUS_PERKS`
-      with a title and a close button, opened from a `YouScreen` row rendered **only when `plusEnabled`**
-      (per Decided design C). Reuse the `Modal` + `ThemeContext.Provider` pattern of the existing sheets in
-      `RitualsApp.js`.
-- [ ] 7. **Teaching empty states.** Two edits, no new files: `ArchiveScreen.js` renders nothing but an
-      empty heatmap at zero entries — add the copy below. `InsightsScreen.js`'s existing empty copy
-      ([line 38](../src/screens/InsightsScreen.js#L38)) gains a second line naming what will appear.
-- [ ] 8. Bundled truth fix per Decided design D — the two strings in `gamify.js`.
-- [ ] 9. `npm test` green (406 + new), `npx expo export --platform android` clean, commit, update
-      `PROGRESS.md`, archive this spec to `docs/build-log.md`.
-
-### Copy — use verbatim, do not rewrite
-
-**`TIPS`**
-
-| id | screen | title | body |
-| --- | --- | --- | --- |
-| `today-streak` | `today` | Your streak | That number is how many days in a row you've laid to rest. Miss a day and it starts again at one — unless a candle is lit for you. |
-| `archive-heat` | `archive` | Your days, at a glance | Every square is a day. 💀 marks one that got away. Tap any reflection to read it again. |
-| `you-safety` | `you` | It all lives here | Your journal is kept on this phone and nowhere else. Back it up here, and it will be waiting on your next one. |
-
-**`EXPLAINERS`** (label → the `Row` label; title/body → the `Alert`)
-
-| id | label | title | body |
-| --- | --- | --- | --- |
-| `streak` | Your streak | Your streak | Your streak is the number of days in a row you've written. It's counted from your reflections themselves, so it's always the truth — miss a day and it returns to one. Writing again on a day you've already kept edits that day rather than adding to it. |
-| `embers` | Embers | Embers | You gather 15 embers for every day you lay to rest. Spend them in the Shop on palettes, skies and streak candles. They also gather on their own — one handful for every day you keep. |
-| `candles` | Streak candles | Streak candles | A candle spends itself when you miss a day, and your streak holds. One candle covers one missed day. If you're away longer than the candles you own, the ones you have are still spent on the days they can cover. Buy them in the Shop with embers. |
-| `rites` | Daily rites | Daily rites | Three small acts that renew at midnight: lay today to rest, name how it felt, and tend an old grave by opening a past reflection. Each one is worth 10 XP. |
-| `levels` | Levels | Levels | Writing a day is worth 50 XP, and each rite another 10. XP only ever adds up, carrying you from Waking to Keeper of Days. Nothing you earn is ever taken back. |
-| `keepsakes` | Keepsakes | Keepsakes | Keepsakes arrive on their own for what you've already written — days kept, streaks held, words laid down. There's nothing to claim; they're simply there when you've earned them. |
-
-**Reflections empty state** (`ArchiveScreen.js`, shown when `entries.length === 0`, replacing the list):
-
-> **Nothing here yet.**
-> Every day you lay to rest is kept here for good — the words, the day, and how it felt. Write your first
-> one and this page starts filling in.
-
-**Insights empty state** (`InsightsScreen.js`, appended as a second line under the existing copy):
-
-> Your moods, your steadiest weekday and the whole shape of your record will appear here as you write.
-
-### Tests
-
-`src/content/tips.js` only — the screens get no render tests (same non-goal as every other screen in this
-app). Cases: `pendingTip` returns the tip for an unseen screen · returns `null` once its id is in
-`seenTips` · returns `null` for a screen with no tip (`'insights'`) · tolerates `undefined`/`null`
-`seenTips` · `markTipSeen` returns a new array and does not mutate the input · `markTipSeen` is idempotent
-(adding a seen id twice yields one entry) · every `TIPS` id is unique, and every `screen` is one of
-`today` / `archive` / `you` · every `EXPLAINERS` entry has a non-empty `label`, `title` and `body`, and
-ids are unique.
-
-### Commit message
-
-```
-feat(learn): explain every mechanic in-app — tips, How it works, What's in Plus (IMP-041)
-
-Nothing in the app explained itself. Beyond first-run onboarding there was
-no surface describing the streak, embers, candles, rites, XP or keepsakes,
-and PLUS_PERKS rendered only inside a paywall that is hidden while the app
-ships free.
-
-Adds a one-per-screen dismissible tip on Today, Reflections and You
-(persisted in seenTips, never shown twice), a "How it works" card on the
-You tab with one honest explainer per mechanic, a "What's in Plus" sheet
-reachable outside the paywall, and empty states that teach instead of
-apologise.
-
-Also corrects the rites card, which claimed embers are earned by finishing
-the rites. They are earned by writing the day; the rites award XP only.
-```
-
-**Ship:** OTA. No `bump:*`.
 
 ---
 
