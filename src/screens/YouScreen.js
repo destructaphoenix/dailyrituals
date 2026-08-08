@@ -11,15 +11,18 @@ import { profileIdentity } from '../profile/identity';
 import { lastBackupLabel } from '../backup/lastBackupLabel';
 import { backupHealth } from '../backup/backupHealth';
 import NameEditModal from './NameEditModal';
+import TipCard from './TipCard';
 import Row from '../ui/Row';
 import { CHROME_FONT_SCALE } from '../ui/textScale';
+import { EXPLAINERS } from '../content/tips';
 
 export default function YouScreen({
   mode, onToggleMode, settings, setSettings,
   streak, level, levelName, xpInto, xpToNext, entriesCount, badgesEarned, onOpenAchievements,
   embers, plus, onOpenShop, onOpenPaywall, onOpenManage, onRestorePurchases, plusEnabled = true, onResetData,
   lastBackupAt, onExportData, onImportData, onExplainAutoBackup, onOpenDev,
-  reminderValue, onOpenReminder,
+  reminderValue, onOpenReminder, onOpenPlusPerks,
+  tip, onDismissTip,
 }) {
   const t = useTheme();
   const c = t.colors;
@@ -34,6 +37,11 @@ export default function YouScreen({
   const atBackupMilestone = entriesCount === 100 || entriesCount === 365;
   const setTone = () => setSettings((s) => ({ ...s, tone: s.tone === 'gentle' ? 'playful' : 'gentle' }));
   const saveName = (clean) => { setSettings((s) => ({ ...s, name: clean })); setEditingName(false); };
+  const explainMechanic = (id) => {
+    const e = EXPLAINERS.find((x) => x.id === id);
+    if (!e) return;
+    Alert.alert(e.title, e.body, [{ text: 'OK', style: 'cancel' }]);
+  };
   const confirmReset = () => {
     Alert.alert(
       'Reset all data',
@@ -51,6 +59,12 @@ export default function YouScreen({
       contentContainerStyle={{ paddingTop: 8, paddingBottom: 26, gap: 18 }}
       showsVerticalScrollIndicator={false}
     >
+      {tip && (
+        <View style={{ paddingHorizontal: 20 }}>
+          <TipCard title={tip.title} body={tip.body} onDismiss={() => onDismissTip(tip.id)} />
+        </View>
+      )}
+
       {/* profile header */}
       <View style={{ paddingHorizontal: 20, paddingTop: 6 }}>
         <Card style={{ padding: 20 }}>
@@ -95,6 +109,11 @@ export default function YouScreen({
       {/* Plus + Shop */}
       <View style={{ paddingHorizontal: 20, gap: 12 }}>
         {plusEnabled && <PlusBanner plus={plus} onOpenPaywall={onOpenPaywall} onManage={onOpenManage} compact />}
+        {plusEnabled && onOpenPlusPerks && (
+          <Card>
+            <Row icon={<Sun size={20} color={c.accentDeep} />} label="What's in Plus" onPress={onOpenPlusPerks} />
+          </Card>
+        )}
         {/* Reachable outside the paywall (IMP-043) — the one place a returning
             subscriber who looks non-Plus has a reason to look. Once `plus` is
             true, this same action lives in Manage subscription instead. */}
@@ -135,6 +154,19 @@ export default function YouScreen({
           <Divider />
           <Row icon={<UserIcon size={20} color={c.accentDeep} />} label="Your name"
             value={display} onPress={() => setEditingName(true)} />
+        </Card>
+      </View>
+
+      {/* how it works — one honest explainer per mechanic */}
+      <View style={{ paddingHorizontal: 20 }}>
+        <T d w={700} color={c.ink} style={{ fontSize: 15, marginBottom: 10, marginLeft: 2 }}>How it works</T>
+        <Card>
+          {EXPLAINERS.map((e, i) => (
+            <React.Fragment key={e.id}>
+              {i > 0 && <Divider />}
+              <Row icon={<Info size={20} color={c.accentDeep} />} label={e.label} onPress={() => explainMechanic(e.id)} />
+            </React.Fragment>
+          ))}
         </Card>
       </View>
 

@@ -6,8 +6,9 @@ import { useTheme } from '../theme';
 import { T, Card } from '../ui';
 import { moodEmoji } from '../data';
 import { buildHeatmap } from '../home/calendar';
+import TipCard from './TipCard';
 
-export default function ArchiveScreen({ copy, mode, entries, onOpen }) {
+export default function ArchiveScreen({ copy, mode, entries, onOpen, tip, onDismissTip }) {
   const t = useTheme();
   const c = t.colors;
   const heat = buildHeatmap(entries);
@@ -18,6 +19,12 @@ export default function ArchiveScreen({ copy, mode, entries, onOpen }) {
       contentContainerStyle={{ paddingTop: 8, paddingBottom: 26, gap: 18 }}
       showsVerticalScrollIndicator={false}
     >
+      {tip && (
+        <View style={{ paddingHorizontal: 20 }}>
+          <TipCard title={tip.title} body={tip.body} onDismiss={() => onDismissTip(tip.id)} />
+        </View>
+      )}
+
       <View style={{ paddingHorizontal: 20, paddingTop: 6 }}>
         <T d w={800} color={c.ink} style={{ fontSize: 24 }}>Reflections</T>
         <T w={600} color={c.muted} style={{ fontSize: 14, marginTop: 2 }}>{copy.arcSub}</T>
@@ -33,30 +40,42 @@ export default function ArchiveScreen({ copy, mode, entries, onOpen }) {
         </Card>
       </View>
 
-      <View style={{ paddingHorizontal: 20, gap: 12 }}>
-        {entries.map((e) => (
-          <Pressable key={e.id} onPress={() => onOpen(e)}>
-            {({ pressed }) => (
-              <Card style={{ padding: 16, flexDirection: 'row', gap: 14, transform: [{ scale: pressed ? 0.99 : 1 }] }}>
-                <View style={{ width: 46, alignItems: 'center' }}>
-                  <T d w={800} color={c.accentDeep} style={{ fontSize: 22, lineHeight: 22 }}>{e.day}</T>
-                  <T w={800} color={c.muted} style={{ fontSize: 11, textTransform: 'uppercase', marginTop: 2 }}>{e.mon}</T>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <T d w={700} color={c.ink} style={{ fontSize: 15, marginBottom: 3 }}>{e.wd}</T>
-                  <T w={400} color={c.muted} style={{ fontSize: 13.5, lineHeight: 19.5 }} numberOfLines={2}>{e.did}</T>
-                  {e.mood ? (
-                    <View style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 5, marginTop: 8, paddingHorizontal: 9, paddingVertical: 3, borderRadius: 999, backgroundColor: c.accentSoft }}>
-                      <Text style={{ fontSize: 12 }}>{moodEmoji(e.mood)}</Text>
-                      <T w={800} color={c.accentDeep} style={{ fontSize: 11 }}>{e.mood}</T>
-                    </View>
-                  ) : null}
-                </View>
-              </Card>
-            )}
-          </Pressable>
-        ))}
-      </View>
+      {entries.length === 0 ? (
+        <View style={{ paddingHorizontal: 20 }}>
+          <Card style={{ padding: 24, alignItems: 'center' }}>
+            <T d w={700} color={c.ink} style={{ fontSize: 16, textAlign: 'center' }}>Nothing here yet.</T>
+            <T w={600} color={c.muted} style={{ fontSize: 14, marginTop: 8, textAlign: 'center', lineHeight: 20 }}>
+              Every day you lay to rest is kept here for good — the words, the day, and how it felt. Write your
+              first one and this page starts filling in.
+            </T>
+          </Card>
+        </View>
+      ) : (
+        <View style={{ paddingHorizontal: 20, gap: 12 }}>
+          {entries.map((e) => (
+            <Pressable key={e.id} onPress={() => onOpen(e)}>
+              {({ pressed }) => (
+                <Card style={{ padding: 16, flexDirection: 'row', gap: 14, transform: [{ scale: pressed ? 0.99 : 1 }] }}>
+                  <View style={{ width: 46, alignItems: 'center' }}>
+                    <T d w={800} color={c.accentDeep} style={{ fontSize: 22, lineHeight: 22 }}>{e.day}</T>
+                    <T w={800} color={c.muted} style={{ fontSize: 11, textTransform: 'uppercase', marginTop: 2 }}>{e.mon}</T>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <T d w={700} color={c.ink} style={{ fontSize: 15, marginBottom: 3 }}>{e.wd}</T>
+                    <T w={400} color={c.muted} style={{ fontSize: 13.5, lineHeight: 19.5 }} numberOfLines={2}>{e.did}</T>
+                    {e.mood ? (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 5, marginTop: 8, paddingHorizontal: 9, paddingVertical: 3, borderRadius: 999, backgroundColor: c.accentSoft }}>
+                        <Text style={{ fontSize: 12 }}>{moodEmoji(e.mood)}</Text>
+                        <T w={800} color={c.accentDeep} style={{ fontSize: 11 }}>{e.mood}</T>
+                      </View>
+                    ) : null}
+                  </View>
+                </Card>
+              )}
+            </Pressable>
+          ))}
+        </View>
+      )}
     </ScrollView>
   );
 }

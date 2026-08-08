@@ -51,6 +51,9 @@ import { dayNumber } from './time/dailyPick';
 import { selectPrompt } from './content/deck';
 import { PROMPTS } from './content/prompts';
 import { reminderCopy } from './content/reminders';
+import { pendingTip, markTipSeen } from './content/tips';
+import TipCard from './screens/TipCard';
+import PlusPerks from './screens/PlusPerks';
 import { nextOccurrences, reminderRowValue } from './reminders/schedule';
 import * as reminderIO from './reminders/io';
 
@@ -143,6 +146,10 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   const [lastActiveDay, setLastActiveDay] = useState(initialState.lastActiveDay ?? todayKey());
   const [promptDeck, setPromptDeck] = useState(initialState.promptDeck ?? null);
   const promptSel = useMemo(() => selectPrompt(PROMPTS, promptDeck, dayNumber()), [promptDeck]);
+  // Tip cards seen (IMP-041) — an id is added once dismissed and never shown again.
+  const [seenTips, setSeenTips] = useState(initialState.seenTips ?? []);
+  const dismissTip = (id) => setSeenTips((s) => markTipSeen(s, id));
+  const [plusPerksOpen, setPlusPerksOpen] = useState(false);
   const [liveEntitlement, setLiveEntitlement] = useState(null);
   const renewLabel = liveEntitlement ? formatRenewDate(liveEntitlement.renewISO) : RENEW_DATE;
   const livePlan = liveEntitlement ? liveEntitlement.plan : activePlan;
@@ -349,13 +356,13 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
         mode,
         entries, xp, done, quests, freezes, frozenDays, embers, plus,
         activePalette, ownedPalettes, activeSky, ownedSkies,
-        subCanceled, activePlan, lastActiveDay, settings, lastBackupAt, promptDeck,
+        subCanceled, activePlan, lastActiveDay, settings, lastBackupAt, promptDeck, seenTips,
       }));
     }, 400);
     return () => clearTimeout(id);
   }, [mode, entries, xp, done, quests, freezes, frozenDays, embers, plus,
     activePalette, ownedPalettes, activeSky, ownedSkies,
-    subCanceled, activePlan, lastActiveDay, settings, lastBackupAt, promptDeck]);
+    subCanceled, activePlan, lastActiveDay, settings, lastBackupAt, promptDeck, seenTips]);
 
   const complete = ({ did, wished, mood }) => {
     const entry = { id: 'new' + Date.now(), ...entryDateParts(), dayKey: todayKey(), mood, did, wished, streak: true };
@@ -379,7 +386,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     onboarded: true,
     entries, xp, done, quests, freezes, frozenDays, embers, plus,
     activePalette, ownedPalettes, activeSky, ownedSkies,
-    subCanceled, activePlan, lastActiveDay, settings, lastBackupAt, promptDeck,
+    subCanceled, activePlan, lastActiveDay, settings, lastBackupAt, promptDeck, seenTips,
   });
 
   const doExport = async () => {
@@ -450,7 +457,13 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
       case 'insights':
         return <InsightsScreen copy={copy} entries={entries} streak={streak} xp={xp} />;
       case 'archive':
-        return <ArchiveScreen copy={copy} mode={mode} entries={entries} onOpen={(e) => { setReading(e); setQuests((qs) => markRevisited(qs, e, todayKey())); }} />;
+        return (
+          <ArchiveScreen
+            copy={copy} mode={mode} entries={entries}
+            onOpen={(e) => { setReading(e); setQuests((qs) => markRevisited(qs, e, todayKey())); }}
+            tip={pendingTip('archive', seenTips)} onDismissTip={dismissTip}
+          />
+        );
       case 'you':
         return (
           <YouScreen
@@ -471,6 +484,8 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             onOpenDev={__DEV__ ? () => setShowDev(true) : undefined}
             reminderValue={reminderRowValue(settings.reminder, reminderPermission)}
             onOpenReminder={() => setReminderOpen(true)}
+            onOpenPlusPerks={() => setPlusPerksOpen(true)}
+            tip={pendingTip('you', seenTips)} onDismissTip={dismissTip}
           />
         );
       case 'today':
@@ -483,6 +498,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             embers={embers} plus={plus} onOpenShop={() => setShopOpen(true)}
             done={done} onWrite={() => setWriting(true)} onToggleMode={onToggleMode}
             dailyPrompt={promptSel.item} userName={(settings.name || '').trim()}
+            tip={pendingTip('today', seenTips)} onDismissTip={dismissTip}
           />
         );
     }
@@ -606,6 +622,12 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
               onGetHelp={doGetHelp}
             />
             {toast && <Toast key={toast.key} message={toast.msg} bottom={insets.bottom} />}
+          </ThemeContext.Provider>
+        </Modal>
+
+        <Modal visible={PLUS_ENABLED && plusPerksOpen} animationType="slide" presentationStyle="overFullScreen" onRequestClose={() => setPlusPerksOpen(false)}>
+          <ThemeContext.Provider value={theme}>
+            <PlusPerks insets={insets} onClose={() => setPlusPerksOpen(false)} />
           </ThemeContext.Provider>
         </Modal>
 

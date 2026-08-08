@@ -110,7 +110,7 @@ export function DailyQuests({ quests }) {
           {allDone ? <Sun size={17} color={c.onAccent} /> : <Ring size={17} color={c.muted} />}
         </View>
         <T w={700} color={allDone ? c.accentDeep : c.muted} style={{ flex: 1, fontSize: 12.5, lineHeight: 17 }}>
-          {allDone ? 'All rites kept — today’s embers are yours.' : `${kept} of ${quests.length} kept — finish to earn today\u2019s embers.`}
+          {allDone ? 'All rites kept — a full day.' : `${kept} of ${quests.length} kept today.`}
         </T>
       </View>
     </View>

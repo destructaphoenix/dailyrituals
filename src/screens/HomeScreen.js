@@ -14,8 +14,9 @@ import { buildWeekStrip } from '../home/calendar';
 import { deriveKeepsakes } from '../profile/achievements';
 import { StreakFreeze, DailyQuests } from '../gamify';
 import { EmberPill } from '../shopui';
+import TipCard from './TipCard';
 
-export default function HomeScreen({ copy, mode, streak, level, levelName, xpInto, xpToNext, entries, quests, freezes, onOpenAchievements, done, onWrite, onToggleMode, embers, plus, onOpenShop, dailyPrompt = '', userName = '' }) {
+export default function HomeScreen({ copy, mode, streak, level, levelName, xpInto, xpToNext, entries, quests, freezes, onOpenAchievements, done, onWrite, onToggleMode, embers, plus, onOpenShop, dailyPrompt = '', userName = '', tip, onDismissTip }) {
   const t = useTheme();
   const c = t.colors;
   const Orb = mode === 'night' ? Moon : Sun;
@@ -32,6 +33,12 @@ export default function HomeScreen({ copy, mode, streak, level, levelName, xpInt
       contentContainerStyle={{ paddingTop: 4, paddingBottom: 26, gap: 14 }}
       showsVerticalScrollIndicator={false}
     >
+      {tip && (
+        <View style={{ paddingHorizontal: 20 }}>
+          <TipCard title={tip.title} body={tip.body} onDismiss={() => onDismissTip(tip.id)} />
+        </View>
+      )}
+
       {/* header: date left · icons right · greeting below */}
       <View style={{ paddingHorizontal: 20 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>

@@ -37,6 +37,9 @@ export default function InsightsScreen({ copy, entries = [], streak = 0, xp = 0 
             <T w={600} color={c.muted} style={{ fontSize: 15, textAlign: 'center', lineHeight: 22 }}>
               No insights yet — write your first reflection and the shape of your days will appear here.
             </T>
+            <T w={600} color={c.muted} style={{ fontSize: 15, textAlign: 'center', lineHeight: 22, marginTop: 8 }}>
+              Your moods, your steadiest weekday and the whole shape of your record will appear here as you write.
+            </T>
           </Card>
         </View>
       </ScrollView>
