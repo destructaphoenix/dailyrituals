@@ -22,6 +22,7 @@ export default function YouScreen({
   embers, plus, onOpenShop, onOpenPaywall, onOpenManage, onRestorePurchases, plusEnabled = true, onResetData,
   lastBackupAt, onExportData, onImportData, onExplainAutoBackup, onOpenDev,
   reminderValue, onOpenReminder, onOpenPlusPerks,
+  trashCount = 0, onOpenTrash,
   tip, onDismissTip,
 }) {
   const t = useTheme();
@@ -182,6 +183,13 @@ export default function YouScreen({
           <Divider />
           <Row icon={<Restore size={20} color={c.accentDeep} />} label="Restore from a backup"
             onPress={onImportData} />
+          {onOpenTrash && (
+            <>
+              <Divider />
+              <Row icon={<Restore size={20} color={c.accentDeep} />} label="Recently deleted"
+                value={trashCount > 0 ? String(trashCount) : undefined} onPress={onOpenTrash} />
+            </>
+          )}
         </Card>
         {health !== 'ok' ? (
           <BackupNudge

@@ -25,6 +25,7 @@ import ReadingSheet from './screens/ReadingSheet';
 import RestoreNotice from './screens/RestoreNotice';
 import ReminderSheet from './screens/ReminderSheet';
 import WriteFlow from './screens/WriteFlow';
+import TrashSheet from './screens/TrashSheet';
 import Celebration from './screens/Celebration';
 import Achievements from './screens/Achievements';
 import Shop from './screens/Shop';
@@ -41,8 +42,9 @@ import { saveState } from './persistence/storage';
 import { pickPersisted } from './persistence/state';
 import { applyCompletion } from './home/completeEntry';
 import { applyAutoFreeze } from './home/streakFreeze';
+import { applyEdit, applyDelete, applyRestore, pruneTrash, streakAfterDelete } from './entries/mutate';
 import { markRevisited } from './home/markRevisited';
-import { findTodaysEntry, isEditableToday } from './home/todaysEntry';
+import { findTodaysEntry } from './home/todaysEntry';
 import { levelFromXp } from './profile/level';
 import { deriveAchievements } from './profile/achievements';
 import { entryDateParts } from './time/clock';
@@ -93,6 +95,15 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   // Missed days a candle has already covered (IMP-039 streak insurance) — see
   // applyAutoFreeze. Forgiven, not journaled: never becomes an `entries` row.
   const [frozenDays, setFrozenDays] = useState(initialState.frozenDays ?? []);
+  // Deleted entries (IMP-036), pruned to a 30-day window on launch below.
+  // Restoring from here is the Plus half — deleting itself is free.
+  const [trash, setTrash] = useState(initialState.trash ?? []);
+  const [trashOpen, setTrashOpen] = useState(false);
+  // Which past day WriteFlow is editing, if any — null means the normal
+  // today flow (complete()/applyCompletion). Past-day edits must never go
+  // through applyCompletion (see IMP-036: it would award a duplicate
+  // reward), so they're routed to editPastEntry/applyEdit instead.
+  const [editingDayKey, setEditingDayKey] = useState(null);
   // Streak is DERIVED from real entries (IMP-024): a missed day breaks it to 0,
   // re-logging after a gap restarts at 1 — UNLESS a candle froze the gap.
   // No persisted streak counter to drift.
@@ -342,6 +353,14 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Trash pruning (IMP-036): drop anything past the 30-day window. Mount-only
+  // like the freeze catch-up above — pruneTrash is idempotent, so the next
+  // launch catches up fine.
+  React.useEffect(() => {
+    const pruned = pruneTrash(trash, Date.now());
+    if (pruned.length !== trash.length) setTrash(pruned);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Advance + persist the prompt deck when the day rolls over. selectPrompt
   // returns the same reference when nothing changed, so this is a no-op then.
   React.useEffect(() => {
@@ -356,13 +375,13 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
         mode,
         entries, xp, done, quests, freezes, frozenDays, embers, plus,
         activePalette, ownedPalettes, activeSky, ownedSkies,
-        subCanceled, activePlan, lastActiveDay, settings, lastBackupAt, promptDeck, seenTips,
+        subCanceled, activePlan, lastActiveDay, settings, lastBackupAt, promptDeck, seenTips, trash,
       }));
     }, 400);
     return () => clearTimeout(id);
   }, [mode, entries, xp, done, quests, freezes, frozenDays, embers, plus,
     activePalette, ownedPalettes, activeSky, ownedSkies,
-    subCanceled, activePlan, lastActiveDay, settings, lastBackupAt, promptDeck, seenTips]);
+    subCanceled, activePlan, lastActiveDay, settings, lastBackupAt, promptDeck, seenTips, trash]);
 
   const complete = ({ did, wished, mood }) => {
     const entry = { id: 'new' + Date.now(), ...entryDateParts(), dayKey: todayKey(), mood, did, wished, streak: true };
@@ -381,12 +400,60 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     else showToast("Today's reflection updated");
   };
 
+  const closeWriting = () => { setWriting(false); setEditingDayKey(null); };
+
+  // Past-day edit (IMP-036) — routed around applyCompletion on purpose: that
+  // path only skips its reward branch when `prev.done` is true, so an
+  // untouched today would fall into the reward branch and double-award XP
+  // + embers plus a duplicate row. applyEdit never touches xp/embers.
+  const editPastEntry = (dayKey, { did, wished, mood }) => {
+    setEntries((es) => applyEdit(es, dayKey, { did, wished, mood }));
+    closeWriting();
+    showToast('Entry updated');
+  };
+
+  const confirmDeleteEntry = (entry) => {
+    const newStreak = streakAfterDelete(entries, entry.dayKey, todayKey(), frozenDays);
+    const remaining = entries.filter((e) => e.dayKey !== entry.dayKey);
+    const losesKeepsake = achievements.some(
+      (a, i) => a.done && !deriveAchievements(remaining, newStreak)[i].done
+    );
+    Alert.alert(
+      'Delete this day?',
+      `This removes ${entry.wd}, ${entry.day} ${entry.mon} from your journal for good — you'll have 30 days ` +
+      `to change your mind. Your streak becomes ${newStreak}.` +
+      (losesKeepsake ? ' One of your keepsakes may go with it.' : ''),
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete', style: 'destructive',
+          onPress: () => {
+            const result = applyDelete({ entries, trash }, entry.dayKey, Date.now());
+            setEntries(result.entries);
+            setTrash(result.trash);
+            setReading(null);
+            showToast('Moved to Recently deleted');
+          },
+        },
+      ]
+    );
+  };
+
+  const restoreFromTrash = (dayKey) => {
+    const result = applyRestore({ entries, trash }, dayKey);
+    setEntries(result.entries);
+    setTrash(result.trash);
+    showToast('Restored');
+  };
+
+  const forgetFromTrash = (dayKey) => setTrash((ts) => ts.filter((t) => t.dayKey !== dayKey));
+
   // The exact persisted slice (mirrors the autosave object) — source for backups.
   const currentSlice = () => ({
     onboarded: true,
     entries, xp, done, quests, freezes, frozenDays, embers, plus,
     activePalette, ownedPalettes, activeSky, ownedSkies,
-    subCanceled, activePlan, lastActiveDay, settings, lastBackupAt, promptDeck, seenTips,
+    subCanceled, activePlan, lastActiveDay, settings, lastBackupAt, promptDeck, seenTips, trash,
   });
 
   const doExport = async () => {
@@ -481,6 +548,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             onExportData={doExport}
             onImportData={doImport}
             onExplainAutoBackup={explainAutoBackup}
+            trashCount={trash.length} onOpenTrash={() => setTrashOpen(true)}
             onOpenDev={__DEV__ ? () => setShowDev(true) : undefined}
             reminderValue={reminderRowValue(settings.reminder, reminderPermission)}
             onOpenReminder={() => setReminderOpen(true)}
@@ -539,12 +607,14 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
         </View>
 
         {/* overlays */}
-        <Modal visible={writing} animationType="slide" presentationStyle="overFullScreen" onRequestClose={() => setWriting(false)}>
+        <Modal visible={writing} animationType="slide" presentationStyle="overFullScreen" onRequestClose={closeWriting}>
           <ThemeContext.Provider value={theme}>
             {writing && (() => {
-              const te = findTodaysEntry(entries, todayKey());
+              const editEntry = editingDayKey ? entries.find((e) => e.dayKey === editingDayKey) : null;
+              const te = editEntry || findTodaysEntry(entries, todayKey());
               const initial = te ? { did: te.did, wished: te.wished, mood: te.mood } : null;
-              return <WriteFlow copy={copy} insets={insets} onClose={() => setWriting(false)} onComplete={complete} initial={initial} />;
+              const onCompleteFlow = editEntry ? (vals) => editPastEntry(editEntry.dayKey, vals) : complete;
+              return <WriteFlow copy={copy} insets={insets} onClose={closeWriting} onComplete={onCompleteFlow} initial={initial} />;
             })()}
           </ThemeContext.Provider>
         </Modal>
@@ -554,10 +624,28 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             {reading && (
               <ReadingSheet
                 entry={reading} copy={copy} mode={mode} insets={insets} onClose={() => setReading(null)}
-                canEdit={isEditableToday(reading, todayKey())}
-                onEdit={() => { setReading(null); setWriting(true); }}
+                canEdit={!!reading}
+                onEdit={() => {
+                  const dayKey = reading.dayKey;
+                  setReading(null);
+                  if (dayKey !== todayKey()) setEditingDayKey(dayKey);
+                  setWriting(true);
+                }}
+                onDelete={() => confirmDeleteEntry(reading)}
               />
             )}
+          </ThemeContext.Provider>
+        </Modal>
+
+        <Modal visible={trashOpen} animationType="slide" presentationStyle="overFullScreen" onRequestClose={() => setTrashOpen(false)}>
+          <ThemeContext.Provider value={theme}>
+            <TrashSheet
+              trash={trash} insets={insets} onClose={() => setTrashOpen(false)}
+              onRestore={restoreFromTrash} onDeleteForever={forgetFromTrash}
+              plus={plus} plusEnabled={PLUS_ENABLED}
+              onOpenPaywall={() => { setTrashOpen(false); setPaywall(true); }}
+              onRestoreBlocked={() => showToast('Undelete is part of Plus — coming soon')}
+            />
           </ThemeContext.Provider>
         </Modal>
 

@@ -8,7 +8,7 @@ import { T } from '../ui';
 import { Chevron } from '../icons';
 import { moodEmoji } from '../data';
 
-export default function ReadingSheet({ entry, copy, mode, insets, onClose, canEdit, onEdit }) {
+export default function ReadingSheet({ entry, copy, mode, insets, onClose, canEdit, onEdit, onDelete }) {
   const t = useTheme();
   const c = t.colors;
   return (
@@ -39,6 +39,12 @@ export default function ReadingSheet({ entry, copy, mode, insets, onClose, canEd
 
         <T d w={700} color={c.accentDeep} style={{ fontSize: 14, marginBottom: 7 }}>{copy.q2}</T>
         <T w={400} color={c.ink} style={{ fontSize: 16.5, lineHeight: 26.7 }}>{entry.wished}</T>
+
+        {onDelete ? (
+          <Pressable onPress={onDelete} style={{ alignSelf: 'flex-start', marginTop: 26, paddingVertical: 6 }}>
+            <T w={700} color={c.red} style={{ fontSize: 13.5 }}>Delete this day</T>
+          </Pressable>
+        ) : null}
       </ScrollView>
     </View>
   );
