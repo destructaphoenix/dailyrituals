@@ -144,7 +144,7 @@ export const PLUS_PRICES = {
 export const PLUS_PERKS = [
   'Every palette & sky — unlocked forever',
   'Streak insurance — a candle spends itself when you miss a day',
-  'Your whole graveyard, kept forever',
+  'On this day — your own words, brought back to you',
   'Your Book — export your days as a PDF',
   'Deeper insights — moods & seasonal themes',
 ];

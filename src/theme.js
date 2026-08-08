@@ -114,6 +114,9 @@ export const DEFAULT_SETTINGS = {
   // User-added feelings beyond the suggested MOODS list (IMP-037), offered
   // again in every future WriteFlow session.
   customMoods: [],
+  // Last dayKey the "On this day" card (IMP-038) was dismissed for — a single
+  // string, not a set, so a past dismissal is irrelevant once the day changes.
+  onThisDayDismissed: '',
 };
 
 // Mix a hex color toward white by `amount` (0–1).

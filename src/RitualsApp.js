@@ -633,10 +633,14 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             copy={copy} mode={mode}
             streak={streak} level={level} levelName={levelName} xpInto={xpInto} xpToNext={xpToNext} entries={entries}
             quests={quests} freezes={freezes} onOpenAchievements={() => setShowAch(true)}
-            embers={embers} plus={plus} onOpenShop={() => setShopOpen(true)}
+            embers={embers} plus={plus} plusEnabled={PLUS_ENABLED} onOpenShop={() => setShopOpen(true)}
             done={done} onWrite={() => setWriting(true)} onToggleMode={onToggleMode}
             dailyPrompt={promptSel.item} userName={(settings.name || '').trim()}
             tip={pendingTip('today', seenTips)} onDismissTip={dismissTip}
+            onThisDayDismissed={settings.onThisDayDismissed || ''}
+            onDismissOnThisDay={() => setSettings((s) => ({ ...s, onThisDayDismissed: todayKey() }))}
+            onOpenOnThisDay={(e) => { setReading(e); setQuests((qs) => markRevisited(qs, e, todayKey())); }}
+            onOpenPaywall={PLUS_ENABLED ? () => setPaywall(true) : () => {}}
           />
         );
     }

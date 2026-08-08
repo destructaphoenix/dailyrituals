@@ -14,15 +14,19 @@ import { buildWeekStrip } from '../home/calendar';
 import { deriveKeepsakes } from '../profile/achievements';
 import { StreakFreeze, DailyQuests } from '../gamify';
 import { EmberPill } from '../shopui';
+import { onThisDay } from '../memory/onThisDay';
 import TipCard from './TipCard';
+import OnThisDayCard from './OnThisDayCard';
 
-export default function HomeScreen({ copy, mode, streak, level, levelName, xpInto, xpToNext, entries, quests, freezes, onOpenAchievements, done, onWrite, onToggleMode, embers, plus, onOpenShop, dailyPrompt = '', userName = '', tip, onDismissTip }) {
+export default function HomeScreen({ copy, mode, streak, level, levelName, xpInto, xpToNext, entries, quests, freezes, onOpenAchievements, done, onWrite, onToggleMode, embers, plus, plusEnabled = false, onOpenShop, dailyPrompt = '', userName = '', tip, onDismissTip, onThisDayDismissed = '', onDismissOnThisDay, onOpenOnThisDay, onOpenPaywall }) {
   const t = useTheme();
   const c = t.colors;
   const Orb = mode === 'night' ? Moon : Sun;
   const hello = pickForDay(HELLOS);
   const week = buildWeekStrip(entries || []);
   const keepsakes = deriveKeepsakes(entries || [], streak || 0);
+  const todayK = new Date().toISOString().slice(0, 10);
+  const onThisDayMatches = plusEnabled && onThisDayDismissed !== todayK ? onThisDay(entries || [], todayK) : [];
   const streakShadow = { textShadowColor: 'rgba(0,0,0,0.7)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 10 };
   const isNightV2 = t.dark && DARK_THEME === 'v2';
   const numberGlow = isNightV2 ? { textShadowColor: c.accent + '8C', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 16 } : {};
@@ -76,6 +80,19 @@ export default function HomeScreen({ copy, mode, streak, level, levelName, xpInt
           {freezes != null && <StreakFreeze count={freezes} />}
         </Card>
       </View>
+
+      {/* on this day (IMP-038, Plus perk #3) */}
+      {onThisDayMatches.length > 0 && (
+        <View style={{ paddingHorizontal: 20 }}>
+          <OnThisDayCard
+            matches={onThisDayMatches}
+            locked={!plus}
+            onOpen={onOpenOnThisDay}
+            onDismiss={onDismissOnThisDay}
+            onOpenPaywall={onOpenPaywall}
+          />
+        </View>
+      )}
 
       {/* today's ritual CTA */}
       <View style={{ paddingHorizontal: 20 }}>
