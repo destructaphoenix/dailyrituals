@@ -1402,6 +1402,59 @@ depends on this) · touch `MISS_EMOJI` or any `💀` rendering.
 
 ---
 
+### IMP-051 — the keyboard stops eating the Next button   ·   Lane: OTA   ·   Status: ✅ code-complete + **emulator-walked 2026-08-10**
+
+**Why:** three compounding causes on Android — [`WriteFlow.js`](../src/screens/WriteFlow.js)'s
+`KeyboardAvoidingView` had `behavior={Platform.OS === 'ios' ? 'padding' : undefined}` (inert on Android),
+WriteFlow renders inside an RN `Modal` (a separate dialog window that never gets `adjustResize`), and
+`targetSdkVersion 36`'s forced edge-to-edge (IMP-027) stops the OS resizing the window for the IME at all.
+Together: the keyboard fully covered the **Next**/finish button on every step, forcing a dismiss-to-tap cycle.
+
+**Measured before theorising (IMP-042 precedent).** A temporary `keyboardDidShow` listener on the Pixel 9
+Pro emulator (API 36, edge-to-edge, gesture nav) read `height=312dp`, `insets.bottom=24dp`. The reported
+height extends flush to the screen's physical bottom edge (visually confirmed — the keyboard fully occluded
+the footer), so it **replaces** `insets.bottom` rather than adding to it, exactly the spec's default design.
+The measured numbers are logged as a comment at the `useKeyboardHeight()` call site in `WriteFlow.js`.
+
+**New hook `src/ui/useKeyboardHeight.js`.** `useKeyboardHeight()` → a number, `0` when closed. Subscribes to
+`keyboardWillShow`/`keyboardWillHide` on iOS, `keyboardDidShow`/`keyboardDidHide` on Android (the only pair
+Android ever emits), storing `e.endCoordinates.height`; both subscriptions removed on unmount.
+`__tests__/ui/useKeyboardHeight.test.js` (6 cases, RED-first) mocks `Keyboard.addListener` to capture and
+fire handlers, covering: starts at 0 · reports the shown height · resets to 0 on hide · Android subscribes to
+`did*` not `will*` · iOS subscribes to `will*` · both subscriptions removed on unmount.
+
+**`WriteFlow.js`** — `KeyboardAvoidingView` deleted (with its now-dead `Platform` import) for a plain `View`
+carrying the same style plus `paddingBottom: kb`, `const kb = useKeyboardHeight()`. `Foot` takes `kb` and
+uses `paddingBottom: 12 + (kb > 0 ? 0 : insets.bottom)`. The outer `View`'s own `paddingBottom: kb` is what
+actually lifts `Foot` (a non-flexed child) above the keyboard, since it shrinks the flex column's available
+height from the bottom; `Foot`'s own conditional padding only governs the safe-area vs. keyboard-open case.
+Covers all three steps, including the mood step's "Name your own…" field and IMP-050's emoji palette.
+
+**`ArchiveFilters.js` and `NameEditModal.js` — confirmed already fine, left untouched, per the spec's own
+instruction.** `ArchiveFilters`'s search `TextInput` sits near the top of a plain (non-Modal) `ScrollView`
+tab with no footer button to occlude — walked on the emulator, field stays visible above the keyboard.
+`NameEditModal` already uses `behavior={Platform.OS === 'ios' ? 'padding' : 'height'}` — Android's `'height'`
+behavior is JS-driven (resizes the container directly from keyboard events) rather than relying on OS window
+resize, so it was never affected by causes (2) or (3). Walked on the emulator: Save/Cancel fully visible
+above the keyboard, no changes needed.
+
+**Walked on the emulator, all branches passed — no fallback needed.** Step 0 (did) → **Next** fully visible
+and tappable with the keyboard up · step 1 (wished) → same · mood step's "Name your own…" field → **Lay the
+day to rest** fully visible · dismissing the keyboard restores `insets.bottom` with no stale padding. The
+owner's "move Next to the top bar" fallback (step 5's documented escape hatch) was **not** needed.
+
+**Tests:** `npm test` → **638 passed, 65 suites** (632 + 6 new `useKeyboardHeight` cases). `npx expo export
+--platform android` clean.
+
+**Do NOT** (per spec, honored): add `react-native-keyboard-controller` or any other native dependency · set
+`softwareKeyboardLayoutMode`/`windowSoftInputMode` in `app.config.js` · change any `Modal`'s
+`presentationStyle` · restructure the three-step flow · touch `Onboarding.js`.
+
+**Ship:** OTA, no bump — not shipped this chat (no `Release-Lane` trailer). **Commit:**
+`fix(writeflow): lift the footer above the keyboard instead of hiding Next under it (IMP-051)`.
+
+---
+
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
 
 > Moved out of PROGRESS.md on 2026-07-31 to keep the live cursor lean once a second spec (IMP-032) opened. These are **not** finished work. If the owner revives one, lift the block back into PROGRESS.md as the ACTIVE TRACK.
@@ -1446,6 +1499,41 @@ depends on this) · touch `MISS_EMOJI` or any `💀` rendering.
 ## Session notes (archived from PROGRESS.md)
 
 _Append-only handoff log moved out of PROGRESS.md to keep it light. Newest 1–2 notes stay live in PROGRESS.md; everything else is here. Git history is the full record._
+
+_2026-08-10 (IMP-056, a day is the day you lived, not the day in Greenwich) — **code-complete, committed,
+not shipped.** `dayKey` was derived in UTC while every date the user reads is local, and both were stamped
+on the same entry — a 1am write in a positive-offset zone silently overwrote the previous evening's entry;
+a negative-offset evening write never appeared on the grid until the following day. Step 0: reproduced on
+the emulator (`Asia/Kolkata`, clock forced to 01:00 via `adb shell service call alarm 2/3` — no root
+available on this AVD image) — Home already read "Today is at rest" for Monday against Sunday's stored
+entry, and WriteFlow opened prefilled with Sunday's words. RED-first: new pure `src/time/dayKey.js`
+(`dayKeyOf`) + `__tests__/time/dayKey.test.js` (6 cases, including a `process.env.TZ`-pinned
+same-instant-different-key proof so it's deterministic in CI regardless of host zone). Replaced exactly the
+four derivation sites named in the spec (`RitualsApp.js`, `calendar.js`, `HomeScreen.js`, `lifetime.js`),
+leaving `dayKeyToUtcMs`/`utcMsToDayKey`/`shiftKey`/`entryDateParts` untouched (they're the *other*,
+already-correct half, or operate on an existing key rather than deriving one from "now"). Fixed
+`calendar.test.js`/`lifetime.test.js` to construct fixture dates via local components instead of
+UTC-instant strings — they passed before only because the host machine's offset happened not to cross a
+day boundary, not because they were actually timezone-safe. Added a regression test in `todaysEntry.test.js`
+that asserts the old UTC key wrongly matches yesterday's entry and the new local key correctly doesn't, in
+one test. Step 5: new `dayKeyDrift()` reporter in the dev-panel Inspector's "Data health" group — report-only,
+counts `entries`/`trash` rows whose `id`-embedded creation epoch disagrees with `dayKeyOf()`, and whether
+remapping would move `currentStreak`. **Read against the emulator's fixture data: 0 drift** — that data's
+ids don't carry the `new<epoch-ms>` shape the reporter keys on, so this is not evidence the bug never fired;
+real tester/production data has never been read through it. Walked both offset directions end-to-end:
+`Asia/Kolkata` 01:00 (WriteFlow now opens blank instead of prefilling, Sunday's entry stays untouched) and
+`America/New_York` 20:30 (wrote a real entry through to save — streak went 12→13 contiguously, proving it
+landed on today's local date, not tomorrow's). `npm test` → **588 passed, 59 suites** (577 + 11 new);
+`npx expo export --platform android` clean. Full spec archived to `docs/build-log.md`; backlog row set to
+code-complete; `docs/specs-open.md`'s index updated (IMP-056 removed, 9 tasks left, IMP-050 now next).
+**Deliberately not done — the historical migration.** Existing entries keep their old key; only new writes
+are correct going forward. Two things recorded in Open items, both outlive this spec: the residual (old
+UTC-keyed entries can still misfire for about a day post-ship) and the IMP-057 decision, which needs a real
+device's drift numbers before it can be scoped — not producible from this emulator's synthetic fixture.
+**Operational notes for future emulator sessions:** `adb shell` hangs indefinitely if the AVD's adb daemon
+goes stale — restart the emulator process, `adb kill-server` alone doesn't fix it; and a running RN process
+does not pick up a live OS timezone change — force-stop + relaunch, not just a new launch `Intent`. NEXT:
+**IMP-050** (every mood gets a face) is the live task — open only its spec in `docs/specs-open.md`._
 
 _2026-08-09 (IMP-049, settings survive a corrupt restore) — **code-complete, committed, not shipped.** Closed the fragility WALK-01's first attempt surfaced: `readBackup` validated only the backup envelope, never the *shape* of `settings` inside it, and `mergeWithDefaults`'s shallow spread let a wrong-typed key (proven: `settings.accent` as a string) replace its default outright — `makeTheme` then indexed the string by character, `processColor` returned `null`, and every `LinearGradient` threw a native NPE, recoverable only via Reset all data. RED-first: `__tests__/persistence/sanitizeSettings.test.js` (18 cases, all of the spec's required cases plus one it didn't anticipate) against new pure `src/persistence/sanitizeSettings.js` — shape comparison (`Array.isArray`→`'array'`, `null`→`'null'`, else `typeof`) replaces a key whose shape differs from its default; `accent` gets its own 3-hex-string check (a partial repair would produce a mismatched palette, so a bad value is replaced wholesale); `reminder` recurses one level. **Found and fixed one case the spec missed while writing the tests:** `recapSeen`'s default is `null` but a real dismissal (IMP-046) stores a *year* (a number) — pure shape-vs-default comparison would have silently reset every dismissal back to `null` on the next hydration, a real regression. Gave it the same kind of per-key exception the spec already grants `accent`/`reminder` (kept if `null` or a number). Wired at **both** hydration points in `App.js` (line 87 cold-start, line 122 restore/replace) — both required, since fixing only the restore path leaves an already-poisoned install unrecoverable. Regression test proves the actual failure closes: feeds the poisoned `{accent: '#C9884A'}` through `mergeWithDefaults`→`makeTheme` for both `'day'`/`'night'` and asserts every colour token is valid — first proving the assertion **fails** without `sanitizeSettings` in the chain (unsanitized run produced problems), then that it passes with it. `npm test` → **577 passed, 58 suites** (559 + 18 new); `npx expo export --platform android` clean. `docs/specs-open.md` reset to empty (IMP-049 was the only open spec). **NEXT:** no IMP task is queued. Resume **WALK-01 step 3** in `docs/walk-open.md` — Reset all data first, since the emulator may still hold settings poisoned by WALK-01's aborted first attempt; this fix prevents *future* poisoning, it does not retroactively repair state already written to AsyncStorage. Alternatively pick up the subscription-track build window (IMP-022 Part A, the PDF perk) or the `internal`→production promotion decision._
 

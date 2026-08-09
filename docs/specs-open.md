@@ -24,103 +24,25 @@
 
 | # | Spec | Lane |
 | --- | --- | --- |
-| 1 | [IMP-051 — the keyboard stops eating the Next button](#imp-051--the-keyboard-stops-eating-the-next-button) | OTA |
-| 2 | [IMP-052 — tap a day, read it](#imp-052--tap-a-day-read-it) | OTA |
-| 3 | [IMP-053 — search shows you the match](#imp-053--search-shows-you-the-match) | OTA |
-| 4 | [IMP-054 — the reminder you can actually answer](#imp-054--the-reminder-you-can-actually-answer) | OTA |
-| 5 | [IMP-055 — manage your feelings](#imp-055--manage-your-feelings) | OTA |
-| 6 | [IMP-060 — a candle burns without telling you](#imp-060--a-candle-burns-without-telling-you) | OTA |
-| 7 | [IMP-059 — the app has one accessibility label](#imp-059--the-app-has-one-accessibility-label) | OTA |
-| 8 | [IMP-058 — prompt packs](#imp-058--prompt-packs) | OTA |
+| 1 | [IMP-052 — tap a day, read it](#imp-052--tap-a-day-read-it) | OTA |
+| 2 | [IMP-053 — search shows you the match](#imp-053--search-shows-you-the-match) | OTA |
+| 3 | [IMP-054 — the reminder you can actually answer](#imp-054--the-reminder-you-can-actually-answer) | OTA |
+| 4 | [IMP-055 — manage your feelings](#imp-055--manage-your-feelings) | OTA |
+| 5 | [IMP-060 — a candle burns without telling you](#imp-060--a-candle-burns-without-telling-you) | OTA |
+| 6 | [IMP-059 — the app has one accessibility label](#imp-059--the-app-has-one-accessibility-label) | OTA |
+| 7 | [IMP-058 — prompt packs](#imp-058--prompt-packs) | OTA |
 
-> **IMP-056 is done (2026-08-10) and IMP-050 is done (2026-08-10) — see `docs/build-log.md`.** **IMP-057 is
-> still deliberately absent.** It is reserved for the historical `dayKey` migration IMP-056 deferred, and it
-> cannot be written until a real device's numbers come back from the dev-panel Inspector's "Data health"
-> reporter IMP-056 added. **Do not reuse the number.**
+> **IMP-056 is done (2026-08-10), IMP-050 is done (2026-08-10) and IMP-051 is done (2026-08-10) — see
+> `docs/build-log.md`.** **IMP-057 is still deliberately absent.** It is reserved for the historical
+> `dayKey` migration IMP-056 deferred, and it cannot be written until a real device's numbers come back from
+> the dev-panel Inspector's "Data health" reporter IMP-056 added. **Do not reuse the number.**
 >
 > **The two ordering constraints that gated IMP-052 and IMP-055 on IMP-050 are now cleared** — IMP-050
 > landed this session, so `cell.moods`, `settings.customMoodEmoji` and the emoji palette all exist. Take
-> the remaining eight specs in any order.
+> the remaining seven specs in any order.
 >
 > **IMP-054 is the one spec `npm test` cannot finish alone** — it needs an emulator. Budget for that before
 > starting it.
-
----
-
-### IMP-051 — the keyboard stops eating the Next button
-
-**Lane:** OTA · **Free/Plus:** N/A (defect) · **Origin:** owner report, 2026-08-09: *"when the keyboard
-comes up to type, the Next button is hidden at the bottom, so the user has to keep closing their keyboard
-just for one button tap."*
-
-**The problem — three compounding causes, which is why it is fully broken rather than merely janky.**
-
-1. [`WriteFlow.js:50`](../src/screens/WriteFlow.js#L50) is
-   `behavior={Platform.OS === 'ios' ? 'padding' : undefined}`. On Android a `KeyboardAvoidingView` with no
-   `behavior` **does nothing at all**. The component is inert by construction on the only platform that
-   ships.
-2. WriteFlow renders inside an RN `Modal` ([`RitualsApp.js:708`](../src/RitualsApp.js#L708)). Android
-   renders that as a **separate dialog window**, which does not inherit the activity's
-   `windowSoftInputMode=adjustResize`.
-3. The app is `targetSdkVersion 36` with edge-to-edge forced (IMP-027). Under edge-to-edge the system
-   **stops resizing the window for the IME**; the app is expected to consume the inset itself.
-
-Any fix that relies on the window resizing loses to (2) and (3). So the fix does not rely on it: read the
-keyboard height from the keyboard events directly and spend it as padding.
-
-**Decided design, do not re-litigate.** The footer stays exactly where the design puts it and simply rides
-above the keyboard. **The owner's "move Next to the top bar" idea is the documented fallback for step 5, to
-be built only if the walk shows the footer fix failing** — it is not built speculatively, because moving
-the primary action mid-flow is its own confusion. `react-native-keyboard-controller` is the textbook answer
-and is **wrong here**: a native module is BUILD lane, cannot reach anyone until vc11 is promoted, and would
-need its own R8 walk (IMP-044). This spec stays pure JS and OTA-shippable.
-
-**Steps**
-
-1. **Measure before theorising** — the IMP-042 precedent, and non-optional. On the emulator, with WriteFlow
-   open on step 0, log `e.endCoordinates.height` from a temporary `keyboardDidShow` listener alongside
-   `insets.bottom`. **Write both measured numbers into the step-3 code as a comment before writing the
-   fix**, and into the session note. Whether Android's reported IME height already includes the navigation bar under
-   edge-to-edge is exactly the detail that half the material on this is wrong about, and it decides whether
-   step 3 adds or replaces `insets.bottom`. Remove the temporary listener afterwards.
-2. **New hook `src/ui/useKeyboardHeight.js`** — `useKeyboardHeight()` → a number, `0` when closed.
-   Subscribes to `keyboardWillShow`/`keyboardWillHide` on iOS (smoother, and it is what the current
-   `behavior="padding"` effectively gives) and `keyboardDidShow`/`keyboardDidHide` on Android, **which is
-   all Android emits** — do not subscribe to `keyboardWillShow` there and wonder why nothing fires. Stores
-   `e.endCoordinates.height`. Both subscriptions removed on unmount. Test
-   `__tests__/ui/useKeyboardHeight.test.js` by mocking `react-native`'s `Keyboard.addListener` to capture
-   and fire handlers: 0 initially · the reported height after a show · 0 after a hide · both subscriptions
-   removed on unmount · the Android path subscribes to the `did*` events, not `will*`.
-3. **[`src/screens/WriteFlow.js`](../src/screens/WriteFlow.js)** — delete the `KeyboardAvoidingView`
-   (and its import — **and `Platform`, whose only use in the file is the dead `behavior` ternary at line
-   50; leaving it violates the no-dead-code rule**) for a plain `View` with the same style plus
-   `paddingBottom: kb`, where
-   `const kb = useKeyboardHeight()`. `Foot` takes `kb` and uses
-   `paddingBottom: 12 + (kb > 0 ? 0 : insets.bottom)` — **the safe-area inset is replaced while the
-   keyboard is up, not added to**, unless step 1's measurement says otherwise, in which case follow the
-   measurement and say so in a comment. The `ScrollView` shrinks on its own; nothing needs to scroll into
-   view and nothing changes position. This covers all three steps of the flow, including the mood step's
-   "Name your own…" field and IMP-050's emoji escape hatch if that has landed first.
-4. **The other two keyboard-in-a-Modal screens get the same one-line treatment**, because they have the
-   identical three causes: [`ArchiveFilters.js`](../src/screens/ArchiveFilters.js) (journal search, inside
-   the archive's own Modal) and [`NameEditModal.js`](../src/screens/NameEditModal.js). **Confirm each
-   actually reproduces on the emulator before touching it** — if one is already fine, say so in the session
-   note and leave it alone. [`Onboarding.js`](../src/screens/Onboarding.js) has a `TextInput` but is **not**
-   inside a Modal; it is out of scope for this spec.
-5. **Walk it on the emulator and record the result** in the session note: keyboard up on step 0 → **Next**
-   fully visible and tappable without dismissing · same on step 1 · same for the mood step's custom-name
-   field · rotating through all three steps does not leave stale padding · dismissing the keyboard with the
-   back gesture restores `insets.bottom`. **If the footer is still covered after step 3, stop and take the
-   fallback**: `Next` moves to the top bar (replacing the step-dot row's right slot) while `kb > 0`, and
-   the footer hides. Log which branch was taken.
-6. `npm test` green (≥ 577), `npx expo export --platform android` clean.
-
-**Do NOT** add `react-native-keyboard-controller` or any other native dependency · set
-`softwareKeyboardLayoutMode` or `windowSoftInputMode` in `app.config.js` (it cannot reach the Modal's
-window, and it would turn an OTA into a BUILD) · change any `Modal`'s `presentationStyle` · restructure the
-three-step flow · touch `Onboarding.js`.
-
-**Commit:** `fix(writeflow): lift the footer above the keyboard instead of hiding Next under it (IMP-051)`
 
 ---
 

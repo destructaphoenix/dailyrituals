@@ -22,9 +22,9 @@
 
 The live work is the **first unchecked `IMP-xxx` task in the Improvements backlog** below — its full spec is in [`docs/specs-open.md`](docs/specs-open.md), linked from its backlog row. Work that, **not** the phase ladder (8 / 10b / 11), which is **parked in [`docs/playbook.md`](docs/playbook.md)** until the owner resumes it.
 
-> **Eight specs left — IMP-051 → IMP-060, minus 056/050 (done) and 057 (still reserved). Updated 2026-08-10:**
+> **Seven specs left — IMP-052 → IMP-060, minus 056/050/051 (done) and 057 (still reserved). Updated 2026-08-10:**
 >
-> **▶️ [IMP-051](docs/specs-open.md#imp-051--the-keyboard-stops-eating-the-next-button) is the live task;
+> **▶️ [IMP-052](docs/specs-open.md#imp-052--tap-a-day-read-it) is the live task;
 > take the rest in table order.** All are **OTA — none needs a `bump:native`.** Each is self-contained:
 > **open one spec, not the file.**
 >
@@ -38,8 +38,9 @@ The live work is the **first unchecked `IMP-xxx` task in the Improvements backlo
 >   + the IMP-057 decision are in Open items below.
 > - **✅ 050 done (2026-08-10).** Custom moods (IMP-037) no longer draw blank — a 40-glyph picker + typed
 >   escape hatch, two named fallback glyphs, and a shimmer for multi-mood cells. Unblocks 052 and 055.
-> - **051** is why **Next** hides under the keyboard — three compounding causes, none fixable by
->   `adjustResize`.
+> - **✅ 051 done (2026-08-10).** The keyboard no longer eats **Next** — a new `useKeyboardHeight()` hook
+>   replaces the inert `KeyboardAvoidingView` on Android; `ArchiveFilters.js`/`NameEditModal.js` confirmed
+>   already fine and left untouched. Walked all three WriteFlow steps on the emulator, no fallback needed.
 > - **052** makes both heatmaps tappable — the retrieval gesture the product thesis has been asking for.
 > - **053** makes a search result actually contain the word you searched for.
 > - **054** fixes IMP-031's two missing halves: a foreground reminder shows nothing, and tapping one does
@@ -52,7 +53,7 @@ The live work is the **first unchecked `IMP-xxx` task in the Improvements backlo
 >   by an earlier decision, and a prompt is the app helping you write *today*.
 >
 > **The two ordering constraints (052 and 055 after 050) are now cleared — 050 shipped this session.** Take
-> the remaining eight in any order. **Two need a running app, not just `npm test`** — 054 (notification
+> the remaining seven in any order. **Two need a running app, not just `npm test`** — 054 (notification
 > behaviour) and 059 (whose acceptance test is writing an entry with TalkBack on and your eyes shut). Budget
 > for that before starting either.
 >
@@ -100,7 +101,7 @@ The live work is the **first unchecked `IMP-xxx` task in the Improvements backlo
 
 **⚠️ OTA has no Play track, and never did.** `eas update` publishes a JS bundle to Expo's CDN — Google is not involved, there is no review, and `internal`/`alpha`/`beta` are meaningless to it. Delivery is gated by exactly two things: the **channel** (`production`, set in `eas.json` → `build.production.channel`) and a **matching `runtimeVersion`**. An installed build receives an OTA regardless of which Play track it was installed from. So "send OTA to internal instead of closed testing" is not a setting that exists — and OTA is already faster than any track, which is the whole reason the lane exists.
 
-**Current stack:** Expo SDK **54** · React Native **0.81.5** · React **19.1.0** · **Legacy Architecture** (`expo.newArchEnabled: false`, held deliberately — SDK 55 drops Legacy and that migration is its own future task) · `compileSdkVersion`/`targetSdkVersion` **36**, `minSdkVersion` **24** · `npm test` → **632 passed, 64 suites**. Details in [`docs/playbook.md`](docs/playbook.md).
+**Current stack:** Expo SDK **54** · React Native **0.81.5** · React **19.1.0** · **Legacy Architecture** (`expo.newArchEnabled: false`, held deliberately — SDK 55 drops Legacy and that migration is its own future task) · `compileSdkVersion`/`targetSdkVersion` **36**, `minSdkVersion` **24** · `npm test` → **638 passed, 65 suites**. Details in [`docs/playbook.md`](docs/playbook.md).
 
 ---
 
@@ -157,7 +158,7 @@ Opus scopes each owner-filed issue into a numbered `IMP-xxx` task — steps, tes
 | IMP-047 | ✨ **Deeper insights — the analysis layer** — `InsightsScreen` has **zero** `plus` checks; free and Plus see identical insights. Mood-by-weekday, seasonal patterns, mood pairings. **Plus perk #5** | OTA | ✅ code-complete — full detail in build-log |
 | IMP-056 | 🔴 **A day is the day you lived, not the day in Greenwich** — `dayKey` is derived in **UTC** ([`RitualsApp.js:83`](src/RitualsApp.js#L83)) while every date the user reads is **local** ([`clock.js:16`](src/time/clock.js#L16)), and both are stamped onto the same entry. In IST a 1am entry is filed under yesterday and can **silently overwrite last night's words**; at negative offsets an 8pm entry is filed under tomorrow and never appears on the grid at all. Fixes derivation only — the historical migration is deferred to IMP-057 | OTA | ✅ code-complete + **emulator-walked 2026-08-10** (both offset directions) — full detail in build-log |
 | IMP-050 | 🟡 Every mood gets a face — custom emoji picker + typed escape hatch, two fallback glyphs, multi-mood shimmer | OTA | ✅ code-complete (2026-08-10) — full detail in build-log |
-| IMP-051 | 🔴 **The keyboard stops eating the Next button** — `KeyboardAvoidingView` is inert on Android (`behavior: undefined`), WriteFlow is inside a `Modal` whose dialog window never gets `adjustResize`, and edge-to-edge (API 36) stops the system resizing for the IME at all. The user must dismiss the keyboard for every single step | OTA | ⬜ [spec](docs/specs-open.md#imp-051--the-keyboard-stops-eating-the-next-button) |
+| IMP-051 | 🔴 **The keyboard stops eating the Next button** — `KeyboardAvoidingView` is inert on Android (`behavior: undefined`), WriteFlow is inside a `Modal` whose dialog window never gets `adjustResize`, and edge-to-edge (API 36) stops the system resizing for the IME at all. The user must dismiss the keyboard for every single step | OTA | ✅ code-complete + **emulator-walked 2026-08-10** — full detail in build-log |
 | IMP-052 | ✨ **Tap a day, read it** — both heatmaps (Reflections + the lifetime grid on Insights) render inert `View`s, so the densest surface in the app is unclickable and the only route to an old entry is scrolling or already remembering a word to search. **Build AFTER IMP-050** — both rewrite `Heat` | OTA | ⬜ [spec](docs/specs-open.md#imp-052--tap-a-day-read-it) |
 | IMP-053 | 🟡 **Search shows you the match** — the result card hard-renders the first 2 lines of `did`, but `searchEntries` matches over `did + wished`. A hit in `wished` (or deep in `did`) yields a card containing the search term **nowhere**. IMP-035 built the engine and hid its output. Watch the index-mapping trap: diacritic folding is not length-preserving | OTA | ⬜ [spec](docs/specs-open.md#imp-053--search-shows-you-the-match) |
 | IMP-054 | 🟡 **The reminder you can actually answer** — two gaps in IMP-031's subsystem: no `setNotificationHandler` (flagged 2026-07-31, never scoped) so a foreground reminder shows **nothing**, and no response listener at all, so **tapping it does not open the write flow** — it lands on whatever tab you left. Owner chose: suppress the OS banner, show the app's own Toast. **Needs an emulator walk; `npm test` cannot prove it** | OTA | ⬜ [spec](docs/specs-open.md#imp-054--the-reminder-you-can-actually-answer) |
@@ -344,6 +345,39 @@ Also worth doing and nearly free: **"gift a year" via Play promo codes** — no 
 
 _History archived in [`docs/build-log.md`](docs/build-log.md) → "Session notes". Only the two newest notes stay here; every chat moves the older one out when it appends a new one (see DEVGUIDE Step 4)._
 
+_2026-08-10 (IMP-051, the keyboard stops eating the Next button) — **code-complete, committed, not shipped.**
+Three compounding causes on Android: `WriteFlow.js`'s `KeyboardAvoidingView` had `behavior: undefined`
+(inert), WriteFlow renders inside an RN `Modal` (a separate dialog window that never gets `adjustResize`),
+and `targetSdkVersion 36`'s forced edge-to-edge (IMP-027) stops the OS resizing the window for the IME at
+all — together the keyboard fully covered **Next** on every step. Step 1 (measure before theorising, the
+IMP-042 precedent): a temporary `keyboardDidShow` listener on the Pixel 9 Pro emulator (API 36, edge-to-edge,
+gesture nav) read `height=312dp`, `insets.bottom=24dp` — the reported height extends flush to the screen's
+physical bottom edge (visually confirmed: the keyboard fully occluded the footer pre-fix), so it **replaces**
+`insets.bottom` rather than adding to it, matching the spec's default design; both numbers are logged as a
+comment at the fix site. **Emulator gotcha this session:** the AVD's `hw.keyboard=yes` (hardware-keyboard
+passthrough) meant Android showed only a compact floating toolbar (mic/backspace/enter/emoji/menu) instead
+of the real software IME, which would have made the height measurement meaningless — had to edit
+`~/.android/avd/Pixel_9_Pro.avd/config.ini` to `hw.keyboard=no` and cold-restart the emulator (`show_ime_
+with_hard_keyboard` alone did not fix it) to get an accurate reading; left this way since it's a prerequisite
+for any future keyboard-behaviour walk (IMP-054, IMP-059). New pure `src/ui/useKeyboardHeight.js` —
+`useKeyboardHeight()` → a number, `0` when closed; subscribes to `keyboardWillShow`/`Hide` on iOS,
+`keyboardDidShow`/`Hide` on Android (the only pair Android emits); RED-first
+`__tests__/ui/useKeyboardHeight.test.js` (6 cases) mocks `Keyboard.addListener` to capture/fire handlers.
+`WriteFlow.js`: `KeyboardAvoidingView` deleted (with the now-dead `Platform` import) for a plain `View` with
+`paddingBottom: kb`; `Foot` takes `kb` and uses `paddingBottom: 12 + (kb > 0 ? 0 : insets.bottom)` — the
+outer `View`'s own `paddingBottom: kb` is what lifts `Foot` (a non-flexed child) above the keyboard, since it
+shrinks the flex column's height from the bottom. **`ArchiveFilters.js` and `NameEditModal.js` confirmed
+already fine on the emulator, left untouched, per the spec's own instruction:** `ArchiveFilters`'s search
+field sits in a plain (non-Modal) tab with no footer button to occlude; `NameEditModal` already used
+`behavior="height"` on Android, which is JS-driven (resizes from keyboard events directly) rather than
+relying on OS window resize, so causes (2)/(3) never applied to it. Walked all three WriteFlow steps on the
+emulator — **Next**/finish fully visible and tappable with the keyboard up on every step, including the mood
+step's "Name your own…" field; dismissing the keyboard restores `insets.bottom` with no stale padding. The
+owner's documented top-bar fallback was **not** needed. `npm test` → **638 passed, 65 suites** (632 + 6 new);
+`npx expo export --platform android` clean. Full spec archived to `docs/build-log.md`; backlog row set to
+code-complete; `docs/specs-open.md`'s index updated (IMP-051 removed, 7 tasks left, IMP-052 now next). NEXT:
+**IMP-052** (tap a day, read it) is the live task — open only its spec in `docs/specs-open.md`._
+
 _2026-08-10 (IMP-050, every mood gets a face) — **code-complete, committed, not shipped.**
 `moodEmoji = (m) => MOOD_EMOJI[m] || ''` in `data.js` drew a blank cell for every custom mood (IMP-037) and
 for a `moods: []` entry — two distinct causes, neither a migration (IMP-037 has never reached a device, so
@@ -380,38 +414,3 @@ removed, 8 tasks left, IMP-051 now next; the two constraints gating IMP-052/055 
 cell itself still isn't pressable (that's IMP-052, next-but-one), no rename/delete flow for custom moods
 (that's IMP-055). NEXT: **IMP-051** (the keyboard stops eating the Next button) is the live task — open only
 its spec in `docs/specs-open.md`._
-
-_2026-08-10 (IMP-056, a day is the day you lived, not the day in Greenwich) — **code-complete, committed,
-not shipped.** `dayKey` was derived in UTC while every date the user reads is local, and both were stamped
-on the same entry — a 1am write in a positive-offset zone silently overwrote the previous evening's entry;
-a negative-offset evening write never appeared on the grid until the following day. Step 0: reproduced on
-the emulator (`Asia/Kolkata`, clock forced to 01:00 via `adb shell service call alarm 2/3` — no root
-available on this AVD image) — Home already read "Today is at rest" for Monday against Sunday's stored
-entry, and WriteFlow opened prefilled with Sunday's words. RED-first: new pure `src/time/dayKey.js`
-(`dayKeyOf`) + `__tests__/time/dayKey.test.js` (6 cases, including a `process.env.TZ`-pinned
-same-instant-different-key proof so it's deterministic in CI regardless of host zone). Replaced exactly the
-four derivation sites named in the spec (`RitualsApp.js`, `calendar.js`, `HomeScreen.js`, `lifetime.js`),
-leaving `dayKeyToUtcMs`/`utcMsToDayKey`/`shiftKey`/`entryDateParts` untouched (they're the *other*,
-already-correct half, or operate on an existing key rather than deriving one from "now"). Fixed
-`calendar.test.js`/`lifetime.test.js` to construct fixture dates via local components instead of
-UTC-instant strings — they passed before only because the host machine's offset happened not to cross a
-day boundary, not because they were actually timezone-safe. Added a regression test in `todaysEntry.test.js`
-that asserts the old UTC key wrongly matches yesterday's entry and the new local key correctly doesn't, in
-one test. Step 5: new `dayKeyDrift()` reporter in the dev-panel Inspector's "Data health" group — report-only,
-counts `entries`/`trash` rows whose `id`-embedded creation epoch disagrees with `dayKeyOf()`, and whether
-remapping would move `currentStreak`. **Read against the emulator's fixture data: 0 drift** — that data's
-ids don't carry the `new<epoch-ms>` shape the reporter keys on, so this is not evidence the bug never fired;
-real tester/production data has never been read through it. Walked both offset directions end-to-end:
-`Asia/Kolkata` 01:00 (WriteFlow now opens blank instead of prefilling, Sunday's entry stays untouched) and
-`America/New_York` 20:30 (wrote a real entry through to save — streak went 12→13 contiguously, proving it
-landed on today's local date, not tomorrow's). `npm test` → **588 passed, 59 suites** (577 + 11 new);
-`npx expo export --platform android` clean. Full spec archived to `docs/build-log.md`; backlog row set to
-code-complete; `docs/specs-open.md`'s index updated (IMP-056 removed, 9 tasks left, IMP-050 now next).
-**Deliberately not done — the historical migration.** Existing entries keep their old key; only new writes
-are correct going forward. Two things recorded in Open items, both outlive this spec: the residual (old
-UTC-keyed entries can still misfire for about a day post-ship) and the IMP-057 decision, which needs a real
-device's drift numbers before it can be scoped — not producible from this emulator's synthetic fixture.
-**Operational notes for future emulator sessions:** `adb shell` hangs indefinitely if the AVD's adb daemon
-goes stale — restart the emulator process, `adb kill-server` alone doesn't fix it; and a running RN process
-does not pick up a live OS timezone change — force-stop + relaunch, not just a new launch `Intent`. NEXT:
-**IMP-050** (every mood gets a face) is the live task — open only its spec in `docs/specs-open.md`._
