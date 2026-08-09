@@ -1193,6 +1193,60 @@ lifetime XP (IMP-045)`.
 
 ---
 
+### IMP-049 — settings survive a corrupt restore   ·   Lane: OTA   ·   Status: ✅ code-complete
+
+**Why:** hit for real on the 2026-08-09 emulator walk. `readBackup` validates only the envelope (`format`,
+`payload` is a string) and the schema version — nothing checks the *shape* of what's inside, and
+`mergeWithDefaults`'s shallow spread (`{ ...defaults, ...loaded }`) lets a wrong-typed key replace its
+default outright. Demonstrated with `settings.accent` as a string (`'#C9884A'`) instead of the
+`[accent, deep, soft]` array: `makeTheme` indexed it by character, `processColor` returned `null` for every
+resulting non-color string, and every `LinearGradient` threw `null cannot be cast to non-null type
+kotlin.Double` — unrecoverable except via Reset all data, since the poisoned settings persist to
+AsyncStorage. **Scope — settings only**, by owner decision: `entries` already have defensive readers
+throughout, and wrong-typed counters (`xp`, `embers`) are cosmetic, not fatal; `settings` is the one slice
+whose wrong type is silently fatal because it feeds `makeTheme`, which feeds native views.
+
+**RED-first.** New `__tests__/persistence/sanitizeSettings.test.js` (18 cases) against a module that didn't
+exist yet — every case the spec required (accent: string / bad 2nd element / valid / wrong length; reminder:
+null / string / bad `hour` with a valid sibling kept; `name` as a number; `customMoods` as a string;
+`recapSeen: null` accepted, not looped back; an unknown key preserved for forward-compat; a missing key
+stays missing; never mutates input; non-object input → `{}`) plus the required regression proving the actual
+IMP-049 failure is closed end-to-end through `mergeWithDefaults` → `makeTheme` for both `'day'` and `'night'`
+— and, first, that the same assertion **fails** without `sanitizeSettings` in the chain (a check that can't
+fail proves nothing).
+
+**GREEN.** New pure `src/persistence/sanitizeSettings.js` exporting
+`sanitizeSettings(loaded, defaults = DEFAULT_SETTINGS)`. Shape comparison: `Array.isArray` → `'array'`,
+`null` → `'null'`, else `typeof`; a key whose shape matches its default is kept, a key whose shape differs is
+replaced by the default. `accent` gets its own check (array of exactly 3 strings each matching
+`/^#?([\da-f]{2}){3}$/i`, or the default array wholesale — a partial repair would produce a mismatched
+palette). `reminder` recurses one level. Unknown keys pass through untouched; keys missing from `loaded`
+stay missing (`mergeWithDefaults` fills them afterward, unchanged).
+
+**One case the spec didn't anticipate, found while writing the tests: `recapSeen`.** Its default is `null`,
+but a real dismissal (IMP-046) stores a *year* (a number) — pure shape-vs-default comparison would reset
+every dismissal back to `null` on the very next hydration, silently breaking a shipped feature every time
+this fix ran. Gave `recapSeen` the same kind of per-key exception the spec already grants `accent` and
+`reminder`: kept if `null` or a `number`, defaulted otherwise. Narrow, mechanical, stays inside "settings
+only" — not a scope expansion.
+
+**Wired at both hydration points, both required** — [`App.js`](../App.js) line 87 (cold-start load) and line
+122 (the restore/replace path) — `setSettings(mergeWithDefaults(sanitizeSettings(s.settings),
+DEFAULT_SETTINGS))`. Both matter: fixing only the restore path would leave an already-poisoned install
+unrecoverable, since the poisoned settings are what cold-start loads on every subsequent launch.
+
+**Tests:** `npm test` → **577 passed, 58 suites** (559 + 18 new). `npx expo export --platform android`
+clean.
+
+**Do NOT** (per spec, honored): no user-facing "this backup was repaired" notice, no change to
+`readBackup`'s return shape, no touching the `'unreadable'`/`'too-new'` rejection reasons. Silent correction
+to a known-good default is the whole behavior.
+
+**Ship:** OTA, no bump — not shipped this chat (no `Release-Lane` trailer). **Commit:**
+`fix(persistence): repair wrong-typed settings from a restore instead of rendering null colours (IMP-049)`.
+
+---
+
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
 
 > Moved out of PROGRESS.md on 2026-07-31 to keep the live cursor lean once a second spec (IMP-032) opened. These are **not** finished work. If the owner revives one, lift the block back into PROGRESS.md as the ACTIVE TRACK.
@@ -1237,6 +1291,8 @@ lifetime XP (IMP-045)`.
 ## Session notes (archived from PROGRESS.md)
 
 _Append-only handoff log moved out of PROGRESS.md to keep it light. Newest 1–2 notes stay live in PROGRESS.md; everything else is here. Git history is the full record._
+
+_2026-08-09 (IMP-045, finish Lifetime Progress — the IMP-021 shortfall) — **code-complete, committed, not shipped.** Closed the last open item in the backlog. RED-first: `__tests__/insights/heatCells.test.js` (13 new cases) against new pure `src/insights/heatCells.js` — `cellState(cell)` → `'done'|'missed'|'empty'|'future'` (precedence `future` > `missed` > `empty` > `done`; a `done+today` cell still reads `done`); `monthLabelsForRows(rows)` → one short month name per row on the row where the month changes, `''` otherwise, row 0 always attempted, malformed/missing `dayKey` rows return `''` rather than throwing. `InsightsScreen.js`'s `LifetimeHeat` now consumes `cellState` for four-way cell styling instead of the old binary `has` check — `done` filled `c.accent` (2px `c.accentDeep` border if `today`), `missed` = `c.accentSoft` fill + 1px `c.border` border ("visibly a day, visibly empty" — matches IMP-014's meaning without the unreadable-at-this-size skull glyph), `empty` = transparent + dashed 1px `c.border`, `future` = fully transparent — plus a month-label gutter down the left and a three-item legend ("kept · missed · not yet started") beneath, both sharing the same `heatCellStyle` swatch function so they can't drift from the grid. `buildLifetimeHeatmap` (`src/home/calendar.js`) untouched, per spec — its cell shape already carried everything needed. The level context line gained the previously-computed-but-never-rendered `xpEarned`: `` `Lv {level} · {levelName}{activeSpan} · {fmt(xpEarned)} XP` ``, reusing the screen's existing `fmt` formatter and leaving `numberOfLines`/font-scale behaviour (IMP-030) untouched. `npm test` → **559 passed, 57 suites** (532 + 13 new); `npx expo export --platform android` clean. Full spec archived to `docs/build-log.md`; IMP-021's backlog row flipped to ✅ (shortfall closed); IMP-045's row set to code-complete; `docs/specs-open.md` reset to empty (IMP-045 was the last open spec — no `IMP-xxx` task remains queued); removed the stale IMP-021 "not properly completed" block and its "Next step" pointer from Open items, folded into the closed device-walk-debts line instead. NEXT: **the backlog is fully code-complete for the first time this project.** No IMP task is queued. Two things remain outstanding, neither blocking: (1) **re-walk IMP-021/045 and IMP-046 on a real device** — both are OTA, un-walked since this fix and since the recap shipped; (2) pick up the **subscription-track build window** (playbook 10b step B9: revive IMP-022 Part A, the PDF perk #6, the last unreal `PLUS_PERKS` line) or make the **`internal` → production promotion** decision — both are the owner's call on sequencing, not a technical blocker._
 
 _2026-08-08 (IMP-046, Annual Recap — "your year, remembered", perk #4) — **code-complete, committed, not shipped.** Full TDD (13 new cases). First extracted `countWords` out of `src/insights/lifetime.js` into new `src/insights/words.js` (re-imported there; `lifetime.test.js` stayed green untouched) so the recap and Lifetime Progress can't drift apart. New pure `src/recap/annualRecap.js` — `recapYears(entries, now)` → offerable years newest-first (a year qualifies from 1 December onward — `now.getMonth() === 11` — and every earlier year forever after; both filtered to ≥10 entries), `buildRecap(entries, year, {xp, now})` → `{year, daysRemembered, totalWords, longestStreak, firstEntry, lastEntry, topMoods, peakMonth, quietestMonth, milestones}` or `null` below the 10-entry floor. Every year-scoped stat filters entries strictly to `dayKey.slice(0,4) === year` first, so a 31 Dec/1 Jan boundary entry never leaks into the wrong year, and `longestStreak` (via `dateKeys.js`'s `longestConsecutiveRun`) is computed within-year only — a 6-day run spanning the boundary reads as 3, not 6. `topMoods` reuses IMP-047's `moodByMonth` (merges its 12 buckets rather than writing a second mood counter), tie-broken alphabetically; `peakMonth`/`quietestMonth` scan the same buckets' totals, keeping the earlier month on a tie. **Milestones — where IMP-021's deferred timeline finally lands:** a day-by-day walk over the *full* account history (not just the target year, since a streak can start in December and cross a threshold in January) finds every `STREAK_MILESTONES` crossing (7/30/100) whose day falls inside the target year, plus a `'First entry of the year'` entry, sorted chronologically; a crossing that happened in the prior year is correctly excluded even when the same run continues into the target year. New presentational `src/screens/AnnualRecap.js` (`{recap, onClose, insets}`, sectioned like `InsightsScreen`'s "Your record" card — hero + 2×2 totals grid, top-moods bars, a "The year, marked" milestone timeline) and `src/screens/AnnualRecapCard.js` (mirrors `OnThisDayCard.js`'s shape exactly, same locked-teaser pattern). `HomeScreen.js` mounts the card only in the **1 Dec – 31 Jan** window when `recapYears()[0]` exists and isn't already dismissed (`settings.recapSeen`, a single number like IMP-038's `onThisDayDismissed`); `YouScreen.js` gained a **permanent** "Your years" section (unlike the Home card, not window-gated — "what stops the feature disappearing for eleven months of the year") listing every offerable year, locked-teaser when `plusEnabled && !plus`. `RitualsApp.js` threads both via a new `openRecapYear` state and a `Modal` matching every other full-screen sheet's shape, lazily computing `buildRecap` only while open. `PLUS_PERKS` (`data.js`) gained a new 6th entry — 'Your year, remembered — the Annual Recap' — **appended, not renumbering** the existing five (the dead PDF perk stays put, still IMP-022's territory). `DEFAULT_SETTINGS` gained `recapSeen: null`. `npm test` → **532 passed, 55 suites** (519 + 13 new); `npx expo export --platform android` clean. Full spec archived to `docs/build-log.md`; backlog row set to code-complete; `docs/specs-open.md`'s index updated (IMP-046 removed, only the no-slot IMP-045 remains); Phase 10b's proposed perk table updated to perk #4 ✅ built. NEXT: **the numbered queue is now empty** — only **IMP-045** (no queue slot, Lifetime Progress shortfall) remains open. After it, the next real work is the subscription-track build window (playbook 10b step B9: revive IMP-022 Part A, the PDF perk #6) or the still-untaken `internal` → production promotion decision._
 
