@@ -2,13 +2,14 @@
 // WriteFlow. Rendered full-screen inside a Modal by RitualsApp.
 
 import React, { useState } from 'react';
-import { View, ScrollView, TextInput, Pressable, KeyboardAvoidingView, Platform, Text } from 'react-native';
+import { View, ScrollView, TextInput, Pressable, Text } from 'react-native';
 import { useTheme } from '../theme';
 import { T, PrimaryButton } from '../ui';
 import { Sun, Chevron, Close } from '../icons';
 import { MOODS, MOOD_PALETTE, moodEmoji } from '../data';
 import { isEmojiish } from '../entries/emojiInput';
 import { todayLabel } from '../time/clock';
+import { useKeyboardHeight } from '../ui/useKeyboardHeight';
 
 const countWords = (s) => (s.trim() ? s.trim().split(/\s+/).length : 0);
 
@@ -59,12 +60,14 @@ export default function WriteFlow({ copy, insets, onClose, onComplete, initial, 
 
   const next = () => { if (last) onComplete({ did, wished, moods }); else setStep(step + 1); };
   const back = () => { if (step === 0) onClose(); else setStep(step - 1); };
+  // Measured on the Pixel 9 Pro emulator (API 36, edge-to-edge, gesture nav):
+  // keyboardDidShow height=312dp, insets.bottom=24dp. The reported height
+  // already extends flush to the physical bottom edge, so it REPLACES
+  // insets.bottom rather than adding to it (see Foot below).
+  const kb = useKeyboardHeight();
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={{ flex: 1, backgroundColor: c.cream, paddingTop: insets.top }}
-    >
+    <View style={{ flex: 1, backgroundColor: c.cream, paddingTop: insets.top, paddingBottom: kb }}>
       {/* top bar */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingTop: 14, paddingBottom: 6 }}>
         <IconBtn onPress={back}>
@@ -105,7 +108,7 @@ export default function WriteFlow({ copy, insets, onClose, onComplete, initial, 
               }}
             />
           </ScrollView>
-          <Foot insets={insets}>
+          <Foot insets={insets} kb={kb}>
             <T w={700} color={c.muted} style={{ fontSize: 12 }}>{countWords(cur.val)} words</T>
             <PrimaryButton label="Next" onPress={next} disabled={!canNext} style={{ flex: 1 }} />
           </Foot>
@@ -195,7 +198,7 @@ export default function WriteFlow({ copy, insets, onClose, onComplete, initial, 
               </Pressable>
             </View>
           </ScrollView>
-          <Foot insets={insets}>
+          <Foot insets={insets} kb={kb}>
             <PrimaryButton
               label={copy.finish}
               onPress={next}
@@ -206,16 +209,16 @@ export default function WriteFlow({ copy, insets, onClose, onComplete, initial, 
           </Foot>
         </>
       )}
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
-function Foot({ insets, children }) {
+function Foot({ insets, kb, children }) {
   const t = useTheme();
   return (
     <View style={{
       flexDirection: 'row', alignItems: 'center', gap: 12,
-      paddingHorizontal: 22, paddingTop: 12, paddingBottom: 12 + insets.bottom,
+      paddingHorizontal: 22, paddingTop: 12, paddingBottom: 12 + (kb > 0 ? 0 : insets.bottom),
       borderTopWidth: 1, borderTopColor: t.colors.border, backgroundColor: t.colors.surface,
     }}>
       {children}
