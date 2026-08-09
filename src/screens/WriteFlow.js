@@ -60,10 +60,12 @@ export default function WriteFlow({ copy, insets, onClose, onComplete, initial, 
 
   const next = () => { if (last) onComplete({ did, wished, moods }); else setStep(step + 1); };
   const back = () => { if (step === 0) onClose(); else setStep(step - 1); };
-  // Measured on the Pixel 9 Pro emulator (API 36, edge-to-edge, gesture nav):
-  // keyboardDidShow height=312dp, insets.bottom=24dp. The reported height
-  // already extends flush to the physical bottom edge, so it REPLACES
-  // insets.bottom rather than adding to it (see Foot below).
+  // The outer View's paddingBottom: kb reserves the keyboard's own height at
+  // the bottom of the flex column, which is what actually lifts Foot above
+  // it. Foot keeps its normal safe-area padding on top of that (not zeroed)
+  // as a margin of safety — different devices/nav-bar modes were found to
+  // report slightly different keyboard heights, and a small gap is far
+  // better than a clipped button.
   const kb = useKeyboardHeight();
 
   return (
@@ -108,7 +110,7 @@ export default function WriteFlow({ copy, insets, onClose, onComplete, initial, 
               }}
             />
           </ScrollView>
-          <Foot insets={insets} kb={kb}>
+          <Foot insets={insets}>
             <T w={700} color={c.muted} style={{ fontSize: 12 }}>{countWords(cur.val)} words</T>
             <PrimaryButton label="Next" onPress={next} disabled={!canNext} style={{ flex: 1 }} />
           </Foot>
@@ -198,7 +200,7 @@ export default function WriteFlow({ copy, insets, onClose, onComplete, initial, 
               </Pressable>
             </View>
           </ScrollView>
-          <Foot insets={insets} kb={kb}>
+          <Foot insets={insets}>
             <PrimaryButton
               label={copy.finish}
               onPress={next}
@@ -213,12 +215,12 @@ export default function WriteFlow({ copy, insets, onClose, onComplete, initial, 
   );
 }
 
-function Foot({ insets, kb, children }) {
+function Foot({ insets, children }) {
   const t = useTheme();
   return (
     <View style={{
       flexDirection: 'row', alignItems: 'center', gap: 12,
-      paddingHorizontal: 22, paddingTop: 12, paddingBottom: 12 + (kb > 0 ? 0 : insets.bottom),
+      paddingHorizontal: 22, paddingTop: 12, paddingBottom: 12 + insets.bottom,
       borderTopWidth: 1, borderTopColor: t.colors.border, backgroundColor: t.colors.surface,
     }}>
       {children}
