@@ -3,7 +3,7 @@
 // Keepsakes row (Home) and the keepsakes tile (You). Earned, never bought.
 
 import React from 'react';
-import { View, ScrollView, Pressable } from 'react-native';
+import { View, ScrollView, Pressable, useWindowDimensions } from 'react-native';
 import { useTheme } from '../theme';
 import { T } from '../ui';
 import { Chevron, Check, ACH_ICON, Sun } from '../icons';
@@ -13,10 +13,15 @@ import { deriveAchievements } from '../profile/achievements';
 export default function Achievements({ insets, onClose, entries = [], streak = 0 }) {
   const t = useTheme();
   const c = t.colors;
+
+  // Cap to the viewport so the ScrollView is bounded on Android's first modal
+  // measure pass, where flex:1 alone bounds nothing. See Shop.js for the full
+  // explanation.
+  const { height: winH } = useWindowDimensions();
   const achievements = deriveAchievements(entries, streak);
   const earned = achievements.filter((a) => a.done).length;
   return (
-    <View style={{ flex: 1, backgroundColor: c.cream, paddingTop: insets.top }}>
+    <View style={{ flex: 1, maxHeight: winH, backgroundColor: c.cream, paddingTop: insets.top }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingTop: 14, paddingBottom: 6 }}>
         <Pressable onPress={onClose} hitSlop={8}
           style={({ pressed }) => ({ width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: c.ghostBtn, opacity: pressed ? 0.6 : 1 })}>

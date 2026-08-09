@@ -3,7 +3,7 @@
 // tries to buy something they can't yet afford.
 
 import React from 'react';
-import { View, ScrollView, Pressable } from 'react-native';
+import { View, ScrollView, Pressable, useWindowDimensions } from 'react-native';
 import { useTheme } from '../theme';
 import { T } from '../ui';
 import { Close, Ember } from '../icons';
@@ -12,8 +12,13 @@ import { EMBER_PACKS } from '../data';
 export default function GetEmbers({ insets, onClose, embers, onBuy }) {
   const t = useTheme();
   const c = t.colors;
+
+  // Cap to the viewport so the ScrollView is bounded on Android's first modal
+  // measure pass, where flex:1 alone bounds nothing. See Shop.js for the full
+  // explanation.
+  const { height: winH } = useWindowDimensions();
   return (
-    <View style={{ flex: 1, backgroundColor: c.cream, paddingTop: insets.top }}>
+    <View style={{ flex: 1, maxHeight: winH, backgroundColor: c.cream, paddingTop: insets.top }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingTop: 12, paddingBottom: 4 }}>
         <Pressable onPress={onClose} hitSlop={8}
           style={({ pressed }) => ({ width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: c.ghostBtn, opacity: pressed ? 0.6 : 1 })}>

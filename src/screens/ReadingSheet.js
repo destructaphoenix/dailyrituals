@@ -2,7 +2,7 @@
 // Modal by RitualsApp, so it's just the sheet body here.
 
 import React from 'react';
-import { View, ScrollView, Pressable, Text } from 'react-native';
+import { View, ScrollView, Pressable, Text, useWindowDimensions } from 'react-native';
 import { useTheme } from '../theme';
 import { T } from '../ui';
 import { Chevron } from '../icons';
@@ -11,8 +11,13 @@ import { moodEmoji } from '../data';
 export default function ReadingSheet({ entry, copy, mode, insets, onClose, canEdit, onEdit, onDelete }) {
   const t = useTheme();
   const c = t.colors;
+
+  // Cap to the viewport so the ScrollView is bounded on Android's first modal
+  // measure pass, where flex:1 alone bounds nothing. See Shop.js for the full
+  // explanation.
+  const { height: winH } = useWindowDimensions();
   return (
-    <View style={{ flex: 1, backgroundColor: c.cream, paddingTop: insets.top }}>
+    <View style={{ flex: 1, maxHeight: winH, backgroundColor: c.cream, paddingTop: insets.top }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingTop: 14, paddingBottom: 6 }}>
         <IconBtn onPress={onClose}><Chevron dir="left" size={22} color={c.ink} /></IconBtn>
         {entry.moods && entry.moods.length > 0 ? (

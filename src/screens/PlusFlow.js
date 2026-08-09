@@ -7,7 +7,7 @@
 //   4. A store-compliant legal footer (Terms · Privacy + auto-renew disclosure).
 
 import React, { useState, useRef, useEffect } from 'react';
-import { View, ScrollView, Pressable, ActivityIndicator } from 'react-native';
+import { View, ScrollView, Pressable, ActivityIndicator, useWindowDimensions } from 'react-native';
 import { useTheme } from '../theme';
 import { T, PrimaryButton } from '../ui';
 import { Close, Check, Sun, Chevron, Alert, NoSignal, Restore, Shield, Receipt, Ban, Info } from '../icons';
@@ -185,10 +185,15 @@ export function ManageSubscription({ insets, platform, plan, canceled, renewLabe
   const priceText = priceString || p.price;
   const [cancelSheet, setCancelSheet] = useState(false);
 
+  // Cap to the viewport so the ScrollView is bounded on Android's first modal
+  // measure pass, where flex:1 alone bounds nothing. See Shop.js for the full
+  // explanation.
+  const { height: winH } = useWindowDimensions();
+
   const Divider = () => <View style={{ height: 1, backgroundColor: c.border, marginLeft: 66 }} />;
 
   return (
-    <View style={{ flex: 1, backgroundColor: c.cream, paddingTop: insets.top }}>
+    <View style={{ flex: 1, maxHeight: winH, backgroundColor: c.cream, paddingTop: insets.top }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingTop: 12, paddingBottom: 6 }}>
         <Pressable onPress={onClose} hitSlop={8} style={({ pressed }) => ({ width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: c.ghostBtn, opacity: pressed ? 0.6 : 1 })}>
           <Chevron dir="left" size={22} color={c.ink} />
