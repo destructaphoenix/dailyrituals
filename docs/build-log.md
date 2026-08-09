@@ -1330,6 +1330,78 @@ inspect/dayKeyDrift). `npx expo export --platform android` clean.
 
 ---
 
+### IMP-050 — every mood gets a face   ·   Lane: OTA   ·   Status: ✅ code-complete
+
+**Why:** `moodEmoji = (m) => MOOD_EMOJI[m] || ''` in `src/data.js` resolved anything outside the 8 built-in
+moods to an empty string — silently blank in all 7 mood-drawing surfaces. Two distinct causes: every custom
+mood from IMP-037 (no emoji was ever offered for one) and a `moods: []` entry (only ever produced by the
+v2→v3 migration or a restored backup, never by the app's own UI, since mood is already mandatory).
+
+**Two named fallbacks, no migration.** `NO_MOOD_EMOJI = '🌫️'` for `moods: []`; `CUSTOM_MOOD_FALLBACK = '✨'`
+for a custom mood with no emoji on record. `moodEmoji(m, custom = {})` now
+`MOOD_EMOJI[m] || custom[m] || (m ? CUSTOM_MOOD_FALLBACK : NO_MOOD_EMOJI)` — a built-in name always wins over
+a custom map, and the function never returns `''` for any input, with or without the second argument.
+`__tests__/data/moodEmoji.test.js` (7 cases) pins all of this, RED-first. No data migration was written or
+needed — IMP-037 has never reached a device, so zero users have ever created a custom mood.
+
+**The picker.** `MOOD_PALETTE` — 40 glyphs in `src/data.js`, chosen for Android 7 font coverage
+(`minSdkVersion` 24, no Emoji 12+ glyphs). New `src/entries/emojiInput.js` → `isEmojiish(s)`, code-point
+based (no `\p{...}` regex — Hermes's Unicode property-escape support wasn't worth betting the validator on),
+validates the typed-emoji escape hatch: 1–8 code points, every one ≥ U+00A0. `WriteFlow.js`'s mood step
+gained a horizontal palette `ScrollView` (default selection `MOOD_PALETTE[0]`, so **Add** is never blocked
+on the emoji) directly above the existing "Name your own…" row, plus a small typed-emoji field — a valid
+typed emoji becomes the selection and clears the palette ring; an invalid one leaves the palette pick
+standing, no alert or toast. `addCustomMood` now calls `onAddCustomMood(name, emoji)` and resets both
+fields. `__tests__/screens/WriteFlowMood.test.js` (7 cases, `@testing-library/react-native`) covers the
+picker plus a **regression test that the mandatory-mood gate still holds** (Finish/`onComplete` fires only
+once a mood is selected) — the rule the owner originally asked about.
+
+**Persistence.** `settings.customMoodEmoji: {}` added to `DEFAULT_SETTINGS`. `sanitizeSettings.js` gained a
+per-key exception matching `accent`/`reminder`/`recapSeen`'s pattern: not a plain object → `{}`; otherwise
+the map is kept and only the individual values failing `isEmojiish` are dropped, so one bad glyph never
+costs the user their other custom moods. 5 new cases in `sanitizeSettings.test.js`.
+
+**The multi-mood shimmer (owner decision, 2026-08-09).** New pure `src/entries/moodFace.js` —
+`hashKey(k)`/`moodFace(moods, tick, dayKey)` picks which mood a cell shows on a given tick, deterministic per
+day (a `dayKey`-seeded phase offset) so every multi-mood cell doesn't animate in lockstep. New
+`src/ui/useMoodTick.js` — a shared ~2500ms tick, ticking only while `AppState` is `'active'` **and**
+reduce-motion is off (`AccessibilityInfo`, live-subscribed), returning `seed` (not `0`) whenever it isn't
+ticking so a backgrounded or reduce-motion cell still shows a day-varying face instead of freezing on
+whichever mood was tapped first. `calendar.js`'s `buildHeatmap`/`buildLifetimeHeatmap` now carry
+`moods: entry.moods || []` on each cell instead of a single resolved `mood`/`emoji` pair — `calendar.js` is a
+pure date-grid helper and has no business resolving glyphs. `ArchiveScreen.js`'s `Heat` computes both
+`enabled` (`cells.some(c => (c.moods||[]).length > 1)`, so a grid with nothing to animate starts no timer)
+and `seed` (`hashKey` of the last cell's `dayKey` — always today, so the phase changes daily with no clock
+plumbing) itself, and renders `moodEmoji(moodFace(cell.moods, tick, cell.dayKey), customMoodEmoji)`.
+`__tests__/entries/moodFace.test.js` (8 cases) and `__tests__/ui/useMoodTick.test.js` (4 cases,
+`jest.useFakeTimers()`) cover the two pure/hook pieces independently. `__tests__/home/calendar.test.js`
+updated for the field shape change — the test previously named "uses only the first mood when an entry
+carries several" was renamed to "carries every mood on the cell, in order", since its old intent (drop all
+but the first mood) was itself the bug this spec closes.
+
+**Threaded `customMoodEmoji` through every consumer:** 5 mount points in `RitualsApp.js`
+(`InsightsScreen`→`DeeperInsights` ×2, `ArchiveScreen`, `ReadingSheet`, `AnnualRecap`, `WriteFlow`) plus
+`DeeperInsights.js`, `ReadingSheet.js`, `AnnualRecap.js` and `ArchiveFilters.js` themselves (each accepting
+the prop and passing it into their own `moodEmoji()` calls). `addCustomMood(name, emoji)` in `RitualsApp.js`
+now writes both `customMoods` and `customMoodEmoji` in one immutable update — re-adding an existing name
+updates its emoji instead of duplicating the mood. `ArchiveFilters.js` now maps over
+`[...MOODS, ...customMoods]` instead of the 8 built-ins alone, so a user-invented feeling can finally be
+searched for — the same second-class treatment IMP-037 left on the retrieval surface.
+
+**Tests:** `npm test` → **632 passed, 64 suites** (588 + 44 new: 7 moodEmoji + 13 emojiInput + 8 moodFace +
+4 useMoodTick + 5 sanitizeSettings + 7 WriteFlowMood, calendar.test.js's existing count unchanged but 5
+assertions rewritten for the field shape). `npx expo export --platform android` clean.
+
+**Do NOT** (per spec, honored): write a data migration · back-fill a mood onto a `moods: []` entry · make
+the heatmap cell pressable (logged to PROGRESS.md → Open items as a future IMP, not built here) · let custom
+moods override the 8 built-in emoji · add a delete/rename flow for custom moods (that's IMP-055, which
+depends on this) · touch `MISS_EMOJI` or any `💀` rendering.
+
+**Ship:** OTA, no bump — not shipped this chat (no `Release-Lane` trailer). **Commit:**
+`feat(entries): every mood gets a face — custom emoji, a glyph for moodless days, and multi-mood cells that breathe (IMP-050)`.
+
+---
+
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
 
 > Moved out of PROGRESS.md on 2026-07-31 to keep the live cursor lean once a second spec (IMP-032) opened. These are **not** finished work. If the owner revives one, lift the block back into PROGRESS.md as the ACTIVE TRACK.
@@ -1374,6 +1446,8 @@ inspect/dayKeyDrift). `npx expo export --platform android` clean.
 ## Session notes (archived from PROGRESS.md)
 
 _Append-only handoff log moved out of PROGRESS.md to keep it light. Newest 1–2 notes stay live in PROGRESS.md; everything else is here. Git history is the full record._
+
+_2026-08-09 (IMP-049, settings survive a corrupt restore) — **code-complete, committed, not shipped.** Closed the fragility WALK-01's first attempt surfaced: `readBackup` validated only the backup envelope, never the *shape* of `settings` inside it, and `mergeWithDefaults`'s shallow spread let a wrong-typed key (proven: `settings.accent` as a string) replace its default outright — `makeTheme` then indexed the string by character, `processColor` returned `null`, and every `LinearGradient` threw a native NPE, recoverable only via Reset all data. RED-first: `__tests__/persistence/sanitizeSettings.test.js` (18 cases, all of the spec's required cases plus one it didn't anticipate) against new pure `src/persistence/sanitizeSettings.js` — shape comparison (`Array.isArray`→`'array'`, `null`→`'null'`, else `typeof`) replaces a key whose shape differs from its default; `accent` gets its own 3-hex-string check (a partial repair would produce a mismatched palette, so a bad value is replaced wholesale); `reminder` recurses one level. **Found and fixed one case the spec missed while writing the tests:** `recapSeen`'s default is `null` but a real dismissal (IMP-046) stores a *year* (a number) — pure shape-vs-default comparison would have silently reset every dismissal back to `null` on the next hydration, a real regression. Gave it the same kind of per-key exception the spec already grants `accent`/`reminder` (kept if `null` or a number). Wired at **both** hydration points in `App.js` (line 87 cold-start, line 122 restore/replace) — both required, since fixing only the restore path leaves an already-poisoned install unrecoverable. Regression test proves the actual failure closes: feeds the poisoned `{accent: '#C9884A'}` through `mergeWithDefaults`→`makeTheme` for both `'day'`/`'night'` and asserts every colour token is valid — first proving the assertion **fails** without `sanitizeSettings` in the chain (unsanitized run produced problems), then that it passes with it. `npm test` → **577 passed, 58 suites** (559 + 18 new); `npx expo export --platform android` clean. `docs/specs-open.md` reset to empty (IMP-049 was the only open spec). **NEXT:** no IMP task is queued. Resume **WALK-01 step 3** in `docs/walk-open.md` — Reset all data first, since the emulator may still hold settings poisoned by WALK-01's aborted first attempt; this fix prevents *future* poisoning, it does not retroactively repair state already written to AsyncStorage. Alternatively pick up the subscription-track build window (IMP-022 Part A, the PDF perk) or the `internal`→production promotion decision._
 
 _2026-08-09 (emulator walk of the post-vc11 batch + IMP-048) — **first hands-on walk of everything built since vc11.** Produced the emulator test plan for IMP-033–047 and surfaced the three structural blockers that hide half of it: (1) `PLUS_ENABLED = false` makes IMP-038/046/047, the "What's in Plus" sheet and trash-restore literally unmountable, so walking them needs a **temporary, uncommitted** flip of [`src/billing/config.js:39`](src/billing/config.js#L39); (2) the Annual Recap **Home** card is 1 Dec – 31 Jan only (the You-tab "Your years" section is the year-round route); (3) the dev harness's Entries stepper is `step: 1`, so a year of history for "On this day"/the recap needs a throwaway `scenarios.js` row at `entryCount: 460`, not tapping. Two emulator techniques worth keeping: **IMP-033's quarantine is triggerable without any Google backup** — set the emulator clock back ~5 days, let one autosave stamp a past `lastSavedAt`, relaunch, and `installedAt > lastSavedAt` fires the real quarantine path; and **IMP-044's R8 is walkable locally** — `android/app/build.gradle` signs `release` with the debug keystore, so `npx expo run:android --variant release` builds the first-ever minified build with no keystore setup (`android/` is now re-prebuilt at vc11 and carries both R8 flags + the `expo-notifications` keep rule). **IMP-048 came out of the walk and is code-complete + walked** (see backlog row / build-log): trash restore was Plus-only with no disclosure and its blocked-toast rendered behind the modal; it is now free 3×, stated on the page before it is spent, locked honestly afterwards even while Plus is unbuyable (owner decision — full rationale in the spec). `npm test` → **559 passed, 57 suites** (545 + 14 new); `npx expo export --platform android` clean. **The walk queue now has a home: [`docs/walk-open.md`](docs/walk-open.md)** — WALK-01…12, each with preconditions, steps, expected results and where to record the outcome, plus six reusable techniques (T1–T6: the PLUS_ENABLED flip, the harness, deep history, the clock trick, bmgr local transport, the release variant). It is to testing what `specs-open.md` is to building, and it is why this chat's context need not be carried forward. **WALK-01 (the v2→v3 mood migration) is IN PROGRESS and is the resume point** — the restore fires and every derived value renders correctly; steps 3–9 (the mood chips themselves, the relaunch-persists-as-v3 proof) are undone. Its fixture generator was promoted out of the session scratchpad to [`scripts/gen-v2-fixture.js`](scripts/gen-v2-fixture.js) (output git-ignored — regenerate it, its dayKeys are relative to the run date). **WALK-01's first attempt aborted on a tester error, not an app defect:** the fixture wrote `settings.accent` as a string where the app expects the `[accent, deep, soft]` array; `mergeWithDefaults` is a shallow spread so it replaced the default outright, `makeTheme` indexed the string by character (`accent: '#'`, `accentDeep: 'C'`, `accentSoft: '9'`), `processColor` returned null, and every `LinearGradient` threw `null cannot be cast to non-null type kotlin.Double`. The fixture is fixed and now type-checked against `DEFAULT_SETTINGS`; **the app fragility it exposed is scoped as IMP-049**, now the one open spec. **⚠️ The emulator may still hold those poisoned settings — they persist to AsyncStorage and survive relaunches, so Reset all data before resuming WALK-01.** NEXT: either build **IMP-049** (spec complete, no design questions left) or resume **WALK-01 step 3**._
 

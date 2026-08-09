@@ -22,11 +22,11 @@
 
 The live work is the **first unchecked `IMP-xxx` task in the Improvements backlog** below — its full spec is in [`docs/specs-open.md`](docs/specs-open.md), linked from its backlog row. Work that, **not** the phase ladder (8 / 10b / 11), which is **parked in [`docs/playbook.md`](docs/playbook.md)** until the owner resumes it.
 
-> **Nine specs left — IMP-050 → IMP-060, minus 056 (done) and 057 (still reserved). Updated 2026-08-10:**
+> **Eight specs left — IMP-051 → IMP-060, minus 056/050 (done) and 057 (still reserved). Updated 2026-08-10:**
 >
-> **▶️ [IMP-050](docs/specs-open.md#imp-050--every-mood-gets-a-face) is the live task; take the rest in
-> table order.** All are **OTA — none needs a `bump:native`.** Each is self-contained: **open one spec, not
-> the file.**
+> **▶️ [IMP-051](docs/specs-open.md#imp-051--the-keyboard-stops-eating-the-next-button) is the live task;
+> take the rest in table order.** All are **OTA — none needs a `bump:native`.** Each is self-contained:
+> **open one spec, not the file.**
 >
 > **`IMP-057` is still reserved, not missing.** It is the historical `dayKey` migration IMP-056 deferred.
 > Its step-5 reporter is now live (dev panel → Inspector → "Data health") but has only ever been read
@@ -36,8 +36,8 @@ The live work is the **first unchecked `IMP-xxx` task in the Improvements backlo
 > - **✅ 056 done (2026-08-10).** `dayKey` is now derived locally, not UTC — closes the 1am-overwrite /
 >   missing-evening-entry defect. Walked both offset directions on the emulator. Full detail + the residual
 >   + the IMP-057 decision are in Open items below.
-> - **050** finishes IMP-037 — custom moods draw **blank** everywhere, because
->   [`data.js:51`](src/data.js#L51) resolves anything outside the 8 built-ins to `''`.
+> - **✅ 050 done (2026-08-10).** Custom moods (IMP-037) no longer draw blank — a 40-glyph picker + typed
+>   escape hatch, two named fallback glyphs, and a shimmer for multi-mood cells. Unblocks 052 and 055.
 > - **051** is why **Next** hides under the keyboard — three compounding causes, none fixable by
 >   `adjustResize`.
 > - **052** makes both heatmaps tappable — the retrieval gesture the product thesis has been asking for.
@@ -51,9 +51,10 @@ The live work is the **first unchecked `IMP-xxx` task in the Improvements backlo
 > - **058** adds grief / gratitude / change prompt packs. **Free, not Plus** — the perk list is fixed at six
 >   by an earlier decision, and a prompt is the app helping you write *today*.
 >
-> **Only two ordering constraints: 052 and 055 must both come after 050.** And **two need a running app,
-> not just `npm test`** — 054 (notification behaviour) and 059 (whose acceptance test is writing an entry
-> with TalkBack on and your eyes shut). Budget for that before starting either.
+> **The two ordering constraints (052 and 055 after 050) are now cleared — 050 shipped this session.** Take
+> the remaining eight in any order. **Two need a running app, not just `npm test`** — 054 (notification
+> behaviour) and 059 (whose acceptance test is writing an entry with TalkBack on and your eyes shut). Budget
+> for that before starting either.
 >
 > Everything else in the backlog table below is ✅. The other live work is the walk queue, the
 > **subscription-track build window** (playbook 10b step B9: revive IMP-022 Part A, the PDF perk #6), or
@@ -99,7 +100,7 @@ The live work is the **first unchecked `IMP-xxx` task in the Improvements backlo
 
 **⚠️ OTA has no Play track, and never did.** `eas update` publishes a JS bundle to Expo's CDN — Google is not involved, there is no review, and `internal`/`alpha`/`beta` are meaningless to it. Delivery is gated by exactly two things: the **channel** (`production`, set in `eas.json` → `build.production.channel`) and a **matching `runtimeVersion`**. An installed build receives an OTA regardless of which Play track it was installed from. So "send OTA to internal instead of closed testing" is not a setting that exists — and OTA is already faster than any track, which is the whole reason the lane exists.
 
-**Current stack:** Expo SDK **54** · React Native **0.81.5** · React **19.1.0** · **Legacy Architecture** (`expo.newArchEnabled: false`, held deliberately — SDK 55 drops Legacy and that migration is its own future task) · `compileSdkVersion`/`targetSdkVersion` **36**, `minSdkVersion` **24** · `npm test` → **577 passed, 58 suites**. Details in [`docs/playbook.md`](docs/playbook.md).
+**Current stack:** Expo SDK **54** · React Native **0.81.5** · React **19.1.0** · **Legacy Architecture** (`expo.newArchEnabled: false`, held deliberately — SDK 55 drops Legacy and that migration is its own future task) · `compileSdkVersion`/`targetSdkVersion` **36**, `minSdkVersion` **24** · `npm test` → **632 passed, 64 suites**. Details in [`docs/playbook.md`](docs/playbook.md).
 
 ---
 
@@ -155,7 +156,7 @@ Opus scopes each owner-filed issue into a numbered `IMP-xxx` task — steps, tes
 | IMP-048 | 🔴 **Three free restores, then Plus** — trash restore was Plus-only with no disclosure: the button looked live and did nothing, and its "part of Plus" toast rendered *behind* the modal. Free 3×, stated on the page before it's spent | OTA | ✅ code-complete + **emulator-walked 2026-08-09** — full detail in build-log |
 | IMP-047 | ✨ **Deeper insights — the analysis layer** — `InsightsScreen` has **zero** `plus` checks; free and Plus see identical insights. Mood-by-weekday, seasonal patterns, mood pairings. **Plus perk #5** | OTA | ✅ code-complete — full detail in build-log |
 | IMP-056 | 🔴 **A day is the day you lived, not the day in Greenwich** — `dayKey` is derived in **UTC** ([`RitualsApp.js:83`](src/RitualsApp.js#L83)) while every date the user reads is **local** ([`clock.js:16`](src/time/clock.js#L16)), and both are stamped onto the same entry. In IST a 1am entry is filed under yesterday and can **silently overwrite last night's words**; at negative offsets an 8pm entry is filed under tomorrow and never appears on the grid at all. Fixes derivation only — the historical migration is deferred to IMP-057 | OTA | ✅ code-complete + **emulator-walked 2026-08-10** (both offset directions) — full detail in build-log |
-| IMP-050 | 🟡 **Every mood gets a face** — `moodEmoji` returns `''` for anything outside the 8 built-ins, so **every custom mood from IMP-037 draws blank** in all 7 mood surfaces, and a `moods: []` entry leaves a hole in the grid. Adds an emoji picker (40-glyph palette + typed escape hatch), two named fallback glyphs, and a shimmer for multi-mood days | OTA | ⬜ [spec](docs/specs-open.md#imp-050--every-mood-gets-a-face) |
+| IMP-050 | 🟡 Every mood gets a face — custom emoji picker + typed escape hatch, two fallback glyphs, multi-mood shimmer | OTA | ✅ code-complete (2026-08-10) — full detail in build-log |
 | IMP-051 | 🔴 **The keyboard stops eating the Next button** — `KeyboardAvoidingView` is inert on Android (`behavior: undefined`), WriteFlow is inside a `Modal` whose dialog window never gets `adjustResize`, and edge-to-edge (API 36) stops the system resizing for the IME at all. The user must dismiss the keyboard for every single step | OTA | ⬜ [spec](docs/specs-open.md#imp-051--the-keyboard-stops-eating-the-next-button) |
 | IMP-052 | ✨ **Tap a day, read it** — both heatmaps (Reflections + the lifetime grid on Insights) render inert `View`s, so the densest surface in the app is unclickable and the only route to an old entry is scrolling or already remembering a word to search. **Build AFTER IMP-050** — both rewrite `Heat` | OTA | ⬜ [spec](docs/specs-open.md#imp-052--tap-a-day-read-it) |
 | IMP-053 | 🟡 **Search shows you the match** — the result card hard-renders the first 2 lines of `did`, but `searchEntries` matches over `did + wished`. A hit in `wished` (or deep in `did`) yields a card containing the search term **nowhere**. IMP-035 built the engine and hid its output. Watch the index-mapping trap: diacritic folding is not length-preserving | OTA | ⬜ [spec](docs/specs-open.md#imp-053--search-shows-you-the-match) |
@@ -343,6 +344,43 @@ Also worth doing and nearly free: **"gift a year" via Play promo codes** — no 
 
 _History archived in [`docs/build-log.md`](docs/build-log.md) → "Session notes". Only the two newest notes stay here; every chat moves the older one out when it appends a new one (see DEVGUIDE Step 4)._
 
+_2026-08-10 (IMP-050, every mood gets a face) — **code-complete, committed, not shipped.**
+`moodEmoji = (m) => MOOD_EMOJI[m] || ''` in `data.js` drew a blank cell for every custom mood (IMP-037) and
+for a `moods: []` entry — two distinct causes, neither a migration (IMP-037 has never reached a device, so
+zero users have ever created a custom mood). Two named fallbacks now cover both: `NO_MOOD_EMOJI = '🌫️'` for
+`moods: []`, `CUSTOM_MOOD_FALLBACK = '✨'` for a named-but-unpictured custom mood; `moodEmoji(m, custom = {})`
+never returns `''` for any input. RED-first throughout: `__tests__/data/moodEmoji.test.js` (7 cases) against
+`src/data.js`'s new `NO_MOOD_EMOJI`/`CUSTOM_MOOD_FALLBACK`/`MOOD_PALETTE` (40 glyphs, Android-7-safe) and the
+two-argument `moodEmoji`; new pure `src/entries/emojiInput.js` (`isEmojiish`, code-point based — no `\p{...}`
+regex, Hermes's support isn't trustworthy) + 13-case test for the typed-emoji escape hatch. `WriteFlow.js`'s
+mood step gained a horizontal palette picker (default `MOOD_PALETTE[0]`, so **Add** is never blocked) plus
+the typed field, both above the existing "Name your own…" row; `addCustomMood(name, emoji)` now resets both.
+`__tests__/screens/WriteFlowMood.test.js` (7 cases, `@testing-library/react-native`) covers the picker and
+doubles as the spec's required mandatory-mood-gate regression test. `settings.customMoodEmoji: {}` added to
+`DEFAULT_SETTINGS`; `sanitizeSettings.js` gained a per-key exception matching `accent`/`reminder`'s pattern —
+keeps the map, drops only the individual bad glyphs, so one typo never costs the other custom moods (5 new
+cases). **The multi-mood shimmer** (owner decision, 2026-08-09): new pure `src/entries/moodFace.js`
+(`hashKey`/`moodFace`, 8 cases) and `src/ui/useMoodTick.js` (a shared ~2500ms tick, live only while
+`AppState` is `'active'` and reduce-motion is off, returning `seed` — not `0` — whenever it isn't ticking; 4
+cases with `jest.useFakeTimers()`). `calendar.js`'s `buildHeatmap`/`buildLifetimeHeatmap` now carry
+`moods: entry.moods || []` per cell instead of resolving a single `mood`/`emoji` — a pure date-grid helper
+has no business resolving glyphs; `ArchiveScreen.js`'s `Heat` computes its own `enabled`
+(`cells.some(c => (c.moods||[]).length > 1)`, so a still grid starts no timer) and `seed`
+(`hashKey` of today's cell), rendering `moodEmoji(moodFace(cell.moods, tick, cell.dayKey), customMoodEmoji)`.
+`__tests__/home/calendar.test.js` updated for the field-shape change — the test previously named "uses only
+the first mood when an entry carries several" was renamed to "carries every mood on the cell, in order",
+since dropping all but the first mood was itself the bug. `customMoodEmoji` threaded through all 5 mount
+points named in the spec (`InsightsScreen`→`DeeperInsights` ×2, `ArchiveScreen`, `ReadingSheet`,
+`AnnualRecap`, `WriteFlow`) plus `ArchiveFilters.js`, which now maps over `[...MOODS, ...customMoods]`
+instead of the 8 built-ins alone — a user-invented feeling can finally be searched for. `npm test` →
+**632 passed, 64 suites** (588 + 44 new); `npx expo export --platform android` clean. Full spec archived to
+`docs/build-log.md`; backlog row set to code-complete; `docs/specs-open.md`'s index updated (IMP-050
+removed, 8 tasks left, IMP-051 now next; the two constraints gating IMP-052/055 on IMP-050 are cleared).
+**Deliberately not done, per spec:** no data migration, no back-fill onto a `moods: []` entry, the heatmap
+cell itself still isn't pressable (that's IMP-052, next-but-one), no rename/delete flow for custom moods
+(that's IMP-055). NEXT: **IMP-051** (the keyboard stops eating the Next button) is the live task — open only
+its spec in `docs/specs-open.md`._
+
 _2026-08-10 (IMP-056, a day is the day you lived, not the day in Greenwich) — **code-complete, committed,
 not shipped.** `dayKey` was derived in UTC while every date the user reads is local, and both were stamped
 on the same entry — a 1am write in a positive-offset zone silently overwrote the previous evening's entry;
@@ -377,5 +415,3 @@ device's drift numbers before it can be scoped — not producible from this emul
 goes stale — restart the emulator process, `adb kill-server` alone doesn't fix it; and a running RN process
 does not pick up a live OS timezone change — force-stop + relaunch, not just a new launch `Intent`. NEXT:
 **IMP-050** (every mood gets a face) is the live task — open only its spec in `docs/specs-open.md`._
-
-_2026-08-09 (IMP-049, settings survive a corrupt restore) — **code-complete, committed, not shipped.** Closed the fragility WALK-01's first attempt surfaced: `readBackup` validated only the backup envelope, never the *shape* of `settings` inside it, and `mergeWithDefaults`'s shallow spread let a wrong-typed key (proven: `settings.accent` as a string) replace its default outright — `makeTheme` then indexed the string by character, `processColor` returned `null`, and every `LinearGradient` threw a native NPE, recoverable only via Reset all data. RED-first: `__tests__/persistence/sanitizeSettings.test.js` (18 cases, all of the spec's required cases plus one it didn't anticipate) against new pure `src/persistence/sanitizeSettings.js` — shape comparison (`Array.isArray`→`'array'`, `null`→`'null'`, else `typeof`) replaces a key whose shape differs from its default; `accent` gets its own 3-hex-string check (a partial repair would produce a mismatched palette, so a bad value is replaced wholesale); `reminder` recurses one level. **Found and fixed one case the spec missed while writing the tests:** `recapSeen`'s default is `null` but a real dismissal (IMP-046) stores a *year* (a number) — pure shape-vs-default comparison would have silently reset every dismissal back to `null` on the next hydration, a real regression. Gave it the same kind of per-key exception the spec already grants `accent`/`reminder` (kept if `null` or a number). Wired at **both** hydration points in `App.js` (line 87 cold-start, line 122 restore/replace) — both required, since fixing only the restore path leaves an already-poisoned install unrecoverable. Regression test proves the actual failure closes: feeds the poisoned `{accent: '#C9884A'}` through `mergeWithDefaults`→`makeTheme` for both `'day'`/`'night'` and asserts every colour token is valid — first proving the assertion **fails** without `sanitizeSettings` in the chain (unsanitized run produced problems), then that it passes with it. `npm test` → **577 passed, 58 suites** (559 + 18 new); `npx expo export --platform android` clean. `docs/specs-open.md` reset to empty (IMP-049 was the only open spec). **NEXT:** no IMP task is queued. Resume **WALK-01 step 3** in `docs/walk-open.md` — Reset all data first, since the emulator may still hold settings poisoned by WALK-01's aborted first attempt; this fix prevents *future* poisoning, it does not retroactively repair state already written to AsyncStorage. Alternatively pick up the subscription-track build window (IMP-022 Part A, the PDF perk) or the `internal`→production promotion decision._
