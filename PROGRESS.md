@@ -22,19 +22,24 @@
 
 The live work is the **first unchecked `IMP-xxx` task in the Improvements backlog** below — its full spec is in [`docs/specs-open.md`](docs/specs-open.md), linked from its backlog row. Work that, **not** the phase ladder (8 / 10b / 11), which is **parked in [`docs/playbook.md`](docs/playbook.md)** until the owner resumes it.
 
-> **Four specs are queued again. Updated 2026-08-09:**
+> **Six specs are queued again — IMP-050 → IMP-055. Updated 2026-08-09:**
 >
-> **▶️ [IMP-050](docs/specs-open.md#imp-050--every-mood-gets-a-face) is the live task, then
-> [IMP-051](docs/specs-open.md#imp-051--the-keyboard-stops-eating-the-next-button), then
-> [IMP-052](docs/specs-open.md#imp-052--tap-a-day-read-it) (which must come after IMP-050 — they share
-> `ArchiveScreen`'s `Heat`).** All three are OTA, all three came out of the owner walking the app on
-> 2026-08-09, and each is self-contained — open one spec, not the file. IMP-050 finishes IMP-037: custom
-> moods currently draw **blank** everywhere because [`data.js:51`](src/data.js#L51) resolves anything
-> outside the 8 built-ins to `''`. IMP-051 is why the **Next** button hides under the keyboard — three
-> compounding causes, none of which is fixable by `adjustResize`. IMP-052 makes both heatmaps tappable,
-> which is the retrieval gesture the playbook's product thesis has been asking for, and
-> [IMP-053](docs/specs-open.md#imp-053--search-shows-you-the-match) makes search results actually show the
-> words you searched for. **None needs a `bump:native`.**
+> **▶️ [IMP-050](docs/specs-open.md#imp-050--every-mood-gets-a-face) is the live task; take the rest in
+> table order.** All six are **OTA — none needs a `bump:native`** — and all six came out of the owner
+> walking the app on 2026-08-09. Each is self-contained: **open one spec, not the file.**
+>
+> - **050** finishes IMP-037 — custom moods draw **blank** everywhere, because
+>   [`data.js:51`](src/data.js#L51) resolves anything outside the 8 built-ins to `''`.
+> - **051** is why **Next** hides under the keyboard — three compounding causes, none fixable by
+>   `adjustResize`.
+> - **052** makes both heatmaps tappable — the retrieval gesture the product thesis has been asking for.
+> - **053** makes a search result actually contain the word you searched for.
+> - **054** fixes IMP-031's two missing halves: a foreground reminder shows nothing, and tapping one does
+>   not open the write flow.
+> - **055** lets you rename / re-emoji / remove the feelings you named yourself.
+>
+> **Only two ordering constraints: 052 and 055 must both come after 050.** And **054 is the only one
+> `npm test` cannot finish** — its proof is an emulator walk, so budget for one before starting it.
 >
 > Everything else in the backlog table below is ✅. The other live work is the walk queue, the
 > **subscription-track build window** (playbook 10b step B9: revive IMP-022 Part A, the PDF perk #6), or
@@ -139,6 +144,8 @@ Opus scopes each owner-filed issue into a numbered `IMP-xxx` task — steps, tes
 | IMP-051 | 🔴 **The keyboard stops eating the Next button** — `KeyboardAvoidingView` is inert on Android (`behavior: undefined`), WriteFlow is inside a `Modal` whose dialog window never gets `adjustResize`, and edge-to-edge (API 36) stops the system resizing for the IME at all. The user must dismiss the keyboard for every single step | OTA | ⬜ [spec](docs/specs-open.md#imp-051--the-keyboard-stops-eating-the-next-button) |
 | IMP-052 | ✨ **Tap a day, read it** — both heatmaps (Reflections + the lifetime grid on Insights) render inert `View`s, so the densest surface in the app is unclickable and the only route to an old entry is scrolling or already remembering a word to search. **Build AFTER IMP-050** — both rewrite `Heat` | OTA | ⬜ [spec](docs/specs-open.md#imp-052--tap-a-day-read-it) |
 | IMP-053 | 🟡 **Search shows you the match** — the result card hard-renders the first 2 lines of `did`, but `searchEntries` matches over `did + wished`. A hit in `wished` (or deep in `did`) yields a card containing the search term **nowhere**. IMP-035 built the engine and hid its output. Watch the index-mapping trap: diacritic folding is not length-preserving | OTA | ⬜ [spec](docs/specs-open.md#imp-053--search-shows-you-the-match) |
+| IMP-054 | 🟡 **The reminder you can actually answer** — two gaps in IMP-031's subsystem: no `setNotificationHandler` (flagged 2026-07-31, never scoped) so a foreground reminder shows **nothing**, and no response listener at all, so **tapping it does not open the write flow** — it lands on whatever tab you left. Owner chose: suppress the OS banner, show the app's own Toast. **Needs an emulator walk; `npm test` cannot prove it** | OTA | ⬜ [spec](docs/specs-open.md#imp-054--the-reminder-you-can-actually-answer) |
+| IMP-055 | 🟡 **Manage your feelings** — `addCustomMood` only ever appends, so a mood typo'd at 11pm is in your picker, Insights and Annual Recap for the life of the install. Rename (rewrites across `entries` **and** `trash`), re-emoji, remove. **Build AFTER IMP-050** | OTA | ⬜ [spec](docs/specs-open.md#imp-055--manage-your-feelings) |
 
 ---
 

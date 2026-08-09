@@ -28,10 +28,16 @@
 | 2 | [IMP-051 — the keyboard stops eating the Next button](#imp-051--the-keyboard-stops-eating-the-next-button) | OTA |
 | 3 | [IMP-052 — tap a day, read it](#imp-052--tap-a-day-read-it) | OTA |
 | 4 | [IMP-053 — search shows you the match](#imp-053--search-shows-you-the-match) | OTA |
+| 5 | [IMP-054 — the reminder you can actually answer](#imp-054--the-reminder-you-can-actually-answer) | OTA |
+| 6 | [IMP-055 — manage your feelings](#imp-055--manage-your-feelings) | OTA |
 
-> **IMP-052 must be built AFTER IMP-050.** Both rewrite `ArchiveScreen`'s `Heat`, and IMP-052 relies on
-> the `cell.moods` field IMP-050 introduces. Taking them out of order means a merge conflict in a file
-> neither spec expects to fight over.
+> **Two ordering constraints, and they are the only ones.** **IMP-052 after IMP-050** — both rewrite
+> `ArchiveScreen`'s `Heat`, and IMP-052 reads the `cell.moods` field IMP-050 introduces. **IMP-055 after
+> IMP-050** — it edits `settings.customMoodEmoji` and reuses the emoji palette, neither of which exists
+> until IMP-050 lands. Everything else can be taken in any order.
+>
+> **IMP-054 is the only spec here that `npm test` cannot finish.** Its proof is an emulator walk; budget
+> for it before starting.
 
 ---
 
@@ -463,3 +469,174 @@ substring search today; changing that is a different spec with different tests) 
 first match · add match counts, relevance scoring or sorting changes · touch `ReadingSheet`.
 
 **Commit:** `feat(archive): show the matched words in search results, not the first two lines (IMP-053)`
+
+---
+
+### IMP-054 — the reminder you can actually answer
+
+**Lane:** OTA · **Free/Plus:** free · **Origin:** the *"no `setNotificationHandler` anywhere in the tree"*
+finding logged in `PROGRESS.md` on **2026-07-31** and never scoped; a second, larger gap found alongside it
+on 2026-08-09.
+
+**Two gaps, same subsystem, one walk.**
+
+**(a) A reminder that fires while the app is open shows nothing.** `setNotificationHandler` appears
+**nowhere** in the tree — the single grep hit is the dev panel's own hint string
+([`NotifySection.js:119`](../src/dev/panel/NotifySection.js#L119)) *documenting* the absence. Under
+`expo-notifications`' default, a foreground notification on Android displays nothing at all. The behaviour
+was never chosen; it is just what happens.
+
+**(b) Tapping the reminder does not take you to the write flow.** There is no
+`addNotificationResponseReceivedListener` and no `getLastNotificationResponseAsync` call anywhere. Tapping
+the notification opens the app on whatever tab it was last left on. A notification whose entire purpose is
+*"write today's entry"* drops the user on the You tab if that is where they were. **`PROGRESS.md`'s IMP-044
+R8 walk checklist lists "reminder fires + tap routes" as if routing existed — it does not.** Correct that
+line when this ships.
+
+**API facts, verified against the installed `expo-notifications` 0.32.17 — do not copy a snippet off the
+internet, most are written for the old API.**
+
+- `shouldShowAlert` is **deprecated**. The handler must return `shouldShowBanner`, `shouldShowList`,
+  `shouldPlaySound` and `shouldSetBadge` — all four, all non-optional booleans.
+- From the package's own type docs: *"On Android, setting `shouldPlaySound: false` will result in the
+  drop-down notification alert **not** showing, no matter what the priority is."* **A silent foreground
+  banner is not achievable on Android.** This is precisely why the owner's chosen design does not use one.
+
+**Decided design (owner, 2026-08-09), do not re-litigate.** The OS banner is **suppressed** in the
+foreground and the app shows **its own Toast** instead — no sound, no system drop-down over the app you are
+already using, and it sidesteps the `shouldPlaySound` trap entirely. Tapping a reminder from outside the
+app opens **WriteFlow**.
+
+**Steps**
+
+1. **RED first — `__tests__/reminders/route.test.js` + new pure
+   [`src/reminders/route.js`](../src/reminders/route.js).** All decisions live here; zero native imports,
+   matching [`schedule.js`](../src/reminders/schedule.js)'s stated architecture. Two exports:
+   - `isOurReminder(notification)` — true only when the notification's
+     `request.content.data.kind` is `'daily-reminder'`. Cases: a matching notification · a foreign
+     notification · `null` / `{}` / a missing `content` → false, never throws.
+   - `reminderAction({ wroteToday, foreground })` → `'nudge' | 'write' | 'none'`. Foreground **and** not
+     written → `'nudge'`; foreground **and** already written → `'none'` (the user is in the app and the day
+     is done; saying anything would be nagging); background tap and not written → `'write'`; background tap
+     and already written → `'none'` (land wherever the app opens; **do not** force the editor open on a day
+     they already finished — IMP-018 already makes today re-editable from Home).
+2. **Stamp the reminders so we can recognise them.** At
+   [`RitualsApp.js:318`](../src/RitualsApp.js#L318) the `reminderCopy(settings.tone)` result is passed to
+   `reminderIO.scheduleAt`. Add `data: { kind: 'daily-reminder' }` to the scheduled content, threaded
+   through [`io.js`](../src/reminders/io.js)'s `scheduleAt(date, { title, body, data })`. Without this,
+   step 4 would hijack any other notification the app ever sends.
+3. **[`src/reminders/io.js`](../src/reminders/io.js) — three additions, and it stays "the ONLY file that
+   imports expo-notifications."** Same lazy `load()` guard as everything else in the file, each degrading
+   to a no-op when the native module is absent (Expo Go):
+   - `setForegroundBehavior()` — calls `setNotificationHandler` with
+     `{ shouldShowBanner: false, shouldShowList: false, shouldPlaySound: false, shouldSetBadge: false }`.
+     Put the Android `shouldPlaySound` fact in a comment above it so nobody "fixes" it later.
+   - `onNotificationReceived(cb)` → a subscription with `.remove()`; wraps
+     `addNotificationReceivedListener`.
+   - `onNotificationTapped(cb)` → wraps `addNotificationResponseReceivedListener`, **and** on registration
+     awaits `getLastNotificationResponseAsync()` once, firing `cb` if it returns one. Both halves are
+     required: the listener catches taps while the app runs, the last-response call catches the cold start
+     where the tap *launched* the app and the listener registered too late to see it.
+4. **Wire it in [`src/RitualsApp.js`](../src/RitualsApp.js)**, beside the existing reminder effects at
+   lines 322–327. One `useEffect` with a `[]` dependency list calls `setForegroundBehavior()` once. A
+   second subscribes both listeners and removes them on unmount. On a received notification:
+   `isOurReminder` → `reminderAction({ wroteToday, foreground: true })` → if `'nudge'`, `showToast` with
+   **`Today is still unwritten.`** On a tap: `isOurReminder` → `reminderAction({ wroteToday, foreground:
+   false })` → if `'write'`, `setWriting(true)`.
+   **Cold-start ordering needs no new plumbing** — [`App.js:103`](../App.js#L103) returns early while
+   `hydrated === null`, so `RitualsApp` cannot mount before entries exist. Do not add a readiness flag.
+5. **Fix the stale line in `PROGRESS.md`** — IMP-044's R8 walk checklist claims tap routing exists. It did
+   not until this spec. Correct it in the same commit.
+6. **Emulator walk, and it is the only proof that counts.** `npm test` cannot exercise any of this — see
+   the technique notes in [`docs/walk-open.md`](walk-open.md). Required: reminder fires with the app
+   **backgrounded** → banner appears → tap → **WriteFlow opens** · reminder fires with the app
+   **foregrounded** and today unwritten → **no banner, no sound**, Toast appears · foregrounded after
+   writing today → **nothing at all** · force-stop the app, let one fire, tap it → WriteFlow opens on the
+   cold start.
+7. `npm test` green (≥ 577, or ≥ whatever the specs before it left), `npx expo export --platform android` clean.
+
+**Do NOT** add notification categories, action buttons or a badge count · change `nextOccurrences`, the
+rolling-window design or `reminderCopy` · request permission anywhere new · make the Toast tappable (it is
+a nudge, not a second CTA) · touch `content/reminders.js`.
+
+**Commit:** `feat(reminders): answer the reminder — a foreground nudge instead of silence, and a tap that opens the write flow (IMP-054)`
+
+---
+
+### IMP-055 — manage your feelings
+
+**Lane:** OTA · **Free/Plus:** free (stored content — the same line IMP-037 and IMP-050 draw) · **Origin:**
+walled out of IMP-050 deliberately; owner asked for it on 2026-08-09.
+
+**⛔ Depends on [IMP-050](#imp-050--every-mood-gets-a-face)** — this spec edits `settings.customMoodEmoji`,
+which IMP-050 creates, and reuses the emoji palette IMP-050 builds. Do not start it first.
+
+**The problem.** IMP-050 makes custom moods worth having: a name *and* a face, offered in every future
+WriteFlow. What it does not give you is any way to change one. `addCustomMood`
+([`RitualsApp.js:431`](../src/RitualsApp.js#L431)) only ever appends. There is **no rename, no delete, and
+no way to change an emoji you picked in a hurry** — so a mood typed as `Anxios` at 11pm is in your picker,
+your Insights and your Annual Recap for the life of the install.
+
+**Decided design (the owner chose the rename semantics, 2026-08-09), do not re-litigate.**
+
+- **A rename rewrites the name across every entry.** History stays coherent and the typo is fixed
+  everywhere it was ever recorded. This edits historical entries, and that is allowed **only** because a
+  mood label is metadata the user themselves chose and is now correcting — **`did` and `wished` are never
+  touched by this spec, under any circumstance.**
+- **A rename must cover `trash` as well as `entries`.** Trashed entries carry their full `moods` array
+  ([`mutate.js:29`](../src/entries/mutate.js#L29)), so skipping trash means restoring an entry later
+  resurrects the old name as an orphan.
+- **A delete removes the mood from the picker and nothing else.** Entries that used it **keep** it, and its
+  `customMoodEmoji` entry is **deliberately left in place** so those days keep their face instead of
+  falling back to the `✨` placeholder. Deleting a feeling you once had must not rewrite the days you had
+  it. The map carrying a few dead keys is a non-cost.
+- **Built-in moods are untouchable.** The 8 in `MOODS` cannot be renamed, re-emoji'd or deleted.
+
+**Steps**
+
+1. **RED first — `__tests__/entries/renameMood.test.js` + new pure
+   [`src/entries/renameMood.js`](../src/entries/renameMood.js)**, following
+   [`mutate.js`](../src/entries/mutate.js)'s `{ entries, trash }` bag idiom. Three exports:
+   - `renameMood({ entries, trash, settings }, from, to)` → a new bag. Rewrites `from` to `to` in every
+     `moods` array in **both** `entries` and `trash`, in `settings.customMoods` (keeping list position),
+     and re-keys `settings.customMoodEmoji`. **Entries that did not use the mood keep their object
+     identity** — assert this directly; it is what stops React re-rendering the whole archive.
+   - `deleteMood({ entries, trash, settings }, name)` → removes `name` from `settings.customMoods` only.
+     `entries`, `trash` and `customMoodEmoji` come back **by reference, unchanged**.
+   - `moodNameError(name, { customMoods, existing })` → `null` or a user-facing string. Rules:
+     empty or whitespace → `Give it a name.` · longer than 24 characters → `A bit shorter.` · a
+     case-insensitive match against `MOODS` → `That one is already here.` · a case-insensitive match
+     against another custom mood → `You already have that one.` · renaming a mood to itself (unchanged) →
+     `null`.
+   Required cases beyond the above: a rename where an entry already carries **both** the old and the new
+   name → the result must not contain a duplicate · a rename with no matching entries anywhere → all three
+   slices come back by reference · `null` and malformed rows, and a missing `moods` array, survive without
+   throwing · nothing is ever mutated in place (freeze the inputs in the test) · **a `did` or `wished`
+   string that happens to contain the mood word is left completely alone** — pin this, it is the one way
+   this spec could damage a journal.
+2. **New `src/screens/MoodManager.js`** — a full-screen `Modal` sheet in the idiom of
+   [`TrashSheet.js`](../src/screens/TrashSheet.js), listing `settings.customMoods`. Each row carries the
+   emoji, the name, and two actions: **Edit** (the same emoji palette and name field IMP-050 built,
+   prefilled) and **Remove**. Removal asks first, with copy that states the actual behaviour:
+   `Remove {name} from your list? Days you already marked with it keep it.` The empty state, when no custom
+   moods exist, is `The feelings you name yourself will live here.`
+   **Reuse IMP-050's palette rather than rebuilding it** — if IMP-050 left it inline in `WriteFlow`,
+   extract it to `src/screens/MoodPalette.js` first and have both screens import it. Do not fork it.
+3. **A You-tab route.** Add a row to [`YouScreen.js`](../src/screens/YouScreen.js) in the same card as the
+   other journal-content rows: label `Your feelings`, value = the custom mood count, or `None yet` at zero.
+   It opens the modal from [`RitualsApp.js`](../src/RitualsApp.js) beside the other overlays, with the same
+   `ThemeContext.Provider` wrapper every sibling modal uses.
+4. **Wire the writes in `RitualsApp`** — `onRenameMood` / `onDeleteMood` call the pure functions and set
+   `entries`, `trash` and `settings` from the returned bag. **All three setters, every time** — a rename
+   that updates settings but not trash is exactly the bug step 1 exists to prevent.
+5. **Component test `__tests__/screens/MoodManager.test.js`**: renaming to a name that already exists shows
+   the error and calls nothing · a valid rename calls `onRenameMood` with the old and new names · Remove
+   asks before calling `onDeleteMood` · the empty state renders with no custom moods · built-in moods are
+   never listed.
+6. `npm test` green (≥ 577, or ≥ whatever the specs before it left), `npx expo export --platform android` clean.
+
+**Do NOT** touch `did` or `wished` · allow editing the 8 built-in moods · delete a mood from historical
+entries · remove its `customMoodEmoji` key on delete · merge on a name collision (a clash is an error, not
+a merge) · add reordering or favourites · touch `ArchiveFilters` beyond what IMP-050 already changed.
+
+**Commit:** `feat(entries): rename, re-emoji and remove the feelings you named yourself (IMP-055)`
