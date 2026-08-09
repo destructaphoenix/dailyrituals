@@ -47,6 +47,7 @@ export function buildState(knobs = {}, today) {
     headlineFont = DEFAULT_SETTINGS.headlineFont,
     roundness = DEFAULT_SETTINGS.roundness,
     textLength = 'short',
+    freeRestoresUsed = 0,
   } = knobs;
 
   const gaps = typeof gapsKnob === 'string' ? (GAP_PRESETS[gapsKnob] || []) : gapsKnob;
@@ -90,6 +91,7 @@ export function buildState(knobs = {}, today) {
     activeSky: sky,
     ownedSkies,
     subCanceled,
+    freeRestoresUsed,
     activePlan: plan !== undefined ? plan : (plus ? 'yearly' : null),
     lastActiveDay: today,
     settings: {

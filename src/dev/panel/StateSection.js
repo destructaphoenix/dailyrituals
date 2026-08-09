@@ -30,6 +30,7 @@ const DEFAULT_KNOBS = {
   reminderEnabled: false, reminderHour: 20, reminderMinute: 30,
   storePurchase: 'success', storeRestore: 'empty',
   headlineFont: 'Quicksand', roundness: 1, textLength: 'short',
+  freeRestoresUsed: 0,
 };
 
 // Module-level memo (never persisted) — survives closing the modal so ~25
@@ -111,6 +112,7 @@ export default function StateSection({ onLoadState, onResetFresh, getSlice, appV
       <Stepper label="XP (0 = derive)" value={knobs.xp ?? 0} step={50} onChange={(v) => set({ xp: v === 0 ? undefined : v })} />
       <Stepper label="Embers" value={knobs.embers} step={50} onChange={(v) => set({ embers: v })} />
       <Stepper label="Freezes" value={knobs.freezes} onChange={(v) => set({ freezes: v })} />
+      <Stepper label="Free restores used (of 3)" value={knobs.freeRestoresUsed ?? 0} onChange={(v) => set({ freeRestoresUsed: v })} />
       <Toggle label="Plus" value={knobs.plus} onChange={(v) => set({ plus: v })} />
       <Segmented
         label="Plan"

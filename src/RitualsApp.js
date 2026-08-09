@@ -45,6 +45,7 @@ import { pendingRestoreInventory } from './persistence/restoreQuarantine';
 import { applyCompletion } from './home/completeEntry';
 import { applyAutoFreeze } from './home/streakFreeze';
 import { applyEdit, applyDelete, applyRestore, pruneTrash, streakAfterDelete } from './entries/mutate';
+import { restoreAccess, consumeFreeRestore } from './entries/restoreAllowance';
 import { markRevisited } from './home/markRevisited';
 import { findTodaysEntry } from './home/todaysEntry';
 import { levelFromXp } from './profile/level';
@@ -100,8 +101,11 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   // applyAutoFreeze. Forgiven, not journaled: never becomes an `entries` row.
   const [frozenDays, setFrozenDays] = useState(initialState.frozenDays ?? []);
   // Deleted entries (IMP-036), pruned to a 30-day window on launch below.
-  // Restoring from here is the Plus half — deleting itself is free.
+  // Deleting is free forever; the first three restores are free too, after
+  // which restoring is the Plus half (IMP-048) — the allowance is disclosed
+  // on the sheet before it is spent, never discovered by a dead button.
   const [trash, setTrash] = useState(initialState.trash ?? []);
+  const [freeRestoresUsed, setFreeRestoresUsed] = useState(initialState.freeRestoresUsed ?? 0);
   const [trashOpen, setTrashOpen] = useState(false);
   // Which past day WriteFlow is editing, if any — null means the normal
   // today flow (complete()/applyCompletion). Past-day edits must never go
@@ -385,12 +389,14 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
         entries, xp, done, quests, freezes, frozenDays, embers, plus,
         activePalette, ownedPalettes, activeSky, ownedSkies,
         subCanceled, activePlan, lastActiveDay, settings, lastBackupAt, promptDeck, seenTips, trash,
+        freeRestoresUsed,
       }));
     }, 400);
     return () => clearTimeout(id);
   }, [mode, entries, xp, done, quests, freezes, frozenDays, embers, plus,
     activePalette, ownedPalettes, activeSky, ownedSkies,
-    subCanceled, activePlan, lastActiveDay, settings, lastBackupAt, promptDeck, seenTips, trash]);
+    subCanceled, activePlan, lastActiveDay, settings, lastBackupAt, promptDeck, seenTips, trash,
+    freeRestoresUsed]);
 
   const complete = ({ did, wished, moods }) => {
     const entry = { id: 'new' + Date.now(), ...entryDateParts(), dayKey: todayKey(), moods, did, wished, streak: true };
@@ -455,11 +461,20 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     );
   };
 
+  // IMP-048: three free restores, then Plus. The gate is re-checked here and
+  // not trusted from the sheet, so no future caller can spend a fourth. No
+  // toast on success — this runs inside the trash Modal, where a Toast in
+  // RitualsApp's tree renders BEHIND the sheet and only surfaces once it
+  // closes. The row leaving the list and the allowance line ticking down are
+  // the feedback.
   const restoreFromTrash = (dayKey) => {
+    const access = restoreAccess({ used: freeRestoresUsed, plus, plusEnabled: PLUS_ENABLED });
+    if (access.kind !== 'free' && access.kind !== 'plus') return;
     const result = applyRestore({ entries, trash }, dayKey);
+    if (result.entries === entries) return; // absent dayKey — spend nothing
     setEntries(result.entries);
     setTrash(result.trash);
-    showToast('Restored');
+    setFreeRestoresUsed((u) => consumeFreeRestore(u, plus));
   };
 
   const forgetFromTrash = (dayKey) => setTrash((ts) => ts.filter((t) => t.dayKey !== dayKey));
@@ -470,6 +485,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     entries, xp, done, quests, freezes, frozenDays, embers, plus,
     activePalette, ownedPalettes, activeSky, ownedSkies,
     subCanceled, activePlan, lastActiveDay, settings, lastBackupAt, promptDeck, seenTips, trash,
+    freeRestoresUsed,
   });
 
   const doExport = async () => {
@@ -729,9 +745,8 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             <TrashSheet
               trash={trash} insets={insets} onClose={() => setTrashOpen(false)}
               onRestore={restoreFromTrash} onDeleteForever={forgetFromTrash}
-              plus={plus} plusEnabled={PLUS_ENABLED}
+              plus={plus} plusEnabled={PLUS_ENABLED} freeRestoresUsed={freeRestoresUsed}
               onOpenPaywall={() => { setTrashOpen(false); setPaywall(true); }}
-              onRestoreBlocked={() => showToast('Undelete is part of Plus — coming soon')}
             />
           </ThemeContext.Provider>
         </Modal>
