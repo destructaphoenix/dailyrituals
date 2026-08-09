@@ -56,3 +56,6 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+
+# Generated test fixture (regenerate with node scripts/gen-v2-fixture.js)
+scripts/daily-rituals-v2-fixture.json
