@@ -114,6 +114,9 @@ export const DEFAULT_SETTINGS = {
   // User-added feelings beyond the suggested MOODS list (IMP-037), offered
   // again in every future WriteFlow session.
   customMoods: [],
+  // Emoji chosen for each custom mood (IMP-050): { [name]: emoji }. A name
+  // absent from this map falls back to CUSTOM_MOOD_FALLBACK, never blank.
+  customMoodEmoji: {},
   // Last dayKey the "On this day" card (IMP-038) was dismissed for — a single
   // string, not a set, so a past dismissal is irrelevant once the day changes.
   onThisDayDismissed: '',

@@ -8,7 +8,7 @@ import { T } from '../ui';
 import { Chevron } from '../icons';
 import { moodEmoji } from '../data';
 
-export default function ReadingSheet({ entry, copy, mode, insets, onClose, canEdit, onEdit, onDelete }) {
+export default function ReadingSheet({ entry, copy, mode, insets, onClose, canEdit, onEdit, onDelete, customMoodEmoji = {} }) {
   const t = useTheme();
   const c = t.colors;
 
@@ -24,7 +24,7 @@ export default function ReadingSheet({ entry, copy, mode, insets, onClose, canEd
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, flexShrink: 1, justifyContent: 'center' }}>
             {entry.moods.map((m) => (
               <View key={m} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 999, backgroundColor: c.accentSoft }}>
-                <Text style={{ fontSize: 13 }}>{moodEmoji(m)}</Text>
+                <Text style={{ fontSize: 13 }}>{moodEmoji(m, customMoodEmoji)}</Text>
                 <T w={800} color={c.accentDeep} style={{ fontSize: 11 }}>{m}</T>
               </View>
             ))}

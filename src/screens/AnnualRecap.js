@@ -25,7 +25,7 @@ function shortDate(dayKey) {
   return `${MONTHS_ABBR[d.getMonth()]} ${d.getDate()}`;
 }
 
-export default function AnnualRecap({ recap, onClose, insets }) {
+export default function AnnualRecap({ recap, onClose, insets, customMoodEmoji = {} }) {
   const t = useTheme();
   const c = t.colors;
   const fmt = (n) => n.toLocaleString();
@@ -84,7 +84,7 @@ export default function AnnualRecap({ recap, onClose, insets }) {
               {recap.topMoods.map((x, i) => (
                 <View key={x.m} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                   <View style={{ minWidth: 84, flexShrink: 1, flexDirection: 'row', alignItems: 'center', gap: 7 }}>
-                    <Text style={{ fontSize: 15 }}>{moodEmoji(x.m)}</Text>
+                    <Text style={{ fontSize: 15 }}>{moodEmoji(x.m, customMoodEmoji)}</Text>
                     <T w={700} color={c.ink} numberOfLines={1} style={{ fontSize: 13.5, flexShrink: 1 }}>{x.m}</T>
                   </View>
                   <View style={{ flex: 1, height: 12, borderRadius: 999, backgroundColor: c.accentSoft, overflow: 'hidden' }}>

@@ -1,4 +1,5 @@
 import { DEFAULT_SETTINGS } from '../theme';
+import { isEmojiish } from '../entries/emojiInput';
 
 const HEX = /^#?([\da-f]{2}){3}$/i;
 
@@ -17,6 +18,17 @@ function sanitizeReminder(value, defaultValue) {
   const out = {};
   for (const key of Object.keys(value)) {
     out[key] = shapeOf(value[key]) === shapeOf(defaultValue[key]) ? value[key] : defaultValue[key];
+  }
+  return out;
+}
+
+// A wrong-typed emoji for one custom mood must not cost the user their other
+// custom moods — keep the map, drop only the individual values that fail.
+function sanitizeCustomMoodEmoji(value) {
+  if (shapeOf(value) !== 'object') return {};
+  const out = {};
+  for (const key of Object.keys(value)) {
+    if (isEmojiish(value[key])) out[key] = value[key];
   }
   return out;
 }
@@ -40,6 +52,10 @@ export function sanitizeSettings(loaded, defaults = DEFAULT_SETTINGS) {
     }
     if (key === 'reminder') {
       out[key] = sanitizeReminder(value, defaults.reminder);
+      continue;
+    }
+    if (key === 'customMoodEmoji') {
+      out[key] = sanitizeCustomMoodEmoji(value);
       continue;
     }
     if (key === 'recapSeen') {

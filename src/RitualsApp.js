@@ -426,11 +426,15 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     showToast('Entry updated');
   };
 
-  // Persists a user-typed feeling so it's offered again next time (IMP-037).
-  const addCustomMood = (m) => {
-    setSettings((s) => (
-      (s.customMoods || []).includes(m) ? s : { ...s, customMoods: [...(s.customMoods || []), m] }
-    ));
+  // Persists a user-typed feeling (and its chosen emoji, IMP-050) so it's
+  // offered again next time (IMP-037). Re-adding an existing name updates
+  // its emoji rather than duplicating the mood.
+  const addCustomMood = (m, emoji) => {
+    setSettings((s) => ({
+      ...s,
+      customMoods: (s.customMoods || []).includes(m) ? (s.customMoods || []) : [...(s.customMoods || []), m],
+      customMoodEmoji: { ...(s.customMoodEmoji || {}), [m]: emoji },
+    }));
   };
 
   const confirmDeleteEntry = (entry) => {
@@ -607,6 +611,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             copy={copy} entries={entries} streak={streak} xp={xp}
             plus={plus} plusEnabled={PLUS_ENABLED}
             onOpenPaywall={PLUS_ENABLED ? () => setPaywall(true) : () => {}}
+            customMoodEmoji={settings.customMoodEmoji || {}}
           />
         );
       case 'archive':
@@ -615,6 +620,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             copy={copy} mode={mode} entries={entries}
             onOpen={(e) => { setReading(e); setQuests((qs) => markRevisited(qs, e, dayKeyOf())); }}
             tip={pendingTip('archive', seenTips)} onDismissTip={dismissTip}
+            customMoods={settings.customMoods || []} customMoodEmoji={settings.customMoodEmoji || {}}
           />
         );
       case 'you':
@@ -714,7 +720,8 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
               return (
                 <WriteFlow
                   copy={copy} insets={insets} onClose={closeWriting} onComplete={onCompleteFlow} initial={initial}
-                  customMoods={settings.customMoods || []} onAddCustomMood={addCustomMood}
+                  customMoods={settings.customMoods || []} customMoodEmoji={settings.customMoodEmoji || {}}
+                  onAddCustomMood={addCustomMood}
                 />
               );
             })()}
@@ -726,7 +733,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             {reading && (
               <ReadingSheet
                 entry={reading} copy={copy} mode={mode} insets={insets} onClose={() => setReading(null)}
-                canEdit={!!reading}
+                canEdit={!!reading} customMoodEmoji={settings.customMoodEmoji || {}}
                 onEdit={() => {
                   const dayKey = reading.dayKey;
                   setReading(null);
@@ -826,6 +833,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
               <AnnualRecap
                 insets={insets} onClose={() => setOpenRecapYear(null)}
                 recap={buildRecap(entries, openRecapYear, { xp })}
+                customMoodEmoji={settings.customMoodEmoji || {}}
               />
             )}
           </ThemeContext.Provider>

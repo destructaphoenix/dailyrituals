@@ -20,27 +20,26 @@ describe('buildHeatmap', () => {
     expect(cells[34]).toEqual({ dayKey: '2026-06-07', empty: true, today: true });
   });
 
-  it('places an entry on its real date with the first mood\'s emoji', () => {
+  it('places an entry on its real date, carrying its moods', () => {
     const cells = buildHeatmap([{ dayKey: '2026-06-01', moods: ['Proud'] }], sun);
     const cell = cells.find((c) => c.dayKey === '2026-06-01');
-    expect(cell).toEqual({ dayKey: '2026-06-01', mood: 'Proud', emoji: '😌', today: false });
+    expect(cell).toEqual({ dayKey: '2026-06-01', moods: ['Proud'], today: false });
   });
 
   it('marks today when an entry exists for today', () => {
     const cells = buildHeatmap([{ dayKey: '2026-06-07', moods: ['Tender'] }], sun);
-    expect(cells[34]).toEqual({ dayKey: '2026-06-07', mood: 'Tender', emoji: '🫶', today: true });
+    expect(cells[34]).toEqual({ dayKey: '2026-06-07', moods: ['Tender'], today: true });
   });
 
-  it('uses only the first mood when an entry carries several', () => {
+  it('carries every mood on the cell, in order', () => {
     const cells = buildHeatmap([{ dayKey: '2026-06-01', moods: ['Proud', 'Tender'] }], sun);
     const cell = cells.find((c) => c.dayKey === '2026-06-01');
-    expect(cell.mood).toBe('Proud');
-    expect(cell.emoji).toBe('😌');
+    expect(cell.moods).toEqual(['Proud', 'Tender']);
   });
 
   it('entry outside the 35-day window does not render but sets firstKey (past in-window days become missed)', () => {
     const cells = buildHeatmap([{ dayKey: '2026-01-01', moods: ['Proud'] }], sun);
-    expect(cells.some((c) => c.mood === 'Proud')).toBe(false); // entry itself not shown
+    expect(cells.some((c) => (c.moods || []).includes('Proud'))).toBe(false); // entry itself not shown
     expect(cells.slice(0, 34).every((c) => c.missed)).toBe(true); // past days all missed
     expect(cells[34]).toEqual({ dayKey: '2026-06-07', empty: true, today: true }); // today unchanged
   });
@@ -50,7 +49,7 @@ describe('buildHeatmap', () => {
       [{ dayKey: '2026-06-05', moods: ['Tender'] }, { dayKey: '2026-06-05', moods: ['Proud'] }],
       sun
     );
-    expect(cells.find((c) => c.dayKey === '2026-06-05').mood).toBe('Tender');
+    expect(cells.find((c) => c.dayKey === '2026-06-05').moods).toEqual(['Tender']);
   });
 });
 
@@ -157,7 +156,7 @@ describe('buildLifetimeHeatmap', () => {
     const mon = flat.find((c) => c.dayKey === '2026-06-08');
     const tue = flat.find((c) => c.dayKey === '2026-06-09');
     const sun = flat.find((c) => c.dayKey === '2026-06-14');
-    expect(mon.mood).toBe('calm');     // done
+    expect(mon.moods).toEqual(['calm']);     // done
     expect(tue.missed).toBe(true);     // past gap after first entry
     expect(sun.today).toBe(true);      // today
   });

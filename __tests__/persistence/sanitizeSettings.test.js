@@ -67,6 +67,36 @@ describe('sanitizeSettings — scalars', () => {
   });
 });
 
+describe('sanitizeSettings — customMoodEmoji', () => {
+  test('a string is replaced with the default empty map', () => {
+    const out = sanitizeSettings({ customMoodEmoji: 'oops' });
+    expect(out.customMoodEmoji).toEqual({});
+  });
+
+  test('an array is replaced with the default empty map', () => {
+    const out = sanitizeSettings({ customMoodEmoji: ['😊'] });
+    expect(out.customMoodEmoji).toEqual({});
+  });
+
+  test('a good map is kept verbatim', () => {
+    const good = { Sleepy: '😴', Wired: '⚡' };
+    const out = sanitizeSettings({ customMoodEmoji: good });
+    expect(out.customMoodEmoji).toEqual(good);
+  });
+
+  test('a mixed map keeps the good keys and drops a bad one', () => {
+    const out = sanitizeSettings({ customMoodEmoji: { Sleepy: '😴', Grumpy: 'zzz' } });
+    expect(out.customMoodEmoji).toEqual({ Sleepy: '😴' });
+  });
+
+  test('never mutates its input map', () => {
+    const input = { customMoodEmoji: { Sleepy: '😴', Grumpy: 'zzz' } };
+    const copy = JSON.parse(JSON.stringify(input));
+    sanitizeSettings(input);
+    expect(input).toEqual(copy);
+  });
+});
+
 describe('sanitizeSettings — forward/backward compat', () => {
   test('an unknown key from a newer build is preserved, not dropped', () => {
     const out = sanitizeSettings({ somethingFromANewerBuild: 1 });

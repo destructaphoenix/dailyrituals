@@ -48,7 +48,26 @@ export const MOOD_EMOJI = {
   Heavy: '🪨',
   Light: '🪶',
 };
-export const moodEmoji = (m) => MOOD_EMOJI[m] || '';
+// moods: [] (no mood recorded — never invented, only ever seen from data) draws
+// this glyph, deliberately unlike every mood emoji and unlike MISS_EMOJI.
+export const NO_MOOD_EMOJI = '🌫️';
+// A custom mood (IMP-037) with no emoji chosen yet draws this, until the user picks one.
+export const CUSTOM_MOOD_FALLBACK = '✨';
+
+// The picker palette — 40 glyphs, chosen for Android 7 font coverage
+// (minSdkVersion 24). Do not add Emoji 12+ glyphs; they render as tofu on the
+// oldest supported devices. None duplicates a built-in mood, MISS_EMOJI,
+// NO_MOOD_EMOJI or CUSTOM_MOOD_FALLBACK (the last is excluded on purpose, so
+// it unambiguously means "no emoji chosen").
+export const MOOD_PALETTE = [
+  '🙂', '😊', '😄', '😅', '😆', '😔', '😞', '😟', '😢', '😭',
+  '😡', '😳', '🤔', '🤗', '😇', '😬', '❤️', '💔', '💛', '💙',
+  '🔥', '💧', '🌊', '🌱', '🌿', '🍂', '🌻', '🌸', '🌙', '⭐',
+  '☀️', '🌈', '⛈️', '❄️', '🕊️', '🦋', '🐌', '🏔️', '🗝️', '⚓',
+];
+
+export const moodEmoji = (m, custom = {}) =>
+  MOOD_EMOJI[m] || custom[m] || (m ? CUSTOM_MOOD_FALLBACK : NO_MOOD_EMOJI);
 
 // A missed day is marked with a skull, both on the week strip and the calendar.
 export const MISS_EMOJI = '💀';

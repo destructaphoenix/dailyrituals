@@ -7,12 +7,14 @@ import { T, Card } from '../ui';
 import { moodEmoji } from '../data';
 import { buildHeatmap } from '../home/calendar';
 import { searchEntries } from '../insights/search';
+import { moodFace, hashKey } from '../entries/moodFace';
+import { useMoodTick } from '../ui/useMoodTick';
 import ArchiveFilters from './ArchiveFilters';
 import TipCard from './TipCard';
 
 const EMPTY_QUERY = { text: '', moods: [], from: null, to: null };
 
-export default function ArchiveScreen({ copy, mode, entries, onOpen, tip, onDismissTip }) {
+export default function ArchiveScreen({ copy, mode, entries, onOpen, tip, onDismissTip, customMoods = [], customMoodEmoji = {} }) {
   const t = useTheme();
   const c = t.colors;
   const [query, setQuery] = useState(EMPTY_QUERY);
@@ -42,6 +44,7 @@ export default function ArchiveScreen({ copy, mode, entries, onOpen, tip, onDism
           <ArchiveFilters
             text={query.text} moods={query.moods} from={query.from} to={query.to}
             onChange={setQuery} resultCount={results.length}
+            customMoods={customMoods} customMoodEmoji={customMoodEmoji}
           />
         </View>
       )}
@@ -52,7 +55,7 @@ export default function ArchiveScreen({ copy, mode, entries, onOpen, tip, onDism
             <T d w={700} color={c.ink} style={{ fontSize: 15 }}>Last 5 weeks</T>
             <T w={700} color={c.muted} style={{ fontSize: 12 }}>{entries.length} kept</T>
           </View>
-          <Heat cells={heat} />
+          <Heat cells={heat} customMoodEmoji={customMoodEmoji} />
         </Card>
       </View>
 
@@ -91,7 +94,7 @@ export default function ArchiveScreen({ copy, mode, entries, onOpen, tip, onDism
                       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
                         {e.moods.map((m) => (
                           <View key={m} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 9, paddingVertical: 3, borderRadius: 999, backgroundColor: c.accentSoft }}>
-                            <Text style={{ fontSize: 12 }}>{moodEmoji(m)}</Text>
+                            <Text style={{ fontSize: 12 }}>{moodEmoji(m, customMoodEmoji)}</Text>
                             <T w={800} color={c.accentDeep} style={{ fontSize: 11 }}>{m}</T>
                           </View>
                         ))}
@@ -108,9 +111,12 @@ export default function ArchiveScreen({ copy, mode, entries, onOpen, tip, onDism
   );
 }
 
-function Heat({ cells }) {
+function Heat({ cells, customMoodEmoji = {} }) {
   const t = useTheme();
   const c = t.colors;
+  const enabled = React.useMemo(() => cells.some((cell) => (cell.moods || []).length > 1), [cells]);
+  const seed = cells.length ? hashKey(cells[cells.length - 1].dayKey) : 0;
+  const tick = useMoodTick({ enabled, seed });
   const rows = [];
   for (let r = 0; r < cells.length; r += 7) rows.push(cells.slice(r, r + 7));
   return (
@@ -137,7 +143,7 @@ function Heat({ cells }) {
                 {cell.missed
                   ? <Text style={{ fontSize: 19, lineHeight: 23 }}>💀</Text>
                   : !cell.empty
-                    ? <Text style={{ fontSize: 19, lineHeight: 23 }}>{cell.emoji}</Text>
+                    ? <Text style={{ fontSize: 19, lineHeight: 23 }}>{moodEmoji(moodFace(cell.moods, tick, cell.dayKey), customMoodEmoji)}</Text>
                     : null}
               </View>
             );

@@ -6,12 +6,13 @@ import { View, ScrollView, TextInput, Pressable, KeyboardAvoidingView, Platform,
 import { useTheme } from '../theme';
 import { T, PrimaryButton } from '../ui';
 import { Sun, Chevron, Close } from '../icons';
-import { MOODS, moodEmoji } from '../data';
+import { MOODS, MOOD_PALETTE, moodEmoji } from '../data';
+import { isEmojiish } from '../entries/emojiInput';
 import { todayLabel } from '../time/clock';
 
 const countWords = (s) => (s.trim() ? s.trim().split(/\s+/).length : 0);
 
-export default function WriteFlow({ copy, insets, onClose, onComplete, initial, customMoods = [], onAddCustomMood }) {
+export default function WriteFlow({ copy, insets, onClose, onComplete, initial, customMoods = [], customMoodEmoji = {}, onAddCustomMood }) {
   const t = useTheme();
   const c = t.colors;
 
@@ -20,8 +21,13 @@ export default function WriteFlow({ copy, insets, onClose, onComplete, initial, 
   const [wished, setWished] = useState(initial?.wished ?? '');
   const [moods, setMoods] = useState(initial?.moods ?? []);
   const [customInput, setCustomInput] = useState('');
+  const [emojiPick, setEmojiPick] = useState(MOOD_PALETTE[0]);
+  const [emojiTyped, setEmojiTyped] = useState('');
 
-  const startFresh = () => { setDid(''); setWished(''); setMoods([]); setCustomInput(''); setStep(0); };
+  const startFresh = () => {
+    setDid(''); setWished(''); setMoods([]); setCustomInput('');
+    setEmojiPick(MOOD_PALETTE[0]); setEmojiTyped(''); setStep(0);
+  };
 
   const steps = [
     { q: copy.q1, help: copy.q1help, val: did, set: setDid, ph: 'Start anywhere…' },
@@ -34,12 +40,21 @@ export default function WriteFlow({ copy, insets, onClose, onComplete, initial, 
 
   const toggleMood = (m) => setMoods((ms) => (ms.includes(m) ? ms.filter((x) => x !== m) : [...ms, m]));
 
+  const onEmojiTyped = (v) => {
+    setEmojiTyped(v);
+    if (isEmojiish(v)) setEmojiPick(v);
+  };
+
+  const pickPaletteEmoji = (e) => { setEmojiPick(e); setEmojiTyped(''); };
+
   const addCustomMood = () => {
     const m = customInput.trim();
     if (!m) return;
     if (!moods.includes(m)) setMoods((ms) => [...ms, m]);
-    if (onAddCustomMood) onAddCustomMood(m);
+    if (onAddCustomMood) onAddCustomMood(m, emojiPick);
     setCustomInput('');
+    setEmojiPick(MOOD_PALETTE[0]);
+    setEmojiTyped('');
   };
 
   const next = () => { if (last) onComplete({ did, wished, moods }); else setStep(step + 1); };
@@ -116,11 +131,44 @@ export default function WriteFlow({ copy, insets, onClose, onComplete, initial, 
                       sel && t.shadow(8, c.accentDeep, 0.8),
                     ]}
                   >
-                    <Text style={{ fontSize: 16 }}>{moodEmoji(m)}</Text>
+                    <Text style={{ fontSize: 16 }}>{moodEmoji(m, customMoodEmoji)}</Text>
                     <T w={700} color={sel ? c.onAccent : c.ink} style={{ fontSize: 15 }}>{m}</T>
                   </Pressable>
                 );
               })}
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginTop: 16, paddingRight: 8 }}>
+              {MOOD_PALETTE.map((e) => {
+                const sel = emojiPick === e;
+                return (
+                  <Pressable
+                    key={e}
+                    onPress={() => pickPaletteEmoji(e)}
+                    accessibilityLabel={`Choose ${e} for your custom mood`}
+                    style={{
+                      width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center',
+                      borderWidth: sel ? 2 : 0, borderColor: c.accent, backgroundColor: c.surface,
+                    }}
+                  >
+                    <Text style={{ fontSize: 17 }}>{e}</Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 }}>
+              <TextInput
+                value={emojiTyped}
+                onChangeText={onEmojiTyped}
+                placeholder="or type one…"
+                placeholderTextColor={c.placeholder}
+                autoCorrect={false}
+                maxLength={12}
+                style={{
+                  width: 90, paddingHorizontal: 12, paddingVertical: 9, borderRadius: 999,
+                  borderWidth: 1.5, borderColor: c.border, backgroundColor: c.surface,
+                  fontFamily: t.body(600), fontSize: 14, color: c.ink,
+                }}
+              />
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 16 }}>
               <TextInput

@@ -12,7 +12,7 @@ import { cellState, monthLabelsForRows } from '../insights/heatCells';
 import { buildLifetimeHeatmap } from '../home/calendar';
 import DeeperInsights from './DeeperInsights';
 
-export default function InsightsScreen({ copy, entries = [], streak = 0, xp = 0, plus = false, plusEnabled = false, onOpenPaywall = () => {} }) {
+export default function InsightsScreen({ copy, entries = [], streak = 0, xp = 0, plus = false, plusEnabled = false, onOpenPaywall = () => {}, customMoodEmoji = {} }) {
   const t = useTheme();
   const c = t.colors;
 
@@ -131,7 +131,7 @@ export default function InsightsScreen({ copy, entries = [], streak = 0, xp = 0,
                 {moodMix.map((x, i) => (
                   <View key={x.m} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                     <View style={{ minWidth: 84, flexShrink: 1, flexDirection: 'row', alignItems: 'center', gap: 7 }}>
-                      <Text style={{ fontSize: 15 }}>{moodEmoji(x.m)}</Text>
+                      <Text style={{ fontSize: 15 }}>{moodEmoji(x.m, customMoodEmoji)}</Text>
                       <T w={700} color={c.ink} numberOfLines={1} style={{ fontSize: 13.5, flexShrink: 1 }}>{x.m}</T>
                     </View>
                     <View style={{ flex: 1, height: 12, borderRadius: 999, backgroundColor: c.accentSoft, overflow: 'hidden' }}>
@@ -182,9 +182,9 @@ export default function InsightsScreen({ copy, entries = [], streak = 0, xp = 0,
 
       {/* Deeper — the analysis layer (IMP-047, PLUS_PERKS #5) */}
       {plus ? (
-        <DeeperInsights entries={entries} onOpenPaywall={onOpenPaywall} />
+        <DeeperInsights entries={entries} onOpenPaywall={onOpenPaywall} customMoodEmoji={customMoodEmoji} />
       ) : plusEnabled ? (
-        <DeeperInsights entries={entries} onOpenPaywall={onOpenPaywall} locked />
+        <DeeperInsights entries={entries} onOpenPaywall={onOpenPaywall} locked customMoodEmoji={customMoodEmoji} />
       ) : null}
     </ScrollView>
   );

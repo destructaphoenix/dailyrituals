@@ -80,7 +80,7 @@ function boundLabel(prefix, key) {
   return `${prefix}: ${monthLabel(y, m)}`;
 }
 
-export default function ArchiveFilters({ text, moods, from, to, onChange, resultCount }) {
+export default function ArchiveFilters({ text, moods, from, to, onChange, resultCount, customMoods = [], customMoodEmoji = {} }) {
   const t = useTheme();
   const c = t.colors;
   const [picker, setPicker] = useState(null); // 'from' | 'to' | null
@@ -120,7 +120,7 @@ export default function ArchiveFilters({ text, moods, from, to, onChange, result
       />
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingRight: 4 }}>
-        {MOODS.map((m) => {
+        {[...MOODS, ...customMoods].map((m) => {
           const sel = moods.includes(m);
           return (
             <Pressable
@@ -131,7 +131,7 @@ export default function ArchiveFilters({ text, moods, from, to, onChange, result
                 sel ? { backgroundColor: c.accent, borderColor: c.accent } : { backgroundColor: c.surface, borderColor: c.border },
               ]}
             >
-              <Text style={{ fontSize: 13 }}>{moodEmoji(m)}</Text>
+              <Text style={{ fontSize: 13 }}>{moodEmoji(m, customMoodEmoji)}</Text>
               <T w={700} color={sel ? c.onAccent : c.ink} style={{ fontSize: 13 }}>{m}</T>
             </Pressable>
           );

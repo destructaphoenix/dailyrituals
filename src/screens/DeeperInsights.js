@@ -12,7 +12,7 @@ import { moodByWeekday, moodByMonth, moodPairings, hasEnoughFor } from '../insig
 
 const NOT_ENOUGH = 'Not enough days yet — this fills in as you write.';
 
-export default function DeeperInsights({ entries = [], onOpenPaywall, locked = false }) {
+export default function DeeperInsights({ entries = [], onOpenPaywall, locked = false, customMoodEmoji = {} }) {
   const t = useTheme();
   const c = t.colors;
 
@@ -81,7 +81,7 @@ export default function DeeperInsights({ entries = [], onOpenPaywall, locked = f
                       borderColor: c.border,
                     }} />
                   </View>
-                  <Text style={{ fontSize: 13 }}>{d.top ? moodEmoji(d.top) : ''}</Text>
+                  <Text style={{ fontSize: 13 }}>{d.top ? moodEmoji(d.top, customMoodEmoji) : ''}</Text>
                   <T w={800} color={c.muted} style={{ fontSize: 11 }}>{d.l}</T>
                 </View>
               ))}
@@ -102,7 +102,7 @@ export default function DeeperInsights({ entries = [], onOpenPaywall, locked = f
                 <View key={m.month} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                   <T w={700} color={c.ink} style={{ width: 84, fontSize: 13 }}>{m.month}</T>
                   <T w={600} color={c.muted} numberOfLines={1} style={{ flex: 1, fontSize: 13 }}>
-                    {m.moods.slice(0, 3).map((x) => `${moodEmoji(x.m)} ${x.m}`).join('  ·  ')}
+                    {m.moods.slice(0, 3).map((x) => `${moodEmoji(x.m, customMoodEmoji)} ${x.m}`).join('  ·  ')}
                   </T>
                 </View>
               ))}
@@ -122,9 +122,9 @@ export default function DeeperInsights({ entries = [], onOpenPaywall, locked = f
               {pairings.slice(0, 6).map((p, i) => (
                 <View key={`${p.a}|${p.b}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                   <View style={{ minWidth: 120, flexShrink: 1, flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                    <Text style={{ fontSize: 14 }}>{moodEmoji(p.a)}</Text>
+                    <Text style={{ fontSize: 14 }}>{moodEmoji(p.a, customMoodEmoji)}</Text>
                     <T w={700} color={c.ink} numberOfLines={1} style={{ fontSize: 13, flexShrink: 1 }}>{p.a} + {p.b}</T>
-                    <Text style={{ fontSize: 14 }}>{moodEmoji(p.b)}</Text>
+                    <Text style={{ fontSize: 14 }}>{moodEmoji(p.b, customMoodEmoji)}</Text>
                   </View>
                   <View style={{ flex: 1, height: 12, borderRadius: 999, backgroundColor: c.accentSoft, overflow: 'hidden' }}>
                     <View style={{
