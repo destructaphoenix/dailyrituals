@@ -196,13 +196,12 @@ const LEGEND = [
   { state: 'empty', label: 'not yet started' },
 ];
 
-function heatCellStyle(state, c, today) {
+// Geometry must NOT vary by cell state: a wider border on one cell makes it read
+// as a bigger block (Android strokes rounded borders half-outside the bounds), which
+// breaks the grid rhythm. Today is marked by an inset ring child instead — see below.
+function heatCellStyle(state, c) {
   if (state === 'done') {
-    return {
-      backgroundColor: c.accent,
-      borderWidth: today ? 2 : 0,
-      borderColor: today ? c.accentDeep : 'transparent',
-    };
+    return { backgroundColor: c.accent, borderWidth: 0, borderColor: 'transparent' };
   }
   if (state === 'missed') {
     return { backgroundColor: c.accentSoft, borderWidth: 1, borderColor: c.border };
@@ -225,17 +224,36 @@ function LifetimeHeat({ rows }) {
               <T w={700} color={c.muted} style={{ fontSize: 9.5 }}>{monthLabels[ri]}</T>
             </View>
             <View style={{ flex: 1, flexDirection: 'row', gap: 4 }}>
-              {row.map((cell, i) => (
-                <View
-                  key={i}
-                  style={{
-                    flex: 1,
-                    aspectRatio: 1,
-                    borderRadius: 4,
-                    ...heatCellStyle(cellState(cell), c, cell.today),
-                  }}
-                />
-              ))}
+              {row.map((cell, i) => {
+                const state = cellState(cell);
+                return (
+                  <View
+                    key={i}
+                    style={{
+                      flex: 1,
+                      aspectRatio: 1,
+                      borderRadius: 4,
+                      ...heatCellStyle(state, c),
+                    }}
+                  >
+                    {state === 'done' && cell.today ? (
+                      <View
+                        pointerEvents="none"
+                        style={{
+                          position: 'absolute',
+                          top: 2,
+                          left: 2,
+                          right: 2,
+                          bottom: 2,
+                          borderRadius: 2,
+                          borderWidth: 1.5,
+                          borderColor: c.accentDeep,
+                        }}
+                      />
+                    ) : null}
+                  </View>
+                );
+              })}
             </View>
           </View>
         ))}
@@ -243,7 +261,7 @@ function LifetimeHeat({ rows }) {
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 14, marginTop: 12, paddingLeft: 28 }}>
         {LEGEND.map((l) => (
           <View key={l.state} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <View style={{ width: 10, height: 10, borderRadius: 3, ...heatCellStyle(l.state, c, false) }} />
+            <View style={{ width: 10, height: 10, borderRadius: 3, ...heatCellStyle(l.state, c) }} />
             <T w={600} color={c.muted} style={{ fontSize: 11 }}>{l.label}</T>
           </View>
         ))}
