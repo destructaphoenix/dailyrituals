@@ -22,12 +22,17 @@
 
 The live work is the **first unchecked `IMP-xxx` task in the Improvements backlog** below — its full spec is in [`docs/specs-open.md`](docs/specs-open.md), linked from its backlog row. Work that, **not** the phase ladder (8 / 10b / 11), which is **parked in [`docs/playbook.md`](docs/playbook.md)** until the owner resumes it.
 
-> **Six specs are queued again — IMP-050 → IMP-055. Updated 2026-08-09:**
+> **Seven specs are queued again — IMP-050 → IMP-056. Updated 2026-08-09:**
 >
-> **▶️ [IMP-050](docs/specs-open.md#imp-050--every-mood-gets-a-face) is the live task; take the rest in
-> table order.** All six are **OTA — none needs a `bump:native`** — and all six came out of the owner
-> walking the app on 2026-08-09. Each is self-contained: **open one spec, not the file.**
+> **▶️ [IMP-056](docs/specs-open.md#imp-056--a-day-is-the-day-you-lived-not-the-day-in-greenwich) is the
+> live task; take the rest in table order.** All seven are **OTA — none needs a `bump:native`** — and all
+> came out of the 2026-08-09 spec session. Each is self-contained: **open one spec, not the file.**
 >
+> - **056 🔴 leads because it loses words.** `dayKey` is UTC, every displayed date is local, and both go on
+>   the same entry — so a 1am entry in IST is filed under yesterday and can overwrite last night's, while an
+>   8pm entry at UTC−4 is filed under tomorrow and never renders. **Live in production today.** This spec
+>   fixes derivation and closes the overwrite; remapping existing entries is deferred to **IMP-057**,
+>   unspecced, because it can break a live streak and needs the step-5 numbers first.
 > - **050** finishes IMP-037 — custom moods draw **blank** everywhere, because
 >   [`data.js:51`](src/data.js#L51) resolves anything outside the 8 built-ins to `''`.
 > - **051** is why **Next** hides under the keyboard — three compounding causes, none fixable by
@@ -38,8 +43,9 @@ The live work is the **first unchecked `IMP-xxx` task in the Improvements backlo
 >   not open the write flow.
 > - **055** lets you rename / re-emoji / remove the feelings you named yourself.
 >
-> **Only two ordering constraints: 052 and 055 must both come after 050.** And **054 is the only one
-> `npm test` cannot finish** — its proof is an emulator walk, so budget for one before starting it.
+> **Only two ordering constraints: 052 and 055 must both come after 050.** And **054 and 056 are the two
+> `npm test` cannot finish** — both need an emulator walk, and 056 needs its *timezone* changed twice.
+> Budget for that before starting either.
 >
 > Everything else in the backlog table below is ✅. The other live work is the walk queue, the
 > **subscription-track build window** (playbook 10b step B9: revive IMP-022 Part A, the PDF perk #6), or
@@ -140,7 +146,8 @@ Opus scopes each owner-filed issue into a numbered `IMP-xxx` task — steps, tes
 | IMP-049 | 🟡 **Settings survive a corrupt restore** — `readBackup` validates the envelope but never the payload's *shape*; `mergeWithDefaults` is a shallow spread, so one wrong-typed key (proven: `settings.accent` as a string) replaces its default and every gradient in the app renders a native null | OTA | ✅ code-complete — full detail in build-log |
 | IMP-048 | 🔴 **Three free restores, then Plus** — trash restore was Plus-only with no disclosure: the button looked live and did nothing, and its "part of Plus" toast rendered *behind* the modal. Free 3×, stated on the page before it's spent | OTA | ✅ code-complete + **emulator-walked 2026-08-09** — full detail in build-log |
 | IMP-047 | ✨ **Deeper insights — the analysis layer** — `InsightsScreen` has **zero** `plus` checks; free and Plus see identical insights. Mood-by-weekday, seasonal patterns, mood pairings. **Plus perk #5** | OTA | ✅ code-complete — full detail in build-log |
-| IMP-050 | 🟡 **Every mood gets a face** — `moodEmoji` returns `''` for anything outside the 8 built-ins, so **every custom mood from IMP-037 draws blank** in all 7 mood surfaces, and a `moods: []` entry leaves a hole in the grid. Adds an emoji picker (40-glyph palette + typed escape hatch), two named fallback glyphs, and a shimmer for multi-mood days | OTA | ⬜ **NEXT** — [spec](docs/specs-open.md#imp-050--every-mood-gets-a-face) |
+| IMP-056 | 🔴 **A day is the day you lived, not the day in Greenwich** — `dayKey` is derived in **UTC** ([`RitualsApp.js:83`](src/RitualsApp.js#L83)) while every date the user reads is **local** ([`clock.js:16`](src/time/clock.js#L16)), and both are stamped onto the same entry. In IST a 1am entry is filed under yesterday and can **silently overwrite last night's words**; at negative offsets an 8pm entry is filed under tomorrow and never appears on the grid at all. Fixes derivation only — the historical migration is deferred to IMP-057 | OTA | ⬜ **NEXT** — [spec](docs/specs-open.md#imp-056--a-day-is-the-day-you-lived-not-the-day-in-greenwich) |
+| IMP-050 | 🟡 **Every mood gets a face** — `moodEmoji` returns `''` for anything outside the 8 built-ins, so **every custom mood from IMP-037 draws blank** in all 7 mood surfaces, and a `moods: []` entry leaves a hole in the grid. Adds an emoji picker (40-glyph palette + typed escape hatch), two named fallback glyphs, and a shimmer for multi-mood days | OTA | ⬜ [spec](docs/specs-open.md#imp-050--every-mood-gets-a-face) |
 | IMP-051 | 🔴 **The keyboard stops eating the Next button** — `KeyboardAvoidingView` is inert on Android (`behavior: undefined`), WriteFlow is inside a `Modal` whose dialog window never gets `adjustResize`, and edge-to-edge (API 36) stops the system resizing for the IME at all. The user must dismiss the keyboard for every single step | OTA | ⬜ [spec](docs/specs-open.md#imp-051--the-keyboard-stops-eating-the-next-button) |
 | IMP-052 | ✨ **Tap a day, read it** — both heatmaps (Reflections + the lifetime grid on Insights) render inert `View`s, so the densest surface in the app is unclickable and the only route to an old entry is scrolling or already remembering a word to search. **Build AFTER IMP-050** — both rewrite `Heat` | OTA | ⬜ [spec](docs/specs-open.md#imp-052--tap-a-day-read-it) |
 | IMP-053 | 🟡 **Search shows you the match** — the result card hard-renders the first 2 lines of `did`, but `searchEntries` matches over `did + wished`. A hit in `wished` (or deep in `did`) yields a card containing the search term **nowhere**. IMP-035 built the engine and hid its output. Watch the index-mapping trap: diacritic folding is not length-preserving | OTA | ⬜ [spec](docs/specs-open.md#imp-053--search-shows-you-the-match) |

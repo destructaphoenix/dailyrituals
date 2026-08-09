@@ -24,20 +24,24 @@
 
 | # | Spec | Lane |
 | --- | --- | --- |
-| 1 | [IMP-050 — every mood gets a face](#imp-050--every-mood-gets-a-face) | OTA |
-| 2 | [IMP-051 — the keyboard stops eating the Next button](#imp-051--the-keyboard-stops-eating-the-next-button) | OTA |
-| 3 | [IMP-052 — tap a day, read it](#imp-052--tap-a-day-read-it) | OTA |
-| 4 | [IMP-053 — search shows you the match](#imp-053--search-shows-you-the-match) | OTA |
-| 5 | [IMP-054 — the reminder you can actually answer](#imp-054--the-reminder-you-can-actually-answer) | OTA |
-| 6 | [IMP-055 — manage your feelings](#imp-055--manage-your-feelings) | OTA |
+| 1 | [IMP-056 — a day is the day you lived, not the day in Greenwich](#imp-056--a-day-is-the-day-you-lived-not-the-day-in-greenwich) 🔴 | OTA |
+| 2 | [IMP-050 — every mood gets a face](#imp-050--every-mood-gets-a-face) | OTA |
+| 3 | [IMP-051 — the keyboard stops eating the Next button](#imp-051--the-keyboard-stops-eating-the-next-button) | OTA |
+| 4 | [IMP-052 — tap a day, read it](#imp-052--tap-a-day-read-it) | OTA |
+| 5 | [IMP-053 — search shows you the match](#imp-053--search-shows-you-the-match) | OTA |
+| 6 | [IMP-054 — the reminder you can actually answer](#imp-054--the-reminder-you-can-actually-answer) | OTA |
+| 7 | [IMP-055 — manage your feelings](#imp-055--manage-your-feelings) | OTA |
 
+> **IMP-056 is first because it loses words.** A 1am entry can silently overwrite last night's. Everything
+> below it is a defect or a gap; that one is data loss, and it is live in production today.
+>
 > **Two ordering constraints, and they are the only ones.** **IMP-052 after IMP-050** — both rewrite
 > `ArchiveScreen`'s `Heat`, and IMP-052 reads the `cell.moods` field IMP-050 introduces. **IMP-055 after
 > IMP-050** — it edits `settings.customMoodEmoji` and reuses the emoji palette, neither of which exists
 > until IMP-050 lands. Everything else can be taken in any order.
 >
-> **IMP-054 is the only spec here that `npm test` cannot finish.** Its proof is an emulator walk; budget
-> for it before starting.
+> **IMP-054 and IMP-056 are the two specs `npm test` cannot finish.** Both need an emulator — IMP-056
+> needs its *timezone* changed, twice. Budget for that before starting either.
 
 ---
 
@@ -640,3 +644,110 @@ entries · remove its `customMoodEmoji` key on delete · merge on a name collisi
 a merge) · add reordering or favourites · touch `ArchiveFilters` beyond what IMP-050 already changed.
 
 **Commit:** `feat(entries): rename, re-emoji and remove the feelings you named yourself (IMP-055)`
+
+---
+
+### IMP-056 — a day is the day you lived, not the day in Greenwich
+
+**Lane:** OTA · **Free/Plus:** N/A (defect — data loss) · **Origin:** found 2026-08-09 while reading
+`src/time/clock.js` for IMP-054. Not reported by a user; proven by reading, **not yet reproduced on a
+device — step 0 does that first.**
+
+**The problem.** `dayKey` — the field every derivation in this app keys on — is computed in **UTC**. Every
+date the user *reads* is computed in **local time**. Both are stamped onto the same entry, in the same
+statement:
+
+- [`RitualsApp.js:83`](../src/RitualsApp.js#L83) — `const todayKey = () => new Date().toISOString().slice(0, 10)` → **UTC**
+- [`clock.js:16`](../src/time/clock.js#L16) — `entryDateParts` uses `getDate()` / `getMonth()` / `getDay()` → **local**
+- [`RitualsApp.js:402`](../src/RitualsApp.js#L402) — `{ ...entryDateParts(), dayKey: todayKey(), … }`
+
+In IST (UTC+5:30), an entry written at 01:00 on Monday 10 August is stored as
+`{ day: '10', mon: 'Aug', wd: 'Monday', dayKey: '2026-08-09' }`. The archive card says **Monday the 10th**;
+the heatmap, the streak, the search date filter and "on this day" all say **the 9th**.
+
+**The destructive path, which is why this is a defect and not a polish item.** If the user had already
+written on Sunday evening, then at 01:00 Monday `findTodaysEntry(entries, todayKey())`
+([`todaysEntry.js`](../src/home/todaysEntry.js)) is called with `'2026-08-09'` and **returns Sunday's
+entry**. `isEditableToday` says yes. WriteFlow opens prefilled with Sunday's words (IMP-018), and saving
+**replaces them**. Monday gets no entry at all. Sunday's words are gone, and nothing warns anybody.
+
+**It is worse at negative offsets, in a much more common hour.** At UTC−4, an entry written at 20:00
+Monday local gets `dayKey` = **Tuesday**. `buildHeatmap`'s window ends at today, so until Tuesday arrives
+**that entry does not appear on the grid at all** — and on Tuesday morning the app believes the day is
+already written.
+
+**Scope — this spec stops the app creating wrong keys and makes every "what day is it" answer agree. It
+deliberately does NOT migrate existing entries.** Migration is real work with a real hazard (remapping can
+move an entry off a day and **break a live streak**), it needs numbers before it can be designed, and it
+must not delay closing the data-loss path above. Step 5 produces those numbers; the migration is
+[IMP-057](#), to be specced once the owner has seen them. **Do not migrate anything in this spec.**
+
+**The single trap in this task, and it will be got wrong without this paragraph.** Two functions look
+exactly like the bug and are **correct as they stand**:
+
+| Keep as-is | Why |
+| --- | --- |
+| [`dateKeys.js:5/11`](../src/insights/dateKeys.js#L5) `dayKeyToUtcMs` / `utcMsToDayKey` | They convert an **existing key string** ↔ ms so days can be *differenced*. `Date.UTC` here is what makes day arithmetic timezone-independent. Changing them breaks `currentStreak`. |
+| [`calendar.js:16`](../src/home/calendar.js#L16) `shiftKey` | Shifts an **existing key** by N days. Never reads the clock. |
+
+The rule: **deriving a key from "now" must be local; operating on a key already in hand stays UTC.**
+
+**Steps**
+
+0. **Reproduce it before fixing it.** Set the emulator to `Asia/Kolkata` and its clock to 01:00. Write an
+   entry. Confirm the archive card and the heatmap name different days, and that a Sunday-evening entry is
+   the one WriteFlow prefills. **Paste what you actually observed into the session note.** If it does not
+   reproduce, **STOP** and log that to `PROGRESS.md` → Open items — the rest of this spec is built on it.
+1. **RED first — `__tests__/time/dayKey.test.js` + new pure [`src/time/dayKey.js`](../src/time/dayKey.js).**
+   One export, `dayKeyOf(date = new Date())`, returning `YYYY-MM-DD` from the date's **local** parts:
+   `` `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}` ``. Cases: a mid-day date · a
+   date at 00:30 local · a date at 23:30 local · single-digit months and days zero-pad · **the same
+   instant yields a different key from `toISOString().slice(0, 10)` when the offset crosses midnight** —
+   construct it explicitly rather than depending on the machine's zone, so the suite passes in CI and on
+   the owner's machine alike · never throws on an invalid date.
+2. **Replace the four derivation sites, and only these four.** Each becomes `dayKeyOf(...)` imported from
+   the new module; delete the local copy:
+   - [`RitualsApp.js:83`](../src/RitualsApp.js#L83) — `todayKey`
+   - [`calendar.js:11`](../src/home/calendar.js#L11) — `keyOf`
+   - [`HomeScreen.js:34`](../src/screens/HomeScreen.js#L34) — `todayK`
+   - [`lifetime.js:8`](../src/insights/lifetime.js#L8) — `now.toISOString().slice(0, 10)`
+   **Leave alone:** the two functions in the table above; [`backup.js:59`](../src/backup/backup.js#L59)
+   (a filename, where UTC is fine and changing it would churn export names); everything under `src/dev/`
+   and [`scripts/gen-v2-fixture.js`](../scripts/gen-v2-fixture.js) (never ships).
+3. **Existing tests will move.** `__tests__/home/calendar.test.js`, `__tests__/insights/lifetime.test.js`
+   and any suite passing a `today` Date into a builder now interpret that Date locally. **Fix them by
+   making the intent explicit** — construct expectations from `dayKeyOf` rather than hard-coded ISO
+   strings — not by reaching for `Date.UTC` to make the old numbers pass again. If a test only passes when
+   the machine is in UTC, it was already wrong.
+4. **A regression test for the destructive path**, in `__tests__/home/todaysEntry.test.js`: an entry
+   stamped with yesterday's local key is **not** returned by `findTodaysEntry` for today's local key, and
+   `isEditableToday` is false for it — asserted at a 01:00 local instant in a positive-offset zone. This
+   is the assertion that proves the overwrite is closed; write it so it fails against the old `todayKey`.
+5. **Quantify the history problem — a reporter, not a migration.** Add a read-only line to the dev panel's
+   Inspector ([`src/dev/panel/InspectSection.js`](../src/dev/panel/InspectSection.js)): for every entry in
+   `entries` and `trash` whose `id` matches `/^new(\d{10,})$/`, compare `dayKeyOf(new Date(Number(ms)))`
+   against its stored `dayKey`, and show **how many disagree**, plus whether recomputing them would change
+   `currentStreak`. The `id` carries the creation epoch ([`RitualsApp.js:402`](../src/RitualsApp.js#L402)
+   stamps `'new' + Date.now()`), which is the ground truth a migration would need. **Report only — write
+   nothing.** Dev-only, `__DEV__`-stripped like the rest of the harness.
+6. **Record two things in `PROGRESS.md` → Open items**, because they outlive this spec:
+   - **The residual, and it is genuinely unfixed:** old entries keep their UTC keys, so for one day after
+     this ships a negative-offset user can still have last-evening's entry answer to today's key. The
+     window closes on its own; the permanent fix is the migration.
+   - **The IMP-057 decision the owner must take**, with step 5's numbers attached: remapping historical
+     entries can move an entry off a day and **break a streak that is currently alive**. That is the
+     streak becoming *correct*, but it will read as a regression to whoever it happens to, and it is the
+     owner's call, not a build chat's.
+7. **Walk it** (`docs/walk-open.md`): with the emulator in `Asia/Kolkata`, write at 01:00 → the card and
+   the heatmap agree, and last night's entry is untouched · repeat at `America/New_York`, 20:00 → the
+   entry appears on the grid **today**, not tomorrow · the streak, the week strip and Lifetime Progress
+   all name the same "today" as the header greeting.
+8. `npm test` green (≥ 577, or ≥ whatever the specs before it left), `npx expo export --platform android` clean.
+
+**Do NOT** migrate, remap or rewrite any stored `dayKey` · touch `dayKeyToUtcMs`, `utcMsToDayKey` or
+`shiftKey` · change `entryDateParts` (it is already correct — it is the *other* half that was wrong) ·
+rewrite `frozenDays`, `lastActiveDay` or `onThisDayDismissed` (all self-heal within a day, and rewriting a
+candle-spend record is not this spec's business) · change the backup filename · introduce a timezone
+library.
+
+**Commit:** `fix(time): derive the day from the user's calendar, not UTC — and stop a 1am entry overwriting last night's (IMP-056)`
