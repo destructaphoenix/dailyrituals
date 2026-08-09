@@ -1,11 +1,12 @@
 import { levelFromXp } from '../profile/level';
 import { longestConsecutiveRun, dayKeyToUtcMs, DAY_MS } from './dateKeys';
 import { countWords } from './words';
+import { dayKeyOf } from '../time/dayKey';
 
 function activeSpanLabel(dayKeys, now) {
   if (!dayKeys.length) return null;
   const first = dayKeys.reduce((min, k) => (k < min ? k : min), dayKeys[0]);
-  const todayMs = dayKeyToUtcMs(now.toISOString().slice(0, 10));
+  const todayMs = dayKeyToUtcMs(dayKeyOf(now));
   const days = Math.floor((todayMs - dayKeyToUtcMs(first)) / DAY_MS);
   if (days <= 0) return 'Started today';
   if (days === 1) return '1 day in';

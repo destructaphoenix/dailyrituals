@@ -1,14 +1,13 @@
 // Pure date-grid helpers for the Reflections heatmap and the Today week strip.
 // Both derive cells from real `entries` (each carrying a `dayKey` = YYYY-MM-DD,
-// produced the same UTC way as todayKey() in RitualsApp) and an injectable
+// produced the same local way as dayKeyOf() in RitualsApp) and an injectable
 // `today` Date.
 //
 // Day states: done (entry exists), missed (past, no entry, on/after firstEntry),
 // empty (past, no entry, before firstEntry — or no entries at all), today, future.
 
 import { MOOD_EMOJI } from '../data';
-
-const keyOf = (date) => date.toISOString().slice(0, 10);
+import { dayKeyOf as keyOf } from '../time/dayKey';
 
 // Shift a YYYY-MM-DD key by whole days in UTC (timezone-independent).
 function shiftKey(key, deltaDays) {

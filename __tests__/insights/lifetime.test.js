@@ -1,6 +1,6 @@
 import { deriveLifetime } from '../../src/insights/lifetime';
 
-const now = new Date('2026-06-14T12:00:00.000Z');
+const now = new Date(2026, 5, 14, 12, 0); // local noon — dayKeyOf reads local getters
 
 const entries = [
   { dayKey: '2026-06-10', did: 'walked the dog', wished: 'more time' }, // 3 + 2 = 5 words

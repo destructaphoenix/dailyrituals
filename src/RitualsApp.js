@@ -13,6 +13,7 @@ import { createBackup, readBackup, backupFilename } from './backup/backup';
 import { runConfirmedImport } from './backup/importFlow';
 import * as backupIO from './backup/io';
 import { ThemeContext, makeTheme } from './theme';
+import { dayKeyOf } from './time/dayKey';
 import { T } from './ui';
 import { CHROME_FONT_SCALE } from './ui/textScale';
 import { HomeIcon, BookIcon, Pencil, ChartIcon, UserIcon } from './icons';
@@ -80,8 +81,6 @@ const IMPORT_ERROR = {
   'unreadable': "That backup file looks damaged and can't be restored.",
 };
 const PLATFORM = Platform.OS === 'android' ? 'android' : 'ios';
-const todayKey = () => new Date().toISOString().slice(0, 10);
-
 export default function RitualsApp({ mode = 'day', settings, setSettings, onToggleMode, initialPlus = false, initialState = {}, onResetData, onReplaceAllData, restoredFromMs = null, onDismissRestoreNotice, pendingRestore = null, onConsumePendingRestore }) {
   const theme = useMemo(() => makeTheme(mode, settings), [mode, settings]);
   const c = theme.colors;
@@ -116,7 +115,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   // re-logging after a gap restarts at 1 — UNLESS a candle froze the gap.
   // No persisted streak counter to drift.
   const streak = useMemo(
-    () => currentStreak(entries.map((e) => e.dayKey), todayKey(), { frozenDays }),
+    () => currentStreak(entries.map((e) => e.dayKey), dayKeyOf(), { frozenDays }),
     [entries, frozenDays]
   );
   const [xp, setXp] = useState(initialState.xp ?? 0);
@@ -165,7 +164,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   const [manageOpen, setManageOpen] = useState(false);
   const [subCanceled, setSubCanceled] = useState(initialState.subCanceled ?? false);
   const [activePlan, setActivePlan] = useState(initialState.activePlan ?? 'annual');
-  const [lastActiveDay, setLastActiveDay] = useState(initialState.lastActiveDay ?? todayKey());
+  const [lastActiveDay, setLastActiveDay] = useState(initialState.lastActiveDay ?? dayKeyOf());
   const [promptDeck, setPromptDeck] = useState(initialState.promptDeck ?? null);
   const promptSel = useMemo(() => selectPrompt(PROMPTS, promptDeck, dayNumber()), [promptDeck]);
   // Tip cards seen (IMP-041) — an id is added once dismissed and never shown again.
@@ -313,7 +312,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     setReminderPermission(status);
     await reminderIO.cancelAll();
     if (status !== 'granted') return;
-    const wroteToday = !!findTodaysEntry(entries, todayKey());
+    const wroteToday = !!findTodaysEntry(entries, dayKeyOf());
     const occurrences = nextOccurrences(new Date(), r, { wroteToday, count: 7 });
     const notif = reminderCopy(settings.tone);
     for (const date of occurrences) await reminderIO.scheduleAt(date, notif);
@@ -346,7 +345,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
 
   // Daily reset: clear done + quest progress when the calendar day rolls over.
   React.useEffect(() => {
-    const today = todayKey();
+    const today = dayKeyOf();
     if (lastActiveDay !== today) {
       setDone(false);
       setQuests((qs) => qs.map((q) => ({ ...q, cur: 0 })));
@@ -359,7 +358,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   // Mount-only like the reset above — the gap only grows one day at a time,
   // and applyAutoFreeze is idempotent, so the next launch catches up fine.
   React.useEffect(() => {
-    const result = applyAutoFreeze(entries, frozenDays, freezes, todayKey());
+    const result = applyAutoFreeze(entries, frozenDays, freezes, dayKeyOf());
     if (result.spent > 0) {
       setFrozenDays(result.frozenDays);
       setFreezes(result.freezes);
@@ -399,7 +398,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     freeRestoresUsed]);
 
   const complete = ({ did, wished, moods }) => {
-    const entry = { id: 'new' + Date.now(), ...entryDateParts(), dayKey: todayKey(), moods, did, wished, streak: true };
+    const entry = { id: 'new' + Date.now(), ...entryDateParts(), dayKey: dayKeyOf(), moods, did, wished, streak: true };
     const next = applyCompletion(
       { entries, xp, embers, done, quests },
       entry,
@@ -435,7 +434,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   };
 
   const confirmDeleteEntry = (entry) => {
-    const newStreak = streakAfterDelete(entries, entry.dayKey, todayKey(), frozenDays);
+    const newStreak = streakAfterDelete(entries, entry.dayKey, dayKeyOf(), frozenDays);
     const remaining = entries.filter((e) => e.dayKey !== entry.dayKey);
     const losesKeepsake = achievements.some(
       (a, i) => a.done && !deriveAchievements(remaining, newStreak)[i].done
@@ -614,7 +613,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
         return (
           <ArchiveScreen
             copy={copy} mode={mode} entries={entries}
-            onOpen={(e) => { setReading(e); setQuests((qs) => markRevisited(qs, e, todayKey())); }}
+            onOpen={(e) => { setReading(e); setQuests((qs) => markRevisited(qs, e, dayKeyOf())); }}
             tip={pendingTip('archive', seenTips)} onDismissTip={dismissTip}
           />
         );
@@ -659,8 +658,8 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             dailyPrompt={promptSel.item} userName={(settings.name || '').trim()}
             tip={pendingTip('today', seenTips)} onDismissTip={dismissTip}
             onThisDayDismissed={settings.onThisDayDismissed || ''}
-            onDismissOnThisDay={() => setSettings((s) => ({ ...s, onThisDayDismissed: todayKey() }))}
-            onOpenOnThisDay={(e) => { setReading(e); setQuests((qs) => markRevisited(qs, e, todayKey())); }}
+            onDismissOnThisDay={() => setSettings((s) => ({ ...s, onThisDayDismissed: dayKeyOf() }))}
+            onOpenOnThisDay={(e) => { setReading(e); setQuests((qs) => markRevisited(qs, e, dayKeyOf())); }}
             onOpenPaywall={PLUS_ENABLED ? () => setPaywall(true) : () => {}}
             recapSeen={settings.recapSeen ?? null}
             onDismissAnnualRecap={(year) => setSettings((s) => ({ ...s, recapSeen: year }))}
@@ -709,7 +708,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
           <ThemeContext.Provider value={theme}>
             {writing && (() => {
               const editEntry = editingDayKey ? entries.find((e) => e.dayKey === editingDayKey) : null;
-              const te = editEntry || findTodaysEntry(entries, todayKey());
+              const te = editEntry || findTodaysEntry(entries, dayKeyOf());
               const initial = te ? { did: te.did, wished: te.wished, moods: te.moods } : null;
               const onCompleteFlow = editEntry ? (vals) => editPastEntry(editEntry.dayKey, vals) : complete;
               return (
@@ -731,7 +730,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
                 onEdit={() => {
                   const dayKey = reading.dayKey;
                   setReading(null);
-                  if (dayKey !== todayKey()) setEditingDayKey(dayKey);
+                  if (dayKey !== dayKeyOf()) setEditingDayKey(dayKey);
                   setWriting(true);
                 }}
                 onDelete={() => confirmDeleteEntry(reading)}
@@ -854,7 +853,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
               settings={settings}
               setSettings={setSettings}
               onRearmReminders={rearmReminders}
-              wroteToday={!!findTodaysEntry(entries, todayKey())}
+              wroteToday={!!findTodaysEntry(entries, dayKeyOf())}
               getSlice={currentSlice}
               appVersion={APP_VERSION}
               insets={insets}

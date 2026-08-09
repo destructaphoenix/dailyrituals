@@ -22,21 +22,20 @@
 
 The live work is the **first unchecked `IMP-xxx` task in the Improvements backlog** below — its full spec is in [`docs/specs-open.md`](docs/specs-open.md), linked from its backlog row. Work that, **not** the phase ladder (8 / 10b / 11), which is **parked in [`docs/playbook.md`](docs/playbook.md)** until the owner resumes it.
 
-> **Ten specs are queued again — IMP-050 → IMP-060, minus 057. Updated 2026-08-09:**
+> **Nine specs left — IMP-050 → IMP-060, minus 056 (done) and 057 (still reserved). Updated 2026-08-10:**
 >
-> **▶️ [IMP-056](docs/specs-open.md#imp-056--a-day-is-the-day-you-lived-not-the-day-in-greenwich) is the
-> live task; take the rest in table order.** All ten are **OTA — none needs a `bump:native`** — and all
-> came out of the 2026-08-09 spec session. Each is self-contained: **open one spec, not the file.**
+> **▶️ [IMP-050](docs/specs-open.md#imp-050--every-mood-gets-a-face) is the live task; take the rest in
+> table order.** All are **OTA — none needs a `bump:native`.** Each is self-contained: **open one spec, not
+> the file.**
 >
-> **`IMP-057` is reserved, not missing.** It is the historical `dayKey` migration IMP-056 defers, and it
-> cannot be written until IMP-056's step-5 reporter says how many entries are affected. **Do not reuse the
-> number for anything else.**
+> **`IMP-057` is still reserved, not missing.** It is the historical `dayKey` migration IMP-056 deferred.
+> Its step-5 reporter is now live (dev panel → Inspector → "Data health") but has only ever been read
+> against synthetic fixture data (0 drift, not meaningful) — it needs a real device's numbers before it can
+> be scoped. **Do not reuse the number for anything else.**
 >
-> - **056 🔴 leads because it loses words.** `dayKey` is UTC, every displayed date is local, and both go on
->   the same entry — so a 1am entry in IST is filed under yesterday and can overwrite last night's, while an
->   8pm entry at UTC−4 is filed under tomorrow and never renders. **Live in production today.** This spec
->   fixes derivation and closes the overwrite; remapping existing entries is deferred to **IMP-057**,
->   unspecced, because it can break a live streak and needs the step-5 numbers first.
+> - **✅ 056 done (2026-08-10).** `dayKey` is now derived locally, not UTC — closes the 1am-overwrite /
+>   missing-evening-entry defect. Walked both offset directions on the emulator. Full detail + the residual
+>   + the IMP-057 decision are in Open items below.
 > - **050** finishes IMP-037 — custom moods draw **blank** everywhere, because
 >   [`data.js:51`](src/data.js#L51) resolves anything outside the 8 built-ins to `''`.
 > - **051** is why **Next** hides under the keyboard — three compounding causes, none fixable by
@@ -52,10 +51,9 @@ The live work is the **first unchecked `IMP-xxx` task in the Improvements backlo
 > - **058** adds grief / gratitude / change prompt packs. **Free, not Plus** — the perk list is fixed at six
 >   by an earlier decision, and a prompt is the app helping you write *today*.
 >
-> **Only two ordering constraints: 052 and 055 must both come after 050.** And **three need a running app,
-> not just `npm test`** — 054 (notification behaviour), 056 (its *timezone* changed, twice) and 059 (whose
-> acceptance test is writing an entry with TalkBack on and your eyes shut). Budget for that before starting
-> any of them.
+> **Only two ordering constraints: 052 and 055 must both come after 050.** And **two need a running app,
+> not just `npm test`** — 054 (notification behaviour) and 059 (whose acceptance test is writing an entry
+> with TalkBack on and your eyes shut). Budget for that before starting either.
 >
 > Everything else in the backlog table below is ✅. The other live work is the walk queue, the
 > **subscription-track build window** (playbook 10b step B9: revive IMP-022 Part A, the PDF perk #6), or
@@ -156,7 +154,7 @@ Opus scopes each owner-filed issue into a numbered `IMP-xxx` task — steps, tes
 | IMP-049 | 🟡 **Settings survive a corrupt restore** — `readBackup` validates the envelope but never the payload's *shape*; `mergeWithDefaults` is a shallow spread, so one wrong-typed key (proven: `settings.accent` as a string) replaces its default and every gradient in the app renders a native null | OTA | ✅ code-complete — full detail in build-log |
 | IMP-048 | 🔴 **Three free restores, then Plus** — trash restore was Plus-only with no disclosure: the button looked live and did nothing, and its "part of Plus" toast rendered *behind* the modal. Free 3×, stated on the page before it's spent | OTA | ✅ code-complete + **emulator-walked 2026-08-09** — full detail in build-log |
 | IMP-047 | ✨ **Deeper insights — the analysis layer** — `InsightsScreen` has **zero** `plus` checks; free and Plus see identical insights. Mood-by-weekday, seasonal patterns, mood pairings. **Plus perk #5** | OTA | ✅ code-complete — full detail in build-log |
-| IMP-056 | 🔴 **A day is the day you lived, not the day in Greenwich** — `dayKey` is derived in **UTC** ([`RitualsApp.js:83`](src/RitualsApp.js#L83)) while every date the user reads is **local** ([`clock.js:16`](src/time/clock.js#L16)), and both are stamped onto the same entry. In IST a 1am entry is filed under yesterday and can **silently overwrite last night's words**; at negative offsets an 8pm entry is filed under tomorrow and never appears on the grid at all. Fixes derivation only — the historical migration is deferred to IMP-057 | OTA | ⬜ **NEXT** — [spec](docs/specs-open.md#imp-056--a-day-is-the-day-you-lived-not-the-day-in-greenwich) |
+| IMP-056 | 🔴 **A day is the day you lived, not the day in Greenwich** — `dayKey` is derived in **UTC** ([`RitualsApp.js:83`](src/RitualsApp.js#L83)) while every date the user reads is **local** ([`clock.js:16`](src/time/clock.js#L16)), and both are stamped onto the same entry. In IST a 1am entry is filed under yesterday and can **silently overwrite last night's words**; at negative offsets an 8pm entry is filed under tomorrow and never appears on the grid at all. Fixes derivation only — the historical migration is deferred to IMP-057 | OTA | ✅ code-complete + **emulator-walked 2026-08-10** (both offset directions) — full detail in build-log |
 | IMP-050 | 🟡 **Every mood gets a face** — `moodEmoji` returns `''` for anything outside the 8 built-ins, so **every custom mood from IMP-037 draws blank** in all 7 mood surfaces, and a `moods: []` entry leaves a hole in the grid. Adds an emoji picker (40-glyph palette + typed escape hatch), two named fallback glyphs, and a shimmer for multi-mood days | OTA | ⬜ [spec](docs/specs-open.md#imp-050--every-mood-gets-a-face) |
 | IMP-051 | 🔴 **The keyboard stops eating the Next button** — `KeyboardAvoidingView` is inert on Android (`behavior: undefined`), WriteFlow is inside a `Modal` whose dialog window never gets `adjustResize`, and edge-to-edge (API 36) stops the system resizing for the IME at all. The user must dismiss the keyboard for every single step | OTA | ⬜ [spec](docs/specs-open.md#imp-051--the-keyboard-stops-eating-the-next-button) |
 | IMP-052 | ✨ **Tap a day, read it** — both heatmaps (Reflections + the lifetime grid on Insights) render inert `View`s, so the densest surface in the app is unclickable and the only route to an old entry is scrolling or already remembering a word to search. **Build AFTER IMP-050** — both rewrite `Heat` | OTA | ⬜ [spec](docs/specs-open.md#imp-052--tap-a-day-read-it) |
@@ -185,6 +183,30 @@ Opus scopes each owner-filed issue into a numbered `IMP-xxx` task — steps, tes
   - ✅ **IMP-021 — walked 2026-08-02, owner called it "not properly completed"; both shortfalls closed by [IMP-045](docs/build-log.md), code-complete 2026-08-09.** Full detail archived in `docs/build-log.md`. **Not yet re-walked on device** — the fix is OTA and testers will see it on the next `eas update`.
   - 🆕 **IMP-044 — a NEW walk debt, and a different kind: the first minified build.** R8 is now on for release builds only (config-only change, 2026-08-08). `npm test` cannot prove it — Jest never exercises R8, and **the failure mode is silent stripping at runtime, not a compile error.** Whenever the next build is cut, the walk must cover every reflection-facing surface: reminder fires + tap routes (IMP-031) · paywall live prices + Restore purchases (IMP-028) · JSON export **and** restore (IMP-020) · `eas update` applies · SVG icons · fonts · restore notice (IMP-029). Also confirm the win: bundle explorer shows **no `expo.modules.devlauncher` classes**. Checklist + full rationale in [`docs/build-log.md`](docs/build-log.md) → IMP-044.
   - ✅ **IMP-029 — PASSED on a real device.** The owner ran a true uninstall → reinstall cycle; Auto Backup restored silently at install time and the app fired the "Welcome back." notice naming the backup's date. The restored data was **stale (2 entries vs the 5 that were live)** — which is the feature working, not failing: that staleness is exactly the hazard the notice exists to announce. Two follow-on findings came out of the walk (see below). Procedure kept in [`docs/build-log.md`](docs/build-log.md) → IMP-029 → "Device-walk procedure" for future regressions.
+
+### 🟡 IMP-056 residual + the IMP-057 decision (2026-08-10) — dayKey derivation fixed; historical entries not migrated
+
+**IMP-056 is code-complete: `dayKey` is now derived locally (`src/time/dayKey.js`), closing the 1am-overwrite /
+missing-evening-entry defect.** Walked on the emulator both directions — `Asia/Kolkata` 01:00 (positive offset:
+confirmed the overwrite is closed, WriteFlow opens blank instead of prefilling last night's words) and
+`America/New_York` 20:30 (negative offset: a new entry correctly lands on *today's* local date — streak went
+12→13, not a broken/skipped day). This spec **deliberately does not migrate existing entries** — two things
+outlive it:
+
+- **The residual, genuinely unfixed:** old entries keep whatever UTC key they were stamped with. For roughly
+  one day after this ships, a negative-offset user can still have last evening's *already-stored* entry answer
+  to today's key (the bug closes for all *new* writes immediately; it self-heals for old data as those UTC-keyed
+  entries age out of relevance). Nothing to act on — just don't be surprised if it's reported once more.
+- **The IMP-057 decision is the owner's, not a build chat's.** The dev-panel Inspector (`Data health` group,
+  step 5 of the spec) now reports how many `entries`/`trash` rows have a `dayKey` that disagrees with what
+  `dayKeyOf()` would stamp today, and whether remapping them would move `currentStreak`. **On the emulator's
+  "Migration Test" fixture profile the count reads 0** — that data was seeded by `scripts/gen-v2-fixture.js`
+  with ids that don't match the `new<epoch-ms>` shape the reporter keys on, so it has nothing to compare
+  against; it is not evidence the bug never fired in practice. **Real tester/production data has never been
+  read through this reporter** — that's the actual step-5 number IMP-057 needs, and it can only come from a
+  real device via the dev harness (You tab → long-press "About Daily Rituals" → Inspector). Once it exists,
+  IMP-057 can be scoped: remapping a historical `dayKey` can move an entry off a day and **break a streak
+  that is currently alive** — correct, but it will read as a regression to whoever it happens to.
 
 ### 🔴 Finding 2026-08-02 (from the IMP-029 walk) — the OS restores without asking, and the notice gives no way to refuse
 

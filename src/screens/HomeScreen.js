@@ -7,6 +7,7 @@ import { T, Card, PrimaryButton, ProgressBar } from '../ui';
 import { Sun, Moon, Check, Pencil, BADGE_ICON } from '../icons';
 import { RayFan, NightSky, NightRays } from '../art';
 import { greetingFor, todayLabel } from '../time/clock';
+import { dayKeyOf } from '../time/dayKey';
 import { pickForDay } from '../time/dailyPick';
 import { HELLOS } from '../content/greetings';
 import { streakSubtitle } from '../home/streakCopy';
@@ -31,7 +32,7 @@ export default function HomeScreen({ copy, mode, streak, level, levelName, xpInt
   const hello = pickForDay(HELLOS);
   const week = buildWeekStrip(entries || []);
   const keepsakes = deriveKeepsakes(entries || [], streak || 0);
-  const todayK = new Date().toISOString().slice(0, 10);
+  const todayK = dayKeyOf();
   const onThisDayMatches = plusEnabled && onThisDayDismissed !== todayK ? onThisDay(entries || [], todayK) : [];
   const now = new Date();
   const inRecapWindow = RECAP_WINDOW_MONTHS.includes(now.getMonth());

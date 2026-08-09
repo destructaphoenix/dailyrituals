@@ -1,4 +1,5 @@
 import { findTodaysEntry, isEditableToday } from '../../src/home/todaysEntry';
+import { dayKeyOf } from '../../src/time/dayKey';
 
 const TODAY = '2026-06-13';
 const YESTERDAY = '2026-06-12';
@@ -51,5 +52,35 @@ describe('isEditableToday', () => {
 
   it('returns false for undefined entry', () => {
     expect(isEditableToday(undefined, TODAY)).toBe(false);
+  });
+});
+
+describe('the destructive overwrite this closes (IMP-056)', () => {
+  it('a 01:00 local write in a positive-offset zone is not matched to last night\'s entry', () => {
+    const originalTZ = process.env.TZ;
+    process.env.TZ = 'Asia/Kolkata'; // UTC+5:30 — deterministic in CI and locally
+    try {
+      // 2026-06-15T01:00 IST is 2026-06-14T19:30 UTC — the 1am scenario from
+      // the spec: the user's calendar says Monday, UTC still says Sunday.
+      const instant = new Date(Date.UTC(2026, 5, 14, 19, 30));
+      const oldBuggyKey = instant.toISOString().slice(0, 10);
+      const todayLocal = dayKeyOf(instant);
+      expect(oldBuggyKey).toBe('2026-06-14'); // what the old UTC derivation produced
+      expect(todayLocal).toBe('2026-06-15');  // what the user's calendar actually says
+
+      const sundayEntry = { id: 'e1', dayKey: '2026-06-14', did: 'walked at dawn', wished: '', moods: ['Grateful'] };
+
+      // The bug: under the old UTC key, Sunday's entry looks like "today".
+      expect(findTodaysEntry([sundayEntry], oldBuggyKey)).toBe(sundayEntry);
+      expect(isEditableToday(sundayEntry, oldBuggyKey)).toBe(true);
+
+      // The fix: under the local key, Sunday's entry is correctly yesterday's
+      // — WriteFlow opens blank for Monday instead of prefilling and
+      // overwriting it on save.
+      expect(findTodaysEntry([sundayEntry], todayLocal)).toBeNull();
+      expect(isEditableToday(sundayEntry, todayLocal)).toBe(false);
+    } finally {
+      process.env.TZ = originalTZ;
+    }
   });
 });

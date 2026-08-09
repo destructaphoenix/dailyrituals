@@ -1247,6 +1247,89 @@ to a known-good default is the whole behavior.
 
 ---
 
+### IMP-056 — a day is the day you lived, not the day in Greenwich   ·   Lane: OTA   ·   Status: ✅ code-complete + **emulator-walked 2026-08-10**
+
+**Why:** found reading `src/time/clock.js` for IMP-054, not user-reported. `dayKey` — the field every
+derivation keys on — was derived in **UTC** (`RitualsApp.js:83`: `new Date().toISOString().slice(0, 10)`)
+while every date the user *reads* (`entryDateParts`/`todayLabel` in `clock.js`) was already **local**, and
+both were stamped onto the same entry. In IST a 1am write was filed under yesterday and **silently
+overwrote last night's entry**; at negative offsets (e.g. `America/New_York`) an evening write was filed
+under tomorrow and didn't appear on the grid until the next calendar day arrived.
+
+**Step 0 — reproduced before fixing.** Emulator forced to `Asia/Kolkata`, clock to 01:00 (`adb shell service
+call alarm 2/3` — no root needed, and root isn't available on this AVD image). Home header already read
+"Monday, 10 August" with "Today is at rest" **checked** — the app had matched Monday to Sunday's
+already-stored entry (`walked at dawn`). Opening Write confirmed the destructive path: WriteFlow headed
+"HERE LIES MONDAY, 10 AUGUST" but prefilled Sunday's words — saving would have overwritten them and left
+Monday empty.
+
+**RED → GREEN.** New pure `src/time/dayKey.js` — `dayKeyOf(date = new Date())` — local
+`getFullYear()`/`getMonth()`/`getDate()`, zero-padded. `__tests__/time/dayKey.test.js` (6 cases) includes a
+deterministic same-instant-different-key proof: pins `process.env.TZ = 'Pacific/Kiritimati'` (UTC+14) for
+one assertion so a 23:30 UTC instant reads a different local calendar day than `toISOString().slice(0,10)`
+— reliable in CI and on the owner's machine regardless of the real host timezone.
+
+**The four derivation sites, and only these four, replaced:** `RitualsApp.js` (`todayKey` deleted, all 13
+call sites renamed to `dayKeyOf()`, direct import) · `src/home/calendar.js` (`const keyOf = (date) =>
+date.toISOString().slice(0,10)` → `import { dayKeyOf as keyOf }`, keeping the file's existing internal name
+since it has 5 call sites) · `src/screens/HomeScreen.js` (`todayK`) · `src/insights/lifetime.js`
+(`activeSpanLabel`'s `dayKeyToUtcMs(now.toISOString().slice(0,10))` → `dayKeyToUtcMs(dayKeyOf(now))`).
+**Left alone, per spec:** `dayKeyToUtcMs`/`utcMsToDayKey` (`dateKeys.js` — operate on an existing key, UTC
+is correct there for timezone-independent day arithmetic) and `shiftKey` (`calendar.js` — same reason);
+`entryDateParts` (`clock.js` — already local, was the *other*, already-correct half); the backup filename;
+everything under `src/dev/` (two more local `todayKey` copies exist there, both dev-only,
+`__DEV__`-stripped, deliberately untouched).
+
+**Existing tests fixed, not just made to pass again:** `__tests__/home/calendar.test.js` and
+`__tests__/insights/lifetime.test.js` built their `today`/`now` fixtures via `new Date('...T12:00:00Z')`
+(UTC-instant construction, safe under the old code but no longer the intent). Rewritten to construct local
+noon directly (`new Date(2026, 5, 7, 12, 0)`) — same values, but now correct regardless of host timezone
+instead of merely lucky within it.
+
+**Regression test for the destructive path** — `__tests__/home/todaysEntry.test.js`, new describe block: at
+a 01:00 `Asia/Kolkata` instant, asserts the **old** UTC key wrongly matches yesterday's entry
+(`findTodaysEntry`/`isEditableToday` both positive) and the **new** local key correctly does not — proving
+both that the bug existed and that it's closed, in one test.
+
+**Step 5 — data-health reporter (dev-only, report-only, writes nothing).** New `dayKeyDrift(entries, trash,
+todayKey)` in `src/dev/inspect.js`: for every entry/trash row whose `id` matches `/^new(\d{10,})$/` (the
+creation-epoch stamp `RitualsApp.js` writes), recomputes what `dayKeyOf()` would have stamped at that
+instant and counts disagreements with the stored `dayKey`; separately reports whether replacing those keys
+in `entries` (not `trash` — it doesn't factor into streaks) would move `currentStreak`. Surfaced as two new
+rows under a "Data health" group in the Inspector (`InspectSection.js` — no new UI code needed, its
+group-rendering loop is already generic). **Read against the emulator's "Migration Test" fixture profile:
+0 drift** — that data was seeded by `scripts/gen-v2-fixture.js` with ids that don't match the `new<ms>`
+shape, so the reporter has nothing to compare against; **this is not evidence the bug never fired on real
+devices**, just that no organically-written data has been read through the reporter yet. Real tester data
+still needed before IMP-057 can be scoped — see PROGRESS.md → Open items.
+
+**Walked both offset directions on the emulator, end to end (not just the reproduction):**
+`Asia/Kolkata` 01:00 — WriteFlow now opens blank for Monday instead of prefilling Sunday, and Sunday's
+entry is untouched in Reflections afterward. `America/New_York` 20:30 — wrote a real entry through to save;
+streak went **12 → 13** (contiguous), Home read "Monday, 10 August" throughout, confirming the entry landed
+on *today's* local date rather than skipping to tomorrow. (Two operational notes for future emulator work:
+`adb shell` hangs indefinitely if the emulator's adb daemon has gone stale — kill/restart the AVD, don't
+just `adb kill-server`; and an already-running RN process does **not** pick up a live OS timezone change —
+force-stop + relaunch, a plain new `Intent` isn't enough, or the JS `Date` local getters keep using the
+zone that was active when Hermes started.)
+
+**Deliberately not done, per spec — the historical migration.** Existing entries keep whatever key they
+were stamped with; only the derivation is fixed, so only *future* writes are correct going forward. The
+residual and the IMP-057 decision are recorded in PROGRESS.md → Open items, not here — they outlive this
+spec.
+
+**Tests:** `npm test` → **588 passed, 59 suites** (577 + 11 new: 6 dayKey + 1 todaysEntry regression + 4
+inspect/dayKeyDrift). `npx expo export --platform android` clean.
+
+**Do NOT** (per spec, honored): migrate/remap/rewrite any stored `dayKey` · touch `dayKeyToUtcMs`,
+`utcMsToDayKey` or `shiftKey` · change `entryDateParts` · rewrite `frozenDays`/`lastActiveDay`/
+`onThisDayDismissed` · change the backup filename · introduce a timezone library.
+
+**Ship:** OTA, no bump — not shipped this chat (no `Release-Lane` trailer). **Commit:**
+`fix(time): derive the day from the user's calendar, not UTC — and stop a 1am entry overwriting last night's (IMP-056)`.
+
+---
+
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
 
 > Moved out of PROGRESS.md on 2026-07-31 to keep the live cursor lean once a second spec (IMP-032) opened. These are **not** finished work. If the owner revives one, lift the block back into PROGRESS.md as the ACTIVE TRACK.

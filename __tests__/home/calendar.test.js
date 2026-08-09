@@ -1,9 +1,10 @@
 import { buildHeatmap, buildWeekStrip, buildLifetimeHeatmap } from '../../src/home/calendar';
 
-// 2026-06-07 is a Sunday; 2026-06-03 is a Wednesday. Use a midday UTC time so
-// toISOString().slice(0,10) yields the intended date regardless of test host TZ.
-const sun = new Date('2026-06-07T12:00:00Z');
-const wed = new Date('2026-06-03T12:00:00Z');
+// 2026-06-07 is a Sunday; 2026-06-03 is a Wednesday. Construct via local
+// components (noon, so there's no local-midnight edge to worry about) —
+// dayKeyOf reads local getters, not UTC, so this is what a real device sees.
+const sun = new Date(2026, 5, 7, 12, 0);
+const wed = new Date(2026, 5, 3, 12, 0);
 
 describe('buildHeatmap', () => {
   it('returns 35 cells with today as the last cell', () => {
@@ -130,7 +131,7 @@ describe('buildWeekStrip — missed days', () => {
   });
 });
 
-const today = new Date('2026-06-14T12:00:00.000Z'); // a Sunday
+const today = new Date(2026, 5, 14, 12, 0); // a Sunday, local noon
 
 describe('buildLifetimeHeatmap', () => {
   test('no entries → empty array', () => {
