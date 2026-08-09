@@ -41,17 +41,24 @@ export default function Shop({
 
   return (
     <View style={{ flex: 1, backgroundColor: c.cream, paddingTop: insets.top }}>
-      {/* top bar */}
+      {/* Top bar. The title is absolutely centred rather than laid out between the
+          back button and the ember pill: those two differ in width, so space-between
+          would centre "Shop" in the leftover gap and visibly push it off-centre. */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingTop: 12, paddingBottom: 8 }}>
+        <T d w={800} color={c.ink} pointerEvents="none"
+          style={{ fontSize: 19, position: 'absolute', left: 0, right: 0, textAlign: 'center' }}>Shop</T>
         <Pressable onPress={onClose} hitSlop={8}
           style={({ pressed }) => ({ width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: c.ghostBtn, opacity: pressed ? 0.6 : 1 })}>
           <Chevron dir="left" size={22} color={c.ink} />
         </Pressable>
-        <T d w={800} color={c.ink} style={{ fontSize: 19 }}>Shop</T>
         <EmberPill embers={embers} onPress={() => onGetEmbers()} lg />
       </View>
 
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36 + insets.bottom }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36 + insets.bottom }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Plus upsell / status */}
         {plusEnabled && (
           <View style={{ marginTop: 4 }}>
