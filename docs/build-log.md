@@ -1088,6 +1088,69 @@ the correct day · malformed entries never throw. `npm test` → **532 passed, 5
 
 ---
 
+### IMP-048 — three free restores, then Plus (the undisclosed trash gate)   ·   Lane: OTA   ·   Status: ✅ code-complete + **emulator-walked 2026-08-09**
+
+**Why:** found by the owner on the 2026-08-09 emulator walk of IMP-036. Restoring from Recently deleted was
+Plus-only with **zero disclosure** — the button looked live, and pressing it did nothing visible. The
+"Undelete is part of Plus" toast fired through `showToast`, which renders in `RitualsApp`'s tree **behind**
+the trash `Modal`, so it only flashed once the sheet closed and the user was back on the You tab. Two
+defects in one tap: an undisclosed paywall, and a dead button. Owner's decision: **make restore free three
+times, then Plus, and say so plainly on the page.**
+
+**Owner decision (2026-08-09) — the cap is enforced even while Plus is unbuyable.** With
+`PLUS_ENABLED = false` there is nothing to sell, so a fourth restore could have been quietly allowed. It is
+not: what a tester sees today is exactly what ships after the flag flips, so "free 3 times" is never
+worth more than it says and the behaviour never silently changes on launch day. The alternative (unlimited
+until Plus is sellable) was rejected as the same promise-shift class this app has spent IMP-031/034/039/040
+removing. Cost, accepted knowingly: a tester who spends all three before Plus exists waits for the launch —
+the day still sits in trash for the rest of its 30 days either way.
+
+**Pure core.** New `src/entries/restoreAllowance.js` — `FREE_RESTORES = 3`; `freeRestoresLeft(used)`;
+`restoreAccess({ used, plus, plusEnabled })` → one of four kinds: `'plus'` (unlimited, spends nothing) ·
+`'free'` (one of the three) · `'locked'` (spent, Plus purchasable → paywall) · `'unavailable'` (spent, Plus
+not on sale yet); `consumeFreeRestore(used, plus)` (never charges a subscriber, clamps at `FREE_RESTORES`).
+A `used` that is missing, non-finite, negative or a string reads as **none used** — a corrupt or
+hand-edited backup must never cost someone their allowance, so the failure direction is deliberately
+generous.
+
+**Disclosure — the actual point of the task.** `TrashSheet.js` renders the allowance in a card at the top
+of the screen, above the list, before anything is pressed: full (*"free your first 3 times. All 3 are still
+yours."*), partial (*"free 3 times — 1 is left."*), `locked` (*"used all 3… Plus brings back any day, any
+time"* plus a "See what's in Plus" pill), `unavailable` (*"…becomes part of Plus, which isn't on sale
+yet."*). The per-row button reads its own state — outlined/muted and relabelled **"Restore with Plus"**
+once the three are gone, so it can never look live when it isn't. Restoring confirms first, and the **last
+free one names itself**: *"it's your last one. After this, bringing days back is part of Plus."*
+
+**Every message on this screen is `Alert.alert`, deliberately, and this is the bug fix.** The sheet lives
+inside a `Modal`; the app's `Toast` renders in `RitualsApp`'s tree and is therefore **behind** it.
+`onRestoreBlocked`/`showToast` is gone entirely, and the `'Restored'` success toast was dropped for the
+same reason — the row leaving the list and the allowance line ticking down are visible feedback, a toast
+that appears 30 seconds later on a different screen is not.
+
+**Wiring.** `freeRestoresUsed` is a new persisted key (`PERSISTED_KEYS`, `src/persistence/state.js`) —
+no schema bump, absent keys hydrate through `initialState.freeRestoresUsed ?? 0`. Threaded through
+`RitualsApp.js` exactly like `frozenDays`/`seenTips`/`trash`: `useState`, the autosave dep array,
+`currentSlice()` (so it rides both the JSON export and Auto Backup). `restoreFromTrash` **re-checks
+`restoreAccess` itself** rather than trusting the sheet, and bails on an absent `dayKey` before spending,
+so no future caller can burn a fourth. Dev harness: `buildState` emits `freeRestoresUsed` and
+`StateSection` gained a "Free restores used (of 3)" stepper — note `buildState` still does not emit
+`trash`, so Apply clears it; set the knob, Apply, *then* delete a day.
+
+**Tests:** `__tests__/entries/restoreAllowance.test.js` (14 cases, RED-first) — the allowance counting down
+and never going negative · a missing/`NaN`/negative/string count reading as none used · all four
+`restoreAccess` kinds including both `plusEnabled` values at exhaustion · the cap being spent identically
+while the paid surface is off · `restoreAccess()` with no argument · `consumeFreeRestore` spending,
+never charging a subscriber, clamping at 3, and normalising corrupt input. `npm test` → **559 passed, 57
+suites** (545 + 14 new). `npx expo export --platform android` clean.
+
+**Walked:** owner confirmed on the emulator 2026-08-09 — three free restores tick down, the fourth is
+visibly locked and explains itself, and the state survives a relaunch.
+
+**Ship:** OTA, no bump. Reaches **testers only** (`runtimeVersion` = `appVersion` = 1.0.5). **Commit:**
+`feat(entries): three free restores, then Plus — and say so before it's spent (IMP-048)`.
+
+---
+
 ### IMP-045 — finish Lifetime Progress (the IMP-021 shortfall)   ·   Lane: OTA   ·   Status: ✅ code-complete
 
 **Why:** closed the two deviations from the approved 2026-06-14 Lifetime Progress design that made the
@@ -1174,6 +1237,8 @@ lifetime XP (IMP-045)`.
 ## Session notes (archived from PROGRESS.md)
 
 _Append-only handoff log moved out of PROGRESS.md to keep it light. Newest 1–2 notes stay live in PROGRESS.md; everything else is here. Git history is the full record._
+
+_2026-08-08 (IMP-046, Annual Recap — "your year, remembered", perk #4) — **code-complete, committed, not shipped.** Full TDD (13 new cases). First extracted `countWords` out of `src/insights/lifetime.js` into new `src/insights/words.js` (re-imported there; `lifetime.test.js` stayed green untouched) so the recap and Lifetime Progress can't drift apart. New pure `src/recap/annualRecap.js` — `recapYears(entries, now)` → offerable years newest-first (a year qualifies from 1 December onward — `now.getMonth() === 11` — and every earlier year forever after; both filtered to ≥10 entries), `buildRecap(entries, year, {xp, now})` → `{year, daysRemembered, totalWords, longestStreak, firstEntry, lastEntry, topMoods, peakMonth, quietestMonth, milestones}` or `null` below the 10-entry floor. Every year-scoped stat filters entries strictly to `dayKey.slice(0,4) === year` first, so a 31 Dec/1 Jan boundary entry never leaks into the wrong year, and `longestStreak` (via `dateKeys.js`'s `longestConsecutiveRun`) is computed within-year only — a 6-day run spanning the boundary reads as 3, not 6. `topMoods` reuses IMP-047's `moodByMonth` (merges its 12 buckets rather than writing a second mood counter), tie-broken alphabetically; `peakMonth`/`quietestMonth` scan the same buckets' totals, keeping the earlier month on a tie. **Milestones — where IMP-021's deferred timeline finally lands:** a day-by-day walk over the *full* account history (not just the target year, since a streak can start in December and cross a threshold in January) finds every `STREAK_MILESTONES` crossing (7/30/100) whose day falls inside the target year, plus a `'First entry of the year'` entry, sorted chronologically; a crossing that happened in the prior year is correctly excluded even when the same run continues into the target year. New presentational `src/screens/AnnualRecap.js` (`{recap, onClose, insets}`, sectioned like `InsightsScreen`'s "Your record" card — hero + 2×2 totals grid, top-moods bars, a "The year, marked" milestone timeline) and `src/screens/AnnualRecapCard.js` (mirrors `OnThisDayCard.js`'s shape exactly, same locked-teaser pattern). `HomeScreen.js` mounts the card only in the **1 Dec – 31 Jan** window when `recapYears()[0]` exists and isn't already dismissed (`settings.recapSeen`, a single number like IMP-038's `onThisDayDismissed`); `YouScreen.js` gained a **permanent** "Your years" section (unlike the Home card, not window-gated — "what stops the feature disappearing for eleven months of the year") listing every offerable year, locked-teaser when `plusEnabled && !plus`. `RitualsApp.js` threads both via a new `openRecapYear` state and a `Modal` matching every other full-screen sheet's shape, lazily computing `buildRecap` only while open. `PLUS_PERKS` (`data.js`) gained a new 6th entry — 'Your year, remembered — the Annual Recap' — **appended, not renumbering** the existing five (the dead PDF perk stays put, still IMP-022's territory). `DEFAULT_SETTINGS` gained `recapSeen: null`. `npm test` → **532 passed, 55 suites** (519 + 13 new); `npx expo export --platform android` clean. Full spec archived to `docs/build-log.md`; backlog row set to code-complete; `docs/specs-open.md`'s index updated (IMP-046 removed, only the no-slot IMP-045 remains); Phase 10b's proposed perk table updated to perk #4 ✅ built. NEXT: **the numbered queue is now empty** — only **IMP-045** (no queue slot, Lifetime Progress shortfall) remains open. After it, the next real work is the subscription-track build window (playbook 10b step B9: revive IMP-022 Part A, the PDF perk #6) or the still-untaken `internal` → production promotion decision._
 
 _2026-08-08 (IMP-038, "On this day") — **code-complete, committed, not shipped.** Full TDD (11 new cases, RED-first). New pure `src/memory/onThisDay.js` → `onThisDay(entries, todayKey)` — year matches (same month-day, any past year, newest-first) strictly take priority over 6/3/1-month fallbacks, which only compute when zero year matches exist; every comparison is on the `YYYY-MM-DD` string components via a `parts()`/`daysInMonth()` helper, never `Date` millisecond math, so 29 Feb never false-matches 28 Feb in either direction and a 31-day month falling back into a shorter one skips the offset rather than rolling into the next month. New presentational `src/screens/OnThisDayCard.js` — `{ matches, locked, onOpen, onDismiss, onOpenPaywall }`, returns `null` on empty `matches`, reuses `ArchiveScreen.js`'s day/mon-numeral row shape; `locked` renders a `DeeperInsights.js`-style teaser ("The app found something…" + Sun-icon "Unlock with Plus" pill) with the same dismiss control in the shared header for both branches. Mounted in `HomeScreen.js` above "Today's reflection"; `HomeScreen` computes `onThisDay()` itself off its own `entries` prop and a locally-computed `todayK` (same UTC-day convention `home/calendar.js` already defaults to), gated on 4 new props (`plusEnabled`, `onThisDayDismissed`, `onDismissOnThisDay`, `onOpenOnThisDay`) plus `onOpenPaywall`; `locked = !plus`. `RitualsApp.js` threads all five — `onOpenOnThisDay` reuses `ArchiveScreen`'s exact `onOpen` handler (`setReading` + `markRevisited`) rather than duplicating the revisit-rite credit, `onDismissOnThisDay` writes `settings.onThisDayDismissed = todayKey()` (single string, self-pruning, no migration needed). `PLUS_PERKS[2]`'s cut line *"Your whole graveyard, kept forever"* → *"On this day — your own words, brought back to you"*; array stays 5 long. `npm test` → **519 passed, 54 suites** (508 + 11 new); `npx expo export --platform android` clean. Full spec archived to `docs/build-log.md`; backlog row set to code-complete; `docs/specs-open.md`'s index updated (IMP-038 removed, 1 task left); both Phase 10b perk-reality tables updated to 4 of 5 real (#1, #2, #3, #5). NEXT: **IMP-046 Annual Recap** (perk #4) is the last item in the open queue, per the ACTIVE TRACK order. IMP-045/-046 remain open; `internal` → production promotion still untaken._
 
