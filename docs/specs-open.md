@@ -26,6 +26,11 @@
 | --- | --- | --- |
 | 1 | [IMP-050 — every mood gets a face](#imp-050--every-mood-gets-a-face) | OTA |
 | 2 | [IMP-051 — the keyboard stops eating the Next button](#imp-051--the-keyboard-stops-eating-the-next-button) | OTA |
+| 3 | [IMP-052 — tap a day, read it](#imp-052--tap-a-day-read-it) | OTA |
+
+> **IMP-052 must be built AFTER IMP-050.** Both rewrite `ArchiveScreen`'s `Heat`, and IMP-052 relies on
+> the `cell.moods` field IMP-050 introduces. Taking them out of order means a merge conflict in a file
+> neither spec expects to fight over.
 
 ---
 
@@ -282,3 +287,86 @@ window, and it would turn an OTA into a BUILD) · change any `Modal`'s `presenta
 three-step flow · touch `Onboarding.js`.
 
 **Commit:** `fix(writeflow): lift the footer above the keyboard instead of hiding Next under it (IMP-051)`
+
+---
+
+### IMP-052 — tap a day, read it
+
+**Lane:** OTA · **Free/Plus:** free (retrieval — the line the playbook draws is that a user's own words are
+never gated) · **Origin:** logged out of IMP-050's design review, 2026-08-09, and confirmed by the owner as
+the next task.
+
+**⛔ Sequencing: build this AFTER [IMP-050](#imp-050--every-mood-gets-a-face).** Both rewrite `Heat` in
+`ArchiveScreen`, and this spec reads the `cell.moods` field IMP-050 introduces.
+
+**The problem.** The Reflections heatmap is the most information-dense surface in the app — 35 days of your
+life, at a glance — and it is **inert**. [`ArchiveScreen.js:123`](../src/screens/ArchiveScreen.js#L123)
+renders each cell as a plain `View`. The same is true of the lifetime heatmap at
+[`InsightsScreen.js:230`](../src/screens/InsightsScreen.js#L230). You can see that 14 March was a heavy day
+and there is no way to ask what happened. The only route to an old entry is scrolling the list below, or
+searching for a word you must already remember.
+
+That is the exact gap the playbook's product thesis names: *"the app today is all continuity and no
+retrieval… which makes the archive write-only."* IMP-035 gave it search; this gives it the gesture every
+user will try first, unprompted, because a grid of days looks tappable.
+
+**Decided design, do not re-litigate.**
+
+- **Only days you wrote are pressable.** Missed (`💀`), empty and future cells take no press, get no ripple
+  and no `accessibilityRole` — a cell that responds to a tap with nothing feels broken in a way that not
+  responding does not.
+- **A tap opens the existing `ReadingSheet`, through the existing handler.** Grid and list are two doors to
+  one room; the grid must also mark the "tend an old grave" quest revisited (IMP-013), which the shared
+  handler already does.
+- **Tapping today's empty cell does NOT open WriteFlow.** Considered and rejected: the archive is for
+  retrieval, writing lives on Home behind a deliberate CTA, and an accidental tap throwing up a
+  full-screen write modal is a worse failure than a no-op. Do not add it later without the owner.
+- **Both heatmaps, or neither.** They are the same visual idiom on two tabs; making one tappable and not
+  the other is precisely the kind of inconsistency this app keeps filing bugs about.
+
+**Steps**
+
+1. **RED first — `__tests__/entries/find.test.js` + new pure
+   [`src/entries/find.js`](../src/entries/find.js)** exporting `entryForDayKey(entries, dayKey)`.
+   **It must resolve collisions the same way [`calendar.js`](../src/home/calendar.js#L26)'s private
+   `indexByDay` does — first match in array order wins ("newest wins", since entries are newest-first).**
+   If the two disagree, the grid paints one entry's mood and opens a different entry, which is a worse bug
+   than the one this spec fixes. Cases: finds the entry · **two entries on one dayKey → the first in array
+   order, the same one `buildHeatmap` paints** · no match → `null` · `null`/`[]`/malformed rows (a `null`
+   in the array, a row with no `dayKey`) → `null`, never throws.
+2. **Lift the shared open-handler in [`src/RitualsApp.js`](../src/RitualsApp.js).** The inline arrow at
+   line 617 (`(e) => { setReading(e); setQuests((qs) => markRevisited(qs, e, todayKey())); }`) becomes a
+   named `openEntry` const beside the other handlers, passed to `ArchiveScreen` (unchanged behaviour) and
+   **also to `InsightsScreen` as a new `onOpen` prop**. One definition, two callers — do not duplicate it.
+3. **[`src/screens/ArchiveScreen.js`](../src/screens/ArchiveScreen.js).** `Heat` takes `entries` and
+   `onOpen`. A cell that is neither `missed` nor `empty` renders as a `Pressable` instead of a `View`;
+   everything else stays a `View`. On press: `const e = entryForDayKey(entries, cell.dayKey); if (e) onOpen(e);`
+   — the guard is not optional, since a cell can outlive its entry by one render after a delete (IMP-036).
+   Details, all required:
+   - `hitSlop={3}`. The grid gap is 6, so 3 is the largest slop that cannot overlap a neighbour — and the
+     cells are only ~40dp on a 360dp screen, under the 48dp target.
+   - Press feedback `transform: [{ scale: pressed ? 0.92 : 1 }]`. The list cards use `0.99`, but they are
+     full-width; a 40dp square needs a visible amount.
+   - `accessibilityRole="button"` and `accessibilityLabel` = the day and its moods, e.g.
+     `` `${cell.dayKey}, ${(cell.moods || []).join(', ') || 'no mood recorded'}` ``. Non-pressable cells get
+     **neither** — no role, no label.
+   - **The grid is not filtered.** It shows all 35 days while the list below shows search results, so a day
+     filtered out of the list stays openable from the grid. That is correct and deliberate; do not "fix" it
+     by filtering the heatmap.
+4. **[`src/screens/InsightsScreen.js`](../src/screens/InsightsScreen.js)** — the same treatment for
+   `LifetimeHeat` (line 215), which already carries `dayKey` on every cell from `buildLifetimeHeatmap`.
+   `cellState(cell) === 'done'` is the pressable condition. The today-ring child at line 239 already has
+   `pointerEvents="none"`, so it will not swallow the press — leave it exactly as it is. **If this step
+   turns out to need more than the Pressable swap and the two new props, STOP and log it to
+   `PROGRESS.md` → Open items rather than expanding here.**
+5. **Component test `__tests__/screens/ArchiveHeat.test.js`** (`@testing-library/react-native`): pressing a
+   written day calls `onOpen` with **that day's** entry · pressing a missed day calls nothing · pressing an
+   empty day calls nothing · a written day whose entry has been removed from `entries` calls nothing and
+   does not throw · pressable cells expose `accessibilityRole="button"` and non-pressable cells do not.
+6. `npm test` green (≥ 577, or ≥ whatever IMP-050 left it at), `npx expo export --platform android` clean.
+
+**Do NOT** open WriteFlow from any cell · filter the heatmap to match the search query · make the week
+strip on Home tappable (different component, different spec, ask the owner first) · add a long-press menu ·
+change `ReadingSheet` · touch the quest logic beyond reusing `openEntry`.
+
+**Commit:** `feat(archive): tap a day on either heatmap to read it (IMP-052)`

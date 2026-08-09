@@ -22,15 +22,18 @@
 
 The live work is the **first unchecked `IMP-xxx` task in the Improvements backlog** below — its full spec is in [`docs/specs-open.md`](docs/specs-open.md), linked from its backlog row. Work that, **not** the phase ladder (8 / 10b / 11), which is **parked in [`docs/playbook.md`](docs/playbook.md)** until the owner resumes it.
 
-> **Two specs are queued again. Updated 2026-08-09:**
+> **Three specs are queued again. Updated 2026-08-09:**
 >
 > **▶️ [IMP-050](docs/specs-open.md#imp-050--every-mood-gets-a-face) is the live task, then
-> [IMP-051](docs/specs-open.md#imp-051--the-keyboard-stops-eating-the-next-button).** Both are OTA, both
-> came from the owner walking the app on 2026-08-09, and both are self-contained — open one spec, not the
-> file. IMP-050 finishes IMP-037: custom moods currently draw **blank** everywhere because
-> [`data.js:51`](src/data.js#L51) resolves anything outside the 8 built-ins to `''`. IMP-051 is why the
-> **Next** button hides under the keyboard — three compounding causes, none of which is fixable by
-> `adjustResize`. Neither needs a `bump:native`.
+> [IMP-051](docs/specs-open.md#imp-051--the-keyboard-stops-eating-the-next-button), then
+> [IMP-052](docs/specs-open.md#imp-052--tap-a-day-read-it) (which must come after IMP-050 — they share
+> `ArchiveScreen`'s `Heat`).** All three are OTA, all three came out of the owner walking the app on
+> 2026-08-09, and each is self-contained — open one spec, not the file. IMP-050 finishes IMP-037: custom
+> moods currently draw **blank** everywhere because [`data.js:51`](src/data.js#L51) resolves anything
+> outside the 8 built-ins to `''`. IMP-051 is why the **Next** button hides under the keyboard — three
+> compounding causes, none of which is fixable by `adjustResize`. IMP-052 makes both heatmaps tappable,
+> which is the retrieval gesture the playbook's product thesis has been asking for. **None needs a
+> `bump:native`.**
 >
 > Everything else in the backlog table below is ✅. The other live work is the walk queue, the
 > **subscription-track build window** (playbook 10b step B9: revive IMP-022 Part A, the PDF perk #6), or
@@ -133,6 +136,7 @@ Opus scopes each owner-filed issue into a numbered `IMP-xxx` task — steps, tes
 | IMP-047 | ✨ **Deeper insights — the analysis layer** — `InsightsScreen` has **zero** `plus` checks; free and Plus see identical insights. Mood-by-weekday, seasonal patterns, mood pairings. **Plus perk #5** | OTA | ✅ code-complete — full detail in build-log |
 | IMP-050 | 🟡 **Every mood gets a face** — `moodEmoji` returns `''` for anything outside the 8 built-ins, so **every custom mood from IMP-037 draws blank** in all 7 mood surfaces, and a `moods: []` entry leaves a hole in the grid. Adds an emoji picker (40-glyph palette + typed escape hatch), two named fallback glyphs, and a shimmer for multi-mood days | OTA | ⬜ **NEXT** — [spec](docs/specs-open.md#imp-050--every-mood-gets-a-face) |
 | IMP-051 | 🔴 **The keyboard stops eating the Next button** — `KeyboardAvoidingView` is inert on Android (`behavior: undefined`), WriteFlow is inside a `Modal` whose dialog window never gets `adjustResize`, and edge-to-edge (API 36) stops the system resizing for the IME at all. The user must dismiss the keyboard for every single step | OTA | ⬜ [spec](docs/specs-open.md#imp-051--the-keyboard-stops-eating-the-next-button) |
+| IMP-052 | ✨ **Tap a day, read it** — both heatmaps (Reflections + the lifetime grid on Insights) render inert `View`s, so the densest surface in the app is unclickable and the only route to an old entry is scrolling or already remembering a word to search. **Build AFTER IMP-050** — both rewrite `Heat` | OTA | ⬜ [spec](docs/specs-open.md#imp-052--tap-a-day-read-it) |
 
 ---
 
