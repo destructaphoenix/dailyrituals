@@ -22,11 +22,15 @@
 
 The live work is the **first unchecked `IMP-xxx` task in the Improvements backlog** below — its full spec is in [`docs/specs-open.md`](docs/specs-open.md), linked from its backlog row. Work that, **not** the phase ladder (8 / 10b / 11), which is **parked in [`docs/playbook.md`](docs/playbook.md)** until the owner resumes it.
 
-> **Seven specs are queued again — IMP-050 → IMP-056. Updated 2026-08-09:**
+> **Ten specs are queued again — IMP-050 → IMP-060, minus 057. Updated 2026-08-09:**
 >
 > **▶️ [IMP-056](docs/specs-open.md#imp-056--a-day-is-the-day-you-lived-not-the-day-in-greenwich) is the
-> live task; take the rest in table order.** All seven are **OTA — none needs a `bump:native`** — and all
+> live task; take the rest in table order.** All ten are **OTA — none needs a `bump:native`** — and all
 > came out of the 2026-08-09 spec session. Each is self-contained: **open one spec, not the file.**
+>
+> **`IMP-057` is reserved, not missing.** It is the historical `dayKey` migration IMP-056 defers, and it
+> cannot be written until IMP-056's step-5 reporter says how many entries are affected. **Do not reuse the
+> number for anything else.**
 >
 > - **056 🔴 leads because it loses words.** `dayKey` is UTC, every displayed date is local, and both go on
 >   the same entry — so a 1am entry in IST is filed under yesterday and can overwrite last night's, while an
@@ -42,10 +46,16 @@ The live work is the **first unchecked `IMP-xxx` task in the Improvements backlo
 > - **054** fixes IMP-031's two missing halves: a foreground reminder shows nothing, and tapping one does
 >   not open the write flow.
 > - **055** lets you rename / re-emoji / remove the feelings you named yourself.
+> - **060** says so when a candle spends itself — today it is taken silently, and it is paid inventory.
+> - **059** labels every icon-only control; the app currently has **one** `accessibilityLabel` in total,
+>   and the write FAB is not it.
+> - **058** adds grief / gratitude / change prompt packs. **Free, not Plus** — the perk list is fixed at six
+>   by an earlier decision, and a prompt is the app helping you write *today*.
 >
-> **Only two ordering constraints: 052 and 055 must both come after 050.** And **054 and 056 are the two
-> `npm test` cannot finish** — both need an emulator walk, and 056 needs its *timezone* changed twice.
-> Budget for that before starting either.
+> **Only two ordering constraints: 052 and 055 must both come after 050.** And **three need a running app,
+> not just `npm test`** — 054 (notification behaviour), 056 (its *timezone* changed, twice) and 059 (whose
+> acceptance test is writing an entry with TalkBack on and your eyes shut). Budget for that before starting
+> any of them.
 >
 > Everything else in the backlog table below is ✅. The other live work is the walk queue, the
 > **subscription-track build window** (playbook 10b step B9: revive IMP-022 Part A, the PDF perk #6), or
@@ -153,6 +163,9 @@ Opus scopes each owner-filed issue into a numbered `IMP-xxx` task — steps, tes
 | IMP-053 | 🟡 **Search shows you the match** — the result card hard-renders the first 2 lines of `did`, but `searchEntries` matches over `did + wished`. A hit in `wished` (or deep in `did`) yields a card containing the search term **nowhere**. IMP-035 built the engine and hid its output. Watch the index-mapping trap: diacritic folding is not length-preserving | OTA | ⬜ [spec](docs/specs-open.md#imp-053--search-shows-you-the-match) |
 | IMP-054 | 🟡 **The reminder you can actually answer** — two gaps in IMP-031's subsystem: no `setNotificationHandler` (flagged 2026-07-31, never scoped) so a foreground reminder shows **nothing**, and no response listener at all, so **tapping it does not open the write flow** — it lands on whatever tab you left. Owner chose: suppress the OS banner, show the app's own Toast. **Needs an emulator walk; `npm test` cannot prove it** | OTA | ⬜ [spec](docs/specs-open.md#imp-054--the-reminder-you-can-actually-answer) |
 | IMP-055 | 🟡 **Manage your feelings** — `addCustomMood` only ever appends, so a mood typo'd at 11pm is in your picker, Insights and Annual Recap for the life of the install. Rename (rewrites across `entries` **and** `trash`), re-emoji, remove. **Build AFTER IMP-050** | OTA | ⬜ [spec](docs/specs-open.md#imp-055--manage-your-feelings) |
+| IMP-060 | 🟡 **A candle burns without telling you** — `applyAutoFreeze` returns `spent`, and [`RitualsApp.js:363`](src/RitualsApp.js#L363) uses it **only** to decide whether to call the setters. A candle bought for 120–450 embers is consumed and a missed day silently covered, with no notice at all — the same "done without permission" class as the OS restore, except it is paid inventory spent by our own code | OTA | ⬜ [spec](docs/specs-open.md#imp-060--a-candle-burns-without-telling-you) |
+| IMP-059 | 🟡 **The app has one accessibility label** — `grep accessibilityLabel\|accessibilityRole` over `src/` (minus `dev/`) returns **exactly one** match. The write FAB, the app's primary action, is a `Pressable` containing only an icon — its "Write" text is a *sibling*, so TalkBack cannot name it. Interactive-controls-only scope; acceptance is writing an entry blind | OTA | ⬜ [spec](docs/specs-open.md#imp-059--the-app-has-one-accessibility-label) |
+| IMP-058 | ✨ **Prompt packs** — grief / gratitude / change, as `settings.promptPack`. Nearly free because `selectPrompt` already takes the pool as a parameter; the catch is that `valid()` checks the deck by **length only**, so switching between same-length packs silently breaks the no-repeat guarantee. **Free, not Plus** — reasoning in the spec | OTA | ⬜ [spec](docs/specs-open.md#imp-058--prompt-packs) |
 
 ---
 
