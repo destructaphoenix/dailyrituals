@@ -4,7 +4,7 @@
 // Cosmetics only — achievements stay earned, never bought.
 
 import React from 'react';
-import { View, ScrollView, Pressable } from 'react-native';
+import { View, ScrollView, Pressable, useWindowDimensions } from 'react-native';
 import { useTheme } from '../theme';
 import { T } from '../ui';
 import { Chevron, Ember, Check, Candle, Sun } from '../icons';
@@ -19,6 +19,14 @@ export default function Shop({
 }) {
   const t = useTheme();
   const c = t.colors;
+
+  // Android's Modal is a Dialog whose window size isn't known on the first
+  // measure pass, so `flex: 1` bounds nothing and this View sizes to its
+  // content — leaving the ScrollView as tall as its content, with no overflow
+  // to scroll. A later pass usually corrects it; when it doesn't, the Shop is
+  // stuck unscrollable. maxHeight caps us at the viewport from the very first
+  // pass, so the ScrollView is always bounded and the correction is optional.
+  const { height: winH } = useWindowDimensions();
 
   const palState = (p) => p.id === activePalette ? 'active'
     : ownedPalettes.includes(p.id) ? 'owned'
@@ -40,7 +48,9 @@ export default function Shop({
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: c.cream, paddingTop: insets.top }}>
+    <View
+      style={{ flex: 1, maxHeight: winH, backgroundColor: c.cream, paddingTop: insets.top }}
+    >
       {/* Top bar. The title is absolutely centred rather than laid out between the
           back button and the ember pill: those two differ in width, so space-between
           would centre "Shop" in the leftover gap and visibly push it off-centre. */}
