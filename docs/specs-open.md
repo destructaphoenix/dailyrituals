@@ -27,6 +27,7 @@
 | 1 | [IMP-050 — every mood gets a face](#imp-050--every-mood-gets-a-face) | OTA |
 | 2 | [IMP-051 — the keyboard stops eating the Next button](#imp-051--the-keyboard-stops-eating-the-next-button) | OTA |
 | 3 | [IMP-052 — tap a day, read it](#imp-052--tap-a-day-read-it) | OTA |
+| 4 | [IMP-053 — search shows you the match](#imp-053--search-shows-you-the-match) | OTA |
 
 > **IMP-052 must be built AFTER IMP-050.** Both rewrite `ArchiveScreen`'s `Heat`, and IMP-052 relies on
 > the `cell.moods` field IMP-050 introduces. Taking them out of order means a merge conflict in a file
@@ -370,3 +371,95 @@ strip on Home tappable (different component, different spec, ask the owner first
 change `ReadingSheet` · touch the quest logic beyond reusing `openEntry`.
 
 **Commit:** `feat(archive): tap a day on either heatmap to read it (IMP-052)`
+
+---
+
+### IMP-053 — search shows you the match
+
+**Lane:** OTA · **Free/Plus:** free (retrieval — a user's own words are never gated) · **Origin:** found
+while reviewing IMP-050, 2026-08-09; owner picked it as the next spec.
+
+**No ordering dependency**, but it lands in the same result card IMP-050 edits. If IMP-050 has not shipped
+yet, **do not touch the mood chips at [`ArchiveScreen.js:94`](../src/screens/ArchiveScreen.js#L94)** — this
+spec's changes sit above them.
+
+**The problem.** [`ArchiveScreen.js:89`](../src/screens/ArchiveScreen.js#L89) renders every result card the
+same way, whether you are browsing or searching:
+`<T … numberOfLines={2}>{e.did}</T>` — **always the first two lines of `did`, unconditionally.**
+
+But [`searchEntries`](../src/insights/search.js#L28) matches against
+`normalize(`${e.did} ${e.wished}`)`. So a hit in `wished`, or a hit in the fourth paragraph of `did`,
+produces a card whose visible text **does not contain the search term anywhere**. The user is shown a list
+of days and left to open each one to find out why it is there. There is no snippet function in
+`search.js` — the whole module returns entries and nothing else.
+
+IMP-035 built the retrieval engine and then hid its output. This is the missing half, and the playbook's
+product thesis is explicit that *"search is the highest-value non-design task in the codebase."*
+
+**⚠️ The one hard part, and it is a correctness trap.** You cannot find the match in the normalized string
+and slice the original at that index. [`foldDiacritics`](../src/insights/search.js#L7) is
+`normalize('NFD')` + strip combining marks, which **changes the string's length**: `'café'` is 4 code
+points, its NFD form is 5, and the folded result is 4 again — but a string containing several accents
+drifts by a different amount at every accent. Emoji make it worse: they are surrogate pairs, so UTF-16
+indices and code-point indices disagree the moment anyone writes 🎂 in their journal. **A naive
+`indexOf` on the folded string will highlight the wrong characters, and it will do it only for users who
+write accents or emoji — i.e. it will look perfect in testing and be wrong in the owner's own market.**
+
+The fix is a **length-preserving, per-code-point fold**, so folded index *n* always maps to original code
+point *n*.
+
+**Decided design, do not re-litigate.**
+
+- **A new pure module, `searchEntries` untouched.** Its filtering behaviour is shipped and tested; this
+  spec adds a renderer's helper beside it and changes nothing about which entries match.
+- **First match only.** No multi-highlight, no match counting.
+- **`did` wins over `wished`** when both match, and the card says which field it took the snippet from.
+- **A match that exists only across the `did`/`wished` join** (the space `searchEntries` concatenates with)
+  yields **no** snippet, and the card falls back to today's behaviour. That is a deliberate, tested,
+  documented outcome — not a bug to chase.
+
+**Steps**
+
+1. **RED first — `__tests__/insights/snippet.test.js`** against a module that does not exist yet.
+2. **GREEN — new pure [`src/insights/snippet.js`](../src/insights/snippet.js)**, importing
+   `foldDiacritics` from `search.js` (do not re-implement it). Four exports:
+   - `foldChar(ch)` — `foldDiacritics(ch).toLowerCase()`, then **its first code point**; if that is empty,
+     return `ch` unchanged. **Both guards are required**: a lone combining mark folds to `''`, and `'İ'`
+     (U+0130) lowercases to *two* code points on some engines. Either would break the 1:1 map.
+   - `foldChars(s)` — `[...String(s ?? '')].map(foldChar)`. **Exactly one output element per input code
+     point. This invariant is the whole spec; assert it directly in a test.**
+   - `indexOfSeq(hay, needle)` — naive array-substring search returning a **code-point index** or `-1`.
+     Entries are a few hundred characters; do not import or write anything cleverer than the obvious
+     double loop.
+   - `entrySnippet(entry, text, { lead = 30, tail = 200 } = {})` → `null`, or
+     `{ field: 'did' | 'wished', before, match, after, truncatedStart }`. Searches `did` then `wished`
+     **separately**; slices the **original** field by code point (`[...field].slice(a, b).join('')`);
+     `before` starts at `max(0, matchStart - lead)` with `truncatedStart` set when that clipped anything;
+     `after` runs at most `tail` code points past the match.
+   Required cases: a mid-string match · a match at index 0 (`truncatedStart` false) · case-insensitive ·
+   **searching `'cafe'` against `'un café noir'` highlights `'café'` — the accented original, not `'cafe'`**
+   · the reverse, `'café'` matching `'un cafe noir'` · **a string with an emoji before the match highlights
+   the right slice** (the surrogate-pair test — this is the one that catches UTF-16 indexing) ·
+   `foldChars(s).length === [...s].length` over a mixed string of accents, emoji and ASCII · a match only in
+   `wished` → `field: 'wished'` · a match in both → `'did'` · a needle matching only across the
+   `did`/`wished` join → `null` · empty/whitespace needle → `null` · `null`/`undefined` entry, and an entry
+   missing both fields → `null`, never throws.
+3. **[`src/screens/ArchiveScreen.js`](../src/screens/ArchiveScreen.js)** — replace the unconditional
+   `numberOfLines={2}` line at 89. When `query.text` is set **and** `entrySnippet` returns a snippet:
+   render `{truncatedStart ? '…' : ''}{before}`, then the match inside a nested
+   `<T w={800} color={c.accentDeep}>` (nesting works — [`T`](../src/ui.js#L12) is a thin `Text` wrapper and
+   always sets its own `fontFamily` and `color`, so the highlight cannot inherit a half-style), then
+   `{after}`. Keep `numberOfLines={2}` on the outer `T` — it clips the tail for free.
+   When the match came from `wished`, prefix the line with a small `c.muted` `wished` label so the user
+   knows which question it answered. **No snippet, or no text query → exactly today's rendering**, unchanged.
+4. **Component test `__tests__/screens/ArchiveResults.test.js`** (`@testing-library/react-native`):
+   searching a word that appears only in `wished` renders it **and** the `wished` label · searching a word
+   deep in `did` renders it · with no text query the card renders `e.did` as before · a mood-only filter
+   (no `text`) renders no highlight.
+5. `npm test` green (≥ 577, or ≥ whatever the specs before it left), `npx expo export --platform android` clean.
+
+**Do NOT** change `searchEntries`, `normalize` or `foldDiacritics` · tokenize the query into words (it is a
+substring search today; changing that is a different spec with different tests) · highlight more than the
+first match · add match counts, relevance scoring or sorting changes · touch `ReadingSheet`.
+
+**Commit:** `feat(archive): show the matched words in search results, not the first two lines (IMP-053)`
