@@ -22,15 +22,21 @@
 
 The live work is the **first unchecked `IMP-xxx` task in the Improvements backlog** below — its full spec is in [`docs/specs-open.md`](docs/specs-open.md), linked from its backlog row. Work that, **not** the phase ladder (8 / 10b / 11), which is **parked in [`docs/playbook.md`](docs/playbook.md)** until the owner resumes it.
 
-> **Backlog fully code-complete again; the walk queue is the live work. Updated 2026-08-09:**
+> **Two specs are queued again. Updated 2026-08-09:**
 >
-> **No spec is queued** — `docs/specs-open.md` is empty. [IMP-049](docs/build-log.md#imp-049--settings-survive-a-corrupt-restore)
-> (settings survive a corrupt restore) shipped this chat. Everything in the backlog table below is ✅. The
-> next real work is either resuming the walk queue below, the **subscription-track build window** (playbook
-> 10b step B9: revive IMP-022 Part A, the PDF perk #6), or the still-untaken **`internal` → production
-> promotion** decision (see Open items below).
+> **▶️ [IMP-050](docs/specs-open.md#imp-050--every-mood-gets-a-face) is the live task, then
+> [IMP-051](docs/specs-open.md#imp-051--the-keyboard-stops-eating-the-next-button).** Both are OTA, both
+> came from the owner walking the app on 2026-08-09, and both are self-contained — open one spec, not the
+> file. IMP-050 finishes IMP-037: custom moods currently draw **blank** everywhere because
+> [`data.js:51`](src/data.js#L51) resolves anything outside the 8 built-ins to `''`. IMP-051 is why the
+> **Next** button hides under the keyboard — three compounding causes, none of which is fixable by
+> `adjustResize`. Neither needs a `bump:native`.
 >
-> **▶️ What is actually happening right now (2026-08-09): the emulator walk of everything built since
+> Everything else in the backlog table below is ✅. The other live work is the walk queue, the
+> **subscription-track build window** (playbook 10b step B9: revive IMP-022 Part A, the PDF perk #6), or
+> the still-untaken **`internal` → production promotion** decision (see Open items below).
+>
+> **▶️ Also still open (2026-08-09): the emulator walk of everything built since
 > vc11 — IMP-033 through IMP-048, none of which has ever been run on hardware.** The walk queue, its
 > techniques and its results live in **[`docs/walk-open.md`](docs/walk-open.md)** — start there, take the
 > first ⬜ row, and open only that walk. Defects found on a walk become fresh `IMP-xxx` rows here and are
@@ -125,6 +131,8 @@ Opus scopes each owner-filed issue into a numbered `IMP-xxx` task — steps, tes
 | IMP-049 | 🟡 **Settings survive a corrupt restore** — `readBackup` validates the envelope but never the payload's *shape*; `mergeWithDefaults` is a shallow spread, so one wrong-typed key (proven: `settings.accent` as a string) replaces its default and every gradient in the app renders a native null | OTA | ✅ code-complete — full detail in build-log |
 | IMP-048 | 🔴 **Three free restores, then Plus** — trash restore was Plus-only with no disclosure: the button looked live and did nothing, and its "part of Plus" toast rendered *behind* the modal. Free 3×, stated on the page before it's spent | OTA | ✅ code-complete + **emulator-walked 2026-08-09** — full detail in build-log |
 | IMP-047 | ✨ **Deeper insights — the analysis layer** — `InsightsScreen` has **zero** `plus` checks; free and Plus see identical insights. Mood-by-weekday, seasonal patterns, mood pairings. **Plus perk #5** | OTA | ✅ code-complete — full detail in build-log |
+| IMP-050 | 🟡 **Every mood gets a face** — `moodEmoji` returns `''` for anything outside the 8 built-ins, so **every custom mood from IMP-037 draws blank** in all 7 mood surfaces, and a `moods: []` entry leaves a hole in the grid. Adds an emoji picker (40-glyph palette + typed escape hatch), two named fallback glyphs, and a shimmer for multi-mood days | OTA | ⬜ **NEXT** — [spec](docs/specs-open.md#imp-050--every-mood-gets-a-face) |
+| IMP-051 | 🔴 **The keyboard stops eating the Next button** — `KeyboardAvoidingView` is inert on Android (`behavior: undefined`), WriteFlow is inside a `Modal` whose dialog window never gets `adjustResize`, and edge-to-edge (API 36) stops the system resizing for the IME at all. The user must dismiss the keyboard for every single step | OTA | ⬜ [spec](docs/specs-open.md#imp-051--the-keyboard-stops-eating-the-next-button) |
 
 ---
 
