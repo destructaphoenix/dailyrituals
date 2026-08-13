@@ -13,7 +13,7 @@
 > re-litigate a "why", and do not improve the scope.** If a step turns out to be impossible or the code
 > contradicts the spec, **STOP** and log it to `PROGRESS.md` → Open items rather than inventing a fix.
 >
-> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **737 passed, 74 suites**), `npx expo export --platform android` clean, commit with the **exact** message given, then
+> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **739 passed, 76 suites**), `npx expo export --platform android` clean, commit with the **exact** message given, then
 > update `PROGRESS.md` (tick the backlog row, write the session note) and **move the finished spec from
 > this file into `docs/build-log.md`**.
 >
@@ -24,23 +24,20 @@
 
 | # | Spec | Lane |
 | --- | --- | --- |
-| 1 | [IMP-059 — the app has one accessibility label](#imp-059--the-app-has-one-accessibility-label) | OTA |
-| 2 | [IMP-058 — prompt packs](#imp-058--prompt-packs) | OTA |
+| 1 | [IMP-058 — prompt packs](#imp-058--prompt-packs) | OTA |
 
 > **IMP-056 is done (2026-08-10), IMP-050 is done (2026-08-10), IMP-051 is done (2026-08-10), IMP-052 is
 > done (2026-08-13), IMP-053 is done (2026-08-13), IMP-054 is done (2026-08-13), IMP-055 is done
-> (2026-08-13) and IMP-060 is done (2026-08-13) — see `docs/build-log.md`.**
+> (2026-08-13), IMP-060 is done (2026-08-13) and IMP-059 is done (2026-08-13) — see `docs/build-log.md`.**
 > **IMP-057 is still deliberately absent.** It is reserved
 > for the historical `dayKey` migration IMP-056 deferred, and it cannot be written until a real device's
 > numbers come back from the dev-panel Inspector's "Data health" reporter IMP-056 added. **Do not reuse the
 > number.**
 >
-> **No ordering constraints on the remaining two specs.** Take them in any order.
->
 > **Every spec here is code-complete at green tests. None of them ends in a walk.** A build chat and a
 > runtime walk are **two different tasks for two different chats** — where a feature needs runtime proof,
-> the spec's last step names its `WALK-nn` row in [`walk-open.md`](walk-open.md) and stops. IMP-059 →
-> WALK-14. **Do not run a walk from a build chat**, and do not read a missing walk as an unfinished spec.
+> the spec's last step names its `WALK-nn` row in [`walk-open.md`](walk-open.md). **Do not run a walk from a
+> build chat**, and do not read a missing walk as an unfinished spec.
 
 ---
 
@@ -145,65 +142,3 @@ persisted deck (one deck, reshuffled on switch, is the design) · add pack-speci
 colours · let a pack be empty.
 
 **Commit:** `feat(content): three more prompt packs, and a deck that knows which pack it belongs to (IMP-058)`
-
----
-
-### IMP-059 — the app has one accessibility label
-
-**Lane:** OTA · **Free/Plus:** N/A (quality) · **Origin:** audit during the 2026-08-09 spec session.
-
-**The problem, counted.** `grep -rn "accessibilityLabel\|accessibilityRole" src/` excluding `src/dev/`
-returns **exactly one match** — the dark-mode toggle at
-[`HomeScreen.js:64`](../src/screens/HomeScreen.js#L64). Every other control whose only child is an icon is
-announced by TalkBack as an unlabelled button, or not at all.
-
-The worst of them is **the primary action of the entire app**: the write FAB at
-[`RitualsApp.js:687`](../src/RitualsApp.js#L687) is a `Pressable` containing only `<Pencil />`. The word
-`Write` beneath it is a **sibling** `T`, not a child, so it does not label the button. A TalkBack user
-cannot find how to write an entry.
-
-**Scope — one crisp rule, so this cannot sprawl.** *Every interactive element whose accessible name is not
-already supplied by visible text inside it gets a label; every purely decorative element that could steal
-focus gets `accessibilityElementsHidden` / `importantForAccessibility="no-hide-descendants"`.* Nothing
-else. This is not a general accessibility programme, a contrast audit, or a font-scaling pass (IMP-030
-already did that one).
-
-**Steps**
-
-1. **`IconBtn` — both copies take a required `label`.** [`WriteFlow.js:178`](../src/screens/WriteFlow.js#L178)
-   and [`ReadingSheet.js:62`](../src/screens/ReadingSheet.js#L62) are the same component duplicated.
-   **Extract it once to `src/ui/IconBtn.js`** and have both import it — a shared control is exactly how the
-   next one gets a label for free. It sets `accessibilityRole="button"` and `accessibilityLabel={label}`.
-   Call sites: WriteFlow's back/close (`Close this entry` on step 0, `Back a step` after) and
-   ReadingSheet's close (`Close`).
-2. **The write FAB** — `accessibilityRole="button"`, `accessibilityLabel="Write today's entry"`. The
-   sibling `Write` text is decorative once the button is labelled: give it
-   `accessibilityElementsHidden` so TalkBack does not read it twice.
-3. **The four tabs** ([`RitualsApp.js:681`](../src/RitualsApp.js#L681) onward). They *do* carry visible
-   text, so they are readable — but selection is not announced. Add `accessibilityRole="tab"` and
-   `accessibilityState={{ selected: active }}` inside the `Tab` component, once.
-4. **Every modal's close control**, in each of the overlay screens mounted from `RitualsApp` lines 708–846
-   — `Achievements`, `Shop`, `GetEmbers`, `Paywall`, `ManageSubscription`, `PlusPerks`, `AnnualRecap`,
-   `TrashSheet`, `Celebration`, `RestoreNotice`, `RestoreOffer`, `ReminderSheet`, `NameEditModal`. Each
-   icon-only dismiss gets `accessibilityRole="button"` and a label naming what closes (`Close the shop`,
-   not a bare `Close`, where the sheet's identity is not otherwise announced).
-5. **Decorative graphics that can steal focus** — the today-ring child at
-   [`InsightsScreen.js:239`](../src/screens/InsightsScreen.js#L239) already has `pointerEvents="none"`, but
-   that does not hide it from a screen reader. Sweep the `LinearGradient` / ring / sheen decorations and mark
-   them hidden. **Do not** hide the mood emoji in a heat cell — it is content.
-6. **If [IMP-052](#imp-052--tap-a-day-read-it) has already landed, the heatmap cells are done** — it
-   specifies their role and label. Do not relabel them; check and move on.
-7. **A test that stops the regression**, `__tests__/ui/IconBtn.test.js`: `IconBtn` renders
-   `accessibilityRole="button"` and the given label · plus a `__tests__/screens/FabLabel.test.js` asserting
-   the FAB exposes its label. Two small tests are enough — the point is that the shared component now
-   carries the guarantee.
-8. `npm test` green, `npx expo export --platform android` clean. **Stop here — this spec is code-complete
-   at green tests.** Its acceptance test is a TalkBack walk, and that is
-   **[WALK-14](walk-open.md#walk-14--talkback-can-write-an-entry)**, a separate task for a separate chat.
-   Do not attempt it here.
-
-**Do NOT** add `accessibilityHint` anywhere (hints are for non-obvious outcomes and mostly add noise) ·
-change any visual layout, colour or contrast · touch font scaling (IMP-030 owns it) · add a settings toggle
-for anything · rename visible copy to suit a label.
-
-**Commit:** `feat(a11y): label every icon-only control, starting with the write button (IMP-059)`

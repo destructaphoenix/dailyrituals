@@ -1698,6 +1698,45 @@ when `spent` is 0 · touch `currentStreak` or `frozenDays` semantics.
 
 ---
 
+### IMP-059 — the app has one accessibility label   ·   Lane: OTA   ·   Status: ✅ code-complete (2026-08-13)
+
+**Free/Plus:** N/A (quality). **Origin:** audit during the 2026-08-09 spec session — `grep` for
+`accessibilityLabel`/`accessibilityRole` under `src/` (excluding `src/dev/`) returned exactly one match
+before this spec, leaving the write FAB — the app's primary action — unlabelled for TalkBack.
+
+**Built:** `WriteFlow.js` and `ReadingSheet.js` carried a byte-identical `IconBtn` with no accessible name;
+extracted once to `src/ui/IconBtn.js` (required `label` prop → `accessibilityRole="button"` +
+`accessibilityLabel`), both screens now import it and pass a label at each call site (`Close this entry` /
+`Back a step` / `Close`). The write FAB in `RitualsApp.js` got `accessibilityRole="button"` +
+`accessibilityLabel="Write today's entry"`; its sibling `Write` text (not a label — a separate `T` node) got
+`accessibilityElementsHidden` so TalkBack doesn't read it twice. The four bottom `Tab`s gained
+`accessibilityRole="tab"` + `accessibilityState={{ selected: active }}` — they already carried visible text,
+so only selection announcement was missing. Every icon-only modal-close control got a role + a label naming
+what closes (`Close the shop`, `Close Keepsakes`, `Close gather embers`, `Close Daily Rituals Plus`,
+`Close what's in Plus`, `Close your year in review`, `Close recently deleted`, `Close subscription`, `Close
+your feelings` for `MoodManager` — added even though it postdates the spec's audit list, since it's the same
+pattern IMP-055 introduced) across `Achievements`, `Shop`, `GetEmbers`, `Paywall`, `ManageSubscription`
+(`PlusFlow.js`), `PlusPerks`, `AnnualRecap`, `TrashSheet`, `MoodManager`. `Celebration`, `RestoreNotice`,
+`RestoreOffer`, `ReminderSheet` and `NameEditModal` needed no change — every dismiss on those screens already
+carries visible button text. The Lifetime heatmap's today-ring (`InsightsScreen.js`) and `Card`'s top sheen
+gradient (`ui.js`) — both `pointerEvents="none"` decorations that doesn't hide them from a screen reader —
+got `accessibilityElementsHidden` + `importantForAccessibility="no-hide-descendants"`. Both heatmaps' day
+cells were already labelled by IMP-052 — checked, not touched, per the spec's explicit note.
+
+**Tests:** `__tests__/ui/IconBtn.test.js` (role + label render) + `__tests__/screens/FabLabel.test.js`
+(mounts the full `RitualsApp` inside `SafeAreaProvider` with `expo-notifications` mocked — its reminder
+effect reaches the real native module on mount otherwise — and asserts the FAB exposes its label). `npm
+test` → **739 passed, 76 suites** (737 + 2). `npx expo export --platform android` clean.
+
+**Do NOT** (per spec, honored): add `accessibilityHint` anywhere · change layout, colour or contrast · touch
+font scaling (IMP-030's) · add a settings toggle · rename visible copy to suit a label.
+
+**Ship:** OTA, no bump — not shipped this chat (no `Release-Lane` trailer). Runtime proof is
+**[WALK-14](walk-open.md#walk-14--talkback-can-write-an-entry)** (TalkBack), a separate chat — not attempted here.
+**Commit:** `feat(a11y): label every icon-only control, starting with the write button (IMP-059)` (`fa523f3`).
+
+---
+
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
 
 > Moved out of PROGRESS.md on 2026-07-31 to keep the live cursor lean once a second spec (IMP-032) opened. These are **not** finished work. If the owner revives one, lift the block back into PROGRESS.md as the ACTIVE TRACK.
@@ -1757,6 +1796,22 @@ tests. `npm test` → **698 passed, 70 suites**; `npx expo export` clean. Also a
 `docs/build-log.md`, corrected a stale IMP-031→IMP-054 tap-routing misattribution there, and folded the
 now-resolved duplicate-reminder Open-items note into build-log's "Resolved findings". Runtime proof is
 **WALK-13**, not run this chat. NEXT: **IMP-055** (`docs/specs-open.md#imp-055--manage-your-feelings`)._
+
+_2026-08-13 (IMP-055, manage your feelings) — **code-complete, committed `6cc63ad`, not shipped.** New pure
+`src/entries/renameMood.js` (`renameMood`, `deleteMood`, `moodNameError`) follows `mutate.js`'s bag idiom:
+`renameMood` rewrites a mood name across `entries` + `trash` moods arrays, `settings.customMoods` (position
+kept) and re-keys `customMoodEmoji`, giving back untouched entries and empty-match slices by exact
+reference. `deleteMood` strips the picker entry only — entries/trash/`customMoodEmoji` pass through
+unchanged, so a day that used a deleted mood keeps both its label and its face. New
+`src/screens/MoodManager.js` (Modal sheet, `TrashSheet.js`'s idiom) lists custom moods with Edit/Remove;
+Edit reuses `MOOD_PALETTE`/`moodEmoji` from `src/data.js` **unmodified** — IMP-050 already left them shared,
+so no extraction was needed despite the spec's conditional. `YouScreen.js` gained a "Your feelings" row
+beside "Recently deleted" in the "Your journal is safe" card. `RitualsApp.js`'s `onRenameMood` calls the
+pure function then folds the (possibly new) emoji into the result under the new name — the pure function
+only knows the *old* emoji, since it re-keys rather than replaces; `onDeleteMood` is a direct pass-through.
+Both setters always fire all three of `entries`/`trash`/`settings`. 25 new tests (20 pure + 5 component).
+`npm test` → **723 passed, 72 suites**; `npx expo export --platform android` clean. NEXT: **IMP-060**
+(`docs/specs-open.md#imp-060--a-candle-burns-without-telling-you`)._
 
 _2026-08-13 (IMP-053 + workflow restructure, Opus session) — **IMP-053 code-complete, committed `f7dbca3`,
 not shipped.** New pure `src/insights/snippet.js` (`foldChar`/`foldChars`/`indexOfSeq`/`entrySnippet`) +
