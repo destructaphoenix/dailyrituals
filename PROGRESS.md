@@ -22,9 +22,9 @@
 
 The live work is the **first unchecked `IMP-xxx` task in the Improvements backlog** below — its full spec is in [`docs/specs-open.md`](docs/specs-open.md), linked from its backlog row. Work that, **not** the phase ladder (8 / 10b / 11), which is **parked in [`docs/playbook.md`](docs/playbook.md)** until the owner resumes it.
 
-> **Seven specs left — IMP-052 → IMP-060, minus 056/050/051 (done) and 057 (still reserved). Updated 2026-08-10:**
+> **Six specs left — IMP-053 → IMP-060, minus 057 (still reserved). Updated 2026-08-13:**
 >
-> **▶️ [IMP-052](docs/specs-open.md#imp-052--tap-a-day-read-it) is the live task;
+> **▶️ [IMP-053](docs/specs-open.md#imp-053--search-shows-you-the-match) is the live task;
 > take the rest in table order.** All are **OTA — none needs a `bump:native`.** Each is self-contained:
 > **open one spec, not the file.**
 >
@@ -37,11 +37,12 @@ The live work is the **first unchecked `IMP-xxx` task in the Improvements backlo
 >   missing-evening-entry defect. Walked both offset directions on the emulator. Full detail + the residual
 >   + the IMP-057 decision are in Open items below.
 > - **✅ 050 done (2026-08-10).** Custom moods (IMP-037) no longer draw blank — a 40-glyph picker + typed
->   escape hatch, two named fallback glyphs, and a shimmer for multi-mood cells. Unblocks 052 and 055.
+>   escape hatch, two named fallback glyphs, and a shimmer for multi-mood cells. Unblocked 052 and 055.
 > - **✅ 051 done (2026-08-10).** The keyboard no longer eats **Next** — a new `useKeyboardHeight()` hook
 >   replaces the inert `KeyboardAvoidingView` on Android; `ArchiveFilters.js`/`NameEditModal.js` confirmed
 >   already fine and left untouched. Walked all three WriteFlow steps on the emulator, no fallback needed.
-> - **052** makes both heatmaps tappable — the retrieval gesture the product thesis has been asking for.
+> - **✅ 052 done (2026-08-13).** Both heatmaps are tappable now — a written day opens `ReadingSheet` through
+>   a shared `openEntry` handler; missed/empty/future cells stay inert.
 > - **053** makes a search result actually contain the word you searched for.
 > - **054** fixes IMP-031's two missing halves: a foreground reminder shows nothing, and tapping one does
 >   not open the write flow.
@@ -52,10 +53,9 @@ The live work is the **first unchecked `IMP-xxx` task in the Improvements backlo
 > - **058** adds grief / gratitude / change prompt packs. **Free, not Plus** — the perk list is fixed at six
 >   by an earlier decision, and a prompt is the app helping you write *today*.
 >
-> **The two ordering constraints (052 and 055 after 050) are now cleared — 050 shipped this session.** Take
-> the remaining seven in any order. **Two need a running app, not just `npm test`** — 054 (notification
-> behaviour) and 059 (whose acceptance test is writing an entry with TalkBack on and your eyes shut). Budget
-> for that before starting either.
+> Take the remaining six in any order — no ordering constraints left. **Two need a running app, not just
+> `npm test`** — 054 (notification behaviour) and 059 (whose acceptance test is writing an entry with
+> TalkBack on and your eyes shut). Budget for that before starting either.
 >
 > Everything else in the backlog table below is ✅. The other live work is the walk queue, the
 > **subscription-track build window** (playbook 10b step B9: revive IMP-022 Part A, the PDF perk #6), or
@@ -101,7 +101,7 @@ The live work is the **first unchecked `IMP-xxx` task in the Improvements backlo
 
 **⚠️ OTA has no Play track, and never did.** `eas update` publishes a JS bundle to Expo's CDN — Google is not involved, there is no review, and `internal`/`alpha`/`beta` are meaningless to it. Delivery is gated by exactly two things: the **channel** (`production`, set in `eas.json` → `build.production.channel`) and a **matching `runtimeVersion`**. An installed build receives an OTA regardless of which Play track it was installed from. So "send OTA to internal instead of closed testing" is not a setting that exists — and OTA is already faster than any track, which is the whole reason the lane exists.
 
-**Current stack:** Expo SDK **54** · React Native **0.81.5** · React **19.1.0** · **Legacy Architecture** (`expo.newArchEnabled: false`, held deliberately — SDK 55 drops Legacy and that migration is its own future task) · `compileSdkVersion`/`targetSdkVersion` **36**, `minSdkVersion` **24** · `npm test` → **638 passed, 65 suites**. Details in [`docs/playbook.md`](docs/playbook.md).
+**Current stack:** Expo SDK **54** · React Native **0.81.5** · React **19.1.0** · **Legacy Architecture** (`expo.newArchEnabled: false`, held deliberately — SDK 55 drops Legacy and that migration is its own future task) · `compileSdkVersion`/`targetSdkVersion` **36**, `minSdkVersion` **24** · `npm test` → **651 passed, 67 suites**. Details in [`docs/playbook.md`](docs/playbook.md).
 
 ---
 
@@ -159,7 +159,7 @@ Opus scopes each owner-filed issue into a numbered `IMP-xxx` task — steps, tes
 | IMP-056 | 🔴 **A day is the day you lived, not the day in Greenwich** — `dayKey` is derived in **UTC** ([`RitualsApp.js:83`](src/RitualsApp.js#L83)) while every date the user reads is **local** ([`clock.js:16`](src/time/clock.js#L16)), and both are stamped onto the same entry. In IST a 1am entry is filed under yesterday and can **silently overwrite last night's words**; at negative offsets an 8pm entry is filed under tomorrow and never appears on the grid at all. Fixes derivation only — the historical migration is deferred to IMP-057 | OTA | ✅ code-complete + **emulator-walked 2026-08-10** (both offset directions) — full detail in build-log |
 | IMP-050 | 🟡 Every mood gets a face — custom emoji picker + typed escape hatch, two fallback glyphs, multi-mood shimmer | OTA | ✅ code-complete (2026-08-10) — full detail in build-log |
 | IMP-051 | 🔴 **The keyboard stops eating the Next button** — `KeyboardAvoidingView` is inert on Android (`behavior: undefined`), WriteFlow is inside a `Modal` whose dialog window never gets `adjustResize`, and edge-to-edge (API 36) stops the system resizing for the IME at all. The user must dismiss the keyboard for every single step | OTA | ✅ code-complete + **emulator-walked 2026-08-10** — full detail in build-log |
-| IMP-052 | ✨ **Tap a day, read it** — both heatmaps (Reflections + the lifetime grid on Insights) render inert `View`s, so the densest surface in the app is unclickable and the only route to an old entry is scrolling or already remembering a word to search. **Build AFTER IMP-050** — both rewrite `Heat` | OTA | ⬜ [spec](docs/specs-open.md#imp-052--tap-a-day-read-it) |
+| IMP-052 | ✨ Tap a day, read it — both heatmaps (Reflections + the lifetime grid on Insights) are now pressable; taps open the existing `ReadingSheet` | OTA | ✅ code-complete (2026-08-13) — full detail in build-log |
 | IMP-053 | 🟡 **Search shows you the match** — the result card hard-renders the first 2 lines of `did`, but `searchEntries` matches over `did + wished`. A hit in `wished` (or deep in `did`) yields a card containing the search term **nowhere**. IMP-035 built the engine and hid its output. Watch the index-mapping trap: diacritic folding is not length-preserving | OTA | ⬜ [spec](docs/specs-open.md#imp-053--search-shows-you-the-match) |
 | IMP-054 | 🟡 **The reminder you can actually answer** — two gaps in IMP-031's subsystem: no `setNotificationHandler` (flagged 2026-07-31, never scoped) so a foreground reminder shows **nothing**, and no response listener at all, so **tapping it does not open the write flow** — it lands on whatever tab you left. Owner chose: suppress the OS banner, show the app's own Toast. **Needs an emulator walk; `npm test` cannot prove it** | OTA | ⬜ [spec](docs/specs-open.md#imp-054--the-reminder-you-can-actually-answer) |
 | IMP-055 | 🟡 **Manage your feelings** — `addCustomMood` only ever appends, so a mood typo'd at 11pm is in your picker, Insights and Annual Recap for the life of the install. Rename (rewrites across `entries` **and** `trash`), re-emoji, remove. **Build AFTER IMP-050** | OTA | ⬜ [spec](docs/specs-open.md#imp-055--manage-your-feelings) |
@@ -345,6 +345,31 @@ Also worth doing and nearly free: **"gift a year" via Play promo codes** — no 
 
 _History archived in [`docs/build-log.md`](docs/build-log.md) → "Session notes". Only the two newest notes stay here; every chat moves the older one out when it appends a new one (see DEVGUIDE Step 4)._
 
+_2026-08-13 (IMP-052, tap a day, read it) — **code-complete, committed, not shipped.** Both heatmaps
+(`ArchiveScreen.js`'s `Heat` and `InsightsScreen.js`'s `LifetimeHeat`) rendered every cell as an inert `View`;
+the only route to an old entry was scrolling the list or already remembering a search word. RED-first: new
+pure `src/entries/find.js` → `entryForDayKey(entries, dayKey)`, resolving a dayKey collision the same way
+`calendar.js`'s private `indexByDay` does (first match in array order wins, entries are newest-first) — if
+the two ever disagreed, the grid would paint one entry's mood and open a different one. `__tests__/entries/
+find.test.js` (8 cases) covers the collision case, `null`/`[]`/malformed rows, no match. Lifted the
+previously-duplicated inline open-handler in `RitualsApp.js` into one named `openEntry` const, passed to both
+`ArchiveScreen` (`onOpen`, unchanged behaviour) and a new `InsightsScreen` `onOpen` prop — one definition,
+two callers. Both `Heat` and `LifetimeHeat` now render a cell that is "written"/`done` as a `Pressable`
+(everything else stays a bare `View`, no role, no label): `hitSlop={3}`, `transform: [{ scale: pressed ? 0.92
+: 1 }]`, `accessibilityRole="button"` + a label naming the day and its moods. On press, `entryForDayKey` is
+guarded — a cell can outlive its entry by one render after a delete (IMP-036), so a miss calls nothing rather
+than throwing. The grid is deliberately not filtered by the search query. `ArchiveScreen.js`'s `Heat` is now
+also a named export so the component test could construct the "cell says done but its entry isn't in
+`entries`" stale-render case directly, without going through `buildHeatmap`. New `__tests__/screens/
+ArchiveHeat.test.js` (5 cases): written day → `onOpen` fires with that entry · missed/empty day → no press
+target at all · entry-removed-but-cell-still-done → calls nothing, doesn't throw · pressable cells expose
+`accessibilityRole="button"`, non-pressable cells expose neither role nor label. `npm test` → **651 passed, 67
+suites** (638 + 13 new); `npx expo export --platform android` clean. Full spec archived to `docs/build-log.md`;
+backlog row set to code-complete; `docs/specs-open.md`'s index updated (IMP-052 removed, 6 tasks left,
+IMP-053 now next). **Do NOT** (per spec, honored, none needed): open WriteFlow from any cell, filter the
+heatmap to the search query, touch the week strip on Home, add a long-press menu, change `ReadingSheet`.
+NEXT: **IMP-053** (search shows you the match) is the live task — open only its spec in `docs/specs-open.md`._
+
 _2026-08-10 (IMP-051, the keyboard stops eating the Next button) — **code-complete, committed, not shipped.**
 Three compounding causes on Android: `WriteFlow.js`'s `KeyboardAvoidingView` had `behavior: undefined`
 (inert), WriteFlow renders inside an RN `Modal` (a separate dialog window that never gets `adjustResize`),
@@ -377,40 +402,3 @@ owner's documented top-bar fallback was **not** needed. `npm test` → **638 pas
 `npx expo export --platform android` clean. Full spec archived to `docs/build-log.md`; backlog row set to
 code-complete; `docs/specs-open.md`'s index updated (IMP-051 removed, 7 tasks left, IMP-052 now next). NEXT:
 **IMP-052** (tap a day, read it) is the live task — open only its spec in `docs/specs-open.md`._
-
-_2026-08-10 (IMP-050, every mood gets a face) — **code-complete, committed, not shipped.**
-`moodEmoji = (m) => MOOD_EMOJI[m] || ''` in `data.js` drew a blank cell for every custom mood (IMP-037) and
-for a `moods: []` entry — two distinct causes, neither a migration (IMP-037 has never reached a device, so
-zero users have ever created a custom mood). Two named fallbacks now cover both: `NO_MOOD_EMOJI = '🌫️'` for
-`moods: []`, `CUSTOM_MOOD_FALLBACK = '✨'` for a named-but-unpictured custom mood; `moodEmoji(m, custom = {})`
-never returns `''` for any input. RED-first throughout: `__tests__/data/moodEmoji.test.js` (7 cases) against
-`src/data.js`'s new `NO_MOOD_EMOJI`/`CUSTOM_MOOD_FALLBACK`/`MOOD_PALETTE` (40 glyphs, Android-7-safe) and the
-two-argument `moodEmoji`; new pure `src/entries/emojiInput.js` (`isEmojiish`, code-point based — no `\p{...}`
-regex, Hermes's support isn't trustworthy) + 13-case test for the typed-emoji escape hatch. `WriteFlow.js`'s
-mood step gained a horizontal palette picker (default `MOOD_PALETTE[0]`, so **Add** is never blocked) plus
-the typed field, both above the existing "Name your own…" row; `addCustomMood(name, emoji)` now resets both.
-`__tests__/screens/WriteFlowMood.test.js` (7 cases, `@testing-library/react-native`) covers the picker and
-doubles as the spec's required mandatory-mood-gate regression test. `settings.customMoodEmoji: {}` added to
-`DEFAULT_SETTINGS`; `sanitizeSettings.js` gained a per-key exception matching `accent`/`reminder`'s pattern —
-keeps the map, drops only the individual bad glyphs, so one typo never costs the other custom moods (5 new
-cases). **The multi-mood shimmer** (owner decision, 2026-08-09): new pure `src/entries/moodFace.js`
-(`hashKey`/`moodFace`, 8 cases) and `src/ui/useMoodTick.js` (a shared ~2500ms tick, live only while
-`AppState` is `'active'` and reduce-motion is off, returning `seed` — not `0` — whenever it isn't ticking; 4
-cases with `jest.useFakeTimers()`). `calendar.js`'s `buildHeatmap`/`buildLifetimeHeatmap` now carry
-`moods: entry.moods || []` per cell instead of resolving a single `mood`/`emoji` — a pure date-grid helper
-has no business resolving glyphs; `ArchiveScreen.js`'s `Heat` computes its own `enabled`
-(`cells.some(c => (c.moods||[]).length > 1)`, so a still grid starts no timer) and `seed`
-(`hashKey` of today's cell), rendering `moodEmoji(moodFace(cell.moods, tick, cell.dayKey), customMoodEmoji)`.
-`__tests__/home/calendar.test.js` updated for the field-shape change — the test previously named "uses only
-the first mood when an entry carries several" was renamed to "carries every mood on the cell, in order",
-since dropping all but the first mood was itself the bug. `customMoodEmoji` threaded through all 5 mount
-points named in the spec (`InsightsScreen`→`DeeperInsights` ×2, `ArchiveScreen`, `ReadingSheet`,
-`AnnualRecap`, `WriteFlow`) plus `ArchiveFilters.js`, which now maps over `[...MOODS, ...customMoods]`
-instead of the 8 built-ins alone — a user-invented feeling can finally be searched for. `npm test` →
-**632 passed, 64 suites** (588 + 44 new); `npx expo export --platform android` clean. Full spec archived to
-`docs/build-log.md`; backlog row set to code-complete; `docs/specs-open.md`'s index updated (IMP-050
-removed, 8 tasks left, IMP-051 now next; the two constraints gating IMP-052/055 on IMP-050 are cleared).
-**Deliberately not done, per spec:** no data migration, no back-fill onto a `moods: []` entry, the heatmap
-cell itself still isn't pressable (that's IMP-052, next-but-one), no rename/delete flow for custom moods
-(that's IMP-055). NEXT: **IMP-051** (the keyboard stops eating the Next button) is the live task — open only
-its spec in `docs/specs-open.md`._
