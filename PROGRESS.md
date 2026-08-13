@@ -32,8 +32,8 @@
 runtime proof is a separate WALK row for a separate chat, so a missing walk is *not* an unfinished spec.
 Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`](docs/playbook.md).
 
-> **▶️ [IMP-058](docs/specs-open.md#imp-058--prompt-packs) is the live build task** — OTA, no `bump:native`.
-> The only spec left in the backlog.
+> **The Improvements backlog is empty of open specs** — IMP-058 (the last one) is code-complete. The next
+> chat here opens once Opus scopes a new `IMP-xxx` into `docs/specs-open.md`.
 >
 > **`IMP-057` is reserved, not missing** — the historical `dayKey` migration IMP-056 deferred. It needs a
 > real device's numbers from the dev-panel Inspector → "Data health" before it can be scoped (see Open
@@ -72,7 +72,7 @@ which track it came from.
 
 **Current stack:** Expo SDK **54** · RN **0.81.5** · React **19.1.0** · **Legacy Architecture**
 (`newArchEnabled: false`, held deliberately) · `targetSdkVersion` **36**, `minSdk` **24** · `npm test` →
-**739 passed, 76 suites**. Details in [`docs/playbook.md`](docs/playbook.md).
+**748 passed, 77 suites**. Details in [`docs/playbook.md`](docs/playbook.md).
 
 ---
 
@@ -139,7 +139,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 055 | Manage your feelings — rename / re-emoji / remove | OTA | ✅ code-complete 2026-08-13 |
 | 060 | A candle burns without telling you | OTA | ✅ code-complete 2026-08-13 |
 | 059 | The app has one accessibility label | OTA | ✅ code-complete 2026-08-13 · walk = WALK-14 |
-| **058** | **Prompt packs — grief / gratitude / change** | OTA | ⬜ [spec](docs/specs-open.md#imp-058--prompt-packs) |
+| 058 | Prompt packs — grief / gratitude / change | OTA | ✅ code-complete 2026-08-14 |
 
 ---
 
@@ -196,22 +196,6 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
-_2026-08-13 (IMP-060, a candle burns without telling you) — **code-complete, committed `83cd59d`, not
-shipped.** New pure `src/home/freezeNotice.js` (`addFreezeNotice`, `freezeNoticeCopy`) — `addFreezeNotice`
-appends+dedupes covered days into `settings.pendingFreezeNotice`, same-reference passthrough when nothing
-new; `freezeNoticeCopy` builds `{ title, body }` from the pending days + freezes left, dates via
-`dayKeyToUtcMs` (never `new Date(string)`). `applyAutoFreeze` (IMP-039) now also returns `covered` (the
-days it spent on, not just the count) — `spent` unchanged, `__tests__/home/streakFreeze.test.js` extended to
-pin it on every case. `RitualsApp.js`'s mount-only auto-freeze effect now folds `covered` into
-`pendingFreezeNotice` via `addFreezeNotice` whenever a spend occurs. New `src/screens/FreezeNoticeCard.js`
-(`TipCard`'s shape, unlit `Candle` icon) renders on Home directly above `OnThisDayCard` whenever
-`pendingFreezeNotice` is non-empty — freeze notice outranks the memory card when both would show, per spec.
-Dismiss clears `pendingFreezeNotice` to `[]`. 14 new tests (9 pure + 5 component). `npm test` → **737
-passed, 74 suites**; `npx expo export --platform android` clean. Archived IMP-060's spec to
-`docs/build-log.md`, removed its `specs-open.md` index row and updated the "done" list there. NEXT: the
-backlog is down to **IMP-058** and **IMP-059** — no ordering constraint, take either
-(`docs/specs-open.md`)._
-
 _2026-08-14 (IMP-059, the app has one accessibility label) — **code-complete, committed `fa523f3`, not
 shipped.** New `src/ui/IconBtn.js` replaces the byte-identical copies in `WriteFlow.js`/`ReadingSheet.js`
 (required `label` prop → `accessibilityRole="button"` + `accessibilityLabel`); call sites labelled (`Close
@@ -230,3 +214,23 @@ test` → **739 passed, 76 suites**; `npx expo export --platform android` clean.
 `docs/build-log.md`, moved the IMP-055 session note there too (this file's 2-note budget), removed
 IMP-059's `specs-open.md` index row. Stop point per spec: TalkBack walk is **WALK-14**, not attempted this
 chat. NEXT: **IMP-058** (`docs/specs-open.md#imp-058--prompt-packs`) — the only spec left in the backlog._
+
+_2026-08-14 (IMP-058, prompt packs) — **code-complete, committed `8c5755a`, not shipped.** Fixed the
+same-length pack-switch trap first: `valid(deck, len, packId)` in `src/content/deck.js` now also requires
+`deck.pack === packId`; `selectPrompt(pool, deck, day, packId = 'everyday')` stores `pack` on the deck state
+and reinitializes on a pack mismatch, a corrupt deck, **or** a pre-058 deck with no `pack` field (the free
+one-reshuffle migration). New `src/content/packs.js` exports `PROMPT_PACKS` (`everyday` reusing the existing
+60 `PROMPTS` untouched, plus 20 new prompts each for `grief`/`gratitude`/`change`, used verbatim from spec)
+and `packById(id)` falling back to `everyday` for an unknown id. `settings.promptPack` defaults to
+`'everyday'` in `theme.js` — no `sanitizeSettings` exception needed. `RitualsApp.js`'s prompt-deck `useMemo`
+now reads `selectPrompt(packById(settings.promptPack).prompts, promptDeck, dayNumber(), settings.promptPack)`.
+New `src/screens/PromptPacks.js` — a small `ReminderSheet`-shaped bottom sheet listing all four packs (name +
+blurb + sample prompt, active one ringed, "Changing packs reshuffles — you will not lose anything." stated
+plainly) — wired via a new "Writing prompts" row in `YouScreen.js`'s Preferences card (next to Voice) and a
+`promptPacksOpen` modal in `RitualsApp.js`. 9 new tests (7 deck pack-tracking cases + `PromptPacks.test.js`:
+all four packs render, selecting calls the setter with its id, active pack marked). `npm test` → **748
+passed, 77 suites**; `npx expo export --platform android` clean. Archived IMP-058's spec to
+`docs/build-log.md` and trimmed `docs/specs-open.md` back to an empty index (its "done" list note updated),
+moved the IMP-060 session note into `docs/build-log.md` too (this file's 2-note budget). NEXT: **the
+Improvements backlog has no open spec** — the next chat here waits on Opus to scope a new `IMP-xxx` into
+`docs/specs-open.md`, or take the first unchecked phase-ladder task if the owner redirects there._

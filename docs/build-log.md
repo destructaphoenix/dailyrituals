@@ -1737,6 +1737,53 @@ font scaling (IMP-030's) · add a settings toggle · rename visible copy to suit
 
 ---
 
+### IMP-058 — prompt packs   ·   Lane: OTA   ·   Status: ✅ code-complete (2026-08-14)
+
+**Free/Plus:** free (decided — perk list stays fixed at six; a prompt is the app speaking to you at the
+moment of writing, the free half of the free/Plus split). **Origin:** owner asked what prompt packs were,
+2026-08-09.
+
+**Built:** `selectPrompt(pool, deck, day)` already took the pool as a parameter — a "pack" is just a named
+array, so the whole feature was making that parameter a setting. **The trap fixed first (step 1):**
+`valid(deck, len)` in [`src/content/deck.js`](../src/content/deck.js) validated by length only, so switching
+between two same-length packs silently carried the old pack's shuffle order into the new pool. `valid()` now
+also takes `packId` and requires `deck.pack === packId`; `selectPrompt(pool, deck, day, packId = 'everyday')`
+stores `pack` on the deck state and rejects (reinitializes) a deck from another pack, a corrupt deck, or a
+pre-058 deck with no `pack` field at all (the free one-reshuffle migration). New
+[`src/content/packs.js`](../src/content/packs.js) exports `PROMPT_PACKS` (`{ id, name, blurb, prompts }`) and
+`packById(id)`, falling back to `everyday` for an unknown id so a restored setting naming a pack this build
+doesn't have can never blank the write card. `everyday` reuses the existing 60 `PROMPTS` from `prompts.js`
+untouched; `grief`, `gratitude` and `change` are 20 new prompts each, used verbatim from the spec.
+`settings.promptPack` defaults to `'everyday'` in [`theme.js`](../src/theme.js) — no `sanitizeSettings`
+exception needed, generic shape-comparison already handles a string default.
+[`RitualsApp.js`](../src/RitualsApp.js)'s prompt-deck `useMemo` now reads
+`selectPrompt(packById(settings.promptPack).prompts, promptDeck, dayNumber(), settings.promptPack)`, keyed on
+`[promptDeck, settings.promptPack]`; the `PROMPTS` import there was replaced by `packById`. New
+[`src/screens/PromptPacks.js`](../src/screens/PromptPacks.js) — a small bottom sheet in `ReminderSheet`'s
+shape (not a full-screen `MoodManager`-style sheet, since it's a short pick-one-of-four list) — renders each
+pack's name, blurb and first prompt as a sample, rings the active one, states plainly "Changing packs
+reshuffles — you will not lose anything.", and calls `onSelect(id)` on tap (no self-close — the caller's
+`onSelect` both writes the setting and closes the modal). Wired via a new `Writing prompts` row in
+`YouScreen.js`'s **Preferences** card (next to Voice — both shape the writing experience), and a
+`promptPacksOpen` modal in `RitualsApp.js` alongside the sibling sheets.
+
+**Tests:** `__tests__/content/deck.test.js` extended — 7 new cases (pack tagging/default, same-pack
+advance, cross-pack same-length rejection, no-`pack`-field migration, same-day same-reference with a
+`packId`, empty pool with a `packId`). `__tests__/screens/PromptPacks.test.js` — all four packs render,
+selecting a pack calls the setter with its id, the active pack is marked (2px vs 1.5px border). `npm test` →
+**748 passed, 77 suites** (739 + 9). `npx expo export --platform android` clean.
+
+**Do NOT** (per spec, honored): gate any pack behind Plus · rewrite or reorder the existing 60 `PROMPTS` ·
+give each pack its own persisted deck (one deck, reshuffled on switch) · add pack-specific mood lists, themes
+or colours · let a pack be empty.
+
+**Ship:** OTA, no bump — not shipped this chat (no `Release-Lane` trailer). No runtime walk named by the
+spec (pure JS + a picker, same class as other OTA-only specs).
+**Commit:** `feat(content): three more prompt packs, and a deck that knows which pack it belongs to (IMP-058)`
+(`8c5755a`).
+
+---
+
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
 
 > Moved out of PROGRESS.md on 2026-07-31 to keep the live cursor lean once a second spec (IMP-032) opened. These are **not** finished work. If the owner revives one, lift the block back into PROGRESS.md as the ACTIVE TRACK.
@@ -1781,6 +1828,22 @@ font scaling (IMP-030's) · add a settings toggle · rename visible copy to suit
 ## Session notes (archived from PROGRESS.md)
 
 _Append-only handoff log moved out of PROGRESS.md to keep it light. Newest 1–2 notes stay live in PROGRESS.md; everything else is here. Git history is the full record._
+
+_2026-08-13 (IMP-060, a candle burns without telling you) — **code-complete, committed `83cd59d`, not
+shipped.** New pure `src/home/freezeNotice.js` (`addFreezeNotice`, `freezeNoticeCopy`) — `addFreezeNotice`
+appends+dedupes covered days into `settings.pendingFreezeNotice`, same-reference passthrough when nothing
+new; `freezeNoticeCopy` builds `{ title, body }` from the pending days + freezes left, dates via
+`dayKeyToUtcMs` (never `new Date(string)`). `applyAutoFreeze` (IMP-039) now also returns `covered` (the
+days it spent on, not just the count) — `spent` unchanged, `__tests__/home/streakFreeze.test.js` extended to
+pin it on every case. `RitualsApp.js`'s mount-only auto-freeze effect now folds `covered` into
+`pendingFreezeNotice` via `addFreezeNotice` whenever a spend occurs. New `src/screens/FreezeNoticeCard.js`
+(`TipCard`'s shape, unlit `Candle` icon) renders on Home directly above `OnThisDayCard` whenever
+`pendingFreezeNotice` is non-empty — freeze notice outranks the memory card when both would show, per spec.
+Dismiss clears `pendingFreezeNotice` to `[]`. 14 new tests (9 pure + 5 component). `npm test` → **737
+passed, 74 suites**; `npx expo export --platform android` clean. Archived IMP-060's spec to
+`docs/build-log.md`, removed its `specs-open.md` index row and updated the "done" list there. NEXT: the
+backlog is down to **IMP-058** and **IMP-059** — no ordering constraint, take either
+(`docs/specs-open.md`)._
 
 _2026-08-13 (IMP-054, the reminder you can actually answer) — **code-complete, committed `18d8c2e`, not
 shipped.** New pure `src/reminders/route.js` (`isOurReminder`, `reminderAction`) decides what a reminder
