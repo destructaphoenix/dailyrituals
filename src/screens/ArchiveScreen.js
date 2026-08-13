@@ -8,6 +8,7 @@ import { moodEmoji } from '../data';
 import { buildHeatmap } from '../home/calendar';
 import { searchEntries } from '../insights/search';
 import { moodFace, hashKey } from '../entries/moodFace';
+import { entryForDayKey } from '../entries/find';
 import { useMoodTick } from '../ui/useMoodTick';
 import ArchiveFilters from './ArchiveFilters';
 import TipCard from './TipCard';
@@ -55,7 +56,7 @@ export default function ArchiveScreen({ copy, mode, entries, onOpen, tip, onDism
             <T d w={700} color={c.ink} style={{ fontSize: 15 }}>Last 5 weeks</T>
             <T w={700} color={c.muted} style={{ fontSize: 12 }}>{entries.length} kept</T>
           </View>
-          <Heat cells={heat} customMoodEmoji={customMoodEmoji} />
+          <Heat cells={heat} entries={entries} onOpen={onOpen} customMoodEmoji={customMoodEmoji} />
         </Card>
       </View>
 
@@ -111,7 +112,7 @@ export default function ArchiveScreen({ copy, mode, entries, onOpen, tip, onDism
   );
 }
 
-function Heat({ cells, customMoodEmoji = {} }) {
+export function Heat({ cells, entries, onOpen, customMoodEmoji = {} }) {
   const t = useTheme();
   const c = t.colors;
   const enabled = React.useMemo(() => cells.some((cell) => (cell.moods || []).length > 1), [cells]);
@@ -125,27 +126,41 @@ function Heat({ cells, customMoodEmoji = {} }) {
         <View key={ri} style={{ flexDirection: 'row', gap: 6 }}>
           {row.map((cell, i) => {
             const isBlank = cell.empty || cell.missed;
+            const pressable = !isBlank;
+            const cellStyle = {
+              flex: 1,
+              aspectRatio: 1,
+              borderRadius: 11,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: isBlank ? 'transparent' : c.accentSoft,
+              borderWidth: isBlank ? 1.5 : cell.today ? 2 : 0,
+              borderColor: isBlank ? c.border : c.accentDeep,
+              borderStyle: isBlank ? 'dashed' : 'solid',
+            };
+            const content = cell.missed
+              ? <Text style={{ fontSize: 19, lineHeight: 23 }}>💀</Text>
+              : !cell.empty
+                ? <Text style={{ fontSize: 19, lineHeight: 23 }}>{moodEmoji(moodFace(cell.moods, tick, cell.dayKey), customMoodEmoji)}</Text>
+                : null;
+            if (!pressable) {
+              return <View key={i} style={cellStyle}>{content}</View>;
+            }
+            const label = `${cell.dayKey}, ${(cell.moods || []).join(', ') || 'no mood recorded'}`;
             return (
-              <View
+              <Pressable
                 key={i}
-                style={{
-                  flex: 1,
-                  aspectRatio: 1,
-                  borderRadius: 11,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: isBlank ? 'transparent' : c.accentSoft,
-                  borderWidth: isBlank ? 1.5 : cell.today ? 2 : 0,
-                  borderColor: isBlank ? c.border : c.accentDeep,
-                  borderStyle: isBlank ? 'dashed' : 'solid',
+                hitSlop={3}
+                accessibilityRole="button"
+                accessibilityLabel={label}
+                onPress={() => {
+                  const e = entryForDayKey(entries, cell.dayKey);
+                  if (e) onOpen(e);
                 }}
+                style={({ pressed }) => [cellStyle, { transform: [{ scale: pressed ? 0.92 : 1 }] }]}
               >
-                {cell.missed
-                  ? <Text style={{ fontSize: 19, lineHeight: 23 }}>💀</Text>
-                  : !cell.empty
-                    ? <Text style={{ fontSize: 19, lineHeight: 23 }}>{moodEmoji(moodFace(cell.moods, tick, cell.dayKey), customMoodEmoji)}</Text>
-                    : null}
-              </View>
+                {content}
+              </Pressable>
             );
           })}
         </View>

@@ -1,7 +1,7 @@
 // InsightsScreen.js — "Your record" (lifetime stats) + "Your patterns" (mood/rhythm).
 
 import React from 'react';
-import { View, ScrollView, Text } from 'react-native';
+import { View, ScrollView, Text, Pressable } from 'react-native';
 import { useTheme } from '../theme';
 import { T, Card } from '../ui';
 import { ChartIcon } from '../icons';
@@ -10,9 +10,10 @@ import { deriveInsights } from '../insights/derive';
 import { deriveLifetime } from '../insights/lifetime';
 import { cellState, monthLabelsForRows } from '../insights/heatCells';
 import { buildLifetimeHeatmap } from '../home/calendar';
+import { entryForDayKey } from '../entries/find';
 import DeeperInsights from './DeeperInsights';
 
-export default function InsightsScreen({ copy, entries = [], streak = 0, xp = 0, plus = false, plusEnabled = false, onOpenPaywall = () => {}, customMoodEmoji = {} }) {
+export default function InsightsScreen({ copy, entries = [], streak = 0, xp = 0, plus = false, plusEnabled = false, onOpenPaywall = () => {}, onOpen = () => {}, customMoodEmoji = {} }) {
   const t = useTheme();
   const c = t.colors;
 
@@ -105,7 +106,7 @@ export default function InsightsScreen({ copy, entries = [], streak = 0, xp = 0,
           {heat.length > 0 && (
             <View style={{ marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: c.border }}>
               <T w={700} color={c.muted} style={{ fontSize: 11.5, letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 12 }}>Consistency</T>
-              <LifetimeHeat rows={heat} />
+              <LifetimeHeat rows={heat} entries={entries} onOpen={onOpen} />
             </View>
           )}
         </Card>
@@ -212,7 +213,7 @@ function heatCellStyle(state, c) {
   return { backgroundColor: 'transparent', borderWidth: 0, borderColor: 'transparent' };
 }
 
-function LifetimeHeat({ rows }) {
+function LifetimeHeat({ rows, entries, onOpen }) {
   const c = useTheme().colors;
   const monthLabels = monthLabelsForRows(rows);
   return (
@@ -226,32 +227,46 @@ function LifetimeHeat({ rows }) {
             <View style={{ flex: 1, flexDirection: 'row', gap: 4 }}>
               {row.map((cell, i) => {
                 const state = cellState(cell);
-                return (
+                const pressable = state === 'done';
+                const cellStyle = {
+                  flex: 1,
+                  aspectRatio: 1,
+                  borderRadius: 4,
+                  ...heatCellStyle(state, c),
+                };
+                const ring = state === 'done' && cell.today ? (
                   <View
-                    key={i}
+                    pointerEvents="none"
                     style={{
-                      flex: 1,
-                      aspectRatio: 1,
-                      borderRadius: 4,
-                      ...heatCellStyle(state, c),
+                      position: 'absolute',
+                      top: 2,
+                      left: 2,
+                      right: 2,
+                      bottom: 2,
+                      borderRadius: 2,
+                      borderWidth: 1.5,
+                      borderColor: c.accentDeep,
                     }}
+                  />
+                ) : null;
+                if (!pressable) {
+                  return <View key={i} style={cellStyle}>{ring}</View>;
+                }
+                const label = `${cell.dayKey}, ${(cell.moods || []).join(', ') || 'no mood recorded'}`;
+                return (
+                  <Pressable
+                    key={i}
+                    hitSlop={3}
+                    accessibilityRole="button"
+                    accessibilityLabel={label}
+                    onPress={() => {
+                      const e = entryForDayKey(entries, cell.dayKey);
+                      if (e) onOpen(e);
+                    }}
+                    style={({ pressed }) => [cellStyle, { transform: [{ scale: pressed ? 0.92 : 1 }] }]}
                   >
-                    {state === 'done' && cell.today ? (
-                      <View
-                        pointerEvents="none"
-                        style={{
-                          position: 'absolute',
-                          top: 2,
-                          left: 2,
-                          right: 2,
-                          bottom: 2,
-                          borderRadius: 2,
-                          borderWidth: 1.5,
-                          borderColor: c.accentDeep,
-                        }}
-                      />
-                    ) : null}
-                  </View>
+                    {ring}
+                  </Pressable>
                 );
               })}
             </View>

@@ -343,6 +343,8 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   };
   const onOpenReminderSettings = () => Linking.openSettings();
 
+  const openEntry = (e) => { setReading(e); setQuests((qs) => markRevisited(qs, e, dayKeyOf())); };
+
   // Daily reset: clear done + quest progress when the calendar day rolls over.
   React.useEffect(() => {
     const today = dayKeyOf();
@@ -612,13 +614,14 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             plus={plus} plusEnabled={PLUS_ENABLED}
             onOpenPaywall={PLUS_ENABLED ? () => setPaywall(true) : () => {}}
             customMoodEmoji={settings.customMoodEmoji || {}}
+            onOpen={openEntry}
           />
         );
       case 'archive':
         return (
           <ArchiveScreen
             copy={copy} mode={mode} entries={entries}
-            onOpen={(e) => { setReading(e); setQuests((qs) => markRevisited(qs, e, dayKeyOf())); }}
+            onOpen={openEntry}
             tip={pendingTip('archive', seenTips)} onDismissTip={dismissTip}
             customMoods={settings.customMoods || []} customMoodEmoji={settings.customMoodEmoji || {}}
           />
