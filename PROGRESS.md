@@ -32,8 +32,9 @@
 runtime proof is a separate WALK row for a separate chat, so a missing walk is *not* an unfinished spec.
 Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`](docs/playbook.md).
 
-> **The Improvements backlog is empty of open specs** — IMP-058 (the last one) is code-complete. The next
-> chat here opens once Opus scopes a new `IMP-xxx` into `docs/specs-open.md`.
+> **One open spec: `IMP-061`** (store screenshots build themselves) — scoped 2026-08-14, spec body in
+> [`docs/specs-open.md`](docs/specs-open.md#imp-061--store-screenshots-build-themselves). **Dev-only lane:
+> no bump, no OTA, no release.** Its runtime proof is **WALK-15**, a separate chat.
 >
 > **`IMP-057` is reserved, not missing** — the historical `dayKey` migration IMP-056 deferred. It needs a
 > real device's numbers from the dev-panel Inspector → "Data health" before it can be scoped (see Open
@@ -140,6 +141,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 060 | A candle burns without telling you | OTA | ✅ code-complete 2026-08-13 |
 | 059 | The app has one accessibility label | OTA | ✅ code-complete 2026-08-13 · walk = WALK-14 |
 | 058 | Prompt packs — grief / gratitude / change | OTA | ✅ code-complete 2026-08-14 |
+| 061 | Store screenshots build themselves | Dev-only | ⬜ **open** — spec in `docs/specs-open.md`; walk = WALK-15 |
 
 ---
 

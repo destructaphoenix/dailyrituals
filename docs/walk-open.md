@@ -47,6 +47,7 @@
 | WALK-11 | [The Plus surfaces](#walk-11--the-plus-surfaces) | IMP-038, 046, 047, 043 | emulator | 👤 | ⬜ |
 | WALK-13 | [The reminder you can answer](#walk-13--the-reminder-you-can-answer) | IMP-054, **+ the duplicate-fire fix** | **device** (OEM behaviour + real doze) | 👤 | ⬜ — **blocked until IMP-054 lands** |
 | WALK-14 | [TalkBack can write an entry](#walk-14--talkback-can-write-an-entry) | IMP-059 | emulator | 👤 (gesture navigation, inherently manual) | ⬜ — **blocked until IMP-059 lands** |
+| WALK-15 | [Store screenshots regenerate](#walk-15--store-screenshots-regenerate) | IMP-061 | emulator | 🤖 mostly (adb + maestro are scriptable; the final seven PNGs need eyes) | ⬜ — **blocked until IMP-061 lands** |
 | WALK-12 | [The R8 release-variant pass](#walk-12--the-r8-release-variant-pass) | IMP-044 | **device** | 👤 | ⬜ — **do last** |
 
 ---
@@ -307,6 +308,60 @@ Enable via emulator → Settings → Accessibility → TalkBack.
 
 **If it fails:** note the exact control and what TalkBack announced instead. Scope a follow-up IMP rather
 than fixing it in the walk chat.
+
+---
+
+## WALK-15 — store screenshots regenerate
+
+**Covers:** IMP-061. **Target: emulator.** **Runner: 🤖 mostly** — steps 1–5 and 7 are `adb` and `maestro`
+commands an agent can drive, but step 6 is visual judgement on assets that go to the public, and that half
+is 👤. **Run it in a terminal window the owner can watch**, per the file's own rule.
+**Note step 4 needs a second AVD** at a different resolution — create it before starting.
+**⛔ Blocked until IMP-061 is code-complete.**
+
+**Why this is a walk and not part of the spec.** The build chat can only prove the compositor against a
+synthetic capture. Everything that can actually go wrong here — a selector that no longer matches, a
+scenario that leaves a screen empty, a keyboard covering half the WriteFlow, a status bar that ignored demo
+mode — only shows up against a running app.
+
+**Preconditions.** Maestro installed (`curl -Ls "https://get.maestro.mobile.dev" | bash`). A **debug** build
+on the emulator (`npx expo run:android`) — the harness does not exist in a release build (T6). One emulator
+attached, nothing else on `adb devices`. **`PLUS_ENABLED` stays `false`** — this walk does not use T1.
+
+**Steps + expected**
+
+1. `npm run shots` completes without a maestro failure, and `store/raw/` holds **exactly seven** PNGs.
+2. **The status bar in every raw capture reads 12:00 with a full battery and no notification icons.** If it
+   shows the real clock, demo mode did not take — some emulator images need
+   `adb shell settings put global sysui_demo_allowed 1` before the *first* broadcast, and a reboot after.
+   Fix the script, not the PNGs.
+3. **The Play-legality check.** `store/play/` holds seven PNGs and
+   `sips -g pixelWidth -g pixelHeight -g hasAlpha store/play/*.png` reports **1080 × 1920 and `hasAlpha: no`
+   for every one**. A raw 1440×3120 capture is past Play's 2:1 limit and an alpha channel is outside its
+   documented 24-bit format — either one gets the asset bounced at upload. `shots.js` asserts both itself and
+   should have thrown before reaching here; this step is confirming the guard actually fired on real data.
+4. **Change the emulator and prove the output doesn't move.** Re-run `npm run shots` on a *different* AVD
+   resolution (e.g. a Pixel 6 at 1080×2400 after a Pixel 8 Pro at 1440×3120). The seven outputs must still be
+   **exactly 1080×1920** — only the phone drawn inside them changes height. This is the whole promise of the
+   compositor; if it fails, the assets are emulator-dependent and the pipeline is not trustworthy.
+5. **Re-run the whole thing a second time.** The seven outputs must be byte-comparable in content — same
+   screens, same data. If the streak number or entry text moved between runs, the scenario is not seeding
+   deterministically and the listing cannot be regenerated reliably. *(Dates legitimately shift across a
+   midnight boundary; anything else is a defect.)*
+6. **The judgement half — open all seven and actually look.** Each must be a screen you would put in front
+   of a stranger: no keyboard covering the WriteFlow, no empty "not enough days yet" panel in Insights, no
+   half-scrolled card, the search snippet actually highlighted in `04-reflections`, no dev-harness pixel
+   anywhere, and the caption legible against the screenshot beneath it at thumbnail size.
+7. Confirm the emulator is **out of demo mode** afterwards (`adb shell am broadcast -a com.android.systemui.demo -e command exit`
+   ran via the trap) — otherwise every later walk's screenshots carry a fake clock.
+
+**Not part of this walk:** the tablet, Chromebook, Wear and TV screenshot slots in Play Console stay
+**empty** — see IMP-061's "Large screens" section for why that is the decision and not an omission.
+
+**If it fails:** record which shot and which of the two halves failed — *capture* (maestro tapped the wrong
+thing / the screen was in the wrong state) or *composition* (geometry, caption, dimensions). They live in
+different files and scope into different follow-ups. **Do not hand-edit a PNG to make the walk pass** — the
+entire point is that the set regenerates.
 
 ---
 
