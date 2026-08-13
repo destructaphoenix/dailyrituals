@@ -237,6 +237,8 @@ function LifetimeHeat({ rows, entries, onOpen }) {
                 const ring = state === 'done' && cell.today ? (
                   <View
                     pointerEvents="none"
+                    accessibilityElementsHidden
+                    importantForAccessibility="no-hide-descendants"
                     style={{
                       position: 'absolute',
                       top: 2,

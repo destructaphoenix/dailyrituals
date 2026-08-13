@@ -57,7 +57,7 @@ export default function Shop({
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingTop: 12, paddingBottom: 8 }}>
         <T d w={800} color={c.ink} pointerEvents="none"
           style={{ fontSize: 19, position: 'absolute', left: 0, right: 0, textAlign: 'center' }}>Shop</T>
-        <Pressable onPress={onClose} hitSlop={8}
+        <Pressable onPress={onClose} hitSlop={8} accessibilityRole="button" accessibilityLabel="Close the shop"
           style={({ pressed }) => ({ width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: c.ghostBtn, opacity: pressed ? 0.6 : 1 })}>
           <Chevron dir="left" size={22} color={c.ink} />
         </Pressable>

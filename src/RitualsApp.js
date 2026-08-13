@@ -764,6 +764,8 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
           <View style={{ width: 72, alignItems: 'center' }}>
             <Pressable
               onPress={() => setWriting(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Write today's entry"
               style={({ pressed }) => [
                 styles.fab,
                 { backgroundColor: c.accent, borderColor: c.cream, transform: [{ scale: pressed ? 0.93 : 1 }] },
@@ -772,7 +774,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             >
               <Pencil size={26} color={c.onAccent} />
             </Pressable>
-            <T w={800} color={c.accentDeep} maxFontSizeMultiplier={CHROME_FONT_SCALE} numberOfLines={1} style={{ fontSize: 10, marginTop: 5 }}>Write</T>
+            <T w={800} color={c.accentDeep} maxFontSizeMultiplier={CHROME_FONT_SCALE} numberOfLines={1} accessibilityElementsHidden style={{ fontSize: 10, marginTop: 5 }}>Write</T>
           </View>
 
           <Tab active={tab === 'archive'} label="Reflections" onPress={() => setTab('archive')}
@@ -988,7 +990,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
 function Tab({ active, label, icon, onPress }) {
   const t = React.useContext(ThemeContext);
   return (
-    <Pressable onPress={onPress} style={{ flex: 1, alignItems: 'center', gap: 4, paddingVertical: 2 }}>
+    <Pressable onPress={onPress} accessibilityRole="tab" accessibilityState={{ selected: active }} style={{ flex: 1, alignItems: 'center', gap: 4, paddingVertical: 2 }}>
       {icon}
       <T w={700} color={active ? t.colors.accentDeep : t.colors.muted} maxFontSizeMultiplier={CHROME_FONT_SCALE} numberOfLines={1} style={{ fontSize: 10.5 }}>{label}</T>
     </Pressable>

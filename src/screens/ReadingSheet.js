@@ -7,6 +7,7 @@ import { useTheme } from '../theme';
 import { T } from '../ui';
 import { Chevron } from '../icons';
 import { moodEmoji } from '../data';
+import IconBtn from '../ui/IconBtn';
 
 export default function ReadingSheet({ entry, copy, mode, insets, onClose, canEdit, onEdit, onDelete, customMoodEmoji = {} }) {
   const t = useTheme();
@@ -19,7 +20,7 @@ export default function ReadingSheet({ entry, copy, mode, insets, onClose, canEd
   return (
     <View style={{ flex: 1, maxHeight: winH, backgroundColor: c.cream, paddingTop: insets.top }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingTop: 14, paddingBottom: 6 }}>
-        <IconBtn onPress={onClose}><Chevron dir="left" size={22} color={c.ink} /></IconBtn>
+        <IconBtn onPress={onClose} label="Close"><Chevron dir="left" size={22} color={c.ink} /></IconBtn>
         {entry.moods && entry.moods.length > 0 ? (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, flexShrink: 1, justifyContent: 'center' }}>
             {entry.moods.map((m) => (
@@ -56,14 +57,5 @@ export default function ReadingSheet({ entry, copy, mode, insets, onClose, canEd
         ) : null}
       </ScrollView>
     </View>
-  );
-}
-
-function IconBtn({ onPress, children }) {
-  const t = useTheme();
-  return (
-    <Pressable onPress={onPress} style={{ width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: t.colors.ghostBtn }}>
-      {children}
-    </Pressable>
   );
 }

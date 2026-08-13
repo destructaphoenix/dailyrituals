@@ -61,6 +61,8 @@ export function Card({ style, children, padded, ...rest }) {
       {isNightV2 && (
         <LinearGradient
           pointerEvents="none"
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
           dither
           colors={CARD_SHEEN.colors}
           start={CARD_SHEEN.start}

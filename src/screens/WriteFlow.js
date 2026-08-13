@@ -10,6 +10,7 @@ import { MOODS, MOOD_PALETTE, moodEmoji } from '../data';
 import { isEmojiish } from '../entries/emojiInput';
 import { todayLabel } from '../time/clock';
 import { useKeyboardHeight } from '../ui/useKeyboardHeight';
+import IconBtn from '../ui/IconBtn';
 
 const countWords = (s) => (s.trim() ? s.trim().split(/\s+/).length : 0);
 
@@ -72,7 +73,7 @@ export default function WriteFlow({ copy, insets, onClose, onComplete, initial, 
     <View style={{ flex: 1, backgroundColor: c.cream, paddingTop: insets.top, paddingBottom: kb }}>
       {/* top bar */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingTop: 14, paddingBottom: 6 }}>
-        <IconBtn onPress={back}>
+        <IconBtn onPress={back} label={step === 0 ? 'Close this entry' : 'Back a step'}>
           {step === 0 ? <Close size={18} color={c.ink} /> : <Chevron dir="left" size={20} color={c.ink} />}
         </IconBtn>
         <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
@@ -228,11 +229,3 @@ function Foot({ insets, children }) {
   );
 }
 
-function IconBtn({ onPress, children }) {
-  const t = useTheme();
-  return (
-    <Pressable onPress={onPress} style={{ width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: t.colors.ghostBtn }}>
-      {children}
-    </Pressable>
-  );
-}
