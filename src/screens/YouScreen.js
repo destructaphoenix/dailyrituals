@@ -26,6 +26,7 @@ export default function YouScreen({
   pendingRestore, onReopenPendingRestore, onDiscardPendingRestore,
   reminderValue, onOpenReminder, onOpenPlusPerks,
   trashCount = 0, onOpenTrash,
+  customMoodsCount = 0, onOpenMoodManager,
   tip, onDismissTip,
   entries = [], onOpenAnnualRecap,
 }) {
@@ -244,6 +245,13 @@ export default function YouScreen({
               <Divider />
               <Row icon={<Restore size={20} color={c.accentDeep} />} label="Recently deleted"
                 value={trashCount > 0 ? String(trashCount) : undefined} onPress={onOpenTrash} />
+            </>
+          )}
+          {onOpenMoodManager && (
+            <>
+              <Divider />
+              <Row icon={<Pencil size={20} color={c.accentDeep} />} label="Your feelings"
+                value={customMoodsCount > 0 ? String(customMoodsCount) : 'None yet'} onPress={onOpenMoodManager} />
             </>
           )}
         </Card>

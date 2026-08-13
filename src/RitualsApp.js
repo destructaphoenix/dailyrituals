@@ -28,6 +28,7 @@ import RestoreOffer from './screens/RestoreOffer';
 import ReminderSheet from './screens/ReminderSheet';
 import WriteFlow from './screens/WriteFlow';
 import TrashSheet from './screens/TrashSheet';
+import MoodManager from './screens/MoodManager';
 import Celebration from './screens/Celebration';
 import Achievements from './screens/Achievements';
 import Shop from './screens/Shop';
@@ -46,6 +47,7 @@ import { pendingRestoreInventory } from './persistence/restoreQuarantine';
 import { applyCompletion } from './home/completeEntry';
 import { applyAutoFreeze } from './home/streakFreeze';
 import { applyEdit, applyDelete, applyRestore, pruneTrash, streakAfterDelete } from './entries/mutate';
+import { renameMood, deleteMood } from './entries/renameMood';
 import { restoreAccess, consumeFreeRestore } from './entries/restoreAllowance';
 import { markRevisited } from './home/markRevisited';
 import { findTodaysEntry } from './home/todaysEntry';
@@ -107,6 +109,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   const [trash, setTrash] = useState(initialState.trash ?? []);
   const [freeRestoresUsed, setFreeRestoresUsed] = useState(initialState.freeRestoresUsed ?? 0);
   const [trashOpen, setTrashOpen] = useState(false);
+  const [moodManagerOpen, setMoodManagerOpen] = useState(false);
   // Which past day WriteFlow is editing, if any — null means the normal
   // today flow (complete()/applyCompletion). Past-day edits must never go
   // through applyCompletion (see IMP-036: it would award a duplicate
@@ -477,6 +480,29 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     }));
   };
 
+  // Rewrites `from` to `to` (and its emoji) across entries, trash and
+  // settings in one go (IMP-055). All three setters fire every time — a
+  // rename that updates settings but not trash is exactly the bug renameMood
+  // exists to prevent.
+  const onRenameMood = (from, to, emoji) => {
+    const result = renameMood({ entries, trash, settings }, from, to);
+    const nextSettings = emoji
+      ? { ...result.settings, customMoodEmoji: { ...(result.settings.customMoodEmoji || {}), [to]: emoji } }
+      : result.settings;
+    setEntries(result.entries);
+    setTrash(result.trash);
+    setSettings(nextSettings);
+  };
+
+  // Removes a mood from the picker only — entries/trash that used it keep it
+  // (IMP-055).
+  const onDeleteMood = (name) => {
+    const result = deleteMood({ entries, trash, settings }, name);
+    setEntries(result.entries);
+    setTrash(result.trash);
+    setSettings(result.settings);
+  };
+
   const confirmDeleteEntry = (entry) => {
     const newStreak = streakAfterDelete(entries, entry.dayKey, dayKeyOf(), frozenDays);
     const remaining = entries.filter((e) => e.dayKey !== entry.dayKey);
@@ -685,6 +711,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             onReopenPendingRestore={() => setRestoreOfferDismissed(false)}
             onDiscardPendingRestore={handleDiscardPendingRestore}
             trashCount={trash.length} onOpenTrash={() => setTrashOpen(true)}
+            customMoodsCount={(settings.customMoods || []).length} onOpenMoodManager={() => setMoodManagerOpen(true)}
             onOpenDev={__DEV__ ? () => setShowDev(true) : undefined}
             reminderValue={reminderRowValue(settings.reminder, reminderPermission)}
             onOpenReminder={() => setReminderOpen(true)}
@@ -794,6 +821,16 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
               onRestore={restoreFromTrash} onDeleteForever={forgetFromTrash}
               plus={plus} plusEnabled={PLUS_ENABLED} freeRestoresUsed={freeRestoresUsed}
               onOpenPaywall={() => { setTrashOpen(false); setPaywall(true); }}
+            />
+          </ThemeContext.Provider>
+        </Modal>
+
+        <Modal visible={moodManagerOpen} animationType="slide" presentationStyle="overFullScreen" onRequestClose={() => setMoodManagerOpen(false)}>
+          <ThemeContext.Provider value={theme}>
+            <MoodManager
+              customMoods={settings.customMoods || []} customMoodEmoji={settings.customMoodEmoji || {}}
+              insets={insets} onClose={() => setMoodManagerOpen(false)}
+              onRenameMood={onRenameMood} onDeleteMood={onDeleteMood}
             />
           </ThemeContext.Provider>
         </Modal>
