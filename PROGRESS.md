@@ -32,12 +32,9 @@
 runtime proof is a separate WALK row for a separate chat, so a missing walk is *not* an unfinished spec.
 Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`](docs/playbook.md).
 
-> **▶️ [IMP-054](docs/specs-open.md#imp-054--the-reminder-you-can-actually-answer) is the live build task.**
-> Five specs left (054, 055, 058, 059, 060) — **all OTA, none needs a `bump:native`**, no ordering
+> **▶️ [IMP-055](docs/specs-open.md#imp-055--manage-your-feelings) is the live build task.**
+> Four specs left (055, 058, 059, 060) — **all OTA, none needs a `bump:native`**, no ordering
 > constraints, take them in table order.
->
-> **⚠️ IMP-054 step 2 quotes a stale `scheduleAt` signature** — read the ⚠️ inside that step before editing
-> `io.js`, or you will silently reintroduce the duplicate-fire bug fixed in `b773352`.
 >
 > **`IMP-057` is reserved, not missing** — the historical `dayKey` migration IMP-056 deferred. It needs a
 > real device's numbers from the dev-panel Inspector → "Data health" before it can be scoped (see Open
@@ -76,7 +73,7 @@ which track it came from.
 
 **Current stack:** Expo SDK **54** · RN **0.81.5** · React **19.1.0** · **Legacy Architecture**
 (`newArchEnabled: false`, held deliberately) · `targetSdkVersion` **36**, `minSdk` **24** · `npm test` →
-**689 passed, 69 suites**. Details in [`docs/playbook.md`](docs/playbook.md).
+**698 passed, 70 suites**. Details in [`docs/playbook.md`](docs/playbook.md).
 
 ---
 
@@ -139,7 +136,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 052 | Tap a day on either heatmap, read it | OTA | ✅ 2026-08-13 |
 | 053 | Search shows you the match (snippet + highlight) | OTA | ✅ 2026-08-13 |
 | 056 | A day is the day you lived, not the day in Greenwich | OTA | ✅ + emulator-walked 2026-08-10 |
-| **054** | **The reminder you can actually answer** | OTA | ⬜ [spec](docs/specs-open.md#imp-054--the-reminder-you-can-actually-answer) · walk = WALK-13 |
+| 054 | The reminder you can actually answer | OTA | ✅ code-complete 2026-08-13 · walk = WALK-13 |
 | **055** | **Manage your feelings — rename / re-emoji / remove** | OTA | ⬜ [spec](docs/specs-open.md#imp-055--manage-your-feelings) |
 | **060** | **A candle burns without telling you** | OTA | ⬜ [spec](docs/specs-open.md#imp-060--a-candle-burns-without-telling-you) |
 | **059** | **The app has one accessibility label** | OTA | ⬜ [spec](docs/specs-open.md#imp-059--the-app-has-one-accessibility-label) · walk = WALK-14 |
@@ -163,21 +160,6 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
   `PLUS_ENABLED` flips — it determines which Play products get created. Full argument in the playbook.
 - **`PLUS_ENABLED` must not flip until every `PLUS_PERKS` line is true.** The one remaining gap is perk #6,
   the PDF (IMP-022, deferred). Gate checklist in the playbook → Phase 10b.
-
-### 🟠 Duplicate-reminder fix landed outside the backlog (2026-08-13, `b773352`)
-
-A live defect in IMP-031's subsystem, found outside a spec and fixed as a plain `fix(reminders)` commit.
-`rearmReminders` cancels all pending notifications then re-schedules the window; overlapping triggers (a
-save mid-flight, `active` firing twice) meant two runs each cancelled then each scheduled, leaving **two
-notifications per day at the same minute**. Fixed on two levels: `reminderId(date)` →
-`rituals-reminder-{dayKey}` makes scheduling idempotent, and a `rearmLock` ref chains the runs.
-
-**⚠️ It moves a signature IMP-054 depends on.** That spec says to thread `data` through
-`scheduleAt(date, { title, body, data })`. The real signature is now
-**`scheduleAt(date, { title, body }, identifier)`** — a third *positional* argument that is load-bearing.
-`data` still goes in the second argument, so both compose: `scheduleAt(date, { title, body, data }, identifier)`.
-**Dropping `identifier` silently restores the duplicate fire.** Annotated inline in the spec. Never seen on
-a running app — **WALK-13 step 1 proves it and is runnable today**, before IMP-054.
 
 ### 🟡 IMP-056 residual + the IMP-057 decision (2026-08-10)
 
@@ -215,6 +197,21 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
+_2026-08-13 (IMP-054, the reminder you can actually answer) — **code-complete, committed `18d8c2e`, not
+shipped.** New pure `src/reminders/route.js` (`isOurReminder`, `reminderAction`) decides what a reminder
+notification means; `io.js` gained `setForegroundBehavior`/`onNotificationReceived`/`onNotificationTapped`
+(same lazy `load()` no-op guard as the rest of the file) and `RitualsApp.js` wires two new effects beside
+the existing reminder ones. Two gaps closed: a reminder firing while the app is open now shows an in-app
+Toast instead of nothing (Android drops the OS banner entirely once `shouldPlaySound: false`, which is
+unavoidable — that's *why* the Toast exists, not a bug); tapping a reminder from outside the app now opens
+WriteFlow, covering both the live-listener and cold-start (`getLastNotificationResponseAsync`) cases.
+**Composed correctly with the out-of-band duplicate-fire fix** (`b773352`) — `scheduleAt(date, { title,
+body, data }, identifier)`, all three args, confirmed against the real signature before editing. 9 new
+tests. `npm test` → **698 passed, 70 suites**; `npx expo export` clean. Also archived IMP-054's spec to
+`docs/build-log.md`, corrected a stale IMP-031→IMP-054 tap-routing misattribution there, and folded the
+now-resolved duplicate-reminder Open-items note into build-log's "Resolved findings". Runtime proof is
+**WALK-13**, not run this chat. NEXT: **IMP-055** (`docs/specs-open.md#imp-055--manage-your-feelings`)._
+
 _2026-08-13 (IMP-053 + workflow restructure, Opus session) — **IMP-053 code-complete, committed `f7dbca3`,
 not shipped.** New pure `src/insights/snippet.js` (`foldChar`/`foldChars`/`indexOfSeq`/`entrySnippet`) +
 exported `ResultLine` in `ArchiveScreen.js`: search results now quote the matched words with the hit
@@ -228,12 +225,3 @@ IMP-059 no longer end in a walk, those became WALK-13/WALK-14, and every walk ro
 (emulator/device) and runner (owner/agent). PROGRESS.md trimmed 476 → ~230 lines by moving monetization
 strategy + Phase 10b to the playbook and resolved findings to the build-log. NEXT: **IMP-054** — read the
 ⚠️ in its step 2 first._
-
-_2026-08-13 (IMP-052, tap a day, read it) — **code-complete, committed, not shipped.** Both heatmaps
-(`ArchiveScreen`'s `Heat`, `InsightsScreen`'s `LifetimeHeat`) rendered every cell as an inert `View`. New
-pure `src/entries/find.js` → `entryForDayKey`, resolving dayKey collisions the same way `calendar.js` does
-(first match wins, entries newest-first) — if the two disagreed the grid would paint one entry's mood and
-open a different one. Written/`done` cells are now `Pressable` with `accessibilityRole="button"` and a
-day+moods label; everything else stays a bare `View`. The press is guarded — a cell can outlive its entry
-by one render after a delete, so a miss calls nothing rather than throwing. Grid deliberately not filtered
-by the search query. `npm test` → 651 passed, 67 suites; export clean._

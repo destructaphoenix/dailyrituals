@@ -1561,6 +1561,54 @@ touch `ReadingSheet`.
 
 ---
 
+### IMP-054 — the reminder you can actually answer   ·   Lane: OTA   ·   Status: ✅ code-complete (2026-08-13)
+
+**Free/Plus:** free. **Origin:** the *"no `setNotificationHandler` anywhere in the tree"* finding logged
+2026-07-31 and never scoped; a second gap (no tap routing) found alongside it 2026-08-09.
+
+**Two gaps, one subsystem.** (a) A reminder that fires while the app is open showed nothing — Android drops
+the OS banner entirely once `shouldPlaySound: false`, which is unavoidable, so the decided design (owner,
+2026-08-09) suppresses the banner and shows the app's own Toast instead. (b) Tapping a reminder from outside
+the app did not open WriteFlow — there was no `addNotificationResponseReceivedListener` and no
+`getLastNotificationResponseAsync` call anywhere, so a tap just opened the app on whatever tab it was last
+left on.
+
+**Built:** new pure `src/reminders/route.js` — `isOurReminder(notification)` (true only when
+`request.content.data.kind === 'daily-reminder'`, false for null/`{}`/foreign notifications, never throws)
+and `reminderAction({ wroteToday, foreground })` → `'nudge' | 'write' | 'none'` (foreground+unwritten →
+nudge; anything already-written → none, so a finished day is never nagged or forced back into the editor —
+IMP-018 already makes today re-editable from Home; background tap+unwritten → write).
+
+Scheduled reminders are now stamped `data: { kind: 'daily-reminder' }` (`RitualsApp.js`'s `rearmReminders`),
+composed with the third positional `identifier` argument the 2026-08-13 duplicate-fire fix (`b773352`) added
+to `scheduleAt` — **`scheduleAt(date, { title, body, data }, identifier)`**; dropping `identifier` would have
+silently reintroduced two notifications a day. `io.js` gained three functions, all behind the file's
+existing lazy `load()` guard (no-ops when the native module is absent): `setForegroundBehavior()` (the
+handler returning all four required booleans false — `shouldShowAlert` is deprecated in the installed
+`expo-notifications` 0.32.17), `onNotificationReceived(cb)`, and `onNotificationTapped(cb)`, which combines
+the live listener with one `getLastNotificationResponseAsync()` check so a tap that cold-starts the app is
+still caught (the listener registers too late to see it otherwise). `RitualsApp.js` wires two new effects
+beside the existing reminder effects: one calls `setForegroundBehavior()` once (`[]` deps), the other
+subscribes both listeners with `[entries]` deps so `wroteToday` is never stale, cleaning up on unmount/re-run.
+
+**Tests:** `__tests__/reminders/route.test.js` (9 cases) — both functions' full decision tables plus
+`isOurReminder`'s null/empty/missing-content guards. `npm test` → **698 passed, 70 suites** (689 + 9).
+`npx expo export --platform android` clean.
+
+**Also fixed in this commit:** `docs/build-log.md`'s IMP-044 walk checklist misattributed tap routing to
+IMP-031, which never included it — corrected to credit IMP-054.
+
+**Do NOT** (per spec, honored): add notification categories, action buttons or a badge count · change
+`nextOccurrences`, the rolling-window design or `reminderCopy` · request permission anywhere new · make the
+Toast tappable · touch `content/reminders.js`.
+
+**Ship:** OTA, no bump — not shipped this chat (no `Release-Lane` trailer). Runtime proof is
+**WALK-13** (`docs/walk-open.md`), a separate device-only task; this spec is code-complete without it.
+**Commit:** `feat(reminders): answer the reminder — a foreground nudge instead of silence, and a tap that
+opens the write flow (IMP-054)`.
+
+---
+
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
 
 > Moved out of PROGRESS.md on 2026-07-31 to keep the live cursor lean once a second spec (IMP-032) opened. These are **not** finished work. If the owner revives one, lift the block back into PROGRESS.md as the ACTIVE TRACK.
@@ -1605,6 +1653,15 @@ touch `ReadingSheet`.
 ## Session notes (archived from PROGRESS.md)
 
 _Append-only handoff log moved out of PROGRESS.md to keep it light. Newest 1–2 notes stay live in PROGRESS.md; everything else is here. Git history is the full record._
+
+_2026-08-13 (IMP-052, tap a day, read it) — **code-complete, committed, not shipped.** Both heatmaps
+(`ArchiveScreen`'s `Heat`, `InsightsScreen`'s `LifetimeHeat`) rendered every cell as an inert `View`. New
+pure `src/entries/find.js` → `entryForDayKey`, resolving dayKey collisions the same way `calendar.js` does
+(first match wins, entries newest-first) — if the two disagreed the grid would paint one entry's mood and
+open a different one. Written/`done` cells are now `Pressable` with `accessibilityRole="button"` and a
+day+moods label; everything else stays a bare `View`. The press is guarded — a cell can outlive its entry
+by one render after a delete, so a miss calls nothing rather than throwing. Grid deliberately not filtered
+by the search query. `npm test` → 651 passed, 67 suites; export clean._
 
 _2026-08-10 (IMP-056, a day is the day you lived, not the day in Greenwich) — **code-complete, committed,
 not shipped.** `dayKey` was derived in UTC while every date the user reads is local, and both were stamped
@@ -1913,6 +1970,21 @@ The owner's words: *"the app is restored automatically (with no option given to 
 - **Fixable — what happens next.** [`RestoreNotice.js`](../src/screens/RestoreNotice.js) offers exactly two actions: **Got it** (accept) and **Restore from a file** (replace from JSON). There is **no way to reject the restored data**. A user handed a stale restore who wants to start clean has to find You tab → Reset all data on their own, and the notice never mentions it.
 
 **✅ RESOLVED — scoped as [IMP-033](docs/specs-open.md#imp-033--the-restore-is-offered-not-imposed), an open task.** The owner rejected a mere "Start fresh" button in favour of a stronger design: **quarantine** the OS-restored payload, run the app as a genuine first install (onboarding and all), then **offer** the backup with fair warnings once onboarding is done. Full spec in [`docs/specs-open.md`](docs/specs-open.md).
+
+### 🟠 Duplicate-reminder fix landed outside the backlog (2026-08-13, `b773352`) — ✅ RESOLVED, IMP-054 landed on it correctly
+
+A live defect in IMP-031's subsystem, found outside a spec and fixed as a plain `fix(reminders)` commit.
+`rearmReminders` cancels all pending notifications then re-schedules the window; overlapping triggers (a
+save mid-flight, `active` firing twice) meant two runs each cancelled then each scheduled, leaving **two
+notifications per day at the same minute**. Fixed on two levels: `reminderId(date)` →
+`rituals-reminder-{dayKey}` makes scheduling idempotent, and a `rearmLock` ref chains the runs.
+
+**It moved a signature IMP-054 depended on.** That spec said to thread `data` through
+`scheduleAt(date, { title, body, data })`. The real signature was already
+**`scheduleAt(date, { title, body }, identifier)`** — a third *positional* argument that is load-bearing.
+`data` still goes in the second argument, so both compose: `scheduleAt(date, { title, body, data }, identifier)`.
+**Dropping `identifier` would have silently restored the duplicate fire.** IMP-054 (see its own build-log
+entry) composed both correctly. **WALK-13** still proves it on a running app.
 
 ### 🟡 Finding 2026-08-02 — "Back up my journal" says nothing about the Google backup at the moment of use
 

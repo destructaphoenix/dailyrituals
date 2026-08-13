@@ -13,7 +13,7 @@
 > re-litigate a "why", and do not improve the scope.** If a step turns out to be impossible or the code
 > contradicts the spec, **STOP** and log it to `PROGRESS.md` → Open items rather than inventing a fix.
 >
-> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **689 passed, 69 suites**), `npx expo export --platform android` clean, commit with the **exact** message given, then
+> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **698 passed, 70 suites**), `npx expo export --platform android` clean, commit with the **exact** message given, then
 > update `PROGRESS.md` (tick the backlog row, write the session note) and **move the finished spec from
 > this file into `docs/build-log.md`**.
 >
@@ -24,123 +24,26 @@
 
 | # | Spec | Lane |
 | --- | --- | --- |
-| 1 | [IMP-054 — the reminder you can actually answer](#imp-054--the-reminder-you-can-actually-answer) | OTA |
-| 2 | [IMP-055 — manage your feelings](#imp-055--manage-your-feelings) | OTA |
-| 3 | [IMP-060 — a candle burns without telling you](#imp-060--a-candle-burns-without-telling-you) | OTA |
-| 4 | [IMP-059 — the app has one accessibility label](#imp-059--the-app-has-one-accessibility-label) | OTA |
-| 5 | [IMP-058 — prompt packs](#imp-058--prompt-packs) | OTA |
+| 1 | [IMP-055 — manage your feelings](#imp-055--manage-your-feelings) | OTA |
+| 2 | [IMP-060 — a candle burns without telling you](#imp-060--a-candle-burns-without-telling-you) | OTA |
+| 3 | [IMP-059 — the app has one accessibility label](#imp-059--the-app-has-one-accessibility-label) | OTA |
+| 4 | [IMP-058 — prompt packs](#imp-058--prompt-packs) | OTA |
 
 > **IMP-056 is done (2026-08-10), IMP-050 is done (2026-08-10), IMP-051 is done (2026-08-10), IMP-052 is
-> done (2026-08-13) and IMP-053 is done (2026-08-13) — see `docs/build-log.md`.** **IMP-057 is still
-> deliberately absent.** It is reserved
+> done (2026-08-13), IMP-053 is done (2026-08-13) and IMP-054 is done (2026-08-13) — see `docs/build-log.md`.**
+> **IMP-057 is still deliberately absent.** It is reserved
 > for the historical `dayKey` migration IMP-056 deferred, and it cannot be written until a real device's
 > numbers come back from the dev-panel Inspector's "Data health" reporter IMP-056 added. **Do not reuse the
 > number.**
 >
 > **The ordering constraint that gated IMP-055 on IMP-050 is now cleared** — IMP-050 landed 2026-08-10, so
-> `cell.moods`, `settings.customMoodEmoji` and the emoji palette all exist. Take the remaining five specs in
+> `cell.moods`, `settings.customMoodEmoji` and the emoji palette all exist. Take the remaining four specs in
 > any order.
 >
 > **Every spec here is code-complete at green tests. None of them ends in a walk.** A build chat and a
 > runtime walk are **two different tasks for two different chats** — where a feature needs runtime proof,
-> the spec's last step names its `WALK-nn` row in [`walk-open.md`](walk-open.md) and stops. IMP-054 →
-> WALK-13, IMP-059 → WALK-14. **Do not run a walk from a build chat**, and do not read a missing walk as an
-> unfinished spec.
-
----
-
-### IMP-054 — the reminder you can actually answer
-
-**Lane:** OTA · **Free/Plus:** free · **Origin:** the *"no `setNotificationHandler` anywhere in the tree"*
-finding logged in `PROGRESS.md` on **2026-07-31** and never scoped; a second, larger gap found alongside it
-on 2026-08-09.
-
-**Two gaps, same subsystem, one walk.**
-
-**(a) A reminder that fires while the app is open shows nothing.** `setNotificationHandler` appears
-**nowhere** in the tree — the single grep hit is the dev panel's own hint string
-([`NotifySection.js:119`](../src/dev/panel/NotifySection.js#L119)) *documenting* the absence. Under
-`expo-notifications`' default, a foreground notification on Android displays nothing at all. The behaviour
-was never chosen; it is just what happens.
-
-**(b) Tapping the reminder does not take you to the write flow.** There is no
-`addNotificationResponseReceivedListener` and no `getLastNotificationResponseAsync` call anywhere. Tapping
-the notification opens the app on whatever tab it was last left on. A notification whose entire purpose is
-*"write today's entry"* drops the user on the You tab if that is where they were. **`PROGRESS.md`'s IMP-044
-R8 walk checklist lists "reminder fires + tap routes" as if routing existed — it does not.** Correct that
-line when this ships.
-
-**API facts, verified against the installed `expo-notifications` 0.32.17 — do not copy a snippet off the
-internet, most are written for the old API.**
-
-- `shouldShowAlert` is **deprecated**. The handler must return `shouldShowBanner`, `shouldShowList`,
-  `shouldPlaySound` and `shouldSetBadge` — all four, all non-optional booleans.
-- From the package's own type docs: *"On Android, setting `shouldPlaySound: false` will result in the
-  drop-down notification alert **not** showing, no matter what the priority is."* **A silent foreground
-  banner is not achievable on Android.** This is precisely why the owner's chosen design does not use one.
-
-**Decided design (owner, 2026-08-09), do not re-litigate.** The OS banner is **suppressed** in the
-foreground and the app shows **its own Toast** instead — no sound, no system drop-down over the app you are
-already using, and it sidesteps the `shouldPlaySound` trap entirely. Tapping a reminder from outside the
-app opens **WriteFlow**.
-
-**Steps**
-
-1. **RED first — `__tests__/reminders/route.test.js` + new pure
-   [`src/reminders/route.js`](../src/reminders/route.js).** All decisions live here; zero native imports,
-   matching [`schedule.js`](../src/reminders/schedule.js)'s stated architecture. Two exports:
-   - `isOurReminder(notification)` — true only when the notification's
-     `request.content.data.kind` is `'daily-reminder'`. Cases: a matching notification · a foreign
-     notification · `null` / `{}` / a missing `content` → false, never throws.
-   - `reminderAction({ wroteToday, foreground })` → `'nudge' | 'write' | 'none'`. Foreground **and** not
-     written → `'nudge'`; foreground **and** already written → `'none'` (the user is in the app and the day
-     is done; saying anything would be nagging); background tap and not written → `'write'`; background tap
-     and already written → `'none'` (land wherever the app opens; **do not** force the editor open on a day
-     they already finished — IMP-018 already makes today re-editable from Home).
-2. **Stamp the reminders so we can recognise them.** At
-   [`RitualsApp.js:318`](../src/RitualsApp.js#L318) the `reminderCopy(settings.tone)` result is passed to
-   `reminderIO.scheduleAt`. Add `data: { kind: 'daily-reminder' }` to the scheduled content, threaded
-   through [`io.js`](../src/reminders/io.js)'s `scheduleAt(date, { title, body, data })`. Without this,
-   step 4 would hijack any other notification the app ever sends.
-   **⚠️ The signature quoted above is stale — read this before you edit it.** An out-of-band duplicate-fire
-   fix (2026-08-13, see `PROGRESS.md` → Open items) made the real signature
-   **`scheduleAt(date, { title, body }, identifier)`**, where `identifier` is a third *positional* argument
-   carrying `reminderId(date)`. It is load-bearing: dropping it reintroduces two notifications per day at
-   the same minute. `data` still goes in the **second** argument, so both changes compose — the end state is
-   `scheduleAt(date, { title, body, data }, identifier)`. **Do not remove or reorder `identifier`**, and add
-   *"exactly one banner per day, not two"* to the step-6 walk.
-3. **[`src/reminders/io.js`](../src/reminders/io.js) — three additions, and it stays "the ONLY file that
-   imports expo-notifications."** Same lazy `load()` guard as everything else in the file, each degrading
-   to a no-op when the native module is absent (Expo Go):
-   - `setForegroundBehavior()` — calls `setNotificationHandler` with
-     `{ shouldShowBanner: false, shouldShowList: false, shouldPlaySound: false, shouldSetBadge: false }`.
-     Put the Android `shouldPlaySound` fact in a comment above it so nobody "fixes" it later.
-   - `onNotificationReceived(cb)` → a subscription with `.remove()`; wraps
-     `addNotificationReceivedListener`.
-   - `onNotificationTapped(cb)` → wraps `addNotificationResponseReceivedListener`, **and** on registration
-     awaits `getLastNotificationResponseAsync()` once, firing `cb` if it returns one. Both halves are
-     required: the listener catches taps while the app runs, the last-response call catches the cold start
-     where the tap *launched* the app and the listener registered too late to see it.
-4. **Wire it in [`src/RitualsApp.js`](../src/RitualsApp.js)**, beside the existing reminder effects at
-   lines 322–327. One `useEffect` with a `[]` dependency list calls `setForegroundBehavior()` once. A
-   second subscribes both listeners and removes them on unmount. On a received notification:
-   `isOurReminder` → `reminderAction({ wroteToday, foreground: true })` → if `'nudge'`, `showToast` with
-   **`Today is still unwritten.`** On a tap: `isOurReminder` → `reminderAction({ wroteToday, foreground:
-   false })` → if `'write'`, `setWriting(true)`.
-   **Cold-start ordering needs no new plumbing** — [`App.js:103`](../App.js#L103) returns early while
-   `hydrated === null`, so `RitualsApp` cannot mount before entries exist. Do not add a readiness flag.
-5. **Fix the stale line in `PROGRESS.md`** — IMP-044's R8 walk checklist claims tap routing exists. It did
-   not until this spec. Correct it in the same commit.
-6. `npm test` green (≥ the prior count), `npx expo export --platform android` clean. **Stop here — this
-   spec is code-complete at green tests.** Its runtime proof is
-   **[WALK-13](walk-open.md#walk-13--the-reminder-you-can-answer)**, a separate task for a separate chat.
-   Do not attempt the walk in this chat, and do not treat its absence as unfinished work.
-
-**Do NOT** add notification categories, action buttons or a badge count · change `nextOccurrences`, the
-rolling-window design or `reminderCopy` · request permission anywhere new · make the Toast tappable (it is
-a nudge, not a second CTA) · touch `content/reminders.js`.
-
-**Commit:** `feat(reminders): answer the reminder — a foreground nudge instead of silence, and a tap that opens the write flow (IMP-054)`
+> the spec's last step names its `WALK-nn` row in [`walk-open.md`](walk-open.md) and stops. IMP-059 →
+> WALK-14. **Do not run a walk from a build chat**, and do not read a missing walk as an unfinished spec.
 
 ---
 
