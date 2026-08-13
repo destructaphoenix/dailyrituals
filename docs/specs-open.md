@@ -13,7 +13,7 @@
 > re-litigate a "why", and do not improve the scope.** If a step turns out to be impossible or the code
 > contradicts the spec, **STOP** and log it to `PROGRESS.md` → Open items rather than inventing a fix.
 >
-> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **723 passed, 72 suites**), `npx expo export --platform android` clean, commit with the **exact** message given, then
+> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **737 passed, 74 suites**), `npx expo export --platform android` clean, commit with the **exact** message given, then
 > update `PROGRESS.md` (tick the backlog row, write the session note) and **move the finished spec from
 > this file into `docs/build-log.md`**.
 >
@@ -24,19 +24,18 @@
 
 | # | Spec | Lane |
 | --- | --- | --- |
-| 1 | [IMP-060 — a candle burns without telling you](#imp-060--a-candle-burns-without-telling-you) | OTA |
-| 2 | [IMP-059 — the app has one accessibility label](#imp-059--the-app-has-one-accessibility-label) | OTA |
-| 3 | [IMP-058 — prompt packs](#imp-058--prompt-packs) | OTA |
+| 1 | [IMP-059 — the app has one accessibility label](#imp-059--the-app-has-one-accessibility-label) | OTA |
+| 2 | [IMP-058 — prompt packs](#imp-058--prompt-packs) | OTA |
 
 > **IMP-056 is done (2026-08-10), IMP-050 is done (2026-08-10), IMP-051 is done (2026-08-10), IMP-052 is
-> done (2026-08-13), IMP-053 is done (2026-08-13), IMP-054 is done (2026-08-13) and IMP-055 is done
-> (2026-08-13) — see `docs/build-log.md`.**
+> done (2026-08-13), IMP-053 is done (2026-08-13), IMP-054 is done (2026-08-13), IMP-055 is done
+> (2026-08-13) and IMP-060 is done (2026-08-13) — see `docs/build-log.md`.**
 > **IMP-057 is still deliberately absent.** It is reserved
 > for the historical `dayKey` migration IMP-056 deferred, and it cannot be written until a real device's
 > numbers come back from the dev-panel Inspector's "Data health" reporter IMP-056 added. **Do not reuse the
 > number.**
 >
-> **All ordering constraints on the remaining three specs are clear.** Take them in any order.
+> **No ordering constraints on the remaining two specs.** Take them in any order.
 >
 > **Every spec here is code-complete at green tests. None of them ends in a walk.** A build chat and a
 > runtime walk are **two different tasks for two different chats** — where a feature needs runtime proof,
@@ -208,67 +207,3 @@ change any visual layout, colour or contrast · touch font scaling (IMP-030 owns
 for anything · rename visible copy to suit a label.
 
 **Commit:** `feat(a11y): label every icon-only control, starting with the write button (IMP-059)`
-
----
-
-### IMP-060 — a candle burns without telling you
-
-**Lane:** OTA · **Free/Plus:** free (candles are bought with embers by anyone; Plus perk #2 only makes them
-automatic) · **Origin:** audit during the 2026-08-09 spec session, verified in code.
-
-**The problem.** [`applyAutoFreeze`](../src/home/streakFreeze.js#L14) returns `{ frozenDays, freezes, spent }`
-— and [`RitualsApp.js:363`](../src/RitualsApp.js#L363) uses `result.spent` for exactly one thing: deciding
-whether to call the setters.
-
-```
-if (result.spent > 0) { setFrozenDays(...); setFreezes(...); }
-```
-
-**Nothing tells the user.** A candle they bought for 120–450 embers is consumed, a missed day is silently
-marked as covered, and the only visible trace is a number in the Shop being lower than they remember. It
-runs on mount, so it happens before they have looked at anything.
-
-This is the same class of complaint the owner raised about the OS restoring a backup — *"it was done
-without permission"* — except here it is **inventory the user paid for**, spent by our own code. The
-mechanic itself is right and must not change; it is the silence that is wrong.
-
-**Decided design.** A dismissible card on Home, in the idiom of
-[`OnThisDayCard`](../src/screens/OnThisDayCard.js) and [`TipCard`](../src/screens/TipCard.js) — **not** a
-Toast, which the user may never see and which would compete with the restore notice on exactly the launch
-where both can fire. The spend is recorded to settings so the notice survives until it is acknowledged.
-
-**Steps**
-
-1. **RED first — `__tests__/home/freezeNotice.test.js` + new pure
-   [`src/home/freezeNotice.js`](../src/home/freezeNotice.js)**, two exports:
-   - `addFreezeNotice(pending, coveredDays)` → the new pending array, **appended and deduped, order
-     preserved**. Appending matters: the effect is mount-only, so a second spend on a later launch must not
-     erase an earlier notice the user has not read yet. Cases: empty + 1 day · existing + new days ·
-     a duplicate day is not added twice · empty input returns the same reference.
-   - `freezeNoticeCopy(days, freezesLeft)` → `{ title, body }`. Title is always
-     `A candle burned for you.` One day → ``You missed {date}. A candle spent itself to keep your streak
-     whole.`` More → ``You missed {n} days. {n} candles spent themselves to keep your streak whole.`` Then
-     the tail: `{freezesLeft} left.`, or `That was your last one.` when zero. Dates render as
-     `{d} {Mon}` from the dayKey — **parse it with `dayKeyToUtcMs`, never `new Date(string)`**, which is
-     locale-dependent. Cases: 1 day, 3 days, zero left, one left, empty array → `null`.
-2. **`settings.pendingFreezeNotice: []`** in `DEFAULT_SETTINGS`. Array default, so `sanitizeSettings` needs
-   no new exception.
-3. **Record the spend** — the effect at [`RitualsApp.js:361`](../src/RitualsApp.js#L361) also does
-   `setSettings((s) => ({ ...s, pendingFreezeNotice: addFreezeNotice(s.pendingFreezeNotice || [], covered) }))`.
-   **`applyAutoFreeze` must return which days it covered**, not just how many — add `covered: covered` to
-   its return object (`spent` stays, nothing that reads it changes) and extend
-   `__tests__/home/streakFreeze.test.js` to pin the new field.
-4. **New `src/screens/FreezeNoticeCard.js`**, rendered on Home when `pendingFreezeNotice` is non-empty.
-   Dismiss clears it to `[]`. Place it where `OnThisDayCard` sits; if both would show, **the freeze notice
-   goes first** — it is about something that was taken, and that outranks a memory.
-5. **Component test `__tests__/screens/FreezeNoticeCard.test.js`**: renders the one-day copy · renders the
-   multi-day copy · renders `That was your last one.` at zero remaining · dismiss calls the clear handler ·
-   renders nothing for an empty array.
-6. `npm test` green, `npx expo export --platform android` clean.
-
-**Do NOT** change when or how candles are spent — `applyAutoFreeze`'s logic, ordering and idempotence are
-IMP-039's and are correct · offer an undo (the day is already covered and the streak already depends on
-it) · make the card a route into the Shop (it is a notice, not an upsell) · show anything when `spent` is
-0 · touch `currentStreak` or `frozenDays` semantics.
-
-**Commit:** `feat(gamify): say so when a candle spends itself for you (IMP-060)`

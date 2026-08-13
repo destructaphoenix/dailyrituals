@@ -1654,6 +1654,48 @@ add reordering or favourites · touch `ArchiveFilters` beyond what IMP-050 alrea
 **Ship:** OTA, no bump — not shipped this chat (no `Release-Lane` trailer).
 **Commit:** `feat(entries): rename, re-emoji and remove the feelings you named yourself (IMP-055)` (`6cc63ad`).
 
+### IMP-060 — a candle burns without telling you   ·   Lane: OTA   ·   Status: ✅ code-complete (2026-08-13)
+
+**Free/Plus:** free (candles are bought with embers by anyone; Plus perk #2 only makes them automatic).
+**Origin:** audit during the 2026-08-09 spec session, verified in code.
+
+**The problem.** `applyAutoFreeze` (IMP-039 streak insurance) ran on mount and silently spent a candle to
+cover a missed day — `RitualsApp.js` used `result.spent` only to decide whether to call the setters, so a
+candle bought for 120–450 embers vanished with no visible trace beyond a lower Shop count. Same class of
+complaint the owner raised about the OS restoring a backup without asking, except this time it's inventory
+the user paid for, spent by the app's own code.
+
+**Built:** new pure `src/home/freezeNotice.js` — `addFreezeNotice(pending, coveredDays)` appends and dedupes
+covered days into the pending list, returning the same reference when nothing new is added (mount-only
+effect, so a later spend must not erase an earlier unread notice); `freezeNoticeCopy(days, freezesLeft)` →
+`{ title, body }` (`null` for an empty array), title always `A candle burned for you.`, body branches
+one-day vs multi-day counts and a `{n} left.` / `That was your last one.` tail, dates rendered `{d} {Mon}`
+via `dayKeyToUtcMs` (never `new Date(string)`, which is locale-dependent).
+
+`applyAutoFreeze` now also returns `covered` (the array of days it spent a candle on, not just the count) —
+`spent` is unchanged, existing callers untouched. `theme.js`'s `DEFAULT_SETTINGS` gained
+`pendingFreezeNotice: []`; `sanitizeSettings` needed no new case since the generic shape check already
+handles an array default. The mount effect in `RitualsApp.js` (`applyAutoFreeze`'s call site) now also folds
+`covered` into `settings.pendingFreezeNotice` via `addFreezeNotice` whenever a spend occurs.
+
+New `src/screens/FreezeNoticeCard.js` — `TipCard`'s shape (icon + title/body + close), using the existing
+`Candle` icon unlit. Renders on Home whenever `pendingFreezeNotice` is non-empty, in the slot immediately
+above `OnThisDayCard` — spec decided the freeze notice outranks it when both would show, since it's about
+something taken rather than a memory. Dismiss clears `pendingFreezeNotice` to `[]`.
+
+**Tests:** `__tests__/home/freezeNotice.test.js` (9 cases — both functions' branch tables) +
+`__tests__/home/streakFreeze.test.js` extended to pin the new `covered` field on every existing case +
+`__tests__/screens/FreezeNoticeCard.test.js` (5 — one-day copy, multi-day copy, zero-left copy, dismiss
+fires the handler, empty array renders nothing). `npm test` → **737 passed, 74 suites** (723 + 14).
+`npx expo export --platform android` clean.
+
+**Do NOT** (per spec, honored): change when or how candles are spent (`applyAutoFreeze`'s logic, ordering,
+idempotence are IMP-039's and correct) · offer an undo · make the card a route into the Shop · show anything
+when `spent` is 0 · touch `currentStreak` or `frozenDays` semantics.
+
+**Ship:** OTA, no bump — not shipped this chat (no `Release-Lane` trailer).
+**Commit:** `feat(gamify): say so when a candle spends itself for you (IMP-060)` (`83cd59d`).
+
 ---
 
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
@@ -1700,6 +1742,21 @@ add reordering or favourites · touch `ArchiveFilters` beyond what IMP-050 alrea
 ## Session notes (archived from PROGRESS.md)
 
 _Append-only handoff log moved out of PROGRESS.md to keep it light. Newest 1–2 notes stay live in PROGRESS.md; everything else is here. Git history is the full record._
+
+_2026-08-13 (IMP-054, the reminder you can actually answer) — **code-complete, committed `18d8c2e`, not
+shipped.** New pure `src/reminders/route.js` (`isOurReminder`, `reminderAction`) decides what a reminder
+notification means; `io.js` gained `setForegroundBehavior`/`onNotificationReceived`/`onNotificationTapped`
+(same lazy `load()` no-op guard as the rest of the file) and `RitualsApp.js` wires two new effects beside
+the existing reminder ones. Two gaps closed: a reminder firing while the app is open now shows an in-app
+Toast instead of nothing (Android drops the OS banner entirely once `shouldPlaySound: false`, which is
+unavoidable — that's *why* the Toast exists, not a bug); tapping a reminder from outside the app now opens
+WriteFlow, covering both the live-listener and cold-start (`getLastNotificationResponseAsync`) cases.
+**Composed correctly with the out-of-band duplicate-fire fix** (`b773352`) — `scheduleAt(date, { title,
+body, data }, identifier)`, all three args, confirmed against the real signature before editing. 9 new
+tests. `npm test` → **698 passed, 70 suites**; `npx expo export` clean. Also archived IMP-054's spec to
+`docs/build-log.md`, corrected a stale IMP-031→IMP-054 tap-routing misattribution there, and folded the
+now-resolved duplicate-reminder Open-items note into build-log's "Resolved findings". Runtime proof is
+**WALK-13**, not run this chat. NEXT: **IMP-055** (`docs/specs-open.md#imp-055--manage-your-feelings`)._
 
 _2026-08-13 (IMP-053 + workflow restructure, Opus session) — **IMP-053 code-complete, committed `f7dbca3`,
 not shipped.** New pure `src/insights/snippet.js` (`foldChar`/`foldChars`/`indexOfSeq`/`entrySnippet`) +

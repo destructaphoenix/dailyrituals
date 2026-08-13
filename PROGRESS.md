@@ -32,8 +32,8 @@
 runtime proof is a separate WALK row for a separate chat, so a missing walk is *not* an unfinished spec.
 Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`](docs/playbook.md).
 
-> **▶️ [IMP-060](docs/specs-open.md#imp-060--a-candle-burns-without-telling-you) is the live build task.**
-> Three specs left (058, 059, 060) — **all OTA, none needs a `bump:native`**, no ordering
+> **▶️ [IMP-059](docs/specs-open.md#imp-059--the-app-has-one-accessibility-label) is the live build task.**
+> Two specs left (058, 059) — **both OTA, neither needs a `bump:native`**, no ordering
 > constraints, take them in table order.
 >
 > **`IMP-057` is reserved, not missing** — the historical `dayKey` migration IMP-056 deferred. It needs a
@@ -73,7 +73,7 @@ which track it came from.
 
 **Current stack:** Expo SDK **54** · RN **0.81.5** · React **19.1.0** · **Legacy Architecture**
 (`newArchEnabled: false`, held deliberately) · `targetSdkVersion` **36**, `minSdk` **24** · `npm test` →
-**723 passed, 72 suites**. Details in [`docs/playbook.md`](docs/playbook.md).
+**737 passed, 74 suites**. Details in [`docs/playbook.md`](docs/playbook.md).
 
 ---
 
@@ -138,7 +138,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 056 | A day is the day you lived, not the day in Greenwich | OTA | ✅ + emulator-walked 2026-08-10 |
 | 054 | The reminder you can actually answer | OTA | ✅ code-complete 2026-08-13 · walk = WALK-13 |
 | 055 | Manage your feelings — rename / re-emoji / remove | OTA | ✅ code-complete 2026-08-13 |
-| **060** | **A candle burns without telling you** | OTA | ⬜ [spec](docs/specs-open.md#imp-060--a-candle-burns-without-telling-you) |
+| 060 | A candle burns without telling you | OTA | ✅ code-complete 2026-08-13 |
 | **059** | **The app has one accessibility label** | OTA | ⬜ [spec](docs/specs-open.md#imp-059--the-app-has-one-accessibility-label) · walk = WALK-14 |
 | **058** | **Prompt packs — grief / gratitude / change** | OTA | ⬜ [spec](docs/specs-open.md#imp-058--prompt-packs) |
 
@@ -197,21 +197,6 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
-_2026-08-13 (IMP-054, the reminder you can actually answer) — **code-complete, committed `18d8c2e`, not
-shipped.** New pure `src/reminders/route.js` (`isOurReminder`, `reminderAction`) decides what a reminder
-notification means; `io.js` gained `setForegroundBehavior`/`onNotificationReceived`/`onNotificationTapped`
-(same lazy `load()` no-op guard as the rest of the file) and `RitualsApp.js` wires two new effects beside
-the existing reminder ones. Two gaps closed: a reminder firing while the app is open now shows an in-app
-Toast instead of nothing (Android drops the OS banner entirely once `shouldPlaySound: false`, which is
-unavoidable — that's *why* the Toast exists, not a bug); tapping a reminder from outside the app now opens
-WriteFlow, covering both the live-listener and cold-start (`getLastNotificationResponseAsync`) cases.
-**Composed correctly with the out-of-band duplicate-fire fix** (`b773352`) — `scheduleAt(date, { title,
-body, data }, identifier)`, all three args, confirmed against the real signature before editing. 9 new
-tests. `npm test` → **698 passed, 70 suites**; `npx expo export` clean. Also archived IMP-054's spec to
-`docs/build-log.md`, corrected a stale IMP-031→IMP-054 tap-routing misattribution there, and folded the
-now-resolved duplicate-reminder Open-items note into build-log's "Resolved findings". Runtime proof is
-**WALK-13**, not run this chat. NEXT: **IMP-055** (`docs/specs-open.md#imp-055--manage-your-feelings`)._
-
 _2026-08-13 (IMP-055, manage your feelings) — **code-complete, committed `6cc63ad`, not shipped.** New pure
 `src/entries/renameMood.js` (`renameMood`, `deleteMood`, `moodNameError`) follows `mutate.js`'s bag idiom:
 `renameMood` rewrites a mood name across `entries` + `trash` moods arrays, `settings.customMoods` (position
@@ -227,3 +212,19 @@ only knows the *old* emoji, since it re-keys rather than replaces; `onDeleteMood
 Both setters always fire all three of `entries`/`trash`/`settings`. 25 new tests (20 pure + 5 component).
 `npm test` → **723 passed, 72 suites**; `npx expo export --platform android` clean. NEXT: **IMP-060**
 (`docs/specs-open.md#imp-060--a-candle-burns-without-telling-you`)._
+
+_2026-08-13 (IMP-060, a candle burns without telling you) — **code-complete, committed `83cd59d`, not
+shipped.** New pure `src/home/freezeNotice.js` (`addFreezeNotice`, `freezeNoticeCopy`) — `addFreezeNotice`
+appends+dedupes covered days into `settings.pendingFreezeNotice`, same-reference passthrough when nothing
+new; `freezeNoticeCopy` builds `{ title, body }` from the pending days + freezes left, dates via
+`dayKeyToUtcMs` (never `new Date(string)`). `applyAutoFreeze` (IMP-039) now also returns `covered` (the
+days it spent on, not just the count) — `spent` unchanged, `__tests__/home/streakFreeze.test.js` extended to
+pin it on every case. `RitualsApp.js`'s mount-only auto-freeze effect now folds `covered` into
+`pendingFreezeNotice` via `addFreezeNotice` whenever a spend occurs. New `src/screens/FreezeNoticeCard.js`
+(`TipCard`'s shape, unlit `Candle` icon) renders on Home directly above `OnThisDayCard` whenever
+`pendingFreezeNotice` is non-empty — freeze notice outranks the memory card when both would show, per spec.
+Dismiss clears `pendingFreezeNotice` to `[]`. 14 new tests (9 pure + 5 component). `npm test` → **737
+passed, 74 suites**; `npx expo export --platform android` clean. Archived IMP-060's spec to
+`docs/build-log.md`, removed its `specs-open.md` index row and updated the "done" list there. NEXT: the
+backlog is down to **IMP-058** and **IMP-059** — no ordering constraint, take either
+(`docs/specs-open.md`)._
