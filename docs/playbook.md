@@ -413,3 +413,116 @@ chat that executes it.
 - **Acceptance:** <how to confirm it works at runtime>
 - **Ship after merge:** OTA `eas update --branch production` | hold for next full build
 ```
+
+
+---
+
+## 💰 Monetization strategy + the subscription track (moved out of PROGRESS.md 2026-08-13)
+
+> Moved here to keep `PROGRESS.md` inside its size budget — it is read in full by every chat.
+> This is **reference, not history**: the open decisions below are still open. `PROGRESS.md`
+> keeps a one-line pointer to each. Nothing here has been edited in the move.
+
+### 🧭 OPEN STRATEGIC DECISION (owner, 2026-08-02) — "was local-only the right call?"
+
+The owner asked this after the purchase-recovery audit: *"I am questioning if I made the right choice by going completely offline… any user grievances (especially related to money) will have huge repercussions."*
+
+**The local-only decision is not the problem, and should not be reversed.** It was taken 2026-06-07 for the **journal** — PII, GDPR/India-DPDP deletion-and-export duties, and onboarding friction (see the `daily-rituals-local-only-decision` memory). Every one of those reasons still holds exactly as written. Nothing found in this audit touches them.
+
+**The actual flaw is narrower: selling a CONSUMABLE currency from an app with no server.** These two are fundamentally incompatible, by Google's design, not by ours — once a consumable is consumed, Play's `queryPurchasesAsync` no longer returns it, so there is **nothing left to restore**. Restoring a spent currency requires *your* server holding the balance. That is what makes ember purchases a genuine one-way lane: if a user pays for embers and loses local state, you cannot make them whole. You cannot grant remotely. The only lever is a Play refund — manual, and rating-damaging.
+
+**Subscriptions and NON-consumables do not have this problem, and need no accounts.** Play holds a durable record tied to the user's Google account, and RevenueCat restores it against **anonymous app user IDs** — no login, no email, no PII, no backend of yours. So "local-only" and "purchases that survive a wipe" are **not** in conflict. Only *consumables* are.
+
+**⚖️ Revised 2026-08-02 after the owner pushed back — *"this is supposed to be the Duolingo of daily journaling"*.** That objection is fair and the first framing of this block overweighted the restore risk. Two corrections:
+
+**1. The gamification is not what's in question.** Duolingo's revenue is overwhelmingly **subscription**; gems are a small line and mostly *earned*, and the shop's real job is to make the streak feel precious — which sells the subscription. Duolingo *can* sell gems because it has **accounts and a server**, i.e. exactly the thing this app deliberately rejected. So "the Duolingo of journaling" is fully achievable here **with every mechanic intact** — streaks, XP, levels, embers, candles, shop, achievements. The only question is whether cash buys the *currency* or buys *Plus*.
+
+**2. The real argument against cash embers is the economics, not the risk.** Actual numbers: `EMBER_GAIN = 15`/day ([`data.js:102`](../src/data.js#L102)); the entire ember-purchasable catalogue is 240 + 240 + 420 + 420 (palettes) + 300 (sky) = **1,620 embers ≈ 108 days of journaling ≈ one $9.99 pack**. So the cash-ember line has a **~$10 lifetime ceiling per user** — after which only candles (120–450) repeat — while **Plus is $29.99/yr recurring and `PLUS_PERKS` already promises "Every palette & sky — unlocked forever"**. Cash embers therefore **cannibalise the subscription that sells the same goods**, cap out at a third of one year of Plus, and carry **100% of the unrestorable-purchase liability**. That is a weak SKU on its own merits.
+
+| | Option | Consequence |
+| --- | --- | --- |
+| **A** ⭐ | **Embers earned-only; sell Plus.** Every mechanic stays; only the cash top-up SKU goes. | Keeps the whole Duolingo-shaped economy, removes the cannibalisation *and* the entire liability class. Shop copy already leans here — *"Embers also gather on their own — one for every day you keep"* ([`Shop.js:167`](../src/screens/Shop.js#L167)). Every money grievance becomes a RevenueCat restore, which already works. |
+| **B** | **Cosmetics as one-time NON-consumable IAP** ("this palette, $1.99"). | Keeps à-la-carte revenue, durable and restorable with **no accounts**. More Play products to maintain. Combines fine with A. |
+| **D** | **Sell cash embers anyway, with real mitigations.** | Legitimate and industry-normal — plenty of offline games store coin balances locally. Mitigations, in order of value: (1) **Google Play promo codes** — Play Console issues codes for in-app products, so a user with a lost balance sends their Play receipt and you send a code granting the same pack free. That is a genuine **server-less manual recourse path**, quantity-limited but ample at indie volume, and it is the concrete answer to "I'd have no way to make them whole". (2) Prompt the JSON export immediately after any cash purchase. (3) Honest copy — *"Embers live on this device"*. (4) Keep a purchase ledger in `PERSISTED_KEYS` so it rides both Auto Backup and the JSON export. Exposure is bounded by the ~$10 ceiling above. |
+| **C** | **Add a server** to hold balances. | Reverses the local-only decision and reimports the PII/legal/friction burden it was taken to avoid. **Not recommended** — the currency is not worth a backend. |
+
+**Timing is the good news.** `PLUS_ENABLED = false` ⇒ **zero paying users, zero refunds owed, zero support tickets, nothing shipped.** This is the cheapest possible moment to find it; after 10b it would be genuinely expensive. **No code decision is blocked on this today** — but it must be settled before `PLUS_ENABLED` flips, because it determines which Play products get created (playbook 10b.2–10b.5, still `TBD`).
+
+### 🚀 SUBSCRIPTION TRACK — ordered next steps (owner asked 2026-08-04)
+
+**The governing fact: BillDesk is the hard external gate, and it is ~4 weeks from expiry (window opened 2026-06-04, ≤90 days ⇒ ~2026-09-02). Play subscription products cannot be created or priced without a verified payments profile — so nothing commercial ships before it. But NONE of the product work is blocked by it.** Treat the wait as the build window; do not idle.
+
+**⚠️ Sequencing trap — flipping `PLUS_ENABLED` is a BUILD, not an OTA.** The RevenueCat key reaches the app through `app.config.js` → `expo-constants` `extra`, which is resolved from `process.env` **at build time in the EAS environment**. `scripts/check-billing-config.js` is already wired as a preflight in the build job for exactly this reason. Do not plan the flip as a JS-only OTA.
+
+**⚠️ Promote vc11 EARLY, not late.** `runtimeVersion` = `appVersion` = 1.0.5, so every OTA lands on **testers only** while the public sits on 1.0.3. All the perk work below is OTA-lane — meaning **none of it reaches real users until vc11 is promoted.** Promotion is not a "later" decision; it is a prerequisite for this whole track mattering.
+
+**🔴 PROPOSED FINAL PERK LIST (owner to approve — this is step A2).** Every line below is either already real or has a specced task. Nothing is aspirational.
+
+| # | The line the paywall carries | Backed by | State |
+| --- | --- | --- | --- |
+| 1 | **Every palette & sky — unlocked forever** | `tier: 'plus'` items | ✅ already real |
+| 2 | **Streak insurance — a candle spends itself when you miss a day** | IMP-039 (a) | ✅ built — replaces the false "3 candles every month" |
+| 3 | **On this day — your own words, brought back to you** | IMP-038 | ✅ code-complete |
+| 4 | **Your year, remembered — the Annual Recap** | **IMP-046** (was "roadmap C, unspecced") | ✅ code-complete |
+| 5 | **Deeper insights — moods, seasons and your rhythms** | **IMP-047**, over IMP-037's data | ✅ code-complete — makes dead perk #5 real |
+| 6 | **Your Book — your days, as a PDF** | IMP-022 Part A (BUILD lane) | ⬜ deferred, revive |
+
+**Cut outright: "Your whole graveyard, kept forever"** — no history limit exists, so it sells relief from a restriction that was never built, and building one would violate the never-gate-their-words line. **Cut, do not implement.**
+
+**Note the shape:** one cosmetic perk, one retention perk, four memory perks. That is the thesis — *free helps you write today, Plus gives you your years back* — expressed as a purchasable list. Keep it at six; a longer list converts worse.
+
+**PRICING TIERS (decided 2026-08-04) — three products, not four. No family plan** (a journal shares nothing, and a family tier would force accounts and reverse the local-only decision; full reasoning in [`docs/playbook.md`](docs/playbook.md)).
+
+| Product | Play type | Why |
+| --- | --- | --- |
+| **Monthly** | subscription | low-commitment entry |
+| **Annual** | subscription | the default; price it so the monthly looks expensive |
+| **Lifetime / "forever"** ⭐ | **non-consumable** (one-time) | ~2.5–3× the annual. Fits the *legacy* theme exactly, **restores with no accounts** (durable Play record), anchors the annual so it reads cheap, and captures the high-intent buyer a family tier was reaching for. **Non-consumable, never consumable** — that is what makes it restorable. |
+
+Also worth doing and nearly free: **"gift a year" via Play promo codes** — no accounts, no infrastructure, and it is the real family use case (giving a journal to someone you love).
+
+**Remaining, unblocked:**
+- **Revive IMP-022 Part A** — Your Book (the PDF export), perk #6. Already sold; still no PDF code in the tree. **BUILD lane** (new native module). The only unbuilt perk left — everything else in the A/B build window (IMP-034/035/036/037/038/046/047, the perk-list decision, `RC_ANDROID_KEY`, vc11 promotion) is done.
+- **Chase BillDesk.** Watch `onboarding@billdesk.com` and Play Console → Payments profile. Critical path; everything else is slack.
+- **Decide pricing, including the India tier.** $29.99/yr is not defensible for today's Plus. ≈₹2,500 needs its own thought — Play local tiers, not just the USD figure.
+- **Decide the trial.** The "7-day free trial" claim is hardcoded in `Paywall.js` + `PlusFlow.js` `LegalFooter`. Either configure a real 7-day offer on the Play base plan or change the copy. **Never ship it unverified.**
+
+**D — the gate before `PLUS_ENABLED` flips. All must be true:**
+- [ ] Every line in `PLUS_PERKS` is real (or deleted)
+- [ ] Play subscription products created **and active**; RevenueCat → Offerings shows `current` with packages
+- [ ] `RC_ANDROID_KEY` present in the EAS **production** environment (else the build silently ships `simService` and fakes purchases)
+- [ ] Trial copy matches the configured Play offer
+- [ ] A **real transaction** tested end-to-end on a real device via a licence tester account
+- [ ] vc11 (or later) is on the production track, so the paying public can actually reach it
+
+### 💳 Phase 10b — payments (the next real track, gated externally)
+
+- **✅✅ BillDesk APPROVED (owner reported 2026-08-04).** PA-CB seller verification is **done**; BillDesk is now working on the payment setup itself. **The 90-day window (~2026-09-02) is no longer a threat and the external gate on Phase 10b is lifted.** What this unblocks: a payments profile means Play subscription **products can be created, priced and activated** (playbook 10b.2–10b.5, still `TBD`) and RevenueCat Offerings can be wired. What it does *not* change: `PLUS_ENABLED` still must not flip until gate **D** below is fully true — approval removes the *external* blocker, not the four unbuilt perks. Remaining wait is BillDesk finishing payment setup; confirm in Play Console → **Payments profile** before creating products.
+- **Historical (resolved) — the deadlock that was:** application SUBMITTED 2026-07-30, verified 2026-08-04. The trap was circular: BillDesk PA-CB seller verification wants the **live app's Play Store URL**, payments need BillDesk, BillDesk needed a published listing. Shipping v1.0.3 broke the cycle, and the owner has now submitted the application with their details. **v1.0.3 is now live and approved**, so the listing URL resolves publicly — if BillDesk queries it during verification it will no longer 404, and the URL can be re-supplied with confidence if they ask again. **Submitted ≠ verified** — BillDesk/Google still have to approve the payments profile, and until they do, subscription products cannot be activated. Watch for mail from `onboarding@billdesk.com` and Play Console → **Payments profile**. Window opened 2026-06-04 (≤90 days ⇒ ~**2026-09-02**).
+- **Owner to confirm once the profile verifies:** whether any Play subscription products exist yet — Play Console → **Monetize → Subscriptions** (any products, and are they *active*?) and RevenueCat → **Offerings** (does `current` list packages?). Playbook 10b.2–10b.5 are still unchecked and "Play product ids" is still `TBD`.
+- **🔴 HARD BLOCKER before `PLUS_ENABLED` — ONE of SIX advertised Plus perks is not real** (perk #6, the PDF — IMP-022, deferred; the other five are built, see the perk table above). Audited 2026-08-03 against `PLUS_PERKS` ([`data.js:144`](../src/data.js#L144)), the list the paywall sells:
+
+  | # | Perk as sold | Reality |
+  | --- | --- | --- |
+  | 1 | "Every palette & sky — unlocked forever" | ✅ **REAL** — `tier: 'plus'` items unlock ([`Shop.js:25/28`](../src/screens/Shop.js#L25)). 3 palettes + 2 skies. |
+  | 2 | "Streak insurance — a candle spends itself when you miss a day" | ✅ **REAL (IMP-039)** — `applyAutoFreeze` spends a candle per missed day automatically; `currentStreak` honors `frozenDays`. The old "3 free every month" wording (a one-time grant sold as recurring) is gone from `PLUS_PERKS`. |
+  | 3 | ~~"Your whole graveyard, kept forever"~~ → "On this day — your own words, brought back to you" | ✅ **REAL (IMP-038)** — the meaningless "no history limit" line is cut; `onThisDay()` resurfaces year-ago (and, before a year of history, 6/3/1-month-back) entries on Home, gated `plus`. |
+  | 4 | "Export your days as a keepsake PDF" | ❌ **DEAD** — no PDF code in the tree at all. Known: IMP-022, ⏸ deferred. |
+  | 5 | "Deeper insights — moods & seasonal themes" | ✅ **REAL (IMP-047)** — `DeeperInsights.js` adds mood-by-weekday, mood-by-season and mood-pairings cards behind `plus`, over IMP-037's mood arrays. |
+
+  **Four of five now real (#1, #2, #3, #5 — #2 fixed by IMP-039, #3 fixed by IMP-038, #5 fixed by IMP-047).** This is the same defect class as IMP-031's "8:30 PM" reminder and IMP-022's PDF button, but on the surface that takes money — so it is a Play policy exposure, not just a broken promise. **Nothing may charge for this list until it is true.** **#4** needs IMP-022 revived — the only remaining gap.
+
+- **🧭 Product thesis lives in [`docs/playbook.md`](docs/playbook.md) → "Why anyone would pay" (2026-08-03).** Short form: value in a journal **accumulates**, so the paying moment is month 2–3, not signup; the app today is **all continuity (streaks/embers/reminder) and no retrieval** — **no search anywhere**, editing is today-only, no delete — which makes the archive **write-only** and blocks any "revisit your past" sale. Free forever = custody of their own words (write/read/**search**/edit/delete/history/raw export); paid = the app's work *on* those words (recap, resurfacing, insight, keepsakes, cosmetics). **Search is the highest-value non-design task in the codebase** and should be scoped as its own IMP.
+- **🧭 Product note — the perk list IS the Plus roadmap.** The owner asked (2026-08-03) what more Plus should contain beyond themes. The audit answers it: **build #2, #4 and #5 properly and Plus is already a real subscription** — and the honest through-line for this app is **memory**, not cosmetics. Free helps you *write today*; Plus helps you *revisit and keep* what you wrote. That framing is exactly the existing "legacy" roadmap (D → A+B → **C, Annual Recap / Time Capsule**, still unbuilt) and the memorial-garden theme. Strongest candidates, cheapest first: **"On this day"** resurfacing (entries are local and `dayKey`-indexed, so this is near-free to build, it is the single most-loved feature in comparable journals, and IMP-013's "Tend an old grave" rite already gestures at it) · **Annual Recap** (roadmap C, the emotional payoff of a year, folds in the deferred milestone timeline) · **keepsake PDF** (perk #4, the legacy artifact — revives IMP-022) · **themed prompt packs** (grief / gratitude / transitions — IMP-023's deck architecture already supports this; new pools are pure data) · **biometric app lock** (`expo-local-authentication`, local-only, top-requested for private journals, high conversion for low build). **Recommended free/paid line: never gate a user's own writing** — reading, writing, raw export, full history and search stay free forever. Gate *enrichment*: recap, resurfacing, deeper analysis, keepsakes, cosmetics, convenience. ⚠️ Also revisit the **price tier** when products are created: $29.99/yr is not defensible for 3 palettes + 2 skies, and the owner's home market (India) reads ≈₹2,500 — Play's local tiers matter as much as the USD figure.
+
+- **🔴 HARD BLOCKER before `PLUS_ENABLED` — the ember packs display cash prices and are wired to NOTHING.** [`data.js:132`](../src/data.js#L132) labels `EMBER_PACKS` "bought with cash" at `$1.99 / $4.99 / $9.99`, but the buy handler is [`RitualsApp.js:532`](../src/RitualsApp.js#L532) — `onBuy={(pack) => { setEmbers((e) => e + pack.amount); … }}` — a bare counter increment. **No `purchaseService`, no RevenueCat, no IAP of any kind.** Same path via [`Shop.js:170`](../src/screens/Shop.js#L170) → `getEmbers(pack)` ([`RitualsApp.js:173`](../src/RitualsApp.js#L173)). Worse, **this surface is not gated by `PLUS_ENABLED`**: the Shop's "Gather Embers" section ([`Shop.js:166`](../src/screens/Shop.js#L166)) has no `plusEnabled &&` wrapper, unlike the Plus banner at line 56 — so it renders **in the shipping free build with cash prices on it**, and tapping a "$9.99" pack grants 1,500 embers for free. Nobody is charged, so no money is at risk, but the app is **displaying a price for something that costs nothing** — the same class of misrepresentation IMP-028 fixed for the paywall. Either wire the packs to real consumable IAP products or hide the section behind `PLUS_ENABLED` (the cheap, correct move for the free release — do this one first).
+- **✅ RESOLVED as IMP-043** — a returning subscriber shown as non-Plus is now re-verified once at launch (`useLaunchEntitlementCheck`), and a definitive "no entitlement" answer from the store now actually downgrades a stale/forged local cache instead of only a failed check being ignored. "Restore purchases" is also reachable from the You tab now, outside the paywall. Full detail in `docs/build-log.md` → IMP-043.
+- **🔴 Embers, owned palettes/skies and freeze candles are LOCAL-ONLY and have no recovery path whatsoever.** They live in `PERSISTED_KEYS` ([`state.js:9–10`](../src/persistence/state.js#L9)) and **nowhere else** — no server record, no RevenueCat, nothing Google holds. If local state is wiped and not restored, paid inventory is **gone permanently**, and unlike the subscription there is no entitlement to re-query. Today this costs nothing (`PLUS_ENABLED = false` ⇒ **zero paying users exist**), but it is the reason IMP-033's decline path must never be a one-tap destruction — see the inventory warning folded into its spec.
+- **⚠️ Before flipping `PLUS_ENABLED`: create the `RC_ANDROID_KEY` EAS env var AND GitHub repo secret.** `.env` is git-ignored and never reaches EAS Build (no `.easignore`, no `env` block in `eas.json`), so a cloud build would resolve the key to `''` → `isBillingConfigured()` false → `createPurchaseService` returns the **simulation** → the paywall fakes a purchase and grants Plus free, with no crash. IMP-028 added `scripts/check-billing-config.js` as a hard preflight in the build job, but it only arms once `PLUS_ENABLED` is true. Run `eas env:create --name RC_ANDROID_KEY --scope project --environment production` and add the repo secret of the same name (`release.yml` references it; the Actions linter flags it as undefined until it exists).
+- **⚠️ The "7-day free trial" claim is hardcoded** in the paywall CTA + legal footer ([`Paywall.js`](src/screens/Paywall.js), [`PlusFlow.js`](src/screens/PlusFlow.js) `LegalFooter`). Only truthful if the Play base plan actually carries a 7-day free-trial offer. **Decide the offer when creating the products**, then either configure the trial in Play or change the copy — do not ship the claim unverified. Left hardcoded deliberately: the correct fix reads the intro/trial period off the live offering, which cannot be built or tested until real products exist. Prices themselves are already live-driven (IMP-028).
+
+---
+
+### 📋 Reading a Play Console compliance banner (procedure, kept after the 2026-08 fix)
+
+- **ℹ️ PROCEDURE, kept after the fact — Play Console compliance banners lag fresh uploads, but "stale" is the *second* thing to check, not the first.** (The 2026-08 instance of this is resolved; the reading order is what to reuse next time.) The banner shown against vc10 on 2026-07-31 **was** stale: the app bundle explorer (authoritative — it reads the manifest) confirmed `targetSdkVersion 36`. **But on 2026-08-08 the same banner was REAL** and this note nearly buried it — it was firing on the forgotten `beta`/`internal` tracks (vc8/vc5, API 35), not on production. **Order of checks, in this order:** (1) list the **active release on every track**, not just the one you last shipped — `beta` and `internal` are easy to forget for months; (2) app bundle explorer for the flagged versionCode; (3) only then suspect lag. The banner's own wording is the tell — it names the *highest non-compliant* API level, so **API 35 could never have meant vc9/vc11**, both of which are 36.
