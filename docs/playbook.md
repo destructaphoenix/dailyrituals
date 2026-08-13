@@ -261,20 +261,26 @@ Guardrails: a commit tagged `ota` that touched native files is auto-rejected by 
 - OTA only reaches builds **≥ versionCode 5**. The v4 build in review can't receive it — so the **first full build we push for improvements (versionCode 5) is what turns the OTA lane on** for everything after.
 - Tag every task with its lane so we batch OTA-able fixes and only rebuild when something native actually changes.
 
-### Play tracks — what each one is for (set 2026-08-08)
+### Play tracks — what each one is for (set 2026-08-08; active releases read from the Play API 2026-08-13)
 
-| Track | Who | Review | Used for |
-| --- | --- | --- | --- |
-| `internal` | the owner only (cap 100) | normally none — live in minutes | **every automated build.** `eas.json` → `submit.production.android.track` |
-| `alpha` (closed testing) | the 12×14 gate cohort | ✅ hours–days | **frozen at vc11.** Gate already cleared 2026-07-29; kept, not fed |
-| `beta` (open testing) | public opt-in | ✅ hours–days | **abandoned at vc8.** See the compliance trap below |
-| `production` | the public | ✅ up to ~7 days | promoted **by hand** from `internal`, never automatically |
+| Track | Who | Review | Active now | Used for |
+| --- | --- | --- | --- | --- |
+| `internal` | the owner only (cap 100) | normally none — live in minutes | 1.0.3 / vc9 | **every automated build.** `eas.json` → `submit.production.android.track` |
+| `alpha` (closed testing) | the 12×14 gate cohort | ✅ hours–days | 1.0.5 / vc11 | **frozen at vc11.** Gate already cleared 2026-07-29; kept, not fed |
+| `beta` (open testing) | public opt-in | ✅ hours–days | 1.0.3 / vc9 | dormant, but **held current** for compliance |
+| `production` | the public | ✅ up to ~7 days | 1.0.3 / vc9 | promoted **by hand** from `internal`, never automatically |
 
-**🔴 The trap that already bit once:** Play evaluates compliance against **the active release on every
-track**, not just the one you last shipped. Abandoned `beta`/vc8 and `internal`/vc5 (both `targetSdkVersion
-35`) are what kept the API-36 banner firing long after production was compliant. **Whenever a track stops
-being fed, either retire it or promote a current build onto it.** Feeding `internal` fixes its half
-automatically from the next build onward.
+**🔴 The trap that already bit once — now fixed, and the rule is what matters:** Play evaluates compliance
+against **the active release on every track**, not just the one you last shipped. Abandoned `beta`/vc8 and
+`internal`/vc5 (both `targetSdkVersion 35`) kept the API-36 banner firing long after production was
+compliant. Both were promoted to vc9 on 2026-08-13 and the banner cleared. **Whenever a track stops being
+fed, either retire it or promote a current build onto it** — a dormant track is a compliance liability that
+costs nothing to keep current.
+
+**⚠️ Note what promoting vc9 onto `internal` cost:** `internal` is the track the owner self-tests on, and it
+now serves the *same* build as the public. Until the next build is cut it carries **none** of the work since
+vc9, and — because `runtimeVersion` is `appVersion` — an `eas update` published at 1.0.5 **cannot reach it
+either**. Self-testing on `internal` starts with a build, not an OTA.
 
 **⚠️ `internal` is not a guarantee of no review.** Google still runs automated scans on every upload
 regardless of track — including the deprecated-API scan that flagged IMP-044 — and reserves the right to
