@@ -47,12 +47,48 @@ export async function cancelAll() {
 // idempotent (scheduling the same id twice replaces, never duplicates). Omitting
 // it lets expo mint a uuid, which is how the same instant used to end up with
 // two pending notifications.
-export async function scheduleAt(date, { title, body }, identifier) {
+export async function scheduleAt(date, { title, body, data }, identifier) {
   const N = load();
   if (!N) return null;
   return N.scheduleNotificationAsync({
     identifier,
-    content: { title, body },
+    content: { title, body, data },
     trigger: { type: N.SchedulableTriggerInputTypes.DATE, date },
   });
+}
+
+// Suppresses the OS banner in the foreground so the app can show its own Toast
+// instead. Android: shouldPlaySound: false also drops the banner no matter what
+// the priority is — that side effect is *why* this works, not a bug to "fix".
+export function setForegroundBehavior() {
+  const N = load();
+  if (!N) return;
+  N.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowBanner: false,
+      shouldShowList: false,
+      shouldPlaySound: false,
+      shouldSetBadge: false,
+    }),
+  });
+}
+
+export function onNotificationReceived(cb) {
+  const N = load();
+  if (!N) return { remove() {} };
+  return N.addNotificationReceivedListener(cb);
+}
+
+// Catches taps while the app is running (the listener) and the cold start
+// where the tap launched the app before the listener could register (the
+// getLastNotificationResponseAsync check) — both are required, neither alone
+// covers both cases.
+export function onNotificationTapped(cb) {
+  const N = load();
+  if (!N) return { remove() {} };
+  const sub = N.addNotificationResponseReceivedListener(cb);
+  N.getLastNotificationResponseAsync().then((response) => {
+    if (response) cb(response);
+  });
+  return sub;
 }

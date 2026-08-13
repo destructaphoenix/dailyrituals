@@ -63,6 +63,7 @@ import PlusPerks from './screens/PlusPerks';
 import AnnualRecap from './screens/AnnualRecap';
 import { buildRecap } from './recap/annualRecap';
 import { nextOccurrences, reminderId, reminderRowValue } from './reminders/schedule';
+import { isOurReminder, reminderAction } from './reminders/route';
 import * as reminderIO from './reminders/io';
 
 // Dev-only test harness. The literal __DEV__ lets Metro strip this require (and
@@ -324,7 +325,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
       if (status !== 'granted') return;
       const wroteToday = !!findTodaysEntry(entries, dayKeyOf());
       const occurrences = nextOccurrences(new Date(), r, { wroteToday, count: 7 });
-      const notif = reminderCopy(settings.tone);
+      const notif = { ...reminderCopy(settings.tone), data: { kind: 'daily-reminder' } };
       for (const date of occurrences) await reminderIO.scheduleAt(date, notif, reminderId(date));
     };
     const next = rearmLock.current.then(run, run);
@@ -338,6 +339,29 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     const sub = AppState.addEventListener('change', (s) => { if (s === 'active') rearmReminders(); });
     return () => sub.remove();
   }, [rearmReminders]);
+
+  // Android drops the OS banner entirely once shouldPlaySound is false (see
+  // io.js) — this is what makes the in-app Toast below the *only* way a
+  // foreground reminder is seen at all, by design (owner, 2026-08-09).
+  React.useEffect(() => { reminderIO.setForegroundBehavior(); }, []);
+
+  React.useEffect(() => {
+    const receivedSub = reminderIO.onNotificationReceived((notification) => {
+      if (!isOurReminder(notification)) return;
+      const wroteToday = !!findTodaysEntry(entries, dayKeyOf());
+      if (reminderAction({ wroteToday, foreground: true }) === 'nudge') {
+        showToast('Today is still unwritten.');
+      }
+    });
+    const tappedSub = reminderIO.onNotificationTapped((response) => {
+      if (!isOurReminder(response?.notification)) return;
+      const wroteToday = !!findTodaysEntry(entries, dayKeyOf());
+      if (reminderAction({ wroteToday, foreground: false }) === 'write') {
+        setWriting(true);
+      }
+    });
+    return () => { receivedSub.remove(); tappedSub.remove(); };
+  }, [entries]);
 
   // Permission is requested only from this tap (first enable) — never at
   // launch. If the native module isn't there (Expo Go), stay off and say so.
