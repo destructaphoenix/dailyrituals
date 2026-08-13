@@ -16,8 +16,9 @@ export function shuffle(n, seed) {
   return arr;
 }
 
-function valid(deck, len) {
+function valid(deck, len, packId) {
   return !!deck
+    && deck.pack === packId
     && Array.isArray(deck.order) && deck.order.length === len
     && deck.order.every((x) => Number.isInteger(x) && x >= 0 && x < len)
     && Number.isInteger(deck.pos) && deck.pos >= 0 && deck.pos < len
@@ -25,14 +26,14 @@ function valid(deck, len) {
 }
 
 // Returns { state, item }. `day` is an integer calendar-day index (dayNumber).
-export function selectPrompt(pool, deck, day) {
+export function selectPrompt(pool, deck, day, packId = 'everyday') {
   const len = pool.length;
   if (len === 0) return { state: null, item: '' };
 
-  // (Re)initialize on first use, corruption, or a pool-size change.
-  if (!valid(deck, len)) {
+  // (Re)initialize on first use, corruption, a pool-size change, or a pack switch.
+  if (!valid(deck, len, packId)) {
     const order = shuffle(len, day);
-    return { state: { day, order, pos: 0 }, item: pool[order[0]] };
+    return { state: { day, order, pos: 0, pack: packId }, item: pool[order[0]] };
   }
 
   // Same day → unchanged. Return the SAME reference so consumers can skip writes.
@@ -44,5 +45,5 @@ export function selectPrompt(pool, deck, day) {
   let pos = deck.pos + 1;
   let order = deck.order;
   if (pos >= len) { order = shuffle(len, day); pos = 0; }
-  return { state: { day, order, pos }, item: pool[order[pos]] };
+  return { state: { day, order, pos, pack: packId }, item: pool[order[pos]] };
 }

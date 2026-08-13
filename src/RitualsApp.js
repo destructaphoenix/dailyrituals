@@ -29,6 +29,7 @@ import ReminderSheet from './screens/ReminderSheet';
 import WriteFlow from './screens/WriteFlow';
 import TrashSheet from './screens/TrashSheet';
 import MoodManager from './screens/MoodManager';
+import PromptPacks from './screens/PromptPacks';
 import Celebration from './screens/Celebration';
 import Achievements from './screens/Achievements';
 import Shop from './screens/Shop';
@@ -58,7 +59,7 @@ import { entryDateParts } from './time/clock';
 import { currentStreak } from './insights/dateKeys';
 import { dayNumber } from './time/dailyPick';
 import { selectPrompt } from './content/deck';
-import { PROMPTS } from './content/prompts';
+import { packById } from './content/packs';
 import { reminderCopy } from './content/reminders';
 import { pendingTip, markTipSeen } from './content/tips';
 import TipCard from './screens/TipCard';
@@ -111,6 +112,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   const [freeRestoresUsed, setFreeRestoresUsed] = useState(initialState.freeRestoresUsed ?? 0);
   const [trashOpen, setTrashOpen] = useState(false);
   const [moodManagerOpen, setMoodManagerOpen] = useState(false);
+  const [promptPacksOpen, setPromptPacksOpen] = useState(false);
   // Which past day WriteFlow is editing, if any — null means the normal
   // today flow (complete()/applyCompletion). Past-day edits must never go
   // through applyCompletion (see IMP-036: it would award a duplicate
@@ -171,7 +173,10 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   const [activePlan, setActivePlan] = useState(initialState.activePlan ?? 'annual');
   const [lastActiveDay, setLastActiveDay] = useState(initialState.lastActiveDay ?? dayKeyOf());
   const [promptDeck, setPromptDeck] = useState(initialState.promptDeck ?? null);
-  const promptSel = useMemo(() => selectPrompt(PROMPTS, promptDeck, dayNumber()), [promptDeck]);
+  const promptSel = useMemo(
+    () => selectPrompt(packById(settings.promptPack).prompts, promptDeck, dayNumber(), settings.promptPack),
+    [promptDeck, settings.promptPack],
+  );
   // Tip cards seen (IMP-041) — an id is added once dismissed and never shown again.
   const [seenTips, setSeenTips] = useState(initialState.seenTips ?? []);
   const dismissTip = (id) => setSeenTips((s) => markTipSeen(s, id));
@@ -714,6 +719,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             onDiscardPendingRestore={handleDiscardPendingRestore}
             trashCount={trash.length} onOpenTrash={() => setTrashOpen(true)}
             customMoodsCount={(settings.customMoods || []).length} onOpenMoodManager={() => setMoodManagerOpen(true)}
+            promptPackName={packById(settings.promptPack).name} onOpenPromptPacks={() => setPromptPacksOpen(true)}
             onOpenDev={__DEV__ ? () => setShowDev(true) : undefined}
             reminderValue={reminderRowValue(settings.reminder, reminderPermission)}
             onOpenReminder={() => setReminderOpen(true)}
@@ -837,6 +843,16 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
               customMoods={settings.customMoods || []} customMoodEmoji={settings.customMoodEmoji || {}}
               insets={insets} onClose={() => setMoodManagerOpen(false)}
               onRenameMood={onRenameMood} onDeleteMood={onDeleteMood}
+            />
+          </ThemeContext.Provider>
+        </Modal>
+
+        <Modal visible={promptPacksOpen} animationType="slide" transparent onRequestClose={() => setPromptPacksOpen(false)}>
+          <ThemeContext.Provider value={theme}>
+            <PromptPacks
+              activePackId={settings.promptPack}
+              onSelect={(id) => { setSettings((s) => ({ ...s, promptPack: id })); setPromptPacksOpen(false); }}
+              onClose={() => setPromptPacksOpen(false)}
             />
           </ThemeContext.Provider>
         </Modal>

@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import { View, ScrollView, Pressable, Alert, Modal } from 'react-native';
 import { useTheme } from '../theme';
 import { T, Card, ProgressBar } from '../ui';
-import { Bell, Contrast, Pencil, Download, Info, Chevron, Sun, Moon, Bag, Ember, Restore, UserIcon, Alert as AlertIcon, ChartIcon } from '../icons';
+import { Bell, Contrast, Pencil, Download, Info, Chevron, Sun, Moon, Bag, Ember, Restore, UserIcon, Alert as AlertIcon, ChartIcon, Feather } from '../icons';
 import { PlusBanner } from '../shopui';
 import { profileIdentity } from '../profile/identity';
 import { lastBackupLabel } from '../backup/lastBackupLabel';
@@ -27,6 +27,7 @@ export default function YouScreen({
   reminderValue, onOpenReminder, onOpenPlusPerks,
   trashCount = 0, onOpenTrash,
   customMoodsCount = 0, onOpenMoodManager,
+  promptPackName, onOpenPromptPacks,
   tip, onDismissTip,
   entries = [], onOpenAnnualRecap,
 }) {
@@ -192,6 +193,9 @@ export default function YouScreen({
           <Divider />
           <Row icon={<Pencil size={20} color={c.accentDeep} />} label="Voice"
             value={settings.tone === 'gentle' ? 'Gentle' : 'Playful'} onPress={setTone} />
+          <Divider />
+          <Row icon={<Feather size={20} color={c.accentDeep} />} label="Writing prompts"
+            value={promptPackName} onPress={onOpenPromptPacks} />
           <Divider />
           <Row icon={<UserIcon size={20} color={c.accentDeep} />} label="Your name"
             value={display} onPress={() => setEditingName(true)} />

@@ -73,4 +73,43 @@ describe('selectPrompt', () => {
   it('handles an empty pool without throwing', () => {
     expect(selectPrompt([], null, 100)).toEqual({ state: null, item: '' });
   });
+
+  it('tags a new deck with the given packId, defaulting to "everyday"', () => {
+    const withDefault = selectPrompt(POOL, null, 100);
+    expect(withDefault.state.pack).toBe('everyday');
+    const withPack = selectPrompt(POOL, null, 100, 'grief');
+    expect(withPack.state.pack).toBe('grief');
+  });
+
+  it('rejects a same-length deck from another pack and reshuffles', () => {
+    const grief = selectPrompt(POOL, null, 100, 'grief');
+    const switched = selectPrompt(POOL, grief.state, 101, 'gratitude');
+    expect(switched.state.pack).toBe('gratitude');
+    expect(switched.state.pos).toBe(0); // reinitialized, not advanced
+  });
+
+  it('keeps and advances a deck from the same pack', () => {
+    const d1 = selectPrompt(POOL, null, 100, 'grief');
+    const d2 = selectPrompt(POOL, d1.state, 101, 'grief');
+    expect(d2.state.pack).toBe('grief');
+    expect(d2.state.pos).toBe(1); // advanced, not reinitialized
+  });
+
+  it('rejects and reinitializes an old deck with no pack field (migration)', () => {
+    const legacy = { day: 100, order: shuffle(POOL.length, 100), pos: 0 }; // no `pack`
+    const { state } = selectPrompt(POOL, legacy, 101, 'everyday');
+    expect(state.pack).toBe('everyday');
+    expect(state.pos).toBe(0); // reinitialized, not advanced to 1
+  });
+
+  it('keeps the same-day same-reference behavior with a packId', () => {
+    const first = selectPrompt(POOL, null, 100, 'grief');
+    const again = selectPrompt(POOL, first.state, 100, 'grief');
+    expect(again.state).toBe(first.state);
+    expect(again.item).toBe(first.item);
+  });
+
+  it('handles an empty pool without throwing, packId or not', () => {
+    expect(selectPrompt([], null, 100, 'grief')).toEqual({ state: null, item: '' });
+  });
 });

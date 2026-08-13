@@ -126,6 +126,10 @@ export const DEFAULT_SETTINGS = {
   // Days a streak-freeze candle covered that the user hasn't been told about
   // yet (IMP-060) — cleared to [] once the Home notice is dismissed.
   pendingFreezeNotice: [],
+  // Active prompt pack (IMP-058) — an id into PROMPT_PACKS. packById() falls
+  // back to 'everyday' for a value this build doesn't have, so an unknown
+  // restored id is safe.
+  promptPack: 'everyday',
 };
 
 // Mix a hex color toward white by `amount` (0–1).
