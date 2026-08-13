@@ -34,7 +34,7 @@
 
 | # | Walk | Covers | Target | Runner | Status |
 | --- | --- | --- | --- | --- | --- |
-| WALK-01 | [v2→v3 mood migration, via a synthetic v2 backup](#walk-01--v2v3-mood-migration) | IMP-037 | emulator | 🤖 mostly (adb push + restore; chip checks are visual) | 🟡 **IN PROGRESS** — restore fires, first attempt aborted by a bad fixture (fixed); mood checks not yet done |
+| WALK-01 | [v2→v3 mood migration](docs/build-log.md#walk-01--v2v3-mood-migration) | IMP-037 | emulator | 🤖 mostly (adb push + restore; chip checks are visual) | ✅ **2026-08-14** — full pass, all 9 steps; detail in `docs/build-log.md` → "Walk log" |
 | WALK-02 | [Restore quarantine — offered, not imposed](#walk-02--restore-quarantine) | IMP-033, IMP-029 | emulator | 👤 (clock changes + judgement on sheet copy) | ⬜ |
 | WALK-03 | [JSON export → share → restore round trip](#walk-03--json-export-round-trip) | IMP-020, IMP-043 | **device** (share-sheet targets) | 👤 | ⬜ |
 | WALK-04 | [Search + the write flow's moods](#walk-04--search--moods) | IMP-035, IMP-037, **IMP-053** | emulator | 👤 | ⬜ |
@@ -82,56 +82,6 @@ Google account needed:
 **T6 · Release builds work locally.** `android/app/build.gradle` signs `release` with the **debug**
 keystore, so `npx expo run:android --variant release` needs no keystore setup. That build has **no dev
 harness** (`__DEV__` false) and no Metro.
-
----
-
-## WALK-01 — v2→v3 mood migration
-
-**Covers:** IMP-037's `SCHEMA_VERSION` 2→3 (`mood: string` → `moods: string[]`). **The only change in the
-post-vc11 batch that can destroy a real journal**, and a fresh install never runs the migrator.
-
-**Why a fixture instead of installing vc11.** [`backup.js:48`](../src/backup/backup.js#L48) runs a restored
-payload through `deserialize()` — the **same function** the cold-start load calls
-([`storage.js:10`](../src/persistence/storage.js#L10)), therefore the same migrator. Restoring a v2 file
-exercises the real path without building the old version.
-
-**Preconditions**
-
-1. `node scripts/gen-v2-fixture.js` — writes `scripts/daily-rituals-v2-fixture.json` (git-ignored;
-   regenerate rather than reuse, its `dayKey`s are relative to the run date).
-2. `adb push scripts/daily-rituals-v2-fixture.json /sdcard/Download/`
-3. **Reset the app first** (You → Reset all data). Non-negotiable if the emulator still holds the poisoned
-   settings from the 2026-08-09 attempt — bad settings persist to AsyncStorage and survive relaunches.
-
-The fixture is 12 entries at `version: 2` containing four deliberate shapes: ordinary `mood: 'Grateful'`
-(→ one mood), **no `mood` key** (→ `[]`), **already `moods: ['Hopeful','Tender']`** (→ untouched,
-idempotency), and `mood: ''` (→ `[]`, **not** `['']`). It also omits `frozenDays`, `seenTips`, `trash` and
-`freeRestoresUsed` on purpose, so the app's `?? []` / `?? 0` fallbacks get exercised on genuinely old data.
-
-**Steps + expected**
-
-1. You → Your journal is safe → **"Restore from a backup"** → pick the file. *(This much already passed on
-   2026-08-09.)*
-2. Archive shows **12 days**; name reads "Migration Test"; 375 embers; 2 candles; Lv 4 · Reflective.
-3. **Mood chips render.** One entry shows **two** chips, two entries show **none**, and there is no blank
-   or empty chip anywhere. ← *the actual point of this walk, not yet done*
-4. Insights → Mood mix populated, with the `across N reflections` denominator line.
-5. Heatmap cells are coloured (they read `moods[0]`).
-6. Archive → search → mood chips filter correctly, and the two-mood entry matches **either** of its moods.
-7. Write today's entry → multi-select still works; the "Name how it felt" rite ticks.
-8. **Force-stop and relaunch.** ← the real proof: the migrated payload was written back as v3 and re-reads
-   clean, with no second migration and no crash.
-9. Harness → Inspect → `frozenDays` / `seenTips` / `trash` came up empty rather than undefined.
-
-**If it fails:** record the exact entry index and what its `moods` value is (Inspect shows it). Do not
-edit the migrator during the walk.
-
-**Log — 2026-08-09, first attempt, ABORTED (tester error, not an app defect).** The restore itself worked
-and every derived value was correct on screen (12-day streak, name, Lv 4, 110/350 XP, 2 candles, "Today is
-at rest"). The walk was abandoned because the fixture wrote `settings.accent` as a **string** where the app
-expects the `[accent, deep, soft]` **array**, which broke every gradient in the app. Fixture fixed and now
-type-checked against `DEFAULT_SETTINGS`; the underlying app fragility it exposed is scoped as **IMP-049**.
-Steps 3–9 remain undone.
 
 ---
 

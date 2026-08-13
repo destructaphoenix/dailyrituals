@@ -1829,6 +1829,26 @@ spec (pure JS + a picker, same class as other OTA-only specs).
 
 _Append-only handoff log moved out of PROGRESS.md to keep it light. Newest 1–2 notes stay live in PROGRESS.md; everything else is here. Git history is the full record._
 
+_2026-08-14 (IMP-058, prompt packs) — **code-complete, committed `8c5755a`, not shipped.** Fixed the
+same-length pack-switch trap first: `valid(deck, len, packId)` in `src/content/deck.js` now also requires
+`deck.pack === packId`; `selectPrompt(pool, deck, day, packId = 'everyday')` stores `pack` on the deck state
+and reinitializes on a pack mismatch, a corrupt deck, **or** a pre-058 deck with no `pack` field (the free
+one-reshuffle migration). New `src/content/packs.js` exports `PROMPT_PACKS` (`everyday` reusing the existing
+60 `PROMPTS` untouched, plus 20 new prompts each for `grief`/`gratitude`/`change`, used verbatim from spec)
+and `packById(id)` falling back to `everyday` for an unknown id. `settings.promptPack` defaults to
+`'everyday'` in `theme.js` — no `sanitizeSettings` exception needed. `RitualsApp.js`'s prompt-deck `useMemo`
+now reads `selectPrompt(packById(settings.promptPack).prompts, promptDeck, dayNumber(), settings.promptPack)`.
+New `src/screens/PromptPacks.js` — a small `ReminderSheet`-shaped bottom sheet listing all four packs (name +
+blurb + sample prompt, active one ringed, "Changing packs reshuffles — you will not lose anything." stated
+plainly) — wired via a new "Writing prompts" row in `YouScreen.js`'s Preferences card (next to Voice) and a
+`promptPacksOpen` modal in `RitualsApp.js`. 9 new tests (7 deck pack-tracking cases + `PromptPacks.test.js`:
+all four packs render, selecting calls the setter with its id, active pack marked). `npm test` → **748
+passed, 77 suites**; `npx expo export --platform android` clean. Archived IMP-058's spec to
+`docs/build-log.md` and trimmed `docs/specs-open.md` back to an empty index (its "done" list note updated),
+moved the IMP-060 session note into `docs/build-log.md` too (this file's 2-note budget). NEXT: **the
+Improvements backlog has no open spec** — the next chat here waits on Opus to scope a new `IMP-xxx` into
+`docs/specs-open.md`, or take the first unchecked phase-ladder task if the owner redirects there._
+
 _2026-08-13 (IMP-060, a candle burns without telling you) — **code-complete, committed `83cd59d`, not
 shipped.** New pure `src/home/freezeNotice.js` (`addFreezeNotice`, `freezeNoticeCopy`) — `addFreezeNotice`
 appends+dedupes covered days into `settings.pendingFreezeNotice`, same-reference passthrough when nothing
@@ -2248,3 +2268,28 @@ Owner: *"When I press 'Backup my journal' it gives me the option to send or shar
   - ✅ **IMP-021 — walked 2026-08-02, owner called it "not properly completed"; both shortfalls closed by [IMP-045](docs/build-log.md), code-complete 2026-08-09.** Full detail archived in `docs/build-log.md`. **Not yet re-walked on device** — the fix is OTA and testers will see it on the next `eas update`.
 
   - ✅ **IMP-029 — PASSED on a real device.** The owner ran a true uninstall → reinstall cycle; Auto Backup restored silently at install time and the app fired the "Welcome back." notice naming the backup's date. The restored data was **stale (2 entries vs the 5 that were live)** — which is the feature working, not failing: that staleness is exactly the hazard the notice exists to announce. Two follow-on findings came out of the walk (see below). Procedure kept in [`docs/build-log.md`](docs/build-log.md) → IMP-029 → "Device-walk procedure" for future regressions.
+
+---
+
+## Walk log (passed walks, moved out of docs/walk-open.md)
+
+### ✅ WALK-01 — v2→v3 mood migration — PASSED 2026-08-14 (emulator, agent-run)
+
+**Covers:** IMP-037's `SCHEMA_VERSION` 2→3 (`mood: string` → `moods: string[]`). Steps 1–2 had already passed 2026-08-09; this run completed steps 3–9, which were the actual point of the walk (mood-chip correctness on migrated data).
+
+**Setup:** `node scripts/gen-v2-fixture.js` regenerated, pushed to `/sdcard/Download/`. App reset via You → Reset all data (non-negotiable per the walk doc — clears the 2026-08-09 attempt's poisoned settings), fresh onboarding completed, then You → Restore from a backup → picked the fixture → REPLACE.
+
+**Result — full pass, all 9 steps:**
+1. Restore dialog read "This backup has 12 entries" → REPLACE.
+2. Archive/Home matched the spec's expected values exactly: **12-day streak, "Migration Test", 375 embers, 2 candles, Lv 4 · Reflective.**
+3. **Mood chips correct on every shape the fixture covers:** the two-mood entry (8 Aug, "finished the book") rendered **both** `Hopeful` and `Tender` chips; both no-mood entries (10 Aug "sat in the sun", 6 Aug "planted basil") rendered **zero** chips — no blank/empty chip anywhere across all 12 entries.
+4. Insights → Mood mix read **"across 10 reflections"** (12 entries − 2 no-mood = 10) with a 7-mood breakdown summing to 11 tags (10 single + 1 double) — denominator and counts both correct.
+5. The Reflections "Last 5 weeks" grid renders each day's `moods[0]` as a coloured emoji cell (not just kept/missed) — confirmed visually.
+6. Mood-chip filtering is any-of on the two-mood entry: filtering by `Tender` returned 2 matches including 8 Aug; filtering by `Hopeful` returned 1 match, the same 8 Aug entry. Free-text search also verified (`basil` → 1 match, highlighted).
+7. Wrote today's entry through the full flow: multi-select confirmed (Grateful + Restless both stayed selected simultaneously), saved cleanly ("Today is at rest."), and the **"Name how it felt" rite ticked** (2 of 3 kept today).
+8. **Force-stop + relaunch: clean cold read.** 13-day streak, 390 embers, today still marked at rest, rites intact — no crash, no re-migration prompt. This is the real proof that the v2 payload was migrated and written back as v3 correctly.
+9. Harness → Inspector: **Schema version: 3**, `dayKey drift: 0`, and every field the fixture deliberately omitted (`customMoods`, `customMoodEmoji`, `pendingFreezeNotice`, `onThisDayDismissed`) rendered as an empty collection, not `undefined` — the `?? []` fallbacks hold on genuinely old data. Also reconfirmed the 2026-08-09 fixture fix: `accent` deserializes as the `["#f59e0b","#d97706","#fef3c7"]` **array** the app expects, not the string that broke every gradient last time.
+
+**Note on step 9's literal field names:** the original walk spec named `frozenDays` / `seenTips` / `trash` explicitly; the current Inspector (grown since IMP-055/058) no longer exposes those three as flat top-level keys. Checked the equivalent fields that do exist instead — all pass the same "empty, not undefined" bar the step was testing for.
+
+**No app defects found.** WALK-01 is fully closed.

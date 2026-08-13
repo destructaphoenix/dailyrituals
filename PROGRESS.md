@@ -215,22 +215,21 @@ test` → **739 passed, 76 suites**; `npx expo export --platform android` clean.
 IMP-059's `specs-open.md` index row. Stop point per spec: TalkBack walk is **WALK-14**, not attempted this
 chat. NEXT: **IMP-058** (`docs/specs-open.md#imp-058--prompt-packs`) — the only spec left in the backlog._
 
-_2026-08-14 (IMP-058, prompt packs) — **code-complete, committed `8c5755a`, not shipped.** Fixed the
-same-length pack-switch trap first: `valid(deck, len, packId)` in `src/content/deck.js` now also requires
-`deck.pack === packId`; `selectPrompt(pool, deck, day, packId = 'everyday')` stores `pack` on the deck state
-and reinitializes on a pack mismatch, a corrupt deck, **or** a pre-058 deck with no `pack` field (the free
-one-reshuffle migration). New `src/content/packs.js` exports `PROMPT_PACKS` (`everyday` reusing the existing
-60 `PROMPTS` untouched, plus 20 new prompts each for `grief`/`gratitude`/`change`, used verbatim from spec)
-and `packById(id)` falling back to `everyday` for an unknown id. `settings.promptPack` defaults to
-`'everyday'` in `theme.js` — no `sanitizeSettings` exception needed. `RitualsApp.js`'s prompt-deck `useMemo`
-now reads `selectPrompt(packById(settings.promptPack).prompts, promptDeck, dayNumber(), settings.promptPack)`.
-New `src/screens/PromptPacks.js` — a small `ReminderSheet`-shaped bottom sheet listing all four packs (name +
-blurb + sample prompt, active one ringed, "Changing packs reshuffles — you will not lose anything." stated
-plainly) — wired via a new "Writing prompts" row in `YouScreen.js`'s Preferences card (next to Voice) and a
-`promptPacksOpen` modal in `RitualsApp.js`. 9 new tests (7 deck pack-tracking cases + `PromptPacks.test.js`:
-all four packs render, selecting calls the setter with its id, active pack marked). `npm test` → **748
-passed, 77 suites**; `npx expo export --platform android` clean. Archived IMP-058's spec to
-`docs/build-log.md` and trimmed `docs/specs-open.md` back to an empty index (its "done" list note updated),
-moved the IMP-060 session note into `docs/build-log.md` too (this file's 2-note budget). NEXT: **the
-Improvements backlog has no open spec** — the next chat here waits on Opus to scope a new `IMP-xxx` into
-`docs/specs-open.md`, or take the first unchecked phase-ladder task if the owner redirects there._
+_2026-08-14 (WALK-01, v2→v3 mood migration) — **full pass, all 9 steps, agent-run on the emulator.** Backlog
+was empty (IMP-058 was the last spec, already code-complete), so this chat took the first ⬜ row in
+`docs/walk-open.md` instead — steps 1–2 had already passed 2026-08-09, steps 3–9 (the actual point: mood-chip
+correctness on migrated data) were outstanding. Regenerated the v2 fixture, reset the app (non-negotiable —
+clears the 2026-08-09 attempt's poisoned settings), completed fresh onboarding, restored the fixture. Every
+check passed: archive/Home matched spec exactly (12-day streak, "Migration Test", 375 embers, 2 candles,
+Lv 4 · Reflective); the two-mood entry rendered both chips and both no-mood entries rendered none, no blank
+chip anywhere; Insights "across 10 reflections" denominator correct; mood-chip filtering matched the two-mood
+entry on **either** mood; text search worked; writing today's entry confirmed multi-select and ticked "Name
+how it felt"; force-stop + relaunch re-read cleanly with no crash or re-migration; harness Inspector showed
+schema version 3, `dayKey drift: 0`, and every fixture-omitted field as an empty collection, not `undefined`.
+**No app defects found — WALK-01 is closed.** Full step-by-step detail moved to `docs/build-log.md` → "Walk
+log"; `docs/walk-open.md`'s index row updated to ✅ and its body section removed (only the index row
+remains, per that file's own size discipline). Moved the IMP-058 session note into `docs/build-log.md` too
+(this file's 2-note budget). NEXT: **still no open IMP spec** — the next build chat waits on Opus to scope a
+new `IMP-xxx`. The next *walk* chat should take **WALK-02** (restore quarantine) — first ⬜ row in
+`docs/walk-open.md` now — but note its runner is 👤 owner (clock changes + judgement on sheet copy), not
+agent-drivable like WALK-01 was._
