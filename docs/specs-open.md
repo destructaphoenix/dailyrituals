@@ -41,8 +41,11 @@
 > `cell.moods`, `settings.customMoodEmoji` and the emoji palette all exist. Take the remaining five specs in
 > any order.
 >
-> **IMP-054 is the one spec `npm test` cannot finish alone** — it needs an emulator. Budget for that before
-> starting it.
+> **Every spec here is code-complete at green tests. None of them ends in a walk.** A build chat and a
+> runtime walk are **two different tasks for two different chats** — where a feature needs runtime proof,
+> the spec's last step names its `WALK-nn` row in [`walk-open.md`](walk-open.md) and stops. IMP-054 →
+> WALK-13, IMP-059 → WALK-14. **Do not run a walk from a build chat**, and do not read a missing walk as an
+> unfinished spec.
 
 ---
 
@@ -128,13 +131,10 @@ app opens **WriteFlow**.
    `hydrated === null`, so `RitualsApp` cannot mount before entries exist. Do not add a readiness flag.
 5. **Fix the stale line in `PROGRESS.md`** — IMP-044's R8 walk checklist claims tap routing exists. It did
    not until this spec. Correct it in the same commit.
-6. **Emulator walk, and it is the only proof that counts.** `npm test` cannot exercise any of this — see
-   the technique notes in [`docs/walk-open.md`](walk-open.md). Required: reminder fires with the app
-   **backgrounded** → banner appears → tap → **WriteFlow opens** · reminder fires with the app
-   **foregrounded** and today unwritten → **no banner, no sound**, Toast appears · foregrounded after
-   writing today → **nothing at all** · force-stop the app, let one fire, tap it → WriteFlow opens on the
-   cold start.
-7. `npm test` green (≥ 577, or ≥ whatever the specs before it left), `npx expo export --platform android` clean.
+6. `npm test` green (≥ the prior count), `npx expo export --platform android` clean. **Stop here — this
+   spec is code-complete at green tests.** Its runtime proof is
+   **[WALK-13](walk-open.md#walk-13--the-reminder-you-can-answer)**, a separate task for a separate chat.
+   Do not attempt the walk in this chat, and do not treat its absence as unfinished work.
 
 **Do NOT** add notification categories, action buttons or a badge count · change `nextOccurrences`, the
 rolling-window design or `reminderCopy` · request permission anywhere new · make the Toast tappable (it is
@@ -378,11 +378,10 @@ already did that one).
    `accessibilityRole="button"` and the given label · plus a `__tests__/screens/FabLabel.test.js` asserting
    the FAB exposes its label. Two small tests are enough — the point is that the shared component now
    carries the guarantee.
-8. `npm test` green, `npx expo export --platform android` clean.
-9. **Walk it with TalkBack on** (Settings → Accessibility → TalkBack on the emulator): swipe through Home
-   and confirm the FAB announces itself and the tabs announce which is selected; open and dismiss WriteFlow
-   using only TalkBack gestures. **That last one is the acceptance test** — if you cannot write and close an
-   entry blind, this spec is not done.
+8. `npm test` green, `npx expo export --platform android` clean. **Stop here — this spec is code-complete
+   at green tests.** Its acceptance test is a TalkBack walk, and that is
+   **[WALK-14](walk-open.md#walk-14--talkback-can-write-an-entry)**, a separate task for a separate chat.
+   Do not attempt it here.
 
 **Do NOT** add `accessibilityHint` anywhere (hints are for non-obvious outcomes and mostly add noise) ·
 change any visual layout, colour or contrast · touch font scaling (IMP-030 owns it) · add a settings toggle

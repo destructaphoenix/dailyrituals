@@ -20,23 +20,34 @@
 >
 > **Emulator ≠ device.** A ✅ here is real but partial. What an emulator cannot settle at all is listed
 > under "Out of scope" at the bottom — those wait for hardware.
+>
+> **Every row states two things before you start it.**
+> - **Target — `emulator` or `device`.** What the walk actually exercises decides this, not convenience. A
+>   `device` row run on an emulator is not a pass.
+> - **Runner — 👤 owner or 🤖 agent.** 👤 is the default: the owner walks it by hand. 🤖 marks a walk whose
+>   steps Claude Code can genuinely drive itself — `adb` commands, `bmgr` backup/restore, clock changes,
+>   log/`dumpsys` inspection, screenshots. Anything needing visual judgement, TalkBack gestures, a share
+>   sheet, a real purchase or real hardware is 👤. **A 🤖 row still runs in a terminal window the owner can
+>   see** — never a hidden shell.
 
 ## Index — take them in this order
 
-| # | Walk | Covers | Status |
-| --- | --- | --- | --- |
-| WALK-01 | [v2→v3 mood migration, via a synthetic v2 backup](#walk-01--v2v3-mood-migration) | IMP-037 | 🟡 **IN PROGRESS** — restore fires, first attempt aborted by a bad fixture (fixed); mood checks not yet done |
-| WALK-02 | [Restore quarantine — offered, not imposed](#walk-02--restore-quarantine) | IMP-033, IMP-029 | ⬜ |
-| WALK-03 | [JSON export → share → restore round trip](#walk-03--json-export-round-trip) | IMP-020, IMP-043 | ⬜ |
-| WALK-04 | [Search + the write flow's moods](#walk-04--search--moods) | IMP-035, IMP-037 | ⬜ |
-| WALK-05 | [Edit a past day, delete, trash allowance](#walk-05--custody-of-your-words) | IMP-036, IMP-048 | ✅ 2026-08-09 (allowance walked; **past-day edit not yet**) |
-| WALK-06 | [Streak insurance — candles spend themselves](#walk-06--streak-insurance) | IMP-039 | ⬜ |
-| WALK-07 | [Modal screens actually scroll](#walk-07--modal-scroll) | IMP-042 | ⬜ |
-| WALK-08 | [Font scale + layout on the nine new screens](#walk-08--font-scale) | IMP-030 regression | ⬜ |
-| WALK-09 | [Lifetime heatmap's four states + the XP line](#walk-09--lifetime-heatmap) | IMP-045 | ⬜ |
-| WALK-10 | [Tips, explainers, empty states](#walk-10--teach-the-app) | IMP-041 | ⬜ |
-| WALK-11 | [The Plus surfaces](#walk-11--the-plus-surfaces) | IMP-038, 046, 047, 043 | ⬜ |
-| WALK-12 | [The R8 release-variant pass](#walk-12--the-r8-release-variant-pass) | IMP-044 | ⬜ — **do last** |
+| # | Walk | Covers | Target | Runner | Status |
+| --- | --- | --- | --- | --- | --- |
+| WALK-01 | [v2→v3 mood migration, via a synthetic v2 backup](#walk-01--v2v3-mood-migration) | IMP-037 | emulator | 🤖 mostly (adb push + restore; chip checks are visual) | 🟡 **IN PROGRESS** — restore fires, first attempt aborted by a bad fixture (fixed); mood checks not yet done |
+| WALK-02 | [Restore quarantine — offered, not imposed](#walk-02--restore-quarantine) | IMP-033, IMP-029 | emulator | 👤 (clock changes + judgement on sheet copy) | ⬜ |
+| WALK-03 | [JSON export → share → restore round trip](#walk-03--json-export-round-trip) | IMP-020, IMP-043 | **device** (share-sheet targets) | 👤 | ⬜ |
+| WALK-04 | [Search + the write flow's moods](#walk-04--search--moods) | IMP-035, IMP-037, **IMP-053** | emulator | 👤 | ⬜ |
+| WALK-05 | [Edit a past day, delete, trash allowance](#walk-05--custody-of-your-words) | IMP-036, IMP-048 | emulator | 👤 | ✅ 2026-08-09 (allowance walked; **past-day edit not yet**) |
+| WALK-06 | [Streak insurance — candles spend themselves](#walk-06--streak-insurance) | IMP-039 | emulator | 👤 | ⬜ |
+| WALK-07 | [Modal screens actually scroll](#walk-07--modal-scroll) | IMP-042 | emulator | 👤 (visual, two nav modes) | ⬜ |
+| WALK-08 | [Font scale + layout on the nine new screens](#walk-08--font-scale) | IMP-030 regression | **device** (real font metrics) | 👤 | ⬜ |
+| WALK-09 | [Lifetime heatmap's four states + the XP line](#walk-09--lifetime-heatmap) | IMP-045 | emulator | 👤 (visual) | ⬜ |
+| WALK-10 | [Tips, explainers, empty states](#walk-10--teach-the-app) | IMP-041 | emulator | 👤 | ⬜ |
+| WALK-11 | [The Plus surfaces](#walk-11--the-plus-surfaces) | IMP-038, 046, 047, 043 | emulator | 👤 | ⬜ |
+| WALK-13 | [The reminder you can answer](#walk-13--the-reminder-you-can-answer) | IMP-054, **+ the duplicate-fire fix** | **device** (OEM behaviour + real doze) | 👤 | ⬜ — **blocked until IMP-054 lands** |
+| WALK-14 | [TalkBack can write an entry](#walk-14--talkback-can-write-an-entry) | IMP-059 | emulator | 👤 (gesture navigation, inherently manual) | ⬜ — **blocked until IMP-059 lands** |
+| WALK-12 | [The R8 release-variant pass](#walk-12--the-r8-release-variant-pass) | IMP-044 | **device** | 👤 | ⬜ — **do last** |
 
 ---
 
@@ -286,6 +297,69 @@ line renders XP: `Lv 4 · {name} · 1,250 XP`.
 
 ---
 
+## WALK-13 — the reminder you can answer
+
+**Covers:** IMP-054 (foreground handler + tap routing) **and the out-of-band duplicate-fire fix** committed
+`b773352` on 2026-08-13, which has never been seen on a running app.
+**Target: device.** **Runner: 👤 owner.**
+**⛔ Blocked until IMP-054 is code-complete** — steps 2–5 test code that does not exist yet. Step 1 is the
+exception and can be run today, because the duplicate-fire fix is already in the tree.
+
+**Why device, not emulator.** Two of the four things here are hardware behaviour. OEM battery managers
+(Xiaomi / Realme / Oppo / Vivo) silently kill scheduled notifications, and real Doze timing is not what an
+emulator simulates. An emulator ✅ here would be a weaker claim than it looks — and this subsystem already
+has a history of the emulator misleading us: the 2026-08-02 walk could not settle the foregrounded case at
+all, precisely because there was no `setNotificationHandler`.
+
+**Preconditions.** A build carrying IMP-054 installed on real hardware. Reminder enabled (You tab), set 2
+minutes out via the dev harness (technique **T2** → Notify).
+
+**Steps + expected**
+
+1. **The duplicate check — runnable now, before IMP-054.** Set a reminder, then force several re-arms:
+   background/foreground the app repeatedly and save an entry while it is settling. Harness → Notify →
+   the **intended-vs-pending diff** must show **exactly one pending notification per day**, never two for
+   the same date. Then let one fire: **one banner, not two.** *(This is the fix in `b773352`. Before it,
+   overlapping re-arms each cancelled then each scheduled, leaving two notifications at the same minute.)*
+2. **Backgrounded → banner → tap → WriteFlow opens.** The tap routing is the half that has never existed;
+   `PROGRESS.md`'s IMP-044 R8 checklist wrongly claimed it did.
+3. **Foregrounded, today unwritten → no banner, no sound, and the app's own Toast appears** reading
+   `Today is still unwritten.` The suppressed OS banner is the design, not a failure — on Android a silent
+   banner is unachievable (`shouldPlaySound: false` suppresses the drop-down entirely), which is why the
+   Toast exists.
+4. **Foregrounded, today already written → nothing at all.** No Toast, no banner. Saying anything here
+   would be nagging.
+5. **Force-stop the app, let one fire, tap it → WriteFlow opens on the cold start.** This is the
+   `getLastNotificationResponseAsync` half; the listener alone registers too late to catch a tap that
+   *launched* the app, so a pass on step 2 does not imply a pass here. Walk both.
+
+**If it fails:** record whether the notification arrived at all, what the Notify diff showed *before* it
+fired, and which of foreground/background/cold-start broke. Do not edit the code during the walk.
+
+---
+
+## WALK-14 — TalkBack can write an entry
+
+**Covers:** IMP-059. **Target: emulator** (TalkBack behaves the same here; nothing in this walk is hardware
+behaviour). **Runner: 👤 owner** — it is gesture navigation with a screen reader, which is inherently manual.
+**⛔ Blocked until IMP-059 is code-complete.**
+
+Enable via emulator → Settings → Accessibility → TalkBack.
+
+1. Swipe through **Home**: the write FAB announces itself as `Write today's entry`. Today it is a
+   `Pressable` containing only an icon, with its `Write` label a *sibling* — so it announces as nothing.
+2. The four tabs announce **which is selected**, not just their names.
+3. Every icon-only dismiss in the overlay screens announces what it closes.
+4. **The acceptance test: open, write and dismiss a WriteFlow entry using only TalkBack gestures.** If an
+   entry cannot be written blind, IMP-059 is not done regardless of what the unit tests say.
+5. Confirm decorative gradients/rings do **not** steal focus, and that heatmap cells still announce their
+   day and moods (IMP-052 labelled them; do not relabel).
+
+**If it fails:** note the exact control and what TalkBack announced instead. Scope a follow-up IMP rather
+than fixing it in the walk chat.
+
+---
+
 ## WALK-12 — the R8 release-variant pass
 
 **Covers:** IMP-044 — a standing walk debt, and **the first minified build of this app ever**. Do it last:
@@ -316,9 +390,9 @@ is both flags in `app.config.js` to `false`.
   unmetered-Wi-Fi schedule. T5 approximates the *restore*, never the backup schedule.
 - **OEM battery managers** silently killing scheduled notifications (Xiaomi / Realme / Oppo / Vivo).
   Unfixable in code — do not promise reliability in copy.
-- **Foreground notifications.** There is still **no `setNotificationHandler`** anywhere in the tree, so a
-  reminder firing while the app is open shows nothing on Android. An unmade product decision, not a bug —
-  the emulator will only confuse you here.
+- **Foreground notifications — no longer unscoped, but still not an emulator job.** There is still no
+  `setNotificationHandler` in the tree, so a reminder firing while the app is open shows nothing on
+  Android. That is now **specced as IMP-054** and proven by **WALK-13 on a device**, not here.
 - **A real transaction** (needs a licence tester account) and real store prices.
 - **Real font metrics, notches, display cutouts.** IMP-030's margin was ~4% on real hardware.
 - **Performance with 400+ entries on low-end hardware** — the search filter and heatmap re-render per

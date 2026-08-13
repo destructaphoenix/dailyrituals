@@ -20,13 +20,26 @@
 
 ## ▶️ ACTIVE TRACK
 
-The live work is the **first unchecked `IMP-xxx` task in the Improvements backlog** below — its full spec is in [`docs/specs-open.md`](docs/specs-open.md), linked from its backlog row. Work that, **not** the phase ladder (8 / 10b / 11), which is **parked in [`docs/playbook.md`](docs/playbook.md)** until the owner resumes it.
+**One chat does exactly ONE task, and there are two kinds. Take whichever the owner sent you here for:**
 
-> **Six specs left — IMP-053 → IMP-060, minus 057 (still reserved). Updated 2026-08-13:**
+| Chat type | Queue | Take |
+| --- | --- | --- |
+| **Build task** | [`docs/specs-open.md`](docs/specs-open.md) | the **first unchecked `IMP-xxx`** in the Improvements backlog below — its row links to the spec |
+| **Runtime walk** | [`docs/walk-open.md`](docs/walk-open.md) | the **first ⬜ `WALK-nn`** in that file's own index |
+
+**Never both in one chat.** A spec is **code-complete at `npm test` green + `npx expo export` clean** — its
+runtime proof is a separate WALK row taken by a separate chat, so a missing walk is not an unfinished spec.
+Neither queue is the phase ladder (8 / 10b / 11), which is **parked in
+[`docs/playbook.md`](docs/playbook.md)** until the owner resumes it.
+
+> **Five specs left — IMP-054, 055, 058, 059, 060 (057 still reserved). Updated 2026-08-13:**
 >
-> **▶️ [IMP-053](docs/specs-open.md#imp-053--search-shows-you-the-match) is the live task;
+> **▶️ [IMP-054](docs/specs-open.md#imp-054--the-reminder-you-can-actually-answer) is the live task;
 > take the rest in table order.** All are **OTA — none needs a `bump:native`.** Each is self-contained:
 > **open one spec, not the file.**
+>
+> **⚠️ IMP-054 step 2 quotes a `scheduleAt` signature that is stale** — read the ⚠️ inside that step before
+> editing `io.js`, or you will silently reintroduce the duplicate-fire bug fixed in `b773352`.
 >
 > **`IMP-057` is still reserved, not missing.** It is the historical `dayKey` migration IMP-056 deferred.
 > Its step-5 reporter is now live (dev panel → Inspector → "Data health") but has only ever been read
