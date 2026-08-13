@@ -1505,6 +1505,62 @@ reusing `openEntry`.
 
 ---
 
+### IMP-053 — search shows you the match   ·   Lane: OTA   ·   Status: ✅ code-complete (2026-08-13)
+
+**Free/Plus:** free (retrieval — a user's own words are never gated). **Origin:** found while reviewing
+IMP-050, 2026-08-09; owner picked it as the next spec.
+
+**The problem.** `ArchiveScreen.js` rendered every result card the same way whether browsing or searching —
+`<T … numberOfLines={2}>{e.did}</T>`, always the first two lines of `did`, unconditionally. But
+`searchEntries` matches against `normalize(`${e.did} ${e.wished}`)`. So a hit in `wished`, or a hit in the
+fourth paragraph of `did`, produced a card whose visible text **did not contain the search term anywhere**,
+leaving the user to open each result to find out why it was there. IMP-035 built the retrieval engine and
+hid its output; this was the missing half.
+
+**The correctness trap, and why the module is shaped the way it is.** You cannot find the match in the
+normalized string and slice the original at that index. `foldDiacritics` is `normalize('NFD')` + strip
+combining marks, which **changes the string's length** — and by a different amount at every accent. Emoji
+make it worse: surrogate pairs mean UTF-16 and code-point indices disagree the moment anyone writes 🎂. A
+naive `indexOf` on the folded string highlights the wrong characters, **and only for users who write accents
+or emoji — it looks perfect in testing and is wrong in the owner's own market.** The fix is a
+length-preserving, per-code-point fold, so folded index *n* always maps to original code point *n*.
+
+**Built:** new pure `src/insights/snippet.js` importing `foldDiacritics` from `search.js` (not
+re-implemented). Four exports — `foldChar` (folds, lowercases, takes the **first code point**; returns the
+input unchanged if folding empties it), `foldChars` (**exactly one output element per input code point** —
+the invariant the whole module rests on, asserted directly), `indexOfSeq` (naive double loop returning a
+code-point index) and `entrySnippet(entry, text, { lead = 30, tail = 200 })` → `null` or
+`{ field, before, match, after, truncatedStart }`. Both of `foldChar`'s guards are load-bearing and pinned:
+a lone combining mark folds to `''` (map would shrink), `'İ'` lowercases to **two** code points on some
+engines (map would grow). `did` is searched before `wished` and wins when both match. **A needle matching
+only across the did/wished join returns `null` by design** — no single field to quote — and the card falls
+back to its old rendering; tested and deliberate, not a bug to chase.
+
+**Rendering:** new exported `ResultLine` component in `ArchiveScreen.js` replaces the hard-coded line. Outer
+`T` keeps `numberOfLines={2}` (clips the tail for free); the match sits in a nested
+`<T w={800} color={c.accentDeep}>` — nesting is safe because `T` always sets its own `fontFamily` and
+`color`, so the highlight cannot inherit a half-style. `…` prefixes a clipped lead; a `wished ·` label in
+`c.muted` appears when the snippet came from that field. Exported for the same reason IMP-052 exported
+`Heat`: so the component test can construct cases directly.
+
+**Tests:** `__tests__/insights/snippet.test.js` (28 cases) — mid-string, index 0, case-insensitive,
+`'cafe'` → highlights `'café'`, the reverse, emoji-before-match (the surrogate-pair case),
+`foldChars(s).length === [...s].length` over mixed accents/emoji/ASCII, wished-only, both-fields,
+join-only → `null`, empty/whitespace needle, `null`/`undefined`/fieldless entries.
+`__tests__/screens/ArchiveResults.test.js` (6 cases) — wished-only match renders the word **and** the label ·
+a word deep in `did` renders with no label · no text query → `did` verbatim · mood-only filter → no
+highlight · unmatched query falls back. `npm test` → **689 passed, 69 suites** (655 + 34).
+`npx expo export --platform android` clean.
+
+**Do NOT** (per spec, honored): change `searchEntries`, `normalize` or `foldDiacritics` · tokenize the query
+into words · highlight more than the first match · add match counts, relevance scoring or sorting changes ·
+touch `ReadingSheet`.
+
+**Ship:** OTA, no bump — not shipped this chat (no `Release-Lane` trailer). **Commit:**
+`feat(archive): show the matched words in search results, not the first two lines (IMP-053)`.
+
+---
+
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
 
 > Moved out of PROGRESS.md on 2026-07-31 to keep the live cursor lean once a second spec (IMP-032) opened. These are **not** finished work. If the owner revives one, lift the block back into PROGRESS.md as the ACTIVE TRACK.

@@ -7,6 +7,7 @@ import { T, Card } from '../ui';
 import { moodEmoji } from '../data';
 import { buildHeatmap } from '../home/calendar';
 import { searchEntries } from '../insights/search';
+import { entrySnippet } from '../insights/snippet';
 import { moodFace, hashKey } from '../entries/moodFace';
 import { entryForDayKey } from '../entries/find';
 import { useMoodTick } from '../ui/useMoodTick';
@@ -90,7 +91,7 @@ export default function ArchiveScreen({ copy, mode, entries, onOpen, tip, onDism
                   </View>
                   <View style={{ flex: 1 }}>
                     <T d w={700} color={c.ink} style={{ fontSize: 15, marginBottom: 3 }}>{e.wd}</T>
-                    <T w={400} color={c.muted} style={{ fontSize: 13.5, lineHeight: 19.5 }} numberOfLines={2}>{e.did}</T>
+                    <ResultLine entry={e} text={query.text} />
                     {e.moods && e.moods.length > 0 ? (
                       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
                         {e.moods.map((m) => (
@@ -109,6 +110,32 @@ export default function ArchiveScreen({ copy, mode, entries, onOpen, tip, onDism
         </View>
       )}
     </ScrollView>
+  );
+}
+
+// The result card's body line. Browsing (no text query) or a match this module
+// cannot locate in a single field renders exactly what it always did — the
+// first two lines of `did`. With a locatable match it quotes the matched words
+// instead, so a hit in `wished`, or deep in `did`, is visible on the card
+// rather than only after opening the entry (IMP-053).
+export function ResultLine({ entry, text }) {
+  const t = useTheme();
+  const c = t.colors;
+  const snip = text ? entrySnippet(entry, text) : null;
+  const style = { fontSize: 13.5, lineHeight: 19.5 };
+  if (!snip) {
+    return <T w={400} color={c.muted} style={style} numberOfLines={2}>{entry.did}</T>;
+  }
+  // numberOfLines on the outer T clips the tail for free. The highlight is a
+  // nested T: it is a thin Text wrapper that always sets its own fontFamily and
+  // color, so it cannot inherit a half-style from the line around it.
+  return (
+    <T w={400} color={c.muted} style={style} numberOfLines={2}>
+      {snip.field === 'wished' ? <T w={800} color={c.muted} style={{ fontSize: 12 }}>wished · </T> : null}
+      {snip.truncatedStart ? '…' : ''}{snip.before}
+      <T w={800} color={c.accentDeep} style={style}>{snip.match}</T>
+      {snip.after}
+    </T>
   );
 }
 

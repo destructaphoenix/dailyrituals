@@ -108,7 +108,7 @@ The live work is the **first unchecked `IMP-xxx` task in the Improvements backlo
 
 **⚠️ OTA has no Play track, and never did.** `eas update` publishes a JS bundle to Expo's CDN — Google is not involved, there is no review, and `internal`/`alpha`/`beta` are meaningless to it. Delivery is gated by exactly two things: the **channel** (`production`, set in `eas.json` → `build.production.channel`) and a **matching `runtimeVersion`**. An installed build receives an OTA regardless of which Play track it was installed from. So "send OTA to internal instead of closed testing" is not a setting that exists — and OTA is already faster than any track, which is the whole reason the lane exists.
 
-**Current stack:** Expo SDK **54** · React Native **0.81.5** · React **19.1.0** · **Legacy Architecture** (`expo.newArchEnabled: false`, held deliberately — SDK 55 drops Legacy and that migration is its own future task) · `compileSdkVersion`/`targetSdkVersion` **36**, `minSdkVersion` **24** · `npm test` → **655 passed, 67 suites**. Details in [`docs/playbook.md`](docs/playbook.md).
+**Current stack:** Expo SDK **54** · React Native **0.81.5** · React **19.1.0** · **Legacy Architecture** (`expo.newArchEnabled: false`, held deliberately — SDK 55 drops Legacy and that migration is its own future task) · `compileSdkVersion`/`targetSdkVersion` **36**, `minSdkVersion` **24** · `npm test` → **689 passed, 69 suites**. Details in [`docs/playbook.md`](docs/playbook.md).
 
 ---
 
@@ -167,7 +167,7 @@ Opus scopes each owner-filed issue into a numbered `IMP-xxx` task — steps, tes
 | IMP-050 | 🟡 Every mood gets a face — custom emoji picker + typed escape hatch, two fallback glyphs, multi-mood shimmer | OTA | ✅ code-complete (2026-08-10) — full detail in build-log |
 | IMP-051 | 🔴 **The keyboard stops eating the Next button** — `KeyboardAvoidingView` is inert on Android (`behavior: undefined`), WriteFlow is inside a `Modal` whose dialog window never gets `adjustResize`, and edge-to-edge (API 36) stops the system resizing for the IME at all. The user must dismiss the keyboard for every single step | OTA | ✅ code-complete + **emulator-walked 2026-08-10** — full detail in build-log |
 | IMP-052 | ✨ Tap a day, read it — both heatmaps (Reflections + the lifetime grid on Insights) are now pressable; taps open the existing `ReadingSheet` | OTA | ✅ code-complete (2026-08-13) — full detail in build-log |
-| IMP-053 | 🟡 **Search shows you the match** — the result card hard-renders the first 2 lines of `did`, but `searchEntries` matches over `did + wished`. A hit in `wished` (or deep in `did`) yields a card containing the search term **nowhere**. IMP-035 built the engine and hid its output. Watch the index-mapping trap: diacritic folding is not length-preserving | OTA | ⬜ [spec](docs/specs-open.md#imp-053--search-shows-you-the-match) |
+| IMP-053 | 🟡 **Search shows you the match** — the result card hard-renders the first 2 lines of `did`, but `searchEntries` matches over `did + wished`. A hit in `wished` (or deep in `did`) yields a card containing the search term **nowhere**. IMP-035 built the engine and hid its output. Watch the index-mapping trap: diacritic folding is not length-preserving | OTA | ✅ code-complete (2026-08-13) — full detail in build-log |
 | IMP-054 | 🟡 **The reminder you can actually answer** — two gaps in IMP-031's subsystem: no `setNotificationHandler` (flagged 2026-07-31, never scoped) so a foreground reminder shows **nothing**, and no response listener at all, so **tapping it does not open the write flow** — it lands on whatever tab you left. Owner chose: suppress the OS banner, show the app's own Toast. **Needs an emulator walk; `npm test` cannot prove it** | OTA | ⬜ [spec](docs/specs-open.md#imp-054--the-reminder-you-can-actually-answer) |
 | IMP-055 | 🟡 **Manage your feelings** — `addCustomMood` only ever appends, so a mood typo'd at 11pm is in your picker, Insights and Annual Recap for the life of the install. Rename (rewrites across `entries` **and** `trash`), re-emoji, remove. **Build AFTER IMP-050** | OTA | ⬜ [spec](docs/specs-open.md#imp-055--manage-your-feelings) |
 | IMP-060 | 🟡 **A candle burns without telling you** — `applyAutoFreeze` returns `spent`, and [`RitualsApp.js:363`](src/RitualsApp.js#L363) uses it **only** to decide whether to call the setters. A candle bought for 120–450 embers is consumed and a missed day silently covered, with no notice at all — the same "done without permission" class as the OS restore, except it is paid inventory spent by our own code | OTA | ⬜ [spec](docs/specs-open.md#imp-060--a-candle-burns-without-telling-you) |
@@ -375,6 +375,34 @@ Also worth doing and nearly free: **"gift a year" via Play promo codes** — no 
 ## Last session note
 
 _History archived in [`docs/build-log.md`](docs/build-log.md) → "Session notes". Only the two newest notes stay here; every chat moves the older one out when it appends a new one (see DEVGUIDE Step 4)._
+
+_2026-08-13 (IMP-053, search shows you the match) — **code-complete, committed, not shipped.**
+`ArchiveScreen.js` rendered `numberOfLines={2}` of `e.did` on every result card unconditionally, while
+`searchEntries` matches over `normalize(`${did} ${wished}`)` — so a hit in `wished`, or past the second line
+of `did`, produced a card containing the search term **nowhere**. RED-first: new pure
+`src/insights/snippet.js` (4 exports) with `__tests__/insights/snippet.test.js` (28 cases).
+**The trap the spec called out is real and is why the module folds per code point:** `foldDiacritics` is
+`normalize('NFD')` + strip marks, which is **not length-preserving**, so an index found in the folded string
+does not point at the same character in the original — and emoji are surrogate pairs, so UTF-16 and
+code-point indices diverge the moment anyone writes 🎂. `foldChars` therefore emits **exactly one element per
+input code point** (asserted directly), and every slice goes through `[...field].slice(a, b).join('')`.
+`foldChar`'s two guards are both load-bearing and both pinned by a test: a lone combining mark folds to `''`
+(map would shrink) and `'İ'` lowercases to **two** code points on some engines (map would grow). Pinned
+end-to-end by `'cafe'` → highlights `'café'`, the reverse, and an emoji-before-match case. `did` is searched
+before `wished` and wins when both match; a needle spanning only the did/wished join returns `null` by
+design (no single field to quote) and the card falls back to its old rendering — tested, not a bug to chase.
+`searchEntries`, `normalize` and `foldDiacritics` untouched. New exported `ResultLine` component in
+`ArchiveScreen.js` replaces the hard-coded line: outer `T` keeps `numberOfLines={2}` (clips the tail for
+free), match sits in a nested `<T w={800} color={c.accentDeep}>` (nesting is safe — `T` always sets its own
+`fontFamily` and `color`, so no half-inherited style), `…` prefix when the lead was clipped, and a `wished ·`
+label in `c.muted` when the snippet came from that field. Exported so the component test can build cases
+directly, the same reason IMP-052 exported `Heat`. `__tests__/screens/ArchiveResults.test.js` (6 cases):
+wished-only match renders the word **and** the label · a word deep in `did` renders with no label · no text
+query → `did` verbatim · mood-only filter → no highlight · unmatched query falls back. `npm test` → **689
+passed, 69 suites** (655 + 34); `npx expo export --platform android` clean. **Do NOT** (per spec, honored):
+change `searchEntries`/`normalize`/`foldDiacritics`, tokenize the query, highlight past the first match, add
+match counts or scoring, touch `ReadingSheet`. NEXT: **IMP-054** (the reminder you can actually answer) — and
+read the ⚠️ in its step 2 first, the `scheduleAt` signature it quotes is stale (see Open items)._
 
 _2026-08-13 (IMP-052, tap a day, read it) — **code-complete, committed, not shipped.** Both heatmaps
 (`ArchiveScreen.js`'s `Heat` and `InsightsScreen.js`'s `LifetimeHeat`) rendered every cell as an inert `View`;
