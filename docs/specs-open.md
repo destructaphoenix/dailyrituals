@@ -13,7 +13,7 @@
 > re-litigate a "why", and do not improve the scope.** If a step turns out to be impossible or the code
 > contradicts the spec, **STOP** and log it to `PROGRESS.md` → Open items rather than inventing a fix.
 >
-> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **651 passed, 67 suites**), `npx expo export --platform android` clean, commit with the **exact** message given, then
+> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **655 passed, 67 suites**), `npx expo export --platform android` clean, commit with the **exact** message given, then
 > update `PROGRESS.md` (tick the backlog row, write the session note) and **move the finished spec from
 > this file into `docs/build-log.md`**.
 >
@@ -191,6 +191,13 @@ app opens **WriteFlow**.
    `reminderIO.scheduleAt`. Add `data: { kind: 'daily-reminder' }` to the scheduled content, threaded
    through [`io.js`](../src/reminders/io.js)'s `scheduleAt(date, { title, body, data })`. Without this,
    step 4 would hijack any other notification the app ever sends.
+   **⚠️ The signature quoted above is stale — read this before you edit it.** An out-of-band duplicate-fire
+   fix (2026-08-13, see `PROGRESS.md` → Open items) made the real signature
+   **`scheduleAt(date, { title, body }, identifier)`**, where `identifier` is a third *positional* argument
+   carrying `reminderId(date)`. It is load-bearing: dropping it reintroduces two notifications per day at
+   the same minute. `data` still goes in the **second** argument, so both changes compose — the end state is
+   `scheduleAt(date, { title, body, data }, identifier)`. **Do not remove or reorder `identifier`**, and add
+   *"exactly one banner per day, not two"* to the step-6 walk.
 3. **[`src/reminders/io.js`](../src/reminders/io.js) — three additions, and it stays "the ONLY file that
    imports expo-notifications."** Same lazy `load()` guard as everything else in the file, each degrading
    to a no-op when the native module is absent (Expo Go):

@@ -108,7 +108,7 @@ The live work is the **first unchecked `IMP-xxx` task in the Improvements backlo
 
 **⚠️ OTA has no Play track, and never did.** `eas update` publishes a JS bundle to Expo's CDN — Google is not involved, there is no review, and `internal`/`alpha`/`beta` are meaningless to it. Delivery is gated by exactly two things: the **channel** (`production`, set in `eas.json` → `build.production.channel`) and a **matching `runtimeVersion`**. An installed build receives an OTA regardless of which Play track it was installed from. So "send OTA to internal instead of closed testing" is not a setting that exists — and OTA is already faster than any track, which is the whole reason the lane exists.
 
-**Current stack:** Expo SDK **54** · React Native **0.81.5** · React **19.1.0** · **Legacy Architecture** (`expo.newArchEnabled: false`, held deliberately — SDK 55 drops Legacy and that migration is its own future task) · `compileSdkVersion`/`targetSdkVersion` **36**, `minSdkVersion` **24** · `npm test` → **651 passed, 67 suites**. Details in [`docs/playbook.md`](docs/playbook.md).
+**Current stack:** Expo SDK **54** · React Native **0.81.5** · React **19.1.0** · **Legacy Architecture** (`expo.newArchEnabled: false`, held deliberately — SDK 55 drops Legacy and that migration is its own future task) · `compileSdkVersion`/`targetSdkVersion` **36**, `minSdkVersion` **24** · `npm test` → **655 passed, 67 suites**. Details in [`docs/playbook.md`](docs/playbook.md).
 
 ---
 
@@ -193,6 +193,29 @@ Opus scopes each owner-filed issue into a numbered `IMP-xxx` task — steps, tes
   - ✅ **IMP-021 — walked 2026-08-02, owner called it "not properly completed"; both shortfalls closed by [IMP-045](docs/build-log.md), code-complete 2026-08-09.** Full detail archived in `docs/build-log.md`. **Not yet re-walked on device** — the fix is OTA and testers will see it on the next `eas update`.
   - 🆕 **IMP-044 — a NEW walk debt, and a different kind: the first minified build.** R8 is now on for release builds only (config-only change, 2026-08-08). `npm test` cannot prove it — Jest never exercises R8, and **the failure mode is silent stripping at runtime, not a compile error.** Whenever the next build is cut, the walk must cover every reflection-facing surface: reminder fires + tap routes (IMP-031) · paywall live prices + Restore purchases (IMP-028) · JSON export **and** restore (IMP-020) · `eas update` applies · SVG icons · fonts · restore notice (IMP-029). Also confirm the win: bundle explorer shows **no `expo.modules.devlauncher` classes**. Checklist + full rationale in [`docs/build-log.md`](docs/build-log.md) → IMP-044.
   - ✅ **IMP-029 — PASSED on a real device.** The owner ran a true uninstall → reinstall cycle; Auto Backup restored silently at install time and the app fired the "Welcome back." notice naming the backup's date. The restored data was **stale (2 entries vs the 5 that were live)** — which is the feature working, not failing: that staleness is exactly the hazard the notice exists to announce. Two follow-on findings came out of the walk (see below). Procedure kept in [`docs/build-log.md`](docs/build-log.md) → IMP-029 → "Device-walk procedure" for future regressions.
+
+### 🟠 Unscoped fix landed outside the backlog (2026-08-13) — duplicate reminders, and the signature it moves under IMP-054
+
+**Shipped as a plain `fix(reminders)` commit, not an `IMP-xxx`** — it was a live defect in IMP-031's
+subsystem found outside a spec, small enough that scoping it would have cost more than fixing it.
+
+**The defect.** `rearmReminders` in `RitualsApp.js` cancels every pending notification and then re-schedules
+the whole 7-day window. Its triggers can overlap (a save landing mid-flight, or the app going `active`
+twice), and `scheduleAt` let expo mint a fresh uuid per call — so two overlapping runs each cancelled, then
+each scheduled, leaving **two notifications per day firing at the same minute**. Fixed on two levels, both
+needed: `schedule.js` gained `reminderId(date)` → `rituals-reminder-{dayKey}` (stable per local calendar day,
+so re-scheduling a day *replaces* it), and the runs are chained on a `rearmLock` ref so one run's cancel can
+never land between another's cancel and its schedules. 4 new tests in
+`__tests__/reminders/schedule.test.js`; `npm test` 651 → **655**.
+
+**⚠️ This contradicts IMP-054's step 2 as written, and the build chat that takes IMP-054 must not silently
+paper over it.** The spec says to thread `data` through `scheduleAt(date, { title, body, data })`. The real
+signature is now **`scheduleAt(date, { title, body }, identifier)`** — a third *positional* parameter that
+already exists and is load-bearing. IMP-054's `data: { kind: 'daily-reminder' }` still belongs in the second
+argument (the content bag), so the two changes compose without conflict — **but the spec's quoted signature
+is stale, and dropping the third argument would silently reintroduce the duplicate fire this fixed.** Keep
+`identifier` third and add `data` to the content bag. The IMP-054 walk should also confirm **one** banner per
+day, not two, since it is the first on-device look at reminders since this landed.
 
 ### 🟡 IMP-056 residual + the IMP-057 decision (2026-08-10) — dayKey derivation fixed; historical entries not migrated
 

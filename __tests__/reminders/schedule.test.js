@@ -1,4 +1,4 @@
-import { nextOccurrences, formatReminderTime, reminderRowValue } from '../../src/reminders/schedule';
+import { nextOccurrences, reminderId, formatReminderTime, reminderRowValue } from '../../src/reminders/schedule';
 
 describe('nextOccurrences', () => {
   it('starts today when the target time has not passed yet', () => {
@@ -83,5 +83,30 @@ describe('reminderRowValue', () => {
   });
   it('reads Blocked in settings when enabled but permission is denied', () => {
     expect(reminderRowValue({ enabled: true, hour: 20, minute: 30 }, 'denied')).toBe('Blocked in settings');
+  });
+});
+
+describe('reminderId', () => {
+  it('is stable for the same instant across calls, so a re-arm replaces rather than duplicates', () => {
+    const d = new Date(2026, 6, 31, 20, 30, 0, 0);
+    expect(reminderId(d)).toBe(reminderId(new Date(2026, 6, 31, 20, 30, 0, 0)));
+  });
+
+  it('gives every occurrence in a window its own id', () => {
+    const occ = nextOccurrences(new Date(2026, 6, 31, 10, 0, 0), { hour: 20, minute: 30 }, { count: 7 });
+    const ids = occ.map(reminderId);
+    expect(new Set(ids).size).toBe(7);
+  });
+
+  it('matches the same window re-derived later the same day — the duplicate-fire fix', () => {
+    const target = { hour: 20, minute: 30 };
+    const morning = nextOccurrences(new Date(2026, 6, 31, 9, 0, 0), target, { count: 7 }).map(reminderId);
+    const noon = nextOccurrences(new Date(2026, 6, 31, 12, 0, 0), target, { count: 7 }).map(reminderId);
+    expect(noon).toEqual(morning);
+  });
+
+  it('keys off the local calendar day, not the wall-clock time', () => {
+    expect(reminderId(new Date(2026, 6, 31, 20, 30))).toBe(reminderId(new Date(2026, 6, 31, 6, 5)));
+    expect(reminderId(new Date(2026, 6, 31, 20, 30))).not.toBe(reminderId(new Date(2026, 7, 1, 20, 30)));
   });
 });

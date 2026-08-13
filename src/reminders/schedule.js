@@ -8,6 +8,8 @@
 // change (see RitualsApp). A lapsed user still gets reminded without opening
 // the app, because the window is always several days deep.
 
+import { dayKeyOf } from '../time/dayKey';
+
 // Next `count` firing Date objects for a { hour, minute } target, skipping
 // today's slot if it has already passed or if the user already wrote today.
 export function nextOccurrences(now, { hour, minute }, { wroteToday = false, count = 7 } = {}) {
@@ -22,6 +24,18 @@ export function nextOccurrences(now, { hour, minute }, { wroteToday = false, cou
     out.push(d);
   }
   return out;
+}
+
+// A stable identifier for the slot a Date falls in — one per calendar day, in
+// local time, so the id survives a re-arm. Both platforms key pending requests
+// by identifier (iOS UNUserNotificationCenter, expo's Android request store +
+// its AlarmManager PendingIntent), so re-scheduling the same day *replaces* its
+// notification instead of adding a second one at the same instant. That is what
+// stops the duplicate fire when two re-arms overlap: the app used to schedule
+// with a fresh uuid every time, so a run that cancelled before the previous run
+// finished scheduling left two pending notifications for the same minute.
+export function reminderId(date) {
+  return `rituals-reminder-${dayKeyOf(date)}`;
 }
 
 // Pure formatter, explicit hour12 — no locale surprises in tests or on device.

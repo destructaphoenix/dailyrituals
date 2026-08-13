@@ -62,7 +62,7 @@ import TipCard from './screens/TipCard';
 import PlusPerks from './screens/PlusPerks';
 import AnnualRecap from './screens/AnnualRecap';
 import { buildRecap } from './recap/annualRecap';
-import { nextOccurrences, reminderRowValue } from './reminders/schedule';
+import { nextOccurrences, reminderId, reminderRowValue } from './reminders/schedule';
 import * as reminderIO from './reminders/io';
 
 // Dev-only test harness. The literal __DEV__ lets Metro strip this require (and
@@ -305,17 +305,31 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   // pending and cancel + re-derive the whole window on every trigger below —
   // cheap and idempotent. wroteToday skips today's slot even if its time
   // hasn't passed yet, so writing early cancels tonight's nudge.
-  const rearmReminders = React.useCallback(async () => {
-    const r = settings.reminder;
-    if (!r || !r.enabled) { await reminderIO.cancelAll(); return; }
-    const status = await reminderIO.getPermissionStatus();
-    setReminderPermission(status);
-    await reminderIO.cancelAll();
-    if (status !== 'granted') return;
-    const wroteToday = !!findTodaysEntry(entries, dayKeyOf());
-    const occurrences = nextOccurrences(new Date(), r, { wroteToday, count: 7 });
-    const notif = reminderCopy(settings.tone);
-    for (const date of occurrences) await reminderIO.scheduleAt(date, notif);
+  //
+  // Two things keep the window free of duplicates, because the triggers below
+  // can overlap (a save landing while a foreground re-arm is mid-flight, or iOS
+  // sending 'active' twice): every notification carries a stable per-day
+  // identifier so re-scheduling a day replaces it, and the runs are chained on
+  // rearmLock so one run's cancel can never land between another's cancel and
+  // its schedules. Without both, two overlapping runs each cancelled, then each
+  // scheduled — leaving two notifications per day, firing at the same minute.
+  const rearmLock = React.useRef(Promise.resolve());
+  const rearmReminders = React.useCallback(() => {
+    const run = async () => {
+      const r = settings.reminder;
+      if (!r || !r.enabled) { await reminderIO.cancelAll(); return; }
+      const status = await reminderIO.getPermissionStatus();
+      setReminderPermission(status);
+      await reminderIO.cancelAll();
+      if (status !== 'granted') return;
+      const wroteToday = !!findTodaysEntry(entries, dayKeyOf());
+      const occurrences = nextOccurrences(new Date(), r, { wroteToday, count: 7 });
+      const notif = reminderCopy(settings.tone);
+      for (const date of occurrences) await reminderIO.scheduleAt(date, notif, reminderId(date));
+    };
+    const next = rearmLock.current.then(run, run);
+    rearmLock.current = next.catch(() => {});
+    return next;
   }, [settings.reminder, settings.tone, entries]);
 
   React.useEffect(() => { rearmReminders(); }, [rearmReminders]);

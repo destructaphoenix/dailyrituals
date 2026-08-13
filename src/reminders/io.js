@@ -43,10 +43,15 @@ export async function cancelAll() {
   await N.cancelAllScheduledNotificationsAsync();
 }
 
-export async function scheduleAt(date, { title, body }) {
+// `identifier` comes from schedule.js's reminderId — passing it makes the call
+// idempotent (scheduling the same id twice replaces, never duplicates). Omitting
+// it lets expo mint a uuid, which is how the same instant used to end up with
+// two pending notifications.
+export async function scheduleAt(date, { title, body }, identifier) {
   const N = load();
   if (!N) return null;
   return N.scheduleNotificationAsync({
+    identifier,
     content: { title, body },
     trigger: { type: N.SchedulableTriggerInputTypes.DATE, date },
   });
