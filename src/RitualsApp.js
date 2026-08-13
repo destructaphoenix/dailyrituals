@@ -46,6 +46,7 @@ import { pickPersisted } from './persistence/state';
 import { pendingRestoreInventory } from './persistence/restoreQuarantine';
 import { applyCompletion } from './home/completeEntry';
 import { applyAutoFreeze } from './home/streakFreeze';
+import { addFreezeNotice } from './home/freezeNotice';
 import { applyEdit, applyDelete, applyRestore, pruneTrash, streakAfterDelete } from './entries/mutate';
 import { renameMood, deleteMood } from './entries/renameMood';
 import { restoreAccess, consumeFreeRestore } from './entries/restoreAllowance';
@@ -405,6 +406,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     if (result.spent > 0) {
       setFrozenDays(result.frozenDays);
       setFreezes(result.freezes);
+      setSettings((s) => ({ ...s, pendingFreezeNotice: addFreezeNotice(s.pendingFreezeNotice || [], result.covered) }));
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -731,6 +733,8 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             done={done} onWrite={() => setWriting(true)} onToggleMode={onToggleMode}
             dailyPrompt={promptSel.item} userName={(settings.name || '').trim()}
             tip={pendingTip('today', seenTips)} onDismissTip={dismissTip}
+            pendingFreezeNotice={settings.pendingFreezeNotice || []}
+            onDismissFreezeNotice={() => setSettings((s) => ({ ...s, pendingFreezeNotice: [] }))}
             onThisDayDismissed={settings.onThisDayDismissed || ''}
             onDismissOnThisDay={() => setSettings((s) => ({ ...s, onThisDayDismissed: dayKeyOf() }))}
             onOpenOnThisDay={(e) => { setReading(e); setQuests((qs) => markRevisited(qs, e, dayKeyOf())); }}

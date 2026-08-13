@@ -18,6 +18,7 @@ import { EmberPill } from '../shopui';
 import { onThisDay } from '../memory/onThisDay';
 import { recapYears } from '../recap/annualRecap';
 import TipCard from './TipCard';
+import FreezeNoticeCard from './FreezeNoticeCard';
 import OnThisDayCard from './OnThisDayCard';
 import AnnualRecapCard from './AnnualRecapCard';
 
@@ -25,7 +26,7 @@ import AnnualRecapCard from './AnnualRecapCard';
 // for why (a "year in review" outside Dec–Jan is either premature or stale).
 const RECAP_WINDOW_MONTHS = [11, 0]; // Dec, Jan
 
-export default function HomeScreen({ copy, mode, streak, level, levelName, xpInto, xpToNext, entries, quests, freezes, onOpenAchievements, done, onWrite, onToggleMode, embers, plus, plusEnabled = false, onOpenShop, dailyPrompt = '', userName = '', tip, onDismissTip, onThisDayDismissed = '', onDismissOnThisDay, onOpenOnThisDay, onOpenPaywall, recapSeen = null, onDismissAnnualRecap, onOpenAnnualRecap }) {
+export default function HomeScreen({ copy, mode, streak, level, levelName, xpInto, xpToNext, entries, quests, freezes, onOpenAchievements, done, onWrite, onToggleMode, embers, plus, plusEnabled = false, onOpenShop, dailyPrompt = '', userName = '', tip, onDismissTip, pendingFreezeNotice = [], onDismissFreezeNotice, onThisDayDismissed = '', onDismissOnThisDay, onOpenOnThisDay, onOpenPaywall, recapSeen = null, onDismissAnnualRecap, onOpenAnnualRecap }) {
   const t = useTheme();
   const c = t.colors;
   const Orb = mode === 'night' ? Moon : Sun;
@@ -91,6 +92,18 @@ export default function HomeScreen({ copy, mode, streak, level, levelName, xpInt
           {freezes != null && <StreakFreeze count={freezes} />}
         </Card>
       </View>
+
+      {/* candle spent notice (IMP-060) — outranks On this day: something */}
+      {/* taken beats a memory, and both can only ever show one at a time. */}
+      {pendingFreezeNotice.length > 0 && (
+        <View style={{ paddingHorizontal: 20 }}>
+          <FreezeNoticeCard
+            days={pendingFreezeNotice}
+            freezesLeft={freezes ?? 0}
+            onDismiss={onDismissFreezeNotice}
+          />
+        </View>
+      )}
 
       {/* on this day (IMP-038, Plus perk #3) */}
       {onThisDayMatches.length > 0 && (

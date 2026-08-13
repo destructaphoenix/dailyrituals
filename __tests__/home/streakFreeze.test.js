@@ -8,14 +8,14 @@ describe('applyAutoFreeze — IMP-039 streak insurance', () => {
   test('no entries → no-op, same references, spent 0', () => {
     const frozenDays = [];
     const result = applyAutoFreeze([], frozenDays, 5, TODAY);
-    expect(result).toEqual({ frozenDays, freezes: 5, spent: 0 });
+    expect(result).toEqual({ frozenDays, freezes: 5, spent: 0, covered: [] });
     expect(result.frozenDays).toBe(frozenDays);
   });
 
   test('no freezes owned → no-op even with a real gap', () => {
     const entries = [entry('2026-06-10')];
     const result = applyAutoFreeze(entries, [], 0, TODAY);
-    expect(result).toEqual({ frozenDays: [], freezes: 0, spent: 0 });
+    expect(result).toEqual({ frozenDays: [], freezes: 0, spent: 0, covered: [] });
   });
 
   test('no gap (wrote yesterday) → nothing to freeze', () => {
@@ -24,6 +24,7 @@ describe('applyAutoFreeze — IMP-039 streak insurance', () => {
     expect(result.spent).toBe(0);
     expect(result.frozenDays).toEqual([]);
     expect(result.freezes).toBe(3);
+    expect(result.covered).toEqual([]);
   });
 
   test('a single missed day is covered by one freeze', () => {
@@ -32,6 +33,7 @@ describe('applyAutoFreeze — IMP-039 streak insurance', () => {
     expect(result.frozenDays).toEqual(['2026-06-13']);
     expect(result.freezes).toBe(2);
     expect(result.spent).toBe(1);
+    expect(result.covered).toEqual(['2026-06-13']);
   });
 
   test('a multi-day gap consumes one freeze per missed day, in order', () => {
@@ -40,6 +42,7 @@ describe('applyAutoFreeze — IMP-039 streak insurance', () => {
     expect(result.frozenDays).toEqual(['2026-06-11', '2026-06-12', '2026-06-13']);
     expect(result.freezes).toBe(2);
     expect(result.spent).toBe(3);
+    expect(result.covered).toEqual(['2026-06-11', '2026-06-12', '2026-06-13']);
   });
 
   test('freezes run out mid-gap → only the affordable prefix is covered', () => {
@@ -48,6 +51,7 @@ describe('applyAutoFreeze — IMP-039 streak insurance', () => {
     expect(result.frozenDays).toEqual(['2026-06-11', '2026-06-12']);
     expect(result.freezes).toBe(0);
     expect(result.spent).toBe(2);
+    expect(result.covered).toEqual(['2026-06-11', '2026-06-12']);
   });
 
   test('idempotent: days already frozen are never re-spent', () => {

@@ -123,6 +123,9 @@ export const DEFAULT_SETTINGS = {
   // Last year the Annual Recap Home card (IMP-046) was dismissed for — a
   // single number, not a set, so an old dismissal never hides a later year.
   recapSeen: null,
+  // Days a streak-freeze candle covered that the user hasn't been told about
+  // yet (IMP-060) — cleared to [] once the Home notice is dismissed.
+  pendingFreezeNotice: [],
 };
 
 // Mix a hex color toward white by `amount` (0–1).

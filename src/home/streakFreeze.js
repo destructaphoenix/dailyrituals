@@ -12,7 +12,7 @@ import { dayKeyToUtcMs, utcMsToDayKey, DAY_MS } from '../insights/dateKeys';
 // gap still breaks the streak (currentStreak's walk stops at the first
 // uncovered day), so candles can be burned without saving a long absence.
 export function applyAutoFreeze(entries, frozenDays, freezes, todayKey) {
-  if (!entries.length || freezes <= 0) return { frozenDays, freezes, spent: 0 };
+  if (!entries.length || freezes <= 0) return { frozenDays, freezes, spent: 0, covered: [] };
 
   const frozenSet = new Set(frozenDays);
   const lastMs = Math.max(...entries.map((e) => dayKeyToUtcMs(e.dayKey)));
@@ -25,12 +25,13 @@ export function applyAutoFreeze(entries, frozenDays, freezes, todayKey) {
     const key = utcMsToDayKey(ms);
     if (!frozenSet.has(key)) missed.push(key);
   }
-  if (!missed.length) return { frozenDays, freezes, spent: 0 };
+  if (!missed.length) return { frozenDays, freezes, spent: 0, covered: [] };
 
   const covered = missed.slice(0, freezes);
   return {
     frozenDays: [...frozenDays, ...covered],
     freezes: freezes - covered.length,
     spent: covered.length,
+    covered,
   };
 }
