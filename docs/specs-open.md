@@ -13,7 +13,7 @@
 > re-litigate a "why", and do not improve the scope.** If a step turns out to be impossible or the code
 > contradicts the spec, **STOP** and log it to `PROGRESS.md` → Open items rather than inventing a fix.
 >
-> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **698 passed, 70 suites**), `npx expo export --platform android` clean, commit with the **exact** message given, then
+> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **723 passed, 72 suites**), `npx expo export --platform android` clean, commit with the **exact** message given, then
 > update `PROGRESS.md` (tick the backlog row, write the session note) and **move the finished spec from
 > this file into `docs/build-log.md`**.
 >
@@ -24,107 +24,24 @@
 
 | # | Spec | Lane |
 | --- | --- | --- |
-| 1 | [IMP-055 — manage your feelings](#imp-055--manage-your-feelings) | OTA |
-| 2 | [IMP-060 — a candle burns without telling you](#imp-060--a-candle-burns-without-telling-you) | OTA |
-| 3 | [IMP-059 — the app has one accessibility label](#imp-059--the-app-has-one-accessibility-label) | OTA |
-| 4 | [IMP-058 — prompt packs](#imp-058--prompt-packs) | OTA |
+| 1 | [IMP-060 — a candle burns without telling you](#imp-060--a-candle-burns-without-telling-you) | OTA |
+| 2 | [IMP-059 — the app has one accessibility label](#imp-059--the-app-has-one-accessibility-label) | OTA |
+| 3 | [IMP-058 — prompt packs](#imp-058--prompt-packs) | OTA |
 
 > **IMP-056 is done (2026-08-10), IMP-050 is done (2026-08-10), IMP-051 is done (2026-08-10), IMP-052 is
-> done (2026-08-13), IMP-053 is done (2026-08-13) and IMP-054 is done (2026-08-13) — see `docs/build-log.md`.**
+> done (2026-08-13), IMP-053 is done (2026-08-13), IMP-054 is done (2026-08-13) and IMP-055 is done
+> (2026-08-13) — see `docs/build-log.md`.**
 > **IMP-057 is still deliberately absent.** It is reserved
 > for the historical `dayKey` migration IMP-056 deferred, and it cannot be written until a real device's
 > numbers come back from the dev-panel Inspector's "Data health" reporter IMP-056 added. **Do not reuse the
 > number.**
 >
-> **The ordering constraint that gated IMP-055 on IMP-050 is now cleared** — IMP-050 landed 2026-08-10, so
-> `cell.moods`, `settings.customMoodEmoji` and the emoji palette all exist. Take the remaining four specs in
-> any order.
+> **All ordering constraints on the remaining three specs are clear.** Take them in any order.
 >
 > **Every spec here is code-complete at green tests. None of them ends in a walk.** A build chat and a
 > runtime walk are **two different tasks for two different chats** — where a feature needs runtime proof,
 > the spec's last step names its `WALK-nn` row in [`walk-open.md`](walk-open.md) and stops. IMP-059 →
 > WALK-14. **Do not run a walk from a build chat**, and do not read a missing walk as an unfinished spec.
-
----
-
-### IMP-055 — manage your feelings
-
-**Lane:** OTA · **Free/Plus:** free (stored content — the same line IMP-037 and IMP-050 draw) · **Origin:**
-walled out of IMP-050 deliberately; owner asked for it on 2026-08-09.
-
-**✅ Unblocked — IMP-050 is done (2026-08-10, see `docs/build-log.md`)** — this spec edits
-`settings.customMoodEmoji`, which IMP-050 created, and reuses the emoji palette IMP-050 built.
-
-**The problem.** IMP-050 makes custom moods worth having: a name *and* a face, offered in every future
-WriteFlow. What it does not give you is any way to change one. `addCustomMood`
-([`RitualsApp.js:432`](../src/RitualsApp.js#L432)) only ever appends (it now also writes the emoji IMP-050
-added, but still never edits an existing entry). There is **no rename, no delete, and
-no way to change an emoji you picked in a hurry** — so a mood typed as `Anxios` at 11pm is in your picker,
-your Insights and your Annual Recap for the life of the install.
-
-**Decided design (the owner chose the rename semantics, 2026-08-09), do not re-litigate.**
-
-- **A rename rewrites the name across every entry.** History stays coherent and the typo is fixed
-  everywhere it was ever recorded. This edits historical entries, and that is allowed **only** because a
-  mood label is metadata the user themselves chose and is now correcting — **`did` and `wished` are never
-  touched by this spec, under any circumstance.**
-- **A rename must cover `trash` as well as `entries`.** Trashed entries carry their full `moods` array
-  ([`mutate.js:29`](../src/entries/mutate.js#L29)), so skipping trash means restoring an entry later
-  resurrects the old name as an orphan.
-- **A delete removes the mood from the picker and nothing else.** Entries that used it **keep** it, and its
-  `customMoodEmoji` entry is **deliberately left in place** so those days keep their face instead of
-  falling back to the `✨` placeholder. Deleting a feeling you once had must not rewrite the days you had
-  it. The map carrying a few dead keys is a non-cost.
-- **Built-in moods are untouchable.** The 8 in `MOODS` cannot be renamed, re-emoji'd or deleted.
-
-**Steps**
-
-1. **RED first — `__tests__/entries/renameMood.test.js` + new pure
-   [`src/entries/renameMood.js`](../src/entries/renameMood.js)**, following
-   [`mutate.js`](../src/entries/mutate.js)'s `{ entries, trash }` bag idiom. Three exports:
-   - `renameMood({ entries, trash, settings }, from, to)` → a new bag. Rewrites `from` to `to` in every
-     `moods` array in **both** `entries` and `trash`, in `settings.customMoods` (keeping list position),
-     and re-keys `settings.customMoodEmoji`. **Entries that did not use the mood keep their object
-     identity** — assert this directly; it is what stops React re-rendering the whole archive.
-   - `deleteMood({ entries, trash, settings }, name)` → removes `name` from `settings.customMoods` only.
-     `entries`, `trash` and `customMoodEmoji` come back **by reference, unchanged**.
-   - `moodNameError(name, { customMoods, existing })` → `null` or a user-facing string. Rules:
-     empty or whitespace → `Give it a name.` · longer than 24 characters → `A bit shorter.` · a
-     case-insensitive match against `MOODS` → `That one is already here.` · a case-insensitive match
-     against another custom mood → `You already have that one.` · renaming a mood to itself (unchanged) →
-     `null`.
-   Required cases beyond the above: a rename where an entry already carries **both** the old and the new
-   name → the result must not contain a duplicate · a rename with no matching entries anywhere → all three
-   slices come back by reference · `null` and malformed rows, and a missing `moods` array, survive without
-   throwing · nothing is ever mutated in place (freeze the inputs in the test) · **a `did` or `wished`
-   string that happens to contain the mood word is left completely alone** — pin this, it is the one way
-   this spec could damage a journal.
-2. **New `src/screens/MoodManager.js`** — a full-screen `Modal` sheet in the idiom of
-   [`TrashSheet.js`](../src/screens/TrashSheet.js), listing `settings.customMoods`. Each row carries the
-   emoji, the name, and two actions: **Edit** (the same emoji palette and name field IMP-050 built,
-   prefilled) and **Remove**. Removal asks first, with copy that states the actual behaviour:
-   `Remove {name} from your list? Days you already marked with it keep it.` The empty state, when no custom
-   moods exist, is `The feelings you name yourself will live here.`
-   **Reuse IMP-050's palette rather than rebuilding it** — if IMP-050 left it inline in `WriteFlow`,
-   extract it to `src/screens/MoodPalette.js` first and have both screens import it. Do not fork it.
-3. **A You-tab route.** Add a row to [`YouScreen.js`](../src/screens/YouScreen.js) in the same card as the
-   other journal-content rows: label `Your feelings`, value = the custom mood count, or `None yet` at zero.
-   It opens the modal from [`RitualsApp.js`](../src/RitualsApp.js) beside the other overlays, with the same
-   `ThemeContext.Provider` wrapper every sibling modal uses.
-4. **Wire the writes in `RitualsApp`** — `onRenameMood` / `onDeleteMood` call the pure functions and set
-   `entries`, `trash` and `settings` from the returned bag. **All three setters, every time** — a rename
-   that updates settings but not trash is exactly the bug step 1 exists to prevent.
-5. **Component test `__tests__/screens/MoodManager.test.js`**: renaming to a name that already exists shows
-   the error and calls nothing · a valid rename calls `onRenameMood` with the old and new names · Remove
-   asks before calling `onDeleteMood` · the empty state renders with no custom moods · built-in moods are
-   never listed.
-6. `npm test` green (≥ 577, or ≥ whatever the specs before it left), `npx expo export --platform android` clean.
-
-**Do NOT** touch `did` or `wished` · allow editing the 8 built-in moods · delete a mood from historical
-entries · remove its `customMoodEmoji` key on delete · merge on a name collision (a clash is an error, not
-a merge) · add reordering or favourites · touch `ArchiveFilters` beyond what IMP-050 already changed.
-
-**Commit:** `feat(entries): rename, re-emoji and remove the feelings you named yourself (IMP-055)`
 
 ---
 

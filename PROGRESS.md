@@ -32,8 +32,8 @@
 runtime proof is a separate WALK row for a separate chat, so a missing walk is *not* an unfinished spec.
 Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`](docs/playbook.md).
 
-> **▶️ [IMP-055](docs/specs-open.md#imp-055--manage-your-feelings) is the live build task.**
-> Four specs left (055, 058, 059, 060) — **all OTA, none needs a `bump:native`**, no ordering
+> **▶️ [IMP-060](docs/specs-open.md#imp-060--a-candle-burns-without-telling-you) is the live build task.**
+> Three specs left (058, 059, 060) — **all OTA, none needs a `bump:native`**, no ordering
 > constraints, take them in table order.
 >
 > **`IMP-057` is reserved, not missing** — the historical `dayKey` migration IMP-056 deferred. It needs a
@@ -73,7 +73,7 @@ which track it came from.
 
 **Current stack:** Expo SDK **54** · RN **0.81.5** · React **19.1.0** · **Legacy Architecture**
 (`newArchEnabled: false`, held deliberately) · `targetSdkVersion` **36**, `minSdk` **24** · `npm test` →
-**698 passed, 70 suites**. Details in [`docs/playbook.md`](docs/playbook.md).
+**723 passed, 72 suites**. Details in [`docs/playbook.md`](docs/playbook.md).
 
 ---
 
@@ -137,7 +137,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 053 | Search shows you the match (snippet + highlight) | OTA | ✅ 2026-08-13 |
 | 056 | A day is the day you lived, not the day in Greenwich | OTA | ✅ + emulator-walked 2026-08-10 |
 | 054 | The reminder you can actually answer | OTA | ✅ code-complete 2026-08-13 · walk = WALK-13 |
-| **055** | **Manage your feelings — rename / re-emoji / remove** | OTA | ⬜ [spec](docs/specs-open.md#imp-055--manage-your-feelings) |
+| 055 | Manage your feelings — rename / re-emoji / remove | OTA | ✅ code-complete 2026-08-13 |
 | **060** | **A candle burns without telling you** | OTA | ⬜ [spec](docs/specs-open.md#imp-060--a-candle-burns-without-telling-you) |
 | **059** | **The app has one accessibility label** | OTA | ⬜ [spec](docs/specs-open.md#imp-059--the-app-has-one-accessibility-label) · walk = WALK-14 |
 | **058** | **Prompt packs — grief / gratitude / change** | OTA | ⬜ [spec](docs/specs-open.md#imp-058--prompt-packs) |
@@ -212,16 +212,18 @@ tests. `npm test` → **698 passed, 70 suites**; `npx expo export` clean. Also a
 now-resolved duplicate-reminder Open-items note into build-log's "Resolved findings". Runtime proof is
 **WALK-13**, not run this chat. NEXT: **IMP-055** (`docs/specs-open.md#imp-055--manage-your-feelings`)._
 
-_2026-08-13 (IMP-053 + workflow restructure, Opus session) — **IMP-053 code-complete, committed `f7dbca3`,
-not shipped.** New pure `src/insights/snippet.js` (`foldChar`/`foldChars`/`indexOfSeq`/`entrySnippet`) +
-exported `ResultLine` in `ArchiveScreen.js`: search results now quote the matched words with the hit
-highlighted, and label the line `wished ·` when the match came from that field. **The whole design exists
-because `foldDiacritics` is not length-preserving and emoji are surrogate pairs** — folding per code point
-keeps folded index n ↔ original code point n; a naive `indexOf` would mis-highlight only for users writing
-accents or emoji. 28 + 6 new tests. `npm test` → **689 passed, 69 suites**; `npx expo export` clean.
-Also this session: `b773352` fixed duplicate reminders (see Open items); `d6f5d75` recorded API-36
-compliance closing account-wide; `ef41206` split the walk queue out of the build queue — IMP-054 and
-IMP-059 no longer end in a walk, those became WALK-13/WALK-14, and every walk row now states its target
-(emulator/device) and runner (owner/agent). PROGRESS.md trimmed 476 → ~230 lines by moving monetization
-strategy + Phase 10b to the playbook and resolved findings to the build-log. NEXT: **IMP-054** — read the
-⚠️ in its step 2 first._
+_2026-08-13 (IMP-055, manage your feelings) — **code-complete, committed `6cc63ad`, not shipped.** New pure
+`src/entries/renameMood.js` (`renameMood`, `deleteMood`, `moodNameError`) follows `mutate.js`'s bag idiom:
+`renameMood` rewrites a mood name across `entries` + `trash` moods arrays, `settings.customMoods` (position
+kept) and re-keys `customMoodEmoji`, giving back untouched entries and empty-match slices by exact
+reference. `deleteMood` strips the picker entry only — entries/trash/`customMoodEmoji` pass through
+unchanged, so a day that used a deleted mood keeps both its label and its face. New
+`src/screens/MoodManager.js` (Modal sheet, `TrashSheet.js`'s idiom) lists custom moods with Edit/Remove;
+Edit reuses `MOOD_PALETTE`/`moodEmoji` from `src/data.js` **unmodified** — IMP-050 already left them shared,
+so no extraction was needed despite the spec's conditional. `YouScreen.js` gained a "Your feelings" row
+beside "Recently deleted" in the "Your journal is safe" card. `RitualsApp.js`'s `onRenameMood` calls the
+pure function then folds the (possibly new) emoji into the result under the new name — the pure function
+only knows the *old* emoji, since it re-keys rather than replaces; `onDeleteMood` is a direct pass-through.
+Both setters always fire all three of `entries`/`trash`/`settings`. 25 new tests (20 pure + 5 component).
+`npm test` → **723 passed, 72 suites**; `npx expo export --platform android` clean. NEXT: **IMP-060**
+(`docs/specs-open.md#imp-060--a-candle-burns-without-telling-you`)._

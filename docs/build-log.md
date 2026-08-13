@@ -1607,6 +1607,53 @@ Toast tappable · touch `content/reminders.js`.
 **Commit:** `feat(reminders): answer the reminder — a foreground nudge instead of silence, and a tap that
 opens the write flow (IMP-054)`.
 
+### IMP-055 — manage your feelings   ·   Lane: OTA   ·   Status: ✅ code-complete (2026-08-13)
+
+**Free/Plus:** free (stored content — the same line IMP-037 and IMP-050 draw). **Origin:** walled out of
+IMP-050 deliberately; owner asked for it 2026-08-09.
+
+**The gap.** IMP-050 gave a custom mood a name and a face, but no way to change either — `addCustomMood`
+only ever appends. A mood typed as `Anxios` at 11pm stayed in the picker, Insights and Annual Recap for the
+life of the install, with no rename, delete, or re-emoji.
+
+**Built:** new pure `src/entries/renameMood.js` — `renameMood({ entries, trash, settings }, from, to)`
+rewrites `from`→`to` in every `moods` array in both `entries` and `trash`, in `settings.customMoods`
+(keeping list position) and re-keys `settings.customMoodEmoji`; entries that never used the mood keep their
+exact object reference, and a rename that touches nothing returns all three slices by reference.
+`deleteMood({ entries, trash, settings }, name)` strips the name from `settings.customMoods` only —
+`entries`, `trash` and `customMoodEmoji` come back unchanged by reference, so a day that used a deleted
+mood keeps both the label and its face. `moodNameError(name, { customMoods, existing })` is the shared
+validator: empty → `Give it a name.`, >24 chars → `A bit shorter.`, case-insensitive collision with a
+built-in mood or another custom mood → the matching error, unchanged-name → `null`. `did`/`wished` are
+never read by any of the three.
+
+New `src/screens/MoodManager.js` — a full-screen Modal sheet in `TrashSheet.js`'s idiom, listing
+`settings.customMoods` (built-ins never appear). Each row shows the emoji + name with Edit/Remove actions;
+Edit expands the same `MOOD_PALETTE`/`moodEmoji` picker WriteFlow uses (already shared via `src/data.js` —
+no extraction needed, it was never inline). Remove confirms with the exact behaviour stated up front:
+"Remove {name} from your list? Days you already marked with it keep it." Empty state: "The feelings you
+name yourself will live here."
+
+`YouScreen.js` gained a "Your feelings" row in the "Your journal is safe" card, next to "Recently deleted"
+(both are journal-content management actions) — value is the custom-mood count or "None yet". `RitualsApp.js`
+wires `onRenameMood(from, to, emoji)` (calls `renameMood`, then folds the emoji into the returned settings
+under the new name, since the pure function only knows the old emoji) and `onDeleteMood(name)`, each setting
+`entries`, `trash` and `settings` every time — a rename that updates settings but not trash is exactly the
+bug the pure function's test suite exists to prevent.
+
+**Tests:** `__tests__/entries/renameMood.test.js` (20 cases — dual-name-in-one-entry dedup, no-match
+reference passthrough, frozen-input immutability, null/malformed rows, `did`/`wished` untouched) +
+`__tests__/screens/MoodManager.test.js` (5 — collision error blocks the call, valid rename fires with old
++ new name + emoji, Remove confirms before deleting, empty state, built-ins never listed). `npm test` →
+**723 passed, 72 suites** (698 + 25). `npx expo export --platform android` clean.
+
+**Do NOT** (per spec, honored): touch `did` or `wished` · allow editing the 8 built-in moods · delete a
+mood from historical entries · remove its `customMoodEmoji` key on delete · merge on a name collision ·
+add reordering or favourites · touch `ArchiveFilters` beyond what IMP-050 already changed.
+
+**Ship:** OTA, no bump — not shipped this chat (no `Release-Lane` trailer).
+**Commit:** `feat(entries): rename, re-emoji and remove the feelings you named yourself (IMP-055)` (`6cc63ad`).
+
 ---
 
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
@@ -1653,6 +1700,20 @@ opens the write flow (IMP-054)`.
 ## Session notes (archived from PROGRESS.md)
 
 _Append-only handoff log moved out of PROGRESS.md to keep it light. Newest 1–2 notes stay live in PROGRESS.md; everything else is here. Git history is the full record._
+
+_2026-08-13 (IMP-053 + workflow restructure, Opus session) — **IMP-053 code-complete, committed `f7dbca3`,
+not shipped.** New pure `src/insights/snippet.js` (`foldChar`/`foldChars`/`indexOfSeq`/`entrySnippet`) +
+exported `ResultLine` in `ArchiveScreen.js`: search results now quote the matched words with the hit
+highlighted, and label the line `wished ·` when the match came from that field. **The whole design exists
+because `foldDiacritics` is not length-preserving and emoji are surrogate pairs** — folding per code point
+keeps folded index n ↔ original code point n; a naive `indexOf` would mis-highlight only for users writing
+accents or emoji. 28 + 6 new tests. `npm test` → **689 passed, 69 suites**; `npx expo export` clean.
+Also this session: `b773352` fixed duplicate reminders (see Open items); `d6f5d75` recorded API-36
+compliance closing account-wide; `ef41206` split the walk queue out of the build queue — IMP-054 and
+IMP-059 no longer end in a walk, those became WALK-13/WALK-14, and every walk row now states its target
+(emulator/device) and runner (owner/agent). PROGRESS.md trimmed 476 → ~230 lines by moving monetization
+strategy + Phase 10b to the playbook and resolved findings to the build-log. NEXT: **IMP-054** — read the
+⚠️ in its step 2 first._
 
 _2026-08-13 (IMP-052, tap a day, read it) — **code-complete, committed, not shipped.** Both heatmaps
 (`ArchiveScreen`'s `Heat`, `InsightsScreen`'s `LifetimeHeat`) rendered every cell as an inert `View`. New
