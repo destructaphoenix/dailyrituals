@@ -2749,3 +2749,11 @@ Owner: *"When I press 'Backup my journal' it gives me the option to send or shar
 9. A second T4 cycle on the already-answered install (a fresh stash written on top) brought the sheet back, confirming a suppressed second offer doesn't happen — the exact data-loss case this flow exists to prevent.
 
 **No app defects found.** WALK-02 is fully closed.
+
+### ✅ WALK-05 — custody of your words — PASSED 2026-08-15 (emulator, owner-run)
+
+**Covers:** IMP-036, IMP-048. **🚦 Gated the release build** — the outstanding half risked silently corrupting a user's XP/ember totals, which no OTA can undo after the fact. The trash-allowance half passed 2026-08-09 (three free restores tick down, the fourth locks and explains itself, state survives a relaunch — IMP-048 was written from that walk).
+
+**Result — the outstanding `applyCompletion` half, run 2026-08-15:** owner confirmed all four remaining steps pass as specced — editing a past entry (with today written, and with today unwritten) leaves XP and ember counts unchanged with no duplicate row; deleting a mid-streak day shows the real post-delete streak and only warns about a keepsake when one is genuinely at risk; and `pruneTrash` drops a 31-day-old item on the next launch after the clock is moved forward. Reported tersely ("works as intended") rather than step-by-step, so this entry records a full pass without the per-step blow-by-blow the earlier walks have.
+
+**No app defects found.** WALK-05 is fully closed.

@@ -44,8 +44,8 @@ IMP-044's R8. So the rows are grouped by *what a failure would cost*:
 | 📦 | **Independent of the app release.** Listing assets; no build required, upload any time. |
 | ⏭ | **Not needed for this release.** Covered code is unreachable in the shipped build. |
 
-**Taking a walk is unchanged: take the first ⬜ row.** WALK-02 **passed 2026-08-15** — the first ⬜ row is
-now **WALK-05** (the outstanding `applyCompletion` half). The ordering does the work — 🚦 rows come first, and
+**Taking a walk is unchanged: take the first ⬜ row.** WALK-05 **passed 2026-08-15** — the first ⬜ row is
+now **WALK-13** (the reminder you can answer, device-only). The ordering does the work — 🚦 rows come first, and
 **WALK-12 sits last inside the 🚦 group on purpose**: R8 must be walked on the build you actually intend to
 ship, so any fix the earlier walks turn up would invalidate an R8 pass done before them.
 
@@ -53,7 +53,7 @@ ship, so any fix the earlier walks turn up would invalidate an R8 pass done befo
 | --- | --- | --- | --- | --- | --- | --- |
 | WALK-01 | ✅ | [v2→v3 mood migration](build-log.md#walk-01--v2v3-mood-migration) | IMP-037 | emulator | 🤖 mostly | ✅ **2026-08-14** — full pass, all 9 steps; detail in `build-log.md` → "Walk log" |
 | WALK-02 | 🚦 | [Restore quarantine — offered, not imposed](build-log.md#walk-02--restore-quarantine) | IMP-033, IMP-029, **IMP-062** | emulator | 👤 (clock changes + judgement on sheet copy) | ✅ **2026-08-15** — full pass, all 9 steps (incl. the new IMP-062 relaunch proof in steps 7–9); detail in `build-log.md` → "Walk log" |
-| WALK-05 | 🚦 | [Edit a past day, delete, trash allowance](#walk-05--custody-of-your-words) | IMP-036, IMP-048 | emulator | 👤 | ⬜ **partial** — allowance passed 2026-08-09; the `applyCompletion` half (past-day edit double-counting XP/embers) is **still open** |
+| WALK-05 | 🚦 | [Edit a past day, delete, trash allowance](build-log.md#walk-05--custody-of-your-words) | IMP-036, IMP-048 | emulator | 👤 | ✅ **2026-08-15** — full pass; the outstanding `applyCompletion` half confirmed no double-counting; detail in `build-log.md` → "Walk log" |
 | WALK-13 | 🚦 | [The reminder you can answer](#walk-13--the-reminder-you-can-answer) | IMP-054, **+ the duplicate-fire fix** | **device** (OEM behaviour + real doze) | 👤 | ⬜ — **unblocked 2026-08-13** (IMP-054 landed, `18d8c2e`) |
 | WALK-03 | 🚦 | [JSON export → share → restore round trip](#walk-03--json-export-round-trip) | IMP-020, IMP-043 | **device** (share-sheet targets) | 👤 | ⬜ — the user's data escape hatch |
 | WALK-12 | 🚦 | [The R8 release-variant pass](#walk-12--the-r8-release-variant-pass) | IMP-044 | **device** | 👤 | ⬜ — **the last 🚦, on the final build candidate.** First minified build ever; failure is silent |
@@ -133,25 +133,6 @@ harness** (`__DEV__` false) and no Metro.
 5. **The heatmap does not react to the filters** — it is the record of the year, not of the query.
 6. Write flow: pick **multiple** moods; add a **custom** one via "Name your own…"; it persists and
    reappears as a chip next session; adding it twice dedups.
-
----
-
-## WALK-05 — custody of your words
-
-**Covers:** IMP-036, IMP-048. **🚦 Gates the release build** — the outstanding half can silently corrupt a
-user's XP and ember totals, which is not something an OTA can undo after the fact.
-
-**Done 2026-08-09:** the trash allowance — three free restores tick down, the fourth is visibly locked and
-explains itself, state survives a relaunch. IMP-048 was written from this walk.
-
-**Still outstanding — the `applyCompletion` trap, which is the risky half:**
-
-1. **Note your XP and ember counts.** Open a **past** entry → edit → save. Both counters **unchanged**, no
-   duplicate row appears, the entry keeps its original date position.
-2. Repeat with today written, and with today unwritten. Both must be free.
-3. Delete a mid-streak day → the confirm shows the **real post-delete streak**, and adds "One of your
-   keepsakes may go with it" only when a delete genuinely un-earns an achievement.
-4. Set the clock forward 31 days → `pruneTrash` drops the item on the next launch.
 
 ---
 
