@@ -32,9 +32,10 @@
 runtime proof is a separate WALK row for a separate chat, so a missing walk is *not* an unfinished spec.
 Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`](docs/playbook.md).
 
-> **One open spec: `IMP-061`** (store screenshots build themselves) — scoped 2026-08-14, spec body in
-> [`docs/specs-open.md`](docs/specs-open.md#imp-061--store-screenshots-build-themselves). **Dev-only lane:
-> no bump, no OTA, no release.** Its runtime proof is **WALK-15**, a separate chat.
+> **The build queue is EMPTY** — IMP-061 was the last open spec and it is code-complete (2026-08-14,
+> `ca850d7`). A build chat arriving now has nothing to take and should say so rather than inventing a task;
+> the next `IMP-xxx` is Opus's to scope. A **walk** chat still has work — the first ⬜ row in
+> [`docs/walk-open.md`](docs/walk-open.md).
 >
 > **`IMP-057` is reserved, not missing** — the historical `dayKey` migration IMP-056 deferred. It needs a
 > real device's numbers from the dev-panel Inspector → "Data health" before it can be scoped (see Open
@@ -63,7 +64,7 @@ Console, which *does* get the full review.
 **⚠️ The OTA lane reaches the `alpha` cohort ONLY.** `runtimeVersion` = `appVersion` = **1.0.5** matches
 **only vc11**, which lives **only on `alpha`**. Promoting vc9 onto `internal` for compliance means
 `internal` now serves the same 1.0.3 as the public — so an `eas update` reaches neither the public nor the
-track the owner self-tests on. **All five open specs are OTA-lane and land on `alpha` alone.**
+track the owner self-tests on. **Every unshipped OTA-lane spec since vc11 lands on `alpha` alone.**
 Self-testing on `internal` needs a **build**, not an update. (General rule: once a `bump:native` lands, the
 OTA lane is closed for that release until the build ships.)
 
@@ -73,7 +74,7 @@ which track it came from.
 
 **Current stack:** Expo SDK **54** · RN **0.81.5** · React **19.1.0** · **Legacy Architecture**
 (`newArchEnabled: false`, held deliberately) · `targetSdkVersion` **36**, `minSdk` **24** · `npm test` →
-**748 passed, 77 suites**. Details in [`docs/playbook.md`](docs/playbook.md).
+**764 passed, 78 suites**. Details in [`docs/playbook.md`](docs/playbook.md).
 
 ---
 
@@ -141,7 +142,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 060 | A candle burns without telling you | OTA | ✅ code-complete 2026-08-13 |
 | 059 | The app has one accessibility label | OTA | ✅ code-complete 2026-08-13 · walk = WALK-14 |
 | 058 | Prompt packs — grief / gratitude / change | OTA | ✅ code-complete 2026-08-14 |
-| 061 | Store screenshots build themselves | Dev-only | ⬜ **open** — spec in `docs/specs-open.md`; walk = WALK-15 |
+| 061 | Store screenshots build themselves | Dev-only | ✅ code-complete 2026-08-14 · walk = WALK-15 |
 
 ---
 
@@ -198,24 +199,36 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
-_2026-08-14 (IMP-059, the app has one accessibility label) — **code-complete, committed `fa523f3`, not
-shipped.** New `src/ui/IconBtn.js` replaces the byte-identical copies in `WriteFlow.js`/`ReadingSheet.js`
-(required `label` prop → `accessibilityRole="button"` + `accessibilityLabel`); call sites labelled (`Close
-this entry` / `Back a step` / `Close`). Write FAB in `RitualsApp.js` got `accessibilityLabel="Write today's
-entry"`, its sibling `Write` text got `accessibilityElementsHidden` so TalkBack doesn't double-read it. The
-four `Tab`s got `accessibilityRole="tab"` + `accessibilityState={{ selected: active }}`. Every icon-only
-modal-close across `Achievements`, `Shop`, `GetEmbers`, `Paywall`, `ManageSubscription` (`PlusFlow.js`),
-`PlusPerks`, `AnnualRecap`, `TrashSheet`, `MoodManager` got a role + a naming label (e.g. `Close the shop`);
-`Celebration`/`RestoreNotice`/`RestoreOffer`/`ReminderSheet`/`NameEditModal` needed nothing — their dismiss
-controls already carry visible text. `InsightsScreen.js`'s heatmap today-ring and `ui.js`'s `Card` sheen
-gradient (both `pointerEvents="none"`, neither hidden from a screen reader by that alone) got
-`accessibilityElementsHidden` + `importantForAccessibility="no-hide-descendants"`. IMP-052's heatmap cell
-labels checked, not touched. 2 new tests — `IconBtn.test.js` (role+label) and `FabLabel.test.js` (mounts the
-full `RitualsApp` in `SafeAreaProvider` with `expo-notifications` mocked, asserts the FAB's label). `npm
-test` → **739 passed, 76 suites**; `npx expo export --platform android` clean. Archived IMP-059's spec to
-`docs/build-log.md`, moved the IMP-055 session note there too (this file's 2-note budget), removed
-IMP-059's `specs-open.md` index row. Stop point per spec: TalkBack walk is **WALK-14**, not attempted this
-chat. NEXT: **IMP-058** (`docs/specs-open.md#imp-058--prompt-packs`) — the only spec left in the backlog._
+_2026-08-14 (IMP-061, store screenshots build themselves) — **code-complete, committed `ca850d7`, not
+shipped; Dev-only lane so there is nothing to ship.** All 8 spec steps done in order. New
+`scripts/shots.config.js` (the manifest — 7 shots, frozen 1080×1920 canvas, caption copy verbatim from the
+spec), `scripts/shots.js` (the compositor: `fitRect` / `stripAlpha` / `assertPlayLegal` / `buildSvg` /
+`renderShot` / `buildAll`, plus a CLI), `scripts/shots.sh` (`chmod +x`; asserts exactly one `adb` device and
+`maestro` on PATH, cleans `store/raw/`, sets the demo-mode status bar, runs maestro, exits demo mode **in a
+trap**, then composes), `.maestro/store-shots.yaml`, and `__tests__/shots.test.js`. `package.json` gained
+`@resvg/resvg-js` + `pngjs` devDeps and `"shots": "bash scripts/shots.sh"`; `.gitignore` gained `store/raw/`
+(`store/play/` stays committed). App-side changes are the three dev-only files the spec named and nothing
+else: the `storeShots` scenario row, `Apply dev state` on StateSection's Apply, `Close the dev panel` on
+DevPanel's Close. **Selectors were read out of the real code, not guessed** — tabs `Today`/`Insights`/
+`Reflections`/`You`, the `v1.0` long-press row at `YouScreen.js:296`, search placeholder `Search your
+journal`, `walk` as the search term (it appears in every `LONG_DIDS`/`LONG_WISHES` string), and
+**Achievements' close label is `Close Keepsakes`, not "Close achievements"** — the spec's example didn't name
+it. `done: true` prefills WriteFlow, so `Next` is live for the 02→03 step pair. The `Launch overlays`
+collapsible is `defaultOpen={false}`, so the flow taps it open before `Achievements`/`Shop`. **Proof:** `npm
+test` → **764 passed, 78 suites** (was 748/77; the 16 new tests add ~70s, dominated by 4 real resvg
+renders). `npx expo export --platform android` clean. `node scripts/shots.js` run against 7 synthetic raws
+in **three different source shapes** (1440×3120, 1080×2400, 1080×1920) produced 7 × `1080x1920 colourType 2`;
+`fitRect` returns exactly `{x:210, y:400, w:660, h:1430}` for 1440×3120, matching the spec's ASCII layout
+contract to the pixel; both fonts render from the bundled TTFs with `loadSystemFonts: false`; the
+missing-raw path exits 1 naming the id. **The synthetic outputs were deleted, not committed** — `store/play/`
+is for real captures, which only WALK-15 can make. LAST command: `git commit` → `ca850d7`. Archived
+IMP-061's spec to `docs/build-log.md`, emptied `docs/specs-open.md`'s index (queue is now empty), moved the
+IMP-059 note down to the build log (2-note budget), and **unblocked WALK-15** in `docs/walk-open.md`.
+**Heads-up, not acted on (out of this spec's scope): WALK-13 and WALK-14 still read "blocked until IMP-054 /
+IMP-059 lands" — both landed 2026-08-13, so those two rows are stale-blocked and are actually ready.**
+NEXT: **no open IMP spec — the build queue is empty**; a build chat should stop and say so rather than
+invent one. A walk chat should take **WALK-02** (restore quarantine, first ⬜, runner 👤) or **WALK-15**
+(store screenshots, runner 🤖 mostly — needs maestro installed and a second AVD for its step 4)._
 
 _2026-08-14 (WALK-01, v2→v3 mood migration) — **full pass, all 9 steps, agent-run on the emulator.** Backlog
 was empty (IMP-058 was the last spec, already code-complete), so this chat took the first ⬜ row in

@@ -47,7 +47,7 @@
 | WALK-11 | [The Plus surfaces](#walk-11--the-plus-surfaces) | IMP-038, 046, 047, 043 | emulator | 👤 | ⬜ |
 | WALK-13 | [The reminder you can answer](#walk-13--the-reminder-you-can-answer) | IMP-054, **+ the duplicate-fire fix** | **device** (OEM behaviour + real doze) | 👤 | ⬜ — **blocked until IMP-054 lands** |
 | WALK-14 | [TalkBack can write an entry](#walk-14--talkback-can-write-an-entry) | IMP-059 | emulator | 👤 (gesture navigation, inherently manual) | ⬜ — **blocked until IMP-059 lands** |
-| WALK-15 | [Store screenshots regenerate](#walk-15--store-screenshots-regenerate) | IMP-061 | emulator | 🤖 mostly (adb + maestro are scriptable; the final seven PNGs need eyes) | ⬜ — **blocked until IMP-061 lands** |
+| WALK-15 | [Store screenshots regenerate](#walk-15--store-screenshots-regenerate) | IMP-061 | emulator | 🤖 mostly (adb + maestro are scriptable; the final seven PNGs need eyes) | ⬜ — **unblocked 2026-08-14** (IMP-061 code-complete, `ca850d7`) |
 | WALK-12 | [The R8 release-variant pass](#walk-12--the-r8-release-variant-pass) | IMP-044 | **device** | 👤 | ⬜ — **do last** |
 
 ---
@@ -317,7 +317,8 @@ than fixing it in the walk chat.
 commands an agent can drive, but step 6 is visual judgement on assets that go to the public, and that half
 is 👤. **Run it in a terminal window the owner can watch**, per the file's own rule.
 **Note step 4 needs a second AVD** at a different resolution — create it before starting.
-**⛔ Blocked until IMP-061 is code-complete.**
+**✅ Unblocked 2026-08-14** — IMP-061 is code-complete (`ca850d7`). `npm run shots` exists and the
+compositor is proven offline; what remains is exactly the runtime half this walk was written for.
 
 **Why this is a walk and not part of the spec.** The build chat can only prove the compositor against a
 synthetic capture. Everything that can actually go wrong here — a selector that no longer matches, a
