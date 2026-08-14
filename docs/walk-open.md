@@ -57,7 +57,7 @@ ship, so any fix the earlier walks turn up would invalidate an R8 pass done befo
 | WALK-13 | 🚦 | [The reminder you can answer](#walk-13--the-reminder-you-can-answer) | IMP-054, **+ the duplicate-fire fix** | **device** (OEM behaviour + real doze) | 👤 | ⬜ — **unblocked 2026-08-13** (IMP-054 landed, `18d8c2e`) |
 | WALK-03 | 🚦 | [JSON export → share → restore round trip](#walk-03--json-export-round-trip) | IMP-020, IMP-043 | **device** (share-sheet targets) | 👤 | ⬜ — the user's data escape hatch |
 | WALK-12 | 🚦 | [The R8 release-variant pass](#walk-12--the-r8-release-variant-pass) | IMP-044 | **device** | 👤 | ⬜ — **the last 🚦, on the final build candidate.** First minified build ever; failure is silent |
-| WALK-04 | 🎨 | [Search + the write flow's moods](#walk-04--search--moods) | IMP-035, IMP-037, **IMP-053** | emulator | 👤 | ⬜ |
+| WALK-04 | 🎨 | [Search + the write flow's moods](#walk-04--search--moods) | IMP-035, IMP-037, **IMP-053** | emulator | 👤 | ❌ **2026-08-15** — base search/filter/heatmap behavior passed; 5 UX defects found (search-clear, mood-chip reorder, WriteFlow deselect, custom-mood layout, wish-prefix asymmetry); findings in `PROGRESS.md` → Open items, need new `IMP-xxx` specs (Opus) |
 | WALK-06 | 🎨 | [Streak insurance — candles spend themselves](#walk-06--streak-insurance) | IMP-039 | emulator | 👤 | ⬜ |
 | WALK-07 | 🎨 | [Modal screens actually scroll](#walk-07--modal-scroll) | IMP-042 | emulator | 👤 (visual, two nav modes) | ⬜ |
 | WALK-08 | 🎨 | [Font scale + layout on the nine new screens](#walk-08--font-scale) | IMP-030 regression | **device** (real font metrics) | 👤 | ⬜ |
@@ -133,6 +133,18 @@ harness** (`__DEV__` false) and no Metro.
 5. **The heatmap does not react to the filters** — it is the record of the year, not of the query.
 6. Write flow: pick **multiple** moods; add a **custom** one via "Name your own…"; it persists and
    reappears as a chip next session; adding it twice dedups.
+
+**Result — ❌ 2026-08-15.** Steps 1-5's base behavior passed (both-field search, accent-folding, multi-select
+OR filtering, zero-results copy, heatmap non-reactivity, dedup on repeat custom-mood add). Five defects
+surfaced, written up in full (with file:line) in `PROGRESS.md` → Open items → "WALK-04 finding": (a) the
+`wished ·` snippet prefix's asymmetry with `did` is a design question, not confirmed as a bug; (b) the
+Archive search bar has no way to clear typed text; (c) selected mood filter chips don't move to the front,
+so deselecting one picked late in the list means scrolling back to find it; (d) the owner could not deselect
+an already-picked mood in WriteFlow's "How did the day feel?" step, which conflicts with the toggle-off code
+path read during writeup — needs re-confirming live, not just re-read; (e) the custom-mood creation row
+(emoji palette / typed-emoji / name fields) reads as an unclear, oddly-placed layout, and the name field
+takes emoji with no character filtering. None block the remaining steps. Each needs a new `IMP-xxx` —
+Opus's lane to scope, not this walk's.
 
 ---
 

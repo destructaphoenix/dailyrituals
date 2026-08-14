@@ -174,6 +174,34 @@ the user, after one session. Fixed — full defect writeup and landed design in
 [`docs/build-log.md` → IMP-062](docs/build-log.md#imp-062--the-restore-offer-outlives-the-launch-that-made-it-lane-ota--status--code-complete-2026-08-14).
 **WALK-02 is unblocked** — the next walk chat re-runs it whole from step 1 (new steps 7–9 prove the fix).
 
+### 🔴 WALK-04 finding — search + moods, five UX defects (2026-08-15)
+
+Walked **WALK-04** end to end on the emulator; the base search/filter/heatmap behavior (case-insensitive +
+accent-folding match, zero-results copy, heatmap not reacting to filters) all passed as specced. Five
+defects surfaced, none blocking the remaining steps — **each needs a new `IMP-xxx`** (Opus to scope; may
+bundle as one UX-polish spec or split):
+
+a. **Search snippet's `wished · ` prefix** ([`ArchiveScreen.js:134`](src/screens/ArchiveScreen.js#L134),
+   gated on `snip.field === 'wished'` from [`snippet.js:57-80`](../src/insights/snippet.js#L57)) shows only
+   when the matched word is in `wished`, never for `did`. Matches current spec intent, but the owner flags
+   the asymmetry (no `did ·` counterpart) as a design call worth revisiting, not confirmed as a bug.
+b. **No way to clear the search text.** [`ArchiveFilters.js`](../src/screens/ArchiveFilters.js)'s
+   `TextInput` (lines 109-120) has no clear/"×" affordance — only manual backspacing.
+c. **Mood filter chips don't move to the front when selected.** `ArchiveFilters.js` (`toggleMood`, lines
+   88-91; chip list, lines 122-139) recolors a selected chip but never reorders it — it stays wherever
+   `[...MOODS, ...customMoods]` put it, so deselecting a chip picked late in the list means hunting for it,
+   not tapping the front.
+d. **WriteFlow mood step — owner reports a selected chip cannot be tapped again to deselect.** Code
+   inspection shows a toggle-off path exists (`toggleMood`, [`WriteFlow.js:43`](../src/screens/WriteFlow.js#L43),
+   wired at line 131) — this contradicts what was observed live, so a build chat should re-confirm on-device
+   before assuming the logic is the problem; could be a hit-target/layout issue instead.
+e. **Custom-mood creation layout** ([`WriteFlow.js:146-202`](../src/screens/WriteFlow.js#L146)): owner found
+   the emoji-palette / typed-emoji / mood-name grouping unclear and "weirdly placed." Also confirmed: the
+   mood-**name** `TextInput` (lines 180-191) has no character filtering and accepts emoji — unlike the
+   sibling typed-emoji field it sits next to, which is `isEmojiish`-gated (lines 164-178).
+
+**WALK-04 marked ❌** in `docs/walk-open.md`; section left in place (not moved to build-log) pending specs.
+
 ### 🟡 IMP-056 residual + the IMP-057 decision (2026-08-10)
 
 `dayKey` is now derived locally (walked both offset directions). **Existing entries were deliberately not
