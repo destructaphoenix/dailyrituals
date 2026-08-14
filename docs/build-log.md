@@ -2730,3 +2730,22 @@ Owner: *"When I press 'Backup my journal' it gives me the option to send or shar
 **Note on step 9's literal field names:** the original walk spec named `frozenDays` / `seenTips` / `trash` explicitly; the current Inspector (grown since IMP-055/058) no longer exposes those three as flat top-level keys. Checked the equivalent fields that do exist instead — all pass the same "empty, not undefined" bar the step was testing for.
 
 **No app defects found.** WALK-01 is fully closed.
+
+### ✅ WALK-02 — restore quarantine — PASSED 2026-08-15 (emulator, owner-run)
+
+**Covers:** IMP-033 (quarantine + offer), IMP-029 (the restore notice) and **IMP-062**. The riskiest new code in the batch — it clears the live storage key. **🚦 Was the last remaining gate on this list before WALK-05.**
+
+**Context:** failed 2026-08-14 at step 3's "Restore from a file" — the import worked but the offer didn't settle. That failure scoped IMP-062, which fixed the real defect (`pendingRestore` only read inside quarantine's one-shot branch, so the sheet and the You-tab `Google backup — {date}` row vanished after a single session while the stash stayed in storage, unloadable and undiscardable). IMP-062 landed `ba8e684`.
+
+**Result — full pass, all 9 steps, run fresh from step 1 per the doc's instruction (the 2026-08-14 partial pass didn't count):**
+1. After T4 (backdated clock + autosave + force-stop + relaunch), the app came up as a genuine first install — full onboarding, zero entries, no name.
+2. RestoreOffer sheet appeared on finishing onboarding, stating the fresh-start replacement, the dated staleness, and the paid-inventory line.
+3. All three actions passed on separate T4 cycles: **Load my journal** returned old data intact and consumed the stash; **Restore from a file** held the sheet through two back-outs (picker and Replace-confirm) — the IMP-062 fix specifically — then completed without destroying the Google stash; **Keep this fresh start** hid the sheet without destroying the stash.
+4. The You-tab `Google backup — {date}` row reopened the sheet on tap, with a separate Discard confirm repeating the inventory line.
+5. Force-stop + relaunch after declining left the stash and row untouched.
+6. Setting `lastBackupAt` newer than the stash via the harness inverted the sheet's emphasis to lead with "Restore from a file," as `preferredSource` intends.
+7. **The IMP-062 proof:** relaunching after each of the four answers behaved correctly — sheet stayed suppressed with the row intact after "Keep fresh start" and after a completed file-restore; both sheet and row were gone for good after "Load" and after "Discard."
+8. Reopening the sheet from the You-tab row, backing out without choosing, then force-stopping and relaunching left the sheet suppressed and the row intact — the persisted answer held.
+9. A second T4 cycle on the already-answered install (a fresh stash written on top) brought the sheet back, confirming a suppressed second offer doesn't happen — the exact data-loss case this flow exists to prevent.
+
+**No app defects found.** WALK-02 is fully closed.
