@@ -137,6 +137,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 059 | The app has one accessibility label | OTA | ✅ code-complete 2026-08-13 · walk = WALK-14 |
 | 058 | Prompt packs — grief / gratitude / change | OTA | ✅ code-complete 2026-08-14 |
 | 061 | Store screenshots build themselves | Dev-only | ✅ code-complete 2026-08-14 · walk = WALK-15 |
+| 062 | The restore offer outlives the launch that made it | OTA | ⬜ **open** — spec in `docs/specs-open.md`; from WALK-02, and **blocks WALK-02** |
 
 ---
 
@@ -156,8 +157,8 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
   matches **vc11 only, which lives only on `alpha`**; and the batch touches `app.config.js` / `eas.json` /
   `package.json` / `package-lock.json`, so CI's backstop auto-rejects an `ota` trailer. **The only route is
   a BUILD**, which necessarily carries IMP-044's R8 — the first minified build of this app ever.
-  **Sequence: clear the 🚦 walks in [`docs/walk-open.md`](docs/walk-open.md) (02 → 05 → 13 → 03 → 12, R8
-  last on the final candidate) → `npm run bump:native` → `Release-Lane: build` → push → owner approval →
+  **Sequence: land IMP-062 (WALK-02 is blocked on it) → clear the 🚦 walks in
+  [`docs/walk-open.md`](docs/walk-open.md) (02 → 05 → 13 → 03 → 12, R8 last on the final candidate) → `npm run bump:native` → `Release-Lane: build` → push → owner approval →
   auto-submits to `internal` → self-test → promote `internal` → `production` by hand** (full review, ~7d).
   The old "promote vc11 → production, or hold" framing is superseded: vc11 is two weeks of work behind HEAD,
   so promoting it would ship a stale build rather than this work.
@@ -166,17 +167,22 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 - **`PLUS_ENABLED` must not flip until every `PLUS_PERKS` line is true.** The one remaining gap is perk #6,
   the PDF (IMP-022, deferred). Gate checklist in the playbook → Phase 10b.
 
-### 🔴 WALK-02 finding — "Restore from a file" never consumes the OS-restore stash (2026-08-14)
+### 🔴 WALK-02 finding — the restore offer does not survive a launch → **scoped as IMP-062** (2026-08-14)
 
-Mid-walk on **WALK-02** (restore quarantine): the "We found your journal" sheet's **Restore from a file**
-action imports the chosen file successfully, but the persisted OS-restore stash (`pendingRestore`) is never
-cleared. Only two actions call `onConsumePendingRestore()` — **Load** (`handleLoadPendingRestore`) and a
-confirmed **Discard** (`handleDiscardPendingRestore`), [`src/RitualsApp.js:622-663`](src/RitualsApp.js#L622).
-`onRestoreFile` only flips the in-memory `restoreOfferDismissed` state
-([`src/RitualsApp.js:997`](src/RitualsApp.js#L997)) — not persisted. Next launch, `RitualsApp` remounts,
-`restoreOfferDismissed` resets to `false`, `pendingRestore` is still truthy → **the sheet re-appears on
-every subsequent launch**, regardless of what was already imported. **Needs a new `IMP-xxx`** — Opus to
-scope (likely: a successful "Restore from a file" should consume `pendingRestore` too, same as Load).
+Filed mid-walk on **WALK-02**: the "We found your journal" sheet's **Restore from a file** imports the
+chosen file but never settles the OS-restore stash, and nothing about the answer is persisted.
+
+**Scoping corrected the symptom and found a worse defect underneath it.** The report said the sheet
+re-appears on every launch; it does not — `pendingRestore` is only ever set inside the **quarantine branch**
+of `App.js`'s load effect, quarantine fires exactly once (the next `serialize()` re-stamps `lastSavedAt`),
+and nothing else calls `readPendingRestore()`. So after that one session the sheet **and** the You-tab
+`Google backup — {date}` row both disappear for good while the stash stays in AsyncStorage — **an
+OS-restored journal the user can neither load nor discard.** The repeated sheet the walk saw is a **T4**
+artifact: a clock still set in the past re-quarantines every launch.
+
+**Full spec: [`docs/specs-open.md` → IMP-062](docs/specs-open.md#imp-062--the-restore-offer-outlives-the-launch-that-made-it).**
+Nothing in production is affected — IMP-033 has never reached a track. **IMP-062 blocks WALK-02**, which is
+the first 🚦 row in the release sequence below, so it goes first.
 **WALK-02 is paused at step 3** pending this; steps 1–2 and the step-6 emphasis-inversion check passed
 before the finding surfaced.
 

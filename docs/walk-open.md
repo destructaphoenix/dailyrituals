@@ -44,14 +44,16 @@ IMP-044's R8. So the rows are grouped by *what a failure would cost*:
 | 📦 | **Independent of the app release.** Listing assets; no build required, upload any time. |
 | ⏭ | **Not needed for this release.** Covered code is unreachable in the shipped build. |
 
-**Taking a walk is unchanged: take the first ⬜ row.** The ordering does the work — 🚦 rows come first, and
+**Taking a walk is unchanged: take the first ⬜ row.** WALK-02 is ❌ and **blocked on IMP-062** as of
+2026-08-14, so the first ⬜ is currently **WALK-05** — the 🚦 group still comes first either way. The
+ordering does the work — 🚦 rows come first, and
 **WALK-12 sits last inside the 🚦 group on purpose**: R8 must be walked on the build you actually intend to
 ship, so any fix the earlier walks turn up would invalidate an R8 pass done before them.
 
 | # | Gate | Walk | Covers | Target | Runner | Status |
 | --- | --- | --- | --- | --- | --- | --- |
 | WALK-01 | ✅ | [v2→v3 mood migration](build-log.md#walk-01--v2v3-mood-migration) | IMP-037 | emulator | 🤖 mostly | ✅ **2026-08-14** — full pass, all 9 steps; detail in `build-log.md` → "Walk log" |
-| WALK-02 | 🚦 | [Restore quarantine — offered, not imposed](#walk-02--restore-quarantine) | IMP-033, IMP-029 | emulator | 👤 (clock changes + judgement on sheet copy) | ⬜ — **the riskiest code in the batch: it clears the live storage key** |
+| WALK-02 | 🚦 | [Restore quarantine — offered, not imposed](#walk-02--restore-quarantine) | IMP-033, IMP-029, **IMP-062** | emulator | 👤 (clock changes + judgement on sheet copy) | ❌ **2026-08-14 — failed at step 3**, scoped as **IMP-062**. **Blocked**: re-run in full once IMP-062 lands |
 | WALK-05 | 🚦 | [Edit a past day, delete, trash allowance](#walk-05--custody-of-your-words) | IMP-036, IMP-048 | emulator | 👤 | ⬜ **partial** — allowance passed 2026-08-09; the `applyCompletion` half (past-day edit double-counting XP/embers) is **still open** |
 | WALK-13 | 🚦 | [The reminder you can answer](#walk-13--the-reminder-you-can-answer) | IMP-054, **+ the duplicate-fire fix** | **device** (OEM behaviour + real doze) | 👤 | ⬜ — **unblocked 2026-08-13** (IMP-054 landed, `18d8c2e`) |
 | WALK-03 | 🚦 | [JSON export → share → restore round trip](#walk-03--json-export-round-trip) | IMP-020, IMP-043 | **device** (share-sheet targets) | 👤 | ⬜ — the user's data escape hatch |
@@ -104,9 +106,20 @@ harness** (`__DEV__` false) and no Metro.
 
 ## WALK-02 — restore quarantine
 
-**Covers:** IMP-033 (quarantine + offer) and IMP-029 (the restore notice). **The riskiest new code in the
-batch — it clears the live storage key**, and it has never run outside jest.
-**🚦 Gates the release build.** This is the first ⬜ row; a walk chat with no other instruction takes this.
+**Covers:** IMP-033 (quarantine + offer), IMP-029 (the restore notice) and **IMP-062**. **The riskiest new
+code in the batch — it clears the live storage key.**
+**🚦 Gates the release build.**
+
+**❌ Failed 2026-08-14, at step 3's "Restore from a file".** The import worked; the offer did not settle.
+Scoping it (**IMP-062**, `docs/specs-open.md`) found the larger defect: `pendingRestore` is only read inside
+the quarantine branch of `App.js`'s load effect, and quarantine fires exactly once — so after that single
+session the sheet **and** the You-tab `Google backup — {date}` row vanish while the stash stays in storage,
+unloadable and undiscardable. Steps 4–6 below could therefore never have passed as written. The sheet
+re-appearing on every launch, which is what it looked like at the time, is a **T4** artifact: leaving the
+clock in the past re-quarantines each launch.
+
+**🔒 Blocked — do not re-run until IMP-062 is code-complete.** When it is, run the whole walk from step 1,
+including the new steps 7–9 that exist to prove the fix.
 
 **Preconditions:** a populated journal (write 3–4 entries, buy a palette so there is paid inventory to
 warn about), then technique **T4**.
@@ -118,8 +131,12 @@ warn about), then technique **T4**.
    dated staleness · the paid-inventory line (embers / palettes / skies / candles).
 3. Run each action on a **separate** T4 cycle:
    - **Load my journal** → confirm → old data returns intact, and a recovery copy of the *fresh* state was
-     written first.
-   - **Restore from a file** → routes into the JSON import.
+     written first. The stash is **consumed** — the You-tab row is gone.
+   - **Restore from a file** → routes into the JSON import. **Back out of the picker, and out of the
+     Replace confirm — the sheet is still standing both times** (IMP-062). Then pick a real backup and
+     confirm: the file's data lands, the sheet goes, and the **stash is NOT destroyed** — the You-tab
+     `Google backup — {date}` row is still there, because choosing a file is not a request to delete the
+     Google copy.
    - **Keep this fresh start** → the sheet hides and the **stash is NOT destroyed**.
 4. After declining: You → "Your journal is safe" has a **`Google backup — {date}`** row → tapping reopens
    the sheet → a separate **Discard** confirms with the inventory line repeated.
@@ -127,8 +144,22 @@ warn about), then technique **T4**.
 6. Set `lastBackupAt` newer than the stash via the harness → the sheet should **invert emphasis** and lead
    with "Restore from a file" (`preferredSource`).
 
+**Steps 7–9 are IMP-062's proof — the relaunch behaviour that has never worked.** A pass on 1–6 without
+these is not a pass.
+
+7. **Relaunch after each of the four answers** (a separate T4 cycle each): after **Keep this fresh start**
+   and after a completed **file restore**, the sheet must **not** reappear, while the You-tab row **must**
+   still be there. After **Load** and after **Discard**, neither the sheet nor the row exists — the stash is
+   gone for good.
+8. **Reopen from the You row, then walk away** — tap the row, get the sheet, back out without choosing,
+   force-stop and relaunch. The sheet stays suppressed (the persisted answer stands) and the row remains.
+9. **A second T4 cycle on an already-answered install** — quarantine again so a *new* stash is written. The
+   sheet **must** appear again: the old answer belonged to the old stash, and a suppressed second offer
+   would be exactly the data-loss this whole flow exists to prevent.
+
 **If it fails:** the failure that matters most is *live data cleared without a readable stash*. If that
-happens, stop and capture the Inspect output before touching anything.
+happens, stop and capture the Inspect output before touching anything. For anything in 7–9, record which
+answer was given and what was on screen after the relaunch.
 
 ---
 
