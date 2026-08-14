@@ -8,6 +8,7 @@ import { isBillingConfigured } from './src/billing';
 import {
   loadState, saveState, clearState,
   readRawState, writePendingRestore, readPendingRestore, clearPendingRestore,
+  readRestoreOfferAnswered, writeRestoreOfferAnswered, clearRestoreOfferAnswered,
 } from './src/persistence/storage';
 import { hasCompletedOnboarding } from './src/persistence/onboarding';
 import { shouldQuarantine, runQuarantine } from './src/persistence/restoreQuarantine';
@@ -44,6 +45,7 @@ export default function App() {
   const [dataKey, setDataKey] = useState(0); // bump to remount RitualsApp with fresh state
   const [restoredFromMs, setRestoredFromMs] = useState(null); // set once when this launch looks like a restore (IMP-029)
   const [pendingRestore, setPendingRestore] = useState(null); // parsed OS-restored stash, offered post-onboarding (IMP-033)
+  const [restoreOfferAnswered, setRestoreOfferAnswered] = useState(false);
 
   React.useEffect(() => {
     const platform = Platform.OS === 'android' ? 'android' : 'ios';
@@ -65,10 +67,12 @@ export default function App() {
             if (quarantined) {
               // Genuine first install from here — onboarding runs with no
               // change, and the stash is offered once it's done (App render).
-              setHydrated({});
-              setOnboarded(false);
+              await clearRestoreOfferAnswered();      // a new stash is a new question
               const stashRaw = await readPendingRestore();
               setPendingRestore(deserialize(stashRaw));
+              setRestoreOfferAnswered(false);
+              setHydrated({});
+              setOnboarded(false);
               return;
             }
             // Stash write or read-back failed — never clear an unverified
@@ -79,6 +83,15 @@ export default function App() {
         } catch (e) {
           // expo-application unavailable in this environment — no notice, no crash
         }
+      }
+      // IMP-062: the stash outlives the launch that created it. Quarantine fires
+      // once (the next save re-stamps lastSavedAt), so without this read the offer
+      // and the You-tab row vanish after one session and the stash is orphaned in
+      // storage — unreachable, and undeletable by the user.
+      const stashRaw = await readPendingRestore();
+      if (stashRaw) {
+        setPendingRestore(deserialize(stashRaw));
+        setRestoreOfferAnswered(await readRestoreOfferAnswered());
       }
       setHydrated(s);
       if (s.mode) setMode(s.mode);
@@ -135,8 +148,18 @@ export default function App() {
   // stash has done its job) or a confirmed Discard (IMP-033).
   const handleConsumePendingRestore = async () => {
     await clearPendingRestore();
+    await clearRestoreOfferAnswered();
     setPendingRestore(null);
+    setRestoreOfferAnswered(false);
   };
+
+  // Answered, not consumed: the stash survives so the You-tab row can still
+  // reach it, and Discard keeps its inventory warning (IMP-033's rule).
+  const handleAnswerRestoreOffer = async () => {
+    setRestoreOfferAnswered(true);
+    await writeRestoreOfferAnswered();
+  };
+  const handleReopenRestoreOffer = () => setRestoreOfferAnswered(false);
 
   const dark = mode === 'night';
 
@@ -167,6 +190,9 @@ export default function App() {
         onDismissRestoreNotice={handleDismissRestoreNotice}
         pendingRestore={pendingRestore}
         onConsumePendingRestore={handleConsumePendingRestore}
+        restoreOfferAnswered={restoreOfferAnswered}
+        onAnswerRestoreOffer={handleAnswerRestoreOffer}
+        onReopenRestoreOffer={handleReopenRestoreOffer}
       />
     </SafeAreaProvider>
   );

@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   saveState, loadState, clearState, readRawState,
   writePendingRestore, readPendingRestore, clearPendingRestore,
+  writeRestoreOfferAnswered, readRestoreOfferAnswered, clearRestoreOfferAnswered,
 } from '../../src/persistence/storage';
 
 beforeEach(() => AsyncStorage.clear());
@@ -43,5 +44,38 @@ describe('clearState', () => {
     await clearState();
     expect(await loadState()).toBeNull();
     expect(await readPendingRestore()).toBe('{"entries":["stashed"]}');
+  });
+});
+
+describe('restore-offer-answered flag (IMP-062)', () => {
+  test('round trip: write → read → clear', async () => {
+    await writeRestoreOfferAnswered();
+    expect(await readRestoreOfferAnswered()).toBe(true);
+    await clearRestoreOfferAnswered();
+    expect(await readRestoreOfferAnswered()).toBe(false);
+  });
+
+  test('unset reads false, not null', async () => {
+    expect(await readRestoreOfferAnswered()).toBe(false);
+  });
+
+  test('independent of the live state key and the stash, in both directions', async () => {
+    await saveState({ entries: [{ dayKey: '2026-01-01' }] });
+    await writePendingRestore('{"entries":["stashed"]}');
+    await writeRestoreOfferAnswered();
+
+    // App clears the answer deliberately alongside the stash — storage itself
+    // never cascades a clear from one key to another.
+    await clearPendingRestore();
+    expect(await readRestoreOfferAnswered()).toBe(true);
+
+    await clearRestoreOfferAnswered();
+    const live = await loadState();
+    expect(live.entries).toEqual([{ dayKey: '2026-01-01' }]);
+    expect(await readPendingRestore()).toBeNull(); // already cleared above, unaffected by clearing the answer
+  });
+
+  test('clearRestoreOfferAnswered on an unset key is a no-op that still resolves true', async () => {
+    expect(await clearRestoreOfferAnswered()).toBe(true);
   });
 });

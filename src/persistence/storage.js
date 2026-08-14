@@ -3,6 +3,7 @@ import { serialize, deserialize } from './state';
 
 const KEY = 'dailyrituals:v1:state';
 const PENDING_RESTORE_KEY = 'dailyrituals:v1:pendingRestore';
+const RESTORE_OFFER_ANSWERED_KEY = 'dailyrituals:v1:restoreOfferAnswered';
 
 export async function loadState() {
   try {
@@ -47,6 +48,21 @@ export async function readPendingRestore() {
 export async function clearPendingRestore() {
   try { await AsyncStorage.removeItem(PENDING_RESTORE_KEY); return true; }
   catch (e) { console.warn('clearPendingRestore failed', e); return false; }
+}
+
+export async function writeRestoreOfferAnswered() {
+  try { await AsyncStorage.setItem(RESTORE_OFFER_ANSWERED_KEY, '1'); return true; }
+  catch (e) { console.warn('writeRestoreOfferAnswered failed', e); return false; }
+}
+
+export async function readRestoreOfferAnswered() {
+  try { return (await AsyncStorage.getItem(RESTORE_OFFER_ANSWERED_KEY)) === '1'; }
+  catch (e) { console.warn('readRestoreOfferAnswered failed', e); return false; }
+}
+
+export async function clearRestoreOfferAnswered() {
+  try { await AsyncStorage.removeItem(RESTORE_OFFER_ANSWERED_KEY); return true; }
+  catch (e) { console.warn('clearRestoreOfferAnswered failed', e); return false; }
 }
 
 export async function saveState(slice) {

@@ -86,7 +86,7 @@ const IMPORT_ERROR = {
   'unreadable': "That backup file looks damaged and can't be restored.",
 };
 const PLATFORM = Platform.OS === 'android' ? 'android' : 'ios';
-export default function RitualsApp({ mode = 'day', settings, setSettings, onToggleMode, initialPlus = false, initialState = {}, onResetData, onReplaceAllData, restoredFromMs = null, onDismissRestoreNotice, pendingRestore = null, onConsumePendingRestore }) {
+export default function RitualsApp({ mode = 'day', settings, setSettings, onToggleMode, initialPlus = false, initialState = {}, onResetData, onReplaceAllData, restoredFromMs = null, onDismissRestoreNotice, pendingRestore = null, onConsumePendingRestore, restoreOfferAnswered = false, onAnswerRestoreOffer, onReopenRestoreOffer }) {
   const theme = useMemo(() => makeTheme(mode, settings), [mode, settings]);
   const c = theme.colors;
   const safe = useSafeAreaInsets();
@@ -138,9 +138,6 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   // ONLY prod-visible cost of the whole dev harness v2 task — one inert
   // useState, always null outside a dev session.
   const [devRestoreMs, setDevRestoreMs] = useState(null);
-  // "Keep this fresh start" hides the offer without discarding the stash
-  // (IMP-033) — it's still reachable from the You tab's backup card.
-  const [restoreOfferDismissed, setRestoreOfferDismissed] = useState(false);
 
   // Live level derived from total XP (no hardcoded level).
   const { level, name: levelName, into: xpInto, toNext: xpToNext } = levelFromXp(xp);
@@ -580,7 +577,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     }
   };
 
-  const doImport = async () => {
+  const doImport = async ({ onConfirmed } = {}) => {
     let raw;
     try { raw = await backupIO.pickFile(); }
     catch (e) { showToast("Couldn't open that file."); return; }
@@ -600,6 +597,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
         {
           text: 'Replace', style: 'destructive',
           onPress: async () => {
+            onConfirmed?.();
             try {
               await runConfirmedImport({
                 currentEnvelopeText: JSON.stringify(createBackup(currentSlice(), { appVersion: APP_VERSION })),
@@ -637,8 +635,8 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
                 restoredState: pendingRestore,
                 writeRecovery: (text) => backupIO.writeRecovery(text),
                 replaceAll: (state) => onReplaceAllData(state),
+                onImported: onConsumePendingRestore,
               });
-              await onConsumePendingRestore();
             } catch (e) {
               showToast("Load failed — your fresh start is unchanged.");
             }
@@ -648,7 +646,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     );
   };
 
-  const handleKeepFreshStart = () => setRestoreOfferDismissed(true);
+  const handleKeepFreshStart = () => onAnswerRestoreOffer();
 
   const handleDiscardPendingRestore = () => {
     const inventory = pendingRestoreInventory(pendingRestore);
@@ -715,7 +713,8 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             onImportData={doImport}
             onExplainAutoBackup={explainAutoBackup}
             pendingRestore={pendingRestore}
-            onReopenPendingRestore={() => setRestoreOfferDismissed(false)}
+            // session-only: the persisted answer stands, so a reopen the user walks away from doesn't re-ambush them next launch
+            onReopenPendingRestore={() => onReopenRestoreOffer()}
             onDiscardPendingRestore={handleDiscardPendingRestore}
             trashCount={trash.length} onOpenTrash={() => setTrashOpen(true)}
             customMoodsCount={(settings.customMoods || []).length} onOpenMoodManager={() => setMoodManagerOpen(true)}
@@ -990,11 +989,11 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
           onRestoreFile={() => { (devRestoreMs ? setDevRestoreMs(null) : onDismissRestoreNotice()); doImport(); }}
         />
 
-        {pendingRestore && !restoreOfferDismissed && (
+        {pendingRestore && !restoreOfferAnswered && (
           <RestoreOffer
             stash={pendingRestore}
             onLoad={handleLoadPendingRestore}
-            onRestoreFile={() => { setRestoreOfferDismissed(true); doImport(); }}
+            onRestoreFile={() => doImport({ onConfirmed: onAnswerRestoreOffer })}
             onKeepFreshStart={handleKeepFreshStart}
           />
         )}
