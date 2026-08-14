@@ -32,23 +32,39 @@
 
 ## Index — take them in this order
 
-| # | Walk | Covers | Target | Runner | Status |
-| --- | --- | --- | --- | --- | --- |
-| WALK-01 | [v2→v3 mood migration](docs/build-log.md#walk-01--v2v3-mood-migration) | IMP-037 | emulator | 🤖 mostly (adb push + restore; chip checks are visual) | ✅ **2026-08-14** — full pass, all 9 steps; detail in `docs/build-log.md` → "Walk log" |
-| WALK-02 | [Restore quarantine — offered, not imposed](#walk-02--restore-quarantine) | IMP-033, IMP-029 | emulator | 👤 (clock changes + judgement on sheet copy) | ⬜ |
-| WALK-03 | [JSON export → share → restore round trip](#walk-03--json-export-round-trip) | IMP-020, IMP-043 | **device** (share-sheet targets) | 👤 | ⬜ |
-| WALK-04 | [Search + the write flow's moods](#walk-04--search--moods) | IMP-035, IMP-037, **IMP-053** | emulator | 👤 | ⬜ |
-| WALK-05 | [Edit a past day, delete, trash allowance](#walk-05--custody-of-your-words) | IMP-036, IMP-048 | emulator | 👤 | ✅ 2026-08-09 (allowance walked; **past-day edit not yet**) |
-| WALK-06 | [Streak insurance — candles spend themselves](#walk-06--streak-insurance) | IMP-039 | emulator | 👤 | ⬜ |
-| WALK-07 | [Modal screens actually scroll](#walk-07--modal-scroll) | IMP-042 | emulator | 👤 (visual, two nav modes) | ⬜ |
-| WALK-08 | [Font scale + layout on the nine new screens](#walk-08--font-scale) | IMP-030 regression | **device** (real font metrics) | 👤 | ⬜ |
-| WALK-09 | [Lifetime heatmap's four states + the XP line](#walk-09--lifetime-heatmap) | IMP-045 | emulator | 👤 (visual) | ⬜ |
-| WALK-10 | [Tips, explainers, empty states](#walk-10--teach-the-app) | IMP-041 | emulator | 👤 | ⬜ |
-| WALK-11 | [The Plus surfaces](#walk-11--the-plus-surfaces) | IMP-038, 046, 047, 043 | emulator | 👤 | ⬜ |
-| WALK-13 | [The reminder you can answer](#walk-13--the-reminder-you-can-answer) | IMP-054, **+ the duplicate-fire fix** | **device** (OEM behaviour + real doze) | 👤 | ⬜ — **blocked until IMP-054 lands** |
-| WALK-14 | [TalkBack can write an entry](#walk-14--talkback-can-write-an-entry) | IMP-059 | emulator | 👤 (gesture navigation, inherently manual) | ⬜ — **blocked until IMP-059 lands** |
-| WALK-15 | [Store screenshots regenerate](#walk-15--store-screenshots-regenerate) | IMP-061 | emulator | 🤖 mostly (adb + maestro are scriptable; the final seven PNGs need eyes) | ⬜ — **unblocked 2026-08-14** (IMP-061 code-complete, `ca850d7`) |
-| WALK-12 | [The R8 release-variant pass](#walk-12--the-r8-release-variant-pass) | IMP-044 | **device** | 👤 | ⬜ — **do last** |
+**The order encodes what gates the release** (re-sorted 2026-08-14). As of today **~25 IMP tasks are
+committed and unpublished** — the last release of any kind was the vc11 build on 2026-08-02, and vc11 lives
+on `alpha` only. Getting that work to the public needs a **build**, not an OTA, and that build carries
+IMP-044's R8. So the rows are grouped by *what a failure would cost*:
+
+| Gate | Meaning |
+| --- | --- |
+| 🚦 | **Blocks the build.** Data loss, silent stripping, or a core loop that has never run outside jest. |
+| 🎨 | **Follows the release.** A failure here is ugly, not destructive — ship, then walk, then OTA the fix. |
+| 📦 | **Independent of the app release.** Listing assets; no build required, upload any time. |
+| ⏭ | **Not needed for this release.** Covered code is unreachable in the shipped build. |
+
+**Taking a walk is unchanged: take the first ⬜ row.** The ordering does the work — 🚦 rows come first, and
+**WALK-12 sits last inside the 🚦 group on purpose**: R8 must be walked on the build you actually intend to
+ship, so any fix the earlier walks turn up would invalidate an R8 pass done before them.
+
+| # | Gate | Walk | Covers | Target | Runner | Status |
+| --- | --- | --- | --- | --- | --- | --- |
+| WALK-01 | ✅ | [v2→v3 mood migration](build-log.md#walk-01--v2v3-mood-migration) | IMP-037 | emulator | 🤖 mostly | ✅ **2026-08-14** — full pass, all 9 steps; detail in `build-log.md` → "Walk log" |
+| WALK-02 | 🚦 | [Restore quarantine — offered, not imposed](#walk-02--restore-quarantine) | IMP-033, IMP-029 | emulator | 👤 (clock changes + judgement on sheet copy) | ⬜ — **the riskiest code in the batch: it clears the live storage key** |
+| WALK-05 | 🚦 | [Edit a past day, delete, trash allowance](#walk-05--custody-of-your-words) | IMP-036, IMP-048 | emulator | 👤 | ⬜ **partial** — allowance passed 2026-08-09; the `applyCompletion` half (past-day edit double-counting XP/embers) is **still open** |
+| WALK-13 | 🚦 | [The reminder you can answer](#walk-13--the-reminder-you-can-answer) | IMP-054, **+ the duplicate-fire fix** | **device** (OEM behaviour + real doze) | 👤 | ⬜ — **unblocked 2026-08-13** (IMP-054 landed, `18d8c2e`) |
+| WALK-03 | 🚦 | [JSON export → share → restore round trip](#walk-03--json-export-round-trip) | IMP-020, IMP-043 | **device** (share-sheet targets) | 👤 | ⬜ — the user's data escape hatch |
+| WALK-12 | 🚦 | [The R8 release-variant pass](#walk-12--the-r8-release-variant-pass) | IMP-044 | **device** | 👤 | ⬜ — **the last 🚦, on the final build candidate.** First minified build ever; failure is silent |
+| WALK-04 | 🎨 | [Search + the write flow's moods](#walk-04--search--moods) | IMP-035, IMP-037, **IMP-053** | emulator | 👤 | ⬜ |
+| WALK-06 | 🎨 | [Streak insurance — candles spend themselves](#walk-06--streak-insurance) | IMP-039 | emulator | 👤 | ⬜ |
+| WALK-07 | 🎨 | [Modal screens actually scroll](#walk-07--modal-scroll) | IMP-042 | emulator | 👤 (visual, two nav modes) | ⬜ |
+| WALK-08 | 🎨 | [Font scale + layout on the nine new screens](#walk-08--font-scale) | IMP-030 regression | **device** (real font metrics) | 👤 | ⬜ |
+| WALK-09 | 🎨 | [Lifetime heatmap's four states + the XP line](#walk-09--lifetime-heatmap) | IMP-045 | emulator | 👤 (visual) | ⬜ |
+| WALK-10 | 🎨 | [Tips, explainers, empty states](#walk-10--teach-the-app) | IMP-041 | emulator | 👤 | ⬜ |
+| WALK-14 | 🎨 | [TalkBack can write an entry](#walk-14--talkback-can-write-an-entry) | IMP-059 | emulator | 👤 (gesture navigation, inherently manual) | ⬜ — **unblocked 2026-08-13** (IMP-059 landed, `fa523f3`) |
+| WALK-15 | 📦 | [Store screenshots regenerate](#walk-15--store-screenshots-regenerate) | IMP-061 | emulator | 🤖 mostly (adb + maestro are scriptable; the final seven PNGs need eyes) | ⬜ — **unblocked 2026-08-14** (IMP-061 landed, `ca850d7`) |
+| WALK-11 | ⏭ | [The Plus surfaces](#walk-11--the-plus-surfaces) | IMP-038, 046, 047, 043 | emulator | 👤 | ⬜ — **skip for this release.** `PLUS_ENABLED = false` makes every surface here *unmountable*, not locked; walking it needs T1, which must be reverted before committing |
 
 ---
 
@@ -90,6 +106,7 @@ harness** (`__DEV__` false) and no Metro.
 
 **Covers:** IMP-033 (quarantine + offer) and IMP-029 (the restore notice). **The riskiest new code in the
 batch — it clears the live storage key**, and it has never run outside jest.
+**🚦 Gates the release build.** This is the first ⬜ row; a walk chat with no other instruction takes this.
 
 **Preconditions:** a populated journal (write 3–4 entries, buy a palette so there is paid inventory to
 warn about), then technique **T4**.
@@ -117,7 +134,8 @@ happens, stop and capture the Inspect output before touching anything.
 
 ## WALK-03 — JSON export round trip
 
-**Covers:** IMP-020, plus IMP-043's backup-health copy.
+**Covers:** IMP-020, plus IMP-043's backup-health copy. **Target: device** (real share-sheet targets).
+**🚦 Gates the release build** — this is the user's only way to get their words out of the app.
 
 1. You → **"Back up my journal"** → the share sheet appears → save the file out.
 2. The success toast says plainly that this export and the Google Auto Backup are **separate systems** and
@@ -149,7 +167,8 @@ happens, stop and capture the Inspect output before touching anything.
 
 ## WALK-05 — custody of your words
 
-**Covers:** IMP-036, IMP-048.
+**Covers:** IMP-036, IMP-048. **🚦 Gates the release build** — the outstanding half can silently corrupt a
+user's XP and ember totals, which is not something an OTA can undo after the fact.
 
 **Done 2026-08-09:** the trash allowance — three free restores tick down, the fourth is visibly locked and
 explains itself, state survives a relaunch. IMP-048 was written from this walk.
@@ -234,6 +253,11 @@ line renders XP: `Lv 4 · {name} · 1,250 XP`.
 **Covers:** IMP-038, IMP-046, IMP-047, IMP-043. **Needs T1 and T3.** Run each item **twice** — once with
 `plus: true`, once `false` — the locked teaser is as shippable as the real thing.
 
+**⏭ Skip this for the current release.** `PLUS_ENABLED = false` makes every surface here *unmountable*, not
+locked — none of it can reach a user in the build being cut. Walking it means flipping T1, which must be
+reverted before committing, so a mistake here ships a paywall the app cannot honour. Do it when Phase 10b
+opens, not before.
+
 1. **On this day** — a real year-match card above "Today's reflection"; tapping a row opens the Reading
    sheet **and ticks the revisit rite**; dismiss suppresses it for today only and it returns tomorrow.
 2. **Deeper Insights** — below the thresholds (14 entries / 3 months / 5 multi-mood entries) it must say
@@ -253,8 +277,9 @@ line renders XP: `Lv 4 · {name} · 1,250 XP`.
 **Covers:** IMP-054 (foreground handler + tap routing) **and the out-of-band duplicate-fire fix** committed
 `b773352` on 2026-08-13, which has never been seen on a running app.
 **Target: device.** **Runner: 👤 owner.**
-**⛔ Blocked until IMP-054 is code-complete** — steps 2–5 test code that does not exist yet. Step 1 is the
-exception and can be run today, because the duplicate-fire fix is already in the tree.
+**✅ Unblocked 2026-08-13** — IMP-054 is code-complete (`18d8c2e`) and the duplicate-fire fix (`b773352`)
+is in the tree. All five steps are runnable. **🚦 This gates the release build.**
+**Neither commit has ever run on a phone**, which is exactly what makes this a gate rather than polish.
 
 **Why device, not emulator.** Two of the four things here are hardware behaviour. OEM battery managers
 (Xiaomi / Realme / Oppo / Vivo) silently kill scheduled notifications, and real Doze timing is not what an
@@ -293,7 +318,8 @@ fired, and which of foreground/background/cold-start broke. Do not edit the code
 
 **Covers:** IMP-059. **Target: emulator** (TalkBack behaves the same here; nothing in this walk is hardware
 behaviour). **Runner: 👤 owner** — it is gesture navigation with a screen reader, which is inherently manual.
-**⛔ Blocked until IMP-059 is code-complete.**
+**✅ Unblocked 2026-08-13** — IMP-059 is code-complete (`fa523f3`). **🎨 This does not gate the release**:
+a missing label is a real accessibility defect but not data loss, and the fix ships OTA once a build exists.
 
 Enable via emulator → Settings → Accessibility → TalkBack.
 
@@ -368,9 +394,13 @@ entire point is that the set regenerates.
 
 ## WALK-12 — the R8 release-variant pass
 
-**Covers:** IMP-044 — a standing walk debt, and **the first minified build of this app ever**. Do it last:
-no harness, no Metro, and it needs `PLUS_ENABLED` reverted. The failure mode is **silent stripping at
-runtime, not a compile error** — jest cannot touch this.
+**Covers:** IMP-044 — a standing walk debt, and **the first minified build of this app ever**. The failure
+mode is **silent stripping at runtime, not a compile error** — jest cannot touch this.
+
+**🚦 The LAST gate, and the reason is not squeamishness.** R8 must be walked on the build you actually
+intend to ship. If WALK-02/05/13/03 turn up a fix, that fix changes the bundle R8 minifies, and an R8 pass
+taken before it proves nothing about what ships. Practical consequences: no dev harness (`__DEV__` false),
+no Metro, and `PLUS_ENABLED` must be back to `false` before you build.
 
 `npx expo run:android --variant release` (technique **T6**).
 
