@@ -166,6 +166,20 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 - **`PLUS_ENABLED` must not flip until every `PLUS_PERKS` line is true.** The one remaining gap is perk #6,
   the PDF (IMP-022, deferred). Gate checklist in the playbook → Phase 10b.
 
+### 🔴 WALK-02 finding — "Restore from a file" never consumes the OS-restore stash (2026-08-14)
+
+Mid-walk on **WALK-02** (restore quarantine): the "We found your journal" sheet's **Restore from a file**
+action imports the chosen file successfully, but the persisted OS-restore stash (`pendingRestore`) is never
+cleared. Only two actions call `onConsumePendingRestore()` — **Load** (`handleLoadPendingRestore`) and a
+confirmed **Discard** (`handleDiscardPendingRestore`), [`src/RitualsApp.js:622-663`](src/RitualsApp.js#L622).
+`onRestoreFile` only flips the in-memory `restoreOfferDismissed` state
+([`src/RitualsApp.js:997`](src/RitualsApp.js#L997)) — not persisted. Next launch, `RitualsApp` remounts,
+`restoreOfferDismissed` resets to `false`, `pendingRestore` is still truthy → **the sheet re-appears on
+every subsequent launch**, regardless of what was already imported. **Needs a new `IMP-xxx`** — Opus to
+scope (likely: a successful "Restore from a file" should consume `pendingRestore` too, same as Load).
+**WALK-02 is paused at step 3** pending this; steps 1–2 and the step-6 emphasis-inversion check passed
+before the finding surfaced.
+
 ### 🟡 IMP-056 residual + the IMP-057 decision (2026-08-10)
 
 `dayKey` is now derived locally (walked both offset directions). **Existing entries were deliberately not
