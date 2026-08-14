@@ -202,6 +202,42 @@ e. **Custom-mood creation layout** ([`WriteFlow.js:146-202`](../src/screens/Writ
 
 **WALK-04 marked ❌** in `docs/walk-open.md`; section left in place (not moved to build-log) pending specs.
 
+### 🔴 WALK-06 finding — streak insurance, four UX defects (2026-08-15)
+
+Walked **WALK-06** end to end on the emulator; all mechanical behavior passed as specced — freeze survival
+across the `lapsed` scenario, decrement-by-one per missed day, idempotence on repeat relaunch, celebration
+streak matching the Home hero, and the shop copy. Four defects surfaced, none blocking the passed steps —
+**each needs a new `IMP-xxx`** (Opus to scope; owner's framing was that the user must never feel confused
+about what the app is doing, so these may be worth treating as one UX-clarity spec rather than four separate
+tweaks):
+
+a. **The Home candle row caps visually at 3 icons regardless of the real count.**
+   [`StreakFreeze`](../src/gamify.js#L46) (`src/gamify.js:46-58`) maps over a literal `[0, 1, 2]`, not
+   `count` — so owning 10 candles still renders exactly 3 `Candle` icons (`lit={i < count}` just toggles
+   which of the 3 look lit). The true number only appears in small caption text below the row
+   (`src/gamify.js:53-55`), which the owner had to be told about rather than read at a glance. There is no
+   way to *see* that you have 10 candles from the icon row itself.
+b. **The candle-spent explanation is verbose and doesn't land.** `freezeNoticeCopy()`
+   ([`src/home/freezeNotice.js:22-29`](../src/home/freezeNotice.js#L22)) reads *"A candle burned for you. You
+   missed {day}. A candle spent itself to keep your streak whole. {N left / That was your last one.}"*,
+   surfaced as a dismissible card ([`FreezeNoticeCard.js`](../src/screens/FreezeNoticeCard.js#L13), mounted
+   at `HomeScreen.js:98-104`). The owner's objection generalizes past this one string: **the app-wide bar is
+   that the user must never be unsure what happened, what changed, or how a feature works** — worth reading
+   as a standing design principle for any future copy review, not just this card.
+c. Same root cause as (a) — flagged separately by the owner as "visually very difficult to make out how many
+   candles there are," which is the icon-cap problem read from the user's side rather than the code's.
+d. **A frozen ("saved") day has no distinct visual identity anywhere in the app** — it renders as the same 💀
+   used for a genuinely missed day. `frozenDays` state exists (`RitualsApp.js:106`) but is consumed only by
+   streak-continuity math ([`src/insights/dateKeys.js:22-25`](../src/insights/dateKeys.js#L22)) — it never
+   reaches the cell-builders that decide what a day looks like:
+   [`buildHeatmap`/`buildLifetimeHeatmap`](../src/home/calendar.js#L54) (`src/home/calendar.js:54,82`) mark
+   only `missed: true` with no frozen flag, so `HomeScreen.js:232`, `ArchiveScreen.js:169`, and
+   `InsightsScreen.js:207-208` all render (or style) a frozen day identically to a missed one. The owner's
+   reference point is Duolingo's distinct frozen-streak-day glyph — a saved day should read as *saved*, not
+   as *missed and forgiven*.
+
+**WALK-06 marked ❌** in `docs/walk-open.md`; section left in place (not moved to build-log) pending specs.
+
 ### 🟡 IMP-056 residual + the IMP-057 decision (2026-08-10)
 
 `dayKey` is now derived locally (walked both offset directions). **Existing entries were deliberately not

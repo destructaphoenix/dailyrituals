@@ -58,7 +58,7 @@ ship, so any fix the earlier walks turn up would invalidate an R8 pass done befo
 | WALK-03 | 🚦 | [JSON export → share → restore round trip](#walk-03--json-export-round-trip) | IMP-020, IMP-043 | **device** (share-sheet targets) | 👤 | ⬜ — the user's data escape hatch |
 | WALK-12 | 🚦 | [The R8 release-variant pass](#walk-12--the-r8-release-variant-pass) | IMP-044 | **device** | 👤 | ⬜ — **the last 🚦, on the final build candidate.** First minified build ever; failure is silent |
 | WALK-04 | 🎨 | [Search + the write flow's moods](#walk-04--search--moods) | IMP-035, IMP-037, **IMP-053** | emulator | 👤 | ❌ **2026-08-15** — base search/filter/heatmap behavior passed; 5 UX defects found (search-clear, mood-chip reorder, WriteFlow deselect, custom-mood layout, wish-prefix asymmetry); findings in `PROGRESS.md` → Open items, need new `IMP-xxx` specs (Opus) |
-| WALK-06 | 🎨 | [Streak insurance — candles spend themselves](#walk-06--streak-insurance) | IMP-039 | emulator | 👤 | ⬜ |
+| WALK-06 | 🎨 | [Streak insurance — candles spend themselves](#walk-06--streak-insurance) | IMP-039 | emulator | 👤 | ❌ **2026-08-15** — mechanical behavior (freeze survival, decrement-by-one, idempotence, celebration-streak match, shop copy) passed; 4 UX defects found (candle count caps visually at 3, verbose freeze-spent copy, frozen day indistinguishable from missed day); findings in `PROGRESS.md` → Open items, need new `IMP-xxx` specs (Opus) |
 | WALK-07 | 🎨 | [Modal screens actually scroll](#walk-07--modal-scroll) | IMP-042 | emulator | 👤 (visual, two nav modes) | ⬜ |
 | WALK-08 | 🎨 | [Font scale + layout on the nine new screens](#walk-08--font-scale) | IMP-030 regression | **device** (real font metrics) | 👤 | ⬜ |
 | WALK-09 | 🎨 | [Lifetime heatmap's four states + the XP line](#walk-09--lifetime-heatmap) | IMP-045 | emulator | 👤 (visual) | ⬜ |
@@ -160,6 +160,22 @@ Opus's lane to scope, not this walk's.
 4. Relaunch again → **idempotent**, no further spend.
 5. Write today after a freeze → the celebration's streak number matches the Home hero.
 6. Shop copy reads *"A candle spends itself the moment you miss a day…"* — both old false claims gone.
+
+**Result — ❌ 2026-08-15.** Steps 1, 2, 4, 5, 6's mechanical behavior all passed: `applyAutoFreeze` survives
+the lapsed scenario, freezes decrement one per missed day, a repeat relaunch spends nothing further, the
+celebration streak matches the Home hero, and the shop copy is correct. Four UX defects surfaced, written up
+in full (with file:line) in `PROGRESS.md` → Open items → "WALK-06 finding": (a) `StreakFreeze` in
+[`src/gamify.js:46-58`](../src/gamify.js#L46) always renders exactly 3 candle icons (`[0,1,2].map`) regardless
+of the real `freezes` count — a value like 10 still shows 3 lit candles, with the true number visible only in
+small caption text; (b) the auto-freeze spend copy in
+[`src/home/freezeNotice.js:22-29`](../src/home/freezeNotice.js#L22) is verbose and doesn't land clearly, which
+the owner flags as a app-wide principle, not a one-off: the user must never be left unsure what happened or
+why; (c) same root cause as (a) — the candle count is visually hard to make out because the icon row doesn't
+scale with the count; (d) a frozen/"saved" day has no distinct visual state anywhere — `frozenDays`
+(`RitualsApp.js:106`) is used only for streak-continuity math and never reaches the calendar/heatmap builders
+([`src/home/calendar.js:54,82`](../src/home/calendar.js#L54)), so a frozen day renders the identical 💀 glyph
+as a truly missed day in `HomeScreen.js`, `ArchiveScreen.js`, and `InsightsScreen.js`. None block the passed
+steps. Each needs a new `IMP-xxx` — Opus's lane to scope, not this walk's.
 
 ---
 
