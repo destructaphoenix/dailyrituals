@@ -59,3 +59,8 @@ Thumbs.db
 
 # Generated test fixture (regenerate with node scripts/gen-v2-fixture.js)
 scripts/daily-rituals-v2-fixture.json
+
+# Store screenshots: raw emulator captures are disposable (regenerate with
+# `npm run shots`); the framed store/play/ assets ARE the deliverable and are
+# committed, so they survive a fresh clone.
+store/raw/

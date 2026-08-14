@@ -150,7 +150,7 @@ export default function StateSection({ onLoadState, onResetFresh, getSlice, appV
       <SectionLabel>Backup</SectionLabel>
       <Stepper label="Last backup (days ago, -1 = never)" value={knobs.lastBackupAt} min={-1} onChange={(v) => set({ lastBackupAt: v })} />
 
-      <Pressable onPress={confirmApply} style={{ backgroundColor: c.accentDeep, borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginTop: 24 }}>
+      <Pressable onPress={confirmApply} accessibilityLabel="Apply dev state" style={{ backgroundColor: c.accentDeep, borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginTop: 24 }}>
         <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>Apply</Text>
       </Pressable>
       <Pressable onPress={confirmReset} style={{ paddingVertical: 14, alignItems: 'center', marginTop: 8 }}>

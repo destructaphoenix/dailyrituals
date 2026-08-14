@@ -21,6 +21,7 @@ export const SCENARIOS_LIST = [
   { key: 'canceledSub',   label: 'Canceled subscription',    knobs: { streak: 10, entryCount: 10, done: true, plus: true, subCanceled: true } },
   { key: 'nightAmoled',   label: 'Night / AMOLED',           knobs: { streak: 3, entryCount: 3, done: true, mode: 'night' } },
   { key: 'storeFailure',  label: 'Store purchase failure',   knobs: { streak: 3, entryCount: 3, done: true, storePurchase: 'failed' } },
+  { key: 'storeShots',   label: 'Store screenshots',       knobs: { streak: 128, entryCount: 210, done: true, ownAll: true, embers: 2400, freezes: 3, name: 'Sam', textLength: 'long', lastBackupAt: 1 } },
 ];
 
 export function buildScenario(key, today) {

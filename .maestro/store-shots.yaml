@@ -1,0 +1,94 @@
+# .maestro/store-shots.yaml — captures the seven raw screens the Play listing is built from.
+#
+# Driven by `npm run shots` (scripts/shots.sh), which puts the status bar into
+# demo mode first and runs scripts/shots.js after. Raw captures land in
+# store/raw/ (gitignored); the framed 1080x1920 assets land in store/play/.
+#
+# Selector rule: prefer the accessibility label, fall back to visible text,
+# NEVER use coordinates. A coordinate tap breaks silently on the next layout
+# change and produces a *wrong* picture rather than an error.
+#
+# Needs a __DEV__ build — the dev harness does not exist in a release build.
+
+appId: app.dailyrituals.mobile
+---
+- launchApp: { clearState: false }
+
+# --- load the storeShots scenario via the dev harness -----------------------
+- tapOn: "You"
+- scrollUntilVisible:
+    element: "About Daily Rituals"
+- longPressOn: "v1.0"
+- scrollUntilVisible:
+    element: "Store screenshots"
+- tapOn: "Store screenshots"
+- scrollUntilVisible:
+    element:
+      id: "Apply dev state"
+- tapOn:
+    id: "Apply dev state"
+- tapOn: "Apply"            # the confirm alert
+- tapOn:
+    id: "Close the dev panel"
+    optional: true
+
+# --- 01 · Today -------------------------------------------------------------
+- tapOn: "Today"
+- takeScreenshot: store/raw/01-today
+
+# --- 02 · Write, and 03 · Moods (two steps of the same WriteFlow) -----------
+# done:true means today's entry is already written, so WriteFlow opens
+# prefilled and "Next" is enabled on both text steps.
+- tapOn:
+    id: "Write today's entry"
+- takeScreenshot: store/raw/02-write
+- tapOn: "Next"             # did -> wished
+- tapOn: "Next"             # wished -> moods
+- takeScreenshot: store/raw/03-moods
+- tapOn:
+    id: "Back a step"
+- tapOn:
+    id: "Back a step"
+- tapOn:
+    id: "Close this entry"
+
+# --- 04 · Reflections, with a search term so the IMP-053 highlight shows ----
+- tapOn: "Reflections"
+- tapOn: "Search your journal"
+- inputText: "walk"
+- hideKeyboard
+- takeScreenshot: store/raw/04-reflections
+- eraseText
+
+# --- 05 · Insights, scrolled to the lifetime heatmap ------------------------
+- tapOn: "Insights"
+- scrollUntilVisible:
+    element: "Consistency"
+    centerElement: true
+- takeScreenshot: store/raw/05-insights
+
+# --- 06 · Achievements and 07 · Shop, launched from the harness -------------
+# Faster and less brittle than tapping through the You tab.
+- tapOn: "You"
+- scrollUntilVisible:
+    element: "About Daily Rituals"
+- longPressOn: "v1.0"
+- scrollUntilVisible:
+    element: "Launch overlays"
+- tapOn: "Launch overlays"
+- tapOn: "Achievements"
+- takeScreenshot: store/raw/06-achievements
+- tapOn:
+    id: "Close Keepsakes"
+
+- tapOn: "You"
+- scrollUntilVisible:
+    element: "About Daily Rituals"
+- longPressOn: "v1.0"
+- scrollUntilVisible:
+    element: "Launch overlays"
+- tapOn: "Launch overlays"
+- tapOn: "Shop"
+- takeScreenshot: store/raw/07-shop
+- tapOn:
+    id: "Close the shop"

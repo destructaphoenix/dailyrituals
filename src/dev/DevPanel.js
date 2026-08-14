@@ -60,7 +60,7 @@ export default function DevPanel({
     <View testID={SENTINEL} style={{ flex: 1, backgroundColor: c.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16 }}>
         <T d w={800} color={c.ink} style={{ fontSize: 22 }}>Dev Harness</T>
-        <Pressable onPress={onClose} hitSlop={12}><T w={800} color={c.accentDeep} style={{ fontSize: 16 }}>Close</T></Pressable>
+        <Pressable onPress={onClose} accessibilityLabel="Close the dev panel" hitSlop={12}><T w={800} color={c.accentDeep} style={{ fontSize: 16 }}>Close</T></Pressable>
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48 }}>
