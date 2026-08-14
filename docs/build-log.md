@@ -2126,6 +2126,61 @@ false`. The synthetic outputs were deleted rather than committed — `store/play
 **Commit:** `feat(tools): store screenshots build themselves (IMP-061)` (`ca850d7`).
 **Runtime proof:** **WALK-15** (emulator + maestro + eyes on the seven PNGs) — a separate chat.
 
+### IMP-062 — the restore offer outlives the launch that made it   ·   Lane: OTA   ·   Status: ✅ code-complete (2026-08-14)
+
+**Why.** Found by the owner mid-walk on **WALK-02** 2026-08-14: the "We found your journal" sheet's
+**Restore from a file** action imports the chosen file but never clears the OS-restore stash. Scoping it
+found the same handler family broken in three ways, the worst of which is the opposite of the filed symptom
+— defect **A** below means the offer and its You-tab row vanish for good after one session, orphaning the
+stash in `AsyncStorage` where no user action can reach it, in the one flow whose whole purpose is not losing
+a user's journal. (**A** fires once — quarantine — then `serialize()` re-stamps `lastSavedAt`, so nothing
+ever calls `readPendingRestore()` again.) **B**: the answer lived in a plain `useState`, so nothing survived
+a relaunch — masked by A until A was fixed. **C**: the flip happened before `doImport()` ran, so the sheet
+could hide on a cancelled picker.
+
+**Design, as landed:**
+1. The stash is re-read on every launch, unconditionally — the storage key decides whether an offer is
+   outstanding, not the quarantine event.
+2. A successful "Restore from a file" answers the offer but does **not** destroy the stash — Discard still
+   owns deletion, with its inventory-warning confirm intact (IMP-033's "no one-tap destructive dismissal").
+3. The answer lives in its own AsyncStorage key (`restoreOfferAnswered`), never in `PERSISTED_KEYS` — a
+   journal restore replaces that whole slice, which would erase the very answer that triggered it.
+4. The offer is marked answered at the moment of confirmation (tapping **Replace**), not at write success —
+   a cancelled picker or rejected file leaves the sheet where it was, and a failed write still counts as
+   answered (the toast says the journal is unchanged; the You-tab row keeps the stash one tap away).
+5. `shouldOfferRestore` stays unused/unwired — out of scope, `RitualsApp` only mounts post-onboarding.
+
+**Landed as:**
+- `src/persistence/storage.js` — `RESTORE_OFFER_ANSWERED_KEY` + `writeRestoreOfferAnswered` /
+  `readRestoreOfferAnswered` (returns boolean, never `null`) / `clearRestoreOfferAnswered`, same
+  try/catch/console.warn/falsy-on-failure style as the existing stash trio.
+- `src/backup/importFlow.js` — `runConfirmedImport` gains an optional fifth `onImported` effect, run only
+  after `replaceAll` resolves; a throw inside it is caught and logged, never rejects the outer call (so a
+  post-success stash-clear failure can't surface as a "Load failed" lie).
+- `src/RitualsApp.js` — `restoreOfferDismissed` local state deleted; `restoreOfferAnswered`,
+  `onAnswerRestoreOffer`, `onReopenRestoreOffer` now come in as props from `App`. `doImport` takes an
+  optional `{ onConfirmed }` called as the first statement inside the Replace button's `onPress`.
+  `handleLoadPendingRestore` passes `onImported: onConsumePendingRestore` into `runConfirmedImport` instead
+  of awaiting the consume afterward. The offer's mount condition is `pendingRestore && !restoreOfferAnswered`.
+- `App.js` — owns both halves of the stash decision (`RitualsApp` remounts on `dataKey`, so local state
+  there would reinitialize mid-restore). Quarantine branch clears any stale answer before offering a fresh
+  stash. A new unconditional read before `setHydrated` on every launch — this is the actual fix for defect A.
+  `handleConsumePendingRestore` clears both the stash and the answer together (the answered key exists only
+  while a stash exists). Two new handlers, `handleAnswerRestoreOffer` / `handleReopenRestoreOffer`, wired
+  onto `<RitualsApp>` alongside the existing restore props.
+
+**Tests (+8, no new suite files):** `importFlow.test.js` — `onImported` runs after `replaceAll` (order, not
+just count) · never runs when `writeRecovery` or `replaceAll` throws · a throwing `onImported` does not
+reject `runConfirmedImport`. `storage.test.js` — write→read→clear round trip · unset reads `false` not
+`null` · independent of the live-state key and the stash in both directions · clearing an unset key is a
+no-op that still resolves `true`.
+
+**Proof:** `npm test` → **772 passed, 78 suites** (was 764/78). `npx expo export --platform android` clean.
+**Ship:** OTA lane, no bump — rides the next batch with the rest of the ~25 unpublished tasks; no
+`Release-Lane` trailer on this commit.
+**Commit:** `fix(restore): the offer outlives its launch — rehydrate the stash, persist the answer (IMP-062)` (`ba8e684`).
+**Runtime proof:** **WALK-02**, resuming at step 3 — a separate chat.
+
 ---
 
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
@@ -2211,6 +2266,25 @@ passed, 77 suites**; `npx expo export --platform android` clean. Archived IMP-05
 moved the IMP-060 session note into `docs/build-log.md` too (this file's 2-note budget). NEXT: **the
 Improvements backlog has no open spec** — the next chat here waits on Opus to scope a new `IMP-xxx` into
 `docs/specs-open.md`, or take the first unchecked phase-ladder task if the owner redirects there._
+
+_2026-08-14 (WALK-01, v2→v3 mood migration) — **full pass, all 9 steps, agent-run on the emulator.** Backlog
+was empty (IMP-058 was the last spec, already code-complete), so this chat took the first ⬜ row in
+`docs/walk-open.md` instead — steps 1–2 had already passed 2026-08-09, steps 3–9 (the actual point: mood-chip
+correctness on migrated data) were outstanding. Regenerated the v2 fixture, reset the app (non-negotiable —
+clears the 2026-08-09 attempt's poisoned settings), completed fresh onboarding, restored the fixture. Every
+check passed: archive/Home matched spec exactly (12-day streak, "Migration Test", 375 embers, 2 candles,
+Lv 4 · Reflective); the two-mood entry rendered both chips and both no-mood entries rendered none, no blank
+chip anywhere; Insights "across 10 reflections" denominator correct; mood-chip filtering matched the two-mood
+entry on **either** mood; text search worked; writing today's entry confirmed multi-select and ticked "Name
+how it felt"; force-stop + relaunch re-read cleanly with no crash or re-migration; harness Inspector showed
+schema version 3, `dayKey drift: 0`, and every fixture-omitted field as an empty collection, not `undefined`.
+**No app defects found — WALK-01 is closed.** Full step-by-step detail moved to `docs/build-log.md` → "Walk
+log"; `docs/walk-open.md`'s index row updated to ✅ and its body section removed (only the index row
+remains, per that file's own size discipline). Moved the IMP-058 session note into `docs/build-log.md` too
+(this file's 2-note budget). NEXT: **still no open IMP spec** — the next build chat waits on Opus to scope a
+new `IMP-xxx`. The next *walk* chat should take **WALK-02** (restore quarantine) — first ⬜ row in
+`docs/walk-open.md` now — but note its runner is 👤 owner (clock changes + judgement on sheet copy), not
+agent-drivable like WALK-01 was._
 
 _2026-08-13 (IMP-060, a candle burns without telling you) — **code-complete, committed `83cd59d`, not
 shipped.** New pure `src/home/freezeNotice.js` (`addFreezeNotice`, `freezeNoticeCopy`) — `addFreezeNotice`

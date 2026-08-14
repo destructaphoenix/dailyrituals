@@ -44,16 +44,16 @@ IMP-044's R8. So the rows are grouped by *what a failure would cost*:
 | 📦 | **Independent of the app release.** Listing assets; no build required, upload any time. |
 | ⏭ | **Not needed for this release.** Covered code is unreachable in the shipped build. |
 
-**Taking a walk is unchanged: take the first ⬜ row.** WALK-02 is ❌ and **blocked on IMP-062** as of
-2026-08-14, so the first ⬜ is currently **WALK-05** — the 🚦 group still comes first either way. The
-ordering does the work — 🚦 rows come first, and
+**Taking a walk is unchanged: take the first ⬜ row.** WALK-02 was **unblocked 2026-08-14** — IMP-062 landed
+(`ba8e684`) — and is first again; **re-run the whole walk from step 1** (new steps 7–9 exist to prove the
+fix, so the earlier partial pass doesn't count). The ordering does the work — 🚦 rows come first, and
 **WALK-12 sits last inside the 🚦 group on purpose**: R8 must be walked on the build you actually intend to
 ship, so any fix the earlier walks turn up would invalidate an R8 pass done before them.
 
 | # | Gate | Walk | Covers | Target | Runner | Status |
 | --- | --- | --- | --- | --- | --- | --- |
 | WALK-01 | ✅ | [v2→v3 mood migration](build-log.md#walk-01--v2v3-mood-migration) | IMP-037 | emulator | 🤖 mostly | ✅ **2026-08-14** — full pass, all 9 steps; detail in `build-log.md` → "Walk log" |
-| WALK-02 | 🚦 | [Restore quarantine — offered, not imposed](#walk-02--restore-quarantine) | IMP-033, IMP-029, **IMP-062** | emulator | 👤 (clock changes + judgement on sheet copy) | ❌ **2026-08-14 — failed at step 3**, scoped as **IMP-062**. **Blocked**: re-run in full once IMP-062 lands |
+| WALK-02 | 🚦 | [Restore quarantine — offered, not imposed](#walk-02--restore-quarantine) | IMP-033, IMP-029, **IMP-062** | emulator | 👤 (clock changes + judgement on sheet copy) | ⬜ — **unblocked 2026-08-14** (IMP-062 landed, `ba8e684`); **re-run the whole walk from step 1**, including new steps 7–9 |
 | WALK-05 | 🚦 | [Edit a past day, delete, trash allowance](#walk-05--custody-of-your-words) | IMP-036, IMP-048 | emulator | 👤 | ⬜ **partial** — allowance passed 2026-08-09; the `applyCompletion` half (past-day edit double-counting XP/embers) is **still open** |
 | WALK-13 | 🚦 | [The reminder you can answer](#walk-13--the-reminder-you-can-answer) | IMP-054, **+ the duplicate-fire fix** | **device** (OEM behaviour + real doze) | 👤 | ⬜ — **unblocked 2026-08-13** (IMP-054 landed, `18d8c2e`) |
 | WALK-03 | 🚦 | [JSON export → share → restore round trip](#walk-03--json-export-round-trip) | IMP-020, IMP-043 | **device** (share-sheet targets) | 👤 | ⬜ — the user's data escape hatch |
@@ -118,7 +118,7 @@ unloadable and undiscardable. Steps 4–6 below could therefore never have passe
 re-appearing on every launch, which is what it looked like at the time, is a **T4** artifact: leaving the
 clock in the past re-quarantines each launch.
 
-**🔒 Blocked — do not re-run until IMP-062 is code-complete.** When it is, run the whole walk from step 1,
+**✅ Unblocked 2026-08-14 — IMP-062 is code-complete (`ba8e684`).** Run the whole walk from step 1,
 including the new steps 7–9 that exist to prove the fix.
 
 **Preconditions:** a populated journal (write 3–4 entries, buy a palette so there is paid inventory to

@@ -32,7 +32,7 @@
 runtime proof is a separate WALK row for a separate chat, so a missing walk is *not* an unfinished spec.
 Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`](docs/playbook.md).
 
-> **The build queue is EMPTY** (IMP-061 was the last, code-complete 2026-08-14 `ca850d7`). A build chat has
+> **The build queue is EMPTY** (IMP-062 was the last, code-complete 2026-08-14 `ba8e684`). A build chat has
 > nothing to take and should say so rather than invent a task — the next `IMP-xxx` is Opus's to scope.
 > **The live work is WALKS**, now risk-ordered: the 🚦 group gates a release carrying ~25 unpublished tasks.
 >
@@ -68,7 +68,7 @@ build ships.)
 
 **Current stack:** Expo SDK **54** · RN **0.81.5** · React **19.1.0** · **Legacy Architecture**
 (`newArchEnabled: false`, held deliberately) · `targetSdkVersion` **36**, `minSdk` **24** · `npm test` →
-**764 passed, 78 suites**. Details in [`docs/playbook.md`](docs/playbook.md).
+**772 passed, 78 suites**. Details in [`docs/playbook.md`](docs/playbook.md).
 
 ---
 
@@ -137,7 +137,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 059 | The app has one accessibility label | OTA | ✅ code-complete 2026-08-13 · walk = WALK-14 |
 | 058 | Prompt packs — grief / gratitude / change | OTA | ✅ code-complete 2026-08-14 |
 | 061 | Store screenshots build themselves | Dev-only | ✅ code-complete 2026-08-14 · walk = WALK-15 |
-| 062 | The restore offer outlives the launch that made it | OTA | ⬜ **open** — spec in `docs/specs-open.md`; from WALK-02, and **blocks WALK-02** |
+| 062 | The restore offer outlives the launch that made it | OTA | ✅ code-complete 2026-08-14 · walk = WALK-02 |
 
 ---
 
@@ -157,7 +157,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
   matches **vc11 only, which lives only on `alpha`**; and the batch touches `app.config.js` / `eas.json` /
   `package.json` / `package-lock.json`, so CI's backstop auto-rejects an `ota` trailer. **The only route is
   a BUILD**, which necessarily carries IMP-044's R8 — the first minified build of this app ever.
-  **Sequence: land IMP-062 (WALK-02 is blocked on it) → clear the 🚦 walks in
+  **Sequence: IMP-062 has landed (unblocking WALK-02) → clear the 🚦 walks in
   [`docs/walk-open.md`](docs/walk-open.md) (02 → 05 → 13 → 03 → 12, R8 last on the final candidate) → `npm run bump:native` → `Release-Lane: build` → push → owner approval →
   auto-submits to `internal` → self-test → promote `internal` → `production` by hand** (full review, ~7d).
   The old "promote vc11 → production, or hold" framing is superseded: vc11 is two weeks of work behind HEAD,
@@ -167,24 +167,12 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 - **`PLUS_ENABLED` must not flip until every `PLUS_PERKS` line is true.** The one remaining gap is perk #6,
   the PDF (IMP-022, deferred). Gate checklist in the playbook → Phase 10b.
 
-### 🔴 WALK-02 finding — the restore offer does not survive a launch → **scoped as IMP-062** (2026-08-14)
+### ✅ WALK-02 finding — RESOLVED by IMP-062 (2026-08-14, code-complete `ba8e684`)
 
-Filed mid-walk on **WALK-02**: the "We found your journal" sheet's **Restore from a file** imports the
-chosen file but never settles the OS-restore stash, and nothing about the answer is persisted.
-
-**Scoping corrected the symptom and found a worse defect underneath it.** The report said the sheet
-re-appears on every launch; it does not — `pendingRestore` is only ever set inside the **quarantine branch**
-of `App.js`'s load effect, quarantine fires exactly once (the next `serialize()` re-stamps `lastSavedAt`),
-and nothing else calls `readPendingRestore()`. So after that one session the sheet **and** the You-tab
-`Google backup — {date}` row both disappear for good while the stash stays in AsyncStorage — **an
-OS-restored journal the user can neither load nor discard.** The repeated sheet the walk saw is a **T4**
-artifact: a clock still set in the past re-quarantines every launch.
-
-**Full spec: [`docs/specs-open.md` → IMP-062](docs/specs-open.md#imp-062--the-restore-offer-outlives-the-launch-that-made-it).**
-Nothing in production is affected — IMP-033 has never reached a track. **IMP-062 blocks WALK-02**, which is
-the first 🚦 row in the release sequence below, so it goes first.
-**WALK-02 is paused at step 3** pending this; steps 1–2 and the step-6 emphasis-inversion check passed
-before the finding surfaced.
+Filed mid-walk on **WALK-02**: the restore-offer stash could be orphaned in `AsyncStorage`, unreachable by
+the user, after one session. Fixed — full defect writeup and landed design in
+[`docs/build-log.md` → IMP-062](docs/build-log.md#imp-062--the-restore-offer-outlives-the-launch-that-made-it-lane-ota--status--code-complete-2026-08-14).
+**WALK-02 is unblocked** — the next walk chat re-runs it whole from step 1 (new steps 7–9 prove the fix).
 
 ### 🟡 IMP-056 residual + the IMP-057 decision (2026-08-10)
 
@@ -219,6 +207,21 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
+_2026-08-14 (IMP-062, the restore offer outlives the launch that made it) — **code-complete, committed
+`ba8e684`, not shipped; OTA lane, rides the next batch.** All 4 spec steps done in order — `storage.js`'s
+new `restoreOfferAnswered` trio, `importFlow.js`'s `onImported` post-success hook, ownership of the offer's
+answer moved from `RitualsApp`'s local state up into `App.js` alongside the stash (the missing piece: an
+unconditional `readPendingRestore()` before every `setHydrated`, not just inside the once-only quarantine
+branch — full defect writeup in `docs/build-log.md` → IMP-062). 8 new tests exactly as specified across
+`importFlow.test.js` and `storage.test.js`. **Proof:** `npm test` → **772 passed, 78 suites** (was 764/78).
+`npx expo export --platform android` clean. LAST command: `git commit` → `ba8e684`. Archived IMP-062's spec
+into `docs/build-log.md`, emptied `docs/specs-open.md`'s index, condensed the WALK-02 finding in this file's
+Open items to a RESOLVED pointer, moved the WALK-01 session note down to `docs/build-log.md` (2-note
+budget), and **unblocked WALK-02** in `docs/walk-open.md` — re-run the whole walk from step 1 (new steps
+7–9 prove the fix; the earlier partial pass doesn't count). Did not run the walk itself — separate chat, per
+the spec's own closing line. NEXT: **no open IMP spec — the build queue is empty**; a build chat should say
+so rather than invent one. A walk chat takes **WALK-02** (🚦, first row, 👤 owner)._
+
 _2026-08-14 (IMP-061, store screenshots build themselves) — **code-complete, committed `ca850d7`, not
 shipped; Dev-only lane so there is nothing to ship.** All 8 spec steps done in order — new
 `scripts/shots.config.js`, `scripts/shots.js`, `scripts/shots.sh`, `.maestro/store-shots.yaml`,
@@ -252,22 +255,3 @@ body now states its gate inline, so a chat reading one section knows. Also fixed
 queue is empty**; a build chat should stop and say so rather than invent one. A walk chat takes **WALK-02**
 (first ⬜, 🚦, emulator, 👤), or **WALK-15** if the owner wants the Play listing refreshed in parallel
 (🤖 mostly — needs maestro installed and a second AVD for its step 4)._
-
-_2026-08-14 (WALK-01, v2→v3 mood migration) — **full pass, all 9 steps, agent-run on the emulator.** Backlog
-was empty (IMP-058 was the last spec, already code-complete), so this chat took the first ⬜ row in
-`docs/walk-open.md` instead — steps 1–2 had already passed 2026-08-09, steps 3–9 (the actual point: mood-chip
-correctness on migrated data) were outstanding. Regenerated the v2 fixture, reset the app (non-negotiable —
-clears the 2026-08-09 attempt's poisoned settings), completed fresh onboarding, restored the fixture. Every
-check passed: archive/Home matched spec exactly (12-day streak, "Migration Test", 375 embers, 2 candles,
-Lv 4 · Reflective); the two-mood entry rendered both chips and both no-mood entries rendered none, no blank
-chip anywhere; Insights "across 10 reflections" denominator correct; mood-chip filtering matched the two-mood
-entry on **either** mood; text search worked; writing today's entry confirmed multi-select and ticked "Name
-how it felt"; force-stop + relaunch re-read cleanly with no crash or re-migration; harness Inspector showed
-schema version 3, `dayKey drift: 0`, and every fixture-omitted field as an empty collection, not `undefined`.
-**No app defects found — WALK-01 is closed.** Full step-by-step detail moved to `docs/build-log.md` → "Walk
-log"; `docs/walk-open.md`'s index row updated to ✅ and its body section removed (only the index row
-remains, per that file's own size discipline). Moved the IMP-058 session note into `docs/build-log.md` too
-(this file's 2-note budget). NEXT: **still no open IMP spec** — the next build chat waits on Opus to scope a
-new `IMP-xxx`. The next *walk* chat should take **WALK-02** (restore quarantine) — first ⬜ row in
-`docs/walk-open.md` now — but note its runner is 👤 owner (clock changes + judgement on sheet copy), not
-agent-drivable like WALK-01 was._
