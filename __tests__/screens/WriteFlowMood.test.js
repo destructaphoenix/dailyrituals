@@ -43,16 +43,27 @@ describe('WriteFlow — custom mood emoji picker', () => {
   test('typing a valid emoji selects it, and Add fires with that emoji', () => {
     const onAddCustomMood = jest.fn();
     const view = renderOnMoodStep({ onAddCustomMood });
-    fireEvent.changeText(view.getByPlaceholderText('or any emoji…'), '🌵');
+    fireEvent.changeText(view.getByTestId('customMoodEmojiInput'), '🌵');
     fireEvent.changeText(view.getByPlaceholderText('Name your own…'), 'Prickly');
     fireEvent.press(view.getByText('Add'));
     expect(onAddCustomMood).toHaveBeenCalledWith('Prickly', '🌵');
   });
 
+  test('typing a second emoji after the first replaces it, not just re-picks the first', () => {
+    // Simulates the real native buffer: onChangeText's v is the old value plus
+    // whatever was just typed, not just the new keystroke.
+    const view = renderOnMoodStep();
+    const field = view.getByTestId('customMoodEmojiInput');
+    fireEvent.changeText(field, '🌵');
+    expect(field.props.value).toBe('🌵');
+    fireEvent.changeText(field, '🌵😀');
+    expect(field.props.value).toBe('😀');
+  });
+
   test('typing non-emoji text does not change the selection — the previous pick stands', () => {
     const onAddCustomMood = jest.fn();
     const view = renderOnMoodStep({ onAddCustomMood });
-    fireEvent.changeText(view.getByPlaceholderText('or any emoji…'), 'abc');
+    fireEvent.changeText(view.getByTestId('customMoodEmojiInput'), 'abc');
     fireEvent.changeText(view.getByPlaceholderText('Name your own…'), 'Grumpy');
     fireEvent.press(view.getByText('Add'));
     expect(onAddCustomMood).toHaveBeenCalledWith('Grumpy', MOOD_PALETTE[0]);
@@ -61,8 +72,8 @@ describe('WriteFlow — custom mood emoji picker', () => {
   test('typing "🌵🌵🌵" leaves only "🌵" in the field, and Add fires with it', () => {
     const onAddCustomMood = jest.fn();
     const view = renderOnMoodStep({ onAddCustomMood });
-    fireEvent.changeText(view.getByPlaceholderText('or any emoji…'), '🌵🌵🌵');
-    expect(view.getByPlaceholderText('or any emoji…').props.value).toBe('🌵');
+    fireEvent.changeText(view.getByTestId('customMoodEmojiInput'), '🌵🌵🌵');
+    expect(view.getByTestId('customMoodEmojiInput').props.value).toBe('🌵');
     fireEvent.changeText(view.getByPlaceholderText('Name your own…'), 'Prickly');
     fireEvent.press(view.getByText('Add'));
     expect(onAddCustomMood).toHaveBeenCalledWith('Prickly', '🌵');
@@ -144,7 +155,7 @@ describe('WriteFlow — a feeling you picked can be put back down (IMP-069)', ()
 
   test('with nothing picked the line reads the empty copy', () => {
     const view = renderOnMoodStep();
-    expect(view.getByText('Pick at least one — tap a chosen one again to take it back.')).toBeTruthy();
+    expect(view.getByText('Tap to pick — tap again to undo.')).toBeTruthy();
   });
 
   test('after pressing Grateful it reads "1 chosen · Grateful"', () => {
@@ -157,7 +168,7 @@ describe('WriteFlow — a feeling you picked can be put back down (IMP-069)', ()
     const view = renderOnMoodStep();
     fireEvent.press(view.getByText('Grateful'));
     fireEvent.press(view.getByText('Grateful'));
-    expect(view.getByText('Pick at least one — tap a chosen one again to take it back.')).toBeTruthy();
+    expect(view.getByText('Tap to pick — tap again to undo.')).toBeTruthy();
   });
 
   test('typing "grateful" renders "That one is already here." and Add does not fire', () => {

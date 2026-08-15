@@ -68,7 +68,19 @@ describe('MoodManager — IMP-055', () => {
   test('typing "😬😬" into the face field leaves only "😬" (IMP-070)', () => {
     const view = renderManager({ customMoods: ['Anxios'] });
     fireEvent.press(view.getByLabelText('Edit Anxios'));
-    fireEvent.changeText(view.getByPlaceholderText('or any emoji…'), '😬😬');
-    expect(view.getByPlaceholderText('or any emoji…').props.value).toBe('😬');
+    fireEvent.changeText(view.getByTestId('customMoodEmojiInput'), '😬😬');
+    expect(view.getByTestId('customMoodEmojiInput').props.value).toBe('😬');
+  });
+
+  test('typing a second emoji after the first replaces it, not just re-picks the first', () => {
+    // Simulates the real native buffer: onChangeText's v is the old value plus
+    // whatever was just typed, not just the new keystroke.
+    const view = renderManager({ customMoods: ['Anxios'] });
+    fireEvent.press(view.getByLabelText('Edit Anxios'));
+    const field = view.getByTestId('customMoodEmojiInput');
+    fireEvent.changeText(field, '😬');
+    expect(field.props.value).toBe('😬');
+    fireEvent.changeText(field, '😬🌵');
+    expect(field.props.value).toBe('🌵');
   });
 });
