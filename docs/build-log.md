@@ -2234,6 +2234,41 @@ state and its precedence against `missed`/`future`. `ArchiveHeat.test.js` (+2) �
 
 ---
 
+### IMP-064 — count your candles, and say plainly what one did   ·   Lane: OTA   ·   Status: ✅ code-complete (2026-08-15)
+
+**Why.** WALK-06 findings (a), (c) and (b), 2026-08-15. `StreakFreeze` ([`src/gamify.js`](../src/gamify.js))
+mapped over a literal `[0, 1, 2]`, not `count` — owning 10 candles rendered exactly 3 icons, every count from
+3 upward drew the identical row, and the true number lived only in the caption. Separately, the
+candle-spent notice (`freezeNoticeCopy` in [`src/home/freezeNotice.js`](../src/home/freezeNotice.js)) was 14
+words to say three things. The owner's objection generalised into a standing copy rule: the user must never
+be unsure what happened, what changed, or how a feature works.
+
+**Design, as landed:**
+1. New pure module `src/home/candleRow.js` — `candleRow(count, max = 5)` returns `{ slots, lit, overflow }`:
+   up to 5 real icons, then a `×N` badge past the cap; `count = 0` still draws one unlit slot so the
+   affordance stays visible. `candleRowCopy(count)` returns the caption string (zero/singular/plural forms).
+   No suite existed for `src/gamify.js` and none was added — it stays a straight render of the two tested
+   pure functions.
+2. `StreakFreeze` in `src/gamify.js` renders `candleRow`/`candleRowCopy` instead of the old `[0,1,2].map`,
+   plus the `×N` overflow badge when present.
+3. `freezeNoticeCopy` rewritten to the three-fact shape: *"Your streak is safe."* / `A candle burned for
+   {day}. {N} left.` (or `3 candles burned for 3 days you missed. 1 left.` for multi-day, or `That was your
+   last one.` at zero remaining). `addFreezeNotice` and `formatDay` untouched; `FreezeNoticeCard.js` needed
+   no edit since it just renders `copy.title`/`copy.body`.
+
+**Tests (+10, +1 suite file):** new `__tests__/home/candleRow.test.js` covers `candleRow` at 0/1/3/5/6/12,
+the invalid-input group (negative, `NaN`, `undefined`, numeric string), a custom `max`, and `candleRowCopy`
+at 0/1/7. `__tests__/home/freezeNotice.test.js`'s 4 `freezeNoticeCopy` cases and
+`__tests__/screens/FreezeNoticeCard.test.js`'s 3 copy assertions got the new expected strings, no new cases.
+
+**Proof:** `npm test` → **792 passed, 79 suites** (was 782/78). `npx expo export --platform android` clean.
+**Ship:** OTA lane, no bump — rides the next batch with the rest of the ~25 unpublished tasks; no
+`Release-Lane` trailer on this commit.
+**Commit:** `feat(streak): count your candles at a glance, and say plainly what one did (IMP-064)` (`185e326`).
+**Runtime proof:** **WALK-06**, re-run whole — a separate chat.
+
+---
+
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
 
 > Moved out of PROGRESS.md on 2026-07-31 to keep the live cursor lean once a second spec (IMP-032) opened. These are **not** finished work. If the owner revives one, lift the block back into PROGRESS.md as the ACTIVE TRACK.
@@ -2278,6 +2313,21 @@ state and its precedence against `missed`/`future`. `ArchiveHeat.test.js` (+2) �
 ## Session notes (archived from PROGRESS.md)
 
 _Append-only handoff log moved out of PROGRESS.md to keep it light. Newest 1–2 notes stay live in PROGRESS.md; everything else is here. Git history is the full record._
+
+_2026-08-14 (IMP-062, the restore offer outlives the launch that made it) — **code-complete, committed
+`ba8e684`, not shipped; OTA lane, rides the next batch.** All 4 spec steps done in order — `storage.js`'s
+new `restoreOfferAnswered` trio, `importFlow.js`'s `onImported` post-success hook, ownership of the offer's
+answer moved from `RitualsApp`'s local state up into `App.js` alongside the stash (the missing piece: an
+unconditional `readPendingRestore()` before every `setHydrated`, not just inside the once-only quarantine
+branch — full defect writeup in `docs/build-log.md` → IMP-062). 8 new tests exactly as specified across
+`importFlow.test.js` and `storage.test.js`. **Proof:** `npm test` → **772 passed, 78 suites** (was 764/78).
+`npx expo export --platform android` clean. LAST command: `git commit` → `ba8e684`. Archived IMP-062's spec
+into `docs/build-log.md`, emptied `docs/specs-open.md`'s index, condensed the WALK-02 finding in this file's
+Open items to a RESOLVED pointer, moved the WALK-01 session note down to `docs/build-log.md` (2-note
+budget), and **unblocked WALK-02** in `docs/walk-open.md` — re-run the whole walk from step 1 (new steps
+7–9 prove the fix; the earlier partial pass doesn't count). Did not run the walk itself — separate chat, per
+the spec's own closing line. NEXT: **no open IMP spec — the build queue is empty**; a build chat should say
+so rather than invent one. A walk chat takes **WALK-02** (🚦, first row, 👤 owner)._
 
 _2026-08-14 (IMP-059, the app has one accessibility label) — **code-complete, committed `fa523f3`, not
 shipped.** New `src/ui/IconBtn.js` replaces the byte-identical copies in `WriteFlow.js`/`ReadingSheet.js`

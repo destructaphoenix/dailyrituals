@@ -24,7 +24,6 @@
 
 | # | Spec | Lane | From |
 | --- | --- | --- | --- |
-| IMP-064 | [Count your candles, and say plainly what one did](#imp-064--count-your-candles-and-say-plainly-what-one-did) | OTA | WALK-06 (a, b, c) |
 | IMP-065 | [Clear the search; the moods you picked come to the front](#imp-065--clear-the-search-the-moods-you-picked-come-to-the-front) | OTA | WALK-04 (a, b, c) |
 | IMP-066 | [The mood step stops fighting you](#imp-066--the-mood-step-stops-fighting-you) | OTA | WALK-04 (d, e) |
 | IMP-067 | [A stacked row wraps; Mood Mix bars start in one place](#imp-067--a-stacked-row-wraps-mood-mix-bars-start-in-one-place) | OTA | WALK-07 (b, c) |
@@ -35,9 +34,10 @@
 > gate the release build.** The 🚦 walks in [`walk-open.md`](walk-open.md) still gate it. If the owner wants
 > the build to go out first, every one of these can land after it and ride an OTA — **but they must not be
 > half-landed across the bump**, so a build chat takes them in the order above and finishes each one.
+> **IMP-063 and IMP-064 have already landed** — this index now holds the remaining four.
 >
-> **The order is by user cost, not by walk number.** IMP-063/064 fix a mechanic the user is *told* about but
-> cannot *see* (candles). IMP-065/066 fix the two screens every user touches daily. IMP-067 is visible at
+> **The order is by user cost, not by walk number.** IMP-063/064 fixed a mechanic the user is *told* about but
+> could not *see* (candles). IMP-065/066 fix the two screens every user touches daily. IMP-067 is visible at
 > every font size. **IMP-068 is last on purpose** — the Paywall is unmountable while `PLUS_ENABLED = false`
 > ([`src/billing/config.js:39`](../src/billing/config.js#L39)), so no user can hit it in the shipped build.
 >
@@ -49,149 +49,6 @@
 > runtime walk are **two different tasks for two different chats** — where a feature needs runtime proof,
 > the spec's last step names its `WALK-nn` row in [`walk-open.md`](walk-open.md). **Do not run a walk from a
 > build chat**, and do not read a missing walk as an unfinished spec.
-
----
-
-## IMP-064 — count your candles, and say plainly what one did
-
-**Lane: OTA.** No native change, no bump.
-**Runtime proof: WALK-06**, re-run whole — not this chat.
-
-**Why.** WALK-06 findings (a), (c) and (b), 2026-08-15.
-
-**(a) + (c) are one defect, filed twice — from the code's side and from the user's.** `StreakFreeze`
-([`src/gamify.js:46-58`](../src/gamify.js#L46)) maps over a **literal `[0, 1, 2]`**, not `count`. Owning 10
-candles renders exactly 3 icons; `lit={i < count}` only decides which of those 3 look lit, so **every count
-from 3 upward draws the identical row**. The true number exists only in the caption below it
-(`src/gamify.js:53-55`), which the owner had to be *told* about rather than read at a glance. There is no
-way to see you have 10 candles from the icon row itself.
-
-**(b) The candle-spent notice is verbose and doesn't land.** `freezeNoticeCopy()`
-([`src/home/freezeNotice.js:22-29`](../src/home/freezeNotice.js#L22)) currently reads *"A candle burned for
-you."* / *"You missed 13 Jun. A candle spent itself to keep your streak whole. 2 left."* — 14 words to say
-three things. The owner's objection generalises past this string, and it is recorded in `PROGRESS.md` as a
-standing bar for any future copy: **the user must never be unsure what happened, what changed, or how a
-feature works.** Three facts, in that order, is what this card owes: *your streak survived · a candle paid
-for it, on this day · this many are left.*
-
-### Decided design — do not re-litigate
-
-1. **The icon row shows the real count, up to 5, then overflows to a `×N` badge.** Five is the cap because
-   the row lives inside the streak hero at ~19dp per icon — past five it stops being countable at a glance,
-   which is the whole complaint. At `count = 0` the row draws **one unlit candle**, not nothing: the
-   affordance has to stay visible for the caption to make sense and for the shop to have a referent.
-2. **The arithmetic is a pure module, tested; the component only renders it.** `src/gamify.js` is a
-   presentational file with no test suite and it stays that way — same split as `calendar.js`/`rowFit.js`.
-3. **The caption is rewritten alongside the row** — the current string reads *"0 candles keep the flame on a
-   missed day"* at zero, which states a falsehood about a thing you do not own.
-4. **The notice keeps its two-part shape** (`{ title, body }`) and its `formatDay` helper. Only the strings
-   change. `addFreezeNotice` is untouched.
-5. **Out of scope:** candle pricing, `applyAutoFreeze`, the shop's copy (WALK-06 passed it), and any
-   animation.
-
-### Steps
-
-**1 — new `src/home/candleRow.js`.** Pure, no imports:
-
-```js
-// home/candleRow.js — how many candle icons the streak hero draws, and what the
-// caption under them says (IMP-064). Before this the row was a literal [0,1,2]
-// map, so 3 candles and 30 candles drew the same picture and the only real
-// number was in the caption text.
-
-export const CANDLE_ICON_MAX = 5;
-
-// → { slots, lit, overflow }. `slots` icons are drawn; the first `lit` of them
-// burn. Past CANDLE_ICON_MAX the row stops growing and a "×N" badge carries the
-// count — five 19dp icons is the most that stays countable at a glance.
-export function candleRow(count, max = CANDLE_ICON_MAX) {
-  const n = Math.max(0, Math.floor(Number(count) || 0));
-  if (n === 0) return { slots: 1, lit: 0, overflow: null };
-  if (n <= max) return { slots: n, lit: n, overflow: null };
-  return { slots: max, lit: max, overflow: `×${n}` };
-}
-
-export function candleRowCopy(count) {
-  const n = Math.max(0, Math.floor(Number(count) || 0));
-  if (n === 0) return 'No candles. One keeps your flame on a day you miss.';
-  if (n === 1) return '1 candle — it keeps your flame on a day you miss.';
-  return `${n} candles — each keeps your flame on a day you miss.`;
-}
-```
-
-**2 — `src/gamify.js`: `StreakFreeze` renders it.** Import `{ candleRow, candleRowCopy } from './home/candleRow'`
-and replace the body of `StreakFreeze` ([`:46-58`](../src/gamify.js#L46)) — the wrapper `View`'s style is
-unchanged:
-
-```jsx
-export function StreakFreeze({ count }) {
-  const c = useTheme().colors;
-  const row = candleRow(count);
-  return (
-    <View style={{ marginTop: 16, paddingTop: 15, width: '100%', borderTopWidth: 1, borderTopColor: c.border, alignItems: 'center', gap: 6 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-        {Array.from({ length: row.slots }, (_, i) => (
-          <Candle key={i} size={19} lit={i < row.lit} body={c.accentSoft} deep={c.accentDeep} />
-        ))}
-        {row.overflow ? (
-          <T d w={800} color={c.accentDeep} style={{ fontSize: 14, marginLeft: 2 }}>{row.overflow}</T>
-        ) : null}
-      </View>
-      <T w={700} color={c.muted} style={{ fontSize: 12, textAlign: 'center' }}>{candleRowCopy(count)}</T>
-    </View>
-  );
-}
-```
-
-**3 — `src/home/freezeNotice.js`: the new copy.** `freezeNoticeCopy` only; `addFreezeNotice` and
-`formatDay` are untouched:
-
-```js
-export function freezeNoticeCopy(days, freezesLeft) {
-  if (!days.length) return null;
-  const lead = days.length === 1
-    ? `A candle burned for ${formatDay(days[0])}.`
-    : `${days.length} candles burned for ${days.length} days you missed.`;
-  const tail = freezesLeft === 0 ? 'That was your last one.' : `${freezesLeft} left.`;
-  return { title: 'Your streak is safe.', body: `${lead} ${tail}` };
-}
-```
-
-The exact strings this produces, which the tests must assert verbatim:
-
-| Case | Title | Body |
-| --- | --- | --- |
-| 1 day, 2 left | `Your streak is safe.` | `A candle burned for 13 Jun. 2 left.` |
-| 3 days, 1 left | `Your streak is safe.` | `3 candles burned for 3 days you missed. 1 left.` |
-| 1 day, 0 left | `Your streak is safe.` | `A candle burned for 13 Jun. That was your last one.` |
-
-`FreezeNoticeCard.js` is **not edited** — it renders `copy.title` / `copy.body` and needs no change.
-
-### Tests (+10, and 7 existing assertions updated)
-
-**New `__tests__/home/candleRow.test.js`** (+10) — `candleRow`: `0` → `{ slots: 1, lit: 0, overflow: null }`
-· `1` → `{ slots: 1, lit: 1, overflow: null }` · `3` → 3 slots, 3 lit · `5` → 5 slots, no overflow · `6` →
-`{ slots: 5, lit: 5, overflow: '×6' }` · `12` → `'×12'` · a negative, a `NaN`, `undefined` and `'3'`
-(string) all behave as documented (0, 0, 0, and 3) · a custom `max` of 3 overflows at 4.
-`candleRowCopy`: `0` → `No candles. One keeps your flame on a day you miss.` · `1` → the singular string ·
-`7` → the plural string with `7` in it.
-
-**`__tests__/home/freezeNotice.test.js`** — the 4 `freezeNoticeCopy` cases keep their inputs and get the new
-expected strings from the table above. The `addFreezeNotice` block is untouched.
-
-**`__tests__/screens/FreezeNoticeCard.test.js`** — the 3 copy assertions get the new strings. The dismiss
-and empty-array cases are untouched.
-
-**Test count arithmetic:** +10 new, 0 removed. `StreakFreeze` gets no render test — the component is a
-straight render of two tested pure functions, and `src/gamify.js` has never had a suite.
-
-### Done
-
-`npm test` green at **the prior count + 10** (772 → **782** if this is the first of the six; otherwise that
-chat's number + 10), **+1 suite file**. `npx expo export --platform android` clean.
-**Commit:** `feat(streak): count your candles at a glance, and say plainly what one did (IMP-064)`.
-No `Release-Lane` trailer. Then tick the backlog row, write the session note, move this spec into
-`docs/build-log.md`, and leave **WALK-06** for a walk chat — **do not walk it here.**
 
 ---
 

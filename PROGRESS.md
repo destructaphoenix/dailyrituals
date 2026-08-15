@@ -32,11 +32,11 @@
 runtime proof is a separate WALK row for a separate chat, so a missing walk is *not* an unfinished spec.
 Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`](docs/playbook.md).
 
-> **The build queue holds FIVE open specs — `IMP-064` … `IMP-068`, scoped 2026-08-15 from the WALK-04/06/07
-> findings.** A build chat takes the **first ⬜** row below and opens only that spec. **All five are 🎨: none
+> **The build queue holds FOUR open specs — `IMP-065` … `IMP-068`, scoped 2026-08-15 from the WALK-04/06/07
+> findings.** A build chat takes the **first ⬜** row below and opens only that spec. **All four are 🎨: none
 > of them gates the release build** — the 🚦 walks still do — so the owner may ship first and OTA these
-> after. What must not happen is landing half of them across a `bump:native`. **`IMP-063` (the sixth) landed
-> 2026-08-15** — its spec is archived in `docs/build-log.md`.
+> after. What must not happen is landing half of them across a `bump:native`. **`IMP-063` and `IMP-064` have
+> landed** — their specs are archived in `docs/build-log.md`.
 > **The other live work is WALKS**, risk-ordered: the 🚦 group gates a release carrying ~25 unpublished tasks.
 >
 > **`IMP-057` is reserved, not missing** — the `dayKey` migration IMP-056 deferred; needs real device
@@ -142,7 +142,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 061 | Store screenshots build themselves | Dev-only | ✅ code-complete 2026-08-14 · walk = WALK-15 |
 | 062 | The restore offer outlives the launch that made it | OTA | ✅ code-complete 2026-08-14 · WALK-02 ✅ 2026-08-15 |
 | 063 | A saved day looks saved (frozen ≠ missed) | OTA | ✅ code-complete 2026-08-15 · walk = WALK-06 (re-run whole) |
-| 064 | Count your candles, and say plainly what one did | OTA | ⬜ **open** — [spec](docs/specs-open.md#imp-064--count-your-candles-and-say-plainly-what-one-did); from WALK-06 (a, b, c) |
+| 064 | Count your candles, and say plainly what one did | OTA | ✅ code-complete 2026-08-15 · walk = WALK-06 (re-run whole) |
 | 065 | Clear the search; picked moods come to the front | OTA | ⬜ **open** — [spec](docs/specs-open.md#imp-065--clear-the-search-the-moods-you-picked-come-to-the-front); from WALK-04 (a, b, c) |
 | 066 | The mood step stops fighting you | OTA | ⬜ **open** — [spec](docs/specs-open.md#imp-066--the-mood-step-stops-fighting-you); from WALK-04 (d, e) |
 | 067 | A stacked row wraps; Mood Mix bars line up | OTA | ⬜ **open** — [spec](docs/specs-open.md#imp-067--a-stacked-row-wraps-mood-mix-bars-start-in-one-place); from WALK-07 (b, c) |
@@ -196,22 +196,13 @@ that "did nothing" never reached the chip.
 
 **WALK-04 stays ❌** in `docs/walk-open.md` — re-run it whole once IMP-065 and IMP-066 have both landed.
 
-### 🔴 WALK-06 finding — streak insurance → **scoped as IMP-063 + IMP-064** (2026-08-15) · **IMP-063 ✅ landed 2026-08-15**
+### 🔴 WALK-06 finding — streak insurance → **both scoped specs landed** (IMP-063 + IMP-064, 2026-08-15)
 
-Every mechanical assertion passed — freeze survival across the `lapsed` scenario, decrement-by-one per
-missed day, idempotence on repeat relaunch, celebration streak matching the Home hero, the shop copy. The
-four UX defects split by what they touch: **(d) a frozen day is indistinguishable from a missed one
-everywhere in the app → IMP-063** (the heaviest of the six — `frozenDays` reaches the streak arithmetic and
-nothing else, so no cell builder can paint it — **code-complete, archived in `docs/build-log.md`**);
-**(a) + (c) the candle row caps at 3 icons regardless of the real count, and (b) the candle-spent copy is
-verbose → IMP-064** (still open). Full writeup and the decided design for IMP-064 in
-[`docs/specs-open.md`](docs/specs-open.md).
+Full writeup archived with each spec in `docs/build-log.md`. **Standing rule that outlives this finding:**
+the owner's objection to the candle-spent copy generalises — **the user must never be unsure what happened,
+what changed, or how a feature works.** Read that into any future copy review, not just the freeze card.
 
-**One thing from this finding outlives its specs and belongs here as a standing rule.** The owner's
-objection to (b) generalises past that one string: **the user must never be unsure what happened, what
-changed, or how a feature works.** Read that into any future copy review, not just the freeze card.
-
-**WALK-06 stays ❌** in `docs/walk-open.md` — re-run it whole once IMP-064 has also landed.
+**WALK-06 stays ❌** in `docs/walk-open.md` — re-run it whole now that both specs have landed.
 
 ### 🔴 WALK-07 finding — modal scroll → **scoped as IMP-067 + IMP-068** (2026-08-15)
 
@@ -260,6 +251,23 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
+_2026-08-15 (IMP-064, count your candles, and say plainly what one did) — **code-complete, committed
+`185e326`, not shipped; OTA lane, rides the next batch.** New pure module `src/home/candleRow.js` —
+`candleRow(count, max = 5)` → `{ slots, lit, overflow }` (up to 5 real icons then a `×N` badge; `count = 0`
+still draws one unlit slot) and `candleRowCopy(count)` for the caption. `StreakFreeze` in `src/gamify.js`
+now renders both instead of the old literal `[0, 1, 2].map`. `freezeNoticeCopy` in `src/home/freezeNotice.js`
+rewritten to the three-fact shape — `Your streak is safe.` / `A candle burned for {day}. {N} left.` (plural:
+`3 candles burned for 3 days you missed. 1 left.`; zero-left: `That was your last one.`) — `addFreezeNotice`/
+`formatDay` untouched, `FreezeNoticeCard.js` needed no edit. 10 new tests in new
+`__tests__/home/candleRow.test.js`; `freezeNotice.test.js`'s 4 cases and `FreezeNoticeCard.test.js`'s 3 got
+the new expected strings, no new cases there. **Proof:** `npm test` → **792 passed, 79 suites** (was
+782/78). `npx expo export --platform android` clean. LAST command: `git commit` → `185e326`. Archived
+IMP-064's spec into `docs/build-log.md`, dropped its row from `docs/specs-open.md`'s index (queue is now
+IMP-065…068, four specs), ticked its `PROGRESS.md` row, and moved the IMP-062 session note down to
+`docs/build-log.md` (2-note budget). Did not touch WALK-06 — full re-run is a separate chat, per the spec's
+own closing line. NEXT: a build chat takes **IMP-065** (first ⬜, [spec](docs/specs-open.md#imp-065--clear-the-search-the-moods-you-picked-come-to-the-front)).
+A walk chat can still take **WALK-02** or **WALK-15**, unaffected by this chat's work._
+
 _2026-08-15 (IMP-063, a saved day looks saved) — **code-complete, committed `b7eb4c3`, not shipped; OTA
 lane, rides the next batch.** All 7 spec steps done in order — `FREEZE_EMOJI` added to `src/data.js`; all
 three cell builders in `src/home/calendar.js` (`buildHeatmap`/`buildLifetimeHeatmap`/`buildWeekStrip`) took
@@ -278,18 +286,3 @@ IMP-064…068, five specs), ticked its `PROGRESS.md` row, and moved the IMP-061 
 `docs/build-log.md` (2-note budget). Did not touch WALK-06 — full re-run is a separate chat, per the spec's
 own closing line. NEXT: a build chat takes **IMP-064** (first ⬜, [spec](docs/specs-open.md#imp-064--count-your-candles-and-say-plainly-what-one-did)).
 A walk chat can still take **WALK-02** or **WALK-15**, unaffected by this chat's work._
-
-_2026-08-14 (IMP-062, the restore offer outlives the launch that made it) — **code-complete, committed
-`ba8e684`, not shipped; OTA lane, rides the next batch.** All 4 spec steps done in order — `storage.js`'s
-new `restoreOfferAnswered` trio, `importFlow.js`'s `onImported` post-success hook, ownership of the offer's
-answer moved from `RitualsApp`'s local state up into `App.js` alongside the stash (the missing piece: an
-unconditional `readPendingRestore()` before every `setHydrated`, not just inside the once-only quarantine
-branch — full defect writeup in `docs/build-log.md` → IMP-062). 8 new tests exactly as specified across
-`importFlow.test.js` and `storage.test.js`. **Proof:** `npm test` → **772 passed, 78 suites** (was 764/78).
-`npx expo export --platform android` clean. LAST command: `git commit` → `ba8e684`. Archived IMP-062's spec
-into `docs/build-log.md`, emptied `docs/specs-open.md`'s index, condensed the WALK-02 finding in this file's
-Open items to a RESOLVED pointer, moved the WALK-01 session note down to `docs/build-log.md` (2-note
-budget), and **unblocked WALK-02** in `docs/walk-open.md` — re-run the whole walk from step 1 (new steps
-7–9 prove the fix; the earlier partial pass doesn't count). Did not run the walk itself — separate chat, per
-the spec's own closing line. NEXT: **no open IMP spec — the build queue is empty**; a build chat should say
-so rather than invent one. A walk chat takes **WALK-02** (🚦, first row, 👤 owner)._
