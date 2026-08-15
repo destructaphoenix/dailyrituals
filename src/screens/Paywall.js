@@ -40,7 +40,10 @@ export default function Paywall({ insets, platform = 'ios', service, alreadyPlus
         </Pressable>
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 26, paddingBottom: 18, alignItems: 'center' }} showsVerticalScrollIndicator={false}>
+      {/* style={{ flex: 1 }} is load-bearing (IMP-068): without it this ScrollView
+          lays out at full content height inside the flex column and the fixed footer
+          below is drawn over the plan price and the last perks. */}
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 26, paddingBottom: 18, alignItems: 'center' }} showsVerticalScrollIndicator={false}>
         <View style={{ marginTop: 4 }}><BigSun size={92} /></View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6, backgroundColor: c.accentSoft, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999 }}>
           <Sun size={14} color={c.accentDeep} />
