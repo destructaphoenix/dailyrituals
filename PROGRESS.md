@@ -32,9 +32,11 @@
 runtime proof is a separate WALK row for a separate chat, so a missing walk is *not* an unfinished spec.
 Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`](docs/playbook.md).
 
-> **The build queue is EMPTY** (IMP-062 was the last, code-complete 2026-08-14 `ba8e684`). A build chat has
-> nothing to take and should say so rather than invent a task — the next `IMP-xxx` is Opus's to scope.
-> **The live work is WALKS**, now risk-ordered: the 🚦 group gates a release carrying ~25 unpublished tasks.
+> **The build queue holds SIX open specs — `IMP-063` … `IMP-068`, scoped 2026-08-15 from the WALK-04/06/07
+> findings.** A build chat takes the **first ⬜** row below and opens only that spec. **All six are 🎨: none
+> of them gates the release build** — the 🚦 walks still do — so the owner may ship first and OTA these
+> after. What must not happen is landing half of them across a `bump:native`.
+> **The other live work is WALKS**, risk-ordered: the 🚦 group gates a release carrying ~25 unpublished tasks.
 >
 > **`IMP-057` is reserved, not missing** — the `dayKey` migration IMP-056 deferred; needs real device
 > numbers first (see Open items). **Do not reuse the number.** **IMP-044 claims no queue slot** — it rides
@@ -137,7 +139,13 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 059 | The app has one accessibility label | OTA | ✅ code-complete 2026-08-13 · walk = WALK-14 |
 | 058 | Prompt packs — grief / gratitude / change | OTA | ✅ code-complete 2026-08-14 |
 | 061 | Store screenshots build themselves | Dev-only | ✅ code-complete 2026-08-14 · walk = WALK-15 |
-| 062 | The restore offer outlives the launch that made it | OTA | ✅ code-complete 2026-08-14 · walk = WALK-02 |
+| 062 | The restore offer outlives the launch that made it | OTA | ✅ code-complete 2026-08-14 · WALK-02 ✅ 2026-08-15 |
+| 063 | A saved day looks saved (frozen ≠ missed) | OTA | ⬜ **open** — [spec](docs/specs-open.md#imp-063--a-saved-day-looks-saved); from WALK-06 (d) |
+| 064 | Count your candles, and say plainly what one did | OTA | ⬜ **open** — [spec](docs/specs-open.md#imp-064--count-your-candles-and-say-plainly-what-one-did); from WALK-06 (a, b, c) |
+| 065 | Clear the search; picked moods come to the front | OTA | ⬜ **open** — [spec](docs/specs-open.md#imp-065--clear-the-search-the-moods-you-picked-come-to-the-front); from WALK-04 (a, b, c) |
+| 066 | The mood step stops fighting you | OTA | ⬜ **open** — [spec](docs/specs-open.md#imp-066--the-mood-step-stops-fighting-you); from WALK-04 (d, e) |
+| 067 | A stacked row wraps; Mood Mix bars line up | OTA | ⬜ **open** — [spec](docs/specs-open.md#imp-067--a-stacked-row-wraps-mood-mix-bars-start-in-one-place); from WALK-07 (b, c) |
+| 068 | The Paywall footer stops covering the price | OTA | ⬜ **open** — [spec](docs/specs-open.md#imp-068--the-paywall-footer-stops-covering-the-price); from WALK-07 (a); **take last** |
 
 ---
 
@@ -157,120 +165,65 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
   matches **vc11 only, which lives only on `alpha`**; and the batch touches `app.config.js` / `eas.json` /
   `package.json` / `package-lock.json`, so CI's backstop auto-rejects an `ota` trailer. **The only route is
   a BUILD**, which necessarily carries IMP-044's R8 — the first minified build of this app ever.
-  **Sequence: IMP-062 has landed (unblocking WALK-02) → clear the 🚦 walks in
-  [`docs/walk-open.md`](docs/walk-open.md) (02 → 05 → 13 → 03 → 12, R8 last on the final candidate) → `npm run bump:native` → `Release-Lane: build` → push → owner approval →
+  **Sequence: WALK-02 ✅ and WALK-05 ✅ (both 2026-08-15) → clear the remaining 🚦 walks in
+  [`docs/walk-open.md`](docs/walk-open.md) (13 → 03 → 12, R8 last on the final candidate) → `npm run bump:native` → `Release-Lane: build` → push → owner approval →
   auto-submits to `internal` → self-test → promote `internal` → `production` by hand** (full review, ~7d).
   The old "promote vc11 → production, or hold" framing is superseded: vc11 is two weeks of work behind HEAD,
   so promoting it would ship a stale build rather than this work.
+  **IMP-063…068 are 🎨 and are NOT part of this sequence** — they land either before the bump *in full*, or
+  after the build as an OTA. Never split across it.
 - **Cash embers: settled in principle (dropped 2026-08-03), not finalised.** Must be decided before
   `PLUS_ENABLED` flips — it determines which Play products get created. Full argument in the playbook.
 - **`PLUS_ENABLED` must not flip until every `PLUS_PERKS` line is true.** The one remaining gap is perk #6,
   the PDF (IMP-022, deferred). Gate checklist in the playbook → Phase 10b.
 
-### ✅ WALK-02 finding — RESOLVED by IMP-062 (2026-08-14, code-complete `ba8e684`)
+### 🔴 WALK-04 finding — search + moods → **scoped as IMP-065 + IMP-066** (2026-08-15)
 
-Filed mid-walk on **WALK-02**: the restore-offer stash could be orphaned in `AsyncStorage`, unreachable by
-the user, after one session. Fixed — full defect writeup and landed design in
-[`docs/build-log.md` → IMP-062](docs/build-log.md#imp-062--the-restore-offer-outlives-the-launch-that-made-it-lane-ota--status--code-complete-2026-08-14).
-**WALK-02 is unblocked** — the next walk chat re-runs it whole from step 1 (new steps 7–9 prove the fix).
+Base search/filter/heatmap behavior passed as specced (case-insensitive + accent-folding match, zero-results
+copy, heatmap correctly not reacting to filters). The five UX defects split cleanly by file: **(a) snippet
+label asymmetry, (b) no way to clear the search, (c) selected chips never reorder → IMP-065**
+(`ArchiveFilters` / `ArchiveScreen`); **(d) a selected mood chip won't deselect, (e) the custom-mood block
+is unreadable and its name field accepts emoji → IMP-066** (`WriteFlow`). Full writeups and the decided
+design in [`docs/specs-open.md`](docs/specs-open.md).
 
-### 🔴 WALK-04 finding — search + moods, five UX defects (2026-08-15)
+**Scoping settled (d), which the walk could not.** The finding flagged that the code contradicted the
+observation and asked a build chat to re-confirm on-device. It does not need one: `toggleMood` is a correct
+toggle, and the mood-step `ScrollView` ([`WriteFlow.js:121`](src/screens/WriteFlow.js#L121)) is missing the
+`keyboardShouldPersistTaps="handled"` that the `did`/`wished` step has. The default `"never"` **spends the
+first tap dismissing the keyboard**, and the mood step is the only step carrying text fields — so the tap
+that "did nothing" never reached the chip.
 
-Walked **WALK-04** end to end on the emulator; the base search/filter/heatmap behavior (case-insensitive +
-accent-folding match, zero-results copy, heatmap not reacting to filters) all passed as specced. Five
-defects surfaced, none blocking the remaining steps — **each needs a new `IMP-xxx`** (Opus to scope; may
-bundle as one UX-polish spec or split):
+**WALK-04 stays ❌** in `docs/walk-open.md` — re-run it whole once IMP-065 and IMP-066 have both landed.
 
-a. **Search snippet's `wished · ` prefix** ([`ArchiveScreen.js:134`](src/screens/ArchiveScreen.js#L134),
-   gated on `snip.field === 'wished'` from [`snippet.js:57-80`](../src/insights/snippet.js#L57)) shows only
-   when the matched word is in `wished`, never for `did`. Matches current spec intent, but the owner flags
-   the asymmetry (no `did ·` counterpart) as a design call worth revisiting, not confirmed as a bug.
-b. **No way to clear the search text.** [`ArchiveFilters.js`](../src/screens/ArchiveFilters.js)'s
-   `TextInput` (lines 109-120) has no clear/"×" affordance — only manual backspacing.
-c. **Mood filter chips don't move to the front when selected.** `ArchiveFilters.js` (`toggleMood`, lines
-   88-91; chip list, lines 122-139) recolors a selected chip but never reorders it — it stays wherever
-   `[...MOODS, ...customMoods]` put it, so deselecting a chip picked late in the list means hunting for it,
-   not tapping the front.
-d. **WriteFlow mood step — owner reports a selected chip cannot be tapped again to deselect.** Code
-   inspection shows a toggle-off path exists (`toggleMood`, [`WriteFlow.js:43`](../src/screens/WriteFlow.js#L43),
-   wired at line 131) — this contradicts what was observed live, so a build chat should re-confirm on-device
-   before assuming the logic is the problem; could be a hit-target/layout issue instead.
-e. **Custom-mood creation layout** ([`WriteFlow.js:146-202`](../src/screens/WriteFlow.js#L146)): owner found
-   the emoji-palette / typed-emoji / mood-name grouping unclear and "weirdly placed." Also confirmed: the
-   mood-**name** `TextInput` (lines 180-191) has no character filtering and accepts emoji — unlike the
-   sibling typed-emoji field it sits next to, which is `isEmojiish`-gated (lines 164-178).
+### 🔴 WALK-06 finding — streak insurance → **scoped as IMP-063 + IMP-064** (2026-08-15)
 
-**WALK-04 marked ❌** in `docs/walk-open.md`; section left in place (not moved to build-log) pending specs.
+Every mechanical assertion passed — freeze survival across the `lapsed` scenario, decrement-by-one per
+missed day, idempotence on repeat relaunch, celebration streak matching the Home hero, the shop copy. The
+four UX defects split by what they touch: **(d) a frozen day is indistinguishable from a missed one
+everywhere in the app → IMP-063** (the heaviest of the six — `frozenDays` reaches the streak arithmetic and
+nothing else, so no cell builder can paint it); **(a) + (c) the candle row caps at 3 icons regardless of the
+real count, and (b) the candle-spent copy is verbose → IMP-064**. Full writeups and the decided design in
+[`docs/specs-open.md`](docs/specs-open.md).
 
-### 🔴 WALK-06 finding — streak insurance, four UX defects (2026-08-15)
+**One thing from this finding outlives its specs and belongs here as a standing rule.** The owner's
+objection to (b) generalises past that one string: **the user must never be unsure what happened, what
+changed, or how a feature works.** Read that into any future copy review, not just the freeze card.
 
-Walked **WALK-06** end to end on the emulator; all mechanical behavior passed as specced — freeze survival
-across the `lapsed` scenario, decrement-by-one per missed day, idempotence on repeat relaunch, celebration
-streak matching the Home hero, and the shop copy. Four defects surfaced, none blocking the passed steps —
-**each needs a new `IMP-xxx`** (Opus to scope; owner's framing was that the user must never feel confused
-about what the app is doing, so these may be worth treating as one UX-clarity spec rather than four separate
-tweaks):
+**WALK-06 stays ❌** in `docs/walk-open.md` — re-run it whole once IMP-063 and IMP-064 have both landed.
 
-a. **The Home candle row caps visually at 3 icons regardless of the real count.**
-   [`StreakFreeze`](../src/gamify.js#L46) (`src/gamify.js:46-58`) maps over a literal `[0, 1, 2]`, not
-   `count` — so owning 10 candles still renders exactly 3 `Candle` icons (`lit={i < count}` just toggles
-   which of the 3 look lit). The true number only appears in small caption text below the row
-   (`src/gamify.js:53-55`), which the owner had to be told about rather than read at a glance. There is no
-   way to *see* that you have 10 candles from the icon row itself.
-b. **The candle-spent explanation is verbose and doesn't land.** `freezeNoticeCopy()`
-   ([`src/home/freezeNotice.js:22-29`](../src/home/freezeNotice.js#L22)) reads *"A candle burned for you. You
-   missed {day}. A candle spent itself to keep your streak whole. {N left / That was your last one.}"*,
-   surfaced as a dismissible card ([`FreezeNoticeCard.js`](../src/screens/FreezeNoticeCard.js#L13), mounted
-   at `HomeScreen.js:98-104`). The owner's objection generalizes past this one string: **the app-wide bar is
-   that the user must never be unsure what happened, what changed, or how a feature works** — worth reading
-   as a standing design principle for any future copy review, not just this card.
-c. Same root cause as (a) — flagged separately by the owner as "visually very difficult to make out how many
-   candles there are," which is the icon-cap problem read from the user's side rather than the code's.
-d. **A frozen ("saved") day has no distinct visual identity anywhere in the app** — it renders as the same 💀
-   used for a genuinely missed day. `frozenDays` state exists (`RitualsApp.js:106`) but is consumed only by
-   streak-continuity math ([`src/insights/dateKeys.js:22-25`](../src/insights/dateKeys.js#L22)) — it never
-   reaches the cell-builders that decide what a day looks like:
-   [`buildHeatmap`/`buildLifetimeHeatmap`](../src/home/calendar.js#L54) (`src/home/calendar.js:54,82`) mark
-   only `missed: true` with no frozen flag, so `HomeScreen.js:232`, `ArchiveScreen.js:169`, and
-   `InsightsScreen.js:207-208` all render (or style) a frozen day identically to a missed one. The owner's
-   reference point is Duolingo's distinct frozen-streak-day glyph — a saved day should read as *saved*, not
-   as *missed and forgiven*.
+### 🔴 WALK-07 finding — modal scroll → **scoped as IMP-067 + IMP-068** (2026-08-15)
 
-**WALK-06 marked ❌** in `docs/walk-open.md`; section left in place (not moved to build-log) pending specs.
+Achievements, Shop, the Reading sheet, Get Embers and Manage Subscription all passed at normal **and** max
+(2.0x) OS font scale in both nav modes, and the font-scale cap itself is confirmed working
+(`PixelRatio.getFontScale()` read `2.0` against the `1.5`/`1.2` caps in
+[`src/ui/textScale.js`](src/ui/textScale.js) with nothing broken). Three defects, split by whether the
+screen is reachable: **(b) `Row` truncates a value even when stacking gave it a full line, and (c) Mood Mix
+bars start at a different x per row at every font size → IMP-067**; **(a) the Paywall's fixed footer
+overlaps its own content at normal font size → IMP-068**, which is deliberately **last in the queue** —
+`PLUS_ENABLED = false` makes that screen unmountable, so no user can reach the defect in the shipped build.
+Full writeups and the decided design in [`docs/specs-open.md`](docs/specs-open.md).
 
-### 🔴 WALK-07 finding — modal scroll, Paywall footer + two bonus defects (2026-08-15)
-
-Walked **WALK-07** on the emulator, including flipping T1 (`PLUS_ENABLED`) to reach Manage Subscription and
-Paywall, then reverting it. Achievements, Shop, Reading sheet and Get Embers all passed at normal and max
-(2.0x) OS font scale in both nav modes. **Manage Subscription also passed** — its content
-([`PlusFlow.js:179-268`](../src/screens/PlusFlow.js#L179)) is short enough (~6 stacked blocks: status header,
-plan detail, a 4-row actions card, conditional cancel button, billing disclaimer) that it never needed to
-scroll to reach the nav bar; nothing was hidden. The font-scale cap itself is also confirmed working —
-`PixelRatio.getFontScale()` read `2.0` against the `1.5`/`1.2` caps in
-[`src/ui/textScale.js`](../src/ui/textScale.js) with nothing visibly broken on the four passed screens. One
-real defect and two bonus defects surfaced — **each needs a new `IMP-xxx`** (Opus to scope):
-
-a. **Paywall's fixed footer overlaps its own content, even at normal font size.**
-   [`Paywall.js:94-99`](../src/screens/Paywall.js#L94) renders the "Start 7-day free trial" button and
-   `LegalFooter` as a plain sibling `View` after the `ScrollView` (line 43) — but that `ScrollView` has no
-   `style` prop (only `contentContainerStyle`), so it's never given `flex: 1` to claim the space above the
-   footer. The plan-amount text (`pl.price`, line 86) and the perk bullets (`PLUS_PERKS.map`, lines 54-63,
-   sourced from [`src/data.js:163-170`](../src/data.js#L163)) live inside that unconstrained scroll area, so
-   the footer's fixed height crowds out the tail of the content — the owner observed the plan amount and last
-   1-2 perk bullets covered by the footer at default font size, before max-font is even a factor.
-b. **Annual Recap's teaser description truncates at max font scale.** You tab →
-   [`YouScreen.js:169-170`](../src/screens/YouScreen.js#L169) renders `value="Unlocks after your first full
-   year"` through [`Row.js`](../src/ui/Row.js), which hardcodes `numberOfLines={1}` on both its stacked (line
-   36) and inline (line 45) layouts regardless of the `shouldStackRow` heuristic in
-   [`rowFit.js:7-13`](../src/ui/rowFit.js#L7) — so at 2.0x font the string ellipsizes instead of wrapping or
-   stacking. The owner's read: this description isn't load-bearing and could move inside a detail sheet rather
-   than trying to fit it in the row.
-c. **Mood Mix bars misalign depending on mood-name length — present at every font size, not just max.**
-   [`InsightsScreen.js:134-138`](../src/screens/InsightsScreen.js#L134): the label column uses `minWidth: 84`
-   (not a fixed `width`), so longer mood names push the column wider and shift where each row's bar starts —
-   a flexbox column-alignment bug independent of the font-scale investigation that surfaced it.
-
-**WALK-07 marked ❌** in `docs/walk-open.md`; section left in place (not moved to build-log) pending specs.
+**WALK-07 stays ❌** in `docs/walk-open.md` — re-run it whole once IMP-067 and IMP-068 have both landed.
 
 ### 🟡 IMP-056 residual + the IMP-057 decision (2026-08-10)
 
