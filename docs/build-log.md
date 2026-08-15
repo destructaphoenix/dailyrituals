@@ -2507,6 +2507,33 @@ holds `'😬'` after typing `'😬😬'`.
 (`8b7a976`).
 **Runtime proof:** **WALK-04**, re-run whole — a separate chat.
 
+### IMP-071 — the filter row stops jumping under your thumb   ·   Lane: OTA   ·   Status: ✅ code-complete (2026-08-16)
+
+**Why.** WALK-04 finding (g), 2026-08-15. **This reverses one line IMP-065 deliberately added** — not a
+defect, a design decision made after living with it. IMP-065 gave the Archive's mood filter row two
+behaviours at once: the selected chip sorts to the front, and the row scrolls back to `x: 0` so the user can
+see where it went. Walked live, the scroll is the problem: picking a filter throws the whole row back to the
+start, so choosing a second and third mood means scrolling right again each time to get back to where you
+were reading.
+
+**Landed as specified:** the owner's call — the chip still moves to the front, the view does not move.
+`orderMoodChips` and its use are untouched (front-sorting still answers WALK-04's earlier finding (c)).
+`toggleMood` in [`src/screens/ArchiveFilters.js`](../src/screens/ArchiveFilters.js) no longer calls
+`scrollTo`; the `chipScroll` ref and its `useRef` import are gone entirely (a dead ref was judged an
+invitation to re-add the scroll — this was the second design pass on these eight lines), and the `ref` prop
+was removed from the chip row's `ScrollView`. Out of scope, per spec: `WriteFlow`'s chip row (wraps, never
+scrolled, belongs to IMP-069), the date pickers, the clear button.
+
+**Tests (+2, no new suite files):** `__tests__/screens/ArchiveFilters.test.js`, new `describe('ArchiveFilters
+— IMP-071')` — pressing an unselected chip calls `onChange` with that mood appended and `text`/`from`/`to`
+untouched · a source assertion that `src/screens/ArchiveFilters.js` contains no `scrollTo(`. The file's
+existing IMP-065 cases, including both chip-order assertions, stayed green untouched.
+
+**Proof:** `npm test` → **850 passed, 83 suites** (was 848/83). `npx expo export --platform android` clean.
+**Ship:** OTA lane, no bump — rides the next batch; no `Release-Lane` trailer on this commit.
+**Commit:** `fix(archive): the mood filter row stops jumping under your thumb (IMP-071)` (`4072e8d`).
+**Runtime proof:** **WALK-04**, re-run whole — a separate chat.
+
 ---
 
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
@@ -3089,6 +3116,22 @@ _2026-06-13 — IMP-019 Round 2 COMPLETE (code) — Rebuilt `EmberGlow` in `src/
 _2026-06-14 — IMP-020 COMPLETE (code-complete; device smoke test owner-pending). Backup / Restore — first piece of the "legacy" roadmap (D). Built the full 8-task plan TDD-first: pure core under `src/backup/` (`backup.js` envelope build + validating parse = the single validation boundary, reusing `serialize`/`deserialize`; `lastBackupLabel.js` subtitle; `importFlow.js` recovery-before-replace guarantee) all unit-tested, plus a thin native `io.js` over `expo-file-system`/`expo-sharing`/`expo-document-picker`. Wired `doExport`/`doImport`/`explainAutoBackup` into `RitualsApp.js`, `handleReplaceAllData` + remount `key` into `App.js`, and a new "Your journal is safe" section into `YouScreen.js` (PDF stub relabeled "Save as PDF" — the word "Export" now appears nowhere on the You tab). Import REPLACES but writes a recovery envelope FIRST (never replaces if that write throws). `npm test` → **171 passed, 23 suites** (3 new backup suites: 9+5+2, + 1 state case). `npx expo export --platform android` bundles clean. `npm run bump:build` → versionCode **6**. 8 commits 675e520…08e3d2e; **no `Release-Lane` trailer** (owner hasn't asked to ship). Full spec archived to build-log. NEXT: owner device/emulator smoke test (export→save→restore→recovery; non-backup error toast; settings deep-link) — same gate as IMP-006, the two ride one BUILD shipment. Then legacy roadmap A+B (days-captured hero + Lifetime Progress)._
 
 _2026-06-14 — IMP-021 COMPLETE (code-complete; OTA lane; no ship trailer). Lifetime Progress — second piece of the "legacy" roadmap (A+B). 4 commits, TDD-first. New pure modules: `src/insights/dateKeys.js` (shared `longestConsecutiveRun`/`dayKeyToUtcMs`/`DAY_MS`, extracted from `derive.js`); `src/insights/lifetime.js` (`deriveLifetime` — days remembered, total words, streaks, level/XP, adaptive `activeSpan` label). `buildLifetimeHeatmap` appended to `src/home/calendar.js` (Monday-first week rows from first entry → today). `InsightsScreen.js` restructured: "Your record" section (hero number + 2×2 totals grid + adaptive consistency heatmap) above "Your patterns" heading (unchanged mood mix + rhythm); old "Days kept"/"This month" tiles removed; subtitle updated. `xp` piped from `RitualsApp.js`. `npm test` → **190 passed, 25 suites** (3 new suites: dateKeys 4 tests, lifetime 11, calendar +4 = 20 total). Commits b347dd3…a0d5446. NEXT: owner smoke test (empty state; 1-entry heatmap; multi-week heatmap; "Your patterns" visible) — no ship until owner says go. Then **C — Annual Recap / Time Capsule** (folds in the deferred milestone timeline)._
+
+_2026-08-16 (IMP-069, a feeling you picked can be put back down) — **code-complete, committed `b2ff8c4`, not
+shipped; OTA lane, rides the next batch.** All 5 steps done in order — new `allMoodChips(builtIn,
+customMoods)` in `src/entries/moodChipOrder.js` (case-insensitive, trimmed dedupe, built-ins win), wired into
+`WriteFlow.js`'s mood row and `ArchiveFilters.js`'s filter row; the permanent "N chosen · …" line added under
+the mood question; `addCustomMood`'s create path now calls `moodNameError` before adding, Add disabled + the
+error shown when it fires. `toggleMood` **not touched** — read a third time, still correct. +12 tests exactly
+as specified across `moodChipOrder.test.js`, `WriteFlowMood.test.js`, `ArchiveFilters.test.js`. **Proof:**
+`npm test` → **838 passed, 83 suites** (was 826/83). `npx expo export --platform android` clean. LAST
+command: `git commit` → `b2ff8c4`. Archived the spec into `docs/build-log.md`, dropped its row from
+`docs/specs-open.md`'s index (queue is now IMP-070…071), ticked its `PROGRESS.md` row, updated the WALK-04
+finding note, corrected the stack line, and moved the IMP-068 note down to `docs/build-log.md`. **Not to
+lose: the duplicate-key fix is a candidate root cause for (h), not confirmed** — the "chosen" line is what
+turns that into evidence for the next WALK-04 run. NEXT: a build chat takes **IMP-070** (first ⬜,
+[spec](docs/specs-open.md#imp-070--one-emoji-and-the-block-says-what-it-makes)). A walk chat can still take
+**WALK-07**, **WALK-06** or **WALK-15**._
 
 ---
 

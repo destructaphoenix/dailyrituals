@@ -32,9 +32,9 @@
 runtime proof is a separate WALK row for a separate chat, so a missing walk is *not* an unfinished spec.
 Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`](docs/playbook.md).
 
-> **The build queue holds one spec — `IMP-071`, scoped 2026-08-15 from WALK-04's re-run** (finding g). It is
-> 🎨 and does not gate the release build. `IMP-063` through `IMP-070` have all landed and their specs are
-> archived in `docs/build-log.md`.
+> **The build queue is empty.** `IMP-063` through `IMP-071` have all landed and their specs are archived in
+> `docs/build-log.md`. The next `IMP-xxx` comes from Opus scoping a new owner-filed issue, or a future walk
+> finding.
 > **WALKS are still the risk-ordered work**: the 🚦 group gates a release carrying ~25 unpublished tasks —
 > WALK-07 and WALK-06 can now be re-run whole, and WALK-04's re-run waits on the remaining two.
 >
@@ -70,7 +70,7 @@ build ships.)
 
 **Current stack:** Expo SDK **54** · RN **0.81.5** · React **19.1.0** · **Legacy Architecture**
 (`newArchEnabled: false`, held deliberately) · `targetSdkVersion` **36**, `minSdk` **24** · `npm test` →
-**848 passed, 83 suites**. Details in [`docs/playbook.md`](docs/playbook.md).
+**850 passed, 83 suites**. Details in [`docs/playbook.md`](docs/playbook.md).
 
 ---
 
@@ -148,7 +148,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 068 | The Paywall footer stops covering the price | OTA | ✅ code-complete 2026-08-15 · walk = WALK-07 (re-run whole) |
 | 069 | A feeling you picked can be put back down | OTA | ✅ code-complete 2026-08-16 · walk = WALK-04 (re-run whole) |
 | 070 | One emoji, and the block says what it makes | OTA | ✅ code-complete 2026-08-16 · walk = WALK-04 (re-run whole) |
-| 071 | The filter row stops jumping under your thumb | OTA | ⬜ [spec](docs/specs-open.md#imp-071--the-filter-row-stops-jumping-under-your-thumb) — WALK-04 (g) |
+| 071 | The filter row stops jumping under your thumb | OTA | ✅ code-complete 2026-08-16 · walk = WALK-04 (re-run whole) |
 
 ---
 
@@ -174,23 +174,24 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
   The old "promote vc11 → production, or hold" framing is superseded: vc11 is two weeks of work behind HEAD,
   so promoting it would ship a stale build rather than this work.
   **IMP-063…071 are 🎨 and are NOT part of this sequence** — they land either before the bump *in full*, or
-  after the build as an OTA. Never split across it. (IMP-063…070 landed 2026-08-15/16; IMP-071 remains
-  open.)
+  after the build as an OTA. Never split across it. (IMP-063…071 all landed 2026-08-15/16 — the 🎨 batch is
+  code-complete; the 🚦 walks above still gate the bump.)
 - **Cash embers: settled in principle (dropped 2026-08-03), not finalised.** Must be decided before
   `PLUS_ENABLED` flips — it determines which Play products get created. Full argument in the playbook.
 - **`PLUS_ENABLED` must not flip until every `PLUS_PERKS` line is true.** The one remaining gap is perk #6,
   the PDF (IMP-022, deferred). Gate checklist in the playbook → Phase 10b.
 
-### 🟠 WALK-04 re-run finding (2026-08-15) — (h) landed as IMP-069, (f) as IMP-070; (g) remains (IMP-071)
+### 🟠 WALK-04 re-run finding (2026-08-15) — all three landed: (h) as IMP-069, (f) as IMP-070, (g) as IMP-071
 
 **(h) → IMP-069, code-complete 2026-08-16** (mood deselect — a duplicate React key candidate root cause,
 unconfirmed until the next walk). **(f) → IMP-070, code-complete 2026-08-16** (the custom-mood face field
-now takes exactly one emoji, both copies of it, and says what the block is for). **(g) → IMP-071** (stop
-auto-scrolling the filter row) — spec in `docs/specs-open.md`, verbatim write-up in `docs/walk-open.md` →
-WALK-04's second result block. Two things not to lose: **(h)'s root cause is still unproven** — IMP-069
-removed the one failure mode that *is* provable and added a "N chosen" line so the next walk reports
+now takes exactly one emoji, both copies of it, and says what the block is for). **(g) → IMP-071,
+code-complete 2026-08-16** (the filter row's chip still sorts to the front but no longer auto-scrolls back to
+it — `chipScroll` ref removed entirely). Two things not to lose: **(h)'s root cause is still unproven** —
+IMP-069 removed the one failure mode that *is* provable and added a "N chosen" line so the next walk reports
 evidence, not a fourth theory. And **(g) is the owner reversing landed behavior, cost accepted** — the chip
-you tap leaves the viewport; don't re-file it. **WALK-06 and WALK-07** stay ❌ pending their own re-runs.
+you tap leaves the viewport; don't re-file it. **The next WALK-04 run needs to check all three.** **WALK-06
+and WALK-07** stay ❌ pending their own re-runs.
 
 ### 🟡 IMP-056 residual + the IMP-057 decision (2026-08-10)
 
@@ -225,22 +226,6 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
-_2026-08-16 (IMP-069, a feeling you picked can be put back down) — **code-complete, committed `b2ff8c4`, not
-shipped; OTA lane, rides the next batch.** All 5 steps done in order — new `allMoodChips(builtIn,
-customMoods)` in `src/entries/moodChipOrder.js` (case-insensitive, trimmed dedupe, built-ins win), wired into
-`WriteFlow.js`'s mood row and `ArchiveFilters.js`'s filter row; the permanent "N chosen · …" line added under
-the mood question; `addCustomMood`'s create path now calls `moodNameError` before adding, Add disabled + the
-error shown when it fires. `toggleMood` **not touched** — read a third time, still correct. +12 tests exactly
-as specified across `moodChipOrder.test.js`, `WriteFlowMood.test.js`, `ArchiveFilters.test.js`. **Proof:**
-`npm test` → **838 passed, 83 suites** (was 826/83). `npx expo export --platform android` clean. LAST
-command: `git commit` → `b2ff8c4`. Archived the spec into `docs/build-log.md`, dropped its row from
-`docs/specs-open.md`'s index (queue is now IMP-070…071), ticked its `PROGRESS.md` row, updated the WALK-04
-finding note, corrected the stack line, and moved the IMP-068 note down to `docs/build-log.md`. **Not to
-lose: the duplicate-key fix is a candidate root cause for (h), not confirmed** — the "chosen" line is what
-turns that into evidence for the next WALK-04 run. NEXT: a build chat takes **IMP-070** (first ⬜,
-[spec](docs/specs-open.md#imp-070--one-emoji-and-the-block-says-what-it-makes)). A walk chat can still take
-**WALK-07**, **WALK-06** or **WALK-15**._
-
 _2026-08-16 (IMP-070, one emoji, and the block says what it makes) — **code-complete, committed `8b7a976`,
 not shipped; OTA lane, rides the next batch.** New `firstEmoji(s)` in `src/entries/emojiInput.js`
 (hand-rolled grapheme clustering; `isEmojiish` untouched, still the storage validator), wired into
@@ -256,3 +241,17 @@ NEXT: a build chat takes **IMP-071** (first ⬜,
 [spec](docs/specs-open.md#imp-071--the-filter-row-stops-jumping-under-your-thumb)) — last spec in the queue;
 **it reverses landed behavior (finding g), not a defect fix — don't re-litigate the scroll-back-to-x0
 decision.** A walk chat can still take **WALK-07**, **WALK-06** or **WALK-15**._
+
+_2026-08-16 (IMP-071, the filter row stops jumping under your thumb) — **code-complete, committed
+`4072e8d`, not shipped; OTA lane, rides the next batch. Last spec in the queue — `docs/specs-open.md` is now
+empty.** `src/screens/ArchiveFilters.js`: `toggleMood` no longer calls `scrollTo`; the `chipScroll` ref, its
+`ref` prop, and the `useRef` import are gone. `orderMoodChips`/front-sorting untouched, as directed. +2 tests
+in `ArchiveFilters.test.js` (`describe('ArchiveFilters — IMP-071')`): an unselected-chip press appends via
+`onChange` with `text`/`from`/`to` untouched, plus a source assertion the file contains no `scrollTo(`.
+Existing IMP-065 cases stayed green. **Proof:** `npm test` → **850 passed, 83 suites** (was 848/83). `npx
+expo export --platform android` clean. LAST command: `git commit` → `4072e8d`. Archived the spec,
+emptied `specs-open.md`'s index, ticked the row, closed the WALK-04 finding note (all three of (g)/(h)/(f)
+landed — next run checks all three), updated the ACTIVE TRACK banner, corrected the stack line, moved the
+IMP-069 note down. **Not to lose: WALK-04 hasn't actually been re-run since landing** — the 🚦 walks
+(WALK-13 → 03 → 12) still gate the native build regardless. NEXT: backlog is empty — Opus must scope a new
+`IMP-xxx` before there's a spec to take. A walk chat can still take **WALK-07**, **WALK-06**, or **WALK-15**._
