@@ -19,6 +19,7 @@ describe('ArchiveScreen ResultLine — IMP-053 (search shows you the match)', ()
   test('with no text query it renders did, exactly as before', () => {
     const view = render(<ResultLine entry={entry} text="" />);
     expect(textOf(view)).toBe(entry.did);
+    expect(view.queryByText('did · ')).toBeNull();
     expect(view.queryByText('wished · ')).toBeNull();
   });
 
@@ -31,8 +32,8 @@ describe('ArchiveScreen ResultLine — IMP-053 (search shows you the match)', ()
   test('a word deep in did is rendered even though it is past the first line', () => {
     const view = render(<ResultLine entry={entry} text="bread" />);
     expect(textOf(view)).toContain('bread');
-    // It came from `did`, so the wished label must not appear.
-    expect(view.queryByText('wished · ')).toBeNull();
+    // It came from `did`, so the label names did, not wished.
+    expect(view.getByText('did · ')).toBeTruthy();
   });
 
   test('the matched word is the highlighted node, not the whole line', () => {
@@ -43,11 +44,22 @@ describe('ArchiveScreen ResultLine — IMP-053 (search shows you the match)', ()
   test('a mood-only filter (no text) renders no highlight', () => {
     const view = render(<ResultLine entry={entry} text={undefined} />);
     expect(textOf(view)).toBe(entry.did);
+    expect(view.queryByText('did · ')).toBeNull();
     expect(view.queryByText('wished · ')).toBeNull();
   });
 
   test('a query that matches nothing in either field falls back to did', () => {
     const view = render(<ResultLine entry={entry} text="zebra" />);
     expect(textOf(view)).toBe(entry.did);
+  });
+
+  test('a did match renders "did · " exactly once', () => {
+    const view = render(<ResultLine entry={entry} text="bread" />);
+    expect(view.getAllByText('did · ').length).toBe(1);
+  });
+
+  test('the label text is generated from the field, so a wished match never renders "did · "', () => {
+    const view = render(<ResultLine entry={entry} text="nobody" />);
+    expect(view.queryByText('did · ')).toBeNull();
   });
 });

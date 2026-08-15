@@ -2,11 +2,13 @@
 // Reflections tab (IMP-035). Props in, callbacks out: ArchiveScreen owns the
 // query state and feeds it to searchEntries(). No date-picker library — a
 // month list inside the app's existing Modal + Pressable-row sheet shape.
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, TextInput, ScrollView, Pressable, Modal, Text } from 'react-native';
 import { useTheme } from '../theme';
 import { T } from '../ui';
 import { MOODS, moodEmoji } from '../data';
+import { Close } from '../icons';
+import { orderMoodChips } from '../entries/moodChipOrder';
 
 function pad2(n) { return String(n).padStart(2, '0'); }
 
@@ -84,10 +86,15 @@ export default function ArchiveFilters({ text, moods, from, to, onChange, result
   const t = useTheme();
   const c = t.colors;
   const [picker, setPicker] = useState(null); // 'from' | 'to' | null
+  const chipScroll = useRef(null);
 
   const toggleMood = (m) => {
-    const next = moods.includes(m) ? moods.filter((x) => x !== m) : [...moods, m];
+    const selecting = !moods.includes(m);
+    const next = selecting ? [...moods, m] : moods.filter((x) => x !== m);
     onChange({ text, moods: next, from, to });
+    // The chip just jumped to the front of the row. If it was picked from deep in
+    // the scroll, not following it there reads as the chip disappearing.
+    if (selecting) chipScroll.current?.scrollTo({ x: 0, animated: true });
   };
 
   const selectMonth = (bound, ym) => {
@@ -106,26 +113,42 @@ export default function ArchiveFilters({ text, moods, from, to, onChange, result
 
   return (
     <View style={{ gap: 10 }}>
-      <TextInput
-        style={{
-          paddingVertical: 12, paddingHorizontal: 16,
-          borderRadius: t.radius.btn, borderWidth: 1.5,
-          borderColor: c.border, backgroundColor: c.cream,
-          fontFamily: t.body(400), fontSize: 15, color: c.ink,
-        }}
-        placeholder="Search your journal"
-        placeholderTextColor={c.placeholder}
-        value={text}
-        onChangeText={(v) => onChange({ text: v, moods, from, to })}
-      />
+      <View style={{ justifyContent: 'center' }}>
+        <TextInput
+          style={{
+            paddingVertical: 12, paddingLeft: 16, paddingRight: 44,
+            borderRadius: t.radius.btn, borderWidth: 1.5,
+            borderColor: c.border, backgroundColor: c.cream,
+            fontFamily: t.body(400), fontSize: 15, color: c.ink,
+          }}
+          placeholder="Search your journal"
+          placeholderTextColor={c.placeholder}
+          value={text}
+          onChangeText={(v) => onChange({ text: v, moods, from, to })}
+        />
+        {text ? (
+          <Pressable
+            onPress={() => onChange({ text: '', moods, from, to })}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel="Clear search"
+            style={({ pressed }) => ({ position: 'absolute', right: 14, opacity: pressed ? 0.5 : 1 })}
+          >
+            <Close size={16} color={c.muted} />
+          </Pressable>
+        ) : null}
+      </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingRight: 4 }}>
-        {[...MOODS, ...customMoods].map((m) => {
+      <ScrollView ref={chipScroll} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingRight: 4 }}>
+        {orderMoodChips([...MOODS, ...customMoods], moods).map((m) => {
           const sel = moods.includes(m);
           return (
             <Pressable
               key={m}
               onPress={() => toggleMood(m)}
+              accessibilityRole="button"
+              accessibilityLabel={m}
+              accessibilityState={{ selected: sel }}
               style={[
                 { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999, borderWidth: 1.5 },
                 sel ? { backgroundColor: c.accent, borderColor: c.accent } : { backgroundColor: c.surface, borderColor: c.border },

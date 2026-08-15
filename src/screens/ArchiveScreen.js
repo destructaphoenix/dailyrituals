@@ -117,7 +117,8 @@ export default function ArchiveScreen({ copy, mode, entries, onOpen, tip, onDism
 // cannot locate in a single field renders exactly what it always did — the
 // first two lines of `did`. With a locatable match it quotes the matched words
 // instead, so a hit in `wished`, or deep in `did`, is visible on the card
-// rather than only after opening the entry (IMP-053).
+// rather than only after opening the entry (IMP-053). The label names
+// whichever half of the day matched (IMP-065).
 export function ResultLine({ entry, text }) {
   const t = useTheme();
   const c = t.colors;
@@ -131,7 +132,7 @@ export function ResultLine({ entry, text }) {
   // color, so it cannot inherit a half-style from the line around it.
   return (
     <T w={400} color={c.muted} style={style} numberOfLines={2}>
-      {snip.field === 'wished' ? <T w={800} color={c.muted} style={{ fontSize: 12 }}>wished · </T> : null}
+      <T w={800} color={c.muted} style={{ fontSize: 12 }}>{`${snip.field} · `}</T>
       {snip.truncatedStart ? '…' : ''}{snip.before}
       <T w={800} color={c.accentDeep} style={style}>{snip.match}</T>
       {snip.after}
