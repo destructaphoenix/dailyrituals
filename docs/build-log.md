@@ -2269,6 +2269,46 @@ at 0/1/7. `__tests__/home/freezeNotice.test.js`'s 4 `freezeNoticeCopy` cases and
 
 ---
 
+### IMP-065 — clear the search; the moods you picked come to the front   ·   Lane: OTA   ·   Status: ✅ code-complete (2026-08-15)
+
+**Why.** WALK-04 findings (b), (c) and (a), 2026-08-15. The search itself passed — case-insensitive,
+accent-folding, correct zero-results copy, heatmap correctly not reacting to filters. Getting *out* of a
+search is what failed: no clear affordance on the `TextInput`, and a selected mood chip never moved to the
+front of the horizontal scroll, so turning it back off meant hunting for it. Separately, `ArchiveScreen.js`
+labeled a `wished` snippet match but not a `did` one — the owner flagged the asymmetry as a design call worth
+revisiting; this spec makes the call: label both.
+
+**Design, as landed:**
+1. New pure module `src/entries/moodChipOrder.js` — `orderMoodChips(all, selected)` sorts selected chips to
+   the front, preserving relative order within both groups; returns the input array by reference when nothing
+   is selected.
+2. `ArchiveFilters.js`: the `TextInput` gained a clear button (`Close` icon, absolutely positioned in a
+   constant `paddingRight: 44` gutter so typing the first character never reflows the text) that appears only
+   when `text` is non-empty and clears just the text field. The mood-chip `ScrollView` now maps over
+   `orderMoodChips([...MOODS, ...customMoods], moods)` and scrolls back to `x: 0` on select (not deselect) so
+   a chip picked from deep in the row doesn't appear to vanish. Each chip `Pressable` gained
+   `accessibilityRole="button"`, `accessibilityLabel={m}`, `accessibilityState={{ selected: sel }}`.
+3. `ArchiveScreen.js`'s `ResultLine`: the field label is now unconditional — `` `${snip.field} · ` `` — so a
+   `did` match gets `did · ` the same way a `wished` match always got `wished · `. Only renders when `snip`
+   exists at all; the no-query browsing path is untouched.
+
+**Tests (+13, +2 suite files, 3 existing assertions updated):** new `__tests__/entries/moodChipOrder.test.js`
+(+6) covers the same-reference no-op, single/double selection ordering, unselected-tail order, an unknown
+selected name being ignored, and non-array inputs. New `__tests__/screens/ArchiveFilters.test.js` (+5) covers
+the clear button's presence/absence, its `onChange` payload, and which chip renders first for an empty vs.
+populated `moods`. `__tests__/screens/ArchiveResults.test.js`: the two no-query cases now assert both `did · `
+and `wished · ` are absent; the `did`-match case now asserts `getByText('did · ')` instead of asserting
+`wished · ` is null; two new cases confirm `did · ` renders exactly once for a `did` match and never for a
+`wished` match.
+
+**Proof:** `npm test` → **805 passed, 81 suites** (was 792/79). `npx expo export --platform android` clean.
+**Ship:** OTA lane, no bump — rides the next batch with the rest of the ~25 unpublished tasks; no
+`Release-Lane` trailer on this commit.
+**Commit:** `feat(archive): clear the search, and the moods you picked come to the front (IMP-065)` (`f632688`).
+**Runtime proof:** **WALK-04**, re-run whole — a separate chat.
+
+---
+
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
 
 > Moved out of PROGRESS.md on 2026-07-31 to keep the live cursor lean once a second spec (IMP-032) opened. These are **not** finished work. If the owner revives one, lift the block back into PROGRESS.md as the ACTIVE TRACK.
@@ -2313,6 +2353,25 @@ at 0/1/7. `__tests__/home/freezeNotice.test.js`'s 4 `freezeNoticeCopy` cases and
 ## Session notes (archived from PROGRESS.md)
 
 _Append-only handoff log moved out of PROGRESS.md to keep it light. Newest 1–2 notes stay live in PROGRESS.md; everything else is here. Git history is the full record._
+
+_2026-08-15 (IMP-063, a saved day looks saved) — **code-complete, committed `b7eb4c3`, not shipped; OTA
+lane, rides the next batch.** All 7 spec steps done in order — `FREEZE_EMOJI` added to `src/data.js`; all
+three cell builders in `src/home/calendar.js` (`buildHeatmap`/`buildLifetimeHeatmap`/`buildWeekStrip`) took
+a third `{ frozenDays = [] }` options arg and now emit `frozen: true` on the branch that used to always emit
+`missed`; `cellState` in `src/insights/heatCells.js` gained `frozen` with precedence
+`future > frozen > missed > empty > done`; `InsightsScreen.js` got the `frozen` style branch + legend row;
+`ArchiveScreen.js`'s `Heat` got the frozen branch **above** the mood branch (it would otherwise fall through
+and render 🌫️, since a frozen cell carries neither `missed` nor `empty`) and picked up the two
+already-existing-but-unused `MISS_EMOJI`/`FREEZE_EMOJI` exports in place of a hardcoded `'💀'`; `HomeScreen.js`
+got the same treatment for the week strip; `RitualsApp.js` threads its existing `frozenDays` state into all
+three screens. 10 new tests exactly as specified across `calendar.test.js` (+6), `heatCells.test.js` (+2)
+and `ArchiveHeat.test.js` (+2) — no new suite files. **Proof:** `npm test` → **782 passed, 78 suites** (was
+772/78). `npx expo export --platform android` clean. LAST command: `git commit` → `b7eb4c3`. Archived
+IMP-063's spec into `docs/build-log.md`, dropped its row from `docs/specs-open.md`'s index (queue is now
+IMP-064…068, five specs), ticked its `PROGRESS.md` row, and moved the IMP-061 session note down to
+`docs/build-log.md` (2-note budget). Did not touch WALK-06 — full re-run is a separate chat, per the spec's
+own closing line. NEXT: a build chat takes **IMP-064** (first ⬜, [spec](docs/specs-open.md#imp-064--count-your-candles-and-say-plainly-what-one-did)).
+A walk chat can still take **WALK-02** or **WALK-15**, unaffected by this chat's work._
 
 _2026-08-14 (IMP-062, the restore offer outlives the launch that made it) — **code-complete, committed
 `ba8e684`, not shipped; OTA lane, rides the next batch.** All 4 spec steps done in order — `storage.js`'s

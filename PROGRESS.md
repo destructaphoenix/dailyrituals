@@ -32,11 +32,11 @@
 runtime proof is a separate WALK row for a separate chat, so a missing walk is *not* an unfinished spec.
 Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`](docs/playbook.md).
 
-> **The build queue holds FOUR open specs — `IMP-065` … `IMP-068`, scoped 2026-08-15 from the WALK-04/06/07
-> findings.** A build chat takes the **first ⬜** row below and opens only that spec. **All four are 🎨: none
+> **The build queue holds THREE open specs — `IMP-066` … `IMP-068`, scoped 2026-08-15 from the WALK-04/06/07
+> findings.** A build chat takes the **first ⬜** row below and opens only that spec. **All three are 🎨: none
 > of them gates the release build** — the 🚦 walks still do — so the owner may ship first and OTA these
-> after. What must not happen is landing half of them across a `bump:native`. **`IMP-063` and `IMP-064` have
-> landed** — their specs are archived in `docs/build-log.md`.
+> after. What must not happen is landing half of them across a `bump:native`. **`IMP-063`, `IMP-064` and
+> `IMP-065` have landed** — their specs are archived in `docs/build-log.md`.
 > **The other live work is WALKS**, risk-ordered: the 🚦 group gates a release carrying ~25 unpublished tasks.
 >
 > **`IMP-057` is reserved, not missing** — the `dayKey` migration IMP-056 deferred; needs real device
@@ -71,7 +71,7 @@ build ships.)
 
 **Current stack:** Expo SDK **54** · RN **0.81.5** · React **19.1.0** · **Legacy Architecture**
 (`newArchEnabled: false`, held deliberately) · `targetSdkVersion` **36**, `minSdk` **24** · `npm test` →
-**772 passed, 78 suites**. Details in [`docs/playbook.md`](docs/playbook.md).
+**805 passed, 81 suites**. Details in [`docs/playbook.md`](docs/playbook.md).
 
 ---
 
@@ -143,7 +143,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 062 | The restore offer outlives the launch that made it | OTA | ✅ code-complete 2026-08-14 · WALK-02 ✅ 2026-08-15 |
 | 063 | A saved day looks saved (frozen ≠ missed) | OTA | ✅ code-complete 2026-08-15 · walk = WALK-06 (re-run whole) |
 | 064 | Count your candles, and say plainly what one did | OTA | ✅ code-complete 2026-08-15 · walk = WALK-06 (re-run whole) |
-| 065 | Clear the search; picked moods come to the front | OTA | ⬜ **open** — [spec](docs/specs-open.md#imp-065--clear-the-search-the-moods-you-picked-come-to-the-front); from WALK-04 (a, b, c) |
+| 065 | Clear the search; picked moods come to the front | OTA | ✅ code-complete 2026-08-15 · walk = WALK-04 (re-run whole) |
 | 066 | The mood step stops fighting you | OTA | ⬜ **open** — [spec](docs/specs-open.md#imp-066--the-mood-step-stops-fighting-you); from WALK-04 (d, e) |
 | 067 | A stacked row wraps; Mood Mix bars line up | OTA | ⬜ **open** — [spec](docs/specs-open.md#imp-067--a-stacked-row-wraps-mood-mix-bars-start-in-one-place); from WALK-07 (b, c) |
 | 068 | The Paywall footer stops covering the price | OTA | ⬜ **open** — [spec](docs/specs-open.md#imp-068--the-paywall-footer-stops-covering-the-price); from WALK-07 (a); **take last** |
@@ -178,23 +178,17 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 - **`PLUS_ENABLED` must not flip until every `PLUS_PERKS` line is true.** The one remaining gap is perk #6,
   the PDF (IMP-022, deferred). Gate checklist in the playbook → Phase 10b.
 
-### 🔴 WALK-04 finding — search + moods → **scoped as IMP-065 + IMP-066** (2026-08-15)
+### 🔴 WALK-04 finding — search + moods → **IMP-065 landed, IMP-066 open** (2026-08-15)
 
-Base search/filter/heatmap behavior passed as specced (case-insensitive + accent-folding match, zero-results
-copy, heatmap correctly not reacting to filters). The five UX defects split cleanly by file: **(a) snippet
-label asymmetry, (b) no way to clear the search, (c) selected chips never reorder → IMP-065**
-(`ArchiveFilters` / `ArchiveScreen`); **(d) a selected mood chip won't deselect, (e) the custom-mood block
-is unreadable and its name field accepts emoji → IMP-066** (`WriteFlow`). Full writeups and the decided
-design in [`docs/specs-open.md`](docs/specs-open.md).
+Base search/filter/heatmap behavior passed as specced. Five UX defects: (a)(b)(c) → **IMP-065**, landed
+2026-08-15, full writeup archived in `docs/build-log.md`. (d) a selected mood chip won't deselect, (e) the
+custom-mood block is unreadable and its name field accepts emoji → **IMP-066** (open, `WriteFlow`), full
+writeup and decided design in [`docs/specs-open.md`](docs/specs-open.md). **Scoping settled (d):**
+`toggleMood` is a correct toggle; the mood-step `ScrollView`
+([`WriteFlow.js:121`](src/screens/WriteFlow.js#L121)) is missing `keyboardShouldPersistTaps="handled"`, so
+the first tap on a text-carrying step dismisses the keyboard instead of reaching the chip.
 
-**Scoping settled (d), which the walk could not.** The finding flagged that the code contradicted the
-observation and asked a build chat to re-confirm on-device. It does not need one: `toggleMood` is a correct
-toggle, and the mood-step `ScrollView` ([`WriteFlow.js:121`](src/screens/WriteFlow.js#L121)) is missing the
-`keyboardShouldPersistTaps="handled"` that the `did`/`wished` step has. The default `"never"` **spends the
-first tap dismissing the keyboard**, and the mood step is the only step carrying text fields — so the tap
-that "did nothing" never reached the chip.
-
-**WALK-04 stays ❌** in `docs/walk-open.md` — re-run it whole once IMP-065 and IMP-066 have both landed.
+**WALK-04 stays ❌** in `docs/walk-open.md` — re-run it whole once IMP-066 has also landed.
 
 ### 🔴 WALK-06 finding — streak insurance → **both scoped specs landed** (IMP-063 + IMP-064, 2026-08-15)
 
@@ -206,15 +200,10 @@ what changed, or how a feature works.** Read that into any future copy review, n
 
 ### 🔴 WALK-07 finding — modal scroll → **scoped as IMP-067 + IMP-068** (2026-08-15)
 
-Achievements, Shop, the Reading sheet, Get Embers and Manage Subscription all passed at normal **and** max
-(2.0x) OS font scale in both nav modes, and the font-scale cap itself is confirmed working
-(`PixelRatio.getFontScale()` read `2.0` against the `1.5`/`1.2` caps in
-[`src/ui/textScale.js`](src/ui/textScale.js) with nothing broken). Three defects, split by whether the
-screen is reachable: **(b) `Row` truncates a value even when stacking gave it a full line, and (c) Mood Mix
-bars start at a different x per row at every font size → IMP-067**; **(a) the Paywall's fixed footer
-overlaps its own content at normal font size → IMP-068**, which is deliberately **last in the queue** —
-`PLUS_ENABLED = false` makes that screen unmountable, so no user can reach the defect in the shipped build.
-Full writeups and the decided design in [`docs/specs-open.md`](docs/specs-open.md).
+Font-scale cap confirmed working at 2.0x; three defects split by reachability: (b)(c) `Row` truncation +
+Mood Mix bar misalignment → **IMP-067**; (a) Paywall footer overlap → **IMP-068**, deliberately last —
+`PLUS_ENABLED = false` makes that screen unmountable. Full writeups and decided design in
+[`docs/specs-open.md`](docs/specs-open.md).
 
 **WALK-07 stays ❌** in `docs/walk-open.md` — re-run it whole once IMP-067 and IMP-068 have both landed.
 
@@ -251,6 +240,27 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
+_2026-08-15 (IMP-065, clear the search; the moods you picked come to the front) — **code-complete, committed
+`f632688`, not shipped; OTA lane, rides the next batch.** All 4 spec steps done in order — new pure module
+`src/entries/moodChipOrder.js` (`orderMoodChips(all, selected)`, selected chips to the front, relative order
+preserved in both groups, same-reference return when nothing selected); `ArchiveFilters.js`'s `TextInput`
+gained a clear button (constant `paddingRight: 44` gutter, `Close` icon, shown only when `text` is non-empty)
+and the mood-chip `ScrollView` now maps `orderMoodChips([...MOODS, ...customMoods], moods)` with a
+`chipScroll` ref that scrolls to `x: 0` on select (not deselect); each chip `Pressable` gained
+`accessibilityRole="button"`, `accessibilityLabel={m}`, `accessibilityState={{ selected: sel }}`;
+`ArchiveScreen.js`'s `ResultLine` label went unconditional — `` `${snip.field} · ` `` — so a `did` match now
+gets `did · ` the same way `wished` always did. 13 new tests exactly as specified — new
+`__tests__/entries/moodChipOrder.test.js` (+6), new `__tests__/screens/ArchiveFilters.test.js` (+5),
+`__tests__/screens/ArchiveResults.test.js` (+2, 3 updated: the two no-query cases now assert both labels
+absent, the `did`-match case now asserts `getByText('did · ')` instead of `wished · ` being null). **Proof:**
+`npm test` → **805 passed, 81 suites** (was 792/79). `npx expo export --platform android` clean. LAST
+command: `git commit` → `f632688`. Archived IMP-065's spec into `docs/build-log.md`, dropped its row from
+`docs/specs-open.md`'s index (queue is now IMP-066…068, three specs), ticked its `PROGRESS.md` row, and
+moved the IMP-063 session note down to `docs/build-log.md` (2-note budget). Did not touch WALK-04 — full
+re-run is a separate chat, per the spec's own closing line. NEXT: a build chat takes **IMP-066** (first ⬜,
+[spec](docs/specs-open.md#imp-066--the-mood-step-stops-fighting-you)). A walk chat can still take **WALK-02**
+or **WALK-15**, unaffected by this chat's work._
+
 _2026-08-15 (IMP-064, count your candles, and say plainly what one did) — **code-complete, committed
 `185e326`, not shipped; OTA lane, rides the next batch.** New pure module `src/home/candleRow.js` —
 `candleRow(count, max = 5)` → `{ slots, lit, overflow }` (up to 5 real icons then a `×N` badge; `count = 0`
@@ -266,23 +276,4 @@ IMP-064's spec into `docs/build-log.md`, dropped its row from `docs/specs-open.m
 IMP-065…068, four specs), ticked its `PROGRESS.md` row, and moved the IMP-062 session note down to
 `docs/build-log.md` (2-note budget). Did not touch WALK-06 — full re-run is a separate chat, per the spec's
 own closing line. NEXT: a build chat takes **IMP-065** (first ⬜, [spec](docs/specs-open.md#imp-065--clear-the-search-the-moods-you-picked-come-to-the-front)).
-A walk chat can still take **WALK-02** or **WALK-15**, unaffected by this chat's work._
-
-_2026-08-15 (IMP-063, a saved day looks saved) — **code-complete, committed `b7eb4c3`, not shipped; OTA
-lane, rides the next batch.** All 7 spec steps done in order — `FREEZE_EMOJI` added to `src/data.js`; all
-three cell builders in `src/home/calendar.js` (`buildHeatmap`/`buildLifetimeHeatmap`/`buildWeekStrip`) took
-a third `{ frozenDays = [] }` options arg and now emit `frozen: true` on the branch that used to always emit
-`missed`; `cellState` in `src/insights/heatCells.js` gained `frozen` with precedence
-`future > frozen > missed > empty > done`; `InsightsScreen.js` got the `frozen` style branch + legend row;
-`ArchiveScreen.js`'s `Heat` got the frozen branch **above** the mood branch (it would otherwise fall through
-and render 🌫️, since a frozen cell carries neither `missed` nor `empty`) and picked up the two
-already-existing-but-unused `MISS_EMOJI`/`FREEZE_EMOJI` exports in place of a hardcoded `'💀'`; `HomeScreen.js`
-got the same treatment for the week strip; `RitualsApp.js` threads its existing `frozenDays` state into all
-three screens. 10 new tests exactly as specified across `calendar.test.js` (+6), `heatCells.test.js` (+2)
-and `ArchiveHeat.test.js` (+2) — no new suite files. **Proof:** `npm test` → **782 passed, 78 suites** (was
-772/78). `npx expo export --platform android` clean. LAST command: `git commit` → `b7eb4c3`. Archived
-IMP-063's spec into `docs/build-log.md`, dropped its row from `docs/specs-open.md`'s index (queue is now
-IMP-064…068, five specs), ticked its `PROGRESS.md` row, and moved the IMP-061 session note down to
-`docs/build-log.md` (2-note budget). Did not touch WALK-06 — full re-run is a separate chat, per the spec's
-own closing line. NEXT: a build chat takes **IMP-064** (first ⬜, [spec](docs/specs-open.md#imp-064--count-your-candles-and-say-plainly-what-one-did)).
 A walk chat can still take **WALK-02** or **WALK-15**, unaffected by this chat's work._

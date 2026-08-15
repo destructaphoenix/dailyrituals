@@ -24,7 +24,6 @@
 
 | # | Spec | Lane | From |
 | --- | --- | --- | --- |
-| IMP-065 | [Clear the search; the moods you picked come to the front](#imp-065--clear-the-search-the-moods-you-picked-come-to-the-front) | OTA | WALK-04 (a, b, c) |
 | IMP-066 | [The mood step stops fighting you](#imp-066--the-mood-step-stops-fighting-you) | OTA | WALK-04 (d, e) |
 | IMP-067 | [A stacked row wraps; Mood Mix bars start in one place](#imp-067--a-stacked-row-wraps-mood-mix-bars-start-in-one-place) | OTA | WALK-07 (b, c) |
 | IMP-068 | [The Paywall footer stops covering the price](#imp-068--the-paywall-footer-stops-covering-the-price) | OTA | WALK-07 (a) |
@@ -34,7 +33,7 @@
 > gate the release build.** The 🚦 walks in [`walk-open.md`](walk-open.md) still gate it. If the owner wants
 > the build to go out first, every one of these can land after it and ride an OTA — **but they must not be
 > half-landed across the bump**, so a build chat takes them in the order above and finishes each one.
-> **IMP-063 and IMP-064 have already landed** — this index now holds the remaining four.
+> **IMP-063, IMP-064 and IMP-065 have already landed** — this index now holds the remaining three.
 >
 > **The order is by user cost, not by walk number.** IMP-063/064 fixed a mechanic the user is *told* about but
 > could not *see* (candles). IMP-065/066 fix the two screens every user touches daily. IMP-067 is visible at
@@ -49,177 +48,6 @@
 > runtime walk are **two different tasks for two different chats** — where a feature needs runtime proof,
 > the spec's last step names its `WALK-nn` row in [`walk-open.md`](walk-open.md). **Do not run a walk from a
 > build chat**, and do not read a missing walk as an unfinished spec.
-
----
-
-## IMP-065 — clear the search; the moods you picked come to the front
-
-**Lane: OTA.** No native change, no bump.
-**Runtime proof: WALK-04**, re-run whole — not this chat.
-
-**Why.** WALK-04 findings (b), (c) and (a), 2026-08-15. The search itself passed — case-insensitive,
-accent-folding, correct zero-results copy, heatmap correctly not reacting to filters. Getting *out* of a
-search is what failed.
-
-**(b) There is no way to clear the search text.** `ArchiveFilters.js`'s `TextInput`
-([`:109-120`](../src/screens/ArchiveFilters.js#L109)) has no clear affordance at all — the only way back to
-the full list is holding backspace.
-
-**(c) A selected mood chip never moves.** `toggleMood` ([`:88-91`](../src/screens/ArchiveFilters.js#L88))
-recolours the chip; the list ([`:122-139`](../src/screens/ArchiveFilters.js#L122)) is always
-`[...MOODS, ...customMoods]` in fixed order. Pick a chip from deep in the horizontal scroll and turning it
-back off means hunting for it again instead of tapping the front of the row.
-
-**(a) The search snippet labels one field and not the other.** `ArchiveScreen.js:134` prints `wished · `
-only when `snip.field === 'wished'` ([`snippet.js:57-80`](../src/insights/snippet.js#L57)). A `did` match
-gets no counterpart label. That matches IMP-053's spec as written, and the owner flagged the asymmetry as a
-design call worth revisiting rather than a bug — **this spec makes the call: label both.**
-
-### Decided design — do not re-litigate
-
-1. **The label goes on both fields, not neither.** Removing it is the other symmetric option and it is
-   worse: a `wished` match would then read as though it came from the `did` line, which is precisely the
-   confusion IMP-053 existed to remove. `did` and `wished` are the app's own two halves of a day, and the
-   string is generated from `snip.field` so the two can never drift apart again.
-2. **The clear button appears only when there is text, but the field's padding does not change.** A
-   `paddingRight` that toggles would reflow the user's text under their cursor as they type the first
-   character.
-3. **Selected chips move to the front, keeping their relative order — and the row scrolls back to the
-   start when you select one.** Without the scroll, picking a chip from deep in the row makes it appear to
-   *vanish* (it jumped to an off-screen front), which is a worse bug than the one being fixed. Deselecting
-   does **not** scroll — the row is already where the user is looking.
-4. **The ordering is a pure module.** Same reason as everywhere else in this repo: the component gets a
-   render test, the semantics get a real one.
-5. **Out of scope:** the mood chips in `WriteFlow` (that is IMP-066's file, and its chip row wraps rather
-   than scrolls, so it has no ordering problem), the date-bound pickers, and any "Clear all filters"
-   affordance.
-
-### Steps
-
-**1 — new `src/entries/moodChipOrder.js`:**
-
-```js
-// entries/moodChipOrder.js — selected mood chips sort to the front of the
-// filter row (IMP-065). A chip picked from deep in the horizontal scroll used
-// to stay where it was, so turning it back off meant hunting for it.
-
-// Selected first, then the rest — relative order preserved inside both groups.
-// Returns the input array by reference when nothing is selected.
-export function orderMoodChips(all, selected) {
-  const list = Array.isArray(all) ? all : [];
-  const sel = new Set(Array.isArray(selected) ? selected : []);
-  const picked = list.filter((m) => sel.has(m));
-  if (!picked.length) return list;
-  return [...picked, ...list.filter((m) => !sel.has(m))];
-}
-```
-
-**2 — `src/screens/ArchiveFilters.js`: the clear button.** Add `useRef` to the React import and `Close` to
-the icon import (`import { Close } from '../icons';`). Wrap the `TextInput`
-([`:109-120`](../src/screens/ArchiveFilters.js#L109)) — its style gains **`paddingRight: 44`** and is
-otherwise unchanged:
-
-```jsx
-<View style={{ justifyContent: 'center' }}>
-  <TextInput
-    style={{
-      paddingVertical: 12, paddingLeft: 16, paddingRight: 44,
-      borderRadius: t.radius.btn, borderWidth: 1.5,
-      borderColor: c.border, backgroundColor: c.cream,
-      fontFamily: t.body(400), fontSize: 15, color: c.ink,
-    }}
-    placeholder="Search your journal"
-    placeholderTextColor={c.placeholder}
-    value={text}
-    onChangeText={(v) => onChange({ text: v, moods, from, to })}
-  />
-  {text ? (
-    <Pressable
-      onPress={() => onChange({ text: '', moods, from, to })}
-      hitSlop={10}
-      accessibilityRole="button"
-      accessibilityLabel="Clear search"
-      style={({ pressed }) => ({ position: 'absolute', right: 14, opacity: pressed ? 0.5 : 1 })}
-    >
-      <Close size={16} color={c.muted} />
-    </Pressable>
-  ) : null}
-</View>
-```
-
-Note `paddingHorizontal: 16` is replaced by the explicit `paddingLeft`/`paddingRight` pair — the button sits
-in that right-hand gutter, and the gutter is constant whether or not the button is drawn.
-
-**3 — `src/screens/ArchiveFilters.js`: chip ordering + the scroll-back.** Import `orderMoodChips` from
-`'../entries/moodChipOrder'`. Add the ref and rewrite `toggleMood`:
-
-```js
-const chipScroll = useRef(null);
-
-const toggleMood = (m) => {
-  const selecting = !moods.includes(m);
-  const next = selecting ? [...moods, m] : moods.filter((x) => x !== m);
-  onChange({ text, moods: next, from, to });
-  // The chip just jumped to the front of the row. If it was picked from deep in
-  // the scroll, not following it there reads as the chip disappearing.
-  if (selecting) chipScroll.current?.scrollTo({ x: 0, animated: true });
-};
-```
-
-Put `ref={chipScroll}` on the horizontal `ScrollView` ([`:122`](../src/screens/ArchiveFilters.js#L122)) and
-map over the ordered list instead of the raw one:
-
-```jsx
-{orderMoodChips([...MOODS, ...customMoods], moods).map((m) => {
-```
-
-Each chip `Pressable` ([`:126`](../src/screens/ArchiveFilters.js#L126)) also gains three props, which is
-what the order test reads and what TalkBack has been missing:
-`accessibilityRole="button"`, `accessibilityLabel={m}`, `accessibilityState={{ selected: sel }}`.
-
-**4 — `src/screens/ArchiveScreen.js`: label both fields.** In `ResultLine`, line 134 becomes:
-
-```jsx
-<T w={800} color={c.muted} style={{ fontSize: 12 }}>{`${snip.field} · `}</T>
-```
-
-— unconditional, since it only renders when `snip` exists at all, and `entrySnippet` returns exactly `did`
-or `wished`. Update the comment above `ResultLine` ([`:116-120`](../src/screens/ArchiveScreen.js#L116)) to
-say the label names whichever half of the day matched. **Nothing else in that function changes** — the
-`!snip` browsing path still renders bare `entry.did` with no label.
-
-### Tests (+13, and 3 existing assertions updated)
-
-**New `__tests__/entries/moodChipOrder.test.js`** (+6) — nothing selected returns the **same array
-reference** · one selected moves to index 0 · two selected keep their order relative to each other · the
-unselected tail keeps its original order · a selected name not present in `all` is ignored (no crash, no
-insert) · non-array inputs (`undefined`, `null`) return `[]` / are treated as nothing selected.
-
-**New `__tests__/screens/ArchiveFilters.test.js`** (+5) — render with `text=""`: `queryByLabelText('Clear
-search')` is `null` · with `text="rain"` it exists · pressing it calls `onChange` with
-`{ text: '', moods, from, to }` and the other three values untouched · with `moods={[]}` the first chip is
-`MOODS[0]` · with `moods={['Light']}` (the **last** built-in) the first chip is `Light`.
-
-For the chip-order assertions, read the labels in render order and keep `text=""` so the clear button is not
-in the tree:
-
-```js
-const chipLabels = (view) => view.getAllByRole('button').map((n) => n.props.accessibilityLabel);
-```
-
-**`__tests__/screens/ArchiveResults.test.js`** (+2, 3 updated) — the two cases that assert
-`queryByText('wished · ')` is `null` for a `did` match now assert `getByText('did · ')` instead; the
-`wished` case is unchanged; the two no-query cases now assert **both** labels are absent. New: a `did` match
-renders `did · ` exactly once · the label text is generated from the field, so a `wished` match never
-renders `did · `.
-
-### Done
-
-`npm test` green at **the prior count + 13** (772 → **785** if this is the first of the six; otherwise that
-chat's number + 13), **+2 suite files**. `npx expo export --platform android` clean.
-**Commit:** `feat(archive): clear the search, and the moods you picked come to the front (IMP-065)`.
-No `Release-Lane` trailer. Then tick the backlog row, write the session note, move this spec into
-`docs/build-log.md`, and leave **WALK-04** for a walk chat — **do not walk it here.**
 
 ---
 
