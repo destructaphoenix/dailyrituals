@@ -64,4 +64,11 @@ describe('MoodManager — IMP-055', () => {
     expect(view.queryByText('Grateful')).toBeNull();
     expect(view.queryByText('Restless')).toBeNull();
   });
+
+  test('typing "😬😬" into the face field leaves only "😬" (IMP-070)', () => {
+    const view = renderManager({ customMoods: ['Anxios'] });
+    fireEvent.press(view.getByLabelText('Edit Anxios'));
+    fireEvent.changeText(view.getByPlaceholderText('or any emoji…'), '😬😬');
+    expect(view.getByPlaceholderText('or any emoji…').props.value).toBe('😬');
+  });
 });

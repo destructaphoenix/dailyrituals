@@ -7,7 +7,7 @@ import { useTheme } from '../theme';
 import { T, PrimaryButton } from '../ui';
 import { Sun, Chevron, Close } from '../icons';
 import { MOODS, MOOD_PALETTE, moodEmoji } from '../data';
-import { isEmojiish, stripEmoji } from '../entries/emojiInput';
+import { stripEmoji, firstEmoji } from '../entries/emojiInput';
 import { allMoodChips } from '../entries/moodChipOrder';
 import { moodNameError } from '../entries/renameMood';
 import { todayLabel } from '../time/clock';
@@ -45,9 +45,12 @@ export default function WriteFlow({ copy, insets, onClose, onComplete, initial, 
 
   const toggleMood = (m) => setMoods((ms) => (ms.includes(m) ? ms.filter((x) => x !== m) : [...ms, m]));
 
+  // One emoji, kept as it is typed (IMP-070) — a face has to fit a 34dp circle,
+  // a chip and a heatmap cell. Anything that isn't an emoji leaves the field empty.
   const onEmojiTyped = (v) => {
-    setEmojiTyped(v);
-    if (isEmojiish(v)) setEmojiPick(v);
+    const one = firstEmoji(v);
+    setEmojiTyped(one);
+    if (one) setEmojiPick(one);
   };
 
   const pickPaletteEmoji = (e) => { setEmojiPick(e); setEmojiTyped(''); };
@@ -164,7 +167,7 @@ export default function WriteFlow({ copy, insets, onClose, onComplete, initial, 
             <View style={{ marginTop: 26, paddingTop: 16, borderTopWidth: 1, borderTopColor: c.border }}>
               <T d w={700} color={c.ink} style={{ fontSize: 16 }}>Name your own</T>
               <T w={600} color={c.muted} style={{ fontSize: 13, marginTop: 2, lineHeight: 18 }}>
-                Give it a face, then a name.
+                Make a feeling of your own: one emoji for its face, then what you call it.
               </T>
 
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 16 }}>
@@ -196,12 +199,12 @@ export default function WriteFlow({ copy, insets, onClose, onComplete, initial, 
               <TextInput
                 value={emojiTyped}
                 onChangeText={onEmojiTyped}
-                placeholder="or type one…"
+                placeholder="or any emoji…"
                 placeholderTextColor={c.placeholder}
                 autoCorrect={false}
                 maxLength={12}
                 style={{
-                  marginTop: 10, width: 90, paddingHorizontal: 12, paddingVertical: 9, borderRadius: 999,
+                  marginTop: 10, width: 110, paddingHorizontal: 12, paddingVertical: 9, borderRadius: 999,
                   borderWidth: 1.5, borderColor: c.border, backgroundColor: c.surface,
                   fontFamily: t.body(600), fontSize: 14, color: c.ink,
                 }}

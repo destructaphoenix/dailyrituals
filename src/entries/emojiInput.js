@@ -31,3 +31,36 @@ export function stripEmoji(s) {
     })
     .join('');
 }
+
+// The first complete emoji in `s`, or '' when it doesn't start with one
+// (IMP-070). Grapheme clustering by hand, because Hermes ships no
+// Intl.Segmenter: take one base code point, swallow the modifiers that belong
+// to it (variation selectors, skin tones, the combining keycap), and after a
+// ZWJ take the next base and its modifiers too. A regional-indicator pair (a
+// flag) is one cluster. Tag sequences are not handled — a subdivision flag
+// truncates to its base flag, which is deliberate: those are tofu on Android 7.
+const isEmojiMod = (cp) =>
+  (cp >= 0xfe00 && cp <= 0xfe0f) ||    // variation selectors — the ️ half of "❤️"
+  (cp >= 0x1f3fb && cp <= 0x1f3ff) ||  // skin-tone modifiers
+  cp === 0x20e3;                       // combining enclosing keycap
+const isRegional = (cp) => cp >= 0x1f1e6 && cp <= 0x1f1ff;
+
+export function firstEmoji(s) {
+  const cps = [...String(s ?? '').trim()];
+  if (!cps.length || cps[0].codePointAt(0) < 0x00a0) return '';
+  let i = 0;
+  const takeBase = () => {
+    if (isRegional(cps[i].codePointAt(0)) && cps[i + 1] && isRegional(cps[i + 1].codePointAt(0))) {
+      i += 2;
+      return;
+    }
+    i += 1;
+    while (cps[i] && isEmojiMod(cps[i].codePointAt(0))) i += 1;
+  };
+  takeBase();
+  while (cps[i] && cps[i].codePointAt(0) === 0x200d && cps[i + 1]) {
+    i += 1;
+    takeBase();
+  }
+  return cps.slice(0, i).join('');
+}

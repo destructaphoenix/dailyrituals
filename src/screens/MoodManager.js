@@ -9,7 +9,7 @@ import { useTheme } from '../theme';
 import { T, Card } from '../ui';
 import { Chevron, Pencil, Close } from '../icons';
 import { MOOD_PALETTE, moodEmoji } from '../data';
-import { isEmojiish } from '../entries/emojiInput';
+import { firstEmoji, stripEmoji } from '../entries/emojiInput';
 import { moodNameError } from '../entries/renameMood';
 
 export default function MoodManager({ customMoods = [], customMoodEmoji = {}, insets, onClose, onRenameMood, onDeleteMood }) {
@@ -30,9 +30,12 @@ export default function MoodManager({ customMoods = [], customMoodEmoji = {}, in
   };
   const cancelEdit = () => setEditing(null);
 
+  // One emoji, kept as it is typed (IMP-070) — a face has to fit a 34dp circle,
+  // a chip and a heatmap cell. Anything that isn't an emoji leaves the field empty.
   const onEmojiTyped = (v) => {
-    setEmojiTyped(v);
-    if (isEmojiish(v)) setEmojiPick(v);
+    const one = firstEmoji(v);
+    setEmojiTyped(one);
+    if (one) setEmojiPick(one);
   };
 
   const error = editing !== null ? moodNameError(nameInput, { customMoods, existing: editing }) : null;
@@ -85,7 +88,7 @@ export default function MoodManager({ customMoods = [], customMoodEmoji = {}, in
                       <Text style={{ fontSize: 20 }}>{emojiPick}</Text>
                       <TextInput
                         value={nameInput}
-                        onChangeText={setNameInput}
+                        onChangeText={(v) => setNameInput(stripEmoji(v))}
                         maxLength={24}
                         autoFocus
                         style={{
@@ -119,7 +122,7 @@ export default function MoodManager({ customMoods = [], customMoodEmoji = {}, in
                     <TextInput
                       value={emojiTyped}
                       onChangeText={onEmojiTyped}
-                      placeholder="or type one…"
+                      placeholder="or any emoji…"
                       placeholderTextColor={c.placeholder}
                       autoCorrect={false}
                       maxLength={12}

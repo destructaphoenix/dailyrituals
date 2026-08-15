@@ -1,4 +1,4 @@
-import { isEmojiish, stripEmoji } from '../../src/entries/emojiInput';
+import { isEmojiish, stripEmoji, firstEmoji } from '../../src/entries/emojiInput';
 import { MOOD_PALETTE } from '../../src/data';
 
 describe('isEmojiish', () => {
@@ -85,5 +85,38 @@ describe('stripEmoji', () => {
 
   test('digits, spaces, hyphens and apostrophes survive', () => {
     expect(stripEmoji("Half-awake 2'o clock")).toBe("Half-awake 2'o clock");
+  });
+});
+
+describe('firstEmoji', () => {
+  test('every MOOD_PALETTE glyph round-trips to itself', () => {
+    expect(MOOD_PALETTE.every((e) => firstEmoji(e) === e)).toBe(true);
+  });
+
+  test('extra emoji after the first are dropped', () => {
+    expect(firstEmoji('🌵🌵🌵')).toBe('🌵');
+  });
+
+  test('a variation selector stays with its base, the second emoji is dropped', () => {
+    expect(firstEmoji('❤️🔥')).toBe('❤️');
+  });
+
+  test('a skin-tone modifier is kept', () => {
+    expect(firstEmoji('👍🏽')).toBe('👍🏽');
+  });
+
+  test('a ZWJ sequence returns the whole string with no joiner left dangling', () => {
+    expect(firstEmoji('👨‍👩‍👧')).toBe('👨‍👩‍👧');
+  });
+
+  test('non-emoji text and empty input return empty', () => {
+    expect(firstEmoji('abc')).toBe('');
+    expect(firstEmoji('')).toBe('');
+    expect(firstEmoji(null)).toBe('');
+    expect(firstEmoji(undefined)).toBe('');
+  });
+
+  test('emoji followed by text keeps only the emoji', () => {
+    expect(firstEmoji('🙂abc')).toBe('🙂');
   });
 });

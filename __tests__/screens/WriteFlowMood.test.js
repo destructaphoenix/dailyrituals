@@ -43,7 +43,7 @@ describe('WriteFlow — custom mood emoji picker', () => {
   test('typing a valid emoji selects it, and Add fires with that emoji', () => {
     const onAddCustomMood = jest.fn();
     const view = renderOnMoodStep({ onAddCustomMood });
-    fireEvent.changeText(view.getByPlaceholderText('or type one…'), '🌵');
+    fireEvent.changeText(view.getByPlaceholderText('or any emoji…'), '🌵');
     fireEvent.changeText(view.getByPlaceholderText('Name your own…'), 'Prickly');
     fireEvent.press(view.getByText('Add'));
     expect(onAddCustomMood).toHaveBeenCalledWith('Prickly', '🌵');
@@ -52,10 +52,25 @@ describe('WriteFlow — custom mood emoji picker', () => {
   test('typing non-emoji text does not change the selection — the previous pick stands', () => {
     const onAddCustomMood = jest.fn();
     const view = renderOnMoodStep({ onAddCustomMood });
-    fireEvent.changeText(view.getByPlaceholderText('or type one…'), 'abc');
+    fireEvent.changeText(view.getByPlaceholderText('or any emoji…'), 'abc');
     fireEvent.changeText(view.getByPlaceholderText('Name your own…'), 'Grumpy');
     fireEvent.press(view.getByText('Add'));
     expect(onAddCustomMood).toHaveBeenCalledWith('Grumpy', MOOD_PALETTE[0]);
+  });
+
+  test('typing "🌵🌵🌵" leaves only "🌵" in the field, and Add fires with it', () => {
+    const onAddCustomMood = jest.fn();
+    const view = renderOnMoodStep({ onAddCustomMood });
+    fireEvent.changeText(view.getByPlaceholderText('or any emoji…'), '🌵🌵🌵');
+    expect(view.getByPlaceholderText('or any emoji…').props.value).toBe('🌵');
+    fireEvent.changeText(view.getByPlaceholderText('Name your own…'), 'Prickly');
+    fireEvent.press(view.getByText('Add'));
+    expect(onAddCustomMood).toHaveBeenCalledWith('Prickly', '🌵');
+  });
+
+  test('the block subtitle says what it makes', () => {
+    const view = renderOnMoodStep();
+    expect(view.getByText('Make a feeling of your own: one emoji for its face, then what you call it.')).toBeTruthy();
   });
 
   test('Add with a name and no explicit emoji choice fires with MOOD_PALETTE[0]', () => {
