@@ -57,7 +57,7 @@ ship, so any fix the earlier walks turn up would invalidate an R8 pass done befo
 | WALK-13 | 🚦 | [The reminder you can answer](#walk-13--the-reminder-you-can-answer) | IMP-054, **+ the duplicate-fire fix** | **device** (OEM behaviour + real doze) | 👤 | ⬜ — **unblocked 2026-08-13** (IMP-054 landed, `18d8c2e`) |
 | WALK-03 | 🚦 | [JSON export → share → restore round trip](#walk-03--json-export-round-trip) | IMP-020, IMP-043 | **device** (share-sheet targets) | 👤 | ⬜ — the user's data escape hatch |
 | WALK-12 | 🚦 | [The R8 release-variant pass](#walk-12--the-r8-release-variant-pass) | IMP-044 | **device** | 👤 | ⬜ — **the last 🚦, on the final build candidate.** First minified build ever; failure is silent |
-| WALK-04 | 🎨 | [Search + the write flow's moods](#walk-04--search--moods) | IMP-035, IMP-037, **IMP-053** | emulator | 👤 | ❌ **2026-08-15 re-run** — IMP-065/066 landed the prior 5 findings, but the re-run surfaced 3 new/unresolved defects. Needs scoping (Opus's lane) |
+| WALK-04 | 🎨 | [Search + the write flow's moods](#walk-04--search--moods) | IMP-035, IMP-037, **IMP-053** | emulator | 👤 | ❌ **2026-08-15 re-run** — IMP-065/066 landed the prior 5 findings; the re-run surfaced 3 more. **Scoped 2026-08-15 as IMP-069 + IMP-070 + IMP-071** (`docs/specs-open.md`). **Re-run whole once all three land** — and on step 6, read the new "N chosen" line under the mood question: it is what tells you whether a deselect tap reached the reducer at all |
 | WALK-06 | 🎨 | [Streak insurance — candles spend themselves](#walk-06--streak-insurance) | IMP-039 | emulator | 👤 | ❌ **2026-08-15** — mechanical behavior (freeze survival, decrement-by-one, idempotence, celebration-streak match, shop copy) passed; 4 UX defects found. **Scoped 2026-08-15 as IMP-063 + IMP-064** (`docs/specs-open.md`). **Re-run whole once both land** — IMP-063 adds a frozen-day glyph the walk must now check for |
 | WALK-07 | 🎨 | [Modal screens actually scroll](#walk-07--modal-scroll) | IMP-042 | emulator | 👤 (visual, two nav modes) | ❌ **2026-08-15** — Achievements/Shop/Reading sheet/Get Embers/Manage Subscription all passed, incl. max (2.0x) font scale; Paywall footer overlap + 2 bonus defects. **Scoped 2026-08-15 as IMP-067 + IMP-068** (`docs/specs-open.md`). **Re-run whole once both land**; the Paywall half still needs T1 |
 | WALK-08 | 🎨 | [Font scale + layout on the nine new screens](#walk-08--font-scale) | IMP-030 regression | **device** (real font metrics) | 👤 | ⬜ |
@@ -172,8 +172,16 @@ two carried over from the first pass in worse or unresolved form, one new:
   behavior is covered.
 
 (g) is a design-decision reversal on IMP-065's landed behavior, not a leftover. (h) needs real
-investigation, not another guess — the keyboard-focus theory has now been tried and didn't hold. Each needs
-a new `IMP-xxx` — Opus's lane to scope, not this walk's.
+investigation, not another guess — the keyboard-focus theory has now been tried and didn't hold.
+
+**Scoped 2026-08-15: (h) → IMP-069, (f) → IMP-070, (g) → IMP-071** (`docs/specs-open.md`). Two things this
+walk must carry into its next re-run: **(g)'s cost is accepted by the owner** — the chip you tap now leaves
+the viewport, and that is the design, not a defect to re-file. And **(h)'s root cause is still unproven** —
+IMP-069 fixes the one provable failure mode (two chips under one React key, when a custom mood is stored
+under a built-in's name) and adds a **"N chosen · …" line under the mood question**. On step 6, tap an
+already-selected chip and read that line: *if it does not change, the tap never reached `toggleMood`; if it
+changes while the chip stays highlighted, the tap landed and the row did not repaint.* Report which one —
+that sentence is what a fourth pass needs, and it is worth more than another theory.
 
 ---
 

@@ -2425,6 +2425,52 @@ full-screen modal pairing a `ScrollView` with a fixed footer sibling (`Achieveme
 **Runtime proof:** **WALK-07**, re-run whole — a separate chat. This was the last of the six IMP-063…068
 specs; WALK-07 can now be re-run whole.
 
+### IMP-069 — a feeling you picked can be put back down   ·   Lane: OTA   ·   Status: ✅ code-complete (2026-08-16)
+
+**Why.** WALK-04 finding (h), 2026-08-16 — the third pass on the same defect. Tapping an already-selected
+mood chip in WriteFlow's mood step did nothing; two prior theories (finding d's read of `toggleMood`, and
+IMP-066's keyboard-focus fix) both failed to make the deselect reachable live.
+
+**The provable failure, fixed:** two chips could share a React key. WriteFlow's create path
+(`addCustomMood`) and `RitualsApp.js`'s `addCustomMood` only deduped a new custom mood against *today's
+picks* / *other customs*, not against the built-in `MOODS` list, so a custom mood could be stored under a
+name a built-in already owned. `[...MOODS, ...customMoods].map((m) => <Pressable key={m}…>)` then rendered
+two elements under one key — React keeps one live and the other goes stale, which stops answering taps and
+also explains the reported "1 · Its face" mislabel (sibling reconciliation after a duplicate key).
+**`toggleMood` itself was not touched** — read three times now and correct each time.
+
+**Design, as landed:** new `allMoodChips(builtIn, customMoods)` in
+[`src/entries/moodChipOrder.js`](../src/entries/moodChipOrder.js) — case-insensitive, trimmed dedupe,
+built-ins win. Wired into both chip rows (`WriteFlow.js`'s mood step, `ArchiveFilters.js`'s filter row,
+composed with the existing `orderMoodChips`). WriteFlow's create path (`addCustomMood`) now calls
+`moodNameError` (the same rule the rename path already enforced) before adding, with the **Add** button
+disabled and the error string shown when it fires — so new collisions can no longer be created, and existing
+ones self-heal because the render-side dedupe wins regardless. `RitualsApp.js`'s parent-level
+`addCustomMood` was deliberately left permissive, so restore/backup payloads are never rejected.
+
+**Also landed:** a permanent "N chosen · …" / "Pick at least one — tap a chosen one again to take it back."
+line under the mood question, reading the state `toggleMood` writes — the only copy in the app that says the
+chips toggle off, and the diagnostic the next walk needs: if the line doesn't change on a tap, the tap never
+reached `toggleMood`; if it changes but the chip stays highlighted, the tap landed and the row didn't repaint.
+
+**The duplicate-key fix is a candidate root cause, not a confirmed one** — WALK-04's next pass is what
+confirms or eliminates it, using the new "chosen" line as evidence instead of a fourth theory.
+
+**Tests (+12, no new suite files):** `__tests__/entries/moodChipOrder.test.js` (+6) — `allMoodChips` no
+customs / exact-name collision / case-insensitive collision / whitespace collision / duplicate customs
+collapse / non-strings and non-arrays. `__tests__/screens/WriteFlowMood.test.js` (+5) — empty-copy line ·
+"1 chosen · Grateful" after one pick · back to empty copy on second tap (the (h) regression guard,
+independent of chip styling) · `moodNameError` blocks the create path and shows its string · a colliding
+`customMoods` prop yields exactly one chip. `__tests__/screens/ArchiveFilters.test.js` (+1) — same one-chip
+dedupe check.
+
+**Proof:** `npm test` → **838 passed, 83 suites** (was 826/83). `npx expo export --platform android` clean.
+**Ship:** OTA lane, no bump — rides the next batch; no `Release-Lane` trailer on this commit.
+**Commit:** `fix(entries): a feeling you picked can be put back down (IMP-069)` (`b2ff8c4`).
+**Runtime proof:** **WALK-04**, re-run whole — a separate chat. Say plainly in the walk that this fix removes
+one provable failure mode and is not confirmed as the (h) root cause until the walk reports what the
+"chosen" line does on a stuck tap.
+
 ---
 
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
@@ -2471,6 +2517,37 @@ specs; WALK-07 can now be re-run whole.
 ## Session notes (archived from PROGRESS.md)
 
 _Append-only handoff log moved out of PROGRESS.md to keep it light. Newest 1–2 notes stay live in PROGRESS.md; everything else is here. Git history is the full record._
+
+_2026-08-15 (IMP-068, the Paywall footer stops covering the price) — **code-complete, committed `ce504fc`,
+not shipped; OTA lane, rides the next batch.** The single spec'd change — `src/screens/Paywall.js`'s
+`ScrollView` ([`:43`](../src/screens/Paywall.js#L43)) gained `style={{ flex: 1 }}` (a load-bearing-comment
+explains why), `contentContainerStyle` and `WriteFlow` left untouched per the spec's explicit scope. 3 new
+tests exactly as specified in new `__tests__/screens/Paywall.test.js` — the outer `ScrollView`'s flattened
+style has `flex === 1` (the regression guard) · the last `PLUS_PERKS` entry renders · the annual price
+(`getAllByText`, since it also appears in `LegalFooter`) and the trial CTA both render. **Proof:** `npm test`
+→ **826 passed, 83 suites** (was 823/82). `npx expo export --platform android` clean. LAST command: `git
+commit` → `ce504fc`. Archived IMP-068's spec into `docs/build-log.md`; `docs/specs-open.md`'s index was then
+empty (all six of IMP-063…068 landed). Ticked its `PROGRESS.md` row, closed out the WALK-07 finding note (all
+three of (a)(b)(c) now landed), updated the ACTIVE TRACK banner to say the build queue is empty, and moved
+the IMP-066 session note down to `docs/build-log.md` (2-note budget). Did not touch WALK-07 — separate chat,
+per the spec's own closing line._
+
+_2026-08-15 (IMP-067, a stacked row wraps; Mood Mix bars start in one place) — **code-complete, committed
+`e0c318c`, not shipped; OTA lane, rides the next batch.** All 4 spec steps done in order — `Row.js`'s stacked
+value ([`:36`](../src/ui/Row.js#L36)) is now `numberOfLines={3}` (inline value unchanged at `1`); `YouScreen.js`
+teaser string shortened to `"After your first year"`; new pure `src/insights/moodMixLayout.js` →
+`moodLabelWidth(fontScale)` (fixed 96dp base, scales with OS font, capped at 1.5x/144dp); wired into
+`InsightsScreen.js` via `useWindowDimensions()` read **above** the `data.empty` early return (hooks-order
+requirement), replacing the Mood Mix label column's `minWidth: 84` + `flexShrink: 1` with a fixed `width:
+labelW`. 7 new tests exactly as specified — new `__tests__/insights/moodMixLayout.test.js` (+5: `1`→96,
+`1.5`→144, `2.0`→144 capped, `0.85`→96, `undefined`/`NaN`/`'abc'`→96) and `__tests__/ui/Row.test.js` (+2:
+stacked value `numberOfLines===3`, inline value `numberOfLines===1`, both found by text). All 3 pre-existing
+`assertNoUnboundedFlexText` cases stayed green. **Proof:** `npm test` → **823 passed, 82 suites** (was
+816/81). `npx expo export --platform android` clean. LAST command: `git commit` → `e0c318c`. Archived
+IMP-067's spec into `docs/build-log.md`, dropped its row from `docs/specs-open.md`'s index (queue is now just
+IMP-068), ticked its `PROGRESS.md` row, updated the WALK-07 finding note ((b)(c) now landed, (a)/IMP-068
+remains), and moved the IMP-065 session note down to `docs/build-log.md` (2-note budget). Did not touch
+WALK-07 — separate chat, per the spec's own closing line._
 
 _2026-08-15 (IMP-065, clear the search; the moods you picked come to the front) — **code-complete, committed
 `f632688`, not shipped; OTA lane, rides the next batch.** All 4 spec steps done in order — new pure module
