@@ -8,7 +8,7 @@ import { useTheme } from '../theme';
 import { T } from '../ui';
 import { MOODS, moodEmoji } from '../data';
 import { Close } from '../icons';
-import { orderMoodChips } from '../entries/moodChipOrder';
+import { orderMoodChips, allMoodChips } from '../entries/moodChipOrder';
 
 function pad2(n) { return String(n).padStart(2, '0'); }
 
@@ -140,7 +140,7 @@ export default function ArchiveFilters({ text, moods, from, to, onChange, result
       </View>
 
       <ScrollView ref={chipScroll} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingRight: 4 }}>
-        {orderMoodChips([...MOODS, ...customMoods], moods).map((m) => {
+        {orderMoodChips(allMoodChips(MOODS, customMoods), moods).map((m) => {
           const sel = moods.includes(m);
           return (
             <Pressable

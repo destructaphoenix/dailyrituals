@@ -122,3 +122,40 @@ describe('WriteFlow — the mood step stops fighting you (IMP-066)', () => {
     expect(view.getByPlaceholderText('Name your own…').props.maxLength).toBe(24);
   });
 });
+
+describe('WriteFlow — a feeling you picked can be put back down (IMP-069)', () => {
+  const chipCount = (view, label) =>
+    view.getAllByRole('button').map((n) => n.props.accessibilityLabel).filter((l) => l === label).length;
+
+  test('with nothing picked the line reads the empty copy', () => {
+    const view = renderOnMoodStep();
+    expect(view.getByText('Pick at least one — tap a chosen one again to take it back.')).toBeTruthy();
+  });
+
+  test('after pressing Grateful it reads "1 chosen · Grateful"', () => {
+    const view = renderOnMoodStep();
+    fireEvent.press(view.getByText('Grateful'));
+    expect(view.getByText('1 chosen · Grateful')).toBeTruthy();
+  });
+
+  test('pressing Grateful a second time returns it to the empty copy', () => {
+    const view = renderOnMoodStep();
+    fireEvent.press(view.getByText('Grateful'));
+    fireEvent.press(view.getByText('Grateful'));
+    expect(view.getByText('Pick at least one — tap a chosen one again to take it back.')).toBeTruthy();
+  });
+
+  test('typing "grateful" renders "That one is already here." and Add does not fire', () => {
+    const onAddCustomMood = jest.fn();
+    const view = renderOnMoodStep({ onAddCustomMood });
+    fireEvent.changeText(view.getByPlaceholderText('Name your own…'), 'grateful');
+    expect(view.getByText('That one is already here.')).toBeTruthy();
+    fireEvent.press(view.getByText('Add'));
+    expect(onAddCustomMood).not.toHaveBeenCalled();
+  });
+
+  test('customMoods={["Grateful", "Sleepy"]} yields exactly one chip labelled Grateful', () => {
+    const view = renderOnMoodStep({ customMoods: ['Grateful', 'Sleepy'] });
+    expect(chipCount(view, 'Grateful')).toBe(1);
+  });
+});

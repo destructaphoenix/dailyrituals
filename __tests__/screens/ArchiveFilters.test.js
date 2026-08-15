@@ -36,4 +36,11 @@ describe('ArchiveFilters — IMP-065', () => {
     const view = render(<ArchiveFilters {...baseProps} text="" moods={['Light']} onChange={() => {}} />);
     expect(chipLabels(view)[0]).toBe('Light');
   });
+
+  test('customMoods={["Grateful"]} (IMP-069) yields exactly one chip labelled Grateful', () => {
+    const view = render(
+      <ArchiveFilters {...baseProps} text="" moods={[]} customMoods={['Grateful']} onChange={() => {}} />
+    );
+    expect(chipLabels(view).filter((l) => l === 'Grateful').length).toBe(1);
+  });
 });

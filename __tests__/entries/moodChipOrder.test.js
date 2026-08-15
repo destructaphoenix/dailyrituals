@@ -1,4 +1,4 @@
-import { orderMoodChips } from '../../src/entries/moodChipOrder';
+import { orderMoodChips, allMoodChips } from '../../src/entries/moodChipOrder';
 
 describe('orderMoodChips — IMP-065', () => {
   test('nothing selected returns the same array reference', () => {
@@ -32,5 +32,34 @@ describe('orderMoodChips — IMP-065', () => {
     const all = ['Happy', 'Sad'];
     expect(orderMoodChips(all, undefined)).toBe(all);
     expect(orderMoodChips(all, null)).toBe(all);
+  });
+});
+
+describe('allMoodChips', () => {
+  test('no customs returns the built-ins in order', () => {
+    const builtIn = ['Happy', 'Sad', 'Grateful'];
+    expect(allMoodChips(builtIn, [])).toEqual(builtIn);
+  });
+
+  test('a custom that exactly equals a built-in is dropped and the built-in stays', () => {
+    expect(allMoodChips(['Happy', 'Sad'], ['Happy'])).toEqual(['Happy', 'Sad']);
+  });
+
+  test('one differing only in case is dropped', () => {
+    expect(allMoodChips(['Grateful', 'Sad'], ['grateful'])).toEqual(['Grateful', 'Sad']);
+  });
+
+  test('one differing only in surrounding whitespace is dropped', () => {
+    expect(allMoodChips(['Grateful', 'Sad'], [' Grateful '])).toEqual(['Grateful', 'Sad']);
+  });
+
+  test('two identical customs collapse to one', () => {
+    expect(allMoodChips(['Happy'], ['Sleepy', 'Sleepy'])).toEqual(['Happy', 'Sleepy']);
+  });
+
+  test('non-strings, "" and "   " are skipped and non-array inputs return []', () => {
+    expect(allMoodChips(['Happy'], [null, 42, '', '   ', 'Sleepy'])).toEqual(['Happy', 'Sleepy']);
+    expect(allMoodChips(undefined, undefined)).toEqual([]);
+    expect(allMoodChips(null, null)).toEqual([]);
   });
 });

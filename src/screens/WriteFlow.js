@@ -8,6 +8,8 @@ import { T, PrimaryButton } from '../ui';
 import { Sun, Chevron, Close } from '../icons';
 import { MOODS, MOOD_PALETTE, moodEmoji } from '../data';
 import { isEmojiish, stripEmoji } from '../entries/emojiInput';
+import { allMoodChips } from '../entries/moodChipOrder';
+import { moodNameError } from '../entries/renameMood';
 import { todayLabel } from '../time/clock';
 import { useKeyboardHeight } from '../ui/useKeyboardHeight';
 import IconBtn from '../ui/IconBtn';
@@ -39,6 +41,7 @@ export default function WriteFlow({ copy, insets, onClose, onComplete, initial, 
   const cur = steps[step];
   const last = step === 2;
   const canNext = isMood ? moods.length > 0 : countWords(cur ? cur.val : '') >= 1;
+  const customError = customInput.trim() ? moodNameError(customInput, { customMoods }) : null;
 
   const toggleMood = (m) => setMoods((ms) => (ms.includes(m) ? ms.filter((x) => x !== m) : [...ms, m]));
 
@@ -52,6 +55,7 @@ export default function WriteFlow({ copy, insets, onClose, onComplete, initial, 
   const addCustomMood = () => {
     const m = customInput.trim();
     if (!m) return;
+    if (moodNameError(m, { customMoods })) return;   // the rename path's rule, on the create path (IMP-069)
     if (!moods.includes(m)) setMoods((ms) => [...ms, m]);
     if (onAddCustomMood) onAddCustomMood(m, emojiPick);
     setCustomInput('');
@@ -122,8 +126,16 @@ export default function WriteFlow({ copy, insets, onClose, onComplete, initial, 
             <T d w={600} color={c.muted} style={{ fontSize: 13, letterSpacing: 0.5, textTransform: 'uppercase' }}>{copy.epitaph} {todayLabel()}</T>
             <T d w={700} color={c.ink} style={{ fontSize: 27, lineHeight: 32, marginTop: 8, marginBottom: 4 }}>{copy.moodQ}</T>
             <T w={600} color={c.muted} style={{ fontSize: 14, lineHeight: 19.6 }}>{copy.moodHelp}</T>
+            {/* Reads the state toggleMood writes (IMP-069). It is the only copy that says
+                the chips turn back off, and it is what tells a walk whether a tap that
+                changed nothing on screen reached the reducer at all. */}
+            <T w={700} color={moods.length ? c.accentDeep : c.muted} style={{ fontSize: 13, marginTop: 10, lineHeight: 18 }}>
+              {moods.length
+                ? `${moods.length} chosen · ${moods.join(', ')}`
+                : 'Pick at least one — tap a chosen one again to take it back.'}
+            </T>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 22 }}>
-              {[...MOODS, ...customMoods].map((m) => {
+              {allMoodChips(MOODS, customMoods).map((m) => {
                 const sel = moods.includes(m);
                 return (
                   <Pressable
@@ -212,15 +224,18 @@ export default function WriteFlow({ copy, insets, onClose, onComplete, initial, 
                 />
                 <Pressable
                   onPress={addCustomMood}
-                  disabled={!customInput.trim()}
+                  disabled={!customInput.trim() || !!customError}
                   style={{
                     paddingHorizontal: 16, paddingVertical: 11, borderRadius: 999,
-                    backgroundColor: customInput.trim() ? c.accent : c.border,
+                    backgroundColor: customInput.trim() && !customError ? c.accent : c.border,
                   }}
                 >
-                  <T w={700} color={customInput.trim() ? c.onAccent : c.muted} style={{ fontSize: 14 }}>Add</T>
+                  <T w={700} color={customInput.trim() && !customError ? c.onAccent : c.muted} style={{ fontSize: 14 }}>Add</T>
                 </Pressable>
               </View>
+              {customError ? (
+                <T w={700} color={c.red} style={{ fontSize: 12.5, marginTop: 8 }}>{customError}</T>
+              ) : null}
             </View>
           </ScrollView>
           <Foot insets={insets}>
