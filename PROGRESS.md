@@ -32,11 +32,11 @@
 runtime proof is a separate WALK row for a separate chat, so a missing walk is *not* an unfinished spec.
 Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`](docs/playbook.md).
 
-> **The build queue holds THREE open specs — `IMP-066` … `IMP-068`, scoped 2026-08-15 from the WALK-04/06/07
-> findings.** A build chat takes the **first ⬜** row below and opens only that spec. **All three are 🎨: none
-> of them gates the release build** — the 🚦 walks still do — so the owner may ship first and OTA these
-> after. What must not happen is landing half of them across a `bump:native`. **`IMP-063`, `IMP-064` and
-> `IMP-065` have landed** — their specs are archived in `docs/build-log.md`.
+> **The build queue holds TWO open specs — `IMP-067` … `IMP-068`, scoped 2026-08-15 from the WALK-06/07
+> findings.** A build chat takes the **first ⬜** row below and opens only that spec. **Both are 🎨: neither
+> gates the release build** — the 🚦 walks still do — so the owner may ship first and OTA these
+> after. What must not happen is landing half of them across a `bump:native`. **`IMP-063`, `IMP-064`,
+> `IMP-065` and `IMP-066` have landed** — their specs are archived in `docs/build-log.md`.
 > **The other live work is WALKS**, risk-ordered: the 🚦 group gates a release carrying ~25 unpublished tasks.
 >
 > **`IMP-057` is reserved, not missing** — the `dayKey` migration IMP-056 deferred; needs real device
@@ -71,7 +71,7 @@ build ships.)
 
 **Current stack:** Expo SDK **54** · RN **0.81.5** · React **19.1.0** · **Legacy Architecture**
 (`newArchEnabled: false`, held deliberately) · `targetSdkVersion` **36**, `minSdk` **24** · `npm test` →
-**805 passed, 81 suites**. Details in [`docs/playbook.md`](docs/playbook.md).
+**816 passed, 81 suites**. Details in [`docs/playbook.md`](docs/playbook.md).
 
 ---
 
@@ -144,7 +144,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 063 | A saved day looks saved (frozen ≠ missed) | OTA | ✅ code-complete 2026-08-15 · walk = WALK-06 (re-run whole) |
 | 064 | Count your candles, and say plainly what one did | OTA | ✅ code-complete 2026-08-15 · walk = WALK-06 (re-run whole) |
 | 065 | Clear the search; picked moods come to the front | OTA | ✅ code-complete 2026-08-15 · walk = WALK-04 (re-run whole) |
-| 066 | The mood step stops fighting you | OTA | ⬜ **open** — [spec](docs/specs-open.md#imp-066--the-mood-step-stops-fighting-you); from WALK-04 (d, e) |
+| 066 | The mood step stops fighting you | OTA | ✅ code-complete 2026-08-15 · walk = WALK-04 (re-run whole) |
 | 067 | A stacked row wraps; Mood Mix bars line up | OTA | ⬜ **open** — [spec](docs/specs-open.md#imp-067--a-stacked-row-wraps-mood-mix-bars-start-in-one-place); from WALK-07 (b, c) |
 | 068 | The Paywall footer stops covering the price | OTA | ⬜ **open** — [spec](docs/specs-open.md#imp-068--the-paywall-footer-stops-covering-the-price); from WALK-07 (a); **take last** |
 
@@ -178,17 +178,14 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 - **`PLUS_ENABLED` must not flip until every `PLUS_PERKS` line is true.** The one remaining gap is perk #6,
   the PDF (IMP-022, deferred). Gate checklist in the playbook → Phase 10b.
 
-### 🔴 WALK-04 finding — search + moods → **IMP-065 landed, IMP-066 open** (2026-08-15)
+### 🔴 WALK-04 finding — search + moods → **both scoped specs landed** (IMP-065 + IMP-066, 2026-08-15)
 
-Base search/filter/heatmap behavior passed as specced. Five UX defects: (a)(b)(c) → **IMP-065**, landed
-2026-08-15, full writeup archived in `docs/build-log.md`. (d) a selected mood chip won't deselect, (e) the
-custom-mood block is unreadable and its name field accepts emoji → **IMP-066** (open, `WriteFlow`), full
-writeup and decided design in [`docs/specs-open.md`](docs/specs-open.md). **Scoping settled (d):**
-`toggleMood` is a correct toggle; the mood-step `ScrollView`
-([`WriteFlow.js:121`](src/screens/WriteFlow.js#L121)) is missing `keyboardShouldPersistTaps="handled"`, so
-the first tap on a text-carrying step dismisses the keyboard instead of reaching the chip.
+Full writeups archived with each spec in `docs/build-log.md`. (d) was not a `toggleMood` bug — the mood-step
+`ScrollView` was missing `keyboardShouldPersistTaps="handled"`, swallowing the first tap while the keyboard
+was open. (e) the custom-mood block is now one headed, numbered group; the name field strips emoji instead of
+rejecting them.
 
-**WALK-04 stays ❌** in `docs/walk-open.md` — re-run it whole once IMP-066 has also landed.
+**WALK-04 stays ❌** in `docs/walk-open.md` — re-run it whole now that both specs have landed.
 
 ### 🔴 WALK-06 finding — streak insurance → **both scoped specs landed** (IMP-063 + IMP-064, 2026-08-15)
 
@@ -240,6 +237,22 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
+_2026-08-15 (IMP-066, the mood step stops fighting you) — **code-complete, committed `bf32690`, not shipped;
+OTA lane, rides the next batch.** All 4 spec steps done — new `stripEmoji` in `src/entries/emojiInput.js`
+(range-filters pictographic blocks/joiners, distinct from `isEmojiish`'s `>= 0x00a0` rule so `'Café'` and
+Devanagari survive); `keyboardShouldPersistTaps="handled"` on both mood-step `ScrollView`s (`toggleMood` was
+never the bug — a swallowed tap was); mood chip `Pressable` gained `accessibilityRole`/`Label`/`State`; the
+custom-mood block became one headed group ("1 · Its face" / "2 · Its name"), name field now strips emoji on
+type with `maxLength={24}`. 11 new tests exactly as specified (7 in `emojiInput.test.js`, 4 in
+`WriteFlowMood.test.js`, full detail in `docs/build-log.md`); all 7 pre-existing cases stayed green.
+**Proof:** `npm test` → **816 passed, 81 suites** (was 805/81). `npx expo export --platform android` clean.
+LAST command: `git commit` → `bf32690`. Archived IMP-066's spec into `docs/build-log.md`, dropped its row
+from `docs/specs-open.md`'s index (queue is now IMP-067…068, two specs), ticked its `PROGRESS.md` row,
+closed out the WALK-04 finding note (both (d) and (e) now landed), and moved the IMP-064 session note down
+to `docs/build-log.md` (2-note budget). Did not touch WALK-04 — separate chat. NEXT: a build chat takes
+**IMP-067** (first ⬜, [spec](docs/specs-open.md#imp-067--a-stacked-row-wraps-mood-mix-bars-start-in-one-place)).
+A walk chat can still take **WALK-02** or **WALK-15**, unaffected by this chat's work._
+
 _2026-08-15 (IMP-065, clear the search; the moods you picked come to the front) — **code-complete, committed
 `f632688`, not shipped; OTA lane, rides the next batch.** All 4 spec steps done in order — new pure module
 `src/entries/moodChipOrder.js` (`orderMoodChips(all, selected)`, selected chips to the front, relative order
@@ -260,20 +273,3 @@ moved the IMP-063 session note down to `docs/build-log.md` (2-note budget). Did 
 re-run is a separate chat, per the spec's own closing line. NEXT: a build chat takes **IMP-066** (first ⬜,
 [spec](docs/specs-open.md#imp-066--the-mood-step-stops-fighting-you)). A walk chat can still take **WALK-02**
 or **WALK-15**, unaffected by this chat's work._
-
-_2026-08-15 (IMP-064, count your candles, and say plainly what one did) — **code-complete, committed
-`185e326`, not shipped; OTA lane, rides the next batch.** New pure module `src/home/candleRow.js` —
-`candleRow(count, max = 5)` → `{ slots, lit, overflow }` (up to 5 real icons then a `×N` badge; `count = 0`
-still draws one unlit slot) and `candleRowCopy(count)` for the caption. `StreakFreeze` in `src/gamify.js`
-now renders both instead of the old literal `[0, 1, 2].map`. `freezeNoticeCopy` in `src/home/freezeNotice.js`
-rewritten to the three-fact shape — `Your streak is safe.` / `A candle burned for {day}. {N} left.` (plural:
-`3 candles burned for 3 days you missed. 1 left.`; zero-left: `That was your last one.`) — `addFreezeNotice`/
-`formatDay` untouched, `FreezeNoticeCard.js` needed no edit. 10 new tests in new
-`__tests__/home/candleRow.test.js`; `freezeNotice.test.js`'s 4 cases and `FreezeNoticeCard.test.js`'s 3 got
-the new expected strings, no new cases there. **Proof:** `npm test` → **792 passed, 79 suites** (was
-782/78). `npx expo export --platform android` clean. LAST command: `git commit` → `185e326`. Archived
-IMP-064's spec into `docs/build-log.md`, dropped its row from `docs/specs-open.md`'s index (queue is now
-IMP-065…068, four specs), ticked its `PROGRESS.md` row, and moved the IMP-062 session note down to
-`docs/build-log.md` (2-note budget). Did not touch WALK-06 — full re-run is a separate chat, per the spec's
-own closing line. NEXT: a build chat takes **IMP-065** (first ⬜, [spec](docs/specs-open.md#imp-065--clear-the-search-the-moods-you-picked-come-to-the-front)).
-A walk chat can still take **WALK-02** or **WALK-15**, unaffected by this chat's work._

@@ -2309,6 +2309,47 @@ and `wished · ` are absent; the `did`-match case now asserts `getByText('did ·
 
 ---
 
+### IMP-066 — the mood step stops fighting you   ·   Lane: OTA   ·   Status: ✅ code-complete (2026-08-15)
+
+**Why.** WALK-04 findings (d) and (e), 2026-08-15. (d) A selected mood chip appeared not to deselect — not a
+`toggleMood` bug, but a swallowed tap: the mood step's `ScrollView` had no `keyboardShouldPersistTaps`, so
+with the keyboard open (true whenever the two text-carrying fields above it had been used) the first tap on
+the step dismissed the keyboard instead of reaching the chip. (e) The custom-mood block was three unlabelled
+rows — palette, a lone 90dp "or type one…" field, a name field — with nothing to say they belonged together,
+and the name field accepted emoji with no length limit.
+
+**Design, as landed:**
+1. New `stripEmoji` in `src/entries/emojiInput.js` — code-point range filter (pictographic blocks, arrows,
+   dingbats, variation selectors, ZWJ and other joiners) distinct from `isEmojiish`'s `>= 0x00a0` rule, which
+   would have deleted accented Latin and Devanagari characters. Used only to sanitize the *name* field as the
+   user types, never to reject input.
+2. `keyboardShouldPersistTaps="handled"` added to both ScrollViews on the mood step (the outer step scroll and
+   the horizontal emoji-palette scroll). `toggleMood` untouched — it was always correct.
+3. The mood chip `Pressable` gained `accessibilityRole="button"`, `accessibilityLabel={m}`,
+   `accessibilityState={{ selected: sel }}`.
+4. The custom-mood block became one bordered, headed group ("Name your own" / "Give it a face, then a name.")
+   with two numbered steps — "1 · Its face" (palette + typed-emoji field, both carried over verbatim) and
+   "2 · Its name" (name field now `onChangeText={(v) => setCustomInput(stripEmoji(v))}`, `maxLength={24}`
+   matching `moodNameError`'s existing limit). `addCustomMood`'s duplicate guard is unchanged; collision
+   checking against existing custom moods stays with `MoodManager` (IMP-055).
+
+**Tests (+11):** new in `__tests__/entries/emojiInput.test.js` (+7) — every `MOOD_PALETTE` glyph strips to
+`''` (including `❤️`/`☀️` variation-selector pairs) · `'Café'` and Devanagari `'थका'` survive byte-for-byte ·
+`'Sleepy😴'` → `'Sleepy'` · a ZWJ sequence strips to `''` with no joiner left · `null`/`undefined` → `''` ·
+digits/spaces/hyphens/apostrophes survive. New in `__tests__/screens/WriteFlowMood.test.js` (+4) — tapping a
+selected chip deselects it (the (d) regression) · every `ScrollView` on the mood step has
+`keyboardShouldPersistTaps === 'handled'` (`UNSAFE_getAllByType(ScrollView)`) · typing `'😴Sleepy'` into
+`Name your own…` and pressing `Add` fires with `'Sleepy'` · the name field's `maxLength` is `24`. All 7
+pre-existing cases in that file stayed green untouched.
+
+**Proof:** `npm test` → **816 passed, 81 suites** (was 805/81). `npx expo export --platform android` clean.
+**Ship:** OTA lane, no bump — rides the next batch; no `Release-Lane` trailer on this commit.
+**Commit:** `fix(entries): the mood step answers every tap, and naming a feeling is one clear block (IMP-066)`
+(`bf32690`).
+**Runtime proof:** **WALK-04**, re-run whole — a separate chat.
+
+---
+
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
 
 > Moved out of PROGRESS.md on 2026-07-31 to keep the live cursor lean once a second spec (IMP-032) opened. These are **not** finished work. If the owner revives one, lift the block back into PROGRESS.md as the ACTIVE TRACK.
@@ -2353,6 +2394,23 @@ and `wished · ` are absent; the `did`-match case now asserts `getByText('did ·
 ## Session notes (archived from PROGRESS.md)
 
 _Append-only handoff log moved out of PROGRESS.md to keep it light. Newest 1–2 notes stay live in PROGRESS.md; everything else is here. Git history is the full record._
+
+_2026-08-15 (IMP-064, count your candles, and say plainly what one did) — **code-complete, committed
+`185e326`, not shipped; OTA lane, rides the next batch.** New pure module `src/home/candleRow.js` —
+`candleRow(count, max = 5)` → `{ slots, lit, overflow }` (up to 5 real icons then a `×N` badge; `count = 0`
+still draws one unlit slot) and `candleRowCopy(count)` for the caption. `StreakFreeze` in `src/gamify.js`
+now renders both instead of the old literal `[0, 1, 2].map`. `freezeNoticeCopy` in `src/home/freezeNotice.js`
+rewritten to the three-fact shape — `Your streak is safe.` / `A candle burned for {day}. {N} left.` (plural:
+`3 candles burned for 3 days you missed. 1 left.`; zero-left: `That was your last one.`) — `addFreezeNotice`/
+`formatDay` untouched, `FreezeNoticeCard.js` needed no edit. 10 new tests in new
+`__tests__/home/candleRow.test.js`; `freezeNotice.test.js`'s 4 cases and `FreezeNoticeCard.test.js`'s 3 got
+the new expected strings, no new cases there. **Proof:** `npm test` → **792 passed, 79 suites** (was
+782/78). `npx expo export --platform android` clean. LAST command: `git commit` → `185e326`. Archived
+IMP-064's spec into `docs/build-log.md`, dropped its row from `docs/specs-open.md`'s index (queue is now
+IMP-065…068, four specs), ticked its `PROGRESS.md` row, and moved the IMP-062 session note down to
+`docs/build-log.md` (2-note budget). Did not touch WALK-06 — full re-run is a separate chat, per the spec's
+own closing line. NEXT: a build chat takes **IMP-065** (first ⬜, [spec](docs/specs-open.md#imp-065--clear-the-search-the-moods-you-picked-come-to-the-front)).
+A walk chat can still take **WALK-02** or **WALK-15**, unaffected by this chat's work._
 
 _2026-08-15 (IMP-063, a saved day looks saved) — **code-complete, committed `b7eb4c3`, not shipped; OTA
 lane, rides the next batch.** All 7 spec steps done in order — `FREEZE_EMOJI` added to `src/data.js`; all

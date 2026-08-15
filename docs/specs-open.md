@@ -24,7 +24,6 @@
 
 | # | Spec | Lane | From |
 | --- | --- | --- | --- |
-| IMP-066 | [The mood step stops fighting you](#imp-066--the-mood-step-stops-fighting-you) | OTA | WALK-04 (d, e) |
 | IMP-067 | [A stacked row wraps; Mood Mix bars start in one place](#imp-067--a-stacked-row-wraps-mood-mix-bars-start-in-one-place) | OTA | WALK-07 (b, c) |
 | IMP-068 | [The Paywall footer stops covering the price](#imp-068--the-paywall-footer-stops-covering-the-price) | OTA | WALK-07 (a) |
 
@@ -33,7 +32,7 @@
 > gate the release build.** The 🚦 walks in [`walk-open.md`](walk-open.md) still gate it. If the owner wants
 > the build to go out first, every one of these can land after it and ride an OTA — **but they must not be
 > half-landed across the bump**, so a build chat takes them in the order above and finishes each one.
-> **IMP-063, IMP-064 and IMP-065 have already landed** — this index now holds the remaining three.
+> **IMP-063, IMP-064, IMP-065 and IMP-066 have already landed** — this index now holds the remaining two.
 >
 > **The order is by user cost, not by walk number.** IMP-063/064 fixed a mechanic the user is *told* about but
 > could not *see* (candles). IMP-065/066 fix the two screens every user touches daily. IMP-067 is visible at
@@ -48,184 +47,6 @@
 > runtime walk are **two different tasks for two different chats** — where a feature needs runtime proof,
 > the spec's last step names its `WALK-nn` row in [`walk-open.md`](walk-open.md). **Do not run a walk from a
 > build chat**, and do not read a missing walk as an unfinished spec.
-
----
-
-## IMP-066 — the mood step stops fighting you
-
-**Lane: OTA.** No native change, no bump.
-**Runtime proof: WALK-04**, re-run whole — not this chat.
-
-**Why.** WALK-04 findings (d) and (e), 2026-08-15.
-
-**(d) The owner could not deselect a mood chip, and the code says they should have been able to.** The
-finding recorded that contradiction honestly and asked a build chat to re-confirm before assuming the logic
-was at fault. **It is not the logic.** `toggleMood` ([`WriteFlow.js:43`](../src/screens/WriteFlow.js#L43)) is
-a correct symmetric toggle and it is wired correctly at line 131. The defect is one line above the chips:
-the mood step's `ScrollView` ([`:121`](../src/screens/WriteFlow.js#L121)) **has no
-`keyboardShouldPersistTaps`**, while the `did`/`wished` step's `ScrollView`
-([`:98`](../src/screens/WriteFlow.js#L98)) has `"handled"`. The default is `"never"`, which means: **while
-the keyboard is open, the first tap anywhere inside that ScrollView is swallowed to dismiss the keyboard and
-never reaches the child.** The mood step is the one step with two text fields on it, so the keyboard is open
-exactly when the owner was tapping — the tap that "did nothing" was spent closing the keyboard. It looks
-like a broken toggle and it is a swallowed tap.
-
-**(e) The custom-mood block is three unlabelled rows that do not read as one task**
-([`:146-202`](../src/screens/WriteFlow.js#L146)): a horizontal emoji palette, then a lone 90dp text field
-saying *"or type one…"* ("or type one" *what*, and instead of what?), then a name field with an Add button.
-Nothing says these three belong together or in what order they are meant to be used. Confirmed in the same
-pass: the mood-**name** field ([`:180-191`](../src/screens/WriteFlow.js#L180)) accepts emoji and has no
-length limit, unlike the emoji field sitting directly above it, which is `isEmojiish`-gated.
-
-### Decided design — do not re-litigate
-
-1. **The fix for (d) is `keyboardShouldPersistTaps="handled"`, and `toggleMood` is not touched.** Do not
-   "improve" the toggle, add a hit-slop, or change the chip styling to chase this. The same prop goes on the
-   nested horizontal palette `ScrollView` for the same reason.
-2. **The custom-mood block becomes one bordered, headed group with two numbered steps** — face, then name.
-   The heading is what makes the "or type one…" field legible: it is an alternative to the palette above it,
-   and now it sits inside the same labelled step.
-3. **The name field strips emoji rather than rejecting the input.** Rejecting mid-type loses characters the
-   user already typed; stripping is silent and always leaves a usable name. It also gets `maxLength={24}`,
-   matching `moodNameError`'s existing limit ([`src/entries/renameMood.js`](../src/entries/renameMood.js)).
-4. **Stripping is by emoji block, NOT by "code point above ASCII".** `isEmojiish` uses `>= 0x00a0`, which is
-   right for *validating an emoji* and catastrophic for *filtering a name*: it would delete every accented
-   Latin letter and every Devanagari character. A mood named `थका` or `Café` must survive byte-for-byte.
-5. **No validation beyond that.** `addCustomMood` keeps its current duplicate guard; collision checking
-   against existing custom moods and `moodNameError` wiring are **not** in scope — `MoodManager` (IMP-055)
-   owns correcting a name after the fact.
-6. **Out of scope:** the mood chip row's wrap layout, the built-in `MOODS` list, `MOOD_PALETTE`'s contents,
-   and the Foot/keyboard handling (IMP-051 settled that and WALK-04 passed it).
-
-### Steps
-
-**1 — `src/entries/emojiInput.js`: add `stripEmoji`.** Below `isEmojiish`, unchanged:
-
-```js
-// Removes emoji from a *name* the user typed (IMP-066). Deliberately NOT
-// isEmojiish's ">= 0x00a0" rule: that would delete "Café" and every Devanagari
-// character in a Hindi mood name. Only pictographic blocks and the joiners that
-// glue them together go.
-const EMOJI_RANGES = [
-  [0x1f000, 0x1faff], // faces, hands, objects, flags, supplemental pictographs
-  [0x2190, 0x21ff],   // arrows
-  [0x2300, 0x23ff],   // misc technical (⌚ ⏰)
-  [0x2460, 0x24ff],   // enclosed alphanumerics
-  [0x25a0, 0x27bf],   // geometric shapes, misc symbols (☀ ❤ ✨), dingbats
-  [0x2b00, 0x2bff],   // extra arrows and stars (⭐)
-  [0xfe00, 0xfe0f],   // variation selectors — the ️ half of "❤️"
-];
-const EMOJI_SINGLES = new Set([0x200d, 0x20e3, 0x203c, 0x2049, 0x3030, 0x303d]);
-
-export function stripEmoji(s) {
-  return [...String(s ?? '')]
-    .filter((ch) => {
-      const cp = ch.codePointAt(0);
-      if (EMOJI_SINGLES.has(cp)) return false;
-      return !EMOJI_RANGES.some(([lo, hi]) => cp >= lo && cp <= hi);
-    })
-    .join('');
-}
-```
-
-**2 — `src/screens/WriteFlow.js`: the swallowed tap.** Add `keyboardShouldPersistTaps="handled"` to the
-mood-step `ScrollView` ([`:121`](../src/screens/WriteFlow.js#L121)) **and** to the horizontal palette
-`ScrollView` ([`:146`](../src/screens/WriteFlow.js#L146)). Nothing else on those two lines changes.
-
-**3 — `src/screens/WriteFlow.js`: the chips get their accessibility props.** On the mood chip `Pressable`
-([`:129`](../src/screens/WriteFlow.js#L129)) add `accessibilityRole="button"`, `accessibilityLabel={m}` and
-`accessibilityState={{ selected: sel }}`. `toggleMood` and the chip styles are **unchanged**.
-
-**4 — `src/screens/WriteFlow.js`: the custom-mood block.** Import `stripEmoji` alongside `isEmojiish`.
-Replace everything from line 146 (the palette `ScrollView`) through line 202 (the closing `</View>` of the
-name row) with the block below. The palette `Pressable` body and both `TextInput` styles are carried over
-**verbatim** — only their grouping, labels and the two new name-field props are new:
-
-```jsx
-{/* Name your own — one headed group with two numbered steps (IMP-066). It was
-    three unlabelled rows before, and "or type one…" had nothing to be an
-    alternative *to*. */}
-<View style={{ marginTop: 26, paddingTop: 16, borderTopWidth: 1, borderTopColor: c.border }}>
-  <T d w={700} color={c.ink} style={{ fontSize: 16 }}>Name your own</T>
-  <T w={600} color={c.muted} style={{ fontSize: 13, marginTop: 2, lineHeight: 18 }}>
-    Give it a face, then a name.
-  </T>
-
-  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 16 }}>
-    <T w={800} color={c.muted} style={{ fontSize: 12, letterSpacing: 0.5, textTransform: 'uppercase' }}>1 · Its face</T>
-    <View style={{ width: 34, height: 34, borderRadius: 17, borderWidth: 2, borderColor: c.accent, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' }}>
-      <Text style={{ fontSize: 18 }}>{emojiPick}</Text>
-    </View>
-  </View>
-
-  <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 8, marginTop: 10, paddingRight: 8 }}>
-    {/* …the existing MOOD_PALETTE.map, unchanged… */}
-  </ScrollView>
-
-  <TextInput
-    value={emojiTyped}
-    onChangeText={onEmojiTyped}
-    placeholder="or type one…"
-    placeholderTextColor={c.placeholder}
-    autoCorrect={false}
-    maxLength={12}
-    style={{
-      marginTop: 10, width: 90, paddingHorizontal: 12, paddingVertical: 9, borderRadius: 999,
-      borderWidth: 1.5, borderColor: c.border, backgroundColor: c.surface,
-      fontFamily: t.body(600), fontSize: 14, color: c.ink,
-    }}
-  />
-
-  <T w={800} color={c.muted} style={{ fontSize: 12, letterSpacing: 0.5, textTransform: 'uppercase', marginTop: 18 }}>2 · Its name</T>
-  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 }}>
-    <TextInput
-      value={customInput}
-      onChangeText={(v) => setCustomInput(stripEmoji(v))}
-      placeholder="Name your own…"
-      placeholderTextColor={c.placeholder}
-      maxLength={24}
-      onSubmitEditing={addCustomMood}
-      style={{
-        flex: 1, paddingHorizontal: 15, paddingVertical: 11, borderRadius: 999,
-        borderWidth: 1.5, borderColor: c.border, backgroundColor: c.surface,
-        fontFamily: t.body(600), fontSize: 14, color: c.ink,
-      }}
-    />
-    {/* …the existing Add Pressable, unchanged… */}
-  </View>
-</View>
-```
-
-The 90dp emoji field's wrapping `<View flexDirection: 'row'>` ([`:164`](../src/screens/WriteFlow.js#L164))
-is gone — it wrapped a single child and its `marginTop` moves onto the input's own style. The `1 · Its face`
-row's preview circle shows the current `emojiPick`, which is the thing the palette and the typed field were
-both silently writing to.
-
-### Tests (+11)
-
-**`__tests__/entries/emojiInput.test.js`** (+7) — `MOOD_PALETTE.every((e) => stripEmoji(e) === '')` (one
-assertion covering all 40 glyphs, including the `❤️`/`☀️` variation-selector pairs) · `'Café'` survives
-byte-for-byte · the Devanagari `'थका'` survives byte-for-byte · `'Sleepy😴'` → `'Sleepy'` · a ZWJ sequence
-(`'👨‍👩‍👧'`) strips to `''` with no joiner left behind · `null` and `undefined` → `''` · digits, spaces,
-hyphens and apostrophes survive (`"Half-awake 2'o clock"`).
-
-**`__tests__/screens/WriteFlowMood.test.js`** (+4) — **the (d) regression:** tapping a selected chip
-deselects it (press `'Grateful'`, press it again, press `Finish`, assert `onComplete` was **not** called) ·
-**the swallowed-tap guard:** every `ScrollView` rendered on the mood step carries
-`keyboardShouldPersistTaps === 'handled'`, asserted with `view.UNSAFE_getAllByType(ScrollView)` (the same
-structural-guard idiom as `__tests__/ui/Row.test.js`) · typing `'😴Sleepy'` into `Name your own…` and
-pressing `Add` fires `onAddCustomMood` with `'Sleepy'` · the name field's `maxLength` prop is `24`.
-
-The existing 7 cases in that file must all stay green untouched — if the block rewrite breaks
-`getByPlaceholderText('or type one…')` or `getByText('Add')`, the rewrite is wrong, not the test.
-
-### Done
-
-`npm test` green at **the prior count + 11** (772 → **783** if this is the first of the six; otherwise that
-chat's number + 11). **No new suite files.** `npx expo export --platform android` clean.
-**Commit:** `fix(entries): the mood step answers every tap, and naming a feeling is one clear block (IMP-066)`.
-No `Release-Lane` trailer. Then tick the backlog row, write the session note, move this spec into
-`docs/build-log.md`, and leave **WALK-04** for a walk chat — **do not walk it here.**
 
 ---
 
