@@ -2183,6 +2183,57 @@ no-op that still resolves `true`.
 
 ---
 
+### IMP-063 — a saved day looks saved   ·   Lane: OTA   ·   Status: ✅ code-complete (2026-08-15)
+
+**Why.** WALK-06 finding (d), 2026-08-15. Streak-freeze candles work perfectly and are **invisible**. A day
+a candle saved rendered as the same 💀 the app uses for a genuinely missed day, everywhere it appears —
+`frozenDays` was real, persisted state consumed only by the streak arithmetic, never by the cell builders
+that decide what a day *looks* like. The owner's reference point was Duolingo's distinct frozen-day glyph.
+
+**Design, as landed:**
+1. `frozen` is a new cell flag produced by the same builders that produce `missed` — never computed in a
+   screen. A day is `frozen` only where it would otherwise be `missed`; a `frozenDays` key in the future,
+   before the first entry, or on a day with an entry is ignored, not an error.
+2. The glyph is the app's own candle, not a snowflake — `FREEZE_EMOJI = '🕯️'` (U+1F56F, inside the
+   Android-7 coverage bar `MOOD_PALETTE` already holds to).
+3. A frozen cell keeps the kept-day fill (`c.accentSoft`) with a dashed `c.accentDeep` border — nearer a
+   written day than the transparent dashed "nothing here" cells.
+4. A frozen day is not pressable — no entry to open, same as `missed`.
+5. The lifetime heatmap gained a legend row (`{ state: 'frozen', label: 'a candle kept it' }`) since it's
+   the only one of the three that renders bare colour blocks with no glyph.
+
+**Landed as:**
+- `src/data.js` — `FREEZE_EMOJI = '🕯️'` alongside `MISS_EMOJI`.
+- `src/home/calendar.js` — `buildHeatmap`/`buildLifetimeHeatmap`/`buildWeekStrip` all take a third
+  `{ frozenDays = [] }` options arg, defaulted so every existing caller/test is unchanged; each swaps only
+  its past-day branch to check `frozenDays` before falling to `missed`.
+- `src/insights/heatCells.js` — `cellState` gains `frozen` between `future` and `missed`; precedence is now
+  `future > frozen > missed > empty > done`.
+- `src/screens/InsightsScreen.js` — `heatCellStyle` gets a `frozen` branch before `missed` (same geometry,
+  `accentDeep` border); `LEGEND` gains the frozen row; `pressable = state === 'done'` unchanged;
+  `frozenDays` prop threaded into `buildLifetimeHeatmap`.
+- `src/screens/ArchiveScreen.js` — `Heat`'s cell map gains `isFrozen`, sitting above the mood branch (a
+  frozen cell carries neither `missed` nor `empty`, so it would otherwise fall through to the mood branch
+  and render 🌫️); also replaced the hardcoded `'💀'` literal with the existing-but-unused `MISS_EMOJI`.
+  `frozenDays` prop threaded into `buildHeatmap`.
+- `src/screens/HomeScreen.js` — `Dot` gains a `frozen` branch before `future`, and the skull literal became
+  `MISS_EMOJI` alongside the new `FREEZE_EMOJI` glyph. `frozenDays` prop threaded into `buildWeekStrip`.
+- `src/RitualsApp.js` — `frozenDays` (already local state) passed as a prop to `HomeScreen`, `ArchiveScreen`
+  and `InsightsScreen`.
+
+**Tests (+10, no new suite files):** `calendar.test.js` (+6) — frozen vs missed vs done vs empty precedence
+across all three builders, plus a no-third-argument regression check. `heatCells.test.js` (+2) — `frozen`
+state and its precedence against `missed`/`future`. `ArchiveHeat.test.js` (+2) — frozen renders
+`FREEZE_EMOJI` not `MISS_EMOJI`, and is not pressable.
+
+**Proof:** `npm test` → **782 passed, 78 suites** (was 772/78). `npx expo export --platform android` clean.
+**Ship:** OTA lane, no bump — rides the next batch with the rest of the ~25 unpublished tasks; no
+`Release-Lane` trailer on this commit.
+**Commit:** `feat(streak): a day a candle saved looks saved, not missed (IMP-063)` (`b7eb4c3`).
+**Runtime proof:** **WALK-06**, re-run whole — a separate chat.
+
+---
+
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
 
 > Moved out of PROGRESS.md on 2026-07-31 to keep the live cursor lean once a second spec (IMP-032) opened. These are **not** finished work. If the owner revives one, lift the block back into PROGRESS.md as the ACTIVE TRACK.
@@ -2266,6 +2317,40 @@ passed, 77 suites**; `npx expo export --platform android` clean. Archived IMP-05
 moved the IMP-060 session note into `docs/build-log.md` too (this file's 2-note budget). NEXT: **the
 Improvements backlog has no open spec** — the next chat here waits on Opus to scope a new `IMP-xxx` into
 `docs/specs-open.md`, or take the first unchecked phase-ladder task if the owner redirects there._
+
+_2026-08-14 (IMP-061, store screenshots build themselves) — **code-complete, committed `ca850d7`, not
+shipped; Dev-only lane so there is nothing to ship.** All 8 spec steps done in order — new
+`scripts/shots.config.js`, `scripts/shots.js`, `scripts/shots.sh`, `.maestro/store-shots.yaml`,
+`__tests__/shots.test.js`; `@resvg/resvg-js` + `pngjs` devDeps and a `shots` script; `.gitignore` gained
+`store/raw/`. Full file-by-file detail is in `docs/build-log.md`. App-side changes are the three dev-only
+files the spec named and nothing else. **Selectors were read out of the real code, not guessed** — and one
+correction worth carrying into WALK-15: **Achievements' close label is `Close Keepsakes`, not "Close
+achievements"**, which the spec's example did not name. Also: `done: true` prefills WriteFlow so `Next` is
+live for the 02→03 step pair, and `Launch overlays` is `defaultOpen={false}` so the flow taps it open before
+`Achievements`/`Shop`. **Proof:** `npm
+test` → **764 passed, 78 suites** (was 748/77; the 16 new tests add ~70s, dominated by 4 real resvg
+renders). `npx expo export --platform android` clean. `node scripts/shots.js` run against 7 synthetic raws
+in **three different source shapes** (1440×3120, 1080×2400, 1080×1920) produced 7 × `1080x1920 colourType 2`;
+`fitRect` returns exactly `{x:210, y:400, w:660, h:1430}` for 1440×3120, matching the spec's ASCII layout
+contract to the pixel; both fonts render from the bundled TTFs with `loadSystemFonts: false`; the
+missing-raw path exits 1 naming the id. **The synthetic outputs were deleted, not committed** — `store/play/`
+is for real captures, which only WALK-15 can make. LAST command: `git commit` → `ca850d7`. Archived
+IMP-061's spec to `docs/build-log.md`, emptied `docs/specs-open.md`'s index (queue is now empty), moved the
+IMP-059 note down to the build log (2-note budget), and **unblocked WALK-15** in `docs/walk-open.md`.
+**Then, at the owner's direction, a second piece of work in the same chat: the walk queue's metadata.**
+Audited what has actually shipped by grepping real `Release-Lane` trailers (not the backlog's ✅ column) —
+finding recorded as the first Open item above. Rewrote `docs/walk-open.md`'s index: **unblocked WALK-13 and
+WALK-14** (stale — IMP-054/`18d8c2e` and IMP-059/`fa523f3` both landed 2026-08-13), **re-sorted the index by
+what a failure would cost** with a new Gate column — 🚦 blocks the build (02, 05, 13, 03, 12) · 🎨 follows
+the release (04, 06, 07, 08, 09, 10, 14) · 📦 independent (15) · ⏭ skip (11, `PLUS_ENABLED` makes it
+unmountable). **WALK-05's status was the trap** — it read ✅ while its risky `applyCompletion` half was
+never walked, so "first ⬜" skipped it; now ⬜ **partial**. WALK-12 deliberately sits **last inside 🚦**,
+because R8 must be walked on the final build candidate or an earlier fix invalidates the pass. Each 🚦/⏭
+body now states its gate inline, so a chat reading one section knows. Also fixed WALK-01's broken
+`docs/build-log.md` link (wrong relative path from inside `docs/`). NEXT: **no open IMP spec — the build
+queue is empty**; a build chat should stop and say so rather than invent one. A walk chat takes **WALK-02**
+(first ⬜, 🚦, emulator, 👤), or **WALK-15** if the owner wants the Play listing refreshed in parallel
+(🤖 mostly — needs maestro installed and a second AVD for its step 4)._
 
 _2026-08-14 (WALK-01, v2→v3 mood migration) — **full pass, all 9 steps, agent-run on the emulator.** Backlog
 was empty (IMP-058 was the last spec, already code-complete), so this chat took the first ⬜ row in
