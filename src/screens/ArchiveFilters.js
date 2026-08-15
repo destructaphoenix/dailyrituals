@@ -2,7 +2,7 @@
 // Reflections tab (IMP-035). Props in, callbacks out: ArchiveScreen owns the
 // query state and feeds it to searchEntries(). No date-picker library — a
 // month list inside the app's existing Modal + Pressable-row sheet shape.
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { View, TextInput, ScrollView, Pressable, Modal, Text } from 'react-native';
 import { useTheme } from '../theme';
 import { T } from '../ui';
@@ -86,15 +86,15 @@ export default function ArchiveFilters({ text, moods, from, to, onChange, result
   const t = useTheme();
   const c = t.colors;
   const [picker, setPicker] = useState(null); // 'from' | 'to' | null
-  const chipScroll = useRef(null);
 
+  // The selected chip sorts to the front (orderMoodChips) but the row deliberately
+  // does NOT scroll to follow it (IMP-071, reversing IMP-065). Picking a second and
+  // third filter used to cost a re-scroll each time. The accepted trade: the chip you
+  // just tapped leaves the viewport — it is at the front, which is a fixed, learnable
+  // place. Do not re-add a programmatic scroll here.
   const toggleMood = (m) => {
-    const selecting = !moods.includes(m);
-    const next = selecting ? [...moods, m] : moods.filter((x) => x !== m);
+    const next = moods.includes(m) ? moods.filter((x) => x !== m) : [...moods, m];
     onChange({ text, moods: next, from, to });
-    // The chip just jumped to the front of the row. If it was picked from deep in
-    // the scroll, not following it there reads as the chip disappearing.
-    if (selecting) chipScroll.current?.scrollTo({ x: 0, animated: true });
   };
 
   const selectMonth = (bound, ym) => {
@@ -139,7 +139,7 @@ export default function ArchiveFilters({ text, moods, from, to, onChange, result
         ) : null}
       </View>
 
-      <ScrollView ref={chipScroll} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingRight: 4 }}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingRight: 4 }}>
         {orderMoodChips(allMoodChips(MOODS, customMoods), moods).map((m) => {
           const sel = moods.includes(m);
           return (

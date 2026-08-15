@@ -1,4 +1,6 @@
 import React from 'react';
+import fs from 'fs';
+import path from 'path';
 import { render, fireEvent } from '@testing-library/react-native';
 import ArchiveFilters from '../../src/screens/ArchiveFilters';
 import { MOODS } from '../../src/data';
@@ -42,5 +44,24 @@ describe('ArchiveFilters — IMP-065', () => {
       <ArchiveFilters {...baseProps} text="" moods={[]} customMoods={['Grateful']} onChange={() => {}} />
     );
     expect(chipLabels(view).filter((l) => l === 'Grateful').length).toBe(1);
+  });
+});
+
+describe('ArchiveFilters — IMP-071', () => {
+  test('pressing an unselected chip calls onChange with that mood appended and text/from/to untouched', () => {
+    const onChange = jest.fn();
+    const view = render(
+      <ArchiveFilters {...baseProps} text="rain" moods={[]} from="2026-01-01" to="2026-02-28" onChange={onChange} />
+    );
+    fireEvent.press(view.getByLabelText(MOODS[0]));
+    expect(onChange).toHaveBeenCalledWith({ text: 'rain', moods: [MOODS[0]], from: '2026-01-01', to: '2026-02-28' });
+  });
+
+  // A source assertion on purpose: "never auto-scroll this row" is a decision
+  // about the code, and a rendered tree cannot show the absence of an imperative
+  // scroll (IMP-071).
+  test('the chip row never scrolls itself', () => {
+    const src = fs.readFileSync(path.join(__dirname, '../../src/screens/ArchiveFilters.js'), 'utf8');
+    expect(src).not.toMatch(/scrollTo\(/);
   });
 });
