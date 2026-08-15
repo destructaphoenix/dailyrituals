@@ -238,6 +238,40 @@ d. **A frozen ("saved") day has no distinct visual identity anywhere in the app*
 
 **WALK-06 marked ❌** in `docs/walk-open.md`; section left in place (not moved to build-log) pending specs.
 
+### 🔴 WALK-07 finding — modal scroll, Paywall footer + two bonus defects (2026-08-15)
+
+Walked **WALK-07** on the emulator, including flipping T1 (`PLUS_ENABLED`) to reach Manage Subscription and
+Paywall, then reverting it. Achievements, Shop, Reading sheet and Get Embers all passed at normal and max
+(2.0x) OS font scale in both nav modes. **Manage Subscription also passed** — its content
+([`PlusFlow.js:179-268`](../src/screens/PlusFlow.js#L179)) is short enough (~6 stacked blocks: status header,
+plan detail, a 4-row actions card, conditional cancel button, billing disclaimer) that it never needed to
+scroll to reach the nav bar; nothing was hidden. The font-scale cap itself is also confirmed working —
+`PixelRatio.getFontScale()` read `2.0` against the `1.5`/`1.2` caps in
+[`src/ui/textScale.js`](../src/ui/textScale.js) with nothing visibly broken on the four passed screens. One
+real defect and two bonus defects surfaced — **each needs a new `IMP-xxx`** (Opus to scope):
+
+a. **Paywall's fixed footer overlaps its own content, even at normal font size.**
+   [`Paywall.js:94-99`](../src/screens/Paywall.js#L94) renders the "Start 7-day free trial" button and
+   `LegalFooter` as a plain sibling `View` after the `ScrollView` (line 43) — but that `ScrollView` has no
+   `style` prop (only `contentContainerStyle`), so it's never given `flex: 1` to claim the space above the
+   footer. The plan-amount text (`pl.price`, line 86) and the perk bullets (`PLUS_PERKS.map`, lines 54-63,
+   sourced from [`src/data.js:163-170`](../src/data.js#L163)) live inside that unconstrained scroll area, so
+   the footer's fixed height crowds out the tail of the content — the owner observed the plan amount and last
+   1-2 perk bullets covered by the footer at default font size, before max-font is even a factor.
+b. **Annual Recap's teaser description truncates at max font scale.** You tab →
+   [`YouScreen.js:169-170`](../src/screens/YouScreen.js#L169) renders `value="Unlocks after your first full
+   year"` through [`Row.js`](../src/ui/Row.js), which hardcodes `numberOfLines={1}` on both its stacked (line
+   36) and inline (line 45) layouts regardless of the `shouldStackRow` heuristic in
+   [`rowFit.js:7-13`](../src/ui/rowFit.js#L7) — so at 2.0x font the string ellipsizes instead of wrapping or
+   stacking. The owner's read: this description isn't load-bearing and could move inside a detail sheet rather
+   than trying to fit it in the row.
+c. **Mood Mix bars misalign depending on mood-name length — present at every font size, not just max.**
+   [`InsightsScreen.js:134-138`](../src/screens/InsightsScreen.js#L134): the label column uses `minWidth: 84`
+   (not a fixed `width`), so longer mood names push the column wider and shift where each row's bar starts —
+   a flexbox column-alignment bug independent of the font-scale investigation that surfaced it.
+
+**WALK-07 marked ❌** in `docs/walk-open.md`; section left in place (not moved to build-log) pending specs.
+
 ### 🟡 IMP-056 residual + the IMP-057 decision (2026-08-10)
 
 `dayKey` is now derived locally (walked both offset directions). **Existing entries were deliberately not

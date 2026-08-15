@@ -59,7 +59,7 @@ ship, so any fix the earlier walks turn up would invalidate an R8 pass done befo
 | WALK-12 | 🚦 | [The R8 release-variant pass](#walk-12--the-r8-release-variant-pass) | IMP-044 | **device** | 👤 | ⬜ — **the last 🚦, on the final build candidate.** First minified build ever; failure is silent |
 | WALK-04 | 🎨 | [Search + the write flow's moods](#walk-04--search--moods) | IMP-035, IMP-037, **IMP-053** | emulator | 👤 | ❌ **2026-08-15** — base search/filter/heatmap behavior passed; 5 UX defects found (search-clear, mood-chip reorder, WriteFlow deselect, custom-mood layout, wish-prefix asymmetry); findings in `PROGRESS.md` → Open items, need new `IMP-xxx` specs (Opus) |
 | WALK-06 | 🎨 | [Streak insurance — candles spend themselves](#walk-06--streak-insurance) | IMP-039 | emulator | 👤 | ❌ **2026-08-15** — mechanical behavior (freeze survival, decrement-by-one, idempotence, celebration-streak match, shop copy) passed; 4 UX defects found (candle count caps visually at 3, verbose freeze-spent copy, frozen day indistinguishable from missed day); findings in `PROGRESS.md` → Open items, need new `IMP-xxx` specs (Opus) |
-| WALK-07 | 🎨 | [Modal screens actually scroll](#walk-07--modal-scroll) | IMP-042 | emulator | 👤 (visual, two nav modes) | ⬜ |
+| WALK-07 | 🎨 | [Modal screens actually scroll](#walk-07--modal-scroll) | IMP-042 | emulator | 👤 (visual, two nav modes) | ❌ **2026-08-15** — Achievements/Shop/Reading sheet/Get Embers/Manage Subscription all passed, incl. max (2.0x) font scale; Paywall's fixed footer overlaps its own content at normal font. Two bonus defects found (Annual Recap description truncation at max font, Mood Mix bar misalignment at any font); findings in `PROGRESS.md` → Open items, need new `IMP-xxx` specs (Opus) |
 | WALK-08 | 🎨 | [Font scale + layout on the nine new screens](#walk-08--font-scale) | IMP-030 regression | **device** (real font metrics) | 👤 | ⬜ |
 | WALK-09 | 🎨 | [Lifetime heatmap's four states + the XP line](#walk-09--lifetime-heatmap) | IMP-045 | emulator | 👤 (visual) | ⬜ |
 | WALK-10 | 🎨 | [Tips, explainers, empty states](#walk-10--teach-the-app) | IMP-041 | emulator | 👤 | ⬜ |
@@ -188,6 +188,20 @@ Each of **Achievements · Shop · Reading sheet · Get Embers · Manage Subscrip
 card, with the last card clearing the system nav bar. Check with **gesture nav and 3-button nav** (different
 inset heights) and again at max font size, which is where the overflow is worst. Paywall was deliberately
 left alone — confirm its fixed footer still sits correctly.
+
+**Result — ❌ 2026-08-15.** Achievements, Shop, Reading sheet and Get Embers all passed in both nav modes,
+at normal and max (2.0x) OS font scale. Manage Subscription also passed — its content is short enough it never
+needed to scroll to the nav bar. The font-scale cap itself is confirmed working (`PixelRatio.getFontScale()`
+read `2.0` against the `1.5`/`1.2` caps, nothing broken on the four passed screens). One real defect and two
+bonus defects surfaced, written up in full (with file:line) in `PROGRESS.md` → Open items → "WALK-07 finding":
+(a) Paywall's fixed footer overlaps its own content (plan amount + last perk bullets) even at normal font
+size — the `ScrollView` above the footer is never given `flex: 1`, so it doesn't yield space to the footer;
+(b) Annual Recap's teaser description on the You tab truncates at max font because `Row.js` hardcodes
+`numberOfLines={1}`; (c) Mood Mix bars in Insights misalign depending on mood-name length, at any font size —
+the label column uses `minWidth` instead of a fixed `width`. (a) blocks the Paywall half of this walk from
+being called a pass; (b) and (c) were found incidentally and don't block the passed screens. Each needs a new
+`IMP-xxx` — Opus's lane to scope, not this walk's. **T1 (`PLUS_ENABLED`) was reverted to `false` after this
+walk — confirmed in `src/billing/config.js:39` before anything else touches this file.**
 
 ---
 
