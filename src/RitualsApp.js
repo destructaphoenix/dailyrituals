@@ -684,6 +684,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             onOpenPaywall={PLUS_ENABLED ? () => setPaywall(true) : () => {}}
             customMoodEmoji={settings.customMoodEmoji || {}}
             onOpen={openEntry}
+            frozenDays={frozenDays}
           />
         );
       case 'archive':
@@ -693,6 +694,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             onOpen={openEntry}
             tip={pendingTip('archive', seenTips)} onDismissTip={dismissTip}
             customMoods={settings.customMoods || []} customMoodEmoji={settings.customMoodEmoji || {}}
+            frozenDays={frozenDays}
           />
         );
       case 'you':
@@ -747,6 +749,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             recapSeen={settings.recapSeen ?? null}
             onDismissAnnualRecap={(year) => setSettings((s) => ({ ...s, recapSeen: year }))}
             onOpenAnnualRecap={(year) => setOpenRecapYear(year)}
+            frozenDays={frozenDays}
           />
         );
     }

@@ -12,6 +12,7 @@ import { pickForDay } from '../time/dailyPick';
 import { HELLOS } from '../content/greetings';
 import { streakSubtitle } from '../home/streakCopy';
 import { buildWeekStrip } from '../home/calendar';
+import { MISS_EMOJI, FREEZE_EMOJI } from '../data';
 import { deriveKeepsakes } from '../profile/achievements';
 import { StreakFreeze, DailyQuests } from '../gamify';
 import { EmberPill } from '../shopui';
@@ -26,12 +27,12 @@ import AnnualRecapCard from './AnnualRecapCard';
 // for why (a "year in review" outside Dec–Jan is either premature or stale).
 const RECAP_WINDOW_MONTHS = [11, 0]; // Dec, Jan
 
-export default function HomeScreen({ copy, mode, streak, level, levelName, xpInto, xpToNext, entries, quests, freezes, onOpenAchievements, done, onWrite, onToggleMode, embers, plus, plusEnabled = false, onOpenShop, dailyPrompt = '', userName = '', tip, onDismissTip, pendingFreezeNotice = [], onDismissFreezeNotice, onThisDayDismissed = '', onDismissOnThisDay, onOpenOnThisDay, onOpenPaywall, recapSeen = null, onDismissAnnualRecap, onOpenAnnualRecap }) {
+export default function HomeScreen({ copy, mode, streak, level, levelName, xpInto, xpToNext, entries, quests, freezes, onOpenAchievements, done, onWrite, onToggleMode, embers, plus, plusEnabled = false, onOpenShop, dailyPrompt = '', userName = '', tip, onDismissTip, pendingFreezeNotice = [], onDismissFreezeNotice, onThisDayDismissed = '', onDismissOnThisDay, onOpenOnThisDay, onOpenPaywall, recapSeen = null, onDismissAnnualRecap, onOpenAnnualRecap, frozenDays = [] }) {
   const t = useTheme();
   const c = t.colors;
   const Orb = mode === 'night' ? Moon : Sun;
   const hello = pickForDay(HELLOS);
-  const week = buildWeekStrip(entries || []);
+  const week = buildWeekStrip(entries || [], new Date(), { frozenDays });
   const keepsakes = deriveKeepsakes(entries || [], streak || 0);
   const todayK = dayKeyOf();
   const onThisDayMatches = plusEnabled && onThisDayDismissed !== todayK ? onThisDay(entries || [], todayK) : [];
@@ -224,12 +225,15 @@ function Dot({ state, done, mode, children }) {
     extra = t.shadow(8, c.accentDeep, 0.8);
   } else if (state === 'today') {
     bg = c.surface; borderColor = c.accent;
+  } else if (state === 'frozen') {
+    bg = c.accentSoft; borderColor = c.accentDeep; borderStyle = 'dashed';
   } else if (state === 'future') {
     bg = 'transparent'; borderColor = c.border; borderStyle = 'dashed';
   }
   return (
     <View style={[{ width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: bg, borderWidth: 1.5, borderColor, borderStyle }, extra]}>
-      {state === 'missed' && <Text style={{ fontSize: 16 }}>💀</Text>}
+      {state === 'missed' && <Text style={{ fontSize: 16 }}>{MISS_EMOJI}</Text>}
+      {state === 'frozen' && <Text style={{ fontSize: 16 }}>{FREEZE_EMOJI}</Text>}
       {children}
     </View>
   );

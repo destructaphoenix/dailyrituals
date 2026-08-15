@@ -72,6 +72,11 @@ export const moodEmoji = (m, custom = {}) =>
 // A missed day is marked with a skull, both on the week strip and the calendar.
 export const MISS_EMOJI = '💀';
 
+// A day a streak-freeze candle saved (IMP-063). Deliberately the app's own
+// candle and not a snowflake: the mechanic is "a candle burned for you", and
+// this must never be mistaken for MISS_EMOJI's skull.
+export const FREEZE_EMOJI = '🕯️';
+
 // ── Duolingo-style mechanics (solo & gentle) ────────────────────────────────
 // Daily "rites" — three small quests that renew each day. All start at cur: 0.
 // revisit is kept by opening a past entry from Reflections (see markRevisited.js).

@@ -22,6 +22,13 @@ describe('cellState', () => {
   test('precedence: missed wins over empty when both flags are set', () => {
     expect(cellState({ dayKey: '2026-06-10', missed: true, empty: true })).toBe('missed');
   });
+  test('frozen cell', () => {
+    expect(cellState({ dayKey: '2026-06-10', frozen: true })).toBe('frozen');
+  });
+  test('precedence: frozen wins over missed, and future still wins over frozen', () => {
+    expect(cellState({ dayKey: '2026-06-10', frozen: true, missed: true })).toBe('frozen');
+    expect(cellState({ dayKey: '2026-06-20', future: true, frozen: true })).toBe('future');
+  });
 });
 
 describe('monthLabelsForRows', () => {

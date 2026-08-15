@@ -1,13 +1,15 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import { Heat } from '../../src/screens/ArchiveScreen';
+import { MISS_EMOJI, FREEZE_EMOJI } from '../../src/data';
 
 const writtenCell = { dayKey: '2026-06-14', moods: ['calm'], today: true };
 const missedCell = { dayKey: '2026-06-13', missed: true };
 const emptyCell = { dayKey: '2026-06-01', empty: true };
 const orphanCell = { dayKey: '2026-06-10', moods: ['tired'] };
+const frozenCell = { dayKey: '2026-06-05', frozen: true };
 
-const cells = [writtenCell, missedCell, emptyCell, orphanCell];
+const cells = [writtenCell, missedCell, emptyCell, orphanCell, frozenCell];
 
 const writtenEntry = { id: 'e1', dayKey: '2026-06-14', moods: ['calm'], did: 'did', wished: 'wished' };
 const entries = [writtenEntry]; // no entry for orphanCell's dayKey
@@ -47,5 +49,16 @@ describe('ArchiveScreen Heat — IMP-052 (tap a day, read it)', () => {
     expect(view.getByLabelText('2026-06-10, tired').props.accessibilityRole).toBe('button');
     expect(view.queryByLabelText(/2026-06-13/)).toBeNull();
     expect(view.queryByLabelText(/2026-06-01/)).toBeNull();
+  });
+
+  test('a frozen cell renders FREEZE_EMOJI and not MISS_EMOJI', () => {
+    const view = render(<Heat cells={[frozenCell]} entries={entries} onOpen={() => {}} />);
+    expect(view.getByText(FREEZE_EMOJI)).toBeTruthy();
+    expect(view.queryByText(MISS_EMOJI)).toBeNull();
+  });
+
+  test('a frozen cell is not pressable', () => {
+    const view = render(<Heat cells={cells} entries={entries} onOpen={() => {}} />);
+    expect(view.queryByLabelText(/2026-06-05/)).toBeNull();
   });
 });

@@ -39,10 +39,11 @@ function minDayKey(entries) {
 }
 
 // 35 cells (5 rows x 7), ending today (today = index 34).
-export function buildHeatmap(entries, today = new Date()) {
+export function buildHeatmap(entries, today = new Date(), { frozenDays = [] } = {}) {
   const byDay = indexByDay(entries);
   const todayK = keyOf(today);
   const firstKey = minDayKey(entries);
+  const frozen = new Set(frozenDays || []);
   const cells = [];
   for (let i = 34; i >= 0; i -= 1) {
     const dayKey = shiftKey(todayK, -i);
@@ -51,7 +52,9 @@ export function buildHeatmap(entries, today = new Date()) {
     if (entry) {
       cells.push({ dayKey, moods: entry.moods || [], today: isToday });
     } else if (!isToday && firstKey && dayKey >= firstKey) {
-      cells.push({ dayKey, missed: true, today: false });
+      cells.push(frozen.has(dayKey)
+        ? { dayKey, frozen: true, today: false }
+        : { dayKey, missed: true, today: false });
     } else {
       cells.push({ dayKey, empty: true, today: isToday });
     }
@@ -62,12 +65,13 @@ export function buildHeatmap(entries, today = new Date()) {
 // Adaptive lifetime heatmap: an array of week-rows (each 7 cells, Monday-first),
 // spanning the week of the first entry through the week containing today. Grows
 // as history accumulates; returns [] when there are no entries.
-export function buildLifetimeHeatmap(entries, today = new Date()) {
+export function buildLifetimeHeatmap(entries, today = new Date(), { frozenDays = [] } = {}) {
   const firstKey = minDayKey(entries);
   if (!firstKey) return [];
   const byDay = indexByDay(entries);
   const todayK = keyOf(today);
   const endMonday = shiftKey(todayK, -weekdayMon0(todayK));
+  const frozen = new Set(frozenDays || []);
   const rows = [];
   let weekStart = shiftKey(firstKey, -weekdayMon0(firstKey));
   while (weekStart <= endMonday) {
@@ -79,7 +83,9 @@ export function buildLifetimeHeatmap(entries, today = new Date()) {
       if (entry) {
         row.push({ dayKey, moods: entry.moods || [], today: isToday });
       } else if (dayKey > todayK) row.push({ dayKey, future: true });
-      else if (dayKey >= firstKey) row.push({ dayKey, missed: true, today: isToday });
+      else if (dayKey >= firstKey) row.push(frozen.has(dayKey)
+        ? { dayKey, frozen: true, today: isToday }
+        : { dayKey, missed: true, today: isToday });
       else row.push({ dayKey, empty: true, today: isToday });
     }
     rows.push(row);
@@ -91,11 +97,12 @@ export function buildLifetimeHeatmap(entries, today = new Date()) {
 const WEEK_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
 // 7 cells, Monday-first, for the calendar week containing today.
-export function buildWeekStrip(entries, today = new Date()) {
+export function buildWeekStrip(entries, today = new Date(), { frozenDays = [] } = {}) {
   const byDay = indexByDay(entries);
   const todayK = keyOf(today);
   const mondayK = shiftKey(todayK, -weekdayMon0(todayK));
   const firstKey = minDayKey(entries);
+  const frozen = new Set(frozenDays || []);
   const cells = [];
   for (let i = 0; i < 7; i += 1) {
     const dayKey = shiftKey(mondayK, i);
@@ -103,7 +110,8 @@ export function buildWeekStrip(entries, today = new Date()) {
     if (dayKey === todayK) state = 'today';
     else if (dayKey > todayK) state = 'future';
     else if (byDay[dayKey]) state = 'done';
-    else state = (firstKey && dayKey >= firstKey) ? 'missed' : 'empty';
+    else if (firstKey && dayKey >= firstKey) state = frozen.has(dayKey) ? 'frozen' : 'missed';
+    else state = 'empty';
     cells.push({ l: WEEK_LABELS[i], state });
   }
   return cells;

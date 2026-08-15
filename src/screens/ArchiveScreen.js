@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { View, ScrollView, Pressable, Text } from 'react-native';
 import { useTheme } from '../theme';
 import { T, Card } from '../ui';
-import { moodEmoji } from '../data';
+import { moodEmoji, MISS_EMOJI, FREEZE_EMOJI } from '../data';
 import { buildHeatmap } from '../home/calendar';
 import { searchEntries } from '../insights/search';
 import { entrySnippet } from '../insights/snippet';
@@ -16,11 +16,11 @@ import TipCard from './TipCard';
 
 const EMPTY_QUERY = { text: '', moods: [], from: null, to: null };
 
-export default function ArchiveScreen({ copy, mode, entries, onOpen, tip, onDismissTip, customMoods = [], customMoodEmoji = {} }) {
+export default function ArchiveScreen({ copy, mode, entries, onOpen, tip, onDismissTip, customMoods = [], customMoodEmoji = {}, frozenDays = [] }) {
   const t = useTheme();
   const c = t.colors;
   const [query, setQuery] = useState(EMPTY_QUERY);
-  const heat = buildHeatmap(entries);
+  const heat = buildHeatmap(entries, new Date(), { frozenDays });
   const results = searchEntries(entries, query);
   const filtering = !!(query.text || query.moods.length || query.from || query.to);
 
@@ -152,8 +152,9 @@ export function Heat({ cells, entries, onOpen, customMoodEmoji = {} }) {
       {rows.map((row, ri) => (
         <View key={ri} style={{ flexDirection: 'row', gap: 6 }}>
           {row.map((cell, i) => {
+            const isFrozen = !!cell.frozen;
             const isBlank = cell.empty || cell.missed;
-            const pressable = !isBlank;
+            const pressable = !isBlank && !isFrozen;
             const cellStyle = {
               flex: 1,
               aspectRatio: 1,
@@ -161,15 +162,17 @@ export function Heat({ cells, entries, onOpen, customMoodEmoji = {} }) {
               alignItems: 'center',
               justifyContent: 'center',
               backgroundColor: isBlank ? 'transparent' : c.accentSoft,
-              borderWidth: isBlank ? 1.5 : cell.today ? 2 : 0,
+              borderWidth: isBlank || isFrozen ? 1.5 : cell.today ? 2 : 0,
               borderColor: isBlank ? c.border : c.accentDeep,
-              borderStyle: isBlank ? 'dashed' : 'solid',
+              borderStyle: isBlank || isFrozen ? 'dashed' : 'solid',
             };
             const content = cell.missed
-              ? <Text style={{ fontSize: 19, lineHeight: 23 }}>💀</Text>
-              : !cell.empty
-                ? <Text style={{ fontSize: 19, lineHeight: 23 }}>{moodEmoji(moodFace(cell.moods, tick, cell.dayKey), customMoodEmoji)}</Text>
-                : null;
+              ? <Text style={{ fontSize: 19, lineHeight: 23 }}>{MISS_EMOJI}</Text>
+              : isFrozen
+                ? <Text style={{ fontSize: 19, lineHeight: 23 }}>{FREEZE_EMOJI}</Text>
+                : !cell.empty
+                  ? <Text style={{ fontSize: 19, lineHeight: 23 }}>{moodEmoji(moodFace(cell.moods, tick, cell.dayKey), customMoodEmoji)}</Text>
+                  : null;
             if (!pressable) {
               return <View key={i} style={cellStyle}>{content}</View>;
             }

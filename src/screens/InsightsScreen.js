@@ -13,7 +13,7 @@ import { buildLifetimeHeatmap } from '../home/calendar';
 import { entryForDayKey } from '../entries/find';
 import DeeperInsights from './DeeperInsights';
 
-export default function InsightsScreen({ copy, entries = [], streak = 0, xp = 0, plus = false, plusEnabled = false, onOpenPaywall = () => {}, onOpen = () => {}, customMoodEmoji = {} }) {
+export default function InsightsScreen({ copy, entries = [], streak = 0, xp = 0, plus = false, plusEnabled = false, onOpenPaywall = () => {}, onOpen = () => {}, customMoodEmoji = {}, frozenDays = [] }) {
   const t = useTheme();
   const c = t.colors;
 
@@ -54,7 +54,7 @@ export default function InsightsScreen({ copy, entries = [], streak = 0, xp = 0,
   const rhythmMax = Math.max(1, ...rhythm.map((x) => x.n));
 
   const life = deriveLifetime(entries, { xp, currentStreak: streak });
-  const heat = buildLifetimeHeatmap(entries);
+  const heat = buildLifetimeHeatmap(entries, new Date(), { frozenDays });
   const fmt = (n) => n.toLocaleString();
 
   return (
@@ -193,6 +193,7 @@ export default function InsightsScreen({ copy, entries = [], streak = 0, xp = 0,
 
 const LEGEND = [
   { state: 'done', label: 'kept' },
+  { state: 'frozen', label: 'a candle kept it' },
   { state: 'missed', label: 'missed' },
   { state: 'empty', label: 'not yet started' },
 ];
@@ -203,6 +204,10 @@ const LEGEND = [
 function heatCellStyle(state, c) {
   if (state === 'done') {
     return { backgroundColor: c.accent, borderWidth: 0, borderColor: 'transparent' };
+  }
+  if (state === 'frozen') {
+    // Same fill as missed, ringed in accentDeep: a day that was held, not lost.
+    return { backgroundColor: c.accentSoft, borderWidth: 1, borderColor: c.accentDeep };
   }
   if (state === 'missed') {
     return { backgroundColor: c.accentSoft, borderWidth: 1, borderColor: c.border };

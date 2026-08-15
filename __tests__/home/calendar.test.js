@@ -161,3 +161,70 @@ describe('buildLifetimeHeatmap', () => {
     expect(sun.today).toBe(true);      // today
   });
 });
+
+describe('frozen days (IMP-063)', () => {
+  it('buildHeatmap: a frozenDays key on a past no-entry day emits frozen, not missed', () => {
+    const cells = buildHeatmap(
+      [{ dayKey: '2026-06-01', moods: ['Proud'] }],
+      sun,
+      { frozenDays: ['2026-06-02'] }
+    );
+    const cell = cells.find((c) => c.dayKey === '2026-06-02');
+    expect(cell).toEqual({ dayKey: '2026-06-02', frozen: true, today: false });
+  });
+
+  it('buildHeatmap: a frozenDays key that also has an entry stays a done cell', () => {
+    const cells = buildHeatmap(
+      [{ dayKey: '2026-06-01', moods: ['Proud'] }],
+      sun,
+      { frozenDays: ['2026-06-01'] }
+    );
+    const cell = cells.find((c) => c.dayKey === '2026-06-01');
+    expect(cell).toEqual({ dayKey: '2026-06-01', moods: ['Proud'], today: false });
+  });
+
+  it('buildHeatmap: a frozenDays key before firstKey stays empty', () => {
+    const cells = buildHeatmap(
+      [{ dayKey: '2026-06-01', moods: ['Proud'] }],
+      sun,
+      { frozenDays: ['2026-05-04'] }
+    );
+    expect(cells[0]).toEqual({ dayKey: '2026-05-04', empty: true, today: false });
+  });
+
+  it('buildLifetimeHeatmap: marks the same day frozen, and a future frozenDays key stays future', () => {
+    const midWeek = new Date(2026, 5, 10, 12, 0); // Wed 2026-06-10, same week as 06-08/06-09/06-11
+    const rows = buildLifetimeHeatmap(
+      [{ dayKey: '2026-06-08', moods: ['calm'] }],
+      midWeek,
+      { frozenDays: ['2026-06-09', '2026-06-11'] }
+    );
+    const flat = rows.flat();
+    expect(flat.find((c) => c.dayKey === '2026-06-09'))
+      .toEqual({ dayKey: '2026-06-09', frozen: true, today: false });
+    expect(flat.find((c) => c.dayKey === '2026-06-11'))
+      .toEqual({ dayKey: '2026-06-11', future: true });
+  });
+
+  it('buildWeekStrip: returns state "frozen" for a frozenDays key', () => {
+    const cells = buildWeekStrip(
+      [{ dayKey: '2026-06-01', moods: ['Proud'] }],
+      wed,
+      { frozenDays: ['2026-06-02'] }
+    );
+    expect(cells[1].state).toBe('frozen');
+  });
+
+  it('regression: calling any of the three with no third argument stays byte-identical to a missed cell', () => {
+    const heatCell = buildHeatmap([{ dayKey: '2026-06-01', moods: ['Proud'] }], sun)
+      .find((c) => c.dayKey === '2026-06-02');
+    expect(heatCell).toEqual({ dayKey: '2026-06-02', missed: true, today: false });
+
+    const lifetimeCell = buildLifetimeHeatmap([{ dayKey: '2026-06-08', moods: ['calm'] }], today)
+      .flat().find((c) => c.dayKey === '2026-06-09');
+    expect(lifetimeCell).toEqual({ dayKey: '2026-06-09', missed: true, today: false });
+
+    const weekCell = buildWeekStrip([{ dayKey: '2026-06-01', moods: ['Proud'] }], wed)[1];
+    expect(weekCell.state).toBe('missed');
+  });
+});
