@@ -2471,6 +2471,42 @@ dedupe check.
 one provable failure mode and is not confirmed as the (h) root cause until the walk reports what the
 "chosen" line does on a stuck tap.
 
+### IMP-070 — one emoji, and the block says what it makes   ·   Lane: OTA   ·   Status: ✅ code-complete (2026-08-16)
+
+**Why.** WALK-04 finding (f), 2026-08-15. The custom-mood face field (`WriteFlow.js` and its twin in
+`MoodManager.js`) accepted any number of emoji — `isEmojiish` allows up to 8 code points — so a mood's face
+could be a multi-glyph string that has to fit a 34dp circle, a chip and a heatmap cell. The block's only copy
+("Name your own" / "Give it a face, then a name.") never said it makes a **feeling of your own, represented
+by a single emoji**, and the placeholder `"or type one…"` described text, not emoji.
+
+**Landed as specified:** new `firstEmoji(s)` in [`src/entries/emojiInput.js`](../src/entries/emojiInput.js)
+— hand-rolled grapheme clustering (no `Intl.Segmenter` on Hermes): one base code point plus its modifiers
+(variation selectors, skin tones, the combining keycap), a regional-indicator pair treated as one flag
+cluster, and ZWJ sequences chained through their own base+modifiers. Tag-sequence subdivision flags are
+deliberately not handled — they truncate to their base flag. `isEmojiish` was left exactly as-is; it stays
+the *storage* validator `sanitizeCustomMoodEmoji` uses on restore, separate from this *input* rule. Both
+`WriteFlow.js`'s and `MoodManager.js`'s `onEmojiTyped` now sanitize on change with `firstEmoji` instead of
+gating with `isEmojiish` (that import is now unused in both screens and was dropped). Copy: the subtitle in
+`WriteFlow.js` is now "Make a feeling of your own: one emoji for its face, then what you call it."; both
+face-field placeholders read "or any emoji…", with `WriteFlow.js`'s field widened from 90 to 110 to match
+`MoodManager.js` and avoid clipping. `MoodManager.js`'s name field also picked up `stripEmoji` on change
+(`onChangeText={(v) => setNameInput(stripEmoji(v))}`) — IMP-066 sanitized the create path's name field and
+left the edit path behind; this closes that gap.
+
+**Tests (+10, no new suite files):** `__tests__/entries/emojiInput.test.js` (+7, new `describe('firstEmoji')`)
+— every `MOOD_PALETTE` glyph round-trips · `'🌵🌵🌵'` → `'🌵'` · `'❤️🔥'` → `'❤️'` · `'👍🏽'` → `'👍🏽'` · a ZWJ
+family sequence returns whole · `'abc'`/`''`/`null`/`undefined` → `''` · `'🙂abc'` → `'🙂'`.
+`__tests__/screens/WriteFlowMood.test.js` (+2, 2 existing assertions repointed from the old `'or type
+one…'` placeholder to `'or any emoji…'`) — typing `'🌵🌵🌵'` leaves `'🌵'` in the field and Add fires with
+it · the new subtitle renders. `__tests__/screens/MoodManager.test.js` (+1) — the edit sheet's face field
+holds `'😬'` after typing `'😬😬'`.
+
+**Proof:** `npm test` → **848 passed, 83 suites** (was 838/83). `npx expo export --platform android` clean.
+**Ship:** OTA lane, no bump — rides the next batch; no `Release-Lane` trailer on this commit.
+**Commit:** `fix(entries): a custom feeling gets one face, and the block says what it makes (IMP-070)`
+(`8b7a976`).
+**Runtime proof:** **WALK-04**, re-run whole — a separate chat.
+
 ---
 
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
@@ -2517,6 +2553,17 @@ one provable failure mode and is not confirmed as the (h) root cause until the w
 ## Session notes (archived from PROGRESS.md)
 
 _Append-only handoff log moved out of PROGRESS.md to keep it light. Newest 1–2 notes stay live in PROGRESS.md; everything else is here. Git history is the full record._
+
+_2026-08-15 (Opus scoping chat — WALK-04's three re-run defects) — **no code, docs only, uncommitted at the
+time of writing.** Wrote `IMP-069` / `IMP-070` / `IMP-071` in full into `docs/specs-open.md` (findings h, f,
+g — take them in that order), added their three ⬜ backlog rows, rewrote the WALK-04 finding section from
+"needs scoping" to what a build chat and the next walk each have to carry, pointed WALK-04's row and result
+block at the three specs, corrected the stale stack line (823/82 → **826/83**), and moved the IMP-067 note
+down to `docs/build-log.md`. The one thing not to lose: **IMP-069 does not claim to have found (h)'s root
+cause** — it removes the only provable failure mode (duplicate React keys in the chip row) and adds the
+"N chosen" line so WALK-04's next pass can report evidence instead of a fourth theory. NEXT: a build chat
+takes **IMP-069** (first ⬜). A walk chat can still take **WALK-07**, **WALK-06** or **WALK-15** — none of
+them waits on this._
 
 _2026-08-15 (IMP-068, the Paywall footer stops covering the price) — **code-complete, committed `ce504fc`,
 not shipped; OTA lane, rides the next batch.** The single spec'd change — `src/screens/Paywall.js`'s

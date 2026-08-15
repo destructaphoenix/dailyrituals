@@ -32,9 +32,9 @@
 runtime proof is a separate WALK row for a separate chat, so a missing walk is *not* an unfinished spec.
 Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`](docs/playbook.md).
 
-> **The build queue holds two specs — `IMP-070`, `IMP-071`, scoped 2026-08-15 from WALK-04's re-run**
-> (findings f, g). Take them in that order; each is 🎨 and none gates the release build. `IMP-063` through
-> `IMP-069` have all landed and their specs are archived in `docs/build-log.md`.
+> **The build queue holds one spec — `IMP-071`, scoped 2026-08-15 from WALK-04's re-run** (finding g). It is
+> 🎨 and does not gate the release build. `IMP-063` through `IMP-070` have all landed and their specs are
+> archived in `docs/build-log.md`.
 > **WALKS are still the risk-ordered work**: the 🚦 group gates a release carrying ~25 unpublished tasks —
 > WALK-07 and WALK-06 can now be re-run whole, and WALK-04's re-run waits on the remaining two.
 >
@@ -70,7 +70,7 @@ build ships.)
 
 **Current stack:** Expo SDK **54** · RN **0.81.5** · React **19.1.0** · **Legacy Architecture**
 (`newArchEnabled: false`, held deliberately) · `targetSdkVersion` **36**, `minSdk` **24** · `npm test` →
-**838 passed, 83 suites**. Details in [`docs/playbook.md`](docs/playbook.md).
+**848 passed, 83 suites**. Details in [`docs/playbook.md`](docs/playbook.md).
 
 ---
 
@@ -147,7 +147,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 067 | A stacked row wraps; Mood Mix bars line up | OTA | ✅ code-complete 2026-08-15 · walk = WALK-07 (re-run whole) |
 | 068 | The Paywall footer stops covering the price | OTA | ✅ code-complete 2026-08-15 · walk = WALK-07 (re-run whole) |
 | 069 | A feeling you picked can be put back down | OTA | ✅ code-complete 2026-08-16 · walk = WALK-04 (re-run whole) |
-| 070 | One emoji, and the block says what it makes | OTA | ⬜ [spec](docs/specs-open.md#imp-070--one-emoji-and-the-block-says-what-it-makes) — WALK-04 (f) |
+| 070 | One emoji, and the block says what it makes | OTA | ✅ code-complete 2026-08-16 · walk = WALK-04 (re-run whole) |
 | 071 | The filter row stops jumping under your thumb | OTA | ⬜ [spec](docs/specs-open.md#imp-071--the-filter-row-stops-jumping-under-your-thumb) — WALK-04 (g) |
 
 ---
@@ -174,18 +174,19 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
   The old "promote vc11 → production, or hold" framing is superseded: vc11 is two weeks of work behind HEAD,
   so promoting it would ship a stale build rather than this work.
   **IMP-063…071 are 🎨 and are NOT part of this sequence** — they land either before the bump *in full*, or
-  after the build as an OTA. Never split across it. (IMP-063…069 landed 2026-08-15/16; IMP-070…071 remain
+  after the build as an OTA. Never split across it. (IMP-063…070 landed 2026-08-15/16; IMP-071 remains
   open.)
 - **Cash embers: settled in principle (dropped 2026-08-03), not finalised.** Must be decided before
   `PLUS_ENABLED` flips — it determines which Play products get created. Full argument in the playbook.
 - **`PLUS_ENABLED` must not flip until every `PLUS_PERKS` line is true.** The one remaining gap is perk #6,
   the PDF (IMP-022, deferred). Gate checklist in the playbook → Phase 10b.
 
-### 🟠 WALK-04 re-run finding (2026-08-15) — (h) landed as IMP-069; (f)/(g) remain (IMP-070/071)
+### 🟠 WALK-04 re-run finding (2026-08-15) — (h) landed as IMP-069, (f) as IMP-070; (g) remains (IMP-071)
 
 **(h) → IMP-069, code-complete 2026-08-16** (mood deselect — a duplicate React key candidate root cause,
-unconfirmed until the next walk). **(f) → IMP-070** (one emoji + the missing copy), **(g) → IMP-071** (stop
-auto-scrolling the filter row) — specs in `docs/specs-open.md`, verbatim write-up in `docs/walk-open.md` →
+unconfirmed until the next walk). **(f) → IMP-070, code-complete 2026-08-16** (the custom-mood face field
+now takes exactly one emoji, both copies of it, and says what the block is for). **(g) → IMP-071** (stop
+auto-scrolling the filter row) — spec in `docs/specs-open.md`, verbatim write-up in `docs/walk-open.md` →
 WALK-04's second result block. Two things not to lose: **(h)'s root cause is still unproven** — IMP-069
 removed the one failure mode that *is* provable and added a "N chosen" line so the next walk reports
 evidence, not a fourth theory. And **(g) is the owner reversing landed behavior, cost accepted** — the chip
@@ -224,17 +225,6 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
-_2026-08-15 (Opus scoping chat — WALK-04's three re-run defects) — **no code, docs only, uncommitted at the
-time of writing.** Wrote `IMP-069` / `IMP-070` / `IMP-071` in full into `docs/specs-open.md` (findings h, f,
-g — take them in that order), added their three ⬜ backlog rows, rewrote the WALK-04 finding section from
-"needs scoping" to what a build chat and the next walk each have to carry, pointed WALK-04's row and result
-block at the three specs, corrected the stale stack line (823/82 → **826/83**), and moved the IMP-067 note
-down to `docs/build-log.md`. The one thing not to lose: **IMP-069 does not claim to have found (h)'s root
-cause** — it removes the only provable failure mode (duplicate React keys in the chip row) and adds the
-"N chosen" line so WALK-04's next pass can report evidence instead of a fourth theory. NEXT: a build chat
-takes **IMP-069** (first ⬜). A walk chat can still take **WALK-07**, **WALK-06** or **WALK-15** — none of
-them waits on this._
-
 _2026-08-16 (IMP-069, a feeling you picked can be put back down) — **code-complete, committed `b2ff8c4`, not
 shipped; OTA lane, rides the next batch.** All 5 steps done in order — new `allMoodChips(builtIn,
 customMoods)` in `src/entries/moodChipOrder.js` (case-insensitive, trimmed dedupe, built-ins win), wired into
@@ -250,3 +240,19 @@ lose: the duplicate-key fix is a candidate root cause for (h), not confirmed** �
 turns that into evidence for the next WALK-04 run. NEXT: a build chat takes **IMP-070** (first ⬜,
 [spec](docs/specs-open.md#imp-070--one-emoji-and-the-block-says-what-it-makes)). A walk chat can still take
 **WALK-07**, **WALK-06** or **WALK-15**._
+
+_2026-08-16 (IMP-070, one emoji, and the block says what it makes) — **code-complete, committed `8b7a976`,
+not shipped; OTA lane, rides the next batch.** New `firstEmoji(s)` in `src/entries/emojiInput.js`
+(hand-rolled grapheme clustering; `isEmojiish` untouched, still the storage validator), wired into
+`WriteFlow.js`'s and `MoodManager.js`'s face-field `onEmojiTyped` (their now-unused `isEmojiish` imports
+dropped); `WriteFlow.js`'s subtitle explains the block, both placeholders read "or any emoji…", field
+widened 90→110; `MoodManager.js`'s name field now strips emoji on change too (IMP-066 left the edit path
+behind). +10 tests exactly as specified (`emojiInput.test.js` +7, `WriteFlowMood.test.js` +2 with 2 existing
+assertions repointed, `MoodManager.test.js` +1). **Proof:** `npm test` → **848 passed, 83 suites** (was
+838/83). `npx expo export --platform android` clean. LAST command: `git commit` → `8b7a976`. Archived the
+spec, ticked its row, updated the WALK-04 finding + ACTIVE TRACK callout, corrected the stack line in both
+`PROGRESS.md` and `docs/specs-open.md`, moved the 2026-08-15 Opus scoping note down to `docs/build-log.md`.
+NEXT: a build chat takes **IMP-071** (first ⬜,
+[spec](docs/specs-open.md#imp-071--the-filter-row-stops-jumping-under-your-thumb)) — last spec in the queue;
+**it reverses landed behavior (finding g), not a defect fix — don't re-litigate the scroll-back-to-x0
+decision.** A walk chat can still take **WALK-07**, **WALK-06** or **WALK-15**._
