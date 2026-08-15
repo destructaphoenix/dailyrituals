@@ -1,7 +1,7 @@
 // InsightsScreen.js — "Your record" (lifetime stats) + "Your patterns" (mood/rhythm).
 
 import React from 'react';
-import { View, ScrollView, Text, Pressable } from 'react-native';
+import { View, ScrollView, Text, Pressable, useWindowDimensions } from 'react-native';
 import { useTheme } from '../theme';
 import { T, Card } from '../ui';
 import { ChartIcon } from '../icons';
@@ -11,11 +11,14 @@ import { deriveLifetime } from '../insights/lifetime';
 import { cellState, monthLabelsForRows } from '../insights/heatCells';
 import { buildLifetimeHeatmap } from '../home/calendar';
 import { entryForDayKey } from '../entries/find';
+import { moodLabelWidth } from '../insights/moodMixLayout';
 import DeeperInsights from './DeeperInsights';
 
 export default function InsightsScreen({ copy, entries = [], streak = 0, xp = 0, plus = false, plusEnabled = false, onOpenPaywall = () => {}, onOpen = () => {}, customMoodEmoji = {}, frozenDays = [] }) {
   const t = useTheme();
   const c = t.colors;
+  const { fontScale } = useWindowDimensions();
+  const labelW = moodLabelWidth(fontScale);
 
   const data = deriveInsights(entries, streak);
 
@@ -131,7 +134,7 @@ export default function InsightsScreen({ copy, entries = [], streak = 0, xp = 0,
               <View style={{ gap: 13 }}>
                 {moodMix.map((x, i) => (
                   <View key={x.m} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                    <View style={{ minWidth: 84, flexShrink: 1, flexDirection: 'row', alignItems: 'center', gap: 7 }}>
+                    <View style={{ width: labelW, flexDirection: 'row', alignItems: 'center', gap: 7 }}>
                       <Text style={{ fontSize: 15 }}>{moodEmoji(x.m, customMoodEmoji)}</Text>
                       <T w={700} color={c.ink} numberOfLines={1} style={{ fontSize: 13.5, flexShrink: 1 }}>{x.m}</T>
                     </View>

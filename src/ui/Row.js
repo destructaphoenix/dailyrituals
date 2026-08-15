@@ -33,7 +33,8 @@ export default function Row({ icon, label, labelColor, value, right, onPress, on
         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <View style={{ flex: 1 }}>
             <T w={700} color={labelColor || c.ink} numberOfLines={2} style={{ fontSize: 15.5 }}>{label}</T>
-            <T w={700} color={c.muted} numberOfLines={1} style={{ fontSize: 14, marginTop: 3 }}>{value}</T>
+            {/* stacked value owns the full row width here, so it may wrap; the inline one below may not */}
+            <T w={700} color={c.muted} numberOfLines={3} style={{ fontSize: 14, marginTop: 3 }}>{value}</T>
           </View>
           {onPress ? <Chevron dir="right" size={18} color={c.muted} /> : null}
         </View>

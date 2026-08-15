@@ -167,7 +167,7 @@ export default function YouScreen({
                 onPress={onOpenPaywall} />
             ) : offerableYears.length === 0 ? (
               <Row icon={<ChartIcon size={20} color={c.accentDeep} />} label="Annual Recap"
-                value="Unlocks after your first full year" />
+                value="After your first year" />
             ) : (
               offerableYears.map((y, i) => (
                 <React.Fragment key={y}>

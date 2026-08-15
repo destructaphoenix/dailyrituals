@@ -32,4 +32,18 @@ describe('Row', () => {
     const view = render(<Row icon={null} label="Your name" value={'A'.repeat(40)} onPress={() => {}} />);
     assertNoUnboundedFlexText(view);
   });
+
+  test('stacked row: the value renders with numberOfLines={3}', () => {
+    const view = render(
+      <Row icon={null} label="Back up my journal" value="Backed up 42 days ago — back up again soon" onPress={() => {}} />
+    );
+    const value = view.getByText('Backed up 42 days ago — back up again soon');
+    expect(value.props.numberOfLines).toBe(3);
+  });
+
+  test('inline row: the value renders with numberOfLines={1}', () => {
+    const view = render(<Row icon={null} label="Appearance" value="Night" onPress={() => {}} />);
+    const value = view.getByText('Night');
+    expect(value.props.numberOfLines).toBe(1);
+  });
 });
