@@ -176,10 +176,26 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 - **`PLUS_ENABLED` must not flip until every `PLUS_PERKS` line is true.** The one remaining gap is perk #6,
   the PDF (IMP-022, deferred). Gate checklist in the playbook → Phase 10b.
 
-### 🔴 WALK-04, WALK-06, WALK-07 findings — all scoped specs landed (IMP-063…068, 2026-08-15) — ✅ RESOLVED
+### 🔴 WALK-04 re-run finding (2026-08-15) — 3 new/unresolved defects, needs scoping
 
-Full writeups archived in `docs/build-log.md` → "Resolved findings". All three walks **stay ❌** in
-`docs/walk-open.md` — each needs a whole re-run now that its spec(s) have landed.
+IMP-065 + IMP-066 (the specs scoped from WALK-04's first pass) are code-complete and the re-run confirmed
+5 of their 6 targeted fixes hold. Full write-up (verbatim) in `docs/walk-open.md` → WALK-04's own section,
+second result block. Three defects, none yet scoped as an `IMP-xxx` — Opus's lane:
+
+- **(f)** the custom-mood "face" field (typed-emoji entry) still accepts more than one emoji, and there is
+  still no copy telling the user the block creates a custom mood/feeling represented by a single emoji —
+  IMP-066 only sanitized the *name* field, the *face* field was carried over verbatim.
+- **(g)** IMP-065's landed scroll-to-`x:0`-on-select behavior is itself the complaint now — selecting a mood
+  chip snaps the row back to the start, so picking several filters means re-scrolling right each time. This
+  needs a design change (move only the selected chip; don't auto-scroll the view), not a bug fix.
+- **(h)** WriteFlow mood deselect (`toggleMood`) is still not reachable live — tapping an already-selected
+  chip does nothing — **despite** IMP-066 landing a passing regression test for exactly this. The
+  keyboard-focus theory (IMP-066's fix) did not hold; this needs actual investigation, not another guess.
+  Owner also saw "1 · Its face" (IMP-066's new custom-mood header text) associated with the stuck state —
+  worth checking for a label/rendering mix-up between the mood-chip row and the custom-mood block.
+
+**WALK-06 and WALK-07** still stay ❌ in `docs/walk-open.md` pending their own re-run — untouched by this
+session. Full first-pass writeups archived in `docs/build-log.md` → "Resolved findings".
 
 ### 🟡 IMP-056 residual + the IMP-057 decision (2026-08-10)
 

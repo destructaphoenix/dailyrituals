@@ -57,7 +57,7 @@ ship, so any fix the earlier walks turn up would invalidate an R8 pass done befo
 | WALK-13 | 🚦 | [The reminder you can answer](#walk-13--the-reminder-you-can-answer) | IMP-054, **+ the duplicate-fire fix** | **device** (OEM behaviour + real doze) | 👤 | ⬜ — **unblocked 2026-08-13** (IMP-054 landed, `18d8c2e`) |
 | WALK-03 | 🚦 | [JSON export → share → restore round trip](#walk-03--json-export-round-trip) | IMP-020, IMP-043 | **device** (share-sheet targets) | 👤 | ⬜ — the user's data escape hatch |
 | WALK-12 | 🚦 | [The R8 release-variant pass](#walk-12--the-r8-release-variant-pass) | IMP-044 | **device** | 👤 | ⬜ — **the last 🚦, on the final build candidate.** First minified build ever; failure is silent |
-| WALK-04 | 🎨 | [Search + the write flow's moods](#walk-04--search--moods) | IMP-035, IMP-037, **IMP-053** | emulator | 👤 | ❌ **2026-08-15** — base search/filter/heatmap behavior passed; 5 UX defects found. **Scoped 2026-08-15 as IMP-065 + IMP-066** (`docs/specs-open.md`). **Re-run whole once both land** — the earlier pass does not carry over |
+| WALK-04 | 🎨 | [Search + the write flow's moods](#walk-04--search--moods) | IMP-035, IMP-037, **IMP-053** | emulator | 👤 | ❌ **2026-08-15 re-run** — IMP-065/066 landed the prior 5 findings, but the re-run surfaced 3 new/unresolved defects. Needs scoping (Opus's lane) |
 | WALK-06 | 🎨 | [Streak insurance — candles spend themselves](#walk-06--streak-insurance) | IMP-039 | emulator | 👤 | ❌ **2026-08-15** — mechanical behavior (freeze survival, decrement-by-one, idempotence, celebration-streak match, shop copy) passed; 4 UX defects found. **Scoped 2026-08-15 as IMP-063 + IMP-064** (`docs/specs-open.md`). **Re-run whole once both land** — IMP-063 adds a frozen-day glyph the walk must now check for |
 | WALK-07 | 🎨 | [Modal screens actually scroll](#walk-07--modal-scroll) | IMP-042 | emulator | 👤 (visual, two nav modes) | ❌ **2026-08-15** — Achievements/Shop/Reading sheet/Get Embers/Manage Subscription all passed, incl. max (2.0x) font scale; Paywall footer overlap + 2 bonus defects. **Scoped 2026-08-15 as IMP-067 + IMP-068** (`docs/specs-open.md`). **Re-run whole once both land**; the Paywall half still needs T1 |
 | WALK-08 | 🎨 | [Font scale + layout on the nine new screens](#walk-08--font-scale) | IMP-030 regression | **device** (real font metrics) | 👤 | ⬜ |
@@ -134,10 +134,10 @@ harness** (`__DEV__` false) and no Metro.
 6. Write flow: pick **multiple** moods; add a **custom** one via "Name your own…"; it persists and
    reappears as a chip next session; adding it twice dedups.
 
-**Result — ❌ 2026-08-15.** Steps 1-5's base behavior passed (both-field search, accent-folding, multi-select
-OR filtering, zero-results copy, heatmap non-reactivity, dedup on repeat custom-mood add). Five defects
-surfaced, written up in full (with file:line) in `PROGRESS.md` → Open items → "WALK-04 finding": (a) the
-`wished ·` snippet prefix's asymmetry with `did` is a design question, not confirmed as a bug; (b) the
+**Result — ❌ 2026-08-15 (first pass).** Steps 1-5's base behavior passed (both-field search, accent-folding,
+multi-select OR filtering, zero-results copy, heatmap non-reactivity, dedup on repeat custom-mood add). Five
+defects surfaced, written up in full (with file:line) in `PROGRESS.md` → Open items → "WALK-04 finding": (a)
+the `wished ·` snippet prefix's asymmetry with `did` is a design question, not confirmed as a bug; (b) the
 Archive search bar has no way to clear typed text; (c) selected mood filter chips don't move to the front,
 so deselecting one picked late in the list means scrolling back to find it; (d) the owner could not deselect
 an already-picked mood in WriteFlow's "How did the day feel?" step, which conflicts with the toggle-off code
@@ -145,6 +145,35 @@ path read during writeup — needs re-confirming live, not just re-read; (e) the
 (emoji palette / typed-emoji / name fields) reads as an unclear, oddly-placed layout, and the name field
 takes emoji with no character filtering. None block the remaining steps. Each needs a new `IMP-xxx` —
 Opus's lane to scope, not this walk's.
+
+**Result — ❌ 2026-08-15 (re-run, after IMP-065 + IMP-066 landed).** Steps 1-5 confirmed passing again, and
+old finding (e)'s emoji-filtering-in-the-name-field bug is fixed. Three defects surfaced on this pass —
+two carried over from the first pass in worse or unresolved form, one new:
+
+- **(f) The custom-mood "face" field still takes unlimited emoji, and nothing tells the user what the block
+  is for.** IMP-066 restructured the block into "1 · Its face" / "2 · Its name" and sanitized the *name*
+  field (old finding e), but the typed-emoji *face* field itself ("or type one…" placeholder, carried over
+  verbatim per IMP-066's own writeup) was left untouched: it still accepts an arbitrary string of emoji
+  instead of exactly one, and there's no copy anywhere explaining that this block lets you create your own
+  mood/feeling represented by a single emoji. The owner also flags the placeholder text "type" as a bad fit
+  for a field whose entire content model is "pick or type an emoji," not text.
+- **(g) Regression in the mood-chip fix itself (IMP-065).** IMP-065 landed exactly what it spec'd — the
+  selected chip moves to the front AND the row scrolls back to `x: 0` on select. Walked live, the scroll-to-0
+  is the problem: selecting a mood snaps the whole chip row back to the start, so picking a second or third
+  filter means scrolling right again each time to find the remaining unselected chips. Owner's ask: only the
+  selected chip should move to the front — the view should not auto-scroll.
+- **(h) WriteFlow mood deselect is still broken post-IMP-066**, despite IMP-066 adding a passing regression
+  test ("tapping a selected chip deselects it"). Live behavior: tapping an already-selected mood chip in the
+  "How did the day feel?" step does **nothing** — it stays selected, no toggle-off. The owner also reported
+  seeing "1 · Its face" (the custom-mood block's new section header text from IMP-066) associated with the
+  stuck-selected state, which is unexplained and worth the next investigator checking for a label/rendering
+  mix-up between the mood chips and the custom-mood block — not just re-testing the keyboard-focus theory
+  IMP-066 fixed. This is the third time (d)/(h) has been walked; the test passing does not mean the live
+  behavior is covered.
+
+(g) is a design-decision reversal on IMP-065's landed behavior, not a leftover. (h) needs real
+investigation, not another guess — the keyboard-focus theory has now been tried and didn't hold. Each needs
+a new `IMP-xxx` — Opus's lane to scope, not this walk's.
 
 ---
 
