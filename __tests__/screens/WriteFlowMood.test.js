@@ -1,4 +1,5 @@
 import React from 'react';
+import { ScrollView } from 'react-native';
 import { render, fireEvent } from '@testing-library/react-native';
 import WriteFlow from '../../src/screens/WriteFlow';
 import { MOOD_PALETTE, CUSTOM_MOOD_FALLBACK } from '../../src/data';
@@ -86,5 +87,38 @@ describe('WriteFlow — mandatory mood gate (regression)', () => {
     fireEvent.press(view.getByText('Grateful'));
     fireEvent.press(view.getByText('Finish'));
     expect(onComplete).toHaveBeenCalledWith({ did: 'two words', wished: 'more words', moods: ['Grateful'] });
+  });
+});
+
+describe('WriteFlow — the mood step stops fighting you (IMP-066)', () => {
+  test('tapping a selected chip deselects it', () => {
+    const onComplete = jest.fn();
+    const view = renderOnMoodStep({ onComplete });
+    fireEvent.press(view.getByText('Grateful'));
+    fireEvent.press(view.getByText('Grateful'));
+    fireEvent.press(view.getByText('Finish'));
+    expect(onComplete).not.toHaveBeenCalled();
+  });
+
+  test('every ScrollView on the mood step persists taps through the keyboard', () => {
+    const view = renderOnMoodStep();
+    const scrollViews = view.UNSAFE_getAllByType(ScrollView);
+    expect(scrollViews.length).toBeGreaterThan(0);
+    scrollViews.forEach((sv) => {
+      expect(sv.props.keyboardShouldPersistTaps).toBe('handled');
+    });
+  });
+
+  test('typing "😴Sleepy" into Name your own… and pressing Add fires with the stripped name', () => {
+    const onAddCustomMood = jest.fn();
+    const view = renderOnMoodStep({ onAddCustomMood });
+    fireEvent.changeText(view.getByPlaceholderText('Name your own…'), '😴Sleepy');
+    fireEvent.press(view.getByText('Add'));
+    expect(onAddCustomMood).toHaveBeenCalledWith('Sleepy', MOOD_PALETTE[0]);
+  });
+
+  test('the name field caps at 24 characters', () => {
+    const view = renderOnMoodStep();
+    expect(view.getByPlaceholderText('Name your own…').props.maxLength).toBe(24);
   });
 });

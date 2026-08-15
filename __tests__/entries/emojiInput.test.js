@@ -1,4 +1,5 @@
-import { isEmojiish } from '../../src/entries/emojiInput';
+import { isEmojiish, stripEmoji } from '../../src/entries/emojiInput';
+import { MOOD_PALETTE } from '../../src/data';
 
 describe('isEmojiish', () => {
   test('a single emoji is valid', () => {
@@ -53,5 +54,36 @@ describe('isEmojiish', () => {
     expect(() => isEmojiish(42)).not.toThrow();
     expect(() => isEmojiish({})).not.toThrow();
     expect(() => isEmojiish([])).not.toThrow();
+  });
+});
+
+describe('stripEmoji', () => {
+  test('every MOOD_PALETTE glyph strips to empty, including variation-selector pairs', () => {
+    expect(MOOD_PALETTE.every((e) => stripEmoji(e) === '')).toBe(true);
+  });
+
+  test('"Café" survives byte-for-byte', () => {
+    expect(stripEmoji('Café')).toBe('Café');
+  });
+
+  test('the Devanagari "थका" survives byte-for-byte', () => {
+    expect(stripEmoji('थका')).toBe('थका');
+  });
+
+  test('"Sleepy😴" strips to "Sleepy"', () => {
+    expect(stripEmoji('Sleepy😴')).toBe('Sleepy');
+  });
+
+  test('a ZWJ sequence strips to empty with no joiner left behind', () => {
+    expect(stripEmoji('👨‍👩‍👧')).toBe('');
+  });
+
+  test('null and undefined strip to empty', () => {
+    expect(stripEmoji(null)).toBe('');
+    expect(stripEmoji(undefined)).toBe('');
+  });
+
+  test('digits, spaces, hyphens and apostrophes survive', () => {
+    expect(stripEmoji("Half-awake 2'o clock")).toBe("Half-awake 2'o clock");
   });
 });

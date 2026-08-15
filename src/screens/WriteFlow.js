@@ -7,7 +7,7 @@ import { useTheme } from '../theme';
 import { T, PrimaryButton } from '../ui';
 import { Sun, Chevron, Close } from '../icons';
 import { MOODS, MOOD_PALETTE, moodEmoji } from '../data';
-import { isEmojiish } from '../entries/emojiInput';
+import { isEmojiish, stripEmoji } from '../entries/emojiInput';
 import { todayLabel } from '../time/clock';
 import { useKeyboardHeight } from '../ui/useKeyboardHeight';
 import IconBtn from '../ui/IconBtn';
@@ -118,7 +118,7 @@ export default function WriteFlow({ copy, insets, onClose, onComplete, initial, 
         </>
       ) : (
         <>
-          <ScrollView contentContainerStyle={{ paddingHorizontal: 22, paddingTop: 12, paddingBottom: 18, flexGrow: 1 }}>
+          <ScrollView contentContainerStyle={{ paddingHorizontal: 22, paddingTop: 12, paddingBottom: 18, flexGrow: 1 }} keyboardShouldPersistTaps="handled">
             <T d w={600} color={c.muted} style={{ fontSize: 13, letterSpacing: 0.5, textTransform: 'uppercase' }}>{copy.epitaph} {todayLabel()}</T>
             <T d w={700} color={c.ink} style={{ fontSize: 27, lineHeight: 32, marginTop: 8, marginBottom: 4 }}>{copy.moodQ}</T>
             <T w={600} color={c.muted} style={{ fontSize: 14, lineHeight: 19.6 }}>{copy.moodHelp}</T>
@@ -129,6 +129,9 @@ export default function WriteFlow({ copy, insets, onClose, onComplete, initial, 
                   <Pressable
                     key={m}
                     onPress={() => toggleMood(m)}
+                    accessibilityRole="button"
+                    accessibilityLabel={m}
+                    accessibilityState={{ selected: sel }}
                     style={[
                       { flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 15, paddingVertical: 11, borderRadius: 999, borderWidth: 1.5 },
                       sel
@@ -143,25 +146,41 @@ export default function WriteFlow({ copy, insets, onClose, onComplete, initial, 
                 );
               })}
             </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginTop: 16, paddingRight: 8 }}>
-              {MOOD_PALETTE.map((e) => {
-                const sel = emojiPick === e;
-                return (
-                  <Pressable
-                    key={e}
-                    onPress={() => pickPaletteEmoji(e)}
-                    accessibilityLabel={`Choose ${e} for your custom mood`}
-                    style={{
-                      width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center',
-                      borderWidth: sel ? 2 : 0, borderColor: c.accent, backgroundColor: c.surface,
-                    }}
-                  >
-                    <Text style={{ fontSize: 17 }}>{e}</Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 }}>
+            {/* Name your own — one headed group with two numbered steps (IMP-066). It was
+                three unlabelled rows before, and "or type one…" had nothing to be an
+                alternative *to*. */}
+            <View style={{ marginTop: 26, paddingTop: 16, borderTopWidth: 1, borderTopColor: c.border }}>
+              <T d w={700} color={c.ink} style={{ fontSize: 16 }}>Name your own</T>
+              <T w={600} color={c.muted} style={{ fontSize: 13, marginTop: 2, lineHeight: 18 }}>
+                Give it a face, then a name.
+              </T>
+
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 16 }}>
+                <T w={800} color={c.muted} style={{ fontSize: 12, letterSpacing: 0.5, textTransform: 'uppercase' }}>1 · Its face</T>
+                <View style={{ width: 34, height: 34, borderRadius: 17, borderWidth: 2, borderColor: c.accent, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ fontSize: 18 }}>{emojiPick}</Text>
+                </View>
+              </View>
+
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 8, marginTop: 10, paddingRight: 8 }}>
+                {MOOD_PALETTE.map((e) => {
+                  const sel = emojiPick === e;
+                  return (
+                    <Pressable
+                      key={e}
+                      onPress={() => pickPaletteEmoji(e)}
+                      accessibilityLabel={`Choose ${e} for your custom mood`}
+                      style={{
+                        width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center',
+                        borderWidth: sel ? 2 : 0, borderColor: c.accent, backgroundColor: c.surface,
+                      }}
+                    >
+                      <Text style={{ fontSize: 17 }}>{e}</Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+
               <TextInput
                 value={emojiTyped}
                 onChangeText={onEmojiTyped}
@@ -170,35 +189,38 @@ export default function WriteFlow({ copy, insets, onClose, onComplete, initial, 
                 autoCorrect={false}
                 maxLength={12}
                 style={{
-                  width: 90, paddingHorizontal: 12, paddingVertical: 9, borderRadius: 999,
+                  marginTop: 10, width: 90, paddingHorizontal: 12, paddingVertical: 9, borderRadius: 999,
                   borderWidth: 1.5, borderColor: c.border, backgroundColor: c.surface,
                   fontFamily: t.body(600), fontSize: 14, color: c.ink,
                 }}
               />
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 16 }}>
-              <TextInput
-                value={customInput}
-                onChangeText={setCustomInput}
-                placeholder="Name your own…"
-                placeholderTextColor={c.placeholder}
-                onSubmitEditing={addCustomMood}
-                style={{
-                  flex: 1, paddingHorizontal: 15, paddingVertical: 11, borderRadius: 999,
-                  borderWidth: 1.5, borderColor: c.border, backgroundColor: c.surface,
-                  fontFamily: t.body(600), fontSize: 14, color: c.ink,
-                }}
-              />
-              <Pressable
-                onPress={addCustomMood}
-                disabled={!customInput.trim()}
-                style={{
-                  paddingHorizontal: 16, paddingVertical: 11, borderRadius: 999,
-                  backgroundColor: customInput.trim() ? c.accent : c.border,
-                }}
-              >
-                <T w={700} color={customInput.trim() ? c.onAccent : c.muted} style={{ fontSize: 14 }}>Add</T>
-              </Pressable>
+
+              <T w={800} color={c.muted} style={{ fontSize: 12, letterSpacing: 0.5, textTransform: 'uppercase', marginTop: 18 }}>2 · Its name</T>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 }}>
+                <TextInput
+                  value={customInput}
+                  onChangeText={(v) => setCustomInput(stripEmoji(v))}
+                  placeholder="Name your own…"
+                  placeholderTextColor={c.placeholder}
+                  maxLength={24}
+                  onSubmitEditing={addCustomMood}
+                  style={{
+                    flex: 1, paddingHorizontal: 15, paddingVertical: 11, borderRadius: 999,
+                    borderWidth: 1.5, borderColor: c.border, backgroundColor: c.surface,
+                    fontFamily: t.body(600), fontSize: 14, color: c.ink,
+                  }}
+                />
+                <Pressable
+                  onPress={addCustomMood}
+                  disabled={!customInput.trim()}
+                  style={{
+                    paddingHorizontal: 16, paddingVertical: 11, borderRadius: 999,
+                    backgroundColor: customInput.trim() ? c.accent : c.border,
+                  }}
+                >
+                  <T w={700} color={customInput.trim() ? c.onAccent : c.muted} style={{ fontSize: 14 }}>Add</T>
+                </Pressable>
+              </View>
             </View>
           </ScrollView>
           <Foot insets={insets}>
