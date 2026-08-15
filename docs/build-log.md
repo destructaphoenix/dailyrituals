@@ -3133,6 +3133,22 @@ turns that into evidence for the next WALK-04 run. NEXT: a build chat takes **IM
 [spec](docs/specs-open.md#imp-070--one-emoji-and-the-block-says-what-it-makes)). A walk chat can still take
 **WALK-07**, **WALK-06** or **WALK-15**._
 
+_2026-08-16 (IMP-070, one emoji, and the block says what it makes) — **code-complete, committed `8b7a976`,
+not shipped; OTA lane, rides the next batch.** New `firstEmoji(s)` in `src/entries/emojiInput.js`
+(hand-rolled grapheme clustering; `isEmojiish` untouched, still the storage validator), wired into
+`WriteFlow.js`'s and `MoodManager.js`'s face-field `onEmojiTyped` (their now-unused `isEmojiish` imports
+dropped); `WriteFlow.js`'s subtitle explains the block, both placeholders read "or any emoji…", field
+widened 90→110; `MoodManager.js`'s name field now strips emoji on change too (IMP-066 left the edit path
+behind). +10 tests exactly as specified (`emojiInput.test.js` +7, `WriteFlowMood.test.js` +2 with 2 existing
+assertions repointed, `MoodManager.test.js` +1). **Proof:** `npm test` → **848 passed, 83 suites** (was
+838/83). `npx expo export --platform android` clean. LAST command: `git commit` → `8b7a976`. Archived the
+spec, ticked its row, updated the WALK-04 finding + ACTIVE TRACK callout, corrected the stack line in both
+`PROGRESS.md` and `docs/specs-open.md`, moved the 2026-08-15 Opus scoping note down to `docs/build-log.md`.
+NEXT: a build chat takes **IMP-071** (first ⬜,
+[spec](docs/specs-open.md#imp-071--the-filter-row-stops-jumping-under-your-thumb)) — last spec in the queue;
+**it reverses landed behavior (finding g), not a defect fix — don't re-litigate the scroll-back-to-x0
+decision.** A walk chat can still take **WALK-07**, **WALK-06** or **WALK-15**._
+
 ---
 
 ## Update workflow — superseded manual reference
@@ -3311,3 +3327,60 @@ Owner: *"When I press 'Backup my journal' it gives me the option to send or shar
 **Result — the outstanding `applyCompletion` half, run 2026-08-15:** owner confirmed all four remaining steps pass as specced — editing a past entry (with today written, and with today unwritten) leaves XP and ember counts unchanged with no duplicate row; deleting a mid-streak day shows the real post-delete streak and only warns about a keepsake when one is genuinely at risk; and `pruneTrash` drops a 31-day-old item on the next launch after the clock is moved forward. Reported tersely ("works as intended") rather than step-by-step, so this entry records a full pass without the per-step blow-by-blow the earlier walks have.
 
 **No app defects found.** WALK-05 is fully closed.
+
+### ✅ WALK-04 — search + moods — PASSED 2026-08-16 (emulator, owner-run, third re-run)
+
+**Covers:** IMP-035, IMP-037, IMP-053. Needs ~15 entries (harness) with varied moods.
+
+1. Archive → search filters live across **both** `did` and `wished`.
+2. Case-insensitive; accented input matches unaccented text and back (`cafe` vs `café`) — the `normalize`
+   fallback is Hermes-dependent, so this must be checked on-device, not assumed.
+3. Mood chips are **multi-select** (any-of); the date range opens a month list; "Any time" clears.
+4. Zero results shows *"Nothing matches that yet…"* — **different copy** from the zero-entries
+   *"Nothing here yet."*
+5. **The heatmap does not react to the filters** — it is the record of the year, not of the query.
+6. Write flow: pick **multiple** moods; add a **custom** one via "Name your own…"; it persists and
+   reappears as a chip next session; adding it twice dedups.
+
+**Result — ❌ 2026-08-15 (first pass).** Steps 1-5's base behavior passed (both-field search, accent-folding,
+multi-select OR filtering, zero-results copy, heatmap non-reactivity, dedup on repeat custom-mood add). Five
+defects surfaced: (a) the `wished ·` snippet prefix's asymmetry with `did` is a design question, not confirmed
+as a bug; (b) the Archive search bar has no way to clear typed text; (c) selected mood filter chips don't move
+to the front, so deselecting one picked late in the list means scrolling back to find it; (d) the owner could
+not deselect an already-picked mood in WriteFlow's "How did the day feel?" step; (e) the custom-mood creation
+row reads as unclear/oddly-placed, and the name field takes emoji with no character filtering.
+
+**Result — ❌ 2026-08-15 (re-run, after IMP-065 + IMP-066 landed).** Steps 1-5 confirmed passing again, and
+old finding (e)'s emoji-filtering-in-the-name-field bug is fixed. Three defects surfaced on this pass:
+
+- **(f) The custom-mood "face" field still takes unlimited emoji, and nothing tells the user what the block
+  is for.** IMP-066 restructured the block and sanitized the *name* field, but the typed-emoji *face* field
+  itself was left untouched.
+- **(g) Regression in the mood-chip fix itself (IMP-065).** The row auto-scrolling back to `x: 0` on every
+  select meant picking a second or third filter required scrolling right again each time.
+- **(h) WriteFlow mood deselect is still broken post-IMP-066**, despite a passing regression test — live
+  behavior didn't toggle off a selected chip.
+
+**Scoped 2026-08-15: (h) → IMP-069, (f) → IMP-070, (g) → IMP-071.**
+
+**Result — ✅ 2026-08-16 (full pass, after IMP-069 + IMP-070 + IMP-071 all landed).** All base behavior
+(steps 1–5) and both the WriteFlow mood-deselect fix (h/IMP-069, including the "N chosen" line updating
+correctly on deselect) and the mood-chip front-sort-without-autoscroll fix (g/IMP-071) confirmed passing
+live. Two more defects surfaced on this pass, in the custom-mood face field specifically, and were fixed
+**live in the same chat at the owner's explicit direction** rather than scoped as a separate spec: the
+mood-question copy ("Pick at least one — tap a chosen one again to take it back.") wrapped to two lines
+when empty but one line once a mood was picked, shifting the whole page; and the face field's typed-emoji
+placeholder ("or any emoji…") clipped to "or any" at the field's width. Fixing the placeholder truncation
+led to a UI iteration (circular field sized to match the palette swatches, a "+" placeholder in
+`c.accent`) and, along the way, to finding a **real pre-existing bug**: typing a second emoji into the
+face field never replaced the first, because `onEmojiTyped` took `firstEmoji()` of the raw accumulated
+buffer instead of stripping the already-shown prefix first. Fixed, with a regression test that fails
+without the fix. A follow-up visual "shake" during the swap (Android auto-scrolling the field to fit a
+momentary two-emoji string, then snapping back) was fixed by decoupling the `TextInput`'s own width from
+the visible circle (wider input, clipped by an `overflow: hidden` wrapper) rather than by force-clearing
+the native buffer — that approach was tried first and reverted, since it desynced the Android IME's
+emoji-composing state and silently dropped the second keystroke. All of this is **IMP-072** in
+`PROGRESS.md`'s backlog table, code-complete and walked in the same session (commit `44197e9`) — it has no
+entry in `specs-open.md`/`build-log.md`'s spec archive since it skipped the normal Opus-scoping step.
+
+**WALK-04 is fully closed.**
