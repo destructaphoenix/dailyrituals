@@ -2350,6 +2350,50 @@ pre-existing cases in that file stayed green untouched.
 
 ---
 
+### IMP-067 — a stacked row wraps; Mood Mix bars start in one place   ·   Lane: OTA   ·   Status: ✅ code-complete (2026-08-15)
+
+**Why.** WALK-07 findings (b) and (c), 2026-08-15, found while proving the font-scale cap (which itself
+passed — `PixelRatio.getFontScale()` read 2.0 against the 1.5/1.2 caps in `src/ui/textScale.js` with nothing
+broken on the four passed screens). (b) `Row.js` hardcoded `numberOfLines={1}` on the stacked value even
+though `shouldStackRow` had already given it the full row width to itself — the You tab's Annual Recap
+teaser (`value="Unlocks after your first full year"`) ellipsized instead of wrapping. (c) `InsightsScreen.js`
+gave the Mood Mix label column `minWidth: 84` with `flexShrink: 1`, so the column's actual width tracked its
+content — a long mood name pushed that row's bar right, a short one pulled it left, and the bars stopped
+sharing an origin, which defeats the point of a comparison chart.
+
+**Design, as landed:**
+1. `Row.js`'s stacked value ([`:36`](../src/ui/Row.js#L36)) is now `numberOfLines={3}`; the inline value
+   ([`:45`](../src/ui/Row.js#L45)) keeps `numberOfLines={1}` — it shares the row with the label and has no
+   room to wrap into, so stacking stays the only escape hatch.
+2. `YouScreen.js`'s Annual Recap teaser string shortened to **"After your first year"** (21 chars, same
+   meaning) — 3 lines still wasn't enough for the original 33-char string at 2.0x, and a detail sheet for a
+   row that just says "not yet" would be worse than the truncation it replaces.
+3. New pure `src/insights/moodMixLayout.js` → `moodLabelWidth(fontScale)`: fixed at `MOOD_LABEL_BASE_DP =
+   96`, scaling with the OS font scale, capped at 1.5x (144dp) — uncapped would leave the bar nothing at
+   2.0x. `InsightsScreen.js` reads `fontScale` from `useWindowDimensions()` and calls it **above the
+   `data.empty` early return** (immediately after `const c = t.colors`), since placing it with the other
+   derived values below would put a hook after a conditional return. The label column
+   ([`:134`](../src/screens/InsightsScreen.js#L134)) is now `width: labelW` with `minWidth`/`flexShrink: 1`
+   removed; the name `T` inside keeps `numberOfLines={1}` + `flexShrink: 1` so a long name ellipsizes inside
+   the fixed column instead of widening it.
+
+**Out of scope, per spec:** `shouldStackRow`'s calibration constants (IMP-030, pinned against real
+measurements), the Weekly-rhythm chart below Mood Mix, every other `Row` caller.
+
+**Tests (+7):** new `__tests__/insights/moodMixLayout.test.js` (+5) — `1` → `96` · `1.5` → `144` · `2.0` →
+`144` (capped) · `0.85` → `96` (never shrinks below base) · `undefined`/`NaN`/`'abc'` → `96`.
+`__tests__/ui/Row.test.js` (+2) — a stacked row's value renders with `numberOfLines === 3` · an inline row's
+value renders with `numberOfLines === 1`, both found by text not index. All 3 pre-existing
+`assertNoUnboundedFlexText` cases stayed green.
+
+**Proof:** `npm test` → **823 passed, 82 suites** (was 816/81). `npx expo export --platform android` clean.
+**Ship:** OTA lane, no bump — rides the next batch; no `Release-Lane` trailer on this commit.
+**Commit:** `fix(ui): a stacked row's value wraps, and Mood Mix bars start in one place (IMP-067)`
+(`e0c318c`).
+**Runtime proof:** **WALK-07**, re-run whole — a separate chat, once IMP-068 also lands.
+
+---
+
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
 
 > Moved out of PROGRESS.md on 2026-07-31 to keep the live cursor lean once a second spec (IMP-032) opened. These are **not** finished work. If the owner revives one, lift the block back into PROGRESS.md as the ACTIVE TRACK.
@@ -2394,6 +2438,27 @@ pre-existing cases in that file stayed green untouched.
 ## Session notes (archived from PROGRESS.md)
 
 _Append-only handoff log moved out of PROGRESS.md to keep it light. Newest 1–2 notes stay live in PROGRESS.md; everything else is here. Git history is the full record._
+
+_2026-08-15 (IMP-065, clear the search; the moods you picked come to the front) — **code-complete, committed
+`f632688`, not shipped; OTA lane, rides the next batch.** All 4 spec steps done in order — new pure module
+`src/entries/moodChipOrder.js` (`orderMoodChips(all, selected)`, selected chips to the front, relative order
+preserved in both groups, same-reference return when nothing selected); `ArchiveFilters.js`'s `TextInput`
+gained a clear button (constant `paddingRight: 44` gutter, `Close` icon, shown only when `text` is non-empty)
+and the mood-chip `ScrollView` now maps `orderMoodChips([...MOODS, ...customMoods], moods)` with a
+`chipScroll` ref that scrolls to `x: 0` on select (not deselect); each chip `Pressable` gained
+`accessibilityRole="button"`, `accessibilityLabel={m}`, `accessibilityState={{ selected: sel }}`;
+`ArchiveScreen.js`'s `ResultLine` label went unconditional — `` `${snip.field} · ` `` — so a `did` match now
+gets `did · ` the same way `wished` always did. 13 new tests exactly as specified — new
+`__tests__/entries/moodChipOrder.test.js` (+6), new `__tests__/screens/ArchiveFilters.test.js` (+5),
+`__tests__/screens/ArchiveResults.test.js` (+2, 3 updated: the two no-query cases now assert both labels
+absent, the `did`-match case now asserts `getByText('did · ')` instead of `wished · ` being null). **Proof:**
+`npm test` → **805 passed, 81 suites** (was 792/79). `npx expo export --platform android` clean. LAST
+command: `git commit` → `f632688`. Archived IMP-065's spec into `docs/build-log.md`, dropped its row from
+`docs/specs-open.md`'s index (queue is now IMP-066…068, three specs), ticked its `PROGRESS.md` row, and
+moved the IMP-063 session note down to `docs/build-log.md` (2-note budget). Did not touch WALK-04 — full
+re-run is a separate chat, per the spec's own closing line. NEXT: a build chat takes **IMP-066** (first ⬜,
+[spec](docs/specs-open.md#imp-066--the-mood-step-stops-fighting-you)). A walk chat can still take **WALK-02**
+or **WALK-15**, unaffected by this chat's work._
 
 _2026-08-15 (IMP-064, count your candles, and say plainly what one did) — **code-complete, committed
 `185e326`, not shipped; OTA lane, rides the next batch.** New pure module `src/home/candleRow.js` —
