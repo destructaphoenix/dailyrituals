@@ -32,11 +32,10 @@
 runtime proof is a separate WALK row for a separate chat, so a missing walk is *not* an unfinished spec.
 Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`](docs/playbook.md).
 
-> **The build queue holds ONE open spec — `IMP-068`, scoped 2026-08-15 from the WALK-07 finding.** A build
-> chat takes the **first ⬜** row below and opens only that spec. It is 🎨: it does **not gate the release
-> build** — the 🚦 walks still do — so the owner may ship first and OTA it after. **`IMP-063`, `IMP-064`,
-> `IMP-065`, `IMP-066` and `IMP-067` have landed** — their specs are archived in `docs/build-log.md`.
-> **The other live work is WALKS**, risk-ordered: the 🚦 group gates a release carrying ~25 unpublished tasks.
+> **The build queue is empty — `IMP-063` through `IMP-068` have all landed** (2026-08-15); their specs are
+> archived in `docs/build-log.md`, and `docs/specs-open.md` has no open spec. A build chat has nothing to
+> take until Opus scopes a new one. **The live work is WALKS**, risk-ordered: the 🚦 group gates a release
+> carrying ~25 unpublished tasks — WALK-07 can now be re-run whole since IMP-068 has landed.
 >
 > **`IMP-057` is reserved, not missing** — the `dayKey` migration IMP-056 deferred; needs real device
 > numbers first (see Open items). **Do not reuse the number.** **IMP-044 claims no queue slot** — it rides
@@ -145,7 +144,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 065 | Clear the search; picked moods come to the front | OTA | ✅ code-complete 2026-08-15 · walk = WALK-04 (re-run whole) |
 | 066 | The mood step stops fighting you | OTA | ✅ code-complete 2026-08-15 · walk = WALK-04 (re-run whole) |
 | 067 | A stacked row wraps; Mood Mix bars line up | OTA | ✅ code-complete 2026-08-15 · walk = WALK-07 (re-run whole) |
-| 068 | The Paywall footer stops covering the price | OTA | ⬜ **open** — [spec](docs/specs-open.md#imp-068--the-paywall-footer-stops-covering-the-price); from WALK-07 (a); **take last** |
+| 068 | The Paywall footer stops covering the price | OTA | ✅ code-complete 2026-08-15 · walk = WALK-07 (re-run whole) |
 
 ---
 
@@ -171,38 +170,16 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
   The old "promote vc11 → production, or hold" framing is superseded: vc11 is two weeks of work behind HEAD,
   so promoting it would ship a stale build rather than this work.
   **IMP-063…068 are 🎨 and are NOT part of this sequence** — they land either before the bump *in full*, or
-  after the build as an OTA. Never split across it. (IMP-063…067 landed 2026-08-15; IMP-068 remains.)
+  after the build as an OTA. Never split across it. (All six — IMP-063…068 — landed 2026-08-15.)
 - **Cash embers: settled in principle (dropped 2026-08-03), not finalised.** Must be decided before
   `PLUS_ENABLED` flips — it determines which Play products get created. Full argument in the playbook.
 - **`PLUS_ENABLED` must not flip until every `PLUS_PERKS` line is true.** The one remaining gap is perk #6,
   the PDF (IMP-022, deferred). Gate checklist in the playbook → Phase 10b.
 
-### 🔴 WALK-04 finding — search + moods → **both scoped specs landed** (IMP-065 + IMP-066, 2026-08-15)
+### 🔴 WALK-04, WALK-06, WALK-07 findings — all scoped specs landed (IMP-063…068, 2026-08-15) — ✅ RESOLVED
 
-Full writeups archived with each spec in `docs/build-log.md`. (d) was not a `toggleMood` bug — the mood-step
-`ScrollView` was missing `keyboardShouldPersistTaps="handled"`, swallowing the first tap while the keyboard
-was open. (e) the custom-mood block is now one headed, numbered group; the name field strips emoji instead of
-rejecting them.
-
-**WALK-04 stays ❌** in `docs/walk-open.md` — re-run it whole now that both specs have landed.
-
-### 🔴 WALK-06 finding — streak insurance → **both scoped specs landed** (IMP-063 + IMP-064, 2026-08-15)
-
-Full writeup archived with each spec in `docs/build-log.md`. **Standing rule that outlives this finding:**
-the owner's objection to the candle-spent copy generalises — **the user must never be unsure what happened,
-what changed, or how a feature works.** Read that into any future copy review, not just the freeze card.
-
-**WALK-06 stays ❌** in `docs/walk-open.md` — re-run it whole now that both specs have landed.
-
-### 🔴 WALK-07 finding — modal scroll → (b)(c) landed as **IMP-067**, (a) remains **IMP-068**
-
-Font-scale cap confirmed working at 2.0x; three defects split by reachability: (b)(c) `Row` truncation +
-Mood Mix bar misalignment → **IMP-067, landed 2026-08-15** (full writeup archived in
-`docs/build-log.md`); (a) Paywall footer overlap → **IMP-068**, deliberately last — `PLUS_ENABLED = false`
-makes that screen unmountable. Its writeup and decided design are still in
-[`docs/specs-open.md`](docs/specs-open.md).
-
-**WALK-07 stays ❌** in `docs/walk-open.md` — re-run it whole once IMP-068 has also landed.
+Full writeups archived in `docs/build-log.md` → "Resolved findings". All three walks **stay ❌** in
+`docs/walk-open.md` — each needs a whole re-run now that its spec(s) have landed.
 
 ### 🟡 IMP-056 residual + the IMP-057 decision (2026-08-10)
 
@@ -256,18 +233,18 @@ WALK-07 — separate chat, per the spec's own closing line. NEXT: a build chat t
 **last** in the 🎨 queue — [spec](docs/specs-open.md#imp-068--the-paywall-footer-stops-covering-the-price)).
 A walk chat can still take **WALK-02** or **WALK-15**, unaffected by this chat's work._
 
-_2026-08-15 (IMP-066, the mood step stops fighting you) — **code-complete, committed `bf32690`, not shipped;
-OTA lane, rides the next batch.** All 4 spec steps done — new `stripEmoji` in `src/entries/emojiInput.js`
-(range-filters pictographic blocks/joiners, distinct from `isEmojiish`'s `>= 0x00a0` rule so `'Café'` and
-Devanagari survive); `keyboardShouldPersistTaps="handled"` on both mood-step `ScrollView`s (`toggleMood` was
-never the bug — a swallowed tap was); mood chip `Pressable` gained `accessibilityRole`/`Label`/`State`; the
-custom-mood block became one headed group ("1 · Its face" / "2 · Its name"), name field now strips emoji on
-type with `maxLength={24}`. 11 new tests exactly as specified (7 in `emojiInput.test.js`, 4 in
-`WriteFlowMood.test.js`, full detail in `docs/build-log.md`); all 7 pre-existing cases stayed green.
-**Proof:** `npm test` → **816 passed, 81 suites** (was 805/81). `npx expo export --platform android` clean.
-LAST command: `git commit` → `bf32690`. Archived IMP-066's spec into `docs/build-log.md`, dropped its row
-from `docs/specs-open.md`'s index (queue is now IMP-067…068, two specs), ticked its `PROGRESS.md` row,
-closed out the WALK-04 finding note (both (d) and (e) now landed), and moved the IMP-064 session note down
-to `docs/build-log.md` (2-note budget). Did not touch WALK-04 — separate chat. NEXT: a build chat takes
-**IMP-067** (first ⬜, [spec](docs/specs-open.md#imp-067--a-stacked-row-wraps-mood-mix-bars-start-in-one-place)).
-A walk chat can still take **WALK-02** or **WALK-15**, unaffected by this chat's work._
+_2026-08-15 (IMP-068, the Paywall footer stops covering the price) — **code-complete, committed `ce504fc`,
+not shipped; OTA lane, rides the next batch.** The single spec'd change — `src/screens/Paywall.js`'s
+`ScrollView` ([`:43`](src/screens/Paywall.js#L43)) gained `style={{ flex: 1 }}` (a load-bearing-comment
+explains why), `contentContainerStyle` and `WriteFlow` left untouched per the spec's explicit scope. 3 new
+tests exactly as specified in new `__tests__/screens/Paywall.test.js` — the outer `ScrollView`'s flattened
+style has `flex === 1` (the regression guard) · the last `PLUS_PERKS` entry renders · the annual price
+(`getAllByText`, since it also appears in `LegalFooter`) and the trial CTA both render. **Proof:** `npm test`
+→ **826 passed, 83 suites** (was 823/82). `npx expo export --platform android` clean. LAST command: `git
+commit` → `ce504fc`. Archived IMP-068's spec into `docs/build-log.md`; `docs/specs-open.md`'s index is now
+empty (all six of IMP-063…068 landed). Ticked its `PROGRESS.md` row, closed out the WALK-07 finding note (all
+three of (a)(b)(c) now landed), updated the ACTIVE TRACK banner to say the build queue is empty, and moved
+the IMP-066 session note down to `docs/build-log.md` (2-note budget). Did not touch WALK-07 — separate chat,
+per the spec's own closing line. **NEXT: no open build spec** — the improvements backlog needs Opus to scope
+a new `IMP-xxx` before another build chat has work. A walk chat can take **WALK-07** (now re-runnable whole),
+**WALK-02**, or **WALK-15**._

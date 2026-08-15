@@ -2394,6 +2394,39 @@ value renders with `numberOfLines === 1`, both found by text not index. All 3 pr
 
 ---
 
+### IMP-068 — the Paywall footer stops covering the price   ·   Lane: OTA   ·   Status: ✅ code-complete (2026-08-15)
+
+**Why.** WALK-07 finding (a), 2026-08-15. The Paywall's fixed footer overlapped its own content at normal
+font size — the plan amount and the last one or two perk bullets were drawn under it. **Taken last of the
+six** because `PLUS_ENABLED = false` ([`src/billing/config.js:39`](../src/billing/config.js#L39)) makes the
+Paywall unmountable in the shipped build; the owner reached it during the walk only by flipping T1 and
+reverting after.
+
+**The mechanism.** [`Paywall.js:94-99`](../src/screens/Paywall.js#L94) renders the CTA button and
+`LegalFooter` as a plain sibling `View` after the `ScrollView` ([`:43`](../src/screens/Paywall.js#L43)),
+inside a `flex: 1` column. The `ScrollView` had only `contentContainerStyle`, no `style`, so nothing
+constrained its height — it laid out at full content height and the footer drew over its tail. Every other
+full-screen modal pairing a `ScrollView` with a fixed footer sibling (`Achievements`, `GetEmbers`,
+`PlusPerks`, `PlusFlow`, `MoodManager`, `ReadingSheet`, `TrashSheet`, `AnnualRecap`, and `WriteFlow` via
+`flexGrow: 1`) already constrained it; `Paywall` was the only one with neither.
+
+**Design, as landed:** `style={{ flex: 1 }}` added to the `ScrollView` at
+[`Paywall.js:43`](../src/screens/Paywall.js#L43) — the only code change. `contentContainerStyle` and
+`WriteFlow` left untouched, per the spec's explicit scope.
+
+**Tests (+3, new suite):** new `__tests__/screens/Paywall.test.js` — the outer `ScrollView`
+(`UNSAFE_getAllByType`) flattens to `flex === 1` (the regression guard) · the last `PLUS_PERKS` entry renders
+· the annual price (`PLUS_PRICES.annual.price`, asserted with `getAllByText` since it also appears in
+`LegalFooter`) and the `Start 7-day free trial` label both render.
+
+**Proof:** `npm test` → **826 passed, 83 suites** (was 823/82). `npx expo export --platform android` clean.
+**Ship:** OTA lane, no bump — rides the next batch; no `Release-Lane` trailer on this commit.
+**Commit:** `fix(plus): the Paywall footer stops covering the price and the last perks (IMP-068)` (`ce504fc`).
+**Runtime proof:** **WALK-07**, re-run whole — a separate chat. This was the last of the six IMP-063…068
+specs; WALK-07 can now be re-run whole.
+
+---
+
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
 
 > Moved out of PROGRESS.md on 2026-07-31 to keep the live cursor lean once a second spec (IMP-032) opened. These are **not** finished work. If the owner revives one, lift the block back into PROGRESS.md as the ACTIVE TRACK.
@@ -2459,6 +2492,22 @@ moved the IMP-063 session note down to `docs/build-log.md` (2-note budget). Did 
 re-run is a separate chat, per the spec's own closing line. NEXT: a build chat takes **IMP-066** (first ⬜,
 [spec](docs/specs-open.md#imp-066--the-mood-step-stops-fighting-you)). A walk chat can still take **WALK-02**
 or **WALK-15**, unaffected by this chat's work._
+
+_2026-08-15 (IMP-066, the mood step stops fighting you) — **code-complete, committed `bf32690`, not shipped;
+OTA lane, rides the next batch.** All 4 spec steps done — new `stripEmoji` in `src/entries/emojiInput.js`
+(range-filters pictographic blocks/joiners, distinct from `isEmojiish`'s `>= 0x00a0` rule so `'Café'` and
+Devanagari survive); `keyboardShouldPersistTaps="handled"` on both mood-step `ScrollView`s (`toggleMood` was
+never the bug — a swallowed tap was); mood chip `Pressable` gained `accessibilityRole`/`Label`/`State`; the
+custom-mood block became one headed group ("1 · Its face" / "2 · Its name"), name field now strips emoji on
+type with `maxLength={24}`. 11 new tests exactly as specified (7 in `emojiInput.test.js`, 4 in
+`WriteFlowMood.test.js`, full detail in `docs/build-log.md`); all 7 pre-existing cases stayed green.
+**Proof:** `npm test` → **816 passed, 81 suites** (was 805/81). `npx expo export --platform android` clean.
+LAST command: `git commit` → `bf32690`. Archived IMP-066's spec into `docs/build-log.md`, dropped its row
+from `docs/specs-open.md`'s index (queue is now IMP-067…068, two specs), ticked its `PROGRESS.md` row,
+closed out the WALK-04 finding note (both (d) and (e) now landed), and moved the IMP-064 session note down
+to `docs/build-log.md` (2-note budget). Did not touch WALK-04 — separate chat. NEXT: a build chat takes
+**IMP-067** (first ⬜, [spec](docs/specs-open.md#imp-067--a-stacked-row-wraps-mood-mix-bars-start-in-one-place)).
+A walk chat can still take **WALK-02** or **WALK-15**, unaffected by this chat's work._
 
 _2026-08-15 (IMP-064, count your candles, and say plainly what one did) — **code-complete, committed
 `185e326`, not shipped; OTA lane, rides the next batch.** New pure module `src/home/candleRow.js` —
@@ -2971,6 +3020,27 @@ _2026-07-30 (billing) — **IMP-028: billing correctness pass** (OTA lane; no sh
 > All of these are **settled**. Kept verbatim because the reasoning is worth having when a
 > similar report arrives — especially the Auto-Backup-vs-JSON-export confusion, which the
 > owner themselves hit once. Live blockers stay in `PROGRESS.md`.
+
+### 🔴 WALK-04 finding — search + moods → **both scoped specs landed** (IMP-065 + IMP-066, 2026-08-15) — ✅ RESOLVED
+
+(d) was not a `toggleMood` bug — the mood-step `ScrollView` was missing `keyboardShouldPersistTaps="handled"`,
+swallowing the first tap while the keyboard was open. (e) the custom-mood block is now one headed, numbered
+group; the name field strips emoji instead of rejecting them. Full writeups archived with each spec above.
+**WALK-04 stays ❌ in `docs/walk-open.md`** — re-run it whole; both specs have landed.
+
+### 🔴 WALK-06 finding — streak insurance → **both scoped specs landed** (IMP-063 + IMP-064, 2026-08-15) — ✅ RESOLVED
+
+**Standing rule that outlives this finding:** the owner's objection to the candle-spent copy generalises —
+**the user must never be unsure what happened, what changed, or how a feature works.** Read that into any
+future copy review, not just the freeze card. Full writeup archived with each spec above.
+**WALK-06 stays ❌ in `docs/walk-open.md`** — re-run it whole; both specs have landed.
+
+### 🔴 WALK-07 finding — modal scroll → **all three scoped specs landed** (IMP-067 + IMP-068, 2026-08-15) — ✅ RESOLVED
+
+(b)(c) `Row` truncation + Mood Mix bar misalignment → IMP-067. (a) Paywall footer overlap → IMP-068,
+deliberately last since `PLUS_ENABLED = false` made that screen unmountable in the shipped build; fixed with
+`style={{ flex: 1 }}` on its `ScrollView`. Full writeups archived with each spec above.
+**WALK-07 stays ❌ in `docs/walk-open.md`** — re-run it whole; all three have landed.
 
 ### 🔴 Finding 2026-08-02 (from the IMP-029 walk) — the OS restores without asking, and the notice gives no way to refuse
 
