@@ -27,27 +27,27 @@ describe('freezeNoticeCopy — IMP-060', () => {
   test('one day, freezes remaining', () => {
     const copy = freezeNoticeCopy(['2026-06-13'], 2);
     expect(copy).toEqual({
-      title: 'A candle burned for you.',
-      body: 'You missed 13 Jun. A candle spent itself to keep your streak whole. 2 left.',
+      title: 'Your streak is safe.',
+      body: 'A candle burned for 13 Jun. 2 left.',
     });
   });
 
   test('multiple days, freezes remaining', () => {
     const copy = freezeNoticeCopy(['2026-06-11', '2026-06-12', '2026-06-13'], 1);
     expect(copy).toEqual({
-      title: 'A candle burned for you.',
-      body: 'You missed 3 days. 3 candles spent themselves to keep your streak whole. 1 left.',
+      title: 'Your streak is safe.',
+      body: '3 candles burned for 3 days you missed. 1 left.',
     });
   });
 
   test('zero freezes left', () => {
     const copy = freezeNoticeCopy(['2026-06-13'], 0);
-    expect(copy.body).toBe('You missed 13 Jun. A candle spent itself to keep your streak whole. That was your last one.');
+    expect(copy.body).toBe('A candle burned for 13 Jun. That was your last one.');
   });
 
   test('one freeze left', () => {
     const copy = freezeNoticeCopy(['2026-06-13'], 1);
-    expect(copy.body).toBe('You missed 13 Jun. A candle spent itself to keep your streak whole. 1 left.');
+    expect(copy.body).toBe('A candle burned for 13 Jun. 1 left.');
   });
 
   test('empty array → null', () => {

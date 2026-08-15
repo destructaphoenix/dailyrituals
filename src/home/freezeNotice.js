@@ -22,8 +22,8 @@ function formatDay(dayKey) {
 export function freezeNoticeCopy(days, freezesLeft) {
   if (!days.length) return null;
   const lead = days.length === 1
-    ? `You missed ${formatDay(days[0])}. A candle spent itself to keep your streak whole.`
-    : `You missed ${days.length} days. ${days.length} candles spent themselves to keep your streak whole.`;
+    ? `A candle burned for ${formatDay(days[0])}.`
+    : `${days.length} candles burned for ${days.length} days you missed.`;
   const tail = freezesLeft === 0 ? 'That was your last one.' : `${freezesLeft} left.`;
-  return { title: 'A candle burned for you.', body: `${lead} ${tail}` };
+  return { title: 'Your streak is safe.', body: `${lead} ${tail}` };
 }
