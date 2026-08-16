@@ -96,11 +96,15 @@ test('empty slice does not crash and reports zeroed-out values', () => {
 });
 
 describe('dayKeyDrift (IMP-056 step 5 reporter)', () => {
-  const withTZ = (tz, fn) => {
-    const original = process.env.TZ;
-    process.env.TZ = tz;
-    try { return fn(); } finally { process.env.TZ = original; }
-  };
+  // dayKeyDrift recomputes a `new<ms>` entry's key as dayKeyOf(new Date(ms)),
+  // which reads the LOCAL calendar. These tests used to build ms with
+  // Date.UTC(...) and set process.env.TZ = 'Asia/Kolkata' to make the two
+  // disagree — but that assignment is inert under Jest (each file gets a copy
+  // of process.env), so they only passed on a machine already at a positive
+  // offset. Building ms from LOCAL fields instead makes the recomputed key
+  // '2026-06-15' in every zone, so the drift against a stored '2026-06-14' is
+  // real everywhere rather than an artifact of the runner.
+  const msAtLocal = (...parts) => new Date(...parts).getTime();
 
   test('no drift when nothing has a new<ms> id', () => {
     const entries = [{ id: 'seed-1', dayKey: '2026-06-10' }, { id: 'seed-2', dayKey: '2026-06-11' }];
@@ -108,10 +112,10 @@ describe('dayKeyDrift (IMP-056 step 5 reporter)', () => {
     expect(result).toEqual({ disagreeCount: 0, wouldChangeStreak: false });
   });
 
-  test('counts a drifting entry and reports the streak it would move', () => withTZ('Asia/Kolkata', () => {
-    // 2026-06-14T19:30Z is 2026-06-15 01:00 IST — the old UTC derivation
-    // stamped it '2026-06-14'; dayKeyOf would stamp '2026-06-15'.
-    const ms = Date.UTC(2026, 5, 14, 19, 30);
+  test('counts a drifting entry and reports the streak it would move', () => {
+    // Written at 01:00 local on Monday the 15th. The old UTC derivation
+    // stamped it '2026-06-14'; dayKeyOf recomputes '2026-06-15'.
+    const ms = msAtLocal(2026, 5, 15, 1, 0);
     const drifting = { id: `new${ms}`, dayKey: '2026-06-14' };
     const clean = { id: 'seed-clean', dayKey: '2026-06-13' }; // no new<ms> id — never recomputed
     const today = '2026-06-15';
@@ -121,15 +125,15 @@ describe('dayKeyDrift (IMP-056 step 5 reporter)', () => {
     // Before: 06-13 + 06-14 anchor on yesterday → streak 2.
     // After remap: 06-13 + 06-15 anchor on today → streak 1 (06-14 gap breaks the run).
     expect(result.wouldChangeStreak).toBe(true);
-  }));
+  });
 
-  test('trash counts toward disagreeCount but never toward wouldChangeStreak', () => withTZ('Asia/Kolkata', () => {
-    const ms = Date.UTC(2026, 5, 14, 19, 30);
+  test('trash counts toward disagreeCount but never toward wouldChangeStreak', () => {
+    const ms = msAtLocal(2026, 5, 15, 1, 0);
     const trashedDrifter = { id: `new${ms}`, dayKey: '2026-06-14' };
     const result = dayKeyDrift([], [trashedDrifter], '2026-06-15');
     expect(result.disagreeCount).toBe(1);
     expect(result.wouldChangeStreak).toBe(false);
-  }));
+  });
 
   test('inspectState surfaces the drift report under Data health', () => {
     const entries = [{ id: 'seed-1', dayKey: '2026-06-10' }];

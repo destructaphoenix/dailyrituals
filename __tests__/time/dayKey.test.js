@@ -17,20 +17,21 @@ describe('dayKeyOf', () => {
     expect(dayKeyOf(new Date(2026, 0, 5, 12, 0))).toBe('2026-01-05');
   });
 
-  it('reads the LOCAL calendar day, which differs from toISOString().slice(0, 10) once the offset crosses midnight', () => {
-    // 2026-01-15T23:30:00Z is still the 15th in UTC, but Kiribati (UTC+14)
-    // has already turned over to the 16th. Pin TZ explicitly so this is
-    // deterministic in CI and on the owner's machine alike, not whatever
-    // zone happens to be running the test.
-    const originalTZ = process.env.TZ;
-    process.env.TZ = 'Pacific/Kiritimati';
-    try {
-      const instant = new Date(Date.UTC(2026, 0, 15, 23, 30));
-      expect(instant.toISOString().slice(0, 10)).toBe('2026-01-15');
-      expect(dayKeyOf(instant)).toBe('2026-01-16');
-    } finally {
-      process.env.TZ = originalTZ;
-    }
+  // The local-vs-UTC divergence is proven in __tests__/zone/dayKeyZone.test.js,
+  // which is run under a pinned zone by `npm run test:zone`. It cannot be
+  // proven here: this file runs at the machine's own zone, and under UTC the
+  // two can never differ. The version that used to live here set
+  // `process.env.TZ` at runtime, which is INERT under Jest (each test file gets
+  // a copy of process.env), so it was never testing what it claimed — it passed
+  // only because the author's machine is at UTC+05:30.
+
+  it('reads local calendar fields, not the UTC ones, at both ends of the day', () => {
+    // Zone-independent by construction: a date built from LOCAL fields must
+    // read those same fields back, whatever the machine's offset.
+    expect(dayKeyOf(new Date(2026, 0, 15, 0, 30))).toBe('2026-01-15');
+    expect(dayKeyOf(new Date(2026, 0, 15, 23, 30))).toBe('2026-01-15');
+    expect(dayKeyOf(new Date(2026, 11, 31, 23, 59))).toBe('2026-12-31');
+    expect(dayKeyOf(new Date(2027, 0, 1, 0, 0))).toBe('2027-01-01');
   });
 
   it('never throws on an invalid date', () => {

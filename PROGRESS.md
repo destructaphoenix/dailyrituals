@@ -102,9 +102,10 @@ build ships.)
 
 **Current stack:** Expo SDK **54** · RN **0.81.5** · React **19.1.0** · **Legacy Architecture**
 (`newArchEnabled: false`, held deliberately) · `targetSdkVersion` **36**, `minSdk` **24** · `npm test` →
-**866 passed, 84 suites**. **`npm test` now pins `TZ=Asia/Kolkata`** (2026-08-16) — the suite does not pass
-under an arbitrary zone and CI runs UTC; see Open items → "the suite is timezone-coupled". **Run tests via
-`npm test`, not bare `npx jest`**, or you lose the pin. Details in [`docs/playbook.md`](docs/playbook.md).
+**867 passed, 84 suites**, plus **3 zone tests × 2 pinned zones**. **`npm test` = `test:suite` (the ambient
+suite, no TZ pin) + `test:zone`** (`__tests__/zone/`, run at UTC+14 and UTC−11 via `jest.zone.config.js`).
+**Verified `exit=0` under five ambient zones** — UTC, +5:30, +14, −11, −5. **Run `npm test`, not bare
+`npx jest`**, or the zone half is skipped. Details in [`docs/playbook.md`](docs/playbook.md).
 
 ---
 
@@ -239,31 +240,25 @@ then let the page grow to fit it, instead of reserving space up front — a real
 next spec to weigh. Full writeup in `docs/walk-open.md` → WALK-07 → "Re-run — 🟡 2026-08-16 (whole walk...)".
 **Needs Opus to scope a new `IMP-xxx`.**
 
-### 🟠 The suite is timezone-coupled — pinned, not fixed (2026-08-16)
+### ✅ The suite was timezone-coupled — RESOLVED 2026-08-16
 
-**Found by CI, on the first `npm test` it has actually run in weeks.** The gate only executes when HEAD
-carries a `Release-Lane` trailer; every push since the vc11 era carried none, so those ~10s runs were
-no-ops. vc12's push ran it for real and **4 tests failed on the runner while all 866 passed locally**.
+**Found by CI** on the first `npm test` it had run in weeks (the gate only fires on a `Release-Lane`
+trailer): 4 of 866 failed on the UTC runner while all 866 passed locally. **The tests, not the app —
+`dayKeyOf` was correct throughout.** They set `process.env.TZ` at runtime, which is **inert under Jest**
+(each file gets a copy of `process.env`), so they only ever passed because this machine is IST (+05:30).
+Behind that sat the real defect: fixtures built from **UTC instants** for code that reads **local** calendar
+fields.
 
-**Root cause — the tests, not the app. `dayKeyOf` is correct.** Four tests (`time/dayKey`,
-`home/todaysEntry`, `dev/inspect` ×2) set `process.env.TZ = 'Pacific/Kiritimati'` at runtime and assert that
-the local day differs from the UTC day. **Jest gives each test file a copy of `process.env`, so that write
-never reaches Node's timezone** — probed directly: `{"ambient":"UTC","dateBefore":15,"dateAfter":15,
-"mutationWorks":false}`. The same code works in plain `node`, which is why it reads as correct. So the
-mutation was always inert, and the assertions passed **only because the dev machine is IST (+05:30)**, where
-`23:30Z` really is the next day. On a UTC runner the coincidence disappears.
+**Fixed the same day.** Tests now build dates the way the code reads them; the one genuinely zone-dependent
+proof lives in `__tests__/zone/dayKeyZone.test.js`, run pinned at **UTC+14 and UTC−11** by
+`npm run test:zone`, with a guard that fails rather than passing vacuously at UTC. **The morning's blanket
+`TZ=Asia/Kolkata` pin is gone**, so CI genuinely exercises UTC again. **Verified: full `npm test` `exit=0`
+under five ambient zones** (UTC, +5:30, +14, −11, −5). Full account, including two self-inflicted bugs caught
+during the fix, in `docs/build-log.md` → "Resolved findings".
 
-**What was done: `npm test` pins `TZ=Asia/Kolkata`.** Jest cannot change the zone from inside a test, so a
-pin before process start is the only mechanism. Verified across the full suite: `Asia/Kolkata` → **866/866
-green**; `Pacific/Kiritimati` → **1 failure**, and a *different* test (`recap/annualRecap`, the 1-Dec/30-Nov
-boundary) — i.e. there is at least a **fifth** zone-fragile test the original four never exposed.
-
-**🟠 This unblocks CI; it does not fix anything.** The pin makes the runner reproduce the dev machine, which
-means **CI can no longer catch a timezone regression** — in an app whose IMP-056 was exactly a timezone bug
-and whose reserved IMP-057 is a `dayKey` migration. **Needs a follow-up `IMP-xxx` (Opus's lane):** make these
-tests zone-independent — inject the zone into the code under test, or drive the ambient zone from outside the
-process — then remove or re-choose the pin. **Do not treat the green gate as proof the dayKey logic is
-zone-safe.**
+**Rule for new tests:** build dates with the **local** constructor `new Date(y, m, d, h)` — never
+`Date.UTC(...)`, an ISO `Z` string, or a bare date-only string (which parses as UTC). If a test truly needs a
+specific zone, it belongs in `__tests__/zone/`.
 
 ### 🟡 IMP-056 residual + the IMP-057 decision (2026-08-10)
 

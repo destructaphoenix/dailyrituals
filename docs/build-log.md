@@ -3434,6 +3434,53 @@ _2026-07-30 (billing) — **IMP-028: billing correctness pass** (OTA lane; no sh
 > similar report arrives — especially the Auto-Backup-vs-JSON-export confusion, which the
 > owner themselves hit once. Live blockers stay in `PROGRESS.md`.
 
+### 🟠 The suite was timezone-coupled → **✅ RESOLVED 2026-08-16, same day it was found**
+
+**Found by CI**, on the first `npm test` it had actually executed in weeks — the gate only runs when HEAD
+carries a `Release-Lane` trailer, so every intermediate push no-op'd in ~10s. vc12's push ran it for real:
+**4 of 866 failed on the runner while all 866 passed locally.**
+
+**Root cause — the tests, not the app. `dayKeyOf` was correct throughout.** Four tests set
+`process.env.TZ = '<zone>'` at runtime and asserted that the local day differs from the UTC day. **That
+assignment is inert under Jest**: each test file gets a *copy* of `process.env`, so Node's clock never moves.
+Probed rather than assumed — `{"ambient":"UTC","dateBefore":15,"dateAfter":15,"mutationWorks":false}`. The
+identical code *does* work in plain `node`, which is why it reads as correct. So the tests only ever passed
+because the author's machine is IST (+05:30), where the asserted values happen to be right.
+
+**The deeper defect the inert TZ was hiding: fixtures built from UTC instants.** `dayKeyOf` and `recapYears`
+read **local** calendar fields, so `Date.UTC(...)`, `'…T12:00:00Z'` and even a bare `'2030-01-01'` (date-only
+strings parse as UTC) each mean a *different calendar day* in a different zone. `annualRecap`'s 30 Nov / 1 Dec
+boundary flipped at UTC+14, and its `new Date('2030-01-01')` fixtures are 31 Dec **2029** at any negative
+offset — in tests whose assertions are about years.
+
+**Fix — tests now build dates the way the code reads them.**
+- `recap/annualRecap.test.js` — all `now` fixtures via a local `at(y, m, d)` helper.
+- `home/todaysEntry.test.js` — the zone dance was never what it tested; `findTodaysEntry`/`isEditableToday`
+  compare dayKey strings and read no clock, so the keys are plain fixtures now. `dayKeyOf`'s half is a
+  separate one-line assertion built from local fields.
+- `dev/inspect.test.js` — the `new<ms>` id derives from a local construction, so the drift against the stored
+  key is real in every zone instead of only at positive offsets.
+- `time/dayKey.test.js` — inert test replaced with a zone-independent one.
+
+**The one thing that cannot be zone-independent** is the local-vs-UTC divergence proof itself: it needs a
+non-UTC process, and Jest cannot supply one from inside. It lives alone in `__tests__/zone/dayKeyZone.test.js`,
+excluded from the main suite via `testPathIgnorePatterns`, run by `npm run test:zone` through
+`jest.zone.config.js` **twice — at UTC+14 and UTC−11**, so both signs are covered. It carries a guard that
+fails if the process is at UTC, so it can never pass vacuously.
+
+**The blanket `TZ=Asia/Kolkata` pin (the morning's stopgap) is GONE.** CI at UTC now genuinely exercises UTC
+for the other ~860 tests rather than reproducing the author's laptop.
+
+**Proof — full `npm test` under five ambient zones, all `exit=0`, 867 + 3 + 3 each:** `UTC`, `Asia/Kolkata`
+(+5:30), `Pacific/Kiritimati` (+14), `Pacific/Midway` (−11), `America/New_York` (−5).
+
+**Two self-inflicted bugs caught during the fix, both worth remembering.** `--testPathIgnorePatterns` is
+variadic and silently swallowed the following path argument, so `test:zone` ran the *entire* suite while
+skipping the zone tests — the exact inversion of its purpose; hence the dedicated config file rather than CLI
+flags. And the anti-vacuous guard was itself inert: `-getTimezoneOffset()` is **`-0`** at UTC, and Jest's
+`toBe` uses `Object.is`, where `Object.is(-0, 0)` is **false** — so `expect(offset).not.toBe(0)` *passed* at
+UTC, the one case it exists to catch. Normalised, then verified failing-when-unpinned and passing-when-pinned.
+
 ### 🔴 WALK-04 finding — search + moods → **both scoped specs landed** (IMP-065 + IMP-066, 2026-08-15) — ✅ RESOLVED
 
 (d) was not a `toggleMood` bug — the mood-step `ScrollView` was missing `keyboardShouldPersistTaps="handled"`,

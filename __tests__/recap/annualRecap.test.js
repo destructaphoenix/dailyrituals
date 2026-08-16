@@ -2,6 +2,15 @@ import { recapYears, buildRecap } from '../../src/recap/annualRecap';
 
 const e = (dayKey, extra = {}) => ({ dayKey, did: 'a day', wished: 'more', moods: [], ...extra });
 
+// recapYears/buildRecap read the LOCAL calendar off `now` (now.getFullYear(),
+// now.getMonth()), so a fixture built from a UTC instant is a different
+// calendar day in a different zone. `new Date('2027-11-30T12:00:00Z')` is
+// already 1 Dec at UTC+14, which flipped the boundary test below; and a
+// date-only string is parsed as UTC too, so a bare '2030-01-01' is
+// 31 Dec 2029 at any negative offset. Build `now` the way the code reads it —
+// local — and these hold in every zone.
+const at = (y, m, d, h = 12) => new Date(y, m - 1, d, h);
+
 // 10 entries in `year`, spread out (no run > 1), so any year clears the
 // RECAP_MIN_ENTRIES floor without accidentally building a long streak.
 function tenSpreadEntries(year) {
@@ -11,40 +20,40 @@ function tenSpreadEntries(year) {
 describe('recapYears', () => {
   test('offers the current year on 1 Dec and not on 30 Nov (boundary, both sides)', () => {
     const entries = tenSpreadEntries(2027);
-    expect(recapYears(entries, new Date('2027-11-30T12:00:00.000Z'))).toEqual([]);
-    expect(recapYears(entries, new Date('2027-12-01T12:00:00.000Z'))).toEqual([2027]);
+    expect(recapYears(entries, at(2027, 11, 30))).toEqual([]);
+    expect(recapYears(entries, at(2027, 12, 1))).toEqual([2027]);
   });
 
   test('offers every prior year with enough entries, forever', () => {
     const entries = [...tenSpreadEntries(2020), ...tenSpreadEntries(2025)];
-    expect(recapYears(entries, new Date('2030-06-01T12:00:00.000Z'))).toEqual([2025, 2020]);
+    expect(recapYears(entries, at(2030, 6, 1))).toEqual([2025, 2020]);
   });
 
   test('omits a year with fewer than 10 entries', () => {
     const entries = tenSpreadEntries(2026).slice(0, 9);
-    expect(recapYears(entries, new Date('2030-01-01T12:00:00.000Z'))).toEqual([]);
+    expect(recapYears(entries, at(2030, 1, 1))).toEqual([]);
   });
 
   test('returns [] for empty history', () => {
-    expect(recapYears([], new Date('2027-12-15T12:00:00.000Z'))).toEqual([]);
+    expect(recapYears([], at(2027, 12, 15))).toEqual([]);
   });
 
   test('newest first', () => {
     const entries = [...tenSpreadEntries(2019), ...tenSpreadEntries(2022), ...tenSpreadEntries(2021)];
-    expect(recapYears(entries, new Date('2030-01-01T12:00:00.000Z'))).toEqual([2022, 2021, 2019]);
+    expect(recapYears(entries, at(2030, 1, 1))).toEqual([2022, 2021, 2019]);
   });
 
   test('malformed entries never throw', () => {
     const entries = [null, undefined, {}, { dayKey: 42 }, { dayKey: 'not-a-date' }, ...tenSpreadEntries(2026)];
-    expect(() => recapYears(entries, new Date('2030-01-01T12:00:00.000Z'))).not.toThrow();
-    expect(recapYears(entries, new Date('2030-01-01T12:00:00.000Z'))).toEqual([2026]);
+    expect(() => recapYears(entries, at(2030, 1, 1))).not.toThrow();
+    expect(recapYears(entries, at(2030, 1, 1))).toEqual([2026]);
   });
 });
 
 describe('buildRecap', () => {
   test('returns null below the 10-entry floor', () => {
     const entries = tenSpreadEntries(2026).slice(0, 9);
-    expect(buildRecap(entries, 2026, { now: new Date('2030-01-01') })).toBeNull();
+    expect(buildRecap(entries, 2026, { now: at(2030, 1, 1) })).toBeNull();
   });
 
   test('counts only that year\'s entries — 31 Dec prior-year and 1 Jan next-year both excluded', () => {
@@ -53,7 +62,7 @@ describe('buildRecap', () => {
       ...tenSpreadEntries(2027),
       e('2028-01-01'), // next year — excluded
     ];
-    const r = buildRecap(entries, 2027, { now: new Date('2030-01-01') });
+    const r = buildRecap(entries, 2027, { now: at(2030, 1, 1) });
     expect(r.daysRemembered).toBe(10);
     expect(r.firstEntry).toBe('2027-01-01');
     expect(r.lastEntry).toBe('2027-01-19');
@@ -68,7 +77,7 @@ describe('buildRecap', () => {
       // pad 2027 to the 10-entry floor without extending any run
       e('2027-01-05'), e('2027-01-07'), e('2027-01-09'), e('2027-01-11'), e('2027-01-13'), e('2027-01-15'), e('2027-01-17'),
     ];
-    const r = buildRecap(entries, 2027, { now: new Date('2030-01-01') });
+    const r = buildRecap(entries, 2027, { now: at(2030, 1, 1) });
     expect(r.longestStreak).toBe(3);
   });
 
@@ -79,7 +88,7 @@ describe('buildRecap', () => {
       e('2027-01-07', { moods: ['Zeta'] }), e('2027-01-08', { moods: ['Zeta'] }), e('2027-01-09', { moods: ['Zeta'] }),
       e('2027-01-10', { moods: ['Gamma'] }), e('2027-01-11', { moods: ['Gamma'] }),
     ];
-    const r = buildRecap(entries, 2027, { now: new Date('2030-01-01') });
+    const r = buildRecap(entries, 2027, { now: at(2030, 1, 1) });
     expect(r.topMoods).toEqual([
       { m: 'Alpha', n: 3 },
       { m: 'Beta', n: 3 },
@@ -94,7 +103,7 @@ describe('buildRecap', () => {
       e('2027-03-01'), e('2027-03-02'),
       e('2027-04-01'), e('2027-04-02'),
     ];
-    const r = buildRecap(entries, 2027, { now: new Date('2030-01-01') });
+    const r = buildRecap(entries, 2027, { now: at(2030, 1, 1) });
     expect(r.peakMonth).toBe('January');
     expect(r.quietestMonth).toBe('May');
   });
@@ -111,7 +120,7 @@ describe('buildRecap', () => {
       // pad 2027 to the 10-entry floor
       e('2027-01-05'), e('2027-01-07'), e('2027-01-09'), e('2027-01-11'), e('2027-01-13'), e('2027-01-15'), e('2027-01-17'),
     ];
-    const r = buildRecap(entries, 2027, { now: new Date('2030-01-01') });
+    const r = buildRecap(entries, 2027, { now: at(2030, 1, 1) });
     expect(r.milestones.some((m) => m.label === 'Seven Suns')).toBe(false);
     expect(r.milestones.some((m) => m.day === '2027-01-01')).toBe(true); // the year's first entry
 
@@ -121,7 +130,7 @@ describe('buildRecap', () => {
       e('2027-01-05'), e('2027-01-06'), e('2027-01-07'),
       e('2027-01-09'), e('2027-01-11'), e('2027-01-13'),
     ];
-    const r2 = buildRecap(entries2, 2027, { now: new Date('2030-01-01') });
+    const r2 = buildRecap(entries2, 2027, { now: at(2030, 1, 1) });
     const crossing = r2.milestones.find((m) => m.label === 'Seven Suns');
     expect(crossing).toBeTruthy();
     expect(crossing.day).toBe('2027-01-07');
@@ -129,7 +138,7 @@ describe('buildRecap', () => {
 
   test('malformed entries never throw', () => {
     const entries = [null, undefined, {}, { dayKey: 42 }, ...tenSpreadEntries(2026)];
-    expect(() => buildRecap(entries, 2026, { now: new Date('2030-01-01') })).not.toThrow();
-    expect(buildRecap(entries, 2026, { now: new Date('2030-01-01') })).not.toBeNull();
+    expect(() => buildRecap(entries, 2026, { now: at(2030, 1, 1) })).not.toThrow();
+    expect(buildRecap(entries, 2026, { now: at(2030, 1, 1) })).not.toBeNull();
   });
 });

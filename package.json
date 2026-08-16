@@ -7,7 +7,9 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "test": "TZ=Asia/Kolkata jest --passWithNoTests",
+    "test": "npm run test:suite && npm run test:zone",
+    "test:suite": "jest --passWithNoTests",
+    "test:zone": "TZ=Pacific/Kiritimati jest -c jest.zone.config.js && TZ=Pacific/Midway jest -c jest.zone.config.js",
     "bump:build": "node scripts/bump-version.js build",
     "bump:native": "node scripts/bump-version.js native",
     "shots": "bash scripts/shots.sh",
@@ -20,7 +22,8 @@
     ],
     "testPathIgnorePatterns": [
       "/node_modules/",
-      "/design_handoff_plus_compliance/"
+      "/design_handoff_plus_compliance/",
+      "/__tests__/zone/"
     ],
     "transformIgnorePatterns": [
       "node_modules/(?!((jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|react-native-purchases))"
