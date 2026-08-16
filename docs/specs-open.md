@@ -29,8 +29,7 @@
 > **IMP-076 and IMP-078 are both ✅ code-complete (2026-08-17)** — specs archived to
 > [`build-log.md`](build-log.md). IMP-076 left the tree on **v1.0.7 / vc13**, New Arch on, with a clean
 > `assembleRelease` behind it; **its correctness is not settled yet — [WALK-16](walk-open.md) decides that.**
-> IMP-078 pushed `design-system/` live to a new Claude Design project (**night screen baselines are the one
-> known gap** — see its build-log entry).
+> IMP-078 pushed `design-system/` live to a new Claude Design project — **15 cards, both themes**.
 >
 > **IMP-077 is the only spec left here, and it is BLOCKED on WALK-16 passing.** If you are a build chat and
 > WALK-16 has not passed, there is nothing in this queue for you.

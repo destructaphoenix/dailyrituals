@@ -129,7 +129,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 044 | R8 on release builds (dev client was shipping to the public) | Build | 🟢 **code-complete, UNWALKED — rides v1.0.6 / vc12** (bumped 2026-08-16); walk = WALK-12, on hardware, before `internal` → `production` |
 | 076 | The app moves to the New Architecture | Build | ✅ code-complete 2026-08-17 · **branch-only, never pushed** (`feat/design-push`) · `assembleRelease` clean, **v1.0.7 / vc13** · walk = WALK-16 + WALK-17 |
 | 077 | A motion vocabulary the whole app can speak | Build | ⬜ **blocked on WALK-16** · branch-only, never pushed · walk = WALK-18 |
-| 078 | A design system Claude Design can work from | Dev-only | ✅ code-complete 2026-08-17 · **branch-only, never pushed** · 14 cards live in Claude Design project `Daily Rituals Design System` · ⚠️ **night screen baselines NOT captured** (see build-log) |
+| 078 | A design system Claude Design can work from | Dev-only | ✅ code-complete 2026-08-17 · **branch-only, never pushed** · **15 cards live** in Claude Design project `Daily Rituals Design System`, both themes |
 
 ---
 
@@ -159,11 +159,14 @@ Design does not emit React Native — it returns HTML/CSS previews plus a spec.
 token/component/frozen cards are generated from `src/theme.js`, `src/data.js` and `src/art.js`, so they
 cannot drift — but they do not update themselves.
 
-**Two known gaps, both deliberate and neither blocking:**
-- **No night screen baselines.** The app's day/night mode is its own setting (`App.js:40`, header toggle),
-  not the OS's, so `cmd uimode night` does nothing — capturing night needs the in-app toggle driven from
-  inside `.maestro/store-shots.yaml`. Until then, **night colour lives on the Tokens → Color card**, which is
-  complete and generated.
+**Both themes are covered** — `baseline-day` and `baseline-night` (night captured 2026-08-17 after the
+owner switched the app to dark by hand). **The app's mode is its own setting, not the OS's** (`App.js:40`,
+header toggle), so `cmd uimode night` does nothing: to re-shoot night, set the app to dark **first**, then
+run `npm run shots`. `scripts/gen-design-system.js` picks up whichever `day-*`/`night-*` PNGs are present,
+and **`scripts/check-baseline-dark.py` gates the night copy** (mean luma < 90) so a day frame can never
+again be filed as night — that exact mistake happened once.
+
+**One known gap, deliberate and not blocking:**
 - **No auto-sync.** Pointing the Design System pane's own GitHub connection at `design-system/` would
   re-sync on every `theme.js` change, but that **requires publishing the branch**, which the no-push
   instruction forbids. Owner's call, later.
@@ -268,14 +271,13 @@ because `list_projects` returned empty exactly as the spec predicted. Verified
 `type: PROJECT_TYPE_DESIGN_SYSTEM`, `canEdit: true`. **Two plans, guardrails first** — frozen + motion
 contract (8 files), then the rest (18) — because whatever is in the project at request time is what
 constrains output. All 14 previews carry `<!-- @dsCard -->` as line 1.
-**⚠️ ONE STEP IS HALF DONE AND IT MATTERS: night screen baselines were NOT captured.** The seven `day-*`
-shots are genuine (`npm run shots`, Maestro + adb, `storeShots` scenario). **The app's day/night mode is its
-own setting, not the OS's** — `App.js:40` holds `mode`, `App.js:97` loads it from settings, the header toggle
-drives it — so `cmd uimode night yes` changes nothing, and the first attempt silently produced a **second set
-of day screenshots** (four byte-identical to their day twins). Those were deleted, not shipped. Capturing
-night means driving the in-app toggle from inside `.maestro/store-shots.yaml`, which the Play-asset pipeline
-also depends on — left for whoever takes it. The baseline card states the gap and points at Tokens → Color,
-which does carry every night value.
+**Both themes are now captured (night added later the same day, after the owner switched the app to dark by
+hand).** The catch worth remembering: **the app's day/night mode is its own setting, not the OS's**
+(`App.js:40` holds `mode`, `App.js:97` loads it, the header toggle drives it), so `cmd uimode night yes`
+does nothing — the first night attempt silently produced a **second set of day screenshots**, four
+byte-identical to their day twins, and those were deleted rather than shipped. A stdlib PNG mean-luma check
+now gates the copy (all seven measured 14.5–40.2 against a threshold of 90). **To re-shoot night: set the
+app to dark FIRST, then `npm run shots`.**
 **Proof:** `npm test` → **867 passed, 84 suites** + 3 zone tests × 2 zones, exit 0 — **unchanged**, which is
 exactly what step 9 demands of a spec touching no app code. `npm run shots` also recomposed three committed
 `store/play/*.png` listing assets as a side effect; **reverted** — a dev-only spec should not edit shipped

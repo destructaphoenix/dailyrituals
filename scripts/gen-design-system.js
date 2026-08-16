@@ -724,10 +724,13 @@ function baselinePages() {
   const dir = path.join(OUT, 'screens');
   fs.mkdirSync(dir, { recursive: true });
   const out = [];
+  const present = (m) => (fs.existsSync(dir)
+    ? fs.readdirSync(dir).filter((f) => f.startsWith(`${m}-`) && f.endsWith('.png')).sort()
+    : []);
+  const haveNight = present('night').length > 0;
+
   for (const mode of ['day', 'night']) {
-    const shots = fs.existsSync(dir)
-      ? fs.readdirSync(dir).filter((f) => f.startsWith(`${mode}-`) && f.endsWith('.png')).sort()
-      : [];
+    const shots = present(mode);
     if (!shots.length) continue;
     const figs = shots.map((f) => {
       const key = f.replace(`${mode}-`, '').replace('.png', '');
@@ -737,15 +740,17 @@ function baselinePages() {
   </figure>`;
     }).join('\n');
 
-    const nightNote = mode === 'day'
-      ? `<div class="note" style="border-left-color:#d97706;background:#fffbeb">
-<strong>Night baselines are not in this project yet — treat that as a gap, not as "night looks like this".</strong>
-The app's day/night mode is <em>its own setting</em> (<code>App.js</code> holds <code>mode</code>, the header
-toggle drives it, it persists in settings) — it does <strong>not</strong> follow the OS dark-mode setting, so
-flipping the emulator's <code>uimode</code> produces day screenshots again. Capturing night needs the in-app
-toggle driven inside the Maestro flow. Until then, use the <em>Tokens → Color</em> card for night: every
-night value is there, generated from source.</div>`
-      : '';
+    const pairNote = mode === 'day'
+      ? (haveNight
+        ? `<div class="note"><strong>There is a matching <em>Baseline — night</em> card. Check both before
+designing.</strong> Night is not "day, darker": the canvas goes to true AMOLED black, card shadows are
+dropped entirely in favour of a hairline border plus a 48dp sheen, and <code>c.accentDeep</code> flips to the
+<em>brighter</em> shade. A layout that only works on cream is not finished.</div>`
+        : '')
+      : `<div class="note"><strong>This is night-v2, the shipped dark theme</strong> (<code>DARK_THEME =
+'v2'</code>) — true black rather than the older brown-tinted "classic" palette, which is kept in
+<code>theme.js</code> only as a safe revert. Note what carries the depth here: there are <em>no shadows</em>
+in night mode. Surface contrast, a 1px <code>c.border</code> hairline and the card sheen do all of it.</div>`;
 
     out.push([`screens/baseline-${mode}.html`, page(
       {
@@ -755,7 +760,7 @@ night value is there, generated from source.</div>`
       `<div class="note"><strong>Design <em>from</em> these, not from a description.</strong> This is the
 single biggest lever on whether output reads as the next version of Daily Rituals rather than a generic
 wellness app. Match the density, the card rhythm and the amount of breathing room you see here.</div>
-${nightNote}
+${pairNote}
 <div class="note">Captured through <code>npm run shots</code> (Maestro + adb) against the
 <code>storeShots</code> dev scenario — a 210-day streak, "Sam", 2,400 embers — with the status bar in demo
 mode (12:00, full battery). The fixture is deliberately a heavy account: designs must survive big numbers.</div>

@@ -2717,8 +2717,8 @@ spot is dormant by design here, and WALK-11 is not reopened.
 **Branch-only, never pushed** (`feat/design-push`). No app code changed. Scoped from
 [the motion/design-system design doc](superpowers/specs/2026-08-16-motion-and-design-system-design.md) §5–§7.
 
-**Landed.** `scripts/gen-design-system.js` (new) plus a committed `design-system/` of **14 preview cards**
-and 12 PNGs, all pushed live to a new Claude Design project.
+**Landed.** `scripts/gen-design-system.js` (new) plus a committed `design-system/` of **15 preview cards**
+and 19 PNGs, all pushed live to a new Claude Design project.
 
 **The generator is the interesting part.** `src/*.js` is ESM + JSX importing `react-native` and
 `react-native-svg`, none of which parses under plain node. The script installs a `require` hook (babel:
@@ -2749,17 +2749,17 @@ plans, guardrails first** — plan 1 was the frozen set + motion contract/primit
 **26 files** live. All 14 previews carry `<!-- @dsCard group="…" -->` as line 1 (Tokens / Frozen / Motion /
 Components / Screens); `_ds_manifest.json` was not hand-edited.
 
-**⚠️ Step 5 is HALF DONE — day baselines only. This is a real gap, not an oversight.** The seven `day-*`
-captures are genuine, taken through the sanctioned `npm run shots` path (Maestro + adb, `storeShots`
-scenario, status bar in demo mode). **Night was not captured, because the app's mode is its own setting, not
-the OS's** — `App.js:40` holds `mode` in state, loads it from persisted settings (`App.js:97`) and the header
-toggle drives it; `makeTheme(mode, …)` is called at `RitualsApp.js:88`. Flipping the emulator's
-`cmd uimode night yes` therefore changes nothing, and the first attempt produced a **second set of day
-screenshots** — four of them byte-identical to their day counterparts. Those files were deleted rather than
-shipped. **Capturing night needs the in-app toggle driven from inside the Maestro flow**, which is a change
-to `.maestro/store-shots.yaml` (a file the Play-asset pipeline depends on) and is left for whoever picks it
-up. `screens/baseline-day.html` states the gap on the card itself and points readers at Tokens → Color,
-where every night value is present and generated.
+**Step 5 — both themes captured, and the night half has a story worth keeping.** The seven `day-*` and
+seven `night-*` captures are genuine, taken through the sanctioned `npm run shots` path (Maestro + adb,
+`storeShots` scenario, status bar in demo mode). **The app's mode is its own setting, not the OS's** —
+`App.js:40` holds `mode`, `App.js:97` loads it from persisted settings, the header toggle drives it, and
+`makeTheme(mode, …)` is called at `RitualsApp.js:88`. So `adb shell cmd uimode night yes` changes nothing,
+and the first night attempt silently produced a **second set of day screenshots**, four byte-identical to
+their day twins. Those were deleted, not shipped. **Night was captured only after the owner switched the app
+to dark by hand** (2026-08-17), and a stdlib PNG mean-luma check now gates the copy — all seven measured
+14.5–40.2 against a threshold of 90, so a day frame can never again be filed as night.
+**To re-shoot night: set the app to dark FIRST, then `npm run shots`.** `gen-design-system.js` emits
+whichever `day-*` / `night-*` sets are present, so the pages follow the PNGs.
 
 **Proof:** `npm test` → **867 passed, 84 suites** + 3 zone tests × 2 zones, exit 0 — **unchanged**, which is
 what step 9 demands of a spec that touches no app code. No `expo export` (nothing shippable changed).
