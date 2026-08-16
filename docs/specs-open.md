@@ -89,30 +89,49 @@ evidence (and re-opens `WALK-11`).
 
 **Steps**
 
-1. **Flip both flags, and rewrite the comments to record why the hold ended.**
-   [`app.config.js:36`](../app.config.js#L36) → `newArchEnabled: true`;
-   [`android/gradle.properties:38`](../android/gradle.properties#L38) → `newArchEnabled=true`.
-   The existing comments explain a decision that no longer applies — replace them, do not delete them.
-   The new comment must name **the shipped API-36 build (v1.0.3 / vc9, 2026-07-30)** as the reason the
-   IMP-027 hold ended, so the next reader sees a superseded decision rather than a silent reversal.
-2. **Expect [`scripts/patch-permissions.js`](../scripts/patch-permissions.js) to fire, and do not
-   soften it.** It rewrites `expo-modules-core/…/adapters/react/permissions/PermissionsService.kt` —
-   the **legacy bridge adapter** path. If New Arch routes permissions elsewhere the patch finds no
-   match and, by deliberate IMP-027 design, **exits non-zero rather than no-opping**, failing
-   `npm install` loudly. That is correct behaviour. **Do not make the script tolerant.** If it fires:
-   re-verify the upstream `requestedPermissions!!` bug against a **pristine `expo-modules-core` tarball**
-   (not the installed copy — the installed copy is what the script rewrites, so it cannot answer the
-   question) on the New Arch path, then re-target or retire the patch **on that evidence**, and record
-   which in the session note.
-3. **Full native Android build.** `npx expo export --platform android` is **not** sufficient proof for
-   this spec — it exercises the JS bundle, not the native runtime that just changed. A real build must
-   succeed.
-4. `npm test` green, **≥ 867 passed, 84 suites** ([`PROGRESS.md:105`](../PROGRESS.md)), plus the zone
-   suites. Run **`npm test`**, not bare `npx jest`, or the zone half is skipped.
-5. **`npm run bump:native`** — native change, so `version` bumps (this is what scopes OTA to compatible
-   builds; see the update-workflow rules in `build-log.md`).
-6. **Runtime proof: [WALK-16](walk-open.md).** Do not run it from this chat. **This spec is
-   code-complete at steps 3–5**; WALK-16 decides whether the migration survives.
+1. **Flip both architecture flags.**
+   1. [`app.config.js:36`](../app.config.js#L36) → `newArchEnabled: true`.
+   2. [`android/gradle.properties:38`](../android/gradle.properties#L38) → `newArchEnabled=true`.
+   3. **Rewrite both surrounding comments** — they explain a decision that no longer applies. Replace
+      them; do not delete them. The new comment must name **the shipped API-36 build (v1.0.3 / vc9,
+      2026-07-30)** as the reason the IMP-027 hold ended, so the next reader sees a *superseded*
+      decision rather than a silent reversal.
+   4. Confirm nothing else in the repo still asserts Legacy Arch:
+      `grep -rn "newArchEnabled\|Legacy Architecture" app.config.js android/ docs/playbook.md`.
+      `playbook.md`'s stack block says Legacy — update it.
+
+2. **Reinstall, and expect [`scripts/patch-permissions.js`](../scripts/patch-permissions.js) to fire.**
+   1. Run `npm install` (the patch runs as `postinstall`).
+   2. **If it exits non-zero, that is designed behaviour, not a defect.** It rewrites
+      `expo-modules-core/…/adapters/react/permissions/PermissionsService.kt` — the **legacy bridge
+      adapter** path. If New Arch routes permissions elsewhere, the patch finds no match and fails
+      `npm install` loudly rather than silently no-opping (IMP-027 made it three-state on purpose).
+   3. **Do not make the script tolerant.** That converts a loud, correct failure into an app that
+      crashes on a permission check.
+   4. If it fires: re-verify the upstream `requestedPermissions!!` bug against a **pristine
+      `expo-modules-core` tarball** — *not* the installed copy, which is what the script rewrites and so
+      cannot answer the question — on the New Arch path.
+   5. Re-target or retire the patch **on that evidence**, and record which, and why, in the session note.
+
+3. **Full native Android build.**
+   1. Build for real. **`npx expo export --platform android` is not sufficient proof for this spec** —
+      it exercises the JS bundle, not the native runtime that just changed.
+   2. If the Kotlin/kapt tmpdir issue resurfaces, refresh the `~/.gradle/init.d` fix (it held across
+      SDK 54 per IMP-027; New Arch is a different codegen path).
+
+4. **Green the suite.**
+   1. `npm test` — **≥ 867 passed, 84 suites** ([`PROGRESS.md`](../PROGRESS.md) stack block), plus the
+      zone suites.
+   2. Run **`npm test`**, not bare `npx jest`, or the zone half is silently skipped.
+   3. ⚠️ **A green suite is not evidence this spec worked.** No app code changed, so jest is
+      structurally blind to the architecture flip. Step 6 is the real gate.
+
+5. **`npm run bump:native`** — native change, so `version` bumps. That is what scopes OTA to compatible
+   builds; see the update-workflow rules in `build-log.md`.
+
+6. **Runtime proof: [WALK-16](walk-open.md), then [WALK-17](walk-open.md). Not from this chat.**
+   **This spec is code-complete at steps 3–5.** WALK-16 decides whether the migration survives, and
+   WALK-17 re-audits edge-to-edge (IMP-027's pass was on Legacy Arch and does not carry over).
 
 **Rollback is one line each way.** Both flags back to `false`, rebuild. This spec deliberately changes
 **no app code at all** — that is what keeps it revertible, and it is why it must land before any design
@@ -140,54 +159,73 @@ every Claude Design spec will be written in.** One named primitive set, one plac
 
 **Steps**
 
-1. **Install via `npx expo install`, not bare `npm install`** — `react-native-reanimated@~4.1.1` and
-   `react-native-worklets@0.5.1`, both Expo SDK 54's own bundled recommendations
-   (`node_modules/expo/bundledNativeModules.json`).
-2. **Do not touch [`babel.config.js`](../babel.config.js).** `babel-preset-expo` auto-injects the
-   worklets plugin when `react-native-worklets` is present, and prefers it over the Reanimated plugin
-   (`node_modules/babel-preset-expo/build/index.js:286-289`). Adding either by hand risks
-   double-application. The file stays exactly as it is.
-3. **Jest** — add to [`jest.setup.js`](../jest.setup.js):
-   `jest.mock('react-native-reanimated', () => require('react-native-reanimated/mock'));`
-   and add `react-native-reanimated` to the `transformIgnorePatterns` allowlist in
-   [`package.json`](../package.json)'s jest block, beside the existing entries.
-   ⚠️ **Write a comment there saying the mock no-ops every hook, so a green suite proves the screens
-   still render and proves nothing whatsoever about the native side.** That is exactly the trap this
-   spec's gate exists for.
-4. **New `src/motion.js`** — pure presentation. **No imports from `persistence/`, `billing/`,
-   `gamify.js` or `insights/`**, and it owns no state. Durations and curves are lifted from what already
-   reads well: [`Celebration.js`](../src/screens/Celebration.js) — a spring pop into
-   `Animated.stagger(150, …)` over scale and opacity — is the house feel. Generalize it; do not invent a
-   new one. Exports:
-   - `DUR` = `{ tap: 120, enter: 320, settle: 480, celebrate: 900 }`
-   - `EASE` — named curves plus one spring config matching Celebration's
-   - `riseIn(delay)` — fade + 12dp translateY. The default entrance for cards and rows.
-   - `popIn(delay)` — scale 0.85→1 spring. Rewards, badges, orbs.
-   - `fadeOut()` — plain opacity. Dismissals.
-   - `stagger(i, step = 60)` — delay for list index `i`.
-   - `usePressScale()` — shared press feedback.
-   - `useCountUp(value)` — animates a number toward `value`.
-   - `ScreenFade` — see step 6.
-5. **`PrimaryButton` adopts `usePressScale()`**, replacing its local press spring
-   ([`ui.js:83-85`](../src/ui.js#L83-L85)). **`ProgressBar`'s shimmer is not touched** — it works, it is
-   native-driven, and the regression risk buys nothing.
-6. **`ScreenFade` wraps the screen container** at [`RitualsApp.js:754`](../src/RitualsApp.js#L754) —
-   cross-fade plus an 8dp translateY settle at `DUR.enter`, keyed on the active tab so a change remounts
-   the animation. **No routing change, no state change, no navigation library.** The ~12
-   `<Modal animationType="slide">` instances stay exactly as they are; OS modal presentation is correct
-   for sheets.
-7. **Coexistence is the rule, not a compromise.** [`src/art.js`](../src/art.js) is **frozen** (see step
-   8). `Celebration.js` and `Toast.js` **stay on `Animated`** — rewriting working choreography buys
-   nothing. New motion uses `motion.js`; old motion is left alone.
-8. **🔒 `src/art.js` is read-only for this entire effort.** `RayFan`, `NightSky`, `NightRays`, `BigSun`,
-   `BigMoon` are the app's signature and the owner's explicit constraint. Not ported to Reanimated, not
-   restyled, not re-timed. **No exceptions.**
-9. **Tests** — a `__tests__/motion.test.js` covering the pure surface: `DUR`/`EASE` shapes,
-   `stagger(i, step)` arithmetic, and `motion.js` importing nothing from the four forbidden directories
-   (a source assertion, in the style of IMP-074's).
-10. `npm test` green, **≥ the count IMP-076 left**, plus the zone suites. `npx expo export --platform
-    android` clean. **`npm run bump:native`** — native dep.
-11. **Runtime proof: [WALK-18](walk-open.md).** Not from this chat.
+1. **Install the two packages.**
+   1. Use **`npx expo install`**, not bare `npm install` — `react-native-reanimated@~4.1.1` and
+      `react-native-worklets@0.5.1`, both Expo SDK 54's own bundled recommendations
+      (`node_modules/expo/bundledNativeModules.json`).
+   2. **Do not touch [`babel.config.js`](../babel.config.js).** `babel-preset-expo` auto-injects the
+      worklets plugin when `react-native-worklets` is present, and prefers it over the Reanimated plugin
+      (`node_modules/babel-preset-expo/build/index.js:286-289`). Adding either by hand risks
+      double-application. The file stays exactly as it is.
+
+2. **Wire up Jest — and document why it lies.**
+   1. Add to [`jest.setup.js`](../jest.setup.js):
+      `jest.mock('react-native-reanimated', () => require('react-native-reanimated/mock'));`
+   2. Add `react-native-reanimated` to the `transformIgnorePatterns` allowlist in
+      [`package.json`](../package.json)'s jest block, beside the existing entries.
+   3. ⚠️ **Comment at the mock site that it no-ops every hook** — so a green suite proves the screens
+      still render and proves *nothing whatsoever* about the native side. That is exactly the trap this
+      spec's WALK-16 gate exists for, and the next reader must not have to rediscover it.
+
+3. **New `src/motion.js` — the vocabulary.**
+   1. **Purity rules:** no state of its own, and **no imports from `persistence/`, `billing/`,
+      `gamify.js` or `insights/`**. This is the "no backend rewiring" constraint made mechanical.
+   2. **Source the feel, don't invent it.** [`Celebration.js`](../src/screens/Celebration.js) — a spring
+      pop into `Animated.stagger(150, …)` over scale and opacity — is the house motion. Generalize it.
+   3. Export exactly:
+      - `DUR` = `{ tap: 120, enter: 320, settle: 480, celebrate: 900 }`
+      - `EASE` — named curves plus one spring config matching Celebration's
+      - `riseIn(delay)` — fade + 12dp translateY. The default entrance for cards and rows.
+      - `popIn(delay)` — scale 0.85→1 spring. Rewards, badges, orbs.
+      - `fadeOut()` — plain opacity. Dismissals.
+      - `stagger(i, step = 60)` — delay for list index `i`.
+      - `usePressScale()` — shared press feedback.
+      - `useCountUp(value)` — animates a number toward `value`.
+      - `ScreenFade` — see step 5.
+
+4. **Adopt it in exactly two places. No more.**
+   1. **`PrimaryButton` takes `usePressScale()`**, replacing its local press spring
+      ([`ui.js:83-85`](../src/ui.js#L83-L85)).
+   2. **`ProgressBar`'s shimmer is not touched** — it works, it is native-driven, and the regression risk
+      buys nothing.
+
+5. **`ScreenFade` wraps the screen container** at [`RitualsApp.js:754`](../src/RitualsApp.js#L754).
+   1. Cross-fade plus an 8dp translateY settle at `DUR.enter`, keyed on the active tab so a change
+      remounts the animation.
+   2. **No routing change, no state change, no navigation library.**
+   3. The ~12 `<Modal animationType="slide">` instances stay exactly as they are — OS modal presentation
+      is correct for sheets, and a custom presenter is far more change than the result justifies.
+
+6. **🔒 Freeze `src/art.js`, and leave working choreography alone.**
+   1. `RayFan`, `NightSky`, `NightRays`, `BigSun`, `BigMoon` are the app's signature and the owner's
+      explicit constraint. **Not ported to Reanimated, not restyled, not re-timed. No exceptions.**
+   2. `Celebration.js` and `Toast.js` **stay on `Animated`.** Rewriting working choreography buys
+      nothing.
+   3. **Coexistence is the design, not a compromise** — new motion uses `motion.js`, old motion is left
+      alone, and the two run side by side.
+
+7. **Tests — `__tests__/motion.test.js`**, covering the pure surface only:
+   1. `DUR` and `EASE` shapes.
+   2. `stagger(i, step)` arithmetic.
+   3. A **source assertion** (in the style of IMP-074's) that `motion.js` imports nothing from the four
+      forbidden directories.
+
+8. **Green + bump.**
+   1. `npm test` — **≥ the count IMP-076 left**, plus the zone suites.
+   2. `npx expo export --platform android` clean.
+   3. **`npm run bump:native`** — native dep.
+
+9. **Runtime proof: [WALK-18](walk-open.md). Not from this chat.**
 
 **Commit:** `feat(motion): a motion vocabulary the whole app can speak (IMP-077)` — **no `Release-Lane`
 trailer, and do not push.**
@@ -211,48 +249,66 @@ design.
 
 **Steps**
 
-1. **New `scripts/gen-design-system.js`** — imports `makeTheme()` from [`theme.js`](../src/theme.js) and
-   generates `design-system/tokens/{color,type,shape,elevation}.html` across `mode: day | night` × the
-   shipped accent sets. **Generated, never hand-written** — hand-copied hex drifts the first time the
-   accent palette changes. **Render every swatch labelled with its token name (`c.accentSoft`), never a
-   raw hex.** Claude Design will only return specs in token names if it never sees a hex.
-2. **`design-system/frozen/celestial.html`** — `BigSun`, `RayFan`, `NightSky`, `NightRays`, `BigMoon` as
-   static PNGs exported from the real components, captioned verbatim:
-   > **FROZEN — reference only.** These are the app's signature. Compose around them. Never redraw,
-   > restyle, recolor, or re-time them. Designs may position them, size them, and animate their
-   > *container* (opacity, translate, scale) — nothing inside.
+1. **Generate the tokens — `scripts/gen-design-system.js` (new).**
+   1. Import `makeTheme()` from [`theme.js`](../src/theme.js) and emit
+      `design-system/tokens/{color,type,shape,elevation}.html` across `mode: day | night` × the shipped
+      accent sets.
+   2. **Generated, never hand-written.** Hand-copied hex drifts the first time the accent palette
+      changes; generated output cannot.
+   3. **Label every swatch with its token name (`c.accentSoft`) and never show a raw hex.** Claude
+      Design will only return specs in token names if it never sees a hex.
 
-   **This is the single highest-value card in the project.** Without a *visual*, Claude Design redesigns
-   the sun and every downstream screen spec inherits a sun that cannot ship.
-3. **`design-system/motion/contract.html`** — the hard rules, verbatim from §6 of the design doc: only
-   `opacity`/`translateX,Y`/`scale`/`rotate` animate; every motion names a `src/motion.js` primitive;
-   numbers not vibes (ms, dp, named easing); durations from `DUR`; nothing loops except the existing
-   `ProgressBar` shimmer; every entrance degrades to a cross-fade under reduced-motion.
-   **`motion/primitives.html`** sits beside it as a runnable CSS approximation of each `motion.js`
-   export, so the house feel can be *seen* rather than inferred. (Writable before IMP-077 lands — the
-   primitive list is specified there and in the design doc.)
+2. **`design-system/frozen/celestial.html` — the highest-value card in the project.**
+   1. Render `BigSun`, `RayFan`, `NightSky`, `NightRays`, `BigMoon` as static PNGs exported from the
+      **real components**, both themes.
+   2. Caption verbatim:
+      > **FROZEN — reference only.** These are the app's signature. Compose around them. Never redraw,
+      > restyle, recolor, or re-time them. Designs may position them, size them, and animate their
+      > *container* (opacity, translate, scale) — nothing inside.
+   3. **Why it is first:** without a *visual*, Claude Design redesigns the sun, and every downstream
+      screen spec silently inherits a sun that cannot ship.
+
+3. **`design-system/motion/` — the portability contract.**
+   1. `contract.html` — the hard rules, verbatim from §6 of the design doc: only
+      `opacity`/`translateX,Y`/`scale`/`rotate` animate; every motion names a `src/motion.js` primitive;
+      numbers not vibes (ms, dp, named easing); durations from `DUR`; nothing loops except the existing
+      `ProgressBar` shimmer; every entrance degrades to a cross-fade under reduced-motion.
+   2. `primitives.html` — a runnable CSS approximation of each `motion.js` export, so the house feel can
+      be **seen** rather than inferred from a table.
+   3. **Writable before IMP-077 lands** — the primitive list is fully specified in IMP-077 step 3 and in
+      the design doc.
+
 4. **`design-system/components/*.html`** — `card` (incl. the night-v2 `CARD_SHEEN` top strip),
    `buttons`, `progress`, `chips`, `nav`, `plus`. Mirror [`ui.js`](../src/ui.js),
-   [`shopui.js`](../src/shopui.js) and the nav at [`RitualsApp.js:757`](../src/RitualsApp.js#L757).
-5. **`design-system/screens/baseline-*.html`** — real screenshots in both themes, captured via the
-   existing `npm run shots` path ([`scripts/shots.sh`](../scripts/shots.sh), Maestro + adb). Designing
-   *from* the current screens rather than from prose is the biggest single lever on whether output reads
-   as the next version of Daily Rituals or as a generic wellness app.
-6. **Every preview's first line must be `<!-- @dsCard group="…" -->`.** That marker is what the Design
-   System pane compiles into `_ds_manifest.json`. **A preview without it produces no card.** Do not
-   hand-edit `_ds_manifest.json`.
-7. **Push.** The owner's existing GitHub connection to this repo is a **regular project**; project type
-   is immutable at creation, so it cannot become a design system (`list_projects`, filtered to writable
-   design-system projects, returned empty on 2026-08-16). Use `DesignSync`: `create_project` →
-   `finalize_plan` → `write_files`. **Push the frozen card and the motion contract first.**
-   ⚠️ **`design-system/` is the only thing that goes to Claude Design. This does not push the repo to
-   GitHub and does not change the branch discipline above.**
-8. **Steady state, owner's call, not this chat's:** once `design-system/` is committed, the Design System
-   pane's own GitHub connection can be pointed at that folder so it re-syncs when `theme.js` changes.
+   [`shopui.js`](../src/shopui.js), and the nav at [`RitualsApp.js:757`](../src/RitualsApp.js#L757).
+
+5. **`design-system/screens/baseline-*.html`** — real screenshots, both themes, captured via the existing
+   `npm run shots` path ([`scripts/shots.sh`](../scripts/shots.sh), Maestro + adb). Designing *from* the
+   current screens rather than from prose is the biggest single lever on whether output reads as the next
+   version of Daily Rituals or as a generic wellness app.
+
+6. **Mark every card.** Each preview's **first line** must be `<!-- @dsCard group="…" -->` — that marker
+   is what the Design System pane compiles into `_ds_manifest.json`. **A preview without it produces no
+   card.** Do not hand-edit `_ds_manifest.json`.
+
+7. **Push to Claude Design.**
+   1. The owner's existing GitHub connection to this repo is a **regular project**; project type is
+      immutable at creation, so it cannot become a design system (`list_projects`, filtered to writable
+      design-system projects, returned empty 2026-08-16). A **new** design-system project is required.
+   2. `DesignSync`: `create_project` → `finalize_plan` → `write_files`.
+   3. **Push step 2 (frozen) and step 3 (motion contract) first** — whatever is in the project at request
+      time is what constrains output, and guardrails added afterward do not retroactively fix an
+      already-generated design.
+   4. ⚠️ **`design-system/` is the only thing that goes to Claude Design.** This does not push the repo
+      to GitHub and does not relax the branch discipline above.
+
+8. **Steady state — note it, do not do it.** Once `design-system/` is committed, the Design System pane's
+   own GitHub connection could be pointed at that folder so it re-syncs whenever `theme.js` changes.
    **That requires publishing the branch, so it does not happen while the no-push instruction stands.**
-   Note it in the session note as an option the owner can take later.
-9. **No test gate** — this spec changes no app code, so `npm test` must simply be **unchanged**, not
-   improved. If the count moves, something was touched that should not have been.
+   Record it in the session note as an option the owner can take later.
+
+9. **No test gate.** This spec changes no app code, so `npm test` must be **unchanged** — not improved.
+   **If the count moves, something was touched that should not have been.**
 
 **Done when** the Design System pane shows every card above, the frozen card renders the real sun, and a
 first design request returns a spec written in **token names and `motion.js` primitives**.

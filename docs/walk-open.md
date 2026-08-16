@@ -44,36 +44,28 @@ IMP-044's R8. So the rows are grouped by *what a failure would cost*:
 | 📦 | **Independent of the app release.** Listing assets; no build required, upload any time. |
 | ⏭ | **Not needed for this release.** Covered code is unreachable in the shipped build. |
 
-**Taking a walk is unchanged: take the first ⬜ row.** WALK-05, WALK-04, WALK-06 and WALK-10 have all
-**passed** as of 2026-08-16, and **WALK-15 was closed ✅ the same day at the owner's call** (steps 1–3 and 7
-passed; 4–6 were accepted unrun — its walk-log entry says exactly what that does and does not buy).
-WALK-09 (lifetime heatmap) is **unblocked** — IMP-073 landed — and **its steps below were rewritten to match
-IMP-073's design**; read them, not the ❌ result paragraph under them. WALK-07 (modal scroll) passed on five
-of six screens but **Paywall still fails after IMP-074**, and that needs a new `IMP-xxx` from Opus, not a
-re-run. **WALK-14 (TalkBack) was dropped from the queue by the owner on 2026-08-16** — see its row for the
-reasoning; it is ⏭, not ⬜, and nothing is waiting on it.
+**Taking a walk is unchanged: take the first ⬜ row.** Passed walks live in `build-log.md` → "Walk log";
+only live rows are described here.
 
-**As of 2026-08-16 the queue is deliberately near-empty, because the work moved to Plus (Phase 10b).** The
-only ⬜ rows left are the **device** ones (WALK-13, WALK-03, WALK-08, WALK-12) plus WALK-11 and WALK-14, both
-⏭. The device rows are set aside pending a build on real hardware — which is exactly what the
-2026-08-16 internal-testing build exists to provide, so they become runnable rather than blocked. The
-ordering still does the work within the device subset: 🚦 rows come first, and **WALK-12 sits last inside the
-🚦 group on purpose** — R8 must be walked on the build you actually intend to ship, so any fix the earlier
-walks turn up would invalidate an R8 pass done before them.
+**Two independent tracks are open. Either can go first — neither gates the other.**
 
-**WALK-11 (the Plus surfaces) is the row that stops being ⏭ the moment Phase 10b opens.** It is skipped only
-because `PLUS_ENABLED = false` makes those surfaces unmountable; once Plus is the active work, that row is
-the first thing to re-read.
+**Track 1 — the vc12 release.** All remaining ⬜ rows are **device** rows (WALK-13, WALK-03, WALK-08,
+WALK-12), set aside pending real hardware — which the 2026-08-16 internal build exists to provide. Within
+them 🚦 comes first, and **WALK-12 sits last inside the 🚦 group on purpose**: R8 must be walked on the build
+you actually intend to ship, so any fix an earlier walk turns up would invalidate an R8 pass done before it.
+Two rows carry live findings — **WALK-07** (Paywall still fails after IMP-074; needs a new `IMP-xxx` from
+Opus, not a re-run) and **WALK-09** (unblocked by IMP-073; **its steps were rewritten to match IMP-073's
+design** — read them, not the ❌ paragraph under them).
 
-**2026-08-17 — WALK-16, WALK-17 and WALK-18 joined the queue, and they are a separate track.** They belong
-to the design push (IMP-076/077/078, scoped in [`specs-open.md`](specs-open.md) from
-[the design doc](superpowers/specs/2026-08-16-motion-and-design-system-design.md)) and they run against
-**`feat/design-push`, a branch that is never pushed to GitHub** — an explicit owner instruction. They do
-**not** gate the pending vc12 release, and the release walks above do **not** gate them; the two tracks are
-independent and either can go first. **WALK-16 is the one that matters most**: IMP-076 changes no app code,
-so `npm test` is structurally blind to it, and WALK-16 is the *only* evidence the New Architecture
-migration works. It also gates IMP-077. `PLUS_ENABLED` stays `false` across all three, so **WALK-11 remains
-⏭ and is not reopened by this track.**
+**Track 2 — the design push (new 2026-08-17): WALK-16, WALK-17, WALK-18.** They belong to IMP-076/077/078,
+scoped in [`specs-open.md`](specs-open.md) from
+[the design doc](superpowers/specs/2026-08-16-motion-and-design-system-design.md), and run against
+**`feat/design-push` — a branch that is never pushed to GitHub** (owner instruction). **WALK-16 matters
+most:** IMP-076 changes no app code, so `npm test` is structurally blind to it and WALK-16 is the *only*
+evidence the New Architecture migration works. It also gates IMP-077.
+
+**`PLUS_ENABLED = false` across both tracks, so WALK-11 stays ⏭** — those surfaces are *unmountable*, not
+locked. It is the row that reopens the moment Plus becomes the active work.
 
 | # | Gate | Walk | Covers | Target | Runner | Status |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -89,7 +81,7 @@ migration works. It also gates IMP-077. `PLUS_ENABLED` stays `false` across all 
 | WALK-08 | 🎨 | [Font scale + layout on the nine new screens](#walk-08--font-scale) | IMP-030 regression | **device** (real font metrics) | 👤 | ⬜ |
 | WALK-09 | 🎨 | [Lifetime heatmap's four states + the XP line](#walk-09--lifetime-heatmap) | IMP-045 | emulator | 👤 (visual) | ❌ **2026-08-16** — states compute correctly (kept/frozen/missed/not-yet-started/future, month labels present, XP line correct) but 3 layout defects found: legend wraps awkwardly, month labels wrap mid-word, grid cells render unevenly. **Scoped 2026-08-16 as IMP-073** (`docs/specs-open.md`), all three in one spec. **Re-run once it lands — against the rewritten steps**, which expect a three-entry legend by design |
 | WALK-10 | 🎨 | [Tips, explainers, empty states](build-log.md#walk-10--teach-the-app) | IMP-041 | emulator | 👤 | ✅ **2026-08-16** — full pass, all 4 steps; owner decided live to drop the tip cards anyway, reserved as **IMP-075**; detail in `build-log.md` → "Walk log" |
-| WALK-14 | ⏭ | [TalkBack can write an entry](#walk-14--talkback-can-write-an-entry) | IMP-059 | **device** | 👤 (gesture navigation, inherently manual) | ⏭ — **dropped from the queue 2026-08-16** per owner. Not a gate, not scheduled; the labels ship either way. See its section |
+| WALK-14 | ⏭ | [TalkBack can write an entry](build-log.md#-walk-14--talkback-can-write-an-entry--dropped-2026-08-16-owners-call-section-moved-here-2026-08-17) | IMP-059 | **device** | 👤 | ⏭ — **dropped 2026-08-16** per owner; section archived to `build-log.md` → "Walk log". Reopen trigger: an accessibility complaint, or institutional Plus buyers |
 | WALK-15 | ✅ | [Store screenshots regenerate](build-log.md#walk-15--store-screenshots-regenerate--closed-2026-08-16-emulator-agent-run-owners-call) | IMP-061 | emulator | 🤖 mostly | ✅ **2026-08-16 — closed at owner's call.** `npm run shots` green end to end, seven Play-legal assets committed; steps 1–3 + 7 passed, **4–6 accepted unrun**; detail in `build-log.md` → "Walk log" |
 | WALK-11 | ⏭ | [The Plus surfaces](#walk-11--the-plus-surfaces) | IMP-038, 046, 047, 043 | emulator | 👤 | ⬜ — **skip for this release.** `PLUS_ENABLED = false` makes every surface here *unmountable*, not locked; walking it needs T1, which must be reverted before committing |
 | WALK-16 | 🚦 | [The New Architecture cold start](#walk-16--the-new-architecture-cold-start) | IMP-076 | **device** (native runtime) | 👤 | ⬜ — **branch-only** (`feat/design-push`). **Gates IMP-077.** Nothing in jest can see this |
@@ -324,47 +316,6 @@ minutes out via the dev harness (technique **T2** → Notify).
 
 **If it fails:** record whether the notification arrived at all, what the Notify diff showed *before* it
 fired, and which of foreground/background/cold-start broke. Do not edit the code during the walk.
-
----
-
-## WALK-14 — TalkBack can write an entry
-
-**Covers:** IMP-059. **Target: device** (reclassified 2026-08-16). **Runner: 👤 owner** — gesture navigation
-with a screen reader, inherently manual.
-
-**⏭ DROPPED FROM THE QUEUE 2026-08-16, at the owner's call. Do not take this row.** Kept here rather than
-deleted because the steps are the only written record of what would prove IMP-059, and they cost nothing
-sitting still.
-
-**Why it existed, since the row itself never said so plainly.** It is not a Play requirement, not a
-compliance deadline, and not a gate — no store check and no policy asks a journaling app to be walkable with
-a screen reader. It was written for one narrow reason: IMP-059 (`fa523f3`) added accessibility labels across
-the app, `npm test` can assert a label *exists* but not that a blind user can actually reach the save button,
-and the write flow is the one screen where an unreachable control means the app's whole purpose is
-unavailable rather than merely awkward. That is the entire case for it. The acceptance bar in step 4 — write
-a full entry using only TalkBack gestures — is a bar this app has no user asking for today, on a
-pre-revenue solo build with the Plus work waiting.
-
-**What dropping it actually costs.** The labels IMP-059 added still ship; nothing is being removed. The
-exposure is that if one of them is wrong, nobody finds out until a screen-reader user hits it. That is a
-real but small and recoverable risk: every fix here is a string on a component, so it goes out OTA the same
-day it is reported, with no build and no review. **Reopen this row** if the app ever gets an accessibility
-complaint, or if Plus starts being sold to institutions (schools, health orgs) that ask about accessibility
-in procurement — that is the realistic trigger, not a date.
-
-Enable via device → Settings → Accessibility → TalkBack.
-
-1. Swipe through **Home**: the write FAB announces itself as `Write today's entry`. Today it is a
-   `Pressable` containing only an icon, with its `Write` label a *sibling* — so it announces as nothing.
-2. The four tabs announce **which is selected**, not just their names.
-3. Every icon-only dismiss in the overlay screens announces what it closes.
-4. **The acceptance test: open, write and dismiss a WriteFlow entry using only TalkBack gestures.** If an
-   entry cannot be written blind, IMP-059 is not done regardless of what the unit tests say.
-5. Confirm decorative gradients/rings do **not** steal focus, and that heatmap cells still announce their
-   day and moods (IMP-052 labelled them; do not relabel).
-
-**If it fails:** note the exact control and what TalkBack announced instead. Scope a follow-up IMP rather
-than fixing it in the walk chat.
 
 ---
 

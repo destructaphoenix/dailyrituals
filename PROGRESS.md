@@ -243,25 +243,16 @@ then let the page grow to fit it, instead of reserving space up front — a real
 next spec to weigh. Full writeup in `docs/walk-open.md` → WALK-07 → "Re-run — 🟡 2026-08-16 (whole walk...)".
 **Needs Opus to scope a new `IMP-xxx`.**
 
-### ✅ The suite was timezone-coupled — RESOLVED 2026-08-16
+### 📏 Standing rule — how new tests build dates (from the 2026-08-16 timezone fix)
 
-**Found by CI** on the first `npm test` it had run in weeks (the gate only fires on a `Release-Lane`
-trailer): 4 of 866 failed on the UTC runner while all 866 passed locally. **The tests, not the app —
-`dayKeyOf` was correct throughout.** They set `process.env.TZ` at runtime, which is **inert under Jest**
-(each file gets a copy of `process.env`), so they only ever passed because this machine is IST (+05:30).
-Behind that sat the real defect: fixtures built from **UTC instants** for code that reads **local** calendar
-fields.
+**Build dates with the local constructor `new Date(y, m, d, h)`** — never `Date.UTC(...)`, an ISO `Z`
+string, or a bare date-only string (which parses as UTC). `dayKeyOf` and `recapYears` read **local**
+calendar fields, so a UTC-built fixture means a different calendar day in a different zone. If a test
+genuinely needs a specific zone it belongs in `__tests__/zone/`, run pinned by `npm run test:zone`.
 
-**Fixed the same day.** Tests now build dates the way the code reads them; the one genuinely zone-dependent
-proof lives in `__tests__/zone/dayKeyZone.test.js`, run pinned at **UTC+14 and UTC−11** by
-`npm run test:zone`, with a guard that fails rather than passing vacuously at UTC. **The morning's blanket
-`TZ=Asia/Kolkata` pin is gone**, so CI genuinely exercises UTC again. **Verified: full `npm test` `exit=0`
-under five ambient zones** (UTC, +5:30, +14, −11, −5). Full account, including two self-inflicted bugs caught
-during the fix, in `docs/build-log.md` → "Resolved findings".
-
-**Rule for new tests:** build dates with the **local** constructor `new Date(y, m, d, h)` — never
-`Date.UTC(...)`, an ISO `Z` string, or a bare date-only string (which parses as UTC). If a test truly needs a
-specific zone, it belongs in `__tests__/zone/`.
+_The incident that produced this rule is closed (RESOLVED 2026-08-16 — CI caught 4/866 failing on the UTC
+runner; the tests were wrong, `dayKeyOf` was correct throughout). Full account in `docs/build-log.md` →
+"Resolved findings"._
 
 ### 🟡 IMP-056 residual + the IMP-057 decision (2026-08-10)
 
@@ -276,20 +267,6 @@ migrated**, leaving two things:
   fixture — meaningless** (`gen-v2-fixture.js` seeds ids the reporter doesn't key on), and **real device
   numbers have never been read.** Once they exist IMP-057 can be scoped — noting remapping can move an entry
   off a day and **break a live streak**: correct, but it reads as a regression to whoever it happens to.
-
-### ✅ WALK-15 screenshot automation — CLOSED 2026-08-16, no spec needed
-
-Fixed as **test-infra repair** (no app code, no accessibility label touched) and **closed at the owner's
-call** the same day. `npm run shots` runs green end to end and the seven Play-legal 1080×1920 assets are
-committed under `store/play/`. Six defects total, five of them the same family — a maestro step reporting
-`COMPLETED` while the app is somewhere else, so the artifact is a *wrong picture* rather than an error
-(`04-reflections.png` was the Android launcher; `07-shop.png` was the home screen). **Full writeup, including
-what each fix was and why:** `docs/build-log.md` → "Walk log" → WALK-15.
-
-**Steps 4, 5 and 6 were accepted unrun** — the second-AVD resolution check, the byte-comparable re-run, and
-the 👤 half where someone opens all seven and looks. **Bounded on purpose:** those three protect only the
-*listing assets*, which are uploaded by hand and seen by a human at upload time; nothing here can reach the
-app or a user. If a later run's output drifts with the emulator, this is the first place to look.
 
 ### 🟢 IMP-044 — the standing build-lane debt
 

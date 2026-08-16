@@ -3567,6 +3567,39 @@ Owner: *"When I press 'Backup my journal' it gives me the option to send or shar
 
 ## Walk log (passed walks, moved out of docs/walk-open.md)
 
+### ⏭ WALK-14 — TalkBack can write an entry — DROPPED 2026-08-16 (owner's call), section moved here 2026-08-17
+
+**Covers:** IMP-059. **Target: device.** **Runner: 👤 owner** — gesture navigation with a screen reader,
+inherently manual. **Do not take this row.** Moved out of `walk-open.md` so the open queue holds only live
+work; the steps are kept because they are the only written record of what would prove IMP-059.
+
+**Why it existed.** Not a Play requirement, not a compliance deadline, not a gate. IMP-059 (`fa523f3`) added
+accessibility labels across the app; `npm test` can assert a label *exists* but not that a blind user can
+reach the save button, and the write flow is the one screen where an unreachable control makes the app's
+whole purpose unavailable rather than merely awkward.
+
+**What dropping it costs.** The labels still ship; nothing was removed. The exposure is that a wrong label
+goes unfound until a screen-reader user hits it — small and recoverable, since every fix here is a string on
+a component and goes out OTA the same day. **Reopen** on an accessibility complaint, or if Plus is ever sold
+to institutions (schools, health orgs) that ask about accessibility in procurement. That is the trigger, not
+a date.
+
+**Steps, if reopened.** Enable via device → Settings → Accessibility → TalkBack.
+
+1. Swipe through **Home**: the write FAB announces itself as `Write today's entry`. At time of writing it is
+   a `Pressable` containing only an icon, with its `Write` label a *sibling* — so it announces as nothing.
+2. The four tabs announce **which is selected**, not just their names.
+3. Every icon-only dismiss in the overlay screens announces what it closes.
+4. **The acceptance test: open, write and dismiss a WriteFlow entry using only TalkBack gestures.** If an
+   entry cannot be written blind, IMP-059 is not done regardless of what the unit tests say.
+5. Confirm decorative gradients/rings do **not** steal focus, and that heatmap cells still announce their day
+   and moods (IMP-052 labelled them; do not relabel).
+
+**If it fails:** note the exact control and what TalkBack announced instead. Scope a follow-up IMP rather
+than fixing it in the walk chat.
+
+---
+
 ### ✅ WALK-01 — v2→v3 mood migration — PASSED 2026-08-14 (emulator, agent-run)
 
 **Covers:** IMP-037's `SCHEMA_VERSION` 2→3 (`mood: string` → `moods: string[]`). Steps 1–2 had already passed 2026-08-09; this run completed steps 3–9, which were the actual point of the walk (mood-chip correctness on migrated data).
