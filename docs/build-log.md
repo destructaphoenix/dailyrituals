@@ -2534,6 +2534,46 @@ existing IMP-065 cases, including both chip-order assertions, stayed green untou
 **Commit:** `fix(archive): the mood filter row stops jumping under your thumb (IMP-071)` (`4072e8d`).
 **Runtime proof:** **WALK-04**, re-run whole — a separate chat.
 
+### IMP-073 — the lifetime heatmap reads as one grid   ·   Lane: OTA   ·   Status: ✅ code-complete (2026-08-16)
+
+**Why.** WALK-09, 2026-08-16. Everything the "Your record" heatmap computes was right (kept / frozen / missed
+/ not-yet-started / future all resolved correctly), but three layout defects made it read as broken: the
+4-entry legend wrapped awkwardly, month labels wrapped mid-word ("Aug" → "Au"/"g"), and grid cells rendered
+at visibly inconsistent sizes because `done` was the only state at `borderWidth: 0`.
+
+**Landed as specified, three decided design moves, not a layout patch:**
+- **Legend drops to three entries** (`LEGEND` in [`InsightsScreen.js`](../src/screens/InsightsScreen.js), now
+  exported) — the owner's call from the walk: "not yet started" doesn't earn a legend row. `empty` moved from
+  a dashed-outline decorated state to a flat, faint fill (`c.ghostBtn`), which also deletes the codebase's
+  only `borderStyle: 'dashed'` (Android renders it unreliably with `borderRadius`).
+- **Every cell state now returns `borderWidth: 1`** in `heatCellStyle` (now exported) — states with no visible
+  ring get a transparent border instead of no border, so geometry stops varying while the paint stays
+  identical. This is the fix the function's own pre-existing comment already called for.
+- **The gutter scales with font size and the legend indents from it**, closing the drift that caused the
+  wrap: new `heatGutterWidth(fontScale)` + `HEAT_GUTTER_BASE_DP` (28) + `HEAT_CELL_GAP` (4) in
+  [`src/insights/heatCells.js`](../src/insights/heatCells.js), mirroring IMP-067's `moodLabelWidth` (same
+  1.5x cap at `MAX_FONT_SCALE`). `LifetimeHeat` reads `fontScale` itself via `useWindowDimensions` (already
+  imported in the file) since it's its own component. The month-label `View` gained `numberOfLines={1}` +
+  `ellipsizeMode="clip"` (clip, not the RN default "tail", so a genuine overflow reads as "Au" not "A…" on a
+  three-letter month). The legend's `paddingLeft` is now `gutter + HEAT_CELL_GAP` — derived, not a second
+  hardcoded constant — and the legend row gained `rowGap: 8` for graceful degradation if a large font scale
+  still forces a second row.
+
+Out of scope, per spec, and untouched: the Archive tab's own month heatmap (`Heat` in `ArchiveScreen.js`),
+`cellState`'s precedence, `buildLifetimeHeatmap`, the today ring, the `done`-only `Pressable` and its
+`accessibilityLabel` (IMP-052), the XP/level line, `DeeperInsights`.
+
+**Tests (+8, one new suite file → 84):** `__tests__/insights/heatCells.test.js` gained a `describe('heatGutterWidth')`
+block (+5) — base width at 1x, growth to 42 at 1.5x, cap at 42 for 2.0x, no shrink below 1x, and
+undefined/NaN/non-numeric fall back to the base; existing `cellState`/`monthLabelsForRows` cases stayed
+green untouched. New `__tests__/insights/heatCellStyle.test.js` (+3) — every state has identical
+`borderWidth: 1`, no state uses `borderStyle: 'dashed'`, and `LEGEND` is exactly `['done', 'frozen', 'missed']`.
+
+**Proof:** `npm test` → **860 passed, 84 suites** (was 852/83). `npx expo export --platform android` clean.
+**Ship:** OTA lane, no bump — rides the next batch; no `Release-Lane` trailer on this commit.
+**Commit:** `fix(insights): the lifetime heatmap reads as one grid (IMP-073)` (`67d0736`).
+**Runtime proof:** **WALK-09**, re-run whole — a separate chat.
+
 ---
 
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
@@ -3149,6 +3189,27 @@ NEXT: a build chat takes **IMP-071** (first ⬜,
 **it reverses landed behavior (finding g), not a defect fix — don't re-litigate the scroll-back-to-x0
 decision.** A walk chat can still take **WALK-07**, **WALK-06** or **WALK-15**._
 
+_2026-08-16 (WALK-04, search + moods) — **✅ full pass, emulator, third re-run.** Steps 1–5 and both
+IMP-069 (deselect + "N chosen" line) and IMP-071 (front-sort without autoscroll) confirmed live. Two more
+defects surfaced in the custom-mood face field and were **fixed live in this chat at the owner's explicit
+direction**, skipping the usual Opus-scoping step: the mood-question copy shifted the page on first select
+(two lines empty, one line chosen — shortened); the face-field placeholder clipped to "or any" (field
+resized to a 34×34 circle matching the palette swatches, "+" placeholder in `c.accent`). That work surfaced
+a **real pre-existing bug** — typing a second emoji into the face field never replaced the first, since
+`onEmojiTyped` read `firstEmoji()` off the raw accumulated buffer instead of stripping the already-shown
+prefix — fixed with a regression test that fails without the fix. A follow-up visual "shake" on swap
+(Android auto-scrolling the field to fit a momentary two-emoji string) was fixed by giving the `TextInput`
+more width than the visible circle (clipped via `overflow: hidden`) rather than by force-clearing the
+native buffer — that was tried first and reverted, since it desyncs the Android IME's emoji-composing state
+and silently drops the second keystroke; left as a code comment so it isn't retried. All logged as
+**IMP-072** (backlog row only, no spec — see WALK-04's entry in `build-log.md` → "Walk log" for the full
+account). **Proof:** `npm test` → **852 passed, 83 suites** (was 850/83). `npx expo export --platform
+android` clean. LAST command: `git commit` → `44197e9`. Moved WALK-04's full section from `walk-open.md` to
+`build-log.md` → "Walk log" (passed), updated its index row, closed the now-resolved WALK-04 finding note in
+this file, updated the ACTIVE TRACK banner. NEXT: backlog is still empty — Opus scopes the next `IMP-xxx`.
+A walk chat can take **WALK-07**, **WALK-06**, or **WALK-15** (all emulator); **WALK-13** is next in
+strict index order but is device-only._
+
 ---
 
 ## Update workflow — superseded manual reference
@@ -3218,12 +3279,33 @@ group; the name field strips emoji instead of rejecting them. Full writeups arch
 future copy review, not just the freeze card. Full writeup archived with each spec above.
 **WALK-06 stays ❌ in `docs/walk-open.md`** — re-run it whole; both specs have landed.
 
-### 🔴 WALK-07 finding — modal scroll → **all three scoped specs landed** (IMP-067 + IMP-068, 2026-08-15) — ✅ RESOLVED
+### 🔴 WALK-07 finding — modal scroll → (b)(c) landed via IMP-067; (a) IMP-068's fix is incomplete — 🔴 REOPENED 2026-08-16
 
-(b)(c) `Row` truncation + Mood Mix bar misalignment → IMP-067. (a) Paywall footer overlap → IMP-068,
-deliberately last since `PLUS_ENABLED = false` made that screen unmountable in the shipped build; fixed with
-`style={{ flex: 1 }}` on its `ScrollView`. Full writeups archived with each spec above.
-**WALK-07 stays ❌ in `docs/walk-open.md`** — re-run it whole; all three have landed.
+(b)(c) `Row` truncation + Mood Mix bar misalignment → IMP-067, landed clean. (a) Paywall footer overlap →
+IMP-068 fixed the *static* case with `style={{ flex: 1 }}` on the `ScrollView` (`Paywall.js:46`), but that
+alone is the same trap `Shop.js:23-29` documents: **Android's Modal is a `Dialog` whose window size is
+unknown on the first measure pass, so `flex: 1` bounds nothing there** — the ScrollView lays out to full
+content height, pushing the footer off-screen. A later layout pass usually corrects it, which is why
+`Shop.js` and `ManageSubscription` (`PlusFlow.js:188-196`) both also cap the *outer* container with
+`maxHeight: winH` from `useWindowDimensions()`, so it's bounded from the very first paint instead of relying
+on a correction. `Paywall.js` never got that second guard.
+
+**Reproduced live during the 2026-08-16 WALK-07 re-run (owner, emulator, T1 flipped):** open Paywall — footer
+is absent (ScrollView unbounded, footer pushed past the fold). Select a plan (any `setState`, e.g.
+`setPlan`) — the correction layout pass fires and the footer reappears, but now overlapping the plan price
+and last perk bullets exactly as before IMP-068. So IMP-068 only fixed the very first frame; any re-render
+reintroduces the original bug.
+
+**Not resolved. Needs a new IMP** — Opus's lane to scope: add `maxHeight: winH` (via `useWindowDimensions`)
+to `Paywall.js`'s outer `View` (line 30), mirroring `Shop.js:23-29`/`52`.
+**WALK-07 stays ❌ in `docs/walk-open.md`** — the Paywall half still fails; re-run whole once this lands.
+
+### 🔴 WALK-09 finding — lifetime heatmap: legend wrap, month-label wrap, uneven cell size → **scoped spec landed** (IMP-073, 2026-08-16) — ✅ RESOLVED
+
+All three defects — the 4-entry legend wrapping, month labels wrapping mid-word, and grid cells rendering at
+inconsistent sizes — were one spec. The owner's call from the walk (drop "not yet started" from the legend
+rather than patch its wrap) is the design that landed. Full writeup archived with the spec above.
+**WALK-09 stays ❌ in `docs/walk-open.md`** — re-run it whole; the spec has landed.
 
 ### 🔴 Finding 2026-08-02 (from the IMP-029 walk) — the OS restores without asking, and the notice gives no way to refuse
 
@@ -3384,3 +3466,11 @@ emoji-composing state and silently dropped the second keystroke. All of this is 
 entry in `specs-open.md`/`build-log.md`'s spec archive since it skipped the normal Opus-scoping step.
 
 **WALK-04 is fully closed.**
+
+### ✅ WALK-06 — streak insurance — PASSED 2026-08-16 (emulator, owner-run, re-run after IMP-063 + IMP-064)
+
+**Covers:** IMP-039, IMP-063, IMP-064. Failed 2026-08-15 on four UX defects — the candle count always rendering as 3 icons regardless of the real total, verbose auto-freeze spend copy, and a frozen day sharing the same 💀 glyph as a truly missed one. IMP-063 and IMP-064 both landed 2026-08-15 to fix them.
+
+**Result — full pass, all original steps plus the two new checks:** `applyAutoFreeze` survives the `lapsed` scenario on relaunch; freezes decrement exactly one per missed day; a gap longer than candles owned freezes only the affordable prefix and still breaks the streak, spending the candles anyway; a second relaunch is idempotent; the celebration streak matches the Home hero after a post-freeze write; shop copy reads the corrected "a candle spends itself the moment you miss a day" line. The two IMP-063/064 fixes both confirmed live: a frozen day now renders a visually distinct state from a missed day on Home/Archive/Insights, and the candle icon row now reflects the real freeze count instead of a fixed three.
+
+**No app defects found.** WALK-06 is fully closed.

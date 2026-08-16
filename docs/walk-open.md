@@ -44,11 +44,16 @@ IMP-044's R8. So the rows are grouped by *what a failure would cost*:
 | 📦 | **Independent of the app release.** Listing assets; no build required, upload any time. |
 | ⏭ | **Not needed for this release.** Covered code is unreachable in the shipped build. |
 
-**Taking a walk is unchanged: take the first ⬜ row.** WALK-05 **passed 2026-08-15** and WALK-04 **passed
-2026-08-16** — the first ⬜ row is **WALK-13** (the reminder you can answer, device-only). The ordering does
-the work — 🚦 rows come first, and **WALK-12 sits last inside the 🚦 group on purpose**: R8 must be walked
-on the build you actually intend to ship, so any fix the earlier walks turn up would invalidate an R8 pass
-done before them.
+**Taking a walk is unchanged: take the first ⬜ row.** WALK-05, WALK-04 and WALK-06 have all **passed** as of
+2026-08-16. WALK-07 (modal scroll, Paywall half) and WALK-09 (lifetime heatmap) are both **❌ blocked on a
+build chat, not on a walk chat** — both were scoped 2026-08-16, as **IMP-074** and **IMP-073** respectively
+(`specs-open.md`), and a re-run means nothing until those land. **WALK-09's steps below were rewritten to
+match IMP-073's design** — read them, not the ❌ result paragraph under them. The first **⬜** row among the
+**emulator-only** walks is now **WALK-10** (teach the app). Device-only rows (WALK-13,
+WALK-03, WALK-08, WALK-12) are set aside for now per the owner's current session. The ordering still does the
+work within that subset — 🚦 rows come first, and **WALK-12 sits last inside the 🚦 group on purpose**: R8
+must be walked on the build you actually intend to ship, so any fix the earlier walks turn up would
+invalidate an R8 pass done before them.
 
 | # | Gate | Walk | Covers | Target | Runner | Status |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -59,10 +64,10 @@ done before them.
 | WALK-13 | 🚦 | [The reminder you can answer](#walk-13--the-reminder-you-can-answer) | IMP-054, **+ the duplicate-fire fix** | **device** (OEM behaviour + real doze) | 👤 | ⬜ — **unblocked 2026-08-13** (IMP-054 landed, `18d8c2e`) |
 | WALK-03 | 🚦 | [JSON export → share → restore round trip](#walk-03--json-export-round-trip) | IMP-020, IMP-043 | **device** (share-sheet targets) | 👤 | ⬜ — the user's data escape hatch |
 | WALK-12 | 🚦 | [The R8 release-variant pass](#walk-12--the-r8-release-variant-pass) | IMP-044 | **device** | 👤 | ⬜ — **the last 🚦, on the final build candidate.** First minified build ever; failure is silent |
-| WALK-06 | 🎨 | [Streak insurance — candles spend themselves](#walk-06--streak-insurance) | IMP-039 | emulator | 👤 | ❌ **2026-08-15** — mechanical behavior (freeze survival, decrement-by-one, idempotence, celebration-streak match, shop copy) passed; 4 UX defects found. **Scoped 2026-08-15 as IMP-063 + IMP-064** (`docs/specs-open.md`). **Re-run whole once both land** — IMP-063 adds a frozen-day glyph the walk must now check for |
-| WALK-07 | 🎨 | [Modal screens actually scroll](#walk-07--modal-scroll) | IMP-042 | emulator | 👤 (visual, two nav modes) | ❌ **2026-08-15** — Achievements/Shop/Reading sheet/Get Embers/Manage Subscription all passed, incl. max (2.0x) font scale; Paywall footer overlap + 2 bonus defects. **Scoped 2026-08-15 as IMP-067 + IMP-068** (`docs/specs-open.md`). **Re-run whole once both land**; the Paywall half still needs T1 |
+| WALK-06 | 🎨 | [Streak insurance — candles spend themselves](build-log.md#walk-06--streak-insurance) | IMP-039, IMP-063, IMP-064 | emulator | 👤 | ✅ **2026-08-16** — full pass, re-run after IMP-063 + IMP-064 landed; detail in `build-log.md` → "Walk log" |
+| WALK-07 | 🎨 | [Modal screens actually scroll](#walk-07--modal-scroll) | IMP-042 | emulator | 👤 (visual, two nav modes) | ❌ **2026-08-16 (reopened)** — the five other screens passed 2026-08-15 incl. max (2.0x) font scale; (b)(c) landed as IMP-067. **(a) reopened on the re-run: IMP-068's fix was only half the mechanism** — now **scoped as IMP-074** (`docs/specs-open.md`). **Re-run WHOLE once it lands** (the five screens + the IMP-067 spot-check were never re-run); the Paywall half needs T1 |
 | WALK-08 | 🎨 | [Font scale + layout on the nine new screens](#walk-08--font-scale) | IMP-030 regression | **device** (real font metrics) | 👤 | ⬜ |
-| WALK-09 | 🎨 | [Lifetime heatmap's four states + the XP line](#walk-09--lifetime-heatmap) | IMP-045 | emulator | 👤 (visual) | ⬜ |
+| WALK-09 | 🎨 | [Lifetime heatmap's four states + the XP line](#walk-09--lifetime-heatmap) | IMP-045 | emulator | 👤 (visual) | ❌ **2026-08-16** — states compute correctly (kept/frozen/missed/not-yet-started/future, month labels present, XP line correct) but 3 layout defects found: legend wraps awkwardly, month labels wrap mid-word, grid cells render unevenly. **Scoped 2026-08-16 as IMP-073** (`docs/specs-open.md`), all three in one spec. **Re-run once it lands — against the rewritten steps**, which expect a three-entry legend by design |
 | WALK-10 | 🎨 | [Tips, explainers, empty states](#walk-10--teach-the-app) | IMP-041 | emulator | 👤 | ⬜ |
 | WALK-14 | 🎨 | [TalkBack can write an entry](#walk-14--talkback-can-write-an-entry) | IMP-059 | emulator | 👤 (gesture navigation, inherently manual) | ⬜ — **unblocked 2026-08-13** (IMP-059 landed, `fa523f3`) |
 | WALK-15 | 📦 | [Store screenshots regenerate](#walk-15--store-screenshots-regenerate) | IMP-061 | emulator | 🤖 mostly (adb + maestro are scriptable; the final seven PNGs need eyes) | ⬜ — **unblocked 2026-08-14** (IMP-061 landed, `ca850d7`) |
@@ -121,37 +126,6 @@ harness** (`__DEV__` false) and no Metro.
 
 ---
 
-## WALK-06 — streak insurance
-
-**Covers:** IMP-039.
-
-1. Harness → `lapsed` scenario (5 days gone) + **freezes ≥ 5** → relaunch. `applyAutoFreeze` runs on mount
-   and the streak **survives**.
-2. Freezes decrement by exactly one per missed day.
-3. Gap longer than candles owned → only the affordable prefix is frozen, the streak still breaks, and the
-   candles are consumed anyway (intended).
-4. Relaunch again → **idempotent**, no further spend.
-5. Write today after a freeze → the celebration's streak number matches the Home hero.
-6. Shop copy reads *"A candle spends itself the moment you miss a day…"* — both old false claims gone.
-
-**Result — ❌ 2026-08-15.** Steps 1, 2, 4, 5, 6's mechanical behavior all passed: `applyAutoFreeze` survives
-the lapsed scenario, freezes decrement one per missed day, a repeat relaunch spends nothing further, the
-celebration streak matches the Home hero, and the shop copy is correct. Four UX defects surfaced, written up
-in full (with file:line) in `PROGRESS.md` → Open items → "WALK-06 finding": (a) `StreakFreeze` in
-[`src/gamify.js:46-58`](../src/gamify.js#L46) always renders exactly 3 candle icons (`[0,1,2].map`) regardless
-of the real `freezes` count — a value like 10 still shows 3 lit candles, with the true number visible only in
-small caption text; (b) the auto-freeze spend copy in
-[`src/home/freezeNotice.js:22-29`](../src/home/freezeNotice.js#L22) is verbose and doesn't land clearly, which
-the owner flags as a app-wide principle, not a one-off: the user must never be left unsure what happened or
-why; (c) same root cause as (a) — the candle count is visually hard to make out because the icon row doesn't
-scale with the count; (d) a frozen/"saved" day has no distinct visual state anywhere — `frozenDays`
-(`RitualsApp.js:106`) is used only for streak-continuity math and never reaches the calendar/heatmap builders
-([`src/home/calendar.js:54,82`](../src/home/calendar.js#L54)), so a frozen day renders the identical 💀 glyph
-as a truly missed day in `HomeScreen.js`, `ArchiveScreen.js`, and `InsightsScreen.js`. None block the passed
-steps. Each needs a new `IMP-xxx` — Opus's lane to scope, not this walk's.
-
----
-
 ## WALK-07 — modal scroll
 
 **Covers:** IMP-042, and the four follow-up viewport-cap commits (`306a0bc`, `d9b7bc0`) that treated it as
@@ -176,6 +150,18 @@ being called a pass; (b) and (c) were found incidentally and don't block the pas
 `IMP-xxx` — Opus's lane to scope, not this walk's. **T1 (`PLUS_ENABLED`) was reverted to `false` after this
 walk — confirmed in `src/billing/config.js:39` before anything else touches this file.**
 
+**Re-run — ❌ 2026-08-16 (Paywall only; T1 flipped for the session).** (b) and (c) landed as IMP-067 —
+not yet re-checked this session. (a)'s fix, IMP-068 (`style={{ flex: 1 }}` on the `ScrollView`), turned out
+incomplete: on first opening Paywall the footer is missing entirely (not just overlapping) — Android's modal
+`Dialog` doesn't know its window size on the first measure pass, so `flex: 1` alone bounds nothing, same trap
+`Shop.js:23-29` already documents. Selecting a plan triggers the correcting layout pass, and the footer
+reappears **still overlapping** the price and perks, same as before IMP-068. Full root-cause writeup and the
+fix `Shop.js` already uses (`maxHeight: winH` via `useWindowDimensions`) in `build-log.md` → "WALK-07
+finding" (reopened). **Scoped 2026-08-16 as `IMP-074`** (`docs/specs-open.md`) — it keeps IMP-068's
+`flex: 1` and adds `maxHeight: winH` as the second half; both are needed. **Walk paused here at the owner's
+call** — the other five screens' nav-mode/font-scale checks and the IMP-067 spot-check were not re-run this
+session, so the re-run after IMP-074 is a **whole-walk** re-run, not a Paywall-only one.
+
 ---
 
 ## WALK-08 — font scale
@@ -193,12 +179,45 @@ Home / You / Recap, and rotate each new sheet to landscape. Harness → Inspect 
 
 ## WALK-09 — lifetime heatmap
 
-**Covers:** IMP-045. Use the `brokenStreak` scenario.
+**Covers:** IMP-045, IMP-063's `frozen` state, and **IMP-073's layout pass**. Use the `brokenStreak` scenario.
 
-Insights → "Your record": the heatmap must show **four visually distinct** cell states — kept (filled),
-**missed** (soft fill + border), **not yet started** (dashed outline), future (invisible) — and the legend
-beneath must match the grid exactly. Month labels appear once per month down the left gutter. The level
-line renders XP: `Lv 4 · {name} · 1,250 XP`.
+> **Read this before re-running: the expected result changed on 2026-08-16.** The steps below describe the
+> design **IMP-073** specifies, not the one the ❌ result at the bottom was walked against. In particular the
+> legend is **three** entries **by design** and "not yet started" is deliberately **not** one of them — that
+> is the fix, not a regression. Do not fail the walk for its absence.
+
+Insights → "Your record":
+
+1. **Five distinct cell states.** kept (solid accent fill) · **a candle kept it** (soft fill + accentDeep
+   ring) · **missed** (soft fill + border ring) · **not yet started** (a flat, faint, ring-less tile —
+   quieter than everything else, no dashed outline) · future (invisible). "Not yet started" should read as
+   *nothing here* without needing a key; if it draws your eye and makes you ask what it means, IMP-073's
+   decision 2 did not land.
+2. **The legend is exactly three entries — `kept` · `a candle kept it` · `missed` — on ONE row**, and it
+   lines up with the left edge of the first grid cell, not with the month labels. Check at normal font
+   scale; if a large scale pushes it to two rows, the rows must be spaced, not cramped.
+3. **Month labels appear once per month down the left gutter, each on a single line.** No "Au"/"g" wrap.
+   Re-check at max OS font size — the gutter is supposed to grow with the text, so the labels stay whole and
+   the grid just gets slightly narrower.
+4. **The grid reads as one grid.** Every cell is the same size regardless of state — sight down a row of
+   mixed kept/missed/frozen days and look for kept days rendering visibly small.
+5. The level line renders XP: `Lv 4 · {name} · 1,250 XP`.
+
+**Result — ❌ 2026-08-16.** All the computed content passed: kept/missed/not-yet-started/future all render
+distinctly, plus the `frozen` ("a candle kept it") state added by IMP-063 is correctly wired in and shows up
+in the legend; month labels appear once per month; the level line reads correct XP. Three layout defects
+surfaced, all cosmetic (nothing miscomputed): (a) the legend (`InsightsScreen.js:197-202`, 4 entries now that
+`frozen` was added) wraps awkwardly under `flexWrap: 'wrap'` — "not yet started" most often forced onto its
+own row; owner's call is that this entry may not need a legend row at all, with that state represented
+in-cell instead, rather than just patching the wrap. (b) Month labels wrap mid-word ("Au"/"g") —
+`InsightsScreen.js:232-233` renders `monthLabelsForRows` output in a fixed `width: 24` box with no
+`numberOfLines`/`ellipsizeMode`; that gutter width also doesn't match the legend's `paddingLeft: 28`. (c)
+Grid cells render at visibly inconsistent sizes — `heatCellStyle` (`InsightsScreen.js:207-222`) varies
+`borderWidth` by state (0 for `done`, 1 for `frozen`/`missed`/`empty`), and the function's own comment
+already documents Android bleeding stroked rounded borders half outside the box, the likely cause. Full
+writeup in `PROGRESS.md` → Open items → "WALK-09 finding". **Scoped 2026-08-16 as `IMP-073` — all three
+defects in one spec** (`docs/specs-open.md`). Re-run this walk **against the rewritten steps above**, not
+against this paragraph, once IMP-073 lands.
 
 ---
 
