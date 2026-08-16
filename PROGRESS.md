@@ -68,15 +68,19 @@ re-derive from an older note.**
 | `production` (public) | **1.0.3 / vc9** | 36 ✅ | live since 2026-07-30 |
 | `beta` (open testing) | **1.0.3 / vc9** | 36 ✅ | was vc8/API 35 — promoted, compliance gap closed |
 | `alpha` (closed testing) | **1.0.5 / vc11** | 36 ✅ | frozen by design 2026-08-08; the newest *built* code |
-| `internal` | **1.0.3 / vc9** | 36 ✅ | was vc5/API 35 — promoted, compliance gap closed |
+| `internal` | **1.0.6 / vc12** | 36 ✅ | **shipped 2026-08-16** — see below |
 
-**🔵 v1.0.6 / vc12 is IN FLIGHT to `internal` as of 2026-08-16 — the table above is pre-bump and will be
-stale the moment CI finishes.** `npm run bump:native` took `app.config.js` to `version: '1.0.6'` /
-`versionCode: 12`; the commit carries `Release-Lane: build`, so pushing it runs the test gate, waits for the
-owner's one-tap approval on the `production` environment, then `eas build --auto-submit` puts it on
-`internal`. **This is the first build since vc11 on 2026-08-02 and the first minified (R8) build of this app
-ever** — IMP-044 rides it, unwalked, which is what WALK-12 exists for. **Re-read the tracks from the Play
-Developer API before trusting the table**, and update it once vc12 lands.
+**✅ v1.0.6 / vc12 SHIPPED to `internal` on 2026-08-16.** Confirmed from the submit output, not inferred:
+`Release track: internal`, `Version code: 12`, `✔ Submitted your app to Google Play Store!` (GH run
+`31951685300`; EAS build `f621adac-8357-48b2-832e-afa89649fe34`, submission
+`2416e8bb-182d-44c9-b2e0-18f52912801b`). **This carries ~40 IMP tasks that had reached no track since the
+vc11 build on 2026-08-02**, and is **the first minified (R8) build of this app ever** — IMP-044 rides it
+**unwalked**, which is exactly what WALK-12 exists for.
+
+**🚦 vc12 is a BUILD CANDIDATE, not the release.** `internal` reaches the owner's devices and invited
+testers only. **WALK-13 → WALK-03 → WALK-12 (R8 last) must pass on real hardware before `internal` →
+`production`**, which is manual and gets the full ~7d review. If WALK-12 finds R8 stripping something, that
+is another bump and another build. The other three tracks below are unchanged and still on older code.
 
 **✅ API-36 compliance (deadline 2026-08-31) is met ACCOUNT-WIDE — blocker CLOSED 2026-08-13.** Every
 active release on every track is `targetSdkVersion 36`. Banner-reading procedure kept in the playbook.
@@ -85,10 +89,11 @@ active release on every track is `targetSdkVersion 36`. Banner-reading procedure
 `a299af7`; CI already does it). Reaching the public stays manual: promote `internal` → `production` in Play
 Console, which *does* get the full review.
 
-**⚠️ THE OTA LANE IS CLOSED until vc12 ships.** `runtimeVersion` = `appVersion`, and the bump moved that to
-**1.0.6**, which no installed build anywhere matches yet — an `eas update` published now reaches **nobody**.
-It reopens the moment vc12 is on `internal` and installed, and it then reaches vc12 only; vc11 on `alpha` is
-orphaned from OTAs for good. (Before the bump this read "reaches `alpha` only" — 1.0.5 = vc11, `alpha`-only.)
+**⚠️ THE OTA LANE REACHES `internal` ONLY** (reopened 2026-08-16 when vc12 shipped). `runtimeVersion` =
+`appVersion` = **1.0.6** = **vc12**, which lives on `internal` alone — so an `eas update` reaches the owner's
+own devices and invited testers, nobody else. **vc11 on `alpha` is orphaned from OTAs for good**, and the
+public on vc9 was never reachable. An OTA fix for anything found in the device walks lands on `internal`
+only; getting it to the public still means the manual `internal` → `production` promotion.
 
 **⚠️ OTA has no Play track.** `eas update` publishes to Expo's CDN — no Google, no review. Gated only by
 **channel** (`production`) + **matching `runtimeVersion`**. An installed build receives an OTA regardless of
@@ -193,8 +198,9 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 
 ### ▶️ Owner decisions still open
 
-- **🔵 The ~40 unpublished IMP tasks are ON THEIR WAY to `internal` as v1.0.6 / vc12 — bumped and pushed
-  2026-08-16, at the owner's direction.** Everything from IMP-032/033 through IMP-075 (search, custody +
+- **✅ RESOLVED 2026-08-16 — the ~40 unpublished IMP tasks reached `internal` as v1.0.6 / vc12.** Kept here
+  (not archived) because the *promotion* half is still open and the walks below still gate it.
+  Everything from IMP-032/033 through IMP-075 (search, custody +
   trash, multi-moods, recap, deeper insights, heatmap, `dayKey`, keyboard fix, prompt packs, a11y, mood
   management, and the whole IMP-063…075 polish run) had reached **no track at all** since the vc11 build on
   2026-08-02. An OTA could never have delivered it — `runtimeVersion` = `appVersion` matched vc11 on `alpha`
@@ -207,10 +213,11 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
   installed on real hardware, and `internal` is how it gets there. **The gate did not disappear, it moved
   one step later — `internal` → `production` is manual and is where WALK-13, WALK-03 and WALK-12 now bite.**
   What ships to `internal` reaches the owner's own devices and invited testers, not the public.
-  **Remaining sequence: CI test gate ✅ → owner's one-tap approval on the `production` environment →
-  `eas build --auto-submit` → `internal` → install on hardware → WALK-13, WALK-03, WALK-12 (R8 last) →
-  promote `internal` → `production` by hand** (full review, ~7d). **If WALK-12 finds R8 stripping something,
-  the fix means another bump and another build — vc12 is a candidate, not the release.**
+  **Done: CI test gate ✅ (after the TZ fix below) → owner approved the `production` environment →
+  `eas build --auto-submit` → `internal` ✅.
+  REMAINING: install vc12 on hardware → WALK-13 → WALK-03 → WALK-12 (R8 last) → promote `internal` →
+  `production` by hand** (full review, ~7d). **If WALK-12 finds R8 stripping something, the fix means another
+  bump and another build — vc12 is a candidate, not the release.**
 - **Cash embers: settled in principle (dropped 2026-08-03), not finalised.** Must be decided before
   `PLUS_ENABLED` flips — it determines which Play products get created. Full argument in the playbook.
 - **`PLUS_ENABLED` must not flip until every `PLUS_PERKS` line is true.** The one remaining gap is perk #6,
@@ -322,10 +329,23 @@ gate moved rather than vanished: it now sits on `internal` → `production`, whi
 candidate, not the release** — if WALK-12 finds R8 stripping something, that is another bump and another
 build. **Proof:** `npm test` → **866 passed, 84 suites** (run in a visible Terminal, `EXIT: 0`);
 `node scripts/check-billing-config.js` → OK (`PLUS_ENABLED` false, no purchase surface ships). LAST command:
-`git push`. **NEXT: the owner must approve the `production` environment gate in GitHub Actions — CI stops and
-waits for it, nothing builds until then.** After that: install vc12 from `internal` on hardware, then
-WALK-13 → WALK-03 → WALK-12. **The active work is now Plus (Phase 10b)** — read the playbook's Phase 10b gate;
-the first thing Opus owes it is a spec for the reopened WALK-07 Paywall finding._
+`git push`. **vc12 SHIPPED to `internal`** — confirmed from the submit output (`Release track: internal`,
+`Version code: 12`, `✔ Submitted your app to Google Play Store!`; GH run `31951685300`).
+
+**The push failed the CI test gate first, and it caught something real.** 4 of 866 failed on the runner while
+all 866 passed locally — **the first time `npm test` had actually executed in CI in weeks**, since the gate
+only runs on a `Release-Lane` trailer and every intermediate push carried none (those ~10s runs are no-ops).
+Root cause was the **tests, not the app**: they set `process.env.TZ` at runtime, which is **inert under Jest**
+(each file gets a copy of `process.env`), so they only ever passed because this machine is IST (+05:30).
+Fixed by pinning `TZ=Asia/Kolkata` in the `test` script — the only mechanism available, since Jest cannot
+change the zone from inside. Verified `TZ=UTC npm test` → 866/866, which simulates the runner directly.
+**See Open items → "the suite is timezone-coupled" — the pin unblocks CI without fixing the fragility, and
+needs a follow-up `IMP-xxx`.**
+
+**NEXT: install vc12 from `internal` on real hardware, then WALK-13 → WALK-03 → WALK-12 (R8 last).** Those
+three gate the manual `internal` → `production` promotion. **The active work is now Plus (Phase 10b)** — read
+the playbook's Phase 10b gate; the first thing Opus owes it is a spec for the reopened WALK-07 Paywall
+finding, plus the timezone-test follow-up above._
 
 _2026-08-16 (WALK-07, modal scroll — whole-walk re-run) — **no app defect on five of six screens; Paywall
 fails again.** T1 flipped for the session and reverted after (confirmed `src/billing/config.js:39` back to
