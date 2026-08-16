@@ -1,4 +1,4 @@
-import { cellState, monthLabelsForRows } from '../../src/insights/heatCells';
+import { cellState, monthLabelsForRows, heatGutterWidth, HEAT_CELL_GAP } from '../../src/insights/heatCells';
 
 describe('cellState', () => {
   test('future cell', () => {
@@ -59,5 +59,30 @@ describe('monthLabelsForRows', () => {
 
   test('rows whose cells lack dayKey never throw', () => {
     expect(monthLabelsForRows([[{}], [{}]])).toEqual(['', '']);
+  });
+});
+
+describe('heatGutterWidth', () => {
+  test('1x scale stays at the base width', () => {
+    expect(heatGutterWidth(1)).toBe(28);
+  });
+
+  test('1.5x scale grows to 42', () => {
+    expect(heatGutterWidth(1.5)).toBe(42);
+  });
+
+  test('2.0x scale is capped at 42 — T never scales past MAX_FONT_SCALE', () => {
+    expect(heatGutterWidth(2.0)).toBe(42);
+  });
+
+  test('a scale below 1 never shrinks the gutter', () => {
+    expect(heatGutterWidth(0.85)).toBe(28);
+  });
+
+  test('undefined, NaN and non-numeric input fall back to the base width', () => {
+    expect(heatGutterWidth(undefined)).toBe(28);
+    expect(heatGutterWidth(NaN)).toBe(28);
+    expect(heatGutterWidth('abc')).toBe(28);
+    expect(HEAT_CELL_GAP).toBe(4);
   });
 });

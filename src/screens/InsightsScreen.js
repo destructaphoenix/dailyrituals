@@ -8,7 +8,7 @@ import { ChartIcon } from '../icons';
 import { moodEmoji } from '../data';
 import { deriveInsights } from '../insights/derive';
 import { deriveLifetime } from '../insights/lifetime';
-import { cellState, monthLabelsForRows } from '../insights/heatCells';
+import { cellState, monthLabelsForRows, heatGutterWidth, HEAT_CELL_GAP } from '../insights/heatCells';
 import { buildLifetimeHeatmap } from '../home/calendar';
 import { entryForDayKey } from '../entries/find';
 import { moodLabelWidth } from '../insights/moodMixLayout';
@@ -194,19 +194,29 @@ export default function InsightsScreen({ copy, entries = [], streak = 0, xp = 0,
   );
 }
 
-const LEGEND = [
+// Three entries, and three is the ceiling: the card is 280dp wide on a 360dp
+// phone (screen paddingHorizontal 20 + Card padding 20, both sides) and these
+// three plus the indent measure ~250dp. A fourth ("not yet started", ~94dp) is a
+// guaranteed wrap at any font scale — which is exactly what WALK-09 saw. That
+// state is shown in-cell instead now; see heatCellStyle's `empty` branch.
+// Do not re-add it here. (IMP-073)
+export const LEGEND = [
   { state: 'done', label: 'kept' },
   { state: 'frozen', label: 'a candle kept it' },
   { state: 'missed', label: 'missed' },
-  { state: 'empty', label: 'not yet started' },
 ];
 
-// Geometry must NOT vary by cell state: a wider border on one cell makes it read
-// as a bigger block (Android strokes rounded borders half-outside the bounds), which
-// breaks the grid rhythm. Today is marked by an inset ring child instead — see below.
-function heatCellStyle(state, c) {
+// Geometry must NOT vary by cell state: Android strokes a rounded border half
+// OUTSIDE the bounds, so a bordered cell occupies ~1dp more in each direction
+// than an unbordered one and reads as a bigger block, breaking the grid rhythm.
+// This comment predates IMP-073; the code did not keep the rule — `done` was the
+// one state at borderWidth 0, so every kept day rendered slightly small. Every
+// state now returns borderWidth: 1, and the ones that show no ring return a
+// transparent one (the background paints beneath it, so nothing looks different —
+// it only measures the same). Today is marked by an inset ring child instead.
+export function heatCellStyle(state, c) {
   if (state === 'done') {
-    return { backgroundColor: c.accent, borderWidth: 0, borderColor: 'transparent' };
+    return { backgroundColor: c.accent, borderWidth: 1, borderColor: 'transparent' };
   }
   if (state === 'frozen') {
     // Same fill as missed, ringed in accentDeep: a day that was held, not lost.
@@ -216,23 +226,32 @@ function heatCellStyle(state, c) {
     return { backgroundColor: c.accentSoft, borderWidth: 1, borderColor: c.border };
   }
   if (state === 'empty') {
-    return { backgroundColor: 'transparent', borderWidth: 1, borderColor: c.border, borderStyle: 'dashed' };
+    // Days before the first entry. Deliberately the quietest thing on the grid,
+    // and deliberately NOT in the legend (IMP-073): a faint blank tile in a grid
+    // where filled means "kept" needs no key. The old dashed outline read as a
+    // state to decode — and Android renders a dashed border with borderRadius
+    // inconsistently anyway. Do not restore borderStyle here.
+    return { backgroundColor: c.ghostBtn, borderWidth: 1, borderColor: 'transparent' };
   }
-  return { backgroundColor: 'transparent', borderWidth: 0, borderColor: 'transparent' };
+  return { backgroundColor: 'transparent', borderWidth: 1, borderColor: 'transparent' };
 }
 
 function LifetimeHeat({ rows, entries, onOpen }) {
   const c = useTheme().colors;
+  // LifetimeHeat is its own component, so it reads the scale itself rather than
+  // taking a prop — InsightsScreen's own `fontScale` is not in scope here.
+  const { fontScale } = useWindowDimensions();
+  const gutter = heatGutterWidth(fontScale);
   const monthLabels = monthLabelsForRows(rows);
   return (
     <View>
-      <View style={{ gap: 4 }}>
+      <View style={{ gap: HEAT_CELL_GAP }}>
         {rows.map((row, ri) => (
-          <View key={ri} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <View style={{ width: 24 }}>
-              <T w={700} color={c.muted} style={{ fontSize: 9.5 }}>{monthLabels[ri]}</T>
+          <View key={ri} style={{ flexDirection: 'row', alignItems: 'center', gap: HEAT_CELL_GAP }}>
+            <View style={{ width: gutter }}>
+              <T w={700} color={c.muted} numberOfLines={1} ellipsizeMode="clip" style={{ fontSize: 9.5 }}>{monthLabels[ri]}</T>
             </View>
-            <View style={{ flex: 1, flexDirection: 'row', gap: 4 }}>
+            <View style={{ flex: 1, flexDirection: 'row', gap: HEAT_CELL_GAP }}>
               {row.map((cell, i) => {
                 const state = cellState(cell);
                 const pressable = state === 'done';
@@ -283,7 +302,7 @@ function LifetimeHeat({ rows, entries, onOpen }) {
           </View>
         ))}
       </View>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 14, marginTop: 12, paddingLeft: 28 }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 14, rowGap: 8, marginTop: 12, paddingLeft: gutter + HEAT_CELL_GAP }}>
         {LEGEND.map((l) => (
           <View key={l.state} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <View style={{ width: 10, height: 10, borderRadius: 3, ...heatCellStyle(l.state, c) }} />

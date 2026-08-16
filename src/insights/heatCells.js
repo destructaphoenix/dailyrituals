@@ -27,3 +27,19 @@ export function monthLabelsForRows(rows) {
     return label;
   });
 }
+
+// The month-label gutter and the gap between cells. Both live here rather than
+// inline in InsightsScreen because the legend under the grid must indent to
+// exactly where the first cell starts — gutter + gap — and two magic numbers in
+// two places is precisely how they drifted apart (the gutter was 24, the legend's
+// indent 28). Growing with the OS font scale and capped at 1.5, which is not a
+// guess: MAX_FONT_SCALE (src/ui/textScale.js) is the most `T` will ever scale, so
+// at the cap a 42dp box always clears 'Aug' at 9.5pt. (IMP-073)
+export const HEAT_GUTTER_BASE_DP = 28;
+export const HEAT_CELL_GAP = 4;
+
+export function heatGutterWidth(fontScale = 1) {
+  const s = Number(fontScale);
+  const safe = Number.isFinite(s) && s > 1 ? Math.min(s, 1.5) : 1;
+  return Math.round(HEAT_GUTTER_BASE_DP * safe);
+}
