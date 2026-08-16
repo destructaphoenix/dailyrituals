@@ -65,6 +65,16 @@ walks turn up would invalidate an R8 pass done before them.
 because `PLUS_ENABLED = false` makes those surfaces unmountable; once Plus is the active work, that row is
 the first thing to re-read.
 
+**2026-08-17 — WALK-16, WALK-17 and WALK-18 joined the queue, and they are a separate track.** They belong
+to the design push (IMP-076/077/078, scoped in [`specs-open.md`](specs-open.md) from
+[the design doc](superpowers/specs/2026-08-16-motion-and-design-system-design.md)) and they run against
+**`feat/design-push`, a branch that is never pushed to GitHub** — an explicit owner instruction. They do
+**not** gate the pending vc12 release, and the release walks above do **not** gate them; the two tracks are
+independent and either can go first. **WALK-16 is the one that matters most**: IMP-076 changes no app code,
+so `npm test` is structurally blind to it, and WALK-16 is the *only* evidence the New Architecture
+migration works. It also gates IMP-077. `PLUS_ENABLED` stays `false` across all three, so **WALK-11 remains
+⏭ and is not reopened by this track.**
+
 | # | Gate | Walk | Covers | Target | Runner | Status |
 | --- | --- | --- | --- | --- | --- | --- |
 | WALK-01 | ✅ | [v2→v3 mood migration](build-log.md#walk-01--v2v3-mood-migration) | IMP-037 | emulator | 🤖 mostly | ✅ **2026-08-14** — full pass, all 9 steps; detail in `build-log.md` → "Walk log" |
@@ -82,6 +92,9 @@ the first thing to re-read.
 | WALK-14 | ⏭ | [TalkBack can write an entry](#walk-14--talkback-can-write-an-entry) | IMP-059 | **device** | 👤 (gesture navigation, inherently manual) | ⏭ — **dropped from the queue 2026-08-16** per owner. Not a gate, not scheduled; the labels ship either way. See its section |
 | WALK-15 | ✅ | [Store screenshots regenerate](build-log.md#walk-15--store-screenshots-regenerate--closed-2026-08-16-emulator-agent-run-owners-call) | IMP-061 | emulator | 🤖 mostly | ✅ **2026-08-16 — closed at owner's call.** `npm run shots` green end to end, seven Play-legal assets committed; steps 1–3 + 7 passed, **4–6 accepted unrun**; detail in `build-log.md` → "Walk log" |
 | WALK-11 | ⏭ | [The Plus surfaces](#walk-11--the-plus-surfaces) | IMP-038, 046, 047, 043 | emulator | 👤 | ⬜ — **skip for this release.** `PLUS_ENABLED = false` makes every surface here *unmountable*, not locked; walking it needs T1, which must be reverted before committing |
+| WALK-16 | 🚦 | [The New Architecture cold start](#walk-16--the-new-architecture-cold-start) | IMP-076 | **device** (native runtime) | 👤 | ⬜ — **branch-only** (`feat/design-push`). **Gates IMP-077.** Nothing in jest can see this |
+| WALK-17 | 🚦 | [Edge-to-edge, re-audited under New Arch](#walk-17--edge-to-edge-re-audited-under-new-arch) | IMP-076, IMP-027 regression | **device** | 👤 (visual) | ⬜ — **branch-only.** Runnable in the same session as WALK-16; do **not** assume IMP-027's pass carries over |
+| WALK-18 | 🎨 | [The app moves](#walk-18--the-app-moves) | IMP-077 | **device** (mid-range, real frame pacing) | 👤 (visual) | ⬜ — **branch-only.** Blocked until WALK-16 passes and IMP-077 lands |
 
 ---
 
@@ -380,6 +393,100 @@ no Metro, and `PLUS_ENABLED` must be back to `false` before you build.
 
 **If something is stripped:** add the specific keep rule. **Do not disable minify wholesale.** Full revert
 is both flags in `app.config.js` to `false`.
+
+---
+
+## WALK-16 — the New Architecture cold start
+
+**Covers:** IMP-076 · **Target:** **device** · **Runner:** 👤 · **Gate:** 🚦 — **this walk gates IMP-077.**
+
+**Read this first.** IMP-076 flips `newArchEnabled` to `true` in `app.config.js` and
+`android/gradle.properties`. It changes **no app code** — which means **`npm test` cannot see it at all.**
+A fully green suite is compatible with an app that redboxes on launch. This walk is the only evidence
+that exists.
+
+**Build from `feat/design-push`. Do not push the branch to run this.**
+
+**Why every step below is a native surface.** The audit in the design doc cleared
+`react-native-svg`, `async-storage` and `safe-area-context` on paper (`codegenConfig` + New Arch
+sourcesets) and every `expo-*` module by virtue of SDK 54 defaulting to New Arch. Paper is not a device.
+Each step exercises one of those cleared claims.
+
+1. **Cold start.** Force-stop, launch. No redbox, no ANR. **If this fails, stop — steps 2-7 are moot.**
+2. **SVG everywhere** (`react-native-svg`) — the Home hero renders **the sun and its rays**, every tab
+   icon draws, the heatmaps paint. This is the highest-traffic native view in the app.
+3. **Safe-area insets** (`safe-area-context`) — status bar and bottom nav are not clipped or overlapped
+   on Home, and the bottom nav sits above the gesture bar.
+4. **Storage round trip** (`async-storage`) — write an entry, force-stop, relaunch, the entry is still
+   there. This is the whole app's persistence layer.
+5. **Notifications** (`expo-notifications`) — set a reminder, confirm it fires. OEM battery managers are
+   a known confound (see "Out of scope"); what is being tested here is that the module *initialises and
+   schedules* under New Arch, not the OS's delivery discipline.
+6. **File I/O + share** (`expo-file-system`, `expo-sharing`, `expo-document-picker`) — export a backup,
+   share it, re-import it.
+7. **Android Auto Backup** — uninstall → reinstall → data returns without login. This is IMP-006's
+   contract and it runs through the native backup agent.
+
+**On failure — this is the deliverable, do not fix it here.** Record exactly what was observed, then:
+both `newArchEnabled` flags back to `false`, rebuild, confirm the failure clears. **IMP-077 then falls
+back to bare `Animated`** — Reanimated 4 is New Arch-only, but the design work (IMP-078) is *not* blocked
+either way, and the motion contract was deliberately written to survive this outcome. Scope the failure
+as a new `IMP-xxx` for Opus.
+
+**Expect one specific stumble, at install rather than runtime:**
+`scripts/patch-permissions.js` may exit non-zero and fail `npm install` if New Arch moves the permissions
+path. That is designed behaviour, not a walk failure — IMP-076 step 2 says what to do.
+
+---
+
+## WALK-17 — edge-to-edge, re-audited under New Arch
+
+**Covers:** IMP-076, IMP-027 regression · **Target:** **device** · **Runner:** 👤 (visual) · **Gate:** 🚦
+
+**Why this is not folded into WALK-16.** Android 16 *forces* edge-to-edge, and the New Architecture
+changes the layout and insets path. IMP-027's edge-to-edge audit passed on 2026-07-30 **on Legacy
+Architecture** — that pass says nothing about this build. It is a separate row because it is a separate
+judgement call, made with different eyes.
+
+Runnable in the same sitting as WALK-16, after it passes.
+
+1. Every top-level tab — Home, Archive, Insights, You — draws under the status bar and the gesture bar
+   without clipped content or double padding.
+2. The bottom nav and its centre write-FAB sit correctly above the gesture bar, in **both** three-button
+   and gesture navigation modes.
+3. Open each modal sheet (write flow, reading sheet, trash, mood manager, achievements, shop) and
+   confirm none is clipped at either end.
+4. Both themes — day and night. The night-v2 canvas is pure black, so an inset error that hides in day
+   mode is invisible until it is not.
+
+**On failure:** record it, scope as a new `IMP-xxx`. Do not fix mid-walk.
+
+---
+
+## WALK-18 — the app moves
+
+**Covers:** IMP-077 · **Target:** **device** (mid-range — real frame pacing) · **Runner:** 👤 (visual) ·
+**Gate:** 🎨
+
+**Blocked** until WALK-16 passes and IMP-077 lands. **An emulator cannot settle this** — it will render
+dropped frames as smooth, which is the exact thing being judged.
+
+1. **Tab transitions** — switching between all four tabs cross-fades and settles, no flash of blank, no
+   stutter. Switch rapidly back and forth; nothing tears or stacks.
+2. **Card entrances** — Home and Insights cards rise in and stagger rather than snapping in.
+3. **Press feedback** — `PrimaryButton` scales under the thumb and releases cleanly, everywhere it
+   appears.
+4. **🔒 The sun and the rays are visually unchanged**, day and night, against the pre-IMP-077 build.
+   `src/art.js` is frozen and untouched by the spec — **this step is the proof of that**, and it is the
+   owner's stated constraint on the entire effort. Compare against a screenshot from before the branch.
+5. **Existing choreography is unregressed** — the Celebration screen (complete an entry) and the Toast
+   both still animate as they did. IMP-077 deliberately leaves both on `Animated`; this confirms the two
+   systems coexist rather than fight.
+6. **Reduced-motion** — enable "Remove animations" in Android accessibility settings; entrances degrade
+   to plain cross-fades and nothing breaks.
+
+**On failure:** record what stuttered and where. Motion defects are `🎨` — ugly, not destructive — so
+scope as a normal `IMP-xxx`; nothing here justifies reverting IMP-076.
 
 ---
 

@@ -188,6 +188,9 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 073 | The lifetime heatmap reads as one grid | OTA | ✅ code-complete 2026-08-16 · walk = WALK-09 (re-run whole) |
 | 074 | The Paywall footer survives the first measure pass | OTA | ✅ code-complete 2026-08-16 · walk = WALK-07 (re-run whole) |
 | 075 | The tip cards go away | OTA | ✅ code-complete 2026-08-16 · reverses IMP-041's tip half by owner's design choice, not a defect · no walk needed (owner already walked this behaviour live in WALK-10) |
+| 076 | The app moves to the New Architecture | Build | ⬜ **branch-only, never pushed** (`feat/design-push`) · walk = WALK-16 + WALK-17 |
+| 077 | A motion vocabulary the whole app can speak | Build | ⬜ **blocked on WALK-16** · branch-only, never pushed · walk = WALK-18 |
+| 078 | A design system Claude Design can work from | Dev-only | ⬜ **branch-only, never pushed** · no app code, no gate — takeable any time |
 
 ---
 
@@ -306,6 +309,33 @@ full checklist and the reason it goes last are in **WALK-12**.
 _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
+
+_2026-08-17 (planning only — no code changed; **branch-only, never pushed**) — **the design push is scoped:
+IMP-076/077/078 + WALK-16/17/18, on `feat/design-push`.** Owner's ask: the app has too little motion outside
+the sun, and the Plus surfaces need designing — via **Claude Design**, with two hard constraints (**the sun
+and rays in `src/art.js` are frozen**, and **no backend rewiring**). Design doc:
+[`docs/superpowers/specs/2026-08-16-motion-and-design-system-design.md`](docs/superpowers/specs/2026-08-16-motion-and-design-system-design.md).
+**The finding that set the shape: IMP-027's Legacy-Architecture hold had already expired.** Its stated reason
+was the Aug-31 API-36 deadline — **met 2026-07-30** by v1.0.3 / vc9 in production — so the hold outlived its
+reason by three weeks, and SDK 55 removes Legacy Arch outright. **A first draft of the design doc targeting
+Reanimated 3.19.5 on Legacy Arch was written and then discarded**; it traded a known forced migration for an
+unverified compat bet (3.19.5's peer deps are wildcards — npm has no opinion on RN 0.81.5) and would have
+thrown the animation code away at SDK 55 anyway. **The dep audit is what made New Arch tractable:**
+`react-native-svg` 15.12.1, `async-storage` 2.2.0 and `safe-area-context` 5.6.2 all carry `codegenConfig` +
+New Arch sourcesets; every `expo-*` is SDK 54, where New Arch is the **default**. **Only RevenueCat is
+unmigrated** (legacy bridge, and `-ui` is a legacy *view* component at one call site,
+`RitualsApp.js:253`) — **and it is dormant, because `PLUS_ENABLED = false`.** Migrating while the risky
+surface is switched off is deliberate, so **`PLUS_ENABLED` stays `false` across all three IMPs** and
+**WALK-11 is not reopened**. Two mechanical notes for whoever takes these: `babel-preset-expo` auto-injects
+the worklets plugin (`build/index.js:286-289`), so **`babel.config.js` is not touched**; and
+`scripts/patch-permissions.js` targets the **legacy bridge adapter** path, so it may fail `npm install`
+loudly under New Arch — **by design, do not soften it** (IMP-076 step 2 says what to do instead).
+**Publication discipline, owner instruction:** branch has **no upstream**, **no `Release-Lane` trailer on any
+commit**, **no merge to `main`** — `release.yml` fires on `push: branches: [main]` + that trailer, so both
+guards fail closed. **Proof:** planning only — no source file touched, `npm test` deliberately unrun and
+unchanged. **NEXT:** IMP-076 (flip both `newArchEnabled` flags, full native build, `bump:native`) → **WALK-16
+on a device, which is the only evidence that exists for it** → then IMP-077. **IMP-078 needs no gate and can
+be taken any time, including first.**_
 
 _2026-08-16 (release — v1.0.6 / vc12 to `internal`, and the free track closes) — **the ~40 unpublished IMP
 tasks finally have a lane.** Owner's direction, three decisions in one session. **(1) WALK-15 closed ✅** —
