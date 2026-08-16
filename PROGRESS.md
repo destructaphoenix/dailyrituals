@@ -32,14 +32,13 @@
 runtime proof is a separate WALK row for a separate chat, so a missing walk is *not* an unfinished spec.
 Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`](docs/playbook.md).
 
-> **The build queue has one row — `IMP-074`**, scoped 2026-08-16 from the reopened WALK-07 Paywall finding.
-> Spec in `docs/specs-open.md`; open **only** that heading. It's 🎨 — it doesn't gate the native build, and it
-> may not be half-landed across the bump. `IMP-063` through `IMP-073` have all landed; `IMP-072` has no spec
-> at all — found and fixed live during the WALK-04 re-run at the owner's direction, skipping Opus-scoping;
-> full account in `build-log.md` → "Walk log" → WALK-04, commit `44197e9`.
+> **The build queue is empty.** `IMP-074` landed 2026-08-16 (`87ab21c`) — `docs/specs-open.md`'s index is now
+> empty; Opus must scope a new `IMP-xxx` before there's a spec to take. `IMP-063` through `IMP-074` have all
+> landed; `IMP-072` has no spec at all — found and fixed live during the WALK-04 re-run at the owner's
+> direction, skipping Opus-scoping; full account in `build-log.md` → "Walk log" → WALK-04, commit `44197e9`.
 > **WALKS are still the risk-ordered work**: the 🚦 group gates a release carrying ~25 unpublished tasks —
-> **WALK-04 and WALK-06 both passed 2026-08-16.** WALK-07 is ❌ and stays blocked until IMP-074 lands;
-> **WALK-09 is unblocked now that IMP-073 has landed** and can be re-run by a walk chat.
+> **WALK-04 and WALK-06 both passed 2026-08-16.** **WALK-07 and WALK-09 are both unblocked now** (IMP-074 and
+> IMP-073 have landed) and can be re-run by a walk chat.
 >
 > **`IMP-057` is reserved, not missing** — the `dayKey` migration IMP-056 deferred; needs real device
 > numbers first (see Open items). **Do not reuse the number.** **IMP-044 claims no queue slot** — it rides
@@ -73,7 +72,7 @@ build ships.)
 
 **Current stack:** Expo SDK **54** · RN **0.81.5** · React **19.1.0** · **Legacy Architecture**
 (`newArchEnabled: false`, held deliberately) · `targetSdkVersion` **36**, `minSdk` **24** · `npm test` →
-**860 passed, 84 suites** (re-run 2026-08-16 at `67d0736`; the earlier "852" here predated IMP-073's +8).
+**862 passed, 84 suites** (re-run 2026-08-16 at `87ab21c`; the earlier "860" here predated IMP-074's +2).
 Details in [`docs/playbook.md`](docs/playbook.md).
 
 ---
@@ -155,7 +154,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 071 | The filter row stops jumping under your thumb | OTA | ✅ code-complete 2026-08-16 · walk = WALK-04 (re-run whole) |
 | 072 | Custom-mood face field polish + a real typing bug | OTA | ✅ code-complete + walked 2026-08-16 · found and fixed live during WALK-04, no separate spec (owner-directed) |
 | 073 | The lifetime heatmap reads as one grid | OTA | ✅ code-complete 2026-08-16 · walk = WALK-09 (re-run whole) |
-| 074 | [The Paywall footer survives the first measure pass](docs/specs-open.md#imp-074--the-paywall-footer-survives-the-first-measure-pass) | OTA | ⬜ **take this** — from WALK-07 (a), reopened; unblocks WALK-07's Paywall half |
+| 074 | The Paywall footer survives the first measure pass | OTA | ✅ code-complete 2026-08-16 · walk = WALK-07 (re-run whole) |
 
 ---
 
@@ -181,35 +180,12 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
   The old "promote vc11 → production, or hold" framing is superseded: vc11 is two weeks of work behind HEAD,
   so promoting it would ship a stale build rather than this work.
   **IMP-063…074 are 🎨 and are NOT part of this sequence** — they land either before the bump *in full*, or
-  after the build as an OTA. Never split across it. (IMP-063…073 all landed 2026-08-15/16. **IMP-074 is
-  open**, scoped 2026-08-16 from the reopened WALK-07 finding — same rule applies to it: land it, or don't,
-  on either side of the bump. The 🚦 walks above still gate the bump either way.)
+  after the build as an OTA. Never split across it. (IMP-063…074 have all now landed, 2026-08-15/16. The 🚦
+  walks above still gate the bump either way.)
 - **Cash embers: settled in principle (dropped 2026-08-03), not finalised.** Must be decided before
   `PLUS_ENABLED` flips — it determines which Play products get created. Full argument in the playbook.
 - **`PLUS_ENABLED` must not flip until every `PLUS_PERKS` line is true.** The one remaining gap is perk #6,
   the PDF (IMP-022, deferred). Gate checklist in the playbook → Phase 10b.
-
-### 🟡 WALK-07 finding — Paywall footer overlap, IMP-068's fix is incomplete (reopened 2026-08-16)
-
-**✅ Scoped 2026-08-16 as [`IMP-074`](docs/specs-open.md#imp-074--the-paywall-footer-survives-the-first-measure-pass).**
-The spec keeps IMP-068's `flex: 1` and adds `maxHeight: winH` as the second half — they are not alternatives.
-This note closes when IMP-074 lands; WALK-07 stays ❌ until it is re-run whole after that.
-
-IMP-068 fixed the *static* overlap with `style={{ flex: 1 }}` on Paywall's `ScrollView`
-(`src/screens/Paywall.js:46`), but that alone doesn't hold on Android: the modal `Dialog`'s window size is
-unknown on the **first** measure pass, so `flex: 1` bounds nothing there — same trap `Shop.js:23-29` already
-documents and works around with `maxHeight: winH` (`useWindowDimensions`) on the *outer* container. Paywall
-never got that second guard.
-
-**Reproduced live, 2026-08-16 WALK-07 re-run:** open Paywall → footer is missing entirely (ScrollView
-unbounded, footer pushed off-screen). Select a plan (any re-render) → the correcting layout pass fires and
-the footer reappears, but overlapping the price/perks exactly as before IMP-068.
-
-**Fix:** add `maxHeight: winH` (via `useWindowDimensions`) to `Paywall.js`'s outer `View` (line 30),
-mirroring `Shop.js:23-29`/`52`. Full writeup in `docs/build-log.md` → "WALK-07 finding" (reopened).
-Needs a new `IMP-xxx` — Opus's lane to scope. **Blocks WALK-07's Paywall half** — `docs/walk-open.md` stays
-❌ there; the other five screens' nav-mode/font-scale re-checks and the IMP-067 spot-check are still
-outstanding too (walk was paused at the owner's call once this surfaced).
 
 ### 🟡 IMP-056 residual + the IMP-057 decision (2026-08-10)
 
@@ -244,19 +220,23 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
-_2026-08-16 (IMP-071, the filter row stops jumping under your thumb) — **code-complete, committed
-`4072e8d`, not shipped; OTA lane, rides the next batch. Last spec in the queue — `docs/specs-open.md` is now
-empty.** `src/screens/ArchiveFilters.js`: `toggleMood` no longer calls `scrollTo`; the `chipScroll` ref, its
-`ref` prop, and the `useRef` import are gone. `orderMoodChips`/front-sorting untouched, as directed. +2 tests
-in `ArchiveFilters.test.js` (`describe('ArchiveFilters — IMP-071')`): an unselected-chip press appends via
-`onChange` with `text`/`from`/`to` untouched, plus a source assertion the file contains no `scrollTo(`.
-Existing IMP-065 cases stayed green. **Proof:** `npm test` → **850 passed, 83 suites** (was 848/83). `npx
-expo export --platform android` clean. LAST command: `git commit` → `4072e8d`. Archived the spec,
-emptied `specs-open.md`'s index, ticked the row, closed the WALK-04 finding note (all three of (g)/(h)/(f)
-landed — next run checks all three), updated the ACTIVE TRACK banner, corrected the stack line, moved the
-IMP-069 note down. **Not to lose: WALK-04 hasn't actually been re-run since landing** — the 🚦 walks
-(WALK-13 → 03 → 12) still gate the native build regardless. NEXT: backlog is empty — Opus must scope a new
-`IMP-xxx` before there's a spec to take. A walk chat can still take **WALK-07**, **WALK-06**, or **WALK-15**._
+_2026-08-16 (IMP-074, the Paywall footer survives the first measure pass) — **code-complete, committed
+`87ab21c`, not shipped; OTA lane, rides the next batch. Backlog is now empty — `docs/specs-open.md`'s index
+is empty again.** `src/screens/Paywall.js`: added `useWindowDimensions` to the `react-native` import, read
+`{ height: winH }` right after `const c = t.colors;`, capped the outer `View` at `maxHeight: winH` and gave
+it `testID="paywallRoot"`, with the explanatory comment from the spec. IMP-068's `flex: 1` on the `ScrollView`
+and its own comment are untouched — both guards, not one, per the spec's decision 1. +2 tests in
+`Paywall.test.js` (`describe('Paywall — IMP-074')`): root `maxHeight` equals `Dimensions.get('window').height`
+and `flex` stays `1`; a source assertion the file uses `useWindowDimensions()` and never `Dimensions.get(`.
+Existing IMP-068 block stayed green untouched. **Proof:** `npm test` → **862 passed, 84 suites** (was
+860/84). `npx expo export --platform android` clean. LAST command: `git commit` → `87ab21c`. Archived the
+spec into `docs/build-log.md`, emptied `specs-open.md`'s index, ticked the row, resolved the WALK-07 finding
+note (in both `PROGRESS.md` Open items — removed — and `build-log.md`, marked ✅ RESOLVED), updated the
+ACTIVE TRACK banner and stack line, moved the IMP-071 note down to `docs/build-log.md` → "Session notes".
+**Not to lose: this spec does not end in a walk** — WALK-07 needs a full re-run (the Paywall half plus the
+five other screens' nav-mode/font-scale re-checks and the IMP-067 spot-check, all paused mid-run when this
+surfaced). NEXT: backlog is empty — Opus must scope a new `IMP-xxx` before there's a spec to take. A walk
+chat can take **WALK-07** (unblocked), **WALK-09** (unblocked), or **WALK-15**._
 
 _2026-08-16 (IMP-073, the lifetime heatmap reads as one grid) — **code-complete, committed `67d0736`, not
 shipped; OTA lane, rides the next batch.** Landed exactly as specified: `heatGutterWidth` +

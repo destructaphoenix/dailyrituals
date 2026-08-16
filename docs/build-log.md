@@ -2574,6 +2574,33 @@ green untouched. New `__tests__/insights/heatCellStyle.test.js` (+3) — every s
 **Commit:** `fix(insights): the lifetime heatmap reads as one grid (IMP-073)` (`67d0736`).
 **Runtime proof:** **WALK-09**, re-run whole — a separate chat.
 
+### IMP-074 — the Paywall footer survives the first measure pass   ·   Lane: OTA   ·   Status: ✅ code-complete (2026-08-16)
+
+**Why.** WALK-07 re-run, 2026-08-16. IMP-068's fix was real but only half the mechanism: `style={{ flex: 1 }}`
+on Paywall's `ScrollView` (`Paywall.js:46`) fixes the *static* case, but on Android the modal `Dialog`'s window
+size is unknown on the first measure pass, so `flex: 1` on the outer `View` resolves against nothing and the
+`ScrollView` goes unbounded — same trap `Shop.js:23-29` already documents and works around. Observed live: open
+Paywall → footer missing entirely (pushed off-screen); select a plan (any re-render) → a correcting layout pass
+fires and the footer reappears, overlapping the price/perks exactly as before IMP-068.
+
+**Landed exactly as specified — both guards, not one:** `Paywall.js` now reads `useWindowDimensions()` and caps
+the outer `View` with `maxHeight: winH` alongside the existing `flex: 1`, with a `testID="paywallRoot"` added
+so the test reaches the root by name rather than tree position. IMP-068's `flex: 1` on the `ScrollView` and its
+comment are untouched — decision 1 in the spec is explicit that they're not alternatives. A comment mirroring
+`Shop.js:23-29`'s shape explains the trap and flags that the two lines are the two halves of one fix.
+Out of scope, per spec, and untouched: `contentContainerStyle`, the footer `View`, `LegalFooter`/
+`usePurchaseFlow` in `PlusFlow.js`, `useLivePrices`, the plan selector, every other modal screen.
+
+**Tests (+2, no new suite file):** `__tests__/screens/Paywall.test.js` gained a `describe('Paywall — IMP-074')`
+block — the root view's `maxHeight` equals `Dimensions.get('window').height` and `flex` stays `1`; a source
+assertion that the file uses `useWindowDimensions()` and never a one-shot `Dimensions.get(`. The existing
+`describe('Paywall — IMP-068')` block stayed green untouched.
+
+**Proof:** `npm test` → **862 passed, 84 suites** (was 860/84). `npx expo export --platform android` clean.
+**Ship:** OTA lane, no bump — rides the next batch; no `Release-Lane` trailer on this commit.
+**Commit:** `fix(plus): the Paywall footer survives the first measure pass (IMP-074)` (`87ab21c`).
+**Runtime proof:** **WALK-07**, re-run whole — a separate chat.
+
 ---
 
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
@@ -2620,6 +2647,20 @@ green untouched. New `__tests__/insights/heatCellStyle.test.js` (+3) — every s
 ## Session notes (archived from PROGRESS.md)
 
 _Append-only handoff log moved out of PROGRESS.md to keep it light. Newest 1–2 notes stay live in PROGRESS.md; everything else is here. Git history is the full record._
+
+_2026-08-16 (IMP-071, the filter row stops jumping under your thumb) — **code-complete, committed
+`4072e8d`, not shipped; OTA lane, rides the next batch. Last spec in the queue — `docs/specs-open.md` is now
+empty.** `src/screens/ArchiveFilters.js`: `toggleMood` no longer calls `scrollTo`; the `chipScroll` ref, its
+`ref` prop, and the `useRef` import are gone. `orderMoodChips`/front-sorting untouched, as directed. +2 tests
+in `ArchiveFilters.test.js` (`describe('ArchiveFilters — IMP-071')`): an unselected-chip press appends via
+`onChange` with `text`/`from`/`to` untouched, plus a source assertion the file contains no `scrollTo(`.
+Existing IMP-065 cases stayed green. **Proof:** `npm test` → **850 passed, 83 suites** (was 848/83). `npx
+expo export --platform android` clean. LAST command: `git commit` → `4072e8d`. Archived the spec,
+emptied `specs-open.md`'s index, ticked the row, closed the WALK-04 finding note (all three of (g)/(h)/(f)
+landed — next run checks all three), updated the ACTIVE TRACK banner, corrected the stack line, moved the
+IMP-069 note down. **Not to lose: WALK-04 hasn't actually been re-run since landing** — the 🚦 walks
+(WALK-13 → 03 → 12) still gate the native build regardless. NEXT: backlog is empty — Opus must scope a new
+`IMP-xxx` before there's a spec to take. A walk chat can still take **WALK-07**, **WALK-06**, or **WALK-15**._
 
 _2026-08-15 (Opus scoping chat — WALK-04's three re-run defects) — **no code, docs only, uncommitted at the
 time of writing.** Wrote `IMP-069` / `IMP-070` / `IMP-071` in full into `docs/specs-open.md` (findings h, f,
@@ -3279,26 +3320,15 @@ group; the name field strips emoji instead of rejecting them. Full writeups arch
 future copy review, not just the freeze card. Full writeup archived with each spec above.
 **WALK-06 stays ❌ in `docs/walk-open.md`** — re-run it whole; both specs have landed.
 
-### 🔴 WALK-07 finding — modal scroll → (b)(c) landed via IMP-067; (a) IMP-068's fix is incomplete — 🔴 REOPENED 2026-08-16
+### 🔴 WALK-07 finding — modal scroll → (b)(c) landed via IMP-067; (a) landed via IMP-074 — ✅ RESOLVED 2026-08-16
 
 (b)(c) `Row` truncation + Mood Mix bar misalignment → IMP-067, landed clean. (a) Paywall footer overlap →
 IMP-068 fixed the *static* case with `style={{ flex: 1 }}` on the `ScrollView` (`Paywall.js:46`), but that
-alone is the same trap `Shop.js:23-29` documents: **Android's Modal is a `Dialog` whose window size is
-unknown on the first measure pass, so `flex: 1` bounds nothing there** — the ScrollView lays out to full
-content height, pushing the footer off-screen. A later layout pass usually corrects it, which is why
-`Shop.js` and `ManageSubscription` (`PlusFlow.js:188-196`) both also cap the *outer* container with
-`maxHeight: winH` from `useWindowDimensions()`, so it's bounded from the very first paint instead of relying
-on a correction. `Paywall.js` never got that second guard.
-
-**Reproduced live during the 2026-08-16 WALK-07 re-run (owner, emulator, T1 flipped):** open Paywall — footer
-is absent (ScrollView unbounded, footer pushed past the fold). Select a plan (any `setState`, e.g.
-`setPlan`) — the correction layout pass fires and the footer reappears, but now overlapping the plan price
-and last perk bullets exactly as before IMP-068. So IMP-068 only fixed the very first frame; any re-render
-reintroduces the original bug.
-
-**Not resolved. Needs a new IMP** — Opus's lane to scope: add `maxHeight: winH` (via `useWindowDimensions`)
-to `Paywall.js`'s outer `View` (line 30), mirroring `Shop.js:23-29`/`52`.
-**WALK-07 stays ❌ in `docs/walk-open.md`** — the Paywall half still fails; re-run whole once this lands.
+alone was the same trap `Shop.js:23-29` documents: Android's Modal is a `Dialog` whose window size is unknown
+on the first measure pass, so `flex: 1` bounds nothing there on that first pass. **Scoped spec landed**
+(IMP-074, 2026-08-16, `87ab21c`) — the outer `View` now also caps at `maxHeight: winH` via
+`useWindowDimensions()`, mirroring `Shop.js:23-29`/`52`. Full writeup archived with the spec above.
+**WALK-07 stays ❌ in `docs/walk-open.md`** — re-run it whole; the spec has landed.
 
 ### 🔴 WALK-09 finding — lifetime heatmap: legend wrap, month-label wrap, uneven cell size → **scoped spec landed** (IMP-073, 2026-08-16) — ✅ RESOLVED
 
