@@ -2685,6 +2685,65 @@ now describes removed behaviour.
 
 _Append-only handoff log moved out of PROGRESS.md to keep it light. Newest 1–2 notes stay live in PROGRESS.md; everything else is here. Git history is the full record._
 
+_2026-08-16 (IMP-075, the tip cards go away) — **code-complete, committed `11fa421`, not shipped; OTA lane,
+rides the next batch. Backlog is empty again — `docs/specs-open.md`'s index is empty.** RED-first: the
+12-test `describe('IMP-075 — the tip cards are gone')` block was added to `__tests__/content/tips.test.js`
+and run against the pre-deletion code — exactly 2 of 12 passed (the `EXPLAINERS` identity guard and the
+legacy-payload `deserialize` guard), 10 failed, matching the spec's prediction. Then landed exactly as
+specified: `git rm src/screens/TipCard.js`; stripped the `tip`/`onDismissTip` props, imports and five-line
+render blocks from `HomeScreen.js`/`ArchiveScreen.js`/`YouScreen.js` (`EXPLAINERS`'s import in `YouScreen`
+untouched); removed `seenTips` state, `dismissTip`, both tip imports and all three call sites (autosave,
+`currentSlice()`, the three screen props) from `RitualsApp.js`; dropped `'seenTips'` from `PERSISTED_KEYS`
+in `state.js` (no `SCHEMA_VERSION` bump — the key self-purges on the next autosave, per decision 3); deleted
+`TIPS`/`pendingTip`/`markTipSeen` from `src/content/tips.js` and rewrote its header comment; fixed the two
+stale comments in `FreezeNoticeCard.js` and `scripts/gen-v2-fixture.js` (no fixture data changed); deleted
+the three old test describes (`pendingTip`, `markTipSeen`, `TIPS`) and narrowed the import to `EXPLAINERS`.
+**Proof:** `npm test` → **866 passed, 84 suites** (862 − 8 removed + 12 added, was 862/84). `npx expo export
+--platform android` clean. LAST command: `git commit` → `11fa421`. Archived the spec into `docs/build-log.md`,
+emptied `specs-open.md`'s index, ticked the row, updated the ACTIVE TRACK banner and stack line, moved the
+IMP-074 note down to `docs/build-log.md` → "Session notes" and deduplicated a stray repeated copy of it that
+was sitting in this section (harmless copy-paste artifact from the prior chat, not a content change). **No
+walk opened for this, deliberately** — the owner already walked this exact rendered behaviour live in
+WALK-10 (all tips dismissed, relaunched; conditional block renders identically whether dismissed or deleted).
+NEXT: backlog and walk-open's 🚦 group both need attention — Opus scopes the next `IMP-xxx`, or a walk chat
+can take **WALK-07** (unblocked), **WALK-09** (unblocked), **WALK-14**, or **WALK-15**._
+
+_2026-08-16 (WALK-14 reclassified, WALK-15 attempted and blocked) — **no app defect found.** Owner call:
+**WALK-14 (TalkBack) moved to device-only and deprioritized**, not a priority for this release — it no
+longer counts toward the emulator queue (`docs/walk-open.md` updated). **WALK-15 (store screenshots) was
+then attempted live** — driven by the agent via `adb`/`maestro` in a visible Terminal window (both were
+already installed, just missing from the non-interactive shell's PATH) — and **failed before any screenshot
+was taken**: `.maestro/store-shots.yaml` uses an `id:` selector (matches RN `testID`/Android `resource-id`)
+against ~6 elements that only ever set `accessibilityLabel`, so those steps can never resolve; reproduced
+deterministically on two runs at the first such step (`Apply dev state`,
+`src/dev/panel/StateSection.js:153`), with the button fully visible on screen both times. Full root-cause
+writeup and the ruled-out flake theory are in `docs/walk-open.md` → WALK-15's own "Result" paragraphs.
+**Then fixed in the same session, as test-infra repair rather than a scoped IMP** — the `id:` diagnosis was
+confirmed on device (`maestro hierarchy`: `accessibilityText` set, `resource-id` empty; string selector
+passed and `id:` failed on the same element back to back), and **four further defects surfaced behind it**,
+all of the "step reports COMPLETED while the app is somewhere else" family: `hideKeyboard` presses BACK and
+exited the app, saving the **Android launcher** as `04-reflections.png`; collapsible headers render as
+`"▸ Launch overlays"` and maestro matches on **full** match, so the plain title never resolved; the scroll
+to that header fired **HOME** off the nav bar, saving the **home screen** as `07-shop.png`; and
+`scripts/shots.sh` was never receiving the captures at all (maestro writes them into its own artifacts
+directory), plus no Java precondition. All fixed; `npm run shots` now exits 0 with seven raw captures and
+seven 1080×1920 `hasAlpha: no` assets, and `__tests__/shots.test.js` still passes 16/16. NEXT: **WALK-15 is
+the open emulator row again — steps 1–3 and 7 pass, steps 4, 5 and 6 (second AVD, byte-comparable re-run,
+and the 👤 look at all seven) still need a runner.** No spec is owed; the backlog stays empty._
+
+_2026-08-16 (WALK-10, teach the app) — **✅ full pass, all four steps** (tip cards on Today/Archive/You,
+dismiss-and-stay-dismissed across a relaunch; "How it works" six rows each open a real alert; corrected
+rites-footer copy; both empty states). No app defects — IMP-041 stands as shipped-correct. **One owner
+decision surfaced mid-walk, not a defect:** having seen the tip cards live, the owner does not want them —
+not a placement complaint, confirmed via `AskUserQuestion` as "they exist at all, drop them, rely on 'How
+it works'". This reverses part of IMP-041 by design choice, not bug fix, so it was **not** written up as a
+runtime finding or spec — logged as a new owner decision under Open items, reserving **IMP-075** for Opus
+to scope (remove `TipCard` + its plumbing from `HomeScreen`/`ArchiveScreen`/`YouScreen`/`RitualsApp.js`,
+decide the fate of `src/content/tips.js`'s `pendingTip`/`markTipSeen` and the `seenTips` persisted key).
+Full walk detail moved to `docs/build-log.md` → "Walk log"; index row ticked. NEXT: the first ⬜ emulator
+walk is now **WALK-14** (TalkBack, unblocked); **WALK-15** (store screenshots) is also open. Opus should
+scope **IMP-075** before a build chat can take it — build queue is otherwise still empty since IMP-074._
+
 _2026-08-16 (IMP-073, the lifetime heatmap reads as one grid) — **code-complete, committed `67d0736`, not
 shipped; OTA lane, rides the next batch.** Landed exactly as specified: `heatGutterWidth` +
 `HEAT_GUTTER_BASE_DP`/`HEAT_CELL_GAP` added to `src/insights/heatCells.js` (mirrors IMP-067's
@@ -3592,3 +3651,61 @@ cards at all, regardless of correctness — decided while walking, not a bug in 
 for the same content, rather than relocating the cards or keeping them on-demand. Logged as a live open item
 in `PROGRESS.md` → Open items, reserving **IMP-075** for Opus to scope — not written up as a full spec here
 since this is a design reversal, not a runtime finding.
+
+### ✅ WALK-15 — store screenshots regenerate — CLOSED 2026-08-16 (emulator, agent-run; owner's call)
+
+**Covers:** IMP-061. **Closed at the owner's direction on 2026-08-16, not by a clean sweep of all seven
+steps** — read the "What was never run" paragraph before trusting this row. The pipeline half the walk
+existed to prove does work: `npm run shots` runs green end to end (`EXIT: 0`), seven raw captures in
+`store/raw/`, seven Play-legal assets in `store/play/`, and those seven PNGs are committed.
+
+**Result — ❌ first sitting, capture-side, before any screenshot was taken.** The flow died deterministically
+at `- tapOn: { id: "Apply dev state" }` with "No visible element found" — reproduced twice with the button
+plainly on screen, so not a scroll or timeout flake. **Root cause:** Maestro's `id:` selector matches the
+Android `resource-id` (React Native's `testID`), **not** the accessibility label. Every element the yaml
+targeted with `id:` is labelled via `accessibilityLabel` only, with no `testID` anywhere in its component, so
+those selectors could never resolve — a standing defect in the flow, not something that run introduced.
+Verified directly against the device rather than assumed: `maestro hierarchy` shows these elements carrying
+`accessibilityText` with an **empty** `resource-id`, and two back-to-back probes on the same element had the
+plain-string selector pass while `id:` failed. The plain-text selectors already in the same file (`"You"`,
+`"v1.0"`, `"Store screenshots"`) worked all along because a bare string matches visible text *or*
+accessibility label.
+
+**Three more defects surfaced only once the flow could run past `Apply dev state`** — all the same family,
+where a step reports `COMPLETED` while the app is not where the flow thinks it is, so the artifact is a
+*wrong picture* rather than an error:
+
+1. **`hideKeyboard` silently exits the app.** Maestro hides the keyboard with a BACK press; Reflections is a
+   root screen with no back handler, so BACK left the app entirely and `04-reflections.png` was saved as a
+   **picture of the Android launcher**, with `takeScreenshot` still reporting `COMPLETED`. Replaced with
+   `pressKey: Enter` (dismisses the IME from inside the field) and the app's own `Clear search` button in
+   place of `eraseText`, which needs a still-focused field.
+2. **Collapsible headers never matched.** `DevPanel.js:41` renders `{open ? '▾ ' : '▸ '}{title}`, so the real
+   text is `"▸ Launch overlays"`. Maestro text matching is a **full** match, not a substring (verified:
+   `"Apply dev"` does not match `"Apply dev state"`), so `"Launch overlays"` could never resolve. Matched as
+   `".*Launch overlays"` now.
+3. **Scrolling to `Launch overlays` pressed HOME.** The harness opens with `State` expanded, putting the row
+   several swipes down; `scrollUntilVisible` timed out unpredictably and a swipe ending on the navigation bar
+   fired a `category.HOME` intent — which is how `07-shop.png` became a picture of the home screen. The flow
+   now collapses `State` first, so the row is on the first screenful and no scrolling happens at all.
+
+**Two script-level bugs in `scripts/shots.sh`**, either of which alone would have left the walk unpassable:
+`takeScreenshot` paths are written into maestro's own run-artifacts directory, **not** the repo, so
+`store/raw/` stayed empty and the compositor had nothing to read (now pinned with `--test-output-dir` and
+moved back into the repo); and maestro needs a JVM, failing with a bare "Unable to locate a Java Runtime"
+that reads like a maestro bug (now a named precondition with a fallback to the Android Studio JBR). A guard
+was added that fails the run unless exactly seven captures landed.
+
+**All of it was test-infra only — no app code and no accessibility label was touched.**
+
+**Steps 1, 2, 3 and 7 pass.** Status bar reads 12:00 with a full battery and no notification icons in every
+capture; `sips` reports 1080×1920 / `hasAlpha: no` for all seven; demo mode exits via the trap.
+`__tests__/shots.test.js` still passes (16/16).
+
+**What was never run — steps 4, 5 and 6.** The second-AVD resolution check (does the compositor really make
+the output emulator-independent), the byte-comparable re-run (does the scenario seed deterministically), and
+the 👤 judgement half where someone opens all seven and actually looks. The set was eyeballed only far enough
+to prove each shot is the screen it claims to be. **The consequence is bounded and worth stating plainly:**
+these three steps only protect the *listing assets*, which are uploaded by hand and looked at by a human at
+upload time anyway — nothing here can reach the app or a user. If a later run's output drifts with the
+emulator, this row is where to look first.

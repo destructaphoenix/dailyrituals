@@ -8,6 +8,19 @@
 # NEVER use coordinates. A coordinate tap breaks silently on the next layout
 # change and produces a *wrong* picture rather than an error.
 #
+# Write an accessibility label as a PLAIN STRING selector, never `id:`.
+# `id:` matches the Android resource-id (RN `testID`) only — it does NOT look
+# at the accessibility label, so an `id:` aimed at a label can never resolve
+# and the flow dies before taking a single screenshot. A plain string matches
+# both the visible text and the label (Maestro's `accessibilityText`), which
+# is the only thing that works for the icon-only buttons below. Matching is a
+# FULL match, not a substring: "Apply" does not match "Apply dev state".
+#
+# Because it is a full match, a selector must cover decoration the component
+# bakes into its own text. The dev harness's collapsible headers render as
+# "▸ Launch overlays" / "▾ Launch overlays" (DevPanel.js), so they are matched
+# as ".*Launch overlays" — plain "Launch overlays" never resolves.
+#
 # Needs a __DEV__ build — the dev harness does not exist in a release build.
 
 appId: app.dailyrituals.mobile
@@ -23,13 +36,11 @@ appId: app.dailyrituals.mobile
     element: "Store screenshots"
 - tapOn: "Store screenshots"
 - scrollUntilVisible:
-    element:
-      id: "Apply dev state"
-- tapOn:
-    id: "Apply dev state"
+    element: "Apply dev state"
+- tapOn: "Apply dev state"
 - tapOn: "Apply"            # the confirm alert
 - tapOn:
-    id: "Close the dev panel"
+    text: "Close the dev panel"
     optional: true
 
 # --- 01 · Today -------------------------------------------------------------
@@ -39,26 +50,29 @@ appId: app.dailyrituals.mobile
 # --- 02 · Write, and 03 · Moods (two steps of the same WriteFlow) -----------
 # done:true means today's entry is already written, so WriteFlow opens
 # prefilled and "Next" is enabled on both text steps.
-- tapOn:
-    id: "Write today's entry"
+- tapOn: "Write today's entry"
 - takeScreenshot: store/raw/02-write
 - tapOn: "Next"             # did -> wished
 - tapOn: "Next"             # wished -> moods
 - takeScreenshot: store/raw/03-moods
-- tapOn:
-    id: "Back a step"
-- tapOn:
-    id: "Back a step"
-- tapOn:
-    id: "Close this entry"
+- tapOn: "Back a step"
+- tapOn: "Back a step"
+- tapOn: "Close this entry"
 
 # --- 04 · Reflections, with a search term so the IMP-053 highlight shows ----
+# NEVER use `hideKeyboard` here. Maestro hides the keyboard with a BACK press,
+# and Reflections is a root screen with no back handler, so BACK leaves the app
+# entirely — and the next `takeScreenshot` still reports COMPLETED while saving
+# a picture of the Android launcher. That is the exact silent-wrong-picture
+# failure this file's header warns about. Enter dismisses the IME from inside
+# the field, and the app's own "Clear search" button resets it afterwards
+# without needing a still-focused field (which `eraseText` would).
 - tapOn: "Reflections"
 - tapOn: "Search your journal"
 - inputText: "walk"
-- hideKeyboard
+- pressKey: Enter
 - takeScreenshot: store/raw/04-reflections
-- eraseText
+- tapOn: "Clear search"
 
 # --- 05 · Insights, scrolled to the lifetime heatmap ------------------------
 - tapOn: "Insights"
@@ -69,26 +83,30 @@ appId: app.dailyrituals.mobile
 
 # --- 06 · Achievements and 07 · Shop, launched from the harness -------------
 # Faster and less brittle than tapping through the You tab.
+#
+# The harness opens with "State" expanded, which pushes "Launch overlays" far
+# below the fold. Do NOT scroll down to it: the panel is long enough that
+# scrollUntilVisible needs several swipes, it times out unpredictably, and a
+# swipe that ends on the navigation bar presses HOME — which drops the app to
+# the launcher and leaves the *next* takeScreenshot saving a picture of the
+# home screen while still reporting COMPLETED. Collapsing "State" first brings
+# "Launch overlays" onto the first screenful, so no scrolling is needed at all.
 - tapOn: "You"
 - scrollUntilVisible:
     element: "About Daily Rituals"
 - longPressOn: "v1.0"
-- scrollUntilVisible:
-    element: "Launch overlays"
-- tapOn: "Launch overlays"
+- tapOn: ".*State"          # collapse State; see the note above the 06 block
+- tapOn: ".*Launch overlays"
 - tapOn: "Achievements"
 - takeScreenshot: store/raw/06-achievements
-- tapOn:
-    id: "Close Keepsakes"
+- tapOn: "Close Keepsakes"
 
 - tapOn: "You"
 - scrollUntilVisible:
     element: "About Daily Rituals"
 - longPressOn: "v1.0"
-- scrollUntilVisible:
-    element: "Launch overlays"
-- tapOn: "Launch overlays"
+- tapOn: ".*State"          # collapse State; see the note above the 06 block
+- tapOn: ".*Launch overlays"
 - tapOn: "Shop"
 - takeScreenshot: store/raw/07-shop
-- tapOn:
-    id: "Close the shop"
+- tapOn: "Close the shop"

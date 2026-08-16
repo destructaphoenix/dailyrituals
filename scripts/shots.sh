@@ -32,6 +32,28 @@ if ! command -v maestro >/dev/null 2>&1; then
   exit 1
 fi
 
+# maestro is a JVM tool: with no java it dies mid-flow on "Unable to locate a
+# Java Runtime", which reads like a maestro bug rather than a missing JDK.
+# Check it here, and fall back to a JDK we know is on any machine that can
+# build this app rather than failing over a bare PATH.
+if ! command -v java >/dev/null 2>&1 && [ -z "${JAVA_HOME:-}" ]; then
+  for candidate in \
+    "/Applications/Android Studio.app/Contents/jbr/Contents/Home" \
+    "/opt/homebrew/opt/openjdk@17"; do
+    if [ -x "$candidate/bin/java" ]; then
+      export JAVA_HOME="$candidate"
+      export PATH="$JAVA_HOME/bin:$PATH"
+      echo "shots: no java on PATH, using $JAVA_HOME"
+      break
+    fi
+  done
+fi
+if ! command -v java >/dev/null 2>&1 && [ ! -x "${JAVA_HOME:-}/bin/java" ]; then
+  echo "shots: no Java runtime found — maestro cannot run without one." >&2
+  echo "       Install a JDK 17+, or set JAVA_HOME to one." >&2
+  exit 1
+fi
+
 # --- 2. clean the raw captures ---------------------------------------------
 rm -rf store/raw
 mkdir -p store/raw
@@ -52,7 +74,31 @@ adb shell am broadcast -a com.android.systemui.demo -e command network -e wifi s
 adb shell am broadcast -a com.android.systemui.demo -e command notifications -e visible false
 
 # --- 4. capture -------------------------------------------------------------
-maestro test .maestro/store-shots.yaml
+# maestro writes takeScreenshot paths into its own run-artifacts directory, not
+# the working directory, so the flow's "store/raw/..." paths actually land in
+# <artifacts>/takeScreenshot/store/raw/. Pin that directory with
+# --test-output-dir and move the captures back into the repo ourselves, rather
+# than trusting a CWD-relative behaviour that is not what this version does.
+MAESTRO_OUT="$ROOT/store/.maestro-out"
+rm -rf "$MAESTRO_OUT"
+maestro test --test-output-dir "$MAESTRO_OUT" .maestro/store-shots.yaml
+
+# maestro still nests a timestamp/flow-name pair under the output dir, and that
+# layout is its business, not ours — locate the capture directory rather than
+# hardcoding the nesting.
+CAPTURED="$(find "$MAESTRO_OUT" -type d -path '*/takeScreenshot/store/raw' 2>/dev/null | head -1)"
+if [ -n "$CAPTURED" ]; then
+  mv "$CAPTURED"/*.png store/raw/
+fi
+
+# A step can report COMPLETED and still leave the set short (or capture the
+# wrong window entirely), so the count is checked rather than assumed.
+SHOTS="$(ls store/raw/*.png 2>/dev/null | wc -l | tr -d ' ')"
+if [ "$SHOTS" -ne 7 ]; then
+  echo "shots: expected 7 raw captures, found $SHOTS in store/raw/." >&2
+  echo "       maestro artifacts kept at $MAESTRO_OUT" >&2
+  exit 1
+fi
 
 # --- 5. demo mode off (also handled by the trap) ---------------------------
 exit_demo

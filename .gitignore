@@ -64,3 +64,6 @@ scripts/daily-rituals-v2-fixture.json
 # `npm run shots`); the framed store/play/ assets ARE the deliverable and are
 # committed, so they survive a fresh clone.
 store/raw/
+# maestro's per-run artifacts (logs, hierarchies, the captures before they are
+# moved into store/raw/) — disposable, kept only to debug a failed run.
+store/.maestro-out/
