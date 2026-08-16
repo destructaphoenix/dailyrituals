@@ -32,14 +32,29 @@
 runtime proof is a separate WALK row for a separate chat, so a missing walk is *not* an unfinished spec.
 Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`](docs/playbook.md).
 
-> **The backlog is empty** — `IMP-075` (remove the IMP-041 tip cards) landed 2026-08-16, `11fa421`;
-> `docs/specs-open.md`'s index is empty again. `IMP-063` through `IMP-075` have all
-> landed; `IMP-072` has no spec at all — found and fixed live during the WALK-04 re-run at the owner's
-> direction, skipping Opus-scoping; full account in `build-log.md` → "Walk log" → WALK-04, commit `44197e9`.
-> **WALKS are still the risk-ordered work**: the 🚦 group gates a release carrying ~25 unpublished tasks —
-> **WALK-04, WALK-06 and WALK-10 have all passed 2026-08-16.** **WALK-07 and WALK-09 are both unblocked now**
-> (IMP-074 and IMP-073 have landed) and can be re-run by a walk chat. IMP-075 needs no walk of its own — the
-> owner already walked its behaviour live in WALK-10. The first ⬜ **emulator** walk is now **WALK-14**.
+> **🔵 2026-08-16 — the free-app improvement track is CLOSED and the work moved to Plus (Phase 10b).** The
+> owner's call, taken with the backlog empty. `IMP-001`–`IMP-075` are done bar the deferred `IMP-022` and the
+> reserved `IMP-057`; `docs/specs-open.md`'s index is empty. **Do not open new free-track IMP rows** — read
+> [`docs/playbook.md`](docs/playbook.md) → Phase 10b first, and note the `PLUS_ENABLED` gate below, which is
+> still shut and still has one unmet perk. The same session cut **v1.0.6 / vc12** to `internal` (below), so
+> everything from IMP-032 onward finally has a track.
+>
+> **What did NOT come with that decision, and is still owed:**
+> - **The WALK-07 Paywall regression needs a new `IMP-xxx` — Opus's lane to scope** (Open items → "WALK-07
+>   finding, reopened"). It is a Plus surface, so it now belongs to the Plus work rather than sitting beside
+>   it: the footer overlaps the plan selector and disclaimer from first open, with both IMP-074 fix-halves
+>   confirmed present in `Paywall.js`. **Nothing about Plus should ship past this.**
+> - **WALK-09 (lifetime heatmap) is unblocked and never re-run** — IMP-073 landed; a walk chat can take it.
+> - **The 🚦 device walks are still unwalked** — WALK-13, WALK-03, WALK-12. vc12 reaching `internal` is what
+>   makes them runnable; they gate `internal` → `production`, not the internal build itself.
+>
+> `IMP-063` through `IMP-075` have all landed. `IMP-072` has no spec at all — found and fixed live during the
+> WALK-04 re-run at the owner's direction, skipping Opus-scoping; full account in `build-log.md` → "Walk log"
+> → WALK-04, commit `44197e9`. **WALK-04, WALK-06 and WALK-10 all passed 2026-08-16**, and **WALK-15 was
+> closed the same day at the owner's call** (steps 1–3 + 7 passed, 4–6 accepted unrun — the listing assets
+> are committed and `npm run shots` is green end to end). **WALK-14 (TalkBack) was dropped from the queue
+> entirely** on 2026-08-16, also the owner's call — it was never a gate and nothing waits on it; the row in
+> `docs/walk-open.md` now states what dropping it costs and what would reopen it.
 >
 > **`IMP-057` is reserved, not missing** — the `dayKey` migration IMP-056 deferred; needs real device
 > numbers first (see Open items). **Do not reuse the number.** **IMP-044
@@ -55,6 +70,14 @@ re-derive from an older note.**
 | `alpha` (closed testing) | **1.0.5 / vc11** | 36 ✅ | frozen by design 2026-08-08; the newest *built* code |
 | `internal` | **1.0.3 / vc9** | 36 ✅ | was vc5/API 35 — promoted, compliance gap closed |
 
+**🔵 v1.0.6 / vc12 is IN FLIGHT to `internal` as of 2026-08-16 — the table above is pre-bump and will be
+stale the moment CI finishes.** `npm run bump:native` took `app.config.js` to `version: '1.0.6'` /
+`versionCode: 12`; the commit carries `Release-Lane: build`, so pushing it runs the test gate, waits for the
+owner's one-tap approval on the `production` environment, then `eas build --auto-submit` puts it on
+`internal`. **This is the first build since vc11 on 2026-08-02 and the first minified (R8) build of this app
+ever** — IMP-044 rides it, unwalked, which is what WALK-12 exists for. **Re-read the tracks from the Play
+Developer API before trusting the table**, and update it once vc12 lands.
+
 **✅ API-36 compliance (deadline 2026-08-31) is met ACCOUNT-WIDE — blocker CLOSED 2026-08-13.** Every
 active release on every track is `targetSdkVersion 36`. Banner-reading procedure kept in the playbook.
 
@@ -62,9 +85,10 @@ active release on every track is `targetSdkVersion 36`. Banner-reading procedure
 `a299af7`; CI already does it). Reaching the public stays manual: promote `internal` → `production` in Play
 Console, which *does* get the full review.
 
-**⚠️ The OTA lane reaches `alpha` ONLY** — `runtimeVersion` = `appVersion` = **1.0.5** = **vc11**, and vc11
-lives only on `alpha`. Self-testing on `internal` needs a **build**, not an update. Full consequence, and
-the release sequence that follows from it, in **Open items → the first bullet**.
+**⚠️ THE OTA LANE IS CLOSED until vc12 ships.** `runtimeVersion` = `appVersion`, and the bump moved that to
+**1.0.6**, which no installed build anywhere matches yet — an `eas update` published now reaches **nobody**.
+It reopens the moment vc12 is on `internal` and installed, and it then reaches vc12 only; vc11 on `alpha` is
+orphaned from OTAs for good. (Before the bump this read "reaches `alpha` only" — 1.0.5 = vc11, `alpha`-only.)
 
 **⚠️ OTA has no Play track.** `eas update` publishes to Expo's CDN — no Google, no review. Gated only by
 **channel** (`production`) + **matching `runtimeVersion`**. An installed build receives an OTA regardless of
@@ -126,7 +150,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 041 | Teach the app — tips + explainers | OTA | ✅ walked 2026-08-16 (WALK-10) — tip-card half now slated for removal, see IMP-075 |
 | 042 | The Keepsakes screen scrolls | OTA | ✅ |
 | 043 | Recoverability pass — re-verify entitlement, backup health | OTA | ✅ |
-| 044 | R8 on release builds (dev client was shipping to the public) | Build | 🟢 **code-complete, unbumped, UNWALKED** — rides the next build; walk = WALK-12 |
+| 044 | R8 on release builds (dev client was shipping to the public) | Build | 🟢 **code-complete, UNWALKED — rides v1.0.6 / vc12** (bumped 2026-08-16); walk = WALK-12, on hardware, before `internal` → `production` |
 | 045 | Finish Lifetime Progress (missed-day painting + XP line) | OTA | ✅ |
 | 046 | Annual Recap — "your year, remembered" | OTA | ✅ |
 | 047 | Deeper insights — the Plus analysis layer | OTA | ✅ |
@@ -140,9 +164,9 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 054 | The reminder you can actually answer | OTA | ✅ code-complete 2026-08-13 · walk = WALK-13 |
 | 055 | Manage your feelings — rename / re-emoji / remove | OTA | ✅ code-complete 2026-08-13 |
 | 060 | A candle burns without telling you | OTA | ✅ code-complete 2026-08-13 |
-| 059 | The app has one accessibility label | OTA | ✅ code-complete 2026-08-13 · walk = WALK-14 |
+| 059 | The app has one accessibility label | OTA | ✅ code-complete 2026-08-13 · **WALK-14 ⏭ dropped 2026-08-16** (owner) — labels ship unwalked; reopen triggers in `walk-open.md` → WALK-14 |
 | 058 | Prompt packs — grief / gratitude / change | OTA | ✅ code-complete 2026-08-14 |
-| 061 | Store screenshots build themselves | Dev-only | ✅ code-complete 2026-08-14 · walk = WALK-15 |
+| 061 | Store screenshots build themselves | Dev-only | ✅ code-complete 2026-08-14 · **WALK-15 ✅ closed 2026-08-16** (steps 4–6 accepted unrun); seven assets committed to `store/play/` |
 | 062 | The restore offer outlives the launch that made it | OTA | ✅ code-complete 2026-08-14 · WALK-02 ✅ 2026-08-15 |
 | 063 | A saved day looks saved (frozen ≠ missed) | OTA | ✅ code-complete 2026-08-15 · walk = WALK-06 (re-run whole) |
 | 064 | Count your candles, and say plainly what one did | OTA | ✅ code-complete 2026-08-15 · walk = WALK-06 (re-run whole) |
@@ -168,26 +192,44 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 
 ### ▶️ Owner decisions still open
 
-- **🔴 ~25 IMP tasks are committed and UNPUBLISHED. Verified against `Release-Lane` trailers in git
-  2026-08-14 — the last release of any kind was the vc11 build on 2026-08-02, and the last OTA was
-  2026-06-13.** Everything from IMP-032/033 to IMP-061 (search, custody + trash, multi-moods, recap, deeper
-  insights, heatmap, `dayKey`, keyboard fix, prompt packs, a11y, mood management) has reached **no track at
-  all**. Two independent reasons an OTA **cannot** deliver it: `runtimeVersion` = `appVersion` = 1.0.5
-  matches **vc11 only, which lives only on `alpha`**; and the batch touches `app.config.js` / `eas.json` /
-  `package.json` / `package-lock.json`, so CI's backstop auto-rejects an `ota` trailer. **The only route is
-  a BUILD**, which necessarily carries IMP-044's R8 — the first minified build of this app ever.
-  **Sequence: WALK-02 ✅ and WALK-05 ✅ (both 2026-08-15) → clear the remaining 🚦 walks in
-  [`docs/walk-open.md`](docs/walk-open.md) (13 → 03 → 12, R8 last on the final candidate) → `npm run bump:native` → `Release-Lane: build` → push → owner approval →
-  auto-submits to `internal` → self-test → promote `internal` → `production` by hand** (full review, ~7d).
-  The old "promote vc11 → production, or hold" framing is superseded: vc11 is two weeks of work behind HEAD,
-  so promoting it would ship a stale build rather than this work.
-  **IMP-063…075 are 🎨 and are NOT part of this sequence** — they land either before the bump *in full*, or
-  after the build as an OTA. Never split across it. (IMP-063…075 have all now landed, 2026-08-15/16. The 🚦
-  walks above still gate the bump either way.)
+- **🔵 The ~40 unpublished IMP tasks are ON THEIR WAY to `internal` as v1.0.6 / vc12 — bumped and pushed
+  2026-08-16, at the owner's direction.** Everything from IMP-032/033 through IMP-075 (search, custody +
+  trash, multi-moods, recap, deeper insights, heatmap, `dayKey`, keyboard fix, prompt packs, a11y, mood
+  management, and the whole IMP-063…075 polish run) had reached **no track at all** since the vc11 build on
+  2026-08-02. An OTA could never have delivered it — `runtimeVersion` = `appVersion` matched vc11 on `alpha`
+  only, and the batch touches `app.config.js` / `eas.json` / `package.json` / `package-lock.json`, so CI's
+  backstop auto-rejects an `ota` trailer — so a **build** was the only route, and it necessarily carries
+  IMP-044's R8, the first minified build of this app ever.
+  **What actually happened vs. the sequence this bullet used to prescribe.** The old plan was *clear the 🚦
+  walks (13 → 03 → 12) first, then bump*. **The three remaining 🚦 rows are all `device` walks and were NOT
+  run** — the owner's call, and the reasoning is sound rather than a corner cut: all three need this build
+  installed on real hardware, and `internal` is how it gets there. **The gate did not disappear, it moved
+  one step later — `internal` → `production` is manual and is where WALK-13, WALK-03 and WALK-12 now bite.**
+  What ships to `internal` reaches the owner's own devices and invited testers, not the public.
+  **Remaining sequence: CI test gate ✅ → owner's one-tap approval on the `production` environment →
+  `eas build --auto-submit` → `internal` → install on hardware → WALK-13, WALK-03, WALK-12 (R8 last) →
+  promote `internal` → `production` by hand** (full review, ~7d). **If WALK-12 finds R8 stripping something,
+  the fix means another bump and another build — vc12 is a candidate, not the release.**
 - **Cash embers: settled in principle (dropped 2026-08-03), not finalised.** Must be decided before
   `PLUS_ENABLED` flips — it determines which Play products get created. Full argument in the playbook.
 - **`PLUS_ENABLED` must not flip until every `PLUS_PERKS` line is true.** The one remaining gap is perk #6,
   the PDF (IMP-022, deferred). Gate checklist in the playbook → Phase 10b.
+
+### 🔴 WALK-07 finding (reopened) — Paywall footer still overlaps content after IMP-074
+
+Whole-walk re-run, 2026-08-16. The five other screens (Achievements, Shop, Reading sheet, Get Embers, Manage
+Subscription) and both IMP-067 spot-checks (Annual Recap teaser wrap, Mood Mix bar alignment) all passed —
+both nav modes, max font scale. **Paywall did not.** On first open, normal font, gesture nav: the fixed
+footer overlaps the plan-selector row and the "Your journal lives on your device" disclaimer from the very
+first frame — not the delayed-then-correcting pass IMP-074's writeup described. Both of IMP-074's fix halves
+are confirmed present and unchanged in code — `maxHeight: winH` on the root `View`
+(`src/screens/Paywall.js:40`) and `flex: 1` on the inner `ScrollView` (`src/screens/Paywall.js:56`) — so the
+fix is not holding, not merely unshipped.
+The plan selector stays tappable underneath, so this blocks nothing functionally, but it fails the walk's
+visual bar. The owner floated an alternative design live: don't render the footer until a plan is picked,
+then let the page grow to fit it, instead of reserving space up front — a real option for whoever scopes the
+next spec to weigh. Full writeup in `docs/walk-open.md` → WALK-07 → "Re-run — 🟡 2026-08-16 (whole walk...)".
+**Needs Opus to scope a new `IMP-xxx`.**
 
 ### 🟡 IMP-056 residual + the IMP-057 decision (2026-08-10)
 
@@ -202,6 +244,20 @@ migrated**, leaving two things:
   fixture — meaningless** (`gen-v2-fixture.js` seeds ids the reporter doesn't key on), and **real device
   numbers have never been read.** Once they exist IMP-057 can be scoped — noting remapping can move an entry
   off a day and **break a live streak**: correct, but it reads as a regression to whoever it happens to.
+
+### ✅ WALK-15 screenshot automation — CLOSED 2026-08-16, no spec needed
+
+Fixed as **test-infra repair** (no app code, no accessibility label touched) and **closed at the owner's
+call** the same day. `npm run shots` runs green end to end and the seven Play-legal 1080×1920 assets are
+committed under `store/play/`. Six defects total, five of them the same family — a maestro step reporting
+`COMPLETED` while the app is somewhere else, so the artifact is a *wrong picture* rather than an error
+(`04-reflections.png` was the Android launcher; `07-shop.png` was the home screen). **Full writeup, including
+what each fix was and why:** `docs/build-log.md` → "Walk log" → WALK-15.
+
+**Steps 4, 5 and 6 were accepted unrun** — the second-AVD resolution check, the byte-comparable re-run, and
+the 👤 half where someone opens all seven and looks. **Bounded on purpose:** those three protect only the
+*listing assets*, which are uploaded by hand and seen by a human at upload time; nothing here can reach the
+app or a user. If a later run's output drifts with the emulator, this is the first place to look.
 
 ### 🟢 IMP-044 — the standing build-lane debt
 
@@ -222,38 +278,40 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
-_2026-08-16 (WALK-10, teach the app) — **✅ full pass, all four steps** (tip cards on Today/Archive/You,
-dismiss-and-stay-dismissed across a relaunch; "How it works" six rows each open a real alert; corrected
-rites-footer copy; both empty states). No app defects — IMP-041 stands as shipped-correct. **One owner
-decision surfaced mid-walk, not a defect:** having seen the tip cards live, the owner does not want them —
-not a placement complaint, confirmed via `AskUserQuestion` as "they exist at all, drop them, rely on 'How
-it works'". This reverses part of IMP-041 by design choice, not bug fix, so it was **not** written up as a
-runtime finding or spec — logged as a new owner decision under Open items, reserving **IMP-075** for Opus
-to scope (remove `TipCard` + its plumbing from `HomeScreen`/`ArchiveScreen`/`YouScreen`/`RitualsApp.js`,
-decide the fate of `src/content/tips.js`'s `pendingTip`/`markTipSeen` and the `seenTips` persisted key).
-Full walk detail moved to `docs/build-log.md` → "Walk log"; index row ticked. NEXT: the first ⬜ emulator
-walk is now **WALK-14** (TalkBack, unblocked); **WALK-15** (store screenshots) is also open. Opus should
-scope **IMP-075** before a build chat can take it — build queue is otherwise still empty since IMP-074._
+_2026-08-16 (release — v1.0.6 / vc12 to `internal`, and the free track closes) — **the ~40 unpublished IMP
+tasks finally have a lane.** Owner's direction, three decisions in one session. **(1) WALK-15 closed ✅** —
+steps 1–3 and 7 passed, steps **4–6 accepted unrun** (second AVD, repeat run, the 👤 look at all seven);
+section moved to `build-log.md` → "Walk log", which records exactly what that costs — those steps protect
+only the listing assets, which a human eyeballs at upload anyway. The seven `store/play/` PNGs are now
+committed. **(2) WALK-14 (TalkBack) dropped ⏭** — the owner asked why it existed at all; the honest answer is
+it is not a Play requirement and never gated anything, it existed only because `npm test` can prove a label
+exists but not that a blind user can reach the save button. Row kept, not deleted, and rewritten to say what
+dropping it costs (a wrong label goes unfound; every fix is a string, so it goes out OTA same-day) and what
+reopens it (an accessibility complaint, or institutional Plus buyers). **(3) The build.** `npm run bump:native`
+→ `version: '1.0.6'` / `versionCode: 12`; committed with `Release-Lane: build` and pushed. **The 🚦 device
+walks (WALK-13, WALK-03, WALK-12) were deliberately NOT run first**, reversing the sequence the old Open-items
+bullet prescribed — all three need this build on real hardware, and `internal` is how it gets there. **The
+gate moved rather than vanished: it now sits on `internal` → `production`, which is manual.** **vc12 is a
+candidate, not the release** — if WALK-12 finds R8 stripping something, that is another bump and another
+build. **Proof:** `npm test` → **866 passed, 84 suites** (run in a visible Terminal, `EXIT: 0`);
+`node scripts/check-billing-config.js` → OK (`PLUS_ENABLED` false, no purchase surface ships). LAST command:
+`git push`. **NEXT: the owner must approve the `production` environment gate in GitHub Actions — CI stops and
+waits for it, nothing builds until then.** After that: install vc12 from `internal` on hardware, then
+WALK-13 → WALK-03 → WALK-12. **The active work is now Plus (Phase 10b)** — read the playbook's Phase 10b gate;
+the first thing Opus owes it is a spec for the reopened WALK-07 Paywall finding._
 
-_2026-08-16 (IMP-075, the tip cards go away) — **code-complete, committed `11fa421`, not shipped; OTA lane,
-rides the next batch. Backlog is empty again — `docs/specs-open.md`'s index is empty.** RED-first: the
-12-test `describe('IMP-075 — the tip cards are gone')` block was added to `__tests__/content/tips.test.js`
-and run against the pre-deletion code — exactly 2 of 12 passed (the `EXPLAINERS` identity guard and the
-legacy-payload `deserialize` guard), 10 failed, matching the spec's prediction. Then landed exactly as
-specified: `git rm src/screens/TipCard.js`; stripped the `tip`/`onDismissTip` props, imports and five-line
-render blocks from `HomeScreen.js`/`ArchiveScreen.js`/`YouScreen.js` (`EXPLAINERS`'s import in `YouScreen`
-untouched); removed `seenTips` state, `dismissTip`, both tip imports and all three call sites (autosave,
-`currentSlice()`, the three screen props) from `RitualsApp.js`; dropped `'seenTips'` from `PERSISTED_KEYS`
-in `state.js` (no `SCHEMA_VERSION` bump — the key self-purges on the next autosave, per decision 3); deleted
-`TIPS`/`pendingTip`/`markTipSeen` from `src/content/tips.js` and rewrote its header comment; fixed the two
-stale comments in `FreezeNoticeCard.js` and `scripts/gen-v2-fixture.js` (no fixture data changed); deleted
-the three old test describes (`pendingTip`, `markTipSeen`, `TIPS`) and narrowed the import to `EXPLAINERS`.
-**Proof:** `npm test` → **866 passed, 84 suites** (862 − 8 removed + 12 added, was 862/84). `npx expo export
---platform android` clean. LAST command: `git commit` → `11fa421`. Archived the spec into `docs/build-log.md`,
-emptied `specs-open.md`'s index, ticked the row, updated the ACTIVE TRACK banner and stack line, moved the
-IMP-074 note down to `docs/build-log.md` → "Session notes" and deduplicated a stray repeated copy of it that
-was sitting in this section (harmless copy-paste artifact from the prior chat, not a content change). **No
-walk opened for this, deliberately** — the owner already walked this exact rendered behaviour live in
-WALK-10 (all tips dismissed, relaunched; conditional block renders identically whether dismissed or deleted).
-NEXT: backlog and walk-open's 🚦 group both need attention — Opus scopes the next `IMP-xxx`, or a walk chat
-can take **WALK-07** (unblocked), **WALK-09** (unblocked), **WALK-14**, or **WALK-15**._
+_2026-08-16 (WALK-07, modal scroll — whole-walk re-run) — **no app defect on five of six screens; Paywall
+fails again.** T1 flipped for the session and reverted after (confirmed `src/billing/config.js:39` back to
+`false`). Achievements, Shop, Reading sheet, Get Embers and Manage Subscription all passed — gesture and
+3-button nav, max (2.0x) OS font scale, no regressions. Both IMP-067 spot-checks passed too (Annual Recap
+teaser wraps, Mood Mix bars stay aligned). **Paywall did not clear this walk despite IMP-074 landing**: the
+fixed footer overlaps the plan selector and the disclaimer line from the very first frame, not after a
+correcting re-render as IMP-074's own writeup predicted. Owner-reported and confirmed against the running
+code — both fix halves are present unchanged (`maxHeight: winH` at `Paywall.js:40`, `flex: 1` at
+`Paywall.js:56`), so this is the fix not holding rather than a fix never shipped. Nothing was edited — per
+the walk's own rule, a failure gets written up, not patched live. Logged as a reopened WALK-07 finding under
+Open items, with the owner's live alternative-design suggestion (hide the footer until a plan is picked, grow
+the page to fit it) noted for whoever scopes the next spec. Full writeup: `docs/walk-open.md` → WALK-07 →
+"Re-run — 🟡 2026-08-16 (whole walk...)". NEXT: **Opus needs to scope a new `IMP-xxx`** for the Paywall
+regression before a build chat can take it. A walk chat can otherwise take **WALK-09** (unblocked) or
+**WALK-15** (steps 4–6)._
