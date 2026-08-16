@@ -89,19 +89,22 @@ active release on every track is `targetSdkVersion 36`. Banner-reading procedure
 `a299af7`; CI already does it). Reaching the public stays manual: promote `internal` → `production` in Play
 Console, which *does* get the full review.
 
-**⚠️ THE OTA LANE REACHES `internal` ONLY** (reopened 2026-08-16 when vc12 shipped). `runtimeVersion` =
-`appVersion` = **1.0.6** = **vc12**, which lives on `internal` alone — so an `eas update` reaches the owner's
-own devices and invited testers, nobody else. **vc11 on `alpha` is orphaned from OTAs for good**, and the
-public on vc9 was never reachable. An OTA fix for anything found in the device walks lands on `internal`
-only; getting it to the public still means the manual `internal` → `production` promotion.
+**⛔ THE OTA LANE IS SHUT — IMP-076's `bump:native` closed it on 2026-08-17.** The repo is now
+`version: 1.0.7` / vc13, and `runtimeVersion` = `appVersion`, so **1.0.7 matches no build on any track**: an
+`eas update` would publish to a runtime nothing is running. It reopens only when a 1.0.7 build actually
+ships. (For the record of what it was: while the repo sat at 1.0.6 the lane reached **`internal` only** —
+vc12's track — never `alpha`'s orphaned vc11 and never the public on vc9.) **Anything found in the device
+walks now needs a build, not an OTA**, and reaching the public still means the manual `internal` →
+`production` promotion.
 
 **⚠️ OTA has no Play track.** `eas update` publishes to Expo's CDN — no Google, no review. Gated only by
 **channel** (`production`) + **matching `runtimeVersion`**. An installed build receives an OTA regardless of
 which track it came from. (Once a `bump:native` lands, the OTA lane is closed for that release until the
 build ships.)
 
-**Current stack:** Expo SDK **54** · RN **0.81.5** · React **19.1.0** · **Legacy Architecture**
-(`newArchEnabled: false`, held deliberately) · `targetSdkVersion` **36**, `minSdk` **24** · `npm test` →
+**Current stack:** Expo SDK **54** · RN **0.81.5** · React **19.1.0** · **New Architecture**
+(`newArchEnabled: true` since IMP-076, 2026-08-17 — **unwalked, WALK-16 is the gate**) ·
+`targetSdkVersion` **36**, `minSdk` **24** · `npm test` →
 **867 passed, 84 suites**, plus **3 zone tests × 2 pinned zones**. **`npm test` = `test:suite` (the ambient
 suite, no TZ pin) + `test:zone`** (`__tests__/zone/`, run at UTC+14 and UTC−11 via `jest.zone.config.js`).
 **Verified `exit=0` under five ambient zones** — UTC, +5:30, +14, −11, −5. **Run `npm test`, not bare
@@ -188,7 +191,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 073 | The lifetime heatmap reads as one grid | OTA | ✅ code-complete 2026-08-16 · walk = WALK-09 (re-run whole) |
 | 074 | The Paywall footer survives the first measure pass | OTA | ✅ code-complete 2026-08-16 · walk = WALK-07 (re-run whole) |
 | 075 | The tip cards go away | OTA | ✅ code-complete 2026-08-16 · reverses IMP-041's tip half by owner's design choice, not a defect · no walk needed (owner already walked this behaviour live in WALK-10) |
-| 076 | The app moves to the New Architecture | Build | ⬜ **branch-only, never pushed** (`feat/design-push`) · walk = WALK-16 + WALK-17 |
+| 076 | The app moves to the New Architecture | Build | ✅ code-complete 2026-08-17 · **branch-only, never pushed** (`feat/design-push`) · `assembleRelease` clean, **v1.0.7 / vc13** · walk = WALK-16 + WALK-17 |
 | 077 | A motion vocabulary the whole app can speak | Build | ⬜ **blocked on WALK-16** · branch-only, never pushed · walk = WALK-18 |
 | 078 | A design system Claude Design can work from | Dev-only | ⬜ **branch-only, never pushed** · no app code, no gate — takeable any time |
 
@@ -287,6 +290,42 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
+_2026-08-17 (IMP-076 — the app moves to the New Architecture; **branch-only, committed, NOT pushed**) —
+**code-complete. `newArchEnabled: true`, `assembleRelease` clean, v1.0.7 / vc13.** Landed exactly as
+specified and **changed no app code at all**, which is what keeps rollback to one line each way. Both flags
+flipped; both surrounding comments **rewritten, not deleted**, each naming the shipped v1.0.3 / vc9 build as
+the reason the IMP-027 hold ended, so the next reader sees a superseded decision rather than a silent
+reversal; `playbook.md`'s stack block rewritten to match.
+**⚠️ Read this before rebuilding locally: `android/` is gitignored** (`.gitignore:19`). The
+`android/gradle.properties` flip the spec asks for is what made **this machine's** gradle build honour New
+Arch, but it is **not in the commit and cannot be** — `app.config.js` is the one durable switch, and EAS
+regenerates `gradle.properties` from it at prebuild. From a clean checkout, run `expo prebuild` (or re-flip
+by hand) before `./gradlew`, or you will build Legacy Arch and not notice.
+**The permissions patch did not fire, and it is NOT retired.** `npm install` → exit 0,
+`patch(permissions): already null-safe — nothing to do`. The flag cannot affect that script either way (it
+inspects `node_modules`), so the real question was answered from source: `PermissionsService.kt` sits in
+`expo-modules-core/android/src/main/`, and the **only** arch-gated sourceset there is `src/fabric/`, which is
+**C++ only**. It is supplied unconditionally by `ReactAdapterPackage.createInternalModules()` and consumed by
+`ModuleRegistryAdapter.createNativeModules()` with **no** `IS_NEW_ARCHITECTURE_ENABLED` branch — that file's
+one arch branch (line 115) is additive, for Fabric *view managers*. Re-verified against a **pristine**
+`expo-modules-core@3.0.30` tarball per the spec: `requestedPermissions!!` is still there at line 174. Patch
+stays, unchanged.
+**Proof — the native build, which is the whole point.** `./gradlew assembleRelease` → **BUILD SUCCESSFUL in
+4m 34s**, 847 tasks, exit 0, 94 MB APK. **Verifiably** New Arch, not just built with the flag on: the APK
+carries `libappmodules.so`, `libreact_codegen_rnsvg.so` and `libreact_codegen_safeareacontext.so` — codegen
+artifacts that exist only under `newArchEnabled=true`. **Both RevenueCat modules assembled clean** (the
+audit's one soft spot), and R8 ran over the result. `npm test` → **867 passed, 84 suites** + 3 zone tests × 2
+pinned zones, exit 0; `npx expo export --platform android` clean — **but neither proves anything here**, no
+app code changed. `npm run bump:native` → **v1.0.7 / vc13**, which **shuts the OTA lane** (see above).
+**One environment gotcha, not New-Arch-specific:** the first build died in 2s on
+`Error resolving plugin [id: 'com.facebook.react.settings'] > 25.0.2` — **Android Studio's bundled JBR is
+Java 25**, which AGP rejects. Build with **JDK 17** (`/opt/homebrew/opt/openjdk@17/...`). The
+`~/.gradle/init.d` kapt fix was **not** needed and that directory does not exist; the issue did not
+resurface. `PLUS_ENABLED` untouched (`false`); WALK-11 not reopened.
+**NEXT: [WALK-16](docs/walk-open.md) on a device — the only evidence that exists for this spec.** Then
+WALK-17 (edge-to-edge, re-audited: IMP-027's pass was on Legacy Arch and does not carry over). **IMP-077 is
+gated on WALK-16 passing.** **IMP-078 needs no gate and can be taken now**, including in parallel._
+
 _2026-08-17 (planning only — no code changed; **branch-only, never pushed**) — **the design push is scoped:
 IMP-076/077/078 + WALK-16/17/18, on `feat/design-push`.** Owner's ask: the app has too little motion outside
 the sun, and the Plus surfaces need designing — via **Claude Design**, with two hard constraints (**the sun
@@ -313,54 +352,3 @@ guards fail closed. **Proof:** planning only — no source file touched, `npm te
 unchanged. **NEXT:** IMP-076 (flip both `newArchEnabled` flags, full native build, `bump:native`) → **WALK-16
 on a device, which is the only evidence that exists for it** → then IMP-077. **IMP-078 needs no gate and can
 be taken any time, including first.**_
-
-_2026-08-16 (release — v1.0.6 / vc12 to `internal`, and the free track closes) — **the ~40 unpublished IMP
-tasks finally have a lane.** Owner's direction, three decisions in one session. **(1) WALK-15 closed ✅** —
-steps 1–3 and 7 passed, steps **4–6 accepted unrun** (second AVD, repeat run, the 👤 look at all seven);
-section moved to `build-log.md` → "Walk log", which records exactly what that costs — those steps protect
-only the listing assets, which a human eyeballs at upload anyway. The seven `store/play/` PNGs are now
-committed. **(2) WALK-14 (TalkBack) dropped ⏭** — the owner asked why it existed at all; the honest answer is
-it is not a Play requirement and never gated anything, it existed only because `npm test` can prove a label
-exists but not that a blind user can reach the save button. Row kept, not deleted, and rewritten to say what
-dropping it costs (a wrong label goes unfound; every fix is a string, so it goes out OTA same-day) and what
-reopens it (an accessibility complaint, or institutional Plus buyers). **(3) The build.** `npm run bump:native`
-→ `version: '1.0.6'` / `versionCode: 12`; committed with `Release-Lane: build` and pushed. **The 🚦 device
-walks (WALK-13, WALK-03, WALK-12) were deliberately NOT run first**, reversing the sequence the old Open-items
-bullet prescribed — all three need this build on real hardware, and `internal` is how it gets there. **The
-gate moved rather than vanished: it now sits on `internal` → `production`, which is manual.** **vc12 is a
-candidate, not the release** — if WALK-12 finds R8 stripping something, that is another bump and another
-build. **Proof:** `npm test` → **866 passed, 84 suites** (run in a visible Terminal, `EXIT: 0`);
-`node scripts/check-billing-config.js` → OK (`PLUS_ENABLED` false, no purchase surface ships). LAST command:
-`git push`. **vc12 SHIPPED to `internal`** — confirmed from the submit output (`Release track: internal`,
-`Version code: 12`, `✔ Submitted your app to Google Play Store!`; GH run `31951685300`).
-
-**The push failed the CI test gate first, and it caught something real.** 4 of 866 failed on the runner while
-all 866 passed locally — **the first time `npm test` had actually executed in CI in weeks**, since the gate
-only runs on a `Release-Lane` trailer and every intermediate push carried none (those ~10s runs are no-ops).
-Root cause was the **tests, not the app**: they set `process.env.TZ` at runtime, which is **inert under Jest**
-(each file gets a copy of `process.env`), so they only ever passed because this machine is IST (+05:30).
-Fixed by pinning `TZ=Asia/Kolkata` in the `test` script — the only mechanism available, since Jest cannot
-change the zone from inside. Verified `TZ=UTC npm test` → 866/866, which simulates the runner directly.
-**See Open items → "the suite is timezone-coupled" — the pin unblocks CI without fixing the fragility, and
-needs a follow-up `IMP-xxx`.**
-
-**NEXT: install vc12 from `internal` on real hardware, then WALK-13 → WALK-03 → WALK-12 (R8 last).** Those
-three gate the manual `internal` → `production` promotion. **The active work is now Plus (Phase 10b)** — read
-the playbook's Phase 10b gate; the first thing Opus owes it is a spec for the reopened WALK-07 Paywall
-finding, plus the timezone-test follow-up above._
-
-_2026-08-16 (WALK-07, modal scroll — whole-walk re-run) — **no app defect on five of six screens; Paywall
-fails again.** T1 flipped for the session and reverted after (confirmed `src/billing/config.js:39` back to
-`false`). Achievements, Shop, Reading sheet, Get Embers and Manage Subscription all passed — gesture and
-3-button nav, max (2.0x) OS font scale, no regressions. Both IMP-067 spot-checks passed too (Annual Recap
-teaser wraps, Mood Mix bars stay aligned). **Paywall did not clear this walk despite IMP-074 landing**: the
-fixed footer overlaps the plan selector and the disclaimer line from the very first frame, not after a
-correcting re-render as IMP-074's own writeup predicted. Owner-reported and confirmed against the running
-code — both fix halves are present unchanged (`maxHeight: winH` at `Paywall.js:40`, `flex: 1` at
-`Paywall.js:56`), so this is the fix not holding rather than a fix never shipped. Nothing was edited — per
-the walk's own rule, a failure gets written up, not patched live. Logged as a reopened WALK-07 finding under
-Open items, with the owner's live alternative-design suggestion (hide the footer until a plan is picked, grow
-the page to fit it) noted for whoever scopes the next spec. Full writeup: `docs/walk-open.md` → WALK-07 →
-"Re-run — 🟡 2026-08-16 (whole walk...)". NEXT: **Opus needs to scope a new `IMP-xxx`** for the Paywall
-regression before a build chat can take it. A walk chat can otherwise take **WALK-09** (unblocked) or
-**WALK-15** (steps 4–6)._

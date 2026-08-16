@@ -13,7 +13,7 @@
 > re-litigate a "why", and do not improve the scope.** If a step turns out to be impossible or the code
 > contradicts the spec, **STOP** and log it to `PROGRESS.md` → Open items rather than inventing a fix.
 >
-> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **866 passed, 84 suites**), `npx expo export --platform android` clean, commit with the **exact** message given, then
+> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **867 passed, 84 suites**), `npx expo export --platform android` clean, commit with the **exact** message given, then
 > update `PROGRESS.md` (tick the backlog row, write the session note) and **move the finished spec from
 > this file into `docs/build-log.md`**.
 >
@@ -24,9 +24,13 @@
 
 | # | Spec | Lane | From |
 | --- | --- | --- | --- |
-| 1 | [IMP-076 — the app moves to the New Architecture](#imp-076--the-app-moves-to-the-new-architecture) | **Build** | owner, 2026-08-17 |
-| 2 | [IMP-077 — a motion vocabulary the whole app can speak](#imp-077--a-motion-vocabulary-the-whole-app-can-speak) | **Build** | owner, 2026-08-17 |
-| 3 | [IMP-078 — a design system Claude Design can work from](#imp-078--a-design-system-claude-design-can-work-from) | Dev-only | owner, 2026-08-17 |
+| 1 | [IMP-077 — a motion vocabulary the whole app can speak](#imp-077--a-motion-vocabulary-the-whole-app-can-speak) | **Build** | owner, 2026-08-17 |
+| 2 | [IMP-078 — a design system Claude Design can work from](#imp-078--a-design-system-claude-design-can-work-from) | Dev-only | owner, 2026-08-17 |
+
+> **IMP-076 is ✅ code-complete (2026-08-17)** — spec archived to
+> [`build-log.md`](build-log.md). It left the tree on **v1.0.7 / vc13**, New Arch on, with a clean
+> `assembleRelease` behind it. **Its correctness is not settled yet: [WALK-16](walk-open.md) is what
+> decides that, and IMP-077 below is gated on it.**
 
 > ### 🔒 ALL THREE ARE BRANCH-ONLY — `feat/design-push`, never pushed
 >
@@ -53,92 +57,9 @@
 > **Every spec here is code-complete at green tests. None of them ends in a walk.** A build chat and a
 > runtime walk are **two different tasks for two different chats** — where a feature needs runtime proof,
 > the spec's last step names its `WALK-nn` row in [`walk-open.md`](walk-open.md). **Do not run a walk from a
-> build chat**, and do not read a missing walk as an unfinished spec. IMP-076 in particular is
-> **code-complete at green tests plus a clean native build** — its correctness is settled by WALK-16, not
-> by this chat.
-
----
-
-### IMP-076 — the app moves to the New Architecture
-
-**Lane:** Build · **Branch:** `feat/design-push`, never pushed · **Origin:** owner, 2026-08-17.
-
-**Why now — the hold expired, it was never a rejection.** `newArchEnabled: false` is set in two places
-with standing comments ([`app.config.js:36`](../app.config.js#L36),
-[`android/gradle.properties:38`](../android/gradle.properties#L38)). IMP-027's stated reason was *"API 36
-compliance needs no New Arch, and migrating both at once against the Aug-31 deadline is unnecessary
-risk."* **That deadline was met on 2026-07-30** — `build-log.md` records v1.0.3 / versionCode 9 in
-production on `targetSdkVersion 36`, "a month ahead of the 2026-08-31 deadline." The migration was
-deferred because it was *coupled* to a deadline; the coupling is gone. SDK 55 removes Legacy
-Architecture outright, so this is forced work either way — the only question is whose schedule it
-happens on.
-
-**Why it is tractable — the audit is already done.** `react-native-svg` (15.12.1), `async-storage`
-(2.2.0) and `safe-area-context` (5.6.2) all ship `codegenConfig` and New Arch sourcesets; every `expo-*`
-module is on SDK 54, where New Arch is the **default** and therefore the best-tested path. **The only
-soft spot is RevenueCat** — `react-native-purchases` and `-ui` (10.5.0) are legacy bridge modules with no
-`codegenConfig`, and `-ui` is a legacy *view* component, the fragile case, used at exactly one call site
-([`RitualsApp.js:253`](../src/RitualsApp.js#L253)).
-
-**And the soft spot is dormant, which is why the ordering is this way.**
-[`PLUS_ENABLED = false`](../src/billing/config.js#L39) — the paywall does not mount and
-`presentCustomerCenter()` is unreachable. The one dependency that could break this migration is switched
-off in the build the migration has to prove. **Do not change `PLUS_ENABLED` in this spec or the next
-two.** Re-enabling Plus means testing RevenueCat under New Arch, which is its own task on its own
-evidence (and re-opens `WALK-11`).
-
-**Steps**
-
-1. **Flip both architecture flags.**
-   1. [`app.config.js:36`](../app.config.js#L36) → `newArchEnabled: true`.
-   2. [`android/gradle.properties:38`](../android/gradle.properties#L38) → `newArchEnabled=true`.
-   3. **Rewrite both surrounding comments** — they explain a decision that no longer applies. Replace
-      them; do not delete them. The new comment must name **the shipped API-36 build (v1.0.3 / vc9,
-      2026-07-30)** as the reason the IMP-027 hold ended, so the next reader sees a *superseded*
-      decision rather than a silent reversal.
-   4. Confirm nothing else in the repo still asserts Legacy Arch:
-      `grep -rn "newArchEnabled\|Legacy Architecture" app.config.js android/ docs/playbook.md`.
-      `playbook.md`'s stack block says Legacy — update it.
-
-2. **Reinstall, and expect [`scripts/patch-permissions.js`](../scripts/patch-permissions.js) to fire.**
-   1. Run `npm install` (the patch runs as `postinstall`).
-   2. **If it exits non-zero, that is designed behaviour, not a defect.** It rewrites
-      `expo-modules-core/…/adapters/react/permissions/PermissionsService.kt` — the **legacy bridge
-      adapter** path. If New Arch routes permissions elsewhere, the patch finds no match and fails
-      `npm install` loudly rather than silently no-opping (IMP-027 made it three-state on purpose).
-   3. **Do not make the script tolerant.** That converts a loud, correct failure into an app that
-      crashes on a permission check.
-   4. If it fires: re-verify the upstream `requestedPermissions!!` bug against a **pristine
-      `expo-modules-core` tarball** — *not* the installed copy, which is what the script rewrites and so
-      cannot answer the question — on the New Arch path.
-   5. Re-target or retire the patch **on that evidence**, and record which, and why, in the session note.
-
-3. **Full native Android build.**
-   1. Build for real. **`npx expo export --platform android` is not sufficient proof for this spec** —
-      it exercises the JS bundle, not the native runtime that just changed.
-   2. If the Kotlin/kapt tmpdir issue resurfaces, refresh the `~/.gradle/init.d` fix (it held across
-      SDK 54 per IMP-027; New Arch is a different codegen path).
-
-4. **Green the suite.**
-   1. `npm test` — **≥ 867 passed, 84 suites** ([`PROGRESS.md`](../PROGRESS.md) stack block), plus the
-      zone suites.
-   2. Run **`npm test`**, not bare `npx jest`, or the zone half is silently skipped.
-   3. ⚠️ **A green suite is not evidence this spec worked.** No app code changed, so jest is
-      structurally blind to the architecture flip. Step 6 is the real gate.
-
-5. **`npm run bump:native`** — native change, so `version` bumps. That is what scopes OTA to compatible
-   builds; see the update-workflow rules in `build-log.md`.
-
-6. **Runtime proof: [WALK-16](walk-open.md), then [WALK-17](walk-open.md). Not from this chat.**
-   **This spec is code-complete at steps 3–5.** WALK-16 decides whether the migration survives, and
-   WALK-17 re-audits edge-to-edge (IMP-027's pass was on Legacy Arch and does not carry over).
-
-**Rollback is one line each way.** Both flags back to `false`, rebuild. This spec deliberately changes
-**no app code at all** — that is what keeps it revertible, and it is why it must land before any design
-work stacks on top of it.
-
-**Commit:** `build(arch): the app moves to the New Architecture (IMP-076)` — **no `Release-Lane` trailer,
-and do not push.**
+> build chat**, and do not read a missing walk as an unfinished spec. IMP-076 is the worked example: it
+> ended **code-complete at green tests plus a clean native build**, and its correctness is settled by
+> WALK-16, not by the chat that built it.
 
 ---
 

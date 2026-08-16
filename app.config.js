@@ -2,7 +2,7 @@ module.exports = {
   expo: {
     name: 'Daily Rituals',
     slug: 'daily-rituals',
-    version: '1.0.6',
+    version: '1.0.7',
     orientation: 'portrait',
     userInterfaceStyle: 'automatic',
     icon: './assets/icon.png',
@@ -24,16 +24,21 @@ module.exports = {
     updates: {
       url: 'https://u.expo.dev/1a0f9b15-cb1a-4cec-9577-3cd66e9f1d36',
     },
-    // SDK 54 defaults New Architecture ON. This app stays on Legacy Architecture
-    // (decided, IMP-027) — API 36 compliance needs no New Arch, and migrating both
-    // at once against the Aug-31 deadline is unnecessary risk. Explicit so
-    // expo install --fix/prebuild can't silently flip it.
+    // New Architecture, on (IMP-076). This SUPERSEDES the IMP-027 hold, which was
+    // never a rejection on the merits: it deferred the migration only because it was
+    // coupled to the 2026-08-31 API-36 deadline. That deadline was met on 2026-07-30
+    // by v1.0.3 / versionCode 9 in production on targetSdkVersion 36, so the reason
+    // for the hold ended three weeks before the flag did. SDK 55 removes Legacy
+    // Architecture entirely, making this forced work either way.
+    //
+    // Still explicit rather than defaulted, for the original IMP-027 reason: so
+    // expo install --fix/prebuild can't silently flip it, in either direction.
     //
     // This top-level `expo.newArchEnabled` is the canonical field in SDK 54. The
     // `expo-build-properties` android option of the same name is deprecated and is
     // intentionally NOT set below — one switch, one place, no ambiguity about which
-    // wins. SDK 55 removes Legacy Architecture entirely; migrating is its own task.
-    newArchEnabled: false,
+    // wins. Keep this in step with android/gradle.properties:38.
+    newArchEnabled: true,
     ios: { supportsTablet: false, bundleIdentifier: 'app.dailyrituals.mobile' },
     android: {
       adaptiveIcon: {
@@ -41,7 +46,7 @@ module.exports = {
         backgroundColor: '#f9f7f4',
       },
       package: 'app.dailyrituals.mobile',
-      versionCode: 12,
+      versionCode: 13,
       // Android Auto Backup: user's local data (journal/streak/settings) backs
       // up to their own Google Drive and restores on a new/reinstalled device —
       // no accounts, no login. Explicit so it can't silently regress if Expo's

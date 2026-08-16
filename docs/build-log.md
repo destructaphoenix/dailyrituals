@@ -2640,6 +2640,78 @@ now describes removed behaviour.
 
 ---
 
+### IMP-076 — the app moves to the New Architecture   ·   Lane: Build   ·   Status: ✅ code-complete (2026-08-17)
+
+**Branch-only, never pushed** (`feat/design-push`, no upstream, no `Release-Lane` trailer, not merged to
+`main`) — owner instruction covering IMP-076/077/078. Scoped from
+[`docs/superpowers/specs/2026-08-16-motion-and-design-system-design.md`](superpowers/specs/2026-08-16-motion-and-design-system-design.md) §2.
+
+**Why now.** IMP-027's `newArchEnabled: false` hold was never a rejection — it deferred the migration only
+because it was *coupled* to the 2026-08-31 API-36 deadline. **That deadline was met on 2026-07-30** by
+v1.0.3 / vc9 in production on `targetSdkVersion 36`, so the hold outlived its reason by three weeks. SDK 55
+removes Legacy Architecture outright, making this forced work either way.
+
+**Landed exactly as specified — no app code changed at all**, which is what keeps the rollback one line each
+way. `app.config.js` → `newArchEnabled: true`, `android/gradle.properties:38` → `newArchEnabled=true`, both
+surrounding comments **rewritten rather than deleted** so the next reader sees a *superseded* IMP-027
+decision (each names the shipped v1.0.3 / vc9 build as the reason the hold ended) rather than a silent
+reversal. `playbook.md`'s stack block rewritten from "Architecture: Legacy, held deliberately" to the New
+Arch entry, including the rollback note.
+
+**⚠️ Only `app.config.js` is durable — `android/` is gitignored** (`.gitignore:19`, "Native Builds (Expo
+Prebuild / EAS)"). The `gradle.properties` flip is what made the **local** gradle build honour New Arch; it
+is not in the commit and cannot be. On EAS, prebuild regenerates `gradle.properties` from
+`expo.newArchEnabled`, so the config field is the single durable switch. Anyone rebuilding this locally from
+a clean checkout must re-run `expo prebuild` (or re-flip by hand) before `./gradlew`.
+
+**`scripts/patch-permissions.js` did NOT fire, and it is NOT retired.** `npm install` exited 0; the script
+reported `already null-safe — nothing to do`. Note that the flag cannot affect it either way — it inspects
+`node_modules`, which an architecture flag does not change — so the real question (*does New Arch route
+permissions somewhere else?*) was answered from source instead, and the answer is **no**:
+- `PermissionsService.kt` lives in `expo-modules-core/android/src/main/`, not an arch-gated sourceset. The
+  **only** arch-gated sourceset in that package is `src/fabric/`, which is **C++ only** (`CMakeLists.txt` +
+  `FabricComponentsRegistry.{cpp,h}`) — no Kotlin/Java in it.
+- It is supplied unconditionally by `ReactAdapterPackage.createInternalModules()` (line 29), consumed by
+  `ModuleRegistryAdapter.createNativeModules()` (lines 63–78) with **no** `IS_NEW_ARCHITECTURE_ENABLED`
+  branch. That file's single arch branch is at line 115 and is additive — Fabric **view manager**
+  registration only.
+- **Pristine-tarball re-verification** (per the spec, since the installed copy is what the patch rewrites and
+  so cannot answer the question): `npm pack expo-modules-core@3.0.30` → `requestedPermissions!!.contains(permission)`
+  still present upstream at line 174. The bug is unfixed and the patch stays correctly targeted.
+
+**Proof — the native build, which is the point of this spec.** `./gradlew assembleRelease` →
+**BUILD SUCCESSFUL in 4m 34s**, 847 tasks, exit 0, 94 MB `app-release.apk`. The APK is **verifiably** New
+Arch, not merely built with the flag on: it carries `lib/*/libappmodules.so` plus
+`libreact_codegen_rnsvg.so` and `libreact_codegen_safeareacontext.so` — codegen artifacts that exist only
+when `newArchEnabled=true`. `react-native-purchases` and `react-native-purchases-ui` — the audit's one soft
+spot — both `assembleRelease`d clean, and R8 ran over the result. Warnings seen and judged benign:
+`MainApplication.kt` deprecation notices for `ReactNativeHost` (RN 0.81 deprecates the old bridge host under
+New Arch), `[CXX5304]` SDK-XML-version notices, and pre-existing R8 stack-map warnings from the Amazon
+appstore SDK (a RevenueCat transitive dep, unrelated to this change).
+
+**One environment gotcha worth keeping.** The first attempt failed in 2s with
+`Error resolving plugin [id: 'com.facebook.react.settings'] > 25.0.2` — **Android Studio's bundled JBR is
+Java 25**, which AGP / the RN settings plugin reject. Build with **JDK 17**
+(`/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home`); nothing about it is New-Arch-specific.
+The `~/.gradle/init.d` kapt tmpdir fix was **not** needed and that directory does not currently exist — the
+issue did not resurface on the New Arch codegen path.
+
+**Proof — the rest.** `npm test` → **867 passed, 84 suites**, plus **3 zone tests × 2 pinned zones**, exit 0
+(run as `npm test`, not bare `npx jest`, so the zone half really ran). `npx expo export --platform android`
+clean. ⚠️ **Neither is evidence this spec worked** — no app code changed, so jest is structurally blind to
+the architecture flip, and export exercises the JS bundle rather than the native runtime. Step 3's native
+build is the only mechanical proof, and correctness is settled by WALK-16.
+**Bump:** `npm run bump:native` → **v1.0.7 / versionCode 13** (native change, so `version` bumps — that is
+what scopes OTA to compatible builds).
+**Ship:** none. No trailer, not pushed, not merged.
+**Commit:** `build(arch): the app moves to the New Architecture (IMP-076)`.
+**Runtime proof: [WALK-16](walk-open.md) then [WALK-17](walk-open.md)** — device rows, a different chat.
+WALK-16 decides whether the migration survives; WALK-17 re-audits edge-to-edge, because IMP-027's pass was
+on Legacy Arch and does not carry over. **`PLUS_ENABLED` stayed `false` throughout** — the RevenueCat soft
+spot is dormant by design here, and WALK-11 is not reopened.
+
+---
+
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
 
 > Moved out of PROGRESS.md on 2026-07-31 to keep the live cursor lean once a second spec (IMP-032) opened. These are **not** finished work. If the owner revives one, lift the block back into PROGRESS.md as the ACTIVE TRACK.
@@ -2684,6 +2756,58 @@ now describes removed behaviour.
 ## Session notes (archived from PROGRESS.md)
 
 _Append-only handoff log moved out of PROGRESS.md to keep it light. Newest 1–2 notes stay live in PROGRESS.md; everything else is here. Git history is the full record._
+
+_2026-08-16 (release — v1.0.6 / vc12 to `internal`, and the free track closes) — **the ~40 unpublished IMP
+tasks finally have a lane.** Owner's direction, three decisions in one session. **(1) WALK-15 closed ✅** —
+steps 1–3 and 7 passed, steps **4–6 accepted unrun** (second AVD, repeat run, the 👤 look at all seven);
+section moved to `build-log.md` → "Walk log", which records exactly what that costs — those steps protect
+only the listing assets, which a human eyeballs at upload anyway. The seven `store/play/` PNGs are now
+committed. **(2) WALK-14 (TalkBack) dropped ⏭** — the owner asked why it existed at all; the honest answer is
+it is not a Play requirement and never gated anything, it existed only because `npm test` can prove a label
+exists but not that a blind user can reach the save button. Row kept, not deleted, and rewritten to say what
+dropping it costs (a wrong label goes unfound; every fix is a string, so it goes out OTA same-day) and what
+reopens it (an accessibility complaint, or institutional Plus buyers). **(3) The build.** `npm run bump:native`
+→ `version: '1.0.6'` / `versionCode: 12`; committed with `Release-Lane: build` and pushed. **The 🚦 device
+walks (WALK-13, WALK-03, WALK-12) were deliberately NOT run first**, reversing the sequence the old Open-items
+bullet prescribed — all three need this build on real hardware, and `internal` is how it gets there. **The
+gate moved rather than vanished: it now sits on `internal` → `production`, which is manual.** **vc12 is a
+candidate, not the release** — if WALK-12 finds R8 stripping something, that is another bump and another
+build. **Proof:** `npm test` → **866 passed, 84 suites** (run in a visible Terminal, `EXIT: 0`);
+`node scripts/check-billing-config.js` → OK (`PLUS_ENABLED` false, no purchase surface ships). LAST command:
+`git push`. **vc12 SHIPPED to `internal`** — confirmed from the submit output (`Release track: internal`,
+`Version code: 12`, `✔ Submitted your app to Google Play Store!`; GH run `31951685300`).
+
+**The push failed the CI test gate first, and it caught something real.** 4 of 866 failed on the runner while
+all 866 passed locally — **the first time `npm test` had actually executed in CI in weeks**, since the gate
+only runs on a `Release-Lane` trailer and every intermediate push carried none (those ~10s runs are no-ops).
+Root cause was the **tests, not the app**: they set `process.env.TZ` at runtime, which is **inert under Jest**
+(each file gets a copy of `process.env`), so they only ever passed because this machine is IST (+05:30).
+Fixed by pinning `TZ=Asia/Kolkata` in the `test` script — the only mechanism available, since Jest cannot
+change the zone from inside. Verified `TZ=UTC npm test` → 866/866, which simulates the runner directly.
+**See Open items → "the suite is timezone-coupled" — the pin unblocks CI without fixing the fragility, and
+needs a follow-up `IMP-xxx`.**
+
+**NEXT: install vc12 from `internal` on real hardware, then WALK-13 → WALK-03 → WALK-12 (R8 last).** Those
+three gate the manual `internal` → `production` promotion. **The active work is now Plus (Phase 10b)** — read
+the playbook's Phase 10b gate; the first thing Opus owes it is a spec for the reopened WALK-07 Paywall
+finding, plus the timezone-test follow-up above._
+
+_2026-08-16 (WALK-07, modal scroll — whole-walk re-run) — **no app defect on five of six screens; Paywall
+fails again.** T1 flipped for the session and reverted after (confirmed `src/billing/config.js:39` back to
+`false`). Achievements, Shop, Reading sheet, Get Embers and Manage Subscription all passed — gesture and
+3-button nav, max (2.0x) OS font scale, no regressions. Both IMP-067 spot-checks passed too (Annual Recap
+teaser wraps, Mood Mix bars stay aligned). **Paywall did not clear this walk despite IMP-074 landing**: the
+fixed footer overlaps the plan selector and the disclaimer line from the very first frame, not after a
+correcting re-render as IMP-074's own writeup predicted. Owner-reported and confirmed against the running
+code — both fix halves are present unchanged (`maxHeight: winH` at `Paywall.js:40`, `flex: 1` at
+`Paywall.js:56`), so this is the fix not holding rather than a fix never shipped. Nothing was edited — per
+the walk's own rule, a failure gets written up, not patched live. Logged as a reopened WALK-07 finding under
+Open items, with the owner's live alternative-design suggestion (hide the footer until a plan is picked, grow
+the page to fit it) noted for whoever scopes the next spec. Full writeup: `docs/walk-open.md` → WALK-07 →
+"Re-run — 🟡 2026-08-16 (whole walk...)". NEXT: **Opus needs to scope a new `IMP-xxx`** for the Paywall
+regression before a build chat can take it. A walk chat can otherwise take **WALK-09** (unblocked) or
+**WALK-15** (steps 4–6)._
+
 
 _2026-08-16 (IMP-075, the tip cards go away) — **code-complete, committed `11fa421`, not shipped; OTA lane,
 rides the next batch. Backlog is empty again — `docs/specs-open.md`'s index is empty.** RED-first: the
