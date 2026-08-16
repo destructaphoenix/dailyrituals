@@ -25,40 +25,43 @@
 
 | Chat type | Queue | Take |
 | --- | --- | --- |
-| **Build task** | [`docs/specs-open.md`](docs/specs-open.md) | the **first ⬜ `IMP-xxx`** in the backlog below — its row links to the spec |
+| **Build task** | [`docs/specs-open.md`](docs/specs-open.md) | the **first ⬜ `IMP-xxx`** in the backlog below — **but check 🧭 below first: a row can be blocked** |
 | **Runtime walk** | [`docs/walk-open.md`](docs/walk-open.md) | the **first ⬜ `WALK-nn`** in that file's own index |
 
 **Never both in one chat.** A spec is **code-complete at `npm test` green + `npx expo export` clean** — its
 runtime proof is a separate WALK row for a separate chat, so a missing walk is *not* an unfinished spec.
 Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`](docs/playbook.md).
 
-> **🔵 2026-08-16 — the free-app improvement track is CLOSED and the work moved to Plus (Phase 10b).** The
-> owner's call, taken with the backlog empty. `IMP-001`–`IMP-075` are done bar the deferred `IMP-022` and the
-> reserved `IMP-057`; `docs/specs-open.md`'s index is empty. **Do not open new free-track IMP rows** — read
-> [`docs/playbook.md`](docs/playbook.md) → Phase 10b first, and note the `PLUS_ENABLED` gate below, which is
-> still shut and still has one unmet perk. The same session cut **v1.0.6 / vc12** to `internal` (below), so
-> everything from IMP-032 onward finally has a track.
+> ## 🧭 WHAT TO TAKE RIGHT NOW — read this before the tables below (2026-08-17)
 >
-> **What did NOT come with that decision, and is still owed:**
-> - **The WALK-07 Paywall regression needs a new `IMP-xxx` — Opus's lane to scope** (Open items → "WALK-07
->   finding, reopened"). It is a Plus surface, so it now belongs to the Plus work rather than sitting beside
->   it: the footer overlaps the plan selector and disclaimer from first open, with both IMP-074 fix-halves
->   confirmed present in `Paywall.js`. **Nothing about Plus should ship past this.**
+> **The build queue is effectively EMPTY. Do not "take the first ⬜ IMP row" today** — the only open spec,
+> `IMP-077`, is **hard-gated on WALK-16**, which has not run. Starting it would produce a green suite that
+> proves nothing (Reanimated 4 cannot run on Legacy Arch, and its Jest mock no-ops every hook).
+>
+> | If this chat is… | Take |
+> | --- | --- |
+> | a **runtime walk** | **[WALK-16](docs/walk-open.md)** — device, owner-run. The single highest-value thing open. It is the *only* evidence IMP-076 has. Then WALK-17 in the same sitting. |
+> | a **design request** | The Claude Design project is **live** — see "Claude Design is set up" below. |
+> | a **build task** | **Nothing is takeable.** IMP-077 unblocks the moment WALK-16 passes. If the owner wants build work sooner, the open scoping debt is the 🔴 WALK-07 Paywall finding, which needs Opus to write a spec first. |
+>
+> **The whole design push lives on `feat/design-push`, which is NEVER pushed, NEVER given a
+> `Release-Lane:` trailer, and NEVER merged to `main`** without a separate owner decision.
+> **IMP-076 ✅ and IMP-078 ✅ are both code-complete (2026-08-17)**; commits `22fcb96` and `4c1e34b`.
+
+> **🔵 2026-08-16 — the free-app improvement track is CLOSED; active work is Plus (Phase 10b) + the design
+> push.** Owner's call. `IMP-001`–`IMP-075` are done bar the deferred `IMP-022` and the reserved `IMP-057`.
+> **Do not open new free-track IMP rows** — read [`docs/playbook.md`](docs/playbook.md) → Phase 10b, and note
+> the `PLUS_ENABLED` gate below, still shut with one unmet perk. Full account of that session, the walk
+> closures (WALK-04/06/10 ✅, WALK-15 closed, WALK-14 dropped) and IMP-072's no-spec fix: `build-log.md`.
+>
+> **Still owed, and neither is done:**
+> - **The 🔴 WALK-07 Paywall regression needs a new `IMP-xxx` — Opus's lane to scope** (see Open items). It
+>   is a Plus surface. **Nothing about Plus should ship past this.**
 > - **WALK-09 (lifetime heatmap) is unblocked and never re-run** — IMP-073 landed; a walk chat can take it.
-> - **The 🚦 device walks are still unwalked** — WALK-13, WALK-03, WALK-12. vc12 reaching `internal` is what
->   makes them runnable; they gate `internal` → `production`, not the internal build itself.
->
-> `IMP-063` through `IMP-075` have all landed. `IMP-072` has no spec at all — found and fixed live during the
-> WALK-04 re-run at the owner's direction, skipping Opus-scoping; full account in `build-log.md` → "Walk log"
-> → WALK-04, commit `44197e9`. **WALK-04, WALK-06 and WALK-10 all passed 2026-08-16**, and **WALK-15 was
-> closed the same day at the owner's call** (steps 1–3 + 7 passed, 4–6 accepted unrun — the listing assets
-> are committed and `npm run shots` is green end to end). **WALK-14 (TalkBack) was dropped from the queue
-> entirely** on 2026-08-16, also the owner's call — it was never a gate and nothing waits on it; the row in
-> `docs/walk-open.md` now states what dropping it costs and what would reopen it.
 >
 > **`IMP-057` is reserved, not missing** — the `dayKey` migration IMP-056 deferred; needs real device
-> numbers first (see Open items). **Do not reuse the number.** **IMP-044
-> claims no queue slot** — it rides the next build; don't "start" it, it needs only WALK-12.
+> numbers first (see Open items). **Do not reuse the number.** **IMP-044 claims no queue slot** — it rides
+> the next build; don't "start" it, it needs only WALK-12.
 
 **App status — all four Play tracks, read from the Play Developer API 2026-08-13. Authoritative; do not
 re-derive from an older note.**
@@ -121,79 +124,49 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 
 | ID | Title | Lane | Status |
 | --- | --- | --- | --- |
-| 001–005 | Early post-launch fixes (name, greeting/date, streak, zero-state, login step) | OTA | ✅ shipped |
-| 006 | Android Auto Backup — new-device restore, no login | Build | ✅ shipped + device-verified 2026-07-30 |
-| 007 | Streak stops stacking on same-day entries | OTA | ✅ |
-| 008 | Real zero-state: level from XP, calendar + week strip from entries | OTA | ✅ |
-| 009 | Insights from real entries (kill hardcoded STATS/MOOD_MIX/RHYTHM) | OTA | ✅ |
-| 010 | Onboarding only on first ever launch | OTA | ✅ |
-| 011 | Kill the last hardcoded "31 May" | OTA | ✅ |
-| 012 | Achievements + Keepsakes start fresh, derived from real data | OTA | ✅ |
-| 013 | "Tend an old grave" rite starts at 0 + real completion trigger | OTA | ✅ |
-| 014 | Missed days show 💀, not a blank cell | OTA | ✅ |
-| 015 | Name is mandatory in onboarding | OTA | ✅ |
-| 016 | Header flame icon proportional + centered | OTA | ✅ |
-| 017 | Greeting by the user's local time | OTA | ✅ |
-| 018 | Today's reflection is editable | OTA | ✅ |
-| 019 | True-black AMOLED dark mode + rotating-rays hero | OTA | ✅ promoted |
-| 020 | Backup / Restore — user-held JSON export + restore-by-replace | Build | ✅ shipped + device-verified 2026-07-30 |
-| 021 | Lifetime Progress | OTA → vc11 | ✅ shipped vc11; shortfall closed by 045 |
+| 001–075 | **Every free-track task, all ✅ except the two rows below.** Search, custody + 30-day trash, multi-moods, Annual Recap, deeper insights, heatmaps, local `dayKey`, prompt packs, a11y labels, the IMP-063…075 polish run, R8, dev harness, backup/restore, reminders. | mixed | ✅ — **full detail per task in [`docs/build-log.md`](docs/build-log.md)**; git is the record. Do not re-derive from this table. |
 | 022 | Save as PDF + About sheet (the two dead You-tab buttons) | Build | ⏸ **deferred (owner)** — spec in build-log → "Deferred specs"; **perk #6 gate** |
-| 023 | Dynamic daily text — rotating greeting + prompt deck | OTA | ✅ |
-| 024 | Streak counts real consecutive days | OTA | ✅ |
-| 025 | Edit your name in the app | OTA | ✅ |
-| 026 | Remove the Gamification toggle entirely | OTA | ✅ |
-| 027 | Expo SDK 51→54 for `targetSdkVersion` 36 | Build | ✅ shipped v1.0.3 / vc9 |
-| 028 | Billing correctness — live store prices, sim guard | OTA → vc11 | ✅ shipped to testers |
-| 029 | Tell the user their data came from a Google backup | Build | ✅ **device-verified 2026-08-02** |
-| 030 | Layout can't blow out — row auto-stack + font-scale cap | OTA+Build → vc11 | ✅ **device-verified 2026-08-02** |
-| 031 | Daily reminder is real | Build | ✅ **device-verified 2026-08-02** |
-| 032 | Dev harness v2 — total control + inspection | Dev-only | ✅ **device-walked 2026-08-02** |
-| 033 | The restore is offered, not imposed (quarantine + offer) | OTA | ✅ |
-| 034 | Hide "Gather Embers" while the app ships free | OTA | ✅ |
-| 035 | Search your journal — full-text over `did`/`wished` | OTA | ✅ |
-| 036 | Custody of your words — edit/delete/30-day trash | OTA | ✅ |
-| 037 | Moods: custom + multiple per entry | OTA | ✅ |
-| 038 | "On this day" resurfacing | OTA | ✅ |
-| 039 | Streak-freeze candles actually spend themselves | OTA | ✅ |
-| 040 | "Keepsake" means one thing now | OTA | ✅ |
-| 041 | Teach the app — tips + explainers | OTA | ✅ walked 2026-08-16 (WALK-10) — tip-card half now slated for removal, see IMP-075 |
-| 042 | The Keepsakes screen scrolls | OTA | ✅ |
-| 043 | Recoverability pass — re-verify entitlement, backup health | OTA | ✅ |
 | 044 | R8 on release builds (dev client was shipping to the public) | Build | 🟢 **code-complete, UNWALKED — rides v1.0.6 / vc12** (bumped 2026-08-16); walk = WALK-12, on hardware, before `internal` → `production` |
-| 045 | Finish Lifetime Progress (missed-day painting + XP line) | OTA | ✅ |
-| 046 | Annual Recap — "your year, remembered" | OTA | ✅ |
-| 047 | Deeper insights — the Plus analysis layer | OTA | ✅ |
-| 048 | Three free trash restores, then Plus | OTA | ✅ + emulator-walked 2026-08-09 |
-| 049 | Settings survive a corrupt restore | OTA | ✅ |
-| 050 | Every mood gets a face — emoji picker + fallback glyphs | OTA | ✅ 2026-08-10 |
-| 051 | The keyboard stops eating the Next button | OTA | ✅ + emulator-walked 2026-08-10 |
-| 052 | Tap a day on either heatmap, read it | OTA | ✅ 2026-08-13 |
-| 053 | Search shows you the match (snippet + highlight) | OTA | ✅ 2026-08-13 |
-| 056 | A day is the day you lived, not the day in Greenwich | OTA | ✅ + emulator-walked 2026-08-10 |
-| 054 | The reminder you can actually answer | OTA | ✅ code-complete 2026-08-13 · walk = WALK-13 |
-| 055 | Manage your feelings — rename / re-emoji / remove | OTA | ✅ code-complete 2026-08-13 |
-| 060 | A candle burns without telling you | OTA | ✅ code-complete 2026-08-13 |
-| 059 | The app has one accessibility label | OTA | ✅ code-complete 2026-08-13 · **WALK-14 ⏭ dropped 2026-08-16** (owner) — labels ship unwalked; reopen triggers in `walk-open.md` → WALK-14 |
-| 058 | Prompt packs — grief / gratitude / change | OTA | ✅ code-complete 2026-08-14 |
-| 061 | Store screenshots build themselves | Dev-only | ✅ code-complete 2026-08-14 · **WALK-15 ✅ closed 2026-08-16** (steps 4–6 accepted unrun); seven assets committed to `store/play/` |
-| 062 | The restore offer outlives the launch that made it | OTA | ✅ code-complete 2026-08-14 · WALK-02 ✅ 2026-08-15 |
-| 063 | A saved day looks saved (frozen ≠ missed) | OTA | ✅ code-complete 2026-08-15 · walk = WALK-06 (re-run whole) |
-| 064 | Count your candles, and say plainly what one did | OTA | ✅ code-complete 2026-08-15 · walk = WALK-06 (re-run whole) |
-| 065 | Clear the search; picked moods come to the front | OTA | ✅ code-complete 2026-08-15 · walk = WALK-04 (re-run whole) |
-| 066 | The mood step stops fighting you | OTA | ✅ code-complete 2026-08-15 · walk = WALK-04 (re-run whole) |
-| 067 | A stacked row wraps; Mood Mix bars line up | OTA | ✅ code-complete 2026-08-15 · walk = WALK-07 (re-run whole) |
-| 068 | The Paywall footer stops covering the price | OTA | ✅ code-complete 2026-08-15 · walk = WALK-07 (re-run whole) |
-| 069 | A feeling you picked can be put back down | OTA | ✅ code-complete 2026-08-16 · walk = WALK-04 (re-run whole) |
-| 070 | One emoji, and the block says what it makes | OTA | ✅ code-complete 2026-08-16 · walk = WALK-04 (re-run whole) |
-| 071 | The filter row stops jumping under your thumb | OTA | ✅ code-complete 2026-08-16 · walk = WALK-04 (re-run whole) |
-| 072 | Custom-mood face field polish + a real typing bug | OTA | ✅ code-complete + walked 2026-08-16 · found and fixed live during WALK-04, no separate spec (owner-directed) |
-| 073 | The lifetime heatmap reads as one grid | OTA | ✅ code-complete 2026-08-16 · walk = WALK-09 (re-run whole) |
-| 074 | The Paywall footer survives the first measure pass | OTA | ✅ code-complete 2026-08-16 · walk = WALK-07 (re-run whole) |
-| 075 | The tip cards go away | OTA | ✅ code-complete 2026-08-16 · reverses IMP-041's tip half by owner's design choice, not a defect · no walk needed (owner already walked this behaviour live in WALK-10) |
 | 076 | The app moves to the New Architecture | Build | ✅ code-complete 2026-08-17 · **branch-only, never pushed** (`feat/design-push`) · `assembleRelease` clean, **v1.0.7 / vc13** · walk = WALK-16 + WALK-17 |
 | 077 | A motion vocabulary the whole app can speak | Build | ⬜ **blocked on WALK-16** · branch-only, never pushed · walk = WALK-18 |
 | 078 | A design system Claude Design can work from | Dev-only | ✅ code-complete 2026-08-17 · **branch-only, never pushed** · 14 cards live in Claude Design project `Daily Rituals Design System` · ⚠️ **night screen baselines NOT captured** (see build-log) |
+
+---
+
+## 🎨 Claude Design is set up — how to use it (IMP-078, 2026-08-17)
+
+**Project: `Daily Rituals Design System`** · id `7bf44d09-f93a-42d2-a8b6-d412d671cf60` · type
+`PROJECT_TYPE_DESIGN_SYSTEM`, writable. **26 files / 14 cards are already live**: Tokens (color, type,
+shape, elevation) · Frozen (the celestial set) · Motion (contract, primitives) · Components (card, buttons,
+progress, chips, nav, plus) · Screens (baseline-day).
+
+**To make a design request, open the Design System pane in Claude Design and ask for ONE screen.**
+"Redesign the app" produces mush. The four rules that make output portable:
+
+1. **One screen per request.** First one should be **`PlusPerks`** — 44 lines carrying the entire "what you
+   get" pitch, against `YouScreen.js`'s 325. The surfaces that take money are the least designed.
+2. **Insist the spec comes back in token names and `motion.js` primitives** — `c.accentSoft`, `t.radius.card`,
+   `riseIn`, `DUR.enter`. Not hex, not "gentle fade". The cards are built so it never sees a raw hex.
+3. **The sun and rays are frozen.** The Frozen card says so in the project. If a returned design redraws
+   them, reject it — that design cannot ship.
+4. **It is a *design* request, not an enablement.** `PLUS_ENABLED` stays `false`; `PLUS_PERKS` copy and
+   everything under `src/billing/` are untouched by design work.
+
+**Porting the result is a normal build task**: a new `IMP-xxx` scoped by Opus, then a build chat. Claude
+Design does not emit React Native — it returns HTML/CSS previews plus a spec.
+
+**To regenerate the cards after a theme change:** `node scripts/gen-design-system.js`, then re-push. The
+token/component/frozen cards are generated from `src/theme.js`, `src/data.js` and `src/art.js`, so they
+cannot drift — but they do not update themselves.
+
+**Two known gaps, both deliberate and neither blocking:**
+- **No night screen baselines.** The app's day/night mode is its own setting (`App.js:40`, header toggle),
+  not the OS's, so `cmd uimode night` does nothing — capturing night needs the in-app toggle driven from
+  inside `.maestro/store-shots.yaml`. Until then, **night colour lives on the Tokens → Color card**, which is
+  complete and generated.
+- **No auto-sync.** Pointing the Design System pane's own GitHub connection at `design-system/` would
+  re-sync on every `theme.js` change, but that **requires publishing the branch**, which the no-push
+  instruction forbids. Owner's call, later.
 
 ---
 
@@ -205,26 +178,13 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 
 ### ▶️ Owner decisions still open
 
-- **✅ RESOLVED 2026-08-16 — the ~40 unpublished IMP tasks reached `internal` as v1.0.6 / vc12.** Kept here
-  (not archived) because the *promotion* half is still open and the walks below still gate it.
-  Everything from IMP-032/033 through IMP-075 (search, custody +
-  trash, multi-moods, recap, deeper insights, heatmap, `dayKey`, keyboard fix, prompt packs, a11y, mood
-  management, and the whole IMP-063…075 polish run) had reached **no track at all** since the vc11 build on
-  2026-08-02. An OTA could never have delivered it — `runtimeVersion` = `appVersion` matched vc11 on `alpha`
-  only, and the batch touches `app.config.js` / `eas.json` / `package.json` / `package-lock.json`, so CI's
-  backstop auto-rejects an `ota` trailer — so a **build** was the only route, and it necessarily carries
-  IMP-044's R8, the first minified build of this app ever.
-  **What actually happened vs. the sequence this bullet used to prescribe.** The old plan was *clear the 🚦
-  walks (13 → 03 → 12) first, then bump*. **The three remaining 🚦 rows are all `device` walks and were NOT
-  run** — the owner's call, and the reasoning is sound rather than a corner cut: all three need this build
-  installed on real hardware, and `internal` is how it gets there. **The gate did not disappear, it moved
-  one step later — `internal` → `production` is manual and is where WALK-13, WALK-03 and WALK-12 now bite.**
-  What ships to `internal` reaches the owner's own devices and invited testers, not the public.
-  **Done: CI test gate ✅ (after the TZ fix below) → owner approved the `production` environment →
-  `eas build --auto-submit` → `internal` ✅.
-  REMAINING: install vc12 on hardware → WALK-13 → WALK-03 → WALK-12 (R8 last) → promote `internal` →
-  `production` by hand** (full review, ~7d). **If WALK-12 finds R8 stripping something, the fix means another
-  bump and another build — vc12 is a candidate, not the release.**
+- **🚦 The `internal` → `production` promotion is still open, and three device walks gate it.**
+  v1.0.6 / vc12 (~40 IMP tasks, and the app's first R8 build) reached `internal` on 2026-08-16 — that half is
+  **done**; full account in `build-log.md` → Session notes. **REMAINING: install vc12 on hardware →
+  WALK-13 → WALK-03 → WALK-12 (R8 last) → promote by hand** (full review, ~7d). vc12 is a *candidate*, not
+  the release: if WALK-12 finds R8 stripping something, that is another bump and another build.
+  ⚠️ **The repo has since moved to v1.0.7 / vc13** (IMP-076's `bump:native`), so the repo no longer matches
+  any built track — a vc13 build is its own decision, separate from promoting vc12.
 - **Cash embers: settled in principle (dropped 2026-08-03), not finalised.** Must be decided before
   `PLUS_ENABLED` flips — it determines which Play products get created. Full argument in the playbook.
 - **`PLUS_ENABLED` must not flip until every `PLUS_PERKS` line is true.** The one remaining gap is perk #6,
