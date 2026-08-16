@@ -13,7 +13,7 @@
 > re-litigate a "why", and do not improve the scope.** If a step turns out to be impossible or the code
 > contradicts the spec, **STOP** and log it to `PROGRESS.md` → Open items rather than inventing a fix.
 >
-> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **862 passed, 84 suites**), `npx expo export --platform android` clean, commit with the **exact** message given, then
+> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **866 passed, 84 suites**), `npx expo export --platform android` clean, commit with the **exact** message given, then
 > update `PROGRESS.md` (tick the backlog row, write the session note) and **move the finished spec from
 > this file into `docs/build-log.md`**.
 >
@@ -22,11 +22,8 @@
 
 ## Index — take them in this order
 
-_Empty. IMP-074 landed 2026-08-16 (`87ab21c`) and is archived in `docs/build-log.md`. Opus must scope a new
-`IMP-xxx` before there's a spec to take._
+_(empty — Opus scopes the next `IMP-xxx` here when one is ready)_
 
 > **IMP-057 is still deliberately absent.** It is reserved for the historical `dayKey` migration IMP-056
 > deferred, and it cannot be written until a real device's numbers come back from the dev-panel Inspector's
 > "Data health" reporter IMP-056 added. **Do not reuse the number.**
-
-

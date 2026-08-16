@@ -44,12 +44,16 @@ IMP-044's R8. So the rows are grouped by *what a failure would cost*:
 | 📦 | **Independent of the app release.** Listing assets; no build required, upload any time. |
 | ⏭ | **Not needed for this release.** Covered code is unreachable in the shipped build. |
 
-**Taking a walk is unchanged: take the first ⬜ row.** WALK-05, WALK-04 and WALK-06 have all **passed** as of
-2026-08-16. WALK-07 (modal scroll, Paywall half) and WALK-09 (lifetime heatmap) are both **❌ blocked on a
-build chat, not on a walk chat** — both were scoped 2026-08-16, as **IMP-074** and **IMP-073** respectively
-(`specs-open.md`), and a re-run means nothing until those land. **WALK-09's steps below were rewritten to
-match IMP-073's design** — read them, not the ❌ result paragraph under them. The first **⬜** row among the
-**emulator-only** walks is now **WALK-10** (teach the app). Device-only rows (WALK-13,
+**Taking a walk is unchanged: take the first ⬜ row.** WALK-05, WALK-04, WALK-06 and WALK-10 have all
+**passed** as of 2026-08-16. WALK-07 (modal scroll, Paywall half) and WALK-09 (lifetime heatmap) are both
+**❌ blocked on a build chat, not on a walk chat** — both were scoped 2026-08-16, as **IMP-074** and
+**IMP-073** respectively (`specs-open.md`), and a re-run means nothing until those land. **WALK-09's steps
+below were rewritten to match IMP-073's design** — read them, not the ❌ result paragraph under them.
+WALK-10 passed clean, but surfaced a new owner decision (drop the tip cards it walked), now **scoped as
+IMP-075** (`specs-open.md`) — a build task, not a walk, and **it opens no new walk row** (the spec says why:
+the post-removal layout is the already-walked all-dismissed layout). When it lands, WALK-10's step 1 becomes
+a record of removed behaviour; the ✅ row stays as IMP-041's history. The first **⬜**
+row among the **emulator-only** walks is now **WALK-14** (TalkBack). Device-only rows (WALK-13,
 WALK-03, WALK-08, WALK-12) are set aside for now per the owner's current session. The ordering still does the
 work within that subset — 🚦 rows come first, and **WALK-12 sits last inside the 🚦 group on purpose**: R8
 must be walked on the build you actually intend to ship, so any fix the earlier walks turn up would
@@ -68,7 +72,7 @@ invalidate an R8 pass done before them.
 | WALK-07 | 🎨 | [Modal screens actually scroll](#walk-07--modal-scroll) | IMP-042 | emulator | 👤 (visual, two nav modes) | ❌ **2026-08-16 (reopened)** — the five other screens passed 2026-08-15 incl. max (2.0x) font scale; (b)(c) landed as IMP-067. **(a) reopened on the re-run: IMP-068's fix was only half the mechanism** — now **scoped as IMP-074** (`docs/specs-open.md`). **Re-run WHOLE once it lands** (the five screens + the IMP-067 spot-check were never re-run); the Paywall half needs T1 |
 | WALK-08 | 🎨 | [Font scale + layout on the nine new screens](#walk-08--font-scale) | IMP-030 regression | **device** (real font metrics) | 👤 | ⬜ |
 | WALK-09 | 🎨 | [Lifetime heatmap's four states + the XP line](#walk-09--lifetime-heatmap) | IMP-045 | emulator | 👤 (visual) | ❌ **2026-08-16** — states compute correctly (kept/frozen/missed/not-yet-started/future, month labels present, XP line correct) but 3 layout defects found: legend wraps awkwardly, month labels wrap mid-word, grid cells render unevenly. **Scoped 2026-08-16 as IMP-073** (`docs/specs-open.md`), all three in one spec. **Re-run once it lands — against the rewritten steps**, which expect a three-entry legend by design |
-| WALK-10 | 🎨 | [Tips, explainers, empty states](#walk-10--teach-the-app) | IMP-041 | emulator | 👤 | ⬜ |
+| WALK-10 | 🎨 | [Tips, explainers, empty states](build-log.md#walk-10--teach-the-app) | IMP-041 | emulator | 👤 | ✅ **2026-08-16** — full pass, all 4 steps; owner decided live to drop the tip cards anyway, reserved as **IMP-075**; detail in `build-log.md` → "Walk log" |
 | WALK-14 | 🎨 | [TalkBack can write an entry](#walk-14--talkback-can-write-an-entry) | IMP-059 | emulator | 👤 (gesture navigation, inherently manual) | ⬜ — **unblocked 2026-08-13** (IMP-059 landed, `fa523f3`) |
 | WALK-15 | 📦 | [Store screenshots regenerate](#walk-15--store-screenshots-regenerate) | IMP-061 | emulator | 🤖 mostly (adb + maestro are scriptable; the final seven PNGs need eyes) | ⬜ — **unblocked 2026-08-14** (IMP-061 landed, `ca850d7`) |
 | WALK-11 | ⏭ | [The Plus surfaces](#walk-11--the-plus-surfaces) | IMP-038, 046, 047, 043 | emulator | 👤 | ⬜ — **skip for this release.** `PLUS_ENABLED = false` makes every surface here *unmountable*, not locked; walking it needs T1, which must be reverted before committing |
@@ -218,19 +222,6 @@ already documents Android bleeding stroked rounded borders half outside the box,
 writeup in `PROGRESS.md` → Open items → "WALK-09 finding". **Scoped 2026-08-16 as `IMP-073` — all three
 defects in one spec** (`docs/specs-open.md`). Re-run this walk **against the rewritten steps above**, not
 against this paragraph, once IMP-073 lands.
-
----
-
-## WALK-10 — teach the app
-
-**Covers:** IMP-041.
-
-1. One tip card on Today, Archive and You (**not** Insights). Dismiss → gone, and **still gone after a
-   relaunch**.
-2. You → **"How it works"**, six rows, each opening a real alert with a non-empty body.
-3. Rites footer reads *"All rites kept — a full day."* / *"{n} of 3 kept today."* — not the old embers
-   claim.
-4. Archive at zero entries shows "Nothing here yet."; the Insights empty state has its second line.
 
 ---
 

@@ -2603,6 +2603,43 @@ assertion that the file uses `useWindowDimensions()` and never a one-shot `Dimen
 
 ---
 
+### IMP-075 — the tip cards go away   ·   Lane: OTA   ·   Status: ✅ code-complete (2026-08-16)
+
+**Why.** WALK-10 (2026-08-16) passed clean — the IMP-041 tip cards worked exactly as specified. Having seen
+them live, the owner decided against the feature anyway, confirmed via `AskUserQuestion`: not a placement or
+style gripe — *they exist at all, drop them, rely on "How it works"*. That card already covers all six
+mechanics on demand. A design reversal, not a bug fix; none of the deleted code was broken.
+
+**Landed exactly as specified.** Deleted `src/screens/TipCard.js` and every wire that fed it: `TIPS`,
+`pendingTip`, `markTipSeen` from `src/content/tips.js` (its header comment rewritten to describe `EXPLAINERS`
+only and to record why the tip half is gone); the `tip`/`onDismissTip` props, imports and render blocks from
+`HomeScreen.js`, `ArchiveScreen.js` and `YouScreen.js` (`EXPLAINERS`'s import in `YouScreen` untouched); the
+`seenTips` state, `dismissTip`, its two imports and its three call sites (autosave, `currentSlice()`, the
+three screen props) from `RitualsApp.js`; and `'seenTips'` from `PERSISTED_KEYS` in `src/persistence/state.js`
+— no `SCHEMA_VERSION` bump, no migrator, per decision 3 (the key self-purges on the next autosave). Two stale
+comments naming `TipCard`/`seenTips` fixed in `FreezeNoticeCard.js` and `scripts/gen-v2-fixture.js`; no
+fixture data changed. `EXPLAINERS` stayed byte-identical throughout.
+
+**Tests:** RED-first per the spec's TDD note — the 12-test `describe('IMP-075 — the tip cards are gone')`
+block in `__tests__/content/tips.test.js` was written and run against the pre-deletion code first; exactly
+2 of 12 passed (the `EXPLAINERS` identity guard and the legacy-payload `deserialize` guard), the other 10
+failed as predicted. Ten of the twelve assert an absence (dead exports, no `TipCard`/`onDismissTip` in the
+three screens' and `RitualsApp.js`'s source, `seenTips` out of `PERSISTED_KEYS`), the other two are survival
+guards (`EXPLAINERS` ids unchanged; a legacy payload carrying `seenTips` still deserializes and
+`pickPersisted` drops it). The three old describes (`pendingTip`, `markTipSeen`, `TIPS`) and the `SCREENS`
+const were deleted; the file's import narrowed to `EXPLAINERS` only.
+
+**Proof:** `npm test` → **866 passed, 84 suites** (862 − 8 removed + 12 added; suite count unchanged, same
+file). `npx expo export --platform android` clean.
+**Ship:** OTA lane, no bump — rides the pending release batch; no `Release-Lane` trailer on this commit.
+**Commit:** `feat(tips): the tip cards go away (IMP-075)` (`11fa421`).
+**Runtime proof:** none needed, deliberately — the owner already walked this exact behaviour live during
+WALK-10 (all three tips dismissed, relaunched; the block was conditional so "all dismissed" and "deleted"
+render identically). Test 12 covers the only data-shaped risk. WALK-10's ✅ row stays as history; its step 1
+now describes removed behaviour.
+
+---
+
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
 
 > Moved out of PROGRESS.md on 2026-07-31 to keep the live cursor lean once a second spec (IMP-032) opened. These are **not** finished work. If the owner revives one, lift the block back into PROGRESS.md as the ACTIVE TRACK.
@@ -2647,6 +2684,20 @@ assertion that the file uses `useWindowDimensions()` and never a one-shot `Dimen
 ## Session notes (archived from PROGRESS.md)
 
 _Append-only handoff log moved out of PROGRESS.md to keep it light. Newest 1–2 notes stay live in PROGRESS.md; everything else is here. Git history is the full record._
+
+_2026-08-16 (IMP-073, the lifetime heatmap reads as one grid) — **code-complete, committed `67d0736`, not
+shipped; OTA lane, rides the next batch.** Landed exactly as specified: `heatGutterWidth` +
+`HEAT_GUTTER_BASE_DP`/`HEAT_CELL_GAP` added to `src/insights/heatCells.js` (mirrors IMP-067's
+`moodLabelWidth`); `InsightsScreen.js`'s `LEGEND` trimmed to three entries and exported, `heatCellStyle`
+exported with every state at `borderWidth: 1` (`empty` now `c.ghostBtn`, no dashed border), `LifetimeHeat`
+wires the derived gutter through its five call sites. Out-of-scope items (`ArchiveScreen.js`'s `Heat`,
+`cellState`, `buildLifetimeHeatmap`, the today ring, `DeeperInsights`) untouched. +8 tests exactly as
+specified. **Proof:** `npm test` → **860 passed, 84 suites** (was 852/83). `npx expo export --platform
+android` clean. LAST command: `git commit` → `67d0736`. Archived the spec + WALK-09 resolved-finding note
+into `docs/build-log.md`, ticked the backlog row, updated the ACTIVE TRACK banner and stack line, moved the
+WALK-04 note down to `docs/build-log.md` → "Session notes". NEXT: a build chat takes **IMP-074** (the only
+row left). A walk chat can now take **WALK-09** (unblocked) too, alongside **WALK-07** (still blocked on
+IMP-074), **WALK-06**, or **WALK-15**._
 
 _2026-08-16 (IMP-071, the filter row stops jumping under your thumb) — **code-complete, committed
 `4072e8d`, not shipped; OTA lane, rides the next batch. Last spec in the queue — `docs/specs-open.md` is now
@@ -3251,6 +3302,24 @@ this file, updated the ACTIVE TRACK banner. NEXT: backlog is still empty — Opu
 A walk chat can take **WALK-07**, **WALK-06**, or **WALK-15** (all emulator); **WALK-13** is next in
 strict index order but is device-only._
 
+_2026-08-16 (IMP-074, the Paywall footer survives the first measure pass) — **code-complete, committed
+`87ab21c`, not shipped; OTA lane, rides the next batch. Backlog is now empty — `docs/specs-open.md`'s index
+is empty again.** `src/screens/Paywall.js`: added `useWindowDimensions` to the `react-native` import, read
+`{ height: winH }` right after `const c = t.colors;`, capped the outer `View` at `maxHeight: winH` and gave
+it `testID="paywallRoot"`, with the explanatory comment from the spec. IMP-068's `flex: 1` on the `ScrollView`
+and its own comment are untouched — both guards, not one, per the spec's decision 1. +2 tests in
+`Paywall.test.js` (`describe('Paywall — IMP-074')`): root `maxHeight` equals `Dimensions.get('window').height`
+and `flex` stays `1`; a source assertion the file uses `useWindowDimensions()` and never `Dimensions.get(`.
+Existing IMP-068 block stayed green untouched. **Proof:** `npm test` → **862 passed, 84 suites** (was
+860/84). `npx expo export --platform android` clean. LAST command: `git commit` → `87ab21c`. Archived the
+spec into `docs/build-log.md`, emptied `specs-open.md`'s index, ticked the row, resolved the WALK-07 finding
+note (in both `PROGRESS.md` Open items — removed — and `build-log.md`, marked ✅ RESOLVED), updated the
+ACTIVE TRACK banner and stack line, moved the IMP-071 note down to `docs/build-log.md` → "Session notes".
+**Not to lose: this spec does not end in a walk** — WALK-07 needs a full re-run (the Paywall half plus the
+five other screens' nav-mode/font-scale re-checks and the IMP-067 spot-check, all paused mid-run when this
+surfaced). NEXT: backlog is empty — Opus must scope a new `IMP-xxx` before there's a spec to take. A walk
+chat can take **WALK-07** (unblocked), **WALK-09** (unblocked), or **WALK-15**._
+
 ---
 
 ## Update workflow — superseded manual reference
@@ -3504,3 +3573,22 @@ entry in `specs-open.md`/`build-log.md`'s spec archive since it skipped the norm
 **Result — full pass, all original steps plus the two new checks:** `applyAutoFreeze` survives the `lapsed` scenario on relaunch; freezes decrement exactly one per missed day; a gap longer than candles owned freezes only the affordable prefix and still breaks the streak, spending the candles anyway; a second relaunch is idempotent; the celebration streak matches the Home hero after a post-freeze write; shop copy reads the corrected "a candle spends itself the moment you miss a day" line. The two IMP-063/064 fixes both confirmed live: a frozen day now renders a visually distinct state from a missed day on Home/Archive/Insights, and the candle icon row now reflects the real freeze count instead of a fixed three.
 
 **No app defects found.** WALK-06 is fully closed.
+
+### ✅ WALK-10 — teach the app — PASSED 2026-08-16 (emulator, owner-run)
+
+**Covers:** IMP-041.
+
+**Result — full pass, all four steps.** Tip cards appear one at a time on Today, Archive and You (not
+Insights); dismissing one clears it and it stays gone after a relaunch. "How it works" (You tab) has six
+rows, each opening a real, non-empty alert. Rites footer reads the corrected copy — *"All rites kept — a
+full day."* / *"{n} of 3 kept today."* — with no embers claim. Archive at zero entries shows "Nothing here
+yet."; the Insights empty state carries its second line.
+
+**No app defects found. WALK-10 is fully closed as specified.**
+
+**Owner feedback surfaced during the walk, not a defect:** the owner does not want the dismissible tip
+cards at all, regardless of correctness — decided while walking, not a bug in what shipped. Direction taken
+(via `AskUserQuestion`): drop `TipCard` from Today/Archive/You entirely and rely solely on "How it works"
+for the same content, rather than relocating the cards or keeping them on-demand. Logged as a live open item
+in `PROGRESS.md` → Open items, reserving **IMP-075** for Opus to scope — not written up as a full spec here
+since this is a design reversal, not a runtime finding.

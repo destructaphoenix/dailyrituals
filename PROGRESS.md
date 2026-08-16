@@ -32,17 +32,18 @@
 runtime proof is a separate WALK row for a separate chat, so a missing walk is *not* an unfinished spec.
 Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`](docs/playbook.md).
 
-> **The build queue is empty.** `IMP-074` landed 2026-08-16 (`87ab21c`) — `docs/specs-open.md`'s index is now
-> empty; Opus must scope a new `IMP-xxx` before there's a spec to take. `IMP-063` through `IMP-074` have all
+> **The backlog is empty** — `IMP-075` (remove the IMP-041 tip cards) landed 2026-08-16, `11fa421`;
+> `docs/specs-open.md`'s index is empty again. `IMP-063` through `IMP-075` have all
 > landed; `IMP-072` has no spec at all — found and fixed live during the WALK-04 re-run at the owner's
 > direction, skipping Opus-scoping; full account in `build-log.md` → "Walk log" → WALK-04, commit `44197e9`.
 > **WALKS are still the risk-ordered work**: the 🚦 group gates a release carrying ~25 unpublished tasks —
-> **WALK-04 and WALK-06 both passed 2026-08-16.** **WALK-07 and WALK-09 are both unblocked now** (IMP-074 and
-> IMP-073 have landed) and can be re-run by a walk chat.
+> **WALK-04, WALK-06 and WALK-10 have all passed 2026-08-16.** **WALK-07 and WALK-09 are both unblocked now**
+> (IMP-074 and IMP-073 have landed) and can be re-run by a walk chat. IMP-075 needs no walk of its own — the
+> owner already walked its behaviour live in WALK-10. The first ⬜ **emulator** walk is now **WALK-14**.
 >
 > **`IMP-057` is reserved, not missing** — the `dayKey` migration IMP-056 deferred; needs real device
-> numbers first (see Open items). **Do not reuse the number.** **IMP-044 claims no queue slot** — it rides
-> the next build; don't "start" it, it needs only WALK-12.
+> numbers first (see Open items). **Do not reuse the number.** **IMP-044
+> claims no queue slot** — it rides the next build; don't "start" it, it needs only WALK-12.
 
 **App status — all four Play tracks, read from the Play Developer API 2026-08-13. Authoritative; do not
 re-derive from an older note.**
@@ -72,7 +73,7 @@ build ships.)
 
 **Current stack:** Expo SDK **54** · RN **0.81.5** · React **19.1.0** · **Legacy Architecture**
 (`newArchEnabled: false`, held deliberately) · `targetSdkVersion` **36**, `minSdk` **24** · `npm test` →
-**862 passed, 84 suites** (re-run 2026-08-16 at `87ab21c`; the earlier "860" here predated IMP-074's +2).
+**866 passed, 84 suites** (re-run 2026-08-16 at `11fa421`; the earlier "862" here predated IMP-075's net +4).
 Details in [`docs/playbook.md`](docs/playbook.md).
 
 ---
@@ -122,7 +123,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 038 | "On this day" resurfacing | OTA | ✅ |
 | 039 | Streak-freeze candles actually spend themselves | OTA | ✅ |
 | 040 | "Keepsake" means one thing now | OTA | ✅ |
-| 041 | Teach the app — tips + explainers | OTA | ✅ |
+| 041 | Teach the app — tips + explainers | OTA | ✅ walked 2026-08-16 (WALK-10) — tip-card half now slated for removal, see IMP-075 |
 | 042 | The Keepsakes screen scrolls | OTA | ✅ |
 | 043 | Recoverability pass — re-verify entitlement, backup health | OTA | ✅ |
 | 044 | R8 on release builds (dev client was shipping to the public) | Build | 🟢 **code-complete, unbumped, UNWALKED** — rides the next build; walk = WALK-12 |
@@ -155,6 +156,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 072 | Custom-mood face field polish + a real typing bug | OTA | ✅ code-complete + walked 2026-08-16 · found and fixed live during WALK-04, no separate spec (owner-directed) |
 | 073 | The lifetime heatmap reads as one grid | OTA | ✅ code-complete 2026-08-16 · walk = WALK-09 (re-run whole) |
 | 074 | The Paywall footer survives the first measure pass | OTA | ✅ code-complete 2026-08-16 · walk = WALK-07 (re-run whole) |
+| 075 | The tip cards go away | OTA | ✅ code-complete 2026-08-16 · reverses IMP-041's tip half by owner's design choice, not a defect · no walk needed (owner already walked this behaviour live in WALK-10) |
 
 ---
 
@@ -179,8 +181,8 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
   auto-submits to `internal` → self-test → promote `internal` → `production` by hand** (full review, ~7d).
   The old "promote vc11 → production, or hold" framing is superseded: vc11 is two weeks of work behind HEAD,
   so promoting it would ship a stale build rather than this work.
-  **IMP-063…074 are 🎨 and are NOT part of this sequence** — they land either before the bump *in full*, or
-  after the build as an OTA. Never split across it. (IMP-063…074 have all now landed, 2026-08-15/16. The 🚦
+  **IMP-063…075 are 🎨 and are NOT part of this sequence** — they land either before the bump *in full*, or
+  after the build as an OTA. Never split across it. (IMP-063…075 have all now landed, 2026-08-15/16. The 🚦
   walks above still gate the bump either way.)
 - **Cash embers: settled in principle (dropped 2026-08-03), not finalised.** Must be decided before
   `PLUS_ENABLED` flips — it determines which Play products get created. Full argument in the playbook.
@@ -220,34 +222,38 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
-_2026-08-16 (IMP-074, the Paywall footer survives the first measure pass) — **code-complete, committed
-`87ab21c`, not shipped; OTA lane, rides the next batch. Backlog is now empty — `docs/specs-open.md`'s index
-is empty again.** `src/screens/Paywall.js`: added `useWindowDimensions` to the `react-native` import, read
-`{ height: winH }` right after `const c = t.colors;`, capped the outer `View` at `maxHeight: winH` and gave
-it `testID="paywallRoot"`, with the explanatory comment from the spec. IMP-068's `flex: 1` on the `ScrollView`
-and its own comment are untouched — both guards, not one, per the spec's decision 1. +2 tests in
-`Paywall.test.js` (`describe('Paywall — IMP-074')`): root `maxHeight` equals `Dimensions.get('window').height`
-and `flex` stays `1`; a source assertion the file uses `useWindowDimensions()` and never `Dimensions.get(`.
-Existing IMP-068 block stayed green untouched. **Proof:** `npm test` → **862 passed, 84 suites** (was
-860/84). `npx expo export --platform android` clean. LAST command: `git commit` → `87ab21c`. Archived the
-spec into `docs/build-log.md`, emptied `specs-open.md`'s index, ticked the row, resolved the WALK-07 finding
-note (in both `PROGRESS.md` Open items — removed — and `build-log.md`, marked ✅ RESOLVED), updated the
-ACTIVE TRACK banner and stack line, moved the IMP-071 note down to `docs/build-log.md` → "Session notes".
-**Not to lose: this spec does not end in a walk** — WALK-07 needs a full re-run (the Paywall half plus the
-five other screens' nav-mode/font-scale re-checks and the IMP-067 spot-check, all paused mid-run when this
-surfaced). NEXT: backlog is empty — Opus must scope a new `IMP-xxx` before there's a spec to take. A walk
-chat can take **WALK-07** (unblocked), **WALK-09** (unblocked), or **WALK-15**._
+_2026-08-16 (WALK-10, teach the app) — **✅ full pass, all four steps** (tip cards on Today/Archive/You,
+dismiss-and-stay-dismissed across a relaunch; "How it works" six rows each open a real alert; corrected
+rites-footer copy; both empty states). No app defects — IMP-041 stands as shipped-correct. **One owner
+decision surfaced mid-walk, not a defect:** having seen the tip cards live, the owner does not want them —
+not a placement complaint, confirmed via `AskUserQuestion` as "they exist at all, drop them, rely on 'How
+it works'". This reverses part of IMP-041 by design choice, not bug fix, so it was **not** written up as a
+runtime finding or spec — logged as a new owner decision under Open items, reserving **IMP-075** for Opus
+to scope (remove `TipCard` + its plumbing from `HomeScreen`/`ArchiveScreen`/`YouScreen`/`RitualsApp.js`,
+decide the fate of `src/content/tips.js`'s `pendingTip`/`markTipSeen` and the `seenTips` persisted key).
+Full walk detail moved to `docs/build-log.md` → "Walk log"; index row ticked. NEXT: the first ⬜ emulator
+walk is now **WALK-14** (TalkBack, unblocked); **WALK-15** (store screenshots) is also open. Opus should
+scope **IMP-075** before a build chat can take it — build queue is otherwise still empty since IMP-074._
 
-_2026-08-16 (IMP-073, the lifetime heatmap reads as one grid) — **code-complete, committed `67d0736`, not
-shipped; OTA lane, rides the next batch.** Landed exactly as specified: `heatGutterWidth` +
-`HEAT_GUTTER_BASE_DP`/`HEAT_CELL_GAP` added to `src/insights/heatCells.js` (mirrors IMP-067's
-`moodLabelWidth`); `InsightsScreen.js`'s `LEGEND` trimmed to three entries and exported, `heatCellStyle`
-exported with every state at `borderWidth: 1` (`empty` now `c.ghostBtn`, no dashed border), `LifetimeHeat`
-wires the derived gutter through its five call sites. Out-of-scope items (`ArchiveScreen.js`'s `Heat`,
-`cellState`, `buildLifetimeHeatmap`, the today ring, `DeeperInsights`) untouched. +8 tests exactly as
-specified. **Proof:** `npm test` → **860 passed, 84 suites** (was 852/83). `npx expo export --platform
-android` clean. LAST command: `git commit` → `67d0736`. Archived the spec + WALK-09 resolved-finding note
-into `docs/build-log.md`, ticked the backlog row, updated the ACTIVE TRACK banner and stack line, moved the
-WALK-04 note down to `docs/build-log.md` → "Session notes". NEXT: a build chat takes **IMP-074** (the only
-row left). A walk chat can now take **WALK-09** (unblocked) too, alongside **WALK-07** (still blocked on
-IMP-074), **WALK-06**, or **WALK-15**._
+_2026-08-16 (IMP-075, the tip cards go away) — **code-complete, committed `11fa421`, not shipped; OTA lane,
+rides the next batch. Backlog is empty again — `docs/specs-open.md`'s index is empty.** RED-first: the
+12-test `describe('IMP-075 — the tip cards are gone')` block was added to `__tests__/content/tips.test.js`
+and run against the pre-deletion code — exactly 2 of 12 passed (the `EXPLAINERS` identity guard and the
+legacy-payload `deserialize` guard), 10 failed, matching the spec's prediction. Then landed exactly as
+specified: `git rm src/screens/TipCard.js`; stripped the `tip`/`onDismissTip` props, imports and five-line
+render blocks from `HomeScreen.js`/`ArchiveScreen.js`/`YouScreen.js` (`EXPLAINERS`'s import in `YouScreen`
+untouched); removed `seenTips` state, `dismissTip`, both tip imports and all three call sites (autosave,
+`currentSlice()`, the three screen props) from `RitualsApp.js`; dropped `'seenTips'` from `PERSISTED_KEYS`
+in `state.js` (no `SCHEMA_VERSION` bump — the key self-purges on the next autosave, per decision 3); deleted
+`TIPS`/`pendingTip`/`markTipSeen` from `src/content/tips.js` and rewrote its header comment; fixed the two
+stale comments in `FreezeNoticeCard.js` and `scripts/gen-v2-fixture.js` (no fixture data changed); deleted
+the three old test describes (`pendingTip`, `markTipSeen`, `TIPS`) and narrowed the import to `EXPLAINERS`.
+**Proof:** `npm test` → **866 passed, 84 suites** (862 − 8 removed + 12 added, was 862/84). `npx expo export
+--platform android` clean. LAST command: `git commit` → `11fa421`. Archived the spec into `docs/build-log.md`,
+emptied `specs-open.md`'s index, ticked the row, updated the ACTIVE TRACK banner and stack line, moved the
+IMP-074 note down to `docs/build-log.md` → "Session notes" and deduplicated a stray repeated copy of it that
+was sitting in this section (harmless copy-paste artifact from the prior chat, not a content change). **No
+walk opened for this, deliberately** — the owner already walked this exact rendered behaviour live in
+WALK-10 (all tips dismissed, relaunched; conditional block renders identically whether dismissed or deleted).
+NEXT: backlog and walk-open's 🚦 group both need attention — Opus scopes the next `IMP-xxx`, or a walk chat
+can take **WALK-07** (unblocked), **WALK-09** (unblocked), **WALK-14**, or **WALK-15**._
