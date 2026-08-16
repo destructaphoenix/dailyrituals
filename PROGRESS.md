@@ -193,7 +193,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 075 | The tip cards go away | OTA | ✅ code-complete 2026-08-16 · reverses IMP-041's tip half by owner's design choice, not a defect · no walk needed (owner already walked this behaviour live in WALK-10) |
 | 076 | The app moves to the New Architecture | Build | ✅ code-complete 2026-08-17 · **branch-only, never pushed** (`feat/design-push`) · `assembleRelease` clean, **v1.0.7 / vc13** · walk = WALK-16 + WALK-17 |
 | 077 | A motion vocabulary the whole app can speak | Build | ⬜ **blocked on WALK-16** · branch-only, never pushed · walk = WALK-18 |
-| 078 | A design system Claude Design can work from | Dev-only | ⬜ **branch-only, never pushed** · no app code, no gate — takeable any time |
+| 078 | A design system Claude Design can work from | Dev-only | ✅ code-complete 2026-08-17 · **branch-only, never pushed** · 14 cards live in Claude Design project `Daily Rituals Design System` · ⚠️ **night screen baselines NOT captured** (see build-log) |
 
 ---
 
@@ -290,6 +290,41 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
+_2026-08-17 (IMP-078 — a design system Claude Design can work from; **branch-only, committed, NOT pushed**)
+— **code-complete. `design-system/` is committed and 26 files are live in a new Claude Design project.**
+`scripts/gen-design-system.js` (new) emits **14 preview cards** — tokens (color/type/shape/elevation), the
+frozen celestial set, six component cards and the day screen baseline — plus 12 PNGs. No app code changed.
+**The generator loads the real source rather than mirroring it:** a babel require-hook (JSX +
+modules-commonjs, scoped to `src/`) plus stubs that map `react-native-svg` to DOM SVG tags and
+`View`/`Animated.View` to `<g>`, so a real component tree renders via `react-dom/server` and rasterises with
+`@resvg/resvg-js`. `Animated.Value.interpolate()` returns its first output value — the frame at t=0, which is
+what "frozen" means. **The five celestial PNGs are therefore the shipped components, not redraws** (visually
+verified: gradient sun disc, cheese-hole moon with haze and stars, 24-spoke fan with amber bloom).
+`tokens/color.html` covers **all 8 `SHOP_PALETTES` × both modes**, and **no raw hex is readable anywhere** —
+values reach the browser only as CSS custom properties, so every visible label is a token name. Only the two
+`motion/` cards are hand-written (they encode rules, not values).
+**Pushed — new project `Daily Rituals Design System` (`7bf44d09-f93a-42d2-a8b6-d412d671cf60`)**, created
+because `list_projects` returned empty exactly as the spec predicted. Verified
+`type: PROJECT_TYPE_DESIGN_SYSTEM`, `canEdit: true`. **Two plans, guardrails first** — frozen + motion
+contract (8 files), then the rest (18) — because whatever is in the project at request time is what
+constrains output. All 14 previews carry `<!-- @dsCard -->` as line 1.
+**⚠️ ONE STEP IS HALF DONE AND IT MATTERS: night screen baselines were NOT captured.** The seven `day-*`
+shots are genuine (`npm run shots`, Maestro + adb, `storeShots` scenario). **The app's day/night mode is its
+own setting, not the OS's** — `App.js:40` holds `mode`, `App.js:97` loads it from settings, the header toggle
+drives it — so `cmd uimode night yes` changes nothing, and the first attempt silently produced a **second set
+of day screenshots** (four byte-identical to their day twins). Those were deleted, not shipped. Capturing
+night means driving the in-app toggle from inside `.maestro/store-shots.yaml`, which the Play-asset pipeline
+also depends on — left for whoever takes it. The baseline card states the gap and points at Tokens → Color,
+which does carry every night value.
+**Proof:** `npm test` → **867 passed, 84 suites** + 3 zone tests × 2 zones, exit 0 — **unchanged**, which is
+exactly what step 9 demands of a spec touching no app code. `npm run shots` also recomposed three committed
+`store/play/*.png` listing assets as a side effect; **reverted** — a dev-only spec should not edit shipped
+store assets. **Steady state noted, deliberately not done:** pointing the Design System pane's own GitHub
+connection at `design-system/` needs the branch published, so it waits on the owner.
+**NEXT: the queue is empty for a build chat.** IMP-077 is the only open spec and is **blocked on WALK-16**.
+The useful next moves are **[WALK-16](docs/walk-open.md) on a device**, or the owner's **first design request
+— `PlusPerks`** (one screen per request; `PLUS_ENABLED` stays `false`)._
+
 _2026-08-17 (IMP-076 — the app moves to the New Architecture; **branch-only, committed, NOT pushed**) —
 **code-complete. `newArchEnabled: true`, `assembleRelease` clean, v1.0.7 / vc13.** Landed exactly as
 specified and **changed no app code at all**, which is what keeps rollback to one line each way. Both flags
@@ -325,30 +360,3 @@ resurface. `PLUS_ENABLED` untouched (`false`); WALK-11 not reopened.
 **NEXT: [WALK-16](docs/walk-open.md) on a device — the only evidence that exists for this spec.** Then
 WALK-17 (edge-to-edge, re-audited: IMP-027's pass was on Legacy Arch and does not carry over). **IMP-077 is
 gated on WALK-16 passing.** **IMP-078 needs no gate and can be taken now**, including in parallel._
-
-_2026-08-17 (planning only — no code changed; **branch-only, never pushed**) — **the design push is scoped:
-IMP-076/077/078 + WALK-16/17/18, on `feat/design-push`.** Owner's ask: the app has too little motion outside
-the sun, and the Plus surfaces need designing — via **Claude Design**, with two hard constraints (**the sun
-and rays in `src/art.js` are frozen**, and **no backend rewiring**). Design doc:
-[`docs/superpowers/specs/2026-08-16-motion-and-design-system-design.md`](docs/superpowers/specs/2026-08-16-motion-and-design-system-design.md).
-**The finding that set the shape: IMP-027's Legacy-Architecture hold had already expired.** Its stated reason
-was the Aug-31 API-36 deadline — **met 2026-07-30** by v1.0.3 / vc9 in production — so the hold outlived its
-reason by three weeks, and SDK 55 removes Legacy Arch outright. **A first draft of the design doc targeting
-Reanimated 3.19.5 on Legacy Arch was written and then discarded**; it traded a known forced migration for an
-unverified compat bet (3.19.5's peer deps are wildcards — npm has no opinion on RN 0.81.5) and would have
-thrown the animation code away at SDK 55 anyway. **The dep audit is what made New Arch tractable:**
-`react-native-svg` 15.12.1, `async-storage` 2.2.0 and `safe-area-context` 5.6.2 all carry `codegenConfig` +
-New Arch sourcesets; every `expo-*` is SDK 54, where New Arch is the **default**. **Only RevenueCat is
-unmigrated** (legacy bridge, and `-ui` is a legacy *view* component at one call site,
-`RitualsApp.js:253`) — **and it is dormant, because `PLUS_ENABLED = false`.** Migrating while the risky
-surface is switched off is deliberate, so **`PLUS_ENABLED` stays `false` across all three IMPs** and
-**WALK-11 is not reopened**. Two mechanical notes for whoever takes these: `babel-preset-expo` auto-injects
-the worklets plugin (`build/index.js:286-289`), so **`babel.config.js` is not touched**; and
-`scripts/patch-permissions.js` targets the **legacy bridge adapter** path, so it may fail `npm install`
-loudly under New Arch — **by design, do not soften it** (IMP-076 step 2 says what to do instead).
-**Publication discipline, owner instruction:** branch has **no upstream**, **no `Release-Lane` trailer on any
-commit**, **no merge to `main`** — `release.yml` fires on `push: branches: [main]` + that trailer, so both
-guards fail closed. **Proof:** planning only — no source file touched, `npm test` deliberately unrun and
-unchanged. **NEXT:** IMP-076 (flip both `newArchEnabled` flags, full native build, `bump:native`) → **WALK-16
-on a device, which is the only evidence that exists for it** → then IMP-077. **IMP-078 needs no gate and can
-be taken any time, including first.**_

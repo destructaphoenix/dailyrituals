@@ -1,0 +1,726 @@
+<!-- @dsCard group="Tokens" -->
+<!doctype html>
+<meta charset="utf-8">
+<title>Color</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  body{margin:0;padding:32px;font:15px/1.55 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+       color:#18181b;background:#fafafa}
+  h1{font-size:24px;margin:0 0 4px;letter-spacing:-.01em}
+  h2{font-size:15px;margin:36px 0 12px;text-transform:uppercase;letter-spacing:.08em;color:#71717a}
+  .lede{margin:0 0 8px;color:#52525b;max-width:70ch}
+  .rule{border:0;border-top:1px solid #e4e4e7;margin:28px 0}
+  .note{border-left:3px solid #a1a1aa;padding:10px 14px;background:#f4f4f5;margin:16px 0;max-width:80ch}
+  .note strong{color:#18181b}
+  code{font:13px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;background:#f4f4f5;padding:1px 5px;border-radius:4px}
+  table{border-collapse:collapse;width:100%;max-width:900px;margin:12px 0}
+  th,td{text-align:left;padding:7px 10px;border-bottom:1px solid #e4e4e7;vertical-align:top}
+  th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:#71717a;font-weight:600}
+  td code{background:none;padding:0}
+  .grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));max-width:1100px}
+  .sw{border:1px solid #e4e4e7;border-radius:8px;overflow:hidden;background:#fff}
+  .sw .chip{height:56px}
+  .sw .nm{font:12px/1.3 ui-monospace,SFMono-Regular,Menlo,monospace;padding:7px 8px;border-top:1px solid #e4e4e7;
+          word-break:break-all;color:#3f3f46}
+  .modes{display:grid;gap:22px;grid-template-columns:repeat(auto-fit,minmax(430px,1fr));max-width:1100px}
+  .pane{border:1px solid #e4e4e7;border-radius:12px;padding:16px;background:#fff}
+  .pane h3{margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:.07em;color:#71717a}
+</style>
+<h1>Color</h1>
+<p class="lede">Every colour token <code>makeTheme()</code> produces, for all eight shipped accent sets in both modes. Generated from <code>src/theme.js</code> — never hand-copied.</p>
+<div class="note"><strong>Return colours by token name, never by hex.</strong> Every swatch below is
+labelled with the name the app uses (<code>c.accentSoft</code>), and no hex appears anywhere in this page's
+readable content — the values reach the browser only as CSS custom properties. A spec that names hex codes
+cannot be ported, because these values change whenever the user picks a different palette.</div>
+
+<div class="note"><strong>Night mode is not "day, darker".</strong> <code>c.accentDeep</code> flips meaning:
+on a dark canvas the <em>brighter</em> shade is what gives contrast, so night maps both accent tokens to the
+same base accent, and <code>c.accentSoft</code> becomes a near-black tint rather than a pastel. Compose with
+the token, not with a remembered colour.</div>
+<h2>Golden Hour <span style="text-transform:none;letter-spacing:0;color:#a1a1aa">— <code>goldenhour</code>, default, always owned</span></h2>
+<div class="modes">
+  <div class="pane" style="--c-goldenhour-day-cream:#f9f7f4;--c-goldenhour-day-surface:#ffffff;--c-goldenhour-day-ink:#292524;--c-goldenhour-day-muted:#6f6a78;--c-goldenhour-day-border:#e8e3da;--c-goldenhour-day-dot:#f1ece4;--c-goldenhour-day-accent:#f59e0b;--c-goldenhour-day-accentDeep:#d97706;--c-goldenhour-day-accentSoft:#fef3c7;--c-goldenhour-day-accentBright:#f8b94f;--c-goldenhour-day-onAccent:#fff;--c-goldenhour-day-iconAccent:#6d3c03;--c-goldenhour-day-accentBorder:rgba(245,158,11,0.35);--c-goldenhour-day-deepBorder:rgba(217,119,6,0.22);--c-goldenhour-day-accentMark:rgba(217,119,6,0.92);--c-goldenhour-day-accentHaze:rgba(245,158,11,0.32);--c-goldenhour-day-glowSoft:rgba(245,158,11,0.1);--c-goldenhour-day-ghostBtn:rgba(0,0,0,0.04);--c-goldenhour-day-scrim:rgba(0,0,0,0.50);--c-goldenhour-day-shadowColor:#623603;--c-goldenhour-day-dimText:#6f6a78;--c-goldenhour-day-green:#22c55e;--c-goldenhour-day-greenSoft:#dcfce7;--c-goldenhour-day-red:#ef4444;--c-goldenhour-day-redSoft:rgba(239,68,68,0.1);--c-goldenhour-day-cancelSoft:rgba(217,119,6,0.14);--c-goldenhour-day-heat0:#f1ece4;--c-goldenhour-day-heat1:#fde9bf;--c-goldenhour-day-heat2:#fcd577;--c-goldenhour-day-heat3:#f59e0b;--c-goldenhour-day-placeholder:#c3bcb0;--c-goldenhour-day-navBg:rgba(255,255,255,0.92);--c-goldenhour-day-plusLight:#fcddaa;--c-goldenhour-day-plusWhite:#fffdf5;--c-goldenhour-day-plusMuted:#eab476;--g0-goldenhour-day:#301a01;--g1-goldenhour-day:#1d1301">
+    <h3>mode: day</h3>
+    <div class="grid">
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-day-cream)"></div><div class="nm">c.cream</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-day-surface)"></div><div class="nm">c.surface</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-day-ink)"></div><div class="nm">c.ink</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-day-muted)"></div><div class="nm">c.muted</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-day-border)"></div><div class="nm">c.border</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-day-dot)"></div><div class="nm">c.dot</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-day-accent)"></div><div class="nm">c.accent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-day-accentDeep)"></div><div class="nm">c.accentDeep</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-day-accentSoft)"></div><div class="nm">c.accentSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-day-accentBright)"></div><div class="nm">c.accentBright</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-day-onAccent)"></div><div class="nm">c.onAccent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-day-iconAccent)"></div><div class="nm">c.iconAccent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-day-accentBorder)"></div><div class="nm">c.accentBorder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-day-deepBorder)"></div><div class="nm">c.deepBorder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-day-accentMark)"></div><div class="nm">c.accentMark</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-day-accentHaze)"></div><div class="nm">c.accentHaze</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-day-glowSoft)"></div><div class="nm">c.glowSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-day-ghostBtn)"></div><div class="nm">c.ghostBtn</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-day-scrim)"></div><div class="nm">c.scrim</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-day-shadowColor)"></div><div class="nm">c.shadowColor</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-day-dimText)"></div><div class="nm">c.dimText</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-day-green)"></div><div class="nm">c.green</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-day-greenSoft)"></div><div class="nm">c.greenSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-day-red)"></div><div class="nm">c.red</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-day-redSoft)"></div><div class="nm">c.redSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-day-cancelSoft)"></div><div class="nm">c.cancelSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-day-heat0)"></div><div class="nm">c.heat0</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-day-heat1)"></div><div class="nm">c.heat1</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-day-heat2)"></div><div class="nm">c.heat2</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-day-heat3)"></div><div class="nm">c.heat3</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-day-placeholder)"></div><div class="nm">c.placeholder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-day-navBg)"></div><div class="nm">c.navBg</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-day-plusLight)"></div><div class="nm">c.plusLight</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-day-plusWhite)"></div><div class="nm">c.plusWhite</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-day-plusMuted)"></div><div class="nm">c.plusMuted</div></div>
+      <div class="sw"><div class="chip" style="background:linear-gradient(135deg,var(--g0-goldenhour-day),var(--g1-goldenhour-day))"></div><div class="nm">c.plusGradient[0→1]</div></div>
+    </div>
+  </div>
+  <div class="pane" style="--c-goldenhour-night-cream:#000000;--c-goldenhour-night-surface:#0e0e10;--c-goldenhour-night-ink:#f4eee4;--c-goldenhour-night-muted:#8b857c;--c-goldenhour-night-border:#26241f;--c-goldenhour-night-dot:#0a0a0b;--c-goldenhour-night-accent:#f59e0b;--c-goldenhour-night-accentDeep:#f59e0b;--c-goldenhour-night-accentSoft:#1d1301;--c-goldenhour-night-accentBright:#f8b94f;--c-goldenhour-night-onAccent:#fff;--c-goldenhour-night-iconAccent:#f59e0b;--c-goldenhour-night-accentBorder:rgba(245,158,11,0.35);--c-goldenhour-night-deepBorder:rgba(217,119,6,0.22);--c-goldenhour-night-accentMark:rgba(217,119,6,0.92);--c-goldenhour-night-accentHaze:rgba(245,158,11,0.32);--c-goldenhour-night-glowSoft:rgba(245,158,11,0.1);--c-goldenhour-night-ghostBtn:rgba(255,255,255,0.06);--c-goldenhour-night-scrim:rgba(0,0,0,0.50);--c-goldenhour-night-shadowColor:#000;--c-goldenhour-night-dimText:#c5c2be;--c-goldenhour-night-green:#34d399;--c-goldenhour-night-greenSoft:#14271a;--c-goldenhour-night-red:#ef4444;--c-goldenhour-night-redSoft:rgba(239,68,68,0.1);--c-goldenhour-night-cancelSoft:rgba(217,119,6,0.14);--c-goldenhour-night-heat0:#1d1301;--c-goldenhour-night-heat1:#3d2803;--c-goldenhour-night-heat2:#7b4f06;--c-goldenhour-night-heat3:#f59e0b;--c-goldenhour-night-placeholder:#585250;--c-goldenhour-night-navBg:rgba(0,0,0,0.88);--c-goldenhour-night-plusLight:#fcddaa;--c-goldenhour-night-plusWhite:#fffdf5;--c-goldenhour-night-plusMuted:#eab476;--g0-goldenhour-night:#301a01;--g1-goldenhour-night:#1d1301">
+    <h3>mode: night</h3>
+    <div class="grid">
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-night-cream)"></div><div class="nm">c.cream</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-night-surface)"></div><div class="nm">c.surface</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-night-ink)"></div><div class="nm">c.ink</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-night-muted)"></div><div class="nm">c.muted</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-night-border)"></div><div class="nm">c.border</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-night-dot)"></div><div class="nm">c.dot</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-night-accent)"></div><div class="nm">c.accent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-night-accentDeep)"></div><div class="nm">c.accentDeep</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-night-accentSoft)"></div><div class="nm">c.accentSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-night-accentBright)"></div><div class="nm">c.accentBright</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-night-onAccent)"></div><div class="nm">c.onAccent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-night-iconAccent)"></div><div class="nm">c.iconAccent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-night-accentBorder)"></div><div class="nm">c.accentBorder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-night-deepBorder)"></div><div class="nm">c.deepBorder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-night-accentMark)"></div><div class="nm">c.accentMark</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-night-accentHaze)"></div><div class="nm">c.accentHaze</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-night-glowSoft)"></div><div class="nm">c.glowSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-night-ghostBtn)"></div><div class="nm">c.ghostBtn</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-night-scrim)"></div><div class="nm">c.scrim</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-night-shadowColor)"></div><div class="nm">c.shadowColor</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-night-dimText)"></div><div class="nm">c.dimText</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-night-green)"></div><div class="nm">c.green</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-night-greenSoft)"></div><div class="nm">c.greenSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-night-red)"></div><div class="nm">c.red</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-night-redSoft)"></div><div class="nm">c.redSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-night-cancelSoft)"></div><div class="nm">c.cancelSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-night-heat0)"></div><div class="nm">c.heat0</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-night-heat1)"></div><div class="nm">c.heat1</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-night-heat2)"></div><div class="nm">c.heat2</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-night-heat3)"></div><div class="nm">c.heat3</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-night-placeholder)"></div><div class="nm">c.placeholder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-night-navBg)"></div><div class="nm">c.navBg</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-night-plusLight)"></div><div class="nm">c.plusLight</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-night-plusWhite)"></div><div class="nm">c.plusWhite</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-goldenhour-night-plusMuted)"></div><div class="nm">c.plusMuted</div></div>
+      <div class="sw"><div class="chip" style="background:linear-gradient(135deg,var(--g0-goldenhour-night),var(--g1-goldenhour-night))"></div><div class="nm">c.plusGradient[0→1]</div></div>
+    </div>
+  </div>
+</div>
+<hr class="rule">
+<h2>Marigold <span style="text-transform:none;letter-spacing:0;color:#a1a1aa">— <code>marigold</code>, 240 embers</span></h2>
+<div class="modes">
+  <div class="pane" style="--c-marigold-day-cream:#f9f7f4;--c-marigold-day-surface:#ffffff;--c-marigold-day-ink:#292524;--c-marigold-day-muted:#6f6a78;--c-marigold-day-border:#e8e3da;--c-marigold-day-dot:#f1ece4;--c-marigold-day-accent:#f97316;--c-marigold-day-accentDeep:#c2410c;--c-marigold-day-accentSoft:#ffedd5;--c-marigold-day-accentBright:#fb9a57;--c-marigold-day-onAccent:#fff;--c-marigold-day-iconAccent:#612106;--c-marigold-day-accentBorder:rgba(249,115,22,0.35);--c-marigold-day-deepBorder:rgba(194,65,12,0.22);--c-marigold-day-accentMark:rgba(194,65,12,0.92);--c-marigold-day-accentHaze:rgba(249,115,22,0.32);--c-marigold-day-glowSoft:rgba(249,115,22,0.1);--c-marigold-day-ghostBtn:rgba(0,0,0,0.04);--c-marigold-day-scrim:rgba(0,0,0,0.50);--c-marigold-day-shadowColor:#571d05;--c-marigold-day-dimText:#6f6a78;--c-marigold-day-green:#22c55e;--c-marigold-day-greenSoft:#dcfce7;--c-marigold-day-red:#ef4444;--c-marigold-day-redSoft:rgba(239,68,68,0.1);--c-marigold-day-cancelSoft:rgba(194,65,12,0.14);--c-marigold-day-heat0:#f1ece4;--c-marigold-day-heat1:#fde9bf;--c-marigold-day-heat2:#fcd577;--c-marigold-day-heat3:#f97316;--c-marigold-day-placeholder:#c3bcb0;--c-marigold-day-navBg:rgba(255,255,255,0.92);--c-marigold-day-plusLight:#fdcead;--c-marigold-day-plusWhite:#fffcf7;--c-marigold-day-plusMuted:#dd9779;--g0-marigold-day:#2b0e03;--g1-marigold-day:#1e0e03">
+    <h3>mode: day</h3>
+    <div class="grid">
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-day-cream)"></div><div class="nm">c.cream</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-day-surface)"></div><div class="nm">c.surface</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-day-ink)"></div><div class="nm">c.ink</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-day-muted)"></div><div class="nm">c.muted</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-day-border)"></div><div class="nm">c.border</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-day-dot)"></div><div class="nm">c.dot</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-day-accent)"></div><div class="nm">c.accent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-day-accentDeep)"></div><div class="nm">c.accentDeep</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-day-accentSoft)"></div><div class="nm">c.accentSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-day-accentBright)"></div><div class="nm">c.accentBright</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-day-onAccent)"></div><div class="nm">c.onAccent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-day-iconAccent)"></div><div class="nm">c.iconAccent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-day-accentBorder)"></div><div class="nm">c.accentBorder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-day-deepBorder)"></div><div class="nm">c.deepBorder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-day-accentMark)"></div><div class="nm">c.accentMark</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-day-accentHaze)"></div><div class="nm">c.accentHaze</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-day-glowSoft)"></div><div class="nm">c.glowSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-day-ghostBtn)"></div><div class="nm">c.ghostBtn</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-day-scrim)"></div><div class="nm">c.scrim</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-day-shadowColor)"></div><div class="nm">c.shadowColor</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-day-dimText)"></div><div class="nm">c.dimText</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-day-green)"></div><div class="nm">c.green</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-day-greenSoft)"></div><div class="nm">c.greenSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-day-red)"></div><div class="nm">c.red</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-day-redSoft)"></div><div class="nm">c.redSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-day-cancelSoft)"></div><div class="nm">c.cancelSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-day-heat0)"></div><div class="nm">c.heat0</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-day-heat1)"></div><div class="nm">c.heat1</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-day-heat2)"></div><div class="nm">c.heat2</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-day-heat3)"></div><div class="nm">c.heat3</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-day-placeholder)"></div><div class="nm">c.placeholder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-day-navBg)"></div><div class="nm">c.navBg</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-day-plusLight)"></div><div class="nm">c.plusLight</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-day-plusWhite)"></div><div class="nm">c.plusWhite</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-day-plusMuted)"></div><div class="nm">c.plusMuted</div></div>
+      <div class="sw"><div class="chip" style="background:linear-gradient(135deg,var(--g0-marigold-day),var(--g1-marigold-day))"></div><div class="nm">c.plusGradient[0→1]</div></div>
+    </div>
+  </div>
+  <div class="pane" style="--c-marigold-night-cream:#000000;--c-marigold-night-surface:#0e0e10;--c-marigold-night-ink:#f4eee4;--c-marigold-night-muted:#8b857c;--c-marigold-night-border:#26241f;--c-marigold-night-dot:#0a0a0b;--c-marigold-night-accent:#f97316;--c-marigold-night-accentDeep:#f97316;--c-marigold-night-accentSoft:#1e0e03;--c-marigold-night-accentBright:#fb9a57;--c-marigold-night-onAccent:#fff;--c-marigold-night-iconAccent:#f97316;--c-marigold-night-accentBorder:rgba(249,115,22,0.35);--c-marigold-night-deepBorder:rgba(194,65,12,0.22);--c-marigold-night-accentMark:rgba(194,65,12,0.92);--c-marigold-night-accentHaze:rgba(249,115,22,0.32);--c-marigold-night-glowSoft:rgba(249,115,22,0.1);--c-marigold-night-ghostBtn:rgba(255,255,255,0.06);--c-marigold-night-scrim:rgba(0,0,0,0.50);--c-marigold-night-shadowColor:#000;--c-marigold-night-dimText:#c5c2be;--c-marigold-night-green:#34d399;--c-marigold-night-greenSoft:#14271a;--c-marigold-night-red:#ef4444;--c-marigold-night-redSoft:rgba(239,68,68,0.1);--c-marigold-night-cancelSoft:rgba(194,65,12,0.14);--c-marigold-night-heat0:#1e0e03;--c-marigold-night-heat1:#3e1d06;--c-marigold-night-heat2:#7d3a0b;--c-marigold-night-heat3:#f97316;--c-marigold-night-placeholder:#585250;--c-marigold-night-navBg:rgba(0,0,0,0.88);--c-marigold-night-plusLight:#fdcead;--c-marigold-night-plusWhite:#fffcf7;--c-marigold-night-plusMuted:#dd9779;--g0-marigold-night:#2b0e03;--g1-marigold-night:#1e0e03">
+    <h3>mode: night</h3>
+    <div class="grid">
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-night-cream)"></div><div class="nm">c.cream</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-night-surface)"></div><div class="nm">c.surface</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-night-ink)"></div><div class="nm">c.ink</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-night-muted)"></div><div class="nm">c.muted</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-night-border)"></div><div class="nm">c.border</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-night-dot)"></div><div class="nm">c.dot</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-night-accent)"></div><div class="nm">c.accent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-night-accentDeep)"></div><div class="nm">c.accentDeep</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-night-accentSoft)"></div><div class="nm">c.accentSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-night-accentBright)"></div><div class="nm">c.accentBright</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-night-onAccent)"></div><div class="nm">c.onAccent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-night-iconAccent)"></div><div class="nm">c.iconAccent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-night-accentBorder)"></div><div class="nm">c.accentBorder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-night-deepBorder)"></div><div class="nm">c.deepBorder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-night-accentMark)"></div><div class="nm">c.accentMark</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-night-accentHaze)"></div><div class="nm">c.accentHaze</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-night-glowSoft)"></div><div class="nm">c.glowSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-night-ghostBtn)"></div><div class="nm">c.ghostBtn</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-night-scrim)"></div><div class="nm">c.scrim</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-night-shadowColor)"></div><div class="nm">c.shadowColor</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-night-dimText)"></div><div class="nm">c.dimText</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-night-green)"></div><div class="nm">c.green</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-night-greenSoft)"></div><div class="nm">c.greenSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-night-red)"></div><div class="nm">c.red</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-night-redSoft)"></div><div class="nm">c.redSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-night-cancelSoft)"></div><div class="nm">c.cancelSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-night-heat0)"></div><div class="nm">c.heat0</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-night-heat1)"></div><div class="nm">c.heat1</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-night-heat2)"></div><div class="nm">c.heat2</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-night-heat3)"></div><div class="nm">c.heat3</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-night-placeholder)"></div><div class="nm">c.placeholder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-night-navBg)"></div><div class="nm">c.navBg</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-night-plusLight)"></div><div class="nm">c.plusLight</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-night-plusWhite)"></div><div class="nm">c.plusWhite</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-marigold-night-plusMuted)"></div><div class="nm">c.plusMuted</div></div>
+      <div class="sw"><div class="chip" style="background:linear-gradient(135deg,var(--g0-marigold-night),var(--g1-marigold-night))"></div><div class="nm">c.plusGradient[0→1]</div></div>
+    </div>
+  </div>
+</div>
+<hr class="rule">
+<h2>Honey <span style="text-transform:none;letter-spacing:0;color:#a1a1aa">— <code>honey</code>, 240 embers</span></h2>
+<div class="modes">
+  <div class="pane" style="--c-honey-day-cream:#f9f7f4;--c-honey-day-surface:#ffffff;--c-honey-day-ink:#292524;--c-honey-day-muted:#6f6a78;--c-honey-day-border:#e8e3da;--c-honey-day-dot:#f1ece4;--c-honey-day-accent:#eab308;--c-honey-day-accentDeep:#a16207;--c-honey-day-accentSoft:#fef9c3;--c-honey-day-accentBright:#f0c84d;--c-honey-day-onAccent:#fff;--c-honey-day-iconAccent:#513104;--c-honey-day-accentBorder:rgba(234,179,8,0.35);--c-honey-day-deepBorder:rgba(161,98,7,0.22);--c-honey-day-accentMark:rgba(161,98,7,0.92);--c-honey-day-accentHaze:rgba(234,179,8,0.32);--c-honey-day-glowSoft:rgba(234,179,8,0.1);--c-honey-day-ghostBtn:rgba(0,0,0,0.04);--c-honey-day-scrim:rgba(0,0,0,0.50);--c-honey-day-shadowColor:#482c03;--c-honey-day-dimText:#6f6a78;--c-honey-day-green:#22c55e;--c-honey-day-greenSoft:#dcfce7;--c-honey-day-red:#ef4444;--c-honey-day-redSoft:rgba(239,68,68,0.1);--c-honey-day-cancelSoft:rgba(161,98,7,0.14);--c-honey-day-heat0:#f1ece4;--c-honey-day-heat1:#fde9bf;--c-honey-day-heat2:#fcd577;--c-honey-day-heat3:#eab308;--c-honey-day-placeholder:#c3bcb0;--c-honey-day-navBg:rgba(255,255,255,0.92);--c-honey-day-plusLight:#f8e4a9;--c-honey-day-plusWhite:#fffef4;--c-honey-day-plusMuted:#cba977;--g0-honey-day:#231602;--g1-honey-day:#1c1501">
+    <h3>mode: day</h3>
+    <div class="grid">
+      <div class="sw"><div class="chip" style="background:var(--c-honey-day-cream)"></div><div class="nm">c.cream</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-day-surface)"></div><div class="nm">c.surface</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-day-ink)"></div><div class="nm">c.ink</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-day-muted)"></div><div class="nm">c.muted</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-day-border)"></div><div class="nm">c.border</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-day-dot)"></div><div class="nm">c.dot</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-day-accent)"></div><div class="nm">c.accent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-day-accentDeep)"></div><div class="nm">c.accentDeep</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-day-accentSoft)"></div><div class="nm">c.accentSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-day-accentBright)"></div><div class="nm">c.accentBright</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-day-onAccent)"></div><div class="nm">c.onAccent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-day-iconAccent)"></div><div class="nm">c.iconAccent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-day-accentBorder)"></div><div class="nm">c.accentBorder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-day-deepBorder)"></div><div class="nm">c.deepBorder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-day-accentMark)"></div><div class="nm">c.accentMark</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-day-accentHaze)"></div><div class="nm">c.accentHaze</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-day-glowSoft)"></div><div class="nm">c.glowSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-day-ghostBtn)"></div><div class="nm">c.ghostBtn</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-day-scrim)"></div><div class="nm">c.scrim</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-day-shadowColor)"></div><div class="nm">c.shadowColor</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-day-dimText)"></div><div class="nm">c.dimText</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-day-green)"></div><div class="nm">c.green</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-day-greenSoft)"></div><div class="nm">c.greenSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-day-red)"></div><div class="nm">c.red</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-day-redSoft)"></div><div class="nm">c.redSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-day-cancelSoft)"></div><div class="nm">c.cancelSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-day-heat0)"></div><div class="nm">c.heat0</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-day-heat1)"></div><div class="nm">c.heat1</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-day-heat2)"></div><div class="nm">c.heat2</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-day-heat3)"></div><div class="nm">c.heat3</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-day-placeholder)"></div><div class="nm">c.placeholder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-day-navBg)"></div><div class="nm">c.navBg</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-day-plusLight)"></div><div class="nm">c.plusLight</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-day-plusWhite)"></div><div class="nm">c.plusWhite</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-day-plusMuted)"></div><div class="nm">c.plusMuted</div></div>
+      <div class="sw"><div class="chip" style="background:linear-gradient(135deg,var(--g0-honey-day),var(--g1-honey-day))"></div><div class="nm">c.plusGradient[0→1]</div></div>
+    </div>
+  </div>
+  <div class="pane" style="--c-honey-night-cream:#000000;--c-honey-night-surface:#0e0e10;--c-honey-night-ink:#f4eee4;--c-honey-night-muted:#8b857c;--c-honey-night-border:#26241f;--c-honey-night-dot:#0a0a0b;--c-honey-night-accent:#eab308;--c-honey-night-accentDeep:#eab308;--c-honey-night-accentSoft:#1c1501;--c-honey-night-accentBright:#f0c84d;--c-honey-night-onAccent:#fff;--c-honey-night-iconAccent:#eab308;--c-honey-night-accentBorder:rgba(234,179,8,0.35);--c-honey-night-deepBorder:rgba(161,98,7,0.22);--c-honey-night-accentMark:rgba(161,98,7,0.92);--c-honey-night-accentHaze:rgba(234,179,8,0.32);--c-honey-night-glowSoft:rgba(234,179,8,0.1);--c-honey-night-ghostBtn:rgba(255,255,255,0.06);--c-honey-night-scrim:rgba(0,0,0,0.50);--c-honey-night-shadowColor:#000;--c-honey-night-dimText:#c5c2be;--c-honey-night-green:#34d399;--c-honey-night-greenSoft:#14271a;--c-honey-night-red:#ef4444;--c-honey-night-redSoft:rgba(239,68,68,0.1);--c-honey-night-cancelSoft:rgba(161,98,7,0.14);--c-honey-night-heat0:#1c1501;--c-honey-night-heat1:#3b2d02;--c-honey-night-heat2:#755a04;--c-honey-night-heat3:#eab308;--c-honey-night-placeholder:#585250;--c-honey-night-navBg:rgba(0,0,0,0.88);--c-honey-night-plusLight:#f8e4a9;--c-honey-night-plusWhite:#fffef4;--c-honey-night-plusMuted:#cba977;--g0-honey-night:#231602;--g1-honey-night:#1c1501">
+    <h3>mode: night</h3>
+    <div class="grid">
+      <div class="sw"><div class="chip" style="background:var(--c-honey-night-cream)"></div><div class="nm">c.cream</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-night-surface)"></div><div class="nm">c.surface</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-night-ink)"></div><div class="nm">c.ink</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-night-muted)"></div><div class="nm">c.muted</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-night-border)"></div><div class="nm">c.border</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-night-dot)"></div><div class="nm">c.dot</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-night-accent)"></div><div class="nm">c.accent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-night-accentDeep)"></div><div class="nm">c.accentDeep</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-night-accentSoft)"></div><div class="nm">c.accentSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-night-accentBright)"></div><div class="nm">c.accentBright</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-night-onAccent)"></div><div class="nm">c.onAccent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-night-iconAccent)"></div><div class="nm">c.iconAccent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-night-accentBorder)"></div><div class="nm">c.accentBorder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-night-deepBorder)"></div><div class="nm">c.deepBorder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-night-accentMark)"></div><div class="nm">c.accentMark</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-night-accentHaze)"></div><div class="nm">c.accentHaze</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-night-glowSoft)"></div><div class="nm">c.glowSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-night-ghostBtn)"></div><div class="nm">c.ghostBtn</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-night-scrim)"></div><div class="nm">c.scrim</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-night-shadowColor)"></div><div class="nm">c.shadowColor</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-night-dimText)"></div><div class="nm">c.dimText</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-night-green)"></div><div class="nm">c.green</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-night-greenSoft)"></div><div class="nm">c.greenSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-night-red)"></div><div class="nm">c.red</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-night-redSoft)"></div><div class="nm">c.redSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-night-cancelSoft)"></div><div class="nm">c.cancelSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-night-heat0)"></div><div class="nm">c.heat0</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-night-heat1)"></div><div class="nm">c.heat1</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-night-heat2)"></div><div class="nm">c.heat2</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-night-heat3)"></div><div class="nm">c.heat3</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-night-placeholder)"></div><div class="nm">c.placeholder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-night-navBg)"></div><div class="nm">c.navBg</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-night-plusLight)"></div><div class="nm">c.plusLight</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-night-plusWhite)"></div><div class="nm">c.plusWhite</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-honey-night-plusMuted)"></div><div class="nm">c.plusMuted</div></div>
+      <div class="sw"><div class="chip" style="background:linear-gradient(135deg,var(--g0-honey-night),var(--g1-honey-night))"></div><div class="nm">c.plusGradient[0→1]</div></div>
+    </div>
+  </div>
+</div>
+<hr class="rule">
+<h2>Rose Dusk <span style="text-transform:none;letter-spacing:0;color:#a1a1aa">— <code>rosedusk</code>, 420 embers</span></h2>
+<div class="modes">
+  <div class="pane" style="--c-rosedusk-day-cream:#f9f7f4;--c-rosedusk-day-surface:#ffffff;--c-rosedusk-day-ink:#292524;--c-rosedusk-day-muted:#6f6a78;--c-rosedusk-day-border:#e8e3da;--c-rosedusk-day-dot:#f1ece4;--c-rosedusk-day-accent:#fb7185;--c-rosedusk-day-accentDeep:#be123c;--c-rosedusk-day-accentSoft:#ffe4e6;--c-rosedusk-day-accentBright:#fc99a7;--c-rosedusk-day-onAccent:#fff;--c-rosedusk-day-iconAccent:#5f091e;--c-rosedusk-day-accentBorder:rgba(251,113,133,0.35);--c-rosedusk-day-deepBorder:rgba(190,18,60,0.22);--c-rosedusk-day-accentMark:rgba(190,18,60,0.92);--c-rosedusk-day-accentHaze:rgba(251,113,133,0.32);--c-rosedusk-day-glowSoft:rgba(251,113,133,0.1);--c-rosedusk-day-ghostBtn:rgba(0,0,0,0.04);--c-rosedusk-day-scrim:rgba(0,0,0,0.50);--c-rosedusk-day-shadowColor:#55081b;--c-rosedusk-day-dimText:#6f6a78;--c-rosedusk-day-green:#22c55e;--c-rosedusk-day-greenSoft:#dcfce7;--c-rosedusk-day-red:#ef4444;--c-rosedusk-day-redSoft:rgba(239,68,68,0.1);--c-rosedusk-day-cancelSoft:rgba(190,18,60,0.14);--c-rosedusk-day-heat0:#f1ece4;--c-rosedusk-day-heat1:#fde9bf;--c-rosedusk-day-heat2:#fcd577;--c-rosedusk-day-heat3:#fb7185;--c-rosedusk-day-placeholder:#c3bcb0;--c-rosedusk-day-navBg:rgba(255,255,255,0.92);--c-rosedusk-day-plusLight:#fecdd4;--c-rosedusk-day-plusWhite:#fffafb;--c-rosedusk-day-plusMuted:#db7d94;--g0-rosedusk-day:#2a040d;--g1-rosedusk-day:#1e0e10">
+    <h3>mode: day</h3>
+    <div class="grid">
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-day-cream)"></div><div class="nm">c.cream</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-day-surface)"></div><div class="nm">c.surface</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-day-ink)"></div><div class="nm">c.ink</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-day-muted)"></div><div class="nm">c.muted</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-day-border)"></div><div class="nm">c.border</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-day-dot)"></div><div class="nm">c.dot</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-day-accent)"></div><div class="nm">c.accent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-day-accentDeep)"></div><div class="nm">c.accentDeep</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-day-accentSoft)"></div><div class="nm">c.accentSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-day-accentBright)"></div><div class="nm">c.accentBright</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-day-onAccent)"></div><div class="nm">c.onAccent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-day-iconAccent)"></div><div class="nm">c.iconAccent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-day-accentBorder)"></div><div class="nm">c.accentBorder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-day-deepBorder)"></div><div class="nm">c.deepBorder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-day-accentMark)"></div><div class="nm">c.accentMark</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-day-accentHaze)"></div><div class="nm">c.accentHaze</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-day-glowSoft)"></div><div class="nm">c.glowSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-day-ghostBtn)"></div><div class="nm">c.ghostBtn</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-day-scrim)"></div><div class="nm">c.scrim</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-day-shadowColor)"></div><div class="nm">c.shadowColor</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-day-dimText)"></div><div class="nm">c.dimText</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-day-green)"></div><div class="nm">c.green</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-day-greenSoft)"></div><div class="nm">c.greenSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-day-red)"></div><div class="nm">c.red</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-day-redSoft)"></div><div class="nm">c.redSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-day-cancelSoft)"></div><div class="nm">c.cancelSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-day-heat0)"></div><div class="nm">c.heat0</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-day-heat1)"></div><div class="nm">c.heat1</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-day-heat2)"></div><div class="nm">c.heat2</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-day-heat3)"></div><div class="nm">c.heat3</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-day-placeholder)"></div><div class="nm">c.placeholder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-day-navBg)"></div><div class="nm">c.navBg</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-day-plusLight)"></div><div class="nm">c.plusLight</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-day-plusWhite)"></div><div class="nm">c.plusWhite</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-day-plusMuted)"></div><div class="nm">c.plusMuted</div></div>
+      <div class="sw"><div class="chip" style="background:linear-gradient(135deg,var(--g0-rosedusk-day),var(--g1-rosedusk-day))"></div><div class="nm">c.plusGradient[0→1]</div></div>
+    </div>
+  </div>
+  <div class="pane" style="--c-rosedusk-night-cream:#000000;--c-rosedusk-night-surface:#0e0e10;--c-rosedusk-night-ink:#f4eee4;--c-rosedusk-night-muted:#8b857c;--c-rosedusk-night-border:#26241f;--c-rosedusk-night-dot:#0a0a0b;--c-rosedusk-night-accent:#fb7185;--c-rosedusk-night-accentDeep:#fb7185;--c-rosedusk-night-accentSoft:#1e0e10;--c-rosedusk-night-accentBright:#fc99a7;--c-rosedusk-night-onAccent:#fff;--c-rosedusk-night-iconAccent:#fb7185;--c-rosedusk-night-accentBorder:rgba(251,113,133,0.35);--c-rosedusk-night-deepBorder:rgba(190,18,60,0.22);--c-rosedusk-night-accentMark:rgba(190,18,60,0.92);--c-rosedusk-night-accentHaze:rgba(251,113,133,0.32);--c-rosedusk-night-glowSoft:rgba(251,113,133,0.1);--c-rosedusk-night-ghostBtn:rgba(255,255,255,0.06);--c-rosedusk-night-scrim:rgba(0,0,0,0.50);--c-rosedusk-night-shadowColor:#000;--c-rosedusk-night-dimText:#c5c2be;--c-rosedusk-night-green:#34d399;--c-rosedusk-night-greenSoft:#14271a;--c-rosedusk-night-red:#ef4444;--c-rosedusk-night-redSoft:rgba(239,68,68,0.1);--c-rosedusk-night-cancelSoft:rgba(190,18,60,0.14);--c-rosedusk-night-heat0:#1e0e10;--c-rosedusk-night-heat1:#3f1c21;--c-rosedusk-night-heat2:#7e3943;--c-rosedusk-night-heat3:#fb7185;--c-rosedusk-night-placeholder:#585250;--c-rosedusk-night-navBg:rgba(0,0,0,0.88);--c-rosedusk-night-plusLight:#fecdd4;--c-rosedusk-night-plusWhite:#fffafb;--c-rosedusk-night-plusMuted:#db7d94;--g0-rosedusk-night:#2a040d;--g1-rosedusk-night:#1e0e10">
+    <h3>mode: night</h3>
+    <div class="grid">
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-night-cream)"></div><div class="nm">c.cream</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-night-surface)"></div><div class="nm">c.surface</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-night-ink)"></div><div class="nm">c.ink</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-night-muted)"></div><div class="nm">c.muted</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-night-border)"></div><div class="nm">c.border</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-night-dot)"></div><div class="nm">c.dot</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-night-accent)"></div><div class="nm">c.accent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-night-accentDeep)"></div><div class="nm">c.accentDeep</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-night-accentSoft)"></div><div class="nm">c.accentSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-night-accentBright)"></div><div class="nm">c.accentBright</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-night-onAccent)"></div><div class="nm">c.onAccent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-night-iconAccent)"></div><div class="nm">c.iconAccent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-night-accentBorder)"></div><div class="nm">c.accentBorder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-night-deepBorder)"></div><div class="nm">c.deepBorder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-night-accentMark)"></div><div class="nm">c.accentMark</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-night-accentHaze)"></div><div class="nm">c.accentHaze</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-night-glowSoft)"></div><div class="nm">c.glowSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-night-ghostBtn)"></div><div class="nm">c.ghostBtn</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-night-scrim)"></div><div class="nm">c.scrim</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-night-shadowColor)"></div><div class="nm">c.shadowColor</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-night-dimText)"></div><div class="nm">c.dimText</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-night-green)"></div><div class="nm">c.green</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-night-greenSoft)"></div><div class="nm">c.greenSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-night-red)"></div><div class="nm">c.red</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-night-redSoft)"></div><div class="nm">c.redSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-night-cancelSoft)"></div><div class="nm">c.cancelSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-night-heat0)"></div><div class="nm">c.heat0</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-night-heat1)"></div><div class="nm">c.heat1</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-night-heat2)"></div><div class="nm">c.heat2</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-night-heat3)"></div><div class="nm">c.heat3</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-night-placeholder)"></div><div class="nm">c.placeholder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-night-navBg)"></div><div class="nm">c.navBg</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-night-plusLight)"></div><div class="nm">c.plusLight</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-night-plusWhite)"></div><div class="nm">c.plusWhite</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-rosedusk-night-plusMuted)"></div><div class="nm">c.plusMuted</div></div>
+      <div class="sw"><div class="chip" style="background:linear-gradient(135deg,var(--g0-rosedusk-night),var(--g1-rosedusk-night))"></div><div class="nm">c.plusGradient[0→1]</div></div>
+    </div>
+  </div>
+</div>
+<hr class="rule">
+<h2>Sage Eve <span style="text-transform:none;letter-spacing:0;color:#a1a1aa">— <code>sageeve</code>, 420 embers</span></h2>
+<div class="modes">
+  <div class="pane" style="--c-sageeve-day-cream:#f9f7f4;--c-sageeve-day-surface:#ffffff;--c-sageeve-day-ink:#292524;--c-sageeve-day-muted:#6f6a78;--c-sageeve-day-border:#e8e3da;--c-sageeve-day-dot:#f1ece4;--c-sageeve-day-accent:#84a98c;--c-sageeve-day-accentDeep:#52796f;--c-sageeve-day-accentSoft:#e7efe8;--c-sageeve-day-accentBright:#a6c1ac;--c-sageeve-day-onAccent:#fff;--c-sageeve-day-iconAccent:#293d38;--c-sageeve-day-accentBorder:rgba(132,169,140,0.35);--c-sageeve-day-deepBorder:rgba(82,121,111,0.22);--c-sageeve-day-accentMark:rgba(82,121,111,0.92);--c-sageeve-day-accentHaze:rgba(132,169,140,0.32);--c-sageeve-day-glowSoft:rgba(132,169,140,0.1);--c-sageeve-day-ghostBtn:rgba(0,0,0,0.04);--c-sageeve-day-scrim:rgba(0,0,0,0.50);--c-sageeve-day-shadowColor:#253632;--c-sageeve-day-dimText:#6f6a78;--c-sageeve-day-green:#22c55e;--c-sageeve-day-greenSoft:#dcfce7;--c-sageeve-day-red:#ef4444;--c-sageeve-day-redSoft:rgba(239,68,68,0.1);--c-sageeve-day-cancelSoft:rgba(82,121,111,0.14);--c-sageeve-day-heat0:#f1ece4;--c-sageeve-day-heat1:#fde9bf;--c-sageeve-day-heat2:#fcd577;--c-sageeve-day-heat3:#84a98c;--c-sageeve-day-placeholder:#c3bcb0;--c-sageeve-day-navBg:rgba(255,255,255,0.92);--c-sageeve-day-plusLight:#d4e1d7;--c-sageeve-day-plusWhite:#fbfcfb;--c-sageeve-day-plusMuted:#a0b5b0;--g0-sageeve-day:#121b18;--g1-sageeve-day:#101411">
+    <h3>mode: day</h3>
+    <div class="grid">
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-day-cream)"></div><div class="nm">c.cream</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-day-surface)"></div><div class="nm">c.surface</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-day-ink)"></div><div class="nm">c.ink</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-day-muted)"></div><div class="nm">c.muted</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-day-border)"></div><div class="nm">c.border</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-day-dot)"></div><div class="nm">c.dot</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-day-accent)"></div><div class="nm">c.accent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-day-accentDeep)"></div><div class="nm">c.accentDeep</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-day-accentSoft)"></div><div class="nm">c.accentSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-day-accentBright)"></div><div class="nm">c.accentBright</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-day-onAccent)"></div><div class="nm">c.onAccent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-day-iconAccent)"></div><div class="nm">c.iconAccent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-day-accentBorder)"></div><div class="nm">c.accentBorder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-day-deepBorder)"></div><div class="nm">c.deepBorder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-day-accentMark)"></div><div class="nm">c.accentMark</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-day-accentHaze)"></div><div class="nm">c.accentHaze</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-day-glowSoft)"></div><div class="nm">c.glowSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-day-ghostBtn)"></div><div class="nm">c.ghostBtn</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-day-scrim)"></div><div class="nm">c.scrim</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-day-shadowColor)"></div><div class="nm">c.shadowColor</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-day-dimText)"></div><div class="nm">c.dimText</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-day-green)"></div><div class="nm">c.green</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-day-greenSoft)"></div><div class="nm">c.greenSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-day-red)"></div><div class="nm">c.red</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-day-redSoft)"></div><div class="nm">c.redSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-day-cancelSoft)"></div><div class="nm">c.cancelSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-day-heat0)"></div><div class="nm">c.heat0</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-day-heat1)"></div><div class="nm">c.heat1</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-day-heat2)"></div><div class="nm">c.heat2</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-day-heat3)"></div><div class="nm">c.heat3</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-day-placeholder)"></div><div class="nm">c.placeholder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-day-navBg)"></div><div class="nm">c.navBg</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-day-plusLight)"></div><div class="nm">c.plusLight</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-day-plusWhite)"></div><div class="nm">c.plusWhite</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-day-plusMuted)"></div><div class="nm">c.plusMuted</div></div>
+      <div class="sw"><div class="chip" style="background:linear-gradient(135deg,var(--g0-sageeve-day),var(--g1-sageeve-day))"></div><div class="nm">c.plusGradient[0→1]</div></div>
+    </div>
+  </div>
+  <div class="pane" style="--c-sageeve-night-cream:#000000;--c-sageeve-night-surface:#0e0e10;--c-sageeve-night-ink:#f4eee4;--c-sageeve-night-muted:#8b857c;--c-sageeve-night-border:#26241f;--c-sageeve-night-dot:#0a0a0b;--c-sageeve-night-accent:#84a98c;--c-sageeve-night-accentDeep:#84a98c;--c-sageeve-night-accentSoft:#101411;--c-sageeve-night-accentBright:#a6c1ac;--c-sageeve-night-onAccent:#fff;--c-sageeve-night-iconAccent:#84a98c;--c-sageeve-night-accentBorder:rgba(132,169,140,0.35);--c-sageeve-night-deepBorder:rgba(82,121,111,0.22);--c-sageeve-night-accentMark:rgba(82,121,111,0.92);--c-sageeve-night-accentHaze:rgba(132,169,140,0.32);--c-sageeve-night-glowSoft:rgba(132,169,140,0.1);--c-sageeve-night-ghostBtn:rgba(255,255,255,0.06);--c-sageeve-night-scrim:rgba(0,0,0,0.50);--c-sageeve-night-shadowColor:#000;--c-sageeve-night-dimText:#c5c2be;--c-sageeve-night-green:#34d399;--c-sageeve-night-greenSoft:#14271a;--c-sageeve-night-red:#ef4444;--c-sageeve-night-redSoft:rgba(239,68,68,0.1);--c-sageeve-night-cancelSoft:rgba(82,121,111,0.14);--c-sageeve-night-heat0:#101411;--c-sageeve-night-heat1:#212a23;--c-sageeve-night-heat2:#425546;--c-sageeve-night-heat3:#84a98c;--c-sageeve-night-placeholder:#585250;--c-sageeve-night-navBg:rgba(0,0,0,0.88);--c-sageeve-night-plusLight:#d4e1d7;--c-sageeve-night-plusWhite:#fbfcfb;--c-sageeve-night-plusMuted:#a0b5b0;--g0-sageeve-night:#121b18;--g1-sageeve-night:#101411">
+    <h3>mode: night</h3>
+    <div class="grid">
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-night-cream)"></div><div class="nm">c.cream</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-night-surface)"></div><div class="nm">c.surface</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-night-ink)"></div><div class="nm">c.ink</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-night-muted)"></div><div class="nm">c.muted</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-night-border)"></div><div class="nm">c.border</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-night-dot)"></div><div class="nm">c.dot</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-night-accent)"></div><div class="nm">c.accent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-night-accentDeep)"></div><div class="nm">c.accentDeep</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-night-accentSoft)"></div><div class="nm">c.accentSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-night-accentBright)"></div><div class="nm">c.accentBright</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-night-onAccent)"></div><div class="nm">c.onAccent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-night-iconAccent)"></div><div class="nm">c.iconAccent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-night-accentBorder)"></div><div class="nm">c.accentBorder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-night-deepBorder)"></div><div class="nm">c.deepBorder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-night-accentMark)"></div><div class="nm">c.accentMark</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-night-accentHaze)"></div><div class="nm">c.accentHaze</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-night-glowSoft)"></div><div class="nm">c.glowSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-night-ghostBtn)"></div><div class="nm">c.ghostBtn</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-night-scrim)"></div><div class="nm">c.scrim</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-night-shadowColor)"></div><div class="nm">c.shadowColor</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-night-dimText)"></div><div class="nm">c.dimText</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-night-green)"></div><div class="nm">c.green</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-night-greenSoft)"></div><div class="nm">c.greenSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-night-red)"></div><div class="nm">c.red</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-night-redSoft)"></div><div class="nm">c.redSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-night-cancelSoft)"></div><div class="nm">c.cancelSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-night-heat0)"></div><div class="nm">c.heat0</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-night-heat1)"></div><div class="nm">c.heat1</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-night-heat2)"></div><div class="nm">c.heat2</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-night-heat3)"></div><div class="nm">c.heat3</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-night-placeholder)"></div><div class="nm">c.placeholder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-night-navBg)"></div><div class="nm">c.navBg</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-night-plusLight)"></div><div class="nm">c.plusLight</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-night-plusWhite)"></div><div class="nm">c.plusWhite</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-sageeve-night-plusMuted)"></div><div class="nm">c.plusMuted</div></div>
+      <div class="sw"><div class="chip" style="background:linear-gradient(135deg,var(--g0-sageeve-night),var(--g1-sageeve-night))"></div><div class="nm">c.plusGradient[0→1]</div></div>
+    </div>
+  </div>
+</div>
+<hr class="rule">
+<h2>Lavender Hour <span style="text-transform:none;letter-spacing:0;color:#a1a1aa">— <code>lavender</code>, Plus-only</span></h2>
+<div class="modes">
+  <div class="pane" style="--c-lavender-day-cream:#f9f7f4;--c-lavender-day-surface:#ffffff;--c-lavender-day-ink:#292524;--c-lavender-day-muted:#6f6a78;--c-lavender-day-border:#e8e3da;--c-lavender-day-dot:#f1ece4;--c-lavender-day-accent:#a78bfa;--c-lavender-day-accentDeep:#7c3aed;--c-lavender-day-accentSoft:#ede9fe;--c-lavender-day-accentBright:#c0abfb;--c-lavender-day-onAccent:#fff;--c-lavender-day-iconAccent:#3e1d77;--c-lavender-day-accentBorder:rgba(167,139,250,0.35);--c-lavender-day-deepBorder:rgba(124,58,237,0.22);--c-lavender-day-accentMark:rgba(124,58,237,0.92);--c-lavender-day-accentHaze:rgba(167,139,250,0.32);--c-lavender-day-glowSoft:rgba(167,139,250,0.1);--c-lavender-day-ghostBtn:rgba(0,0,0,0.04);--c-lavender-day-scrim:rgba(0,0,0,0.50);--c-lavender-day-shadowColor:#381a6b;--c-lavender-day-dimText:#6f6a78;--c-lavender-day-green:#22c55e;--c-lavender-day-greenSoft:#dcfce7;--c-lavender-day-red:#ef4444;--c-lavender-day-redSoft:rgba(239,68,68,0.1);--c-lavender-day-cancelSoft:rgba(124,58,237,0.14);--c-lavender-day-heat0:#f1ece4;--c-lavender-day-heat1:#fde9bf;--c-lavender-day-heat2:#fcd577;--c-lavender-day-heat3:#a78bfa;--c-lavender-day-placeholder:#c3bcb0;--c-lavender-day-navBg:rgba(255,255,255,0.92);--c-lavender-day-plusLight:#e0d6fd;--c-lavender-day-plusWhite:#fcfbff;--c-lavender-day-plusMuted:#b793f5;--g0-lavender-day:#1b0d34;--g1-lavender-day:#14111e">
+    <h3>mode: day</h3>
+    <div class="grid">
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-day-cream)"></div><div class="nm">c.cream</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-day-surface)"></div><div class="nm">c.surface</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-day-ink)"></div><div class="nm">c.ink</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-day-muted)"></div><div class="nm">c.muted</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-day-border)"></div><div class="nm">c.border</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-day-dot)"></div><div class="nm">c.dot</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-day-accent)"></div><div class="nm">c.accent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-day-accentDeep)"></div><div class="nm">c.accentDeep</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-day-accentSoft)"></div><div class="nm">c.accentSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-day-accentBright)"></div><div class="nm">c.accentBright</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-day-onAccent)"></div><div class="nm">c.onAccent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-day-iconAccent)"></div><div class="nm">c.iconAccent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-day-accentBorder)"></div><div class="nm">c.accentBorder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-day-deepBorder)"></div><div class="nm">c.deepBorder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-day-accentMark)"></div><div class="nm">c.accentMark</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-day-accentHaze)"></div><div class="nm">c.accentHaze</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-day-glowSoft)"></div><div class="nm">c.glowSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-day-ghostBtn)"></div><div class="nm">c.ghostBtn</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-day-scrim)"></div><div class="nm">c.scrim</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-day-shadowColor)"></div><div class="nm">c.shadowColor</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-day-dimText)"></div><div class="nm">c.dimText</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-day-green)"></div><div class="nm">c.green</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-day-greenSoft)"></div><div class="nm">c.greenSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-day-red)"></div><div class="nm">c.red</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-day-redSoft)"></div><div class="nm">c.redSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-day-cancelSoft)"></div><div class="nm">c.cancelSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-day-heat0)"></div><div class="nm">c.heat0</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-day-heat1)"></div><div class="nm">c.heat1</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-day-heat2)"></div><div class="nm">c.heat2</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-day-heat3)"></div><div class="nm">c.heat3</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-day-placeholder)"></div><div class="nm">c.placeholder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-day-navBg)"></div><div class="nm">c.navBg</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-day-plusLight)"></div><div class="nm">c.plusLight</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-day-plusWhite)"></div><div class="nm">c.plusWhite</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-day-plusMuted)"></div><div class="nm">c.plusMuted</div></div>
+      <div class="sw"><div class="chip" style="background:linear-gradient(135deg,var(--g0-lavender-day),var(--g1-lavender-day))"></div><div class="nm">c.plusGradient[0→1]</div></div>
+    </div>
+  </div>
+  <div class="pane" style="--c-lavender-night-cream:#000000;--c-lavender-night-surface:#0e0e10;--c-lavender-night-ink:#f4eee4;--c-lavender-night-muted:#8b857c;--c-lavender-night-border:#26241f;--c-lavender-night-dot:#0a0a0b;--c-lavender-night-accent:#a78bfa;--c-lavender-night-accentDeep:#a78bfa;--c-lavender-night-accentSoft:#14111e;--c-lavender-night-accentBright:#c0abfb;--c-lavender-night-onAccent:#fff;--c-lavender-night-iconAccent:#a78bfa;--c-lavender-night-accentBorder:rgba(167,139,250,0.35);--c-lavender-night-deepBorder:rgba(124,58,237,0.22);--c-lavender-night-accentMark:rgba(124,58,237,0.92);--c-lavender-night-accentHaze:rgba(167,139,250,0.32);--c-lavender-night-glowSoft:rgba(167,139,250,0.1);--c-lavender-night-ghostBtn:rgba(255,255,255,0.06);--c-lavender-night-scrim:rgba(0,0,0,0.50);--c-lavender-night-shadowColor:#000;--c-lavender-night-dimText:#c5c2be;--c-lavender-night-green:#34d399;--c-lavender-night-greenSoft:#14271a;--c-lavender-night-red:#ef4444;--c-lavender-night-redSoft:rgba(239,68,68,0.1);--c-lavender-night-cancelSoft:rgba(124,58,237,0.14);--c-lavender-night-heat0:#14111e;--c-lavender-night-heat1:#2a233f;--c-lavender-night-heat2:#54467d;--c-lavender-night-heat3:#a78bfa;--c-lavender-night-placeholder:#585250;--c-lavender-night-navBg:rgba(0,0,0,0.88);--c-lavender-night-plusLight:#e0d6fd;--c-lavender-night-plusWhite:#fcfbff;--c-lavender-night-plusMuted:#b793f5;--g0-lavender-night:#1b0d34;--g1-lavender-night:#14111e">
+    <h3>mode: night</h3>
+    <div class="grid">
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-night-cream)"></div><div class="nm">c.cream</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-night-surface)"></div><div class="nm">c.surface</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-night-ink)"></div><div class="nm">c.ink</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-night-muted)"></div><div class="nm">c.muted</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-night-border)"></div><div class="nm">c.border</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-night-dot)"></div><div class="nm">c.dot</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-night-accent)"></div><div class="nm">c.accent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-night-accentDeep)"></div><div class="nm">c.accentDeep</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-night-accentSoft)"></div><div class="nm">c.accentSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-night-accentBright)"></div><div class="nm">c.accentBright</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-night-onAccent)"></div><div class="nm">c.onAccent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-night-iconAccent)"></div><div class="nm">c.iconAccent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-night-accentBorder)"></div><div class="nm">c.accentBorder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-night-deepBorder)"></div><div class="nm">c.deepBorder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-night-accentMark)"></div><div class="nm">c.accentMark</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-night-accentHaze)"></div><div class="nm">c.accentHaze</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-night-glowSoft)"></div><div class="nm">c.glowSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-night-ghostBtn)"></div><div class="nm">c.ghostBtn</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-night-scrim)"></div><div class="nm">c.scrim</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-night-shadowColor)"></div><div class="nm">c.shadowColor</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-night-dimText)"></div><div class="nm">c.dimText</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-night-green)"></div><div class="nm">c.green</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-night-greenSoft)"></div><div class="nm">c.greenSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-night-red)"></div><div class="nm">c.red</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-night-redSoft)"></div><div class="nm">c.redSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-night-cancelSoft)"></div><div class="nm">c.cancelSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-night-heat0)"></div><div class="nm">c.heat0</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-night-heat1)"></div><div class="nm">c.heat1</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-night-heat2)"></div><div class="nm">c.heat2</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-night-heat3)"></div><div class="nm">c.heat3</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-night-placeholder)"></div><div class="nm">c.placeholder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-night-navBg)"></div><div class="nm">c.navBg</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-night-plusLight)"></div><div class="nm">c.plusLight</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-night-plusWhite)"></div><div class="nm">c.plusWhite</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-lavender-night-plusMuted)"></div><div class="nm">c.plusMuted</div></div>
+      <div class="sw"><div class="chip" style="background:linear-gradient(135deg,var(--g0-lavender-night),var(--g1-lavender-night))"></div><div class="nm">c.plusGradient[0→1]</div></div>
+    </div>
+  </div>
+</div>
+<hr class="rule">
+<h2>Frostlight <span style="text-transform:none;letter-spacing:0;color:#a1a1aa">— <code>frostlight</code>, Plus-only</span></h2>
+<div class="modes">
+  <div class="pane" style="--c-frostlight-day-cream:#f9f7f4;--c-frostlight-day-surface:#ffffff;--c-frostlight-day-ink:#292524;--c-frostlight-day-muted:#6f6a78;--c-frostlight-day-border:#e8e3da;--c-frostlight-day-dot:#f1ece4;--c-frostlight-day-accent:#7dd3fc;--c-frostlight-day-accentDeep:#0284c7;--c-frostlight-day-accentSoft:#e0f2fe;--c-frostlight-day-accentBright:#a1dffd;--c-frostlight-day-onAccent:#fff;--c-frostlight-day-iconAccent:#014264;--c-frostlight-day-accentBorder:rgba(125,211,252,0.35);--c-frostlight-day-deepBorder:rgba(2,132,199,0.22);--c-frostlight-day-accentMark:rgba(2,132,199,0.92);--c-frostlight-day-accentHaze:rgba(125,211,252,0.32);--c-frostlight-day-glowSoft:rgba(125,211,252,0.1);--c-frostlight-day-ghostBtn:rgba(0,0,0,0.04);--c-frostlight-day-scrim:rgba(0,0,0,0.50);--c-frostlight-day-shadowColor:#013b5a;--c-frostlight-day-dimText:#6f6a78;--c-frostlight-day-green:#22c55e;--c-frostlight-day-greenSoft:#dcfce7;--c-frostlight-day-red:#ef4444;--c-frostlight-day-redSoft:rgba(239,68,68,0.1);--c-frostlight-day-cancelSoft:rgba(2,132,199,0.14);--c-frostlight-day-heat0:#f1ece4;--c-frostlight-day-heat1:#fde9bf;--c-frostlight-day-heat2:#fcd577;--c-frostlight-day-heat3:#7dd3fc;--c-frostlight-day-placeholder:#c3bcb0;--c-frostlight-day-navBg:rgba(255,255,255,0.92);--c-frostlight-day-plusLight:#d2f0fe;--c-frostlight-day-plusWhite:#f9fdff;--c-frostlight-day-plusMuted:#74bbe0;--g0-frostlight-day:#001d2c;--g1-frostlight-day:#0f191e">
+    <h3>mode: day</h3>
+    <div class="grid">
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-day-cream)"></div><div class="nm">c.cream</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-day-surface)"></div><div class="nm">c.surface</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-day-ink)"></div><div class="nm">c.ink</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-day-muted)"></div><div class="nm">c.muted</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-day-border)"></div><div class="nm">c.border</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-day-dot)"></div><div class="nm">c.dot</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-day-accent)"></div><div class="nm">c.accent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-day-accentDeep)"></div><div class="nm">c.accentDeep</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-day-accentSoft)"></div><div class="nm">c.accentSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-day-accentBright)"></div><div class="nm">c.accentBright</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-day-onAccent)"></div><div class="nm">c.onAccent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-day-iconAccent)"></div><div class="nm">c.iconAccent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-day-accentBorder)"></div><div class="nm">c.accentBorder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-day-deepBorder)"></div><div class="nm">c.deepBorder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-day-accentMark)"></div><div class="nm">c.accentMark</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-day-accentHaze)"></div><div class="nm">c.accentHaze</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-day-glowSoft)"></div><div class="nm">c.glowSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-day-ghostBtn)"></div><div class="nm">c.ghostBtn</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-day-scrim)"></div><div class="nm">c.scrim</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-day-shadowColor)"></div><div class="nm">c.shadowColor</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-day-dimText)"></div><div class="nm">c.dimText</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-day-green)"></div><div class="nm">c.green</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-day-greenSoft)"></div><div class="nm">c.greenSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-day-red)"></div><div class="nm">c.red</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-day-redSoft)"></div><div class="nm">c.redSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-day-cancelSoft)"></div><div class="nm">c.cancelSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-day-heat0)"></div><div class="nm">c.heat0</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-day-heat1)"></div><div class="nm">c.heat1</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-day-heat2)"></div><div class="nm">c.heat2</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-day-heat3)"></div><div class="nm">c.heat3</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-day-placeholder)"></div><div class="nm">c.placeholder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-day-navBg)"></div><div class="nm">c.navBg</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-day-plusLight)"></div><div class="nm">c.plusLight</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-day-plusWhite)"></div><div class="nm">c.plusWhite</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-day-plusMuted)"></div><div class="nm">c.plusMuted</div></div>
+      <div class="sw"><div class="chip" style="background:linear-gradient(135deg,var(--g0-frostlight-day),var(--g1-frostlight-day))"></div><div class="nm">c.plusGradient[0→1]</div></div>
+    </div>
+  </div>
+  <div class="pane" style="--c-frostlight-night-cream:#000000;--c-frostlight-night-surface:#0e0e10;--c-frostlight-night-ink:#f4eee4;--c-frostlight-night-muted:#8b857c;--c-frostlight-night-border:#26241f;--c-frostlight-night-dot:#0a0a0b;--c-frostlight-night-accent:#7dd3fc;--c-frostlight-night-accentDeep:#7dd3fc;--c-frostlight-night-accentSoft:#0f191e;--c-frostlight-night-accentBright:#a1dffd;--c-frostlight-night-onAccent:#fff;--c-frostlight-night-iconAccent:#7dd3fc;--c-frostlight-night-accentBorder:rgba(125,211,252,0.35);--c-frostlight-night-deepBorder:rgba(2,132,199,0.22);--c-frostlight-night-accentMark:rgba(2,132,199,0.92);--c-frostlight-night-accentHaze:rgba(125,211,252,0.32);--c-frostlight-night-glowSoft:rgba(125,211,252,0.1);--c-frostlight-night-ghostBtn:rgba(255,255,255,0.06);--c-frostlight-night-scrim:rgba(0,0,0,0.50);--c-frostlight-night-shadowColor:#000;--c-frostlight-night-dimText:#c5c2be;--c-frostlight-night-green:#34d399;--c-frostlight-night-greenSoft:#14271a;--c-frostlight-night-red:#ef4444;--c-frostlight-night-redSoft:rgba(239,68,68,0.1);--c-frostlight-night-cancelSoft:rgba(2,132,199,0.14);--c-frostlight-night-heat0:#0f191e;--c-frostlight-night-heat1:#1f353f;--c-frostlight-night-heat2:#3f6a7e;--c-frostlight-night-heat3:#7dd3fc;--c-frostlight-night-placeholder:#585250;--c-frostlight-night-navBg:rgba(0,0,0,0.88);--c-frostlight-night-plusLight:#d2f0fe;--c-frostlight-night-plusWhite:#f9fdff;--c-frostlight-night-plusMuted:#74bbe0;--g0-frostlight-night:#001d2c;--g1-frostlight-night:#0f191e">
+    <h3>mode: night</h3>
+    <div class="grid">
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-night-cream)"></div><div class="nm">c.cream</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-night-surface)"></div><div class="nm">c.surface</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-night-ink)"></div><div class="nm">c.ink</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-night-muted)"></div><div class="nm">c.muted</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-night-border)"></div><div class="nm">c.border</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-night-dot)"></div><div class="nm">c.dot</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-night-accent)"></div><div class="nm">c.accent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-night-accentDeep)"></div><div class="nm">c.accentDeep</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-night-accentSoft)"></div><div class="nm">c.accentSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-night-accentBright)"></div><div class="nm">c.accentBright</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-night-onAccent)"></div><div class="nm">c.onAccent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-night-iconAccent)"></div><div class="nm">c.iconAccent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-night-accentBorder)"></div><div class="nm">c.accentBorder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-night-deepBorder)"></div><div class="nm">c.deepBorder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-night-accentMark)"></div><div class="nm">c.accentMark</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-night-accentHaze)"></div><div class="nm">c.accentHaze</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-night-glowSoft)"></div><div class="nm">c.glowSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-night-ghostBtn)"></div><div class="nm">c.ghostBtn</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-night-scrim)"></div><div class="nm">c.scrim</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-night-shadowColor)"></div><div class="nm">c.shadowColor</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-night-dimText)"></div><div class="nm">c.dimText</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-night-green)"></div><div class="nm">c.green</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-night-greenSoft)"></div><div class="nm">c.greenSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-night-red)"></div><div class="nm">c.red</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-night-redSoft)"></div><div class="nm">c.redSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-night-cancelSoft)"></div><div class="nm">c.cancelSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-night-heat0)"></div><div class="nm">c.heat0</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-night-heat1)"></div><div class="nm">c.heat1</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-night-heat2)"></div><div class="nm">c.heat2</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-night-heat3)"></div><div class="nm">c.heat3</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-night-placeholder)"></div><div class="nm">c.placeholder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-night-navBg)"></div><div class="nm">c.navBg</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-night-plusLight)"></div><div class="nm">c.plusLight</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-night-plusWhite)"></div><div class="nm">c.plusWhite</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-frostlight-night-plusMuted)"></div><div class="nm">c.plusMuted</div></div>
+      <div class="sw"><div class="chip" style="background:linear-gradient(135deg,var(--g0-frostlight-night),var(--g1-frostlight-night))"></div><div class="nm">c.plusGradient[0→1]</div></div>
+    </div>
+  </div>
+</div>
+<hr class="rule">
+<h2>Bloom <span style="text-transform:none;letter-spacing:0;color:#a1a1aa">— <code>bloom</code>, Plus-only</span></h2>
+<div class="modes">
+  <div class="pane" style="--c-bloom-day-cream:#f9f7f4;--c-bloom-day-surface:#ffffff;--c-bloom-day-ink:#292524;--c-bloom-day-muted:#6f6a78;--c-bloom-day-border:#e8e3da;--c-bloom-day-dot:#f1ece4;--c-bloom-day-accent:#f472b6;--c-bloom-day-accentDeep:#db2777;--c-bloom-day-accentSoft:#fce7f3;--c-bloom-day-accentBright:#f799ca;--c-bloom-day-onAccent:#fff;--c-bloom-day-iconAccent:#6e143c;--c-bloom-day-accentBorder:rgba(244,114,182,0.35);--c-bloom-day-deepBorder:rgba(219,39,119,0.22);--c-bloom-day-accentMark:rgba(219,39,119,0.92);--c-bloom-day-accentHaze:rgba(244,114,182,0.32);--c-bloom-day-glowSoft:rgba(244,114,182,0.1);--c-bloom-day-ghostBtn:rgba(0,0,0,0.04);--c-bloom-day-scrim:rgba(0,0,0,0.50);--c-bloom-day-shadowColor:#631236;--c-bloom-day-dimText:#6f6a78;--c-bloom-day-green:#22c55e;--c-bloom-day-greenSoft:#dcfce7;--c-bloom-day-red:#ef4444;--c-bloom-day-redSoft:rgba(239,68,68,0.1);--c-bloom-day-cancelSoft:rgba(219,39,119,0.14);--c-bloom-day-heat0:#f1ece4;--c-bloom-day-heat1:#fde9bf;--c-bloom-day-heat2:#fcd577;--c-bloom-day-heat3:#f472b6;--c-bloom-day-placeholder:#c3bcb0;--c-bloom-day-navBg:rgba(255,255,255,0.92);--c-bloom-day-plusLight:#fbcee5;--c-bloom-day-plusWhite:#fefbfd;--c-bloom-day-plusMuted:#eb88b4;--g0-bloom-day:#30091a;--g1-bloom-day:#1d0e16">
+    <h3>mode: day</h3>
+    <div class="grid">
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-day-cream)"></div><div class="nm">c.cream</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-day-surface)"></div><div class="nm">c.surface</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-day-ink)"></div><div class="nm">c.ink</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-day-muted)"></div><div class="nm">c.muted</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-day-border)"></div><div class="nm">c.border</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-day-dot)"></div><div class="nm">c.dot</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-day-accent)"></div><div class="nm">c.accent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-day-accentDeep)"></div><div class="nm">c.accentDeep</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-day-accentSoft)"></div><div class="nm">c.accentSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-day-accentBright)"></div><div class="nm">c.accentBright</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-day-onAccent)"></div><div class="nm">c.onAccent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-day-iconAccent)"></div><div class="nm">c.iconAccent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-day-accentBorder)"></div><div class="nm">c.accentBorder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-day-deepBorder)"></div><div class="nm">c.deepBorder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-day-accentMark)"></div><div class="nm">c.accentMark</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-day-accentHaze)"></div><div class="nm">c.accentHaze</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-day-glowSoft)"></div><div class="nm">c.glowSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-day-ghostBtn)"></div><div class="nm">c.ghostBtn</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-day-scrim)"></div><div class="nm">c.scrim</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-day-shadowColor)"></div><div class="nm">c.shadowColor</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-day-dimText)"></div><div class="nm">c.dimText</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-day-green)"></div><div class="nm">c.green</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-day-greenSoft)"></div><div class="nm">c.greenSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-day-red)"></div><div class="nm">c.red</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-day-redSoft)"></div><div class="nm">c.redSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-day-cancelSoft)"></div><div class="nm">c.cancelSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-day-heat0)"></div><div class="nm">c.heat0</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-day-heat1)"></div><div class="nm">c.heat1</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-day-heat2)"></div><div class="nm">c.heat2</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-day-heat3)"></div><div class="nm">c.heat3</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-day-placeholder)"></div><div class="nm">c.placeholder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-day-navBg)"></div><div class="nm">c.navBg</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-day-plusLight)"></div><div class="nm">c.plusLight</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-day-plusWhite)"></div><div class="nm">c.plusWhite</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-day-plusMuted)"></div><div class="nm">c.plusMuted</div></div>
+      <div class="sw"><div class="chip" style="background:linear-gradient(135deg,var(--g0-bloom-day),var(--g1-bloom-day))"></div><div class="nm">c.plusGradient[0→1]</div></div>
+    </div>
+  </div>
+  <div class="pane" style="--c-bloom-night-cream:#000000;--c-bloom-night-surface:#0e0e10;--c-bloom-night-ink:#f4eee4;--c-bloom-night-muted:#8b857c;--c-bloom-night-border:#26241f;--c-bloom-night-dot:#0a0a0b;--c-bloom-night-accent:#f472b6;--c-bloom-night-accentDeep:#f472b6;--c-bloom-night-accentSoft:#1d0e16;--c-bloom-night-accentBright:#f799ca;--c-bloom-night-onAccent:#fff;--c-bloom-night-iconAccent:#f472b6;--c-bloom-night-accentBorder:rgba(244,114,182,0.35);--c-bloom-night-deepBorder:rgba(219,39,119,0.22);--c-bloom-night-accentMark:rgba(219,39,119,0.92);--c-bloom-night-accentHaze:rgba(244,114,182,0.32);--c-bloom-night-glowSoft:rgba(244,114,182,0.1);--c-bloom-night-ghostBtn:rgba(255,255,255,0.06);--c-bloom-night-scrim:rgba(0,0,0,0.50);--c-bloom-night-shadowColor:#000;--c-bloom-night-dimText:#c5c2be;--c-bloom-night-green:#34d399;--c-bloom-night-greenSoft:#14271a;--c-bloom-night-red:#ef4444;--c-bloom-night-redSoft:rgba(239,68,68,0.1);--c-bloom-night-cancelSoft:rgba(219,39,119,0.14);--c-bloom-night-heat0:#1d0e16;--c-bloom-night-heat1:#3d1d2e;--c-bloom-night-heat2:#7a395b;--c-bloom-night-heat3:#f472b6;--c-bloom-night-placeholder:#585250;--c-bloom-night-navBg:rgba(0,0,0,0.88);--c-bloom-night-plusLight:#fbcee5;--c-bloom-night-plusWhite:#fefbfd;--c-bloom-night-plusMuted:#eb88b4;--g0-bloom-night:#30091a;--g1-bloom-night:#1d0e16">
+    <h3>mode: night</h3>
+    <div class="grid">
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-night-cream)"></div><div class="nm">c.cream</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-night-surface)"></div><div class="nm">c.surface</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-night-ink)"></div><div class="nm">c.ink</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-night-muted)"></div><div class="nm">c.muted</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-night-border)"></div><div class="nm">c.border</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-night-dot)"></div><div class="nm">c.dot</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-night-accent)"></div><div class="nm">c.accent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-night-accentDeep)"></div><div class="nm">c.accentDeep</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-night-accentSoft)"></div><div class="nm">c.accentSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-night-accentBright)"></div><div class="nm">c.accentBright</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-night-onAccent)"></div><div class="nm">c.onAccent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-night-iconAccent)"></div><div class="nm">c.iconAccent</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-night-accentBorder)"></div><div class="nm">c.accentBorder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-night-deepBorder)"></div><div class="nm">c.deepBorder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-night-accentMark)"></div><div class="nm">c.accentMark</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-night-accentHaze)"></div><div class="nm">c.accentHaze</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-night-glowSoft)"></div><div class="nm">c.glowSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-night-ghostBtn)"></div><div class="nm">c.ghostBtn</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-night-scrim)"></div><div class="nm">c.scrim</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-night-shadowColor)"></div><div class="nm">c.shadowColor</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-night-dimText)"></div><div class="nm">c.dimText</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-night-green)"></div><div class="nm">c.green</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-night-greenSoft)"></div><div class="nm">c.greenSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-night-red)"></div><div class="nm">c.red</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-night-redSoft)"></div><div class="nm">c.redSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-night-cancelSoft)"></div><div class="nm">c.cancelSoft</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-night-heat0)"></div><div class="nm">c.heat0</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-night-heat1)"></div><div class="nm">c.heat1</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-night-heat2)"></div><div class="nm">c.heat2</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-night-heat3)"></div><div class="nm">c.heat3</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-night-placeholder)"></div><div class="nm">c.placeholder</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-night-navBg)"></div><div class="nm">c.navBg</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-night-plusLight)"></div><div class="nm">c.plusLight</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-night-plusWhite)"></div><div class="nm">c.plusWhite</div></div>
+      <div class="sw"><div class="chip" style="background:var(--c-bloom-night-plusMuted)"></div><div class="nm">c.plusMuted</div></div>
+      <div class="sw"><div class="chip" style="background:linear-gradient(135deg,var(--g0-bloom-night),var(--g1-bloom-night))"></div><div class="nm">c.plusGradient[0→1]</div></div>
+    </div>
+  </div>
+</div>

@@ -25,12 +25,15 @@
 | # | Spec | Lane | From |
 | --- | --- | --- | --- |
 | 1 | [IMP-077 — a motion vocabulary the whole app can speak](#imp-077--a-motion-vocabulary-the-whole-app-can-speak) | **Build** | owner, 2026-08-17 |
-| 2 | [IMP-078 — a design system Claude Design can work from](#imp-078--a-design-system-claude-design-can-work-from) | Dev-only | owner, 2026-08-17 |
 
-> **IMP-076 is ✅ code-complete (2026-08-17)** — spec archived to
-> [`build-log.md`](build-log.md). It left the tree on **v1.0.7 / vc13**, New Arch on, with a clean
-> `assembleRelease` behind it. **Its correctness is not settled yet: [WALK-16](walk-open.md) is what
-> decides that, and IMP-077 below is gated on it.**
+> **IMP-076 and IMP-078 are both ✅ code-complete (2026-08-17)** — specs archived to
+> [`build-log.md`](build-log.md). IMP-076 left the tree on **v1.0.7 / vc13**, New Arch on, with a clean
+> `assembleRelease` behind it; **its correctness is not settled yet — [WALK-16](walk-open.md) decides that.**
+> IMP-078 pushed `design-system/` live to a new Claude Design project (**night screen baselines are the one
+> known gap** — see its build-log entry).
+>
+> **IMP-077 is the only spec left here, and it is BLOCKED on WALK-16 passing.** If you are a build chat and
+> WALK-16 has not passed, there is nothing in this queue for you.
 
 > ### 🔒 ALL THREE ARE BRANCH-ONLY — `feat/design-push`, never pushed
 >
@@ -151,93 +154,3 @@ every Claude Design spec will be written in.** One named primitive set, one plac
 **Commit:** `feat(motion): a motion vocabulary the whole app can speak (IMP-077)` — **no `Release-Lane`
 trailer, and do not push.**
 
----
-
-### IMP-078 — a design system Claude Design can work from
-
-**Lane:** Dev-only (**no app code changes at all**) · **Branch:** `feat/design-push`, never pushed ·
-**Origin:** owner, 2026-08-17.
-
-**No gate — this depends on neither IMP-076 nor IMP-077** and may be taken first, last or concurrently.
-
-**Why, and what the failure mode is.** Claude Design does **not** emit React Native; a design-system
-project is HTML/CSS previews plus specs. Given only a description it produces a beautiful *different
-app* — output that cannot be ported. Everything below exists to constrain it toward output portable in
-an afternoon. **The two highest-value files are the frozen-sun card and the motion contract**, and both
-must exist **before the first design request** — whatever is in the project at request time is what
-constrains the output, and guardrails added afterward do not retroactively fix an already-generated
-design.
-
-**Steps**
-
-1. **Generate the tokens — `scripts/gen-design-system.js` (new).**
-   1. Import `makeTheme()` from [`theme.js`](../src/theme.js) and emit
-      `design-system/tokens/{color,type,shape,elevation}.html` across `mode: day | night` × the shipped
-      accent sets.
-   2. **Generated, never hand-written.** Hand-copied hex drifts the first time the accent palette
-      changes; generated output cannot.
-   3. **Label every swatch with its token name (`c.accentSoft`) and never show a raw hex.** Claude
-      Design will only return specs in token names if it never sees a hex.
-
-2. **`design-system/frozen/celestial.html` — the highest-value card in the project.**
-   1. Render `BigSun`, `RayFan`, `NightSky`, `NightRays`, `BigMoon` as static PNGs exported from the
-      **real components**, both themes.
-   2. Caption verbatim:
-      > **FROZEN — reference only.** These are the app's signature. Compose around them. Never redraw,
-      > restyle, recolor, or re-time them. Designs may position them, size them, and animate their
-      > *container* (opacity, translate, scale) — nothing inside.
-   3. **Why it is first:** without a *visual*, Claude Design redesigns the sun, and every downstream
-      screen spec silently inherits a sun that cannot ship.
-
-3. **`design-system/motion/` — the portability contract.**
-   1. `contract.html` — the hard rules, verbatim from §6 of the design doc: only
-      `opacity`/`translateX,Y`/`scale`/`rotate` animate; every motion names a `src/motion.js` primitive;
-      numbers not vibes (ms, dp, named easing); durations from `DUR`; nothing loops except the existing
-      `ProgressBar` shimmer; every entrance degrades to a cross-fade under reduced-motion.
-   2. `primitives.html` — a runnable CSS approximation of each `motion.js` export, so the house feel can
-      be **seen** rather than inferred from a table.
-   3. **Writable before IMP-077 lands** — the primitive list is fully specified in IMP-077 step 3 and in
-      the design doc.
-
-4. **`design-system/components/*.html`** — `card` (incl. the night-v2 `CARD_SHEEN` top strip),
-   `buttons`, `progress`, `chips`, `nav`, `plus`. Mirror [`ui.js`](../src/ui.js),
-   [`shopui.js`](../src/shopui.js), and the nav at [`RitualsApp.js:757`](../src/RitualsApp.js#L757).
-
-5. **`design-system/screens/baseline-*.html`** — real screenshots, both themes, captured via the existing
-   `npm run shots` path ([`scripts/shots.sh`](../scripts/shots.sh), Maestro + adb). Designing *from* the
-   current screens rather than from prose is the biggest single lever on whether output reads as the next
-   version of Daily Rituals or as a generic wellness app.
-
-6. **Mark every card.** Each preview's **first line** must be `<!-- @dsCard group="…" -->` — that marker
-   is what the Design System pane compiles into `_ds_manifest.json`. **A preview without it produces no
-   card.** Do not hand-edit `_ds_manifest.json`.
-
-7. **Push to Claude Design.**
-   1. The owner's existing GitHub connection to this repo is a **regular project**; project type is
-      immutable at creation, so it cannot become a design system (`list_projects`, filtered to writable
-      design-system projects, returned empty 2026-08-16). A **new** design-system project is required.
-   2. `DesignSync`: `create_project` → `finalize_plan` → `write_files`.
-   3. **Push step 2 (frozen) and step 3 (motion contract) first** — whatever is in the project at request
-      time is what constrains output, and guardrails added afterward do not retroactively fix an
-      already-generated design.
-   4. ⚠️ **`design-system/` is the only thing that goes to Claude Design.** This does not push the repo
-      to GitHub and does not relax the branch discipline above.
-
-8. **Steady state — note it, do not do it.** Once `design-system/` is committed, the Design System pane's
-   own GitHub connection could be pointed at that folder so it re-syncs whenever `theme.js` changes.
-   **That requires publishing the branch, so it does not happen while the no-push instruction stands.**
-   Record it in the session note as an option the owner can take later.
-
-9. **No test gate.** This spec changes no app code, so `npm test` must be **unchanged** — not improved.
-   **If the count moves, something was touched that should not have been.**
-
-**Done when** the Design System pane shows every card above, the frozen card renders the real sun, and a
-first design request returns a spec written in **token names and `motion.js` primitives**.
-
-**First design request, once it is live:** **`PlusPerks`** — 44 lines carrying the entire "what you get"
-pitch, against `YouScreen.js`'s 325. The surfaces that take money are the least designed in the product.
-**One screen per request**; "redesign the app" produces mush. And this is a *design* request only —
-`PLUS_ENABLED` stays `false`, `PLUS_PERKS` copy and everything under `src/billing/` are untouched.
-
-**Commit:** `docs(design): a design system Claude Design can work from (IMP-078)` — **no `Release-Lane`
-trailer, and do not push.**

@@ -1,0 +1,67 @@
+<!-- @dsCard group="Tokens" -->
+<!doctype html>
+<meta charset="utf-8">
+<title>Shape</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  body{margin:0;padding:32px;font:15px/1.55 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+       color:#18181b;background:#fafafa}
+  h1{font-size:24px;margin:0 0 4px;letter-spacing:-.01em}
+  h2{font-size:15px;margin:36px 0 12px;text-transform:uppercase;letter-spacing:.08em;color:#71717a}
+  .lede{margin:0 0 8px;color:#52525b;max-width:70ch}
+  .rule{border:0;border-top:1px solid #e4e4e7;margin:28px 0}
+  .note{border-left:3px solid #a1a1aa;padding:10px 14px;background:#f4f4f5;margin:16px 0;max-width:80ch}
+  .note strong{color:#18181b}
+  code{font:13px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;background:#f4f4f5;padding:1px 5px;border-radius:4px}
+  table{border-collapse:collapse;width:100%;max-width:900px;margin:12px 0}
+  th,td{text-align:left;padding:7px 10px;border-bottom:1px solid #e4e4e7;vertical-align:top}
+  th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:#71717a;font-weight:600}
+  td code{background:none;padding:0}
+  .grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));max-width:1100px}
+  .sw{border:1px solid #e4e4e7;border-radius:8px;overflow:hidden;background:#fff}
+  .sw .chip{height:56px}
+  .sw .nm{font:12px/1.3 ui-monospace,SFMono-Regular,Menlo,monospace;padding:7px 8px;border-top:1px solid #e4e4e7;
+          word-break:break-all;color:#3f3f46}
+  .modes{display:grid;gap:22px;grid-template-columns:repeat(auto-fit,minmax(430px,1fr));max-width:1100px}
+  .pane{border:1px solid #e4e4e7;border-radius:12px;padding:16px;background:#fff}
+  .pane h3{margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:.07em;color:#71717a}
+</style>
+<h1>Shape</h1>
+<p class="lede">The radius scale, shown at the three ends of the user-adjustable roundness range.</p>
+<div class="note"><strong>Radius is not a constant — it is <code>base × roundness</code>, and the user
+sets roundness.</strong> Card 26, button 18, small 13, each multiplied. Name
+<code>t.radius.card</code> / <code>.btn</code> / <code>.sm</code>; a fixed <code>borderRadius: 26</code>
+breaks for every user who moved the slider.</div>
+<div class="modes"><div class="pane"><h3>roundness 0.6</h3>
+  <div style="display:flex;gap:12px;flex-wrap:wrap"><div style="width:132px;height:76px;border:1px solid #d4d4d8;background:#fff;border-radius:15.6px;
+        display:flex;align-items:center;justify-content:center;font:12px ui-monospace,Menlo,monospace;color:#52525b">
+        t.radius.card</div><div style="width:132px;height:76px;border:1px solid #d4d4d8;background:#fff;border-radius:10.799999999999999px;
+        display:flex;align-items:center;justify-content:center;font:12px ui-monospace,Menlo,monospace;color:#52525b">
+        t.radius.btn</div><div style="width:132px;height:76px;border:1px solid #d4d4d8;background:#fff;border-radius:7.8px;
+        display:flex;align-items:center;justify-content:center;font:12px ui-monospace,Menlo,monospace;color:#52525b">
+        t.radius.sm</div></div>
+  <table style="margin-top:14px"><tr><th>Token</th><th>Value</th></tr>
+  <tr><td><code>t.radius.card</code></td><td><code>15.6px</code></td></tr><tr><td><code>t.radius.btn</code></td><td><code>10.799999999999999px</code></td></tr><tr><td><code>t.radius.sm</code></td><td><code>7.8px</code></td></tr>
+  </table></div>
+<div class="pane"><h3>roundness 1 — shipped default</h3>
+  <div style="display:flex;gap:12px;flex-wrap:wrap"><div style="width:132px;height:76px;border:1px solid #d4d4d8;background:#fff;border-radius:26px;
+        display:flex;align-items:center;justify-content:center;font:12px ui-monospace,Menlo,monospace;color:#52525b">
+        t.radius.card</div><div style="width:132px;height:76px;border:1px solid #d4d4d8;background:#fff;border-radius:18px;
+        display:flex;align-items:center;justify-content:center;font:12px ui-monospace,Menlo,monospace;color:#52525b">
+        t.radius.btn</div><div style="width:132px;height:76px;border:1px solid #d4d4d8;background:#fff;border-radius:13px;
+        display:flex;align-items:center;justify-content:center;font:12px ui-monospace,Menlo,monospace;color:#52525b">
+        t.radius.sm</div></div>
+  <table style="margin-top:14px"><tr><th>Token</th><th>Value</th></tr>
+  <tr><td><code>t.radius.card</code></td><td><code>26px</code></td></tr><tr><td><code>t.radius.btn</code></td><td><code>18px</code></td></tr><tr><td><code>t.radius.sm</code></td><td><code>13px</code></td></tr>
+  </table></div>
+<div class="pane"><h3>roundness 1.4</h3>
+  <div style="display:flex;gap:12px;flex-wrap:wrap"><div style="width:132px;height:76px;border:1px solid #d4d4d8;background:#fff;border-radius:36.4px;
+        display:flex;align-items:center;justify-content:center;font:12px ui-monospace,Menlo,monospace;color:#52525b">
+        t.radius.card</div><div style="width:132px;height:76px;border:1px solid #d4d4d8;background:#fff;border-radius:25.2px;
+        display:flex;align-items:center;justify-content:center;font:12px ui-monospace,Menlo,monospace;color:#52525b">
+        t.radius.btn</div><div style="width:132px;height:76px;border:1px solid #d4d4d8;background:#fff;border-radius:18.2px;
+        display:flex;align-items:center;justify-content:center;font:12px ui-monospace,Menlo,monospace;color:#52525b">
+        t.radius.sm</div></div>
+  <table style="margin-top:14px"><tr><th>Token</th><th>Value</th></tr>
+  <tr><td><code>t.radius.card</code></td><td><code>36.4px</code></td></tr><tr><td><code>t.radius.btn</code></td><td><code>25.2px</code></td></tr><tr><td><code>t.radius.sm</code></td><td><code>18.2px</code></td></tr>
+  </table></div></div>

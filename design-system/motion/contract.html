@@ -1,0 +1,98 @@
+<!-- @dsCard group="Motion" -->
+<!doctype html>
+<meta charset="utf-8">
+<title>Motion contract</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  body{margin:0;padding:32px;font:15px/1.55 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+       color:#18181b;background:#fafafa}
+  h1{font-size:24px;margin:0 0 4px;letter-spacing:-.01em}
+  h2{font-size:15px;margin:34px 0 10px;text-transform:uppercase;letter-spacing:.08em;color:#71717a}
+  .lede{margin:0 0 8px;color:#52525b;max-width:74ch}
+  code{font:13px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;background:#f4f4f5;padding:1px 5px;border-radius:4px}
+  ol.rules{counter-reset:r;list-style:none;padding:0;margin:0;max-width:86ch}
+  ol.rules>li{counter-increment:r;position:relative;padding:16px 18px 16px 56px;margin:0 0 10px;
+              background:#fff;border:1px solid #e4e4e7;border-radius:10px}
+  ol.rules>li::before{content:counter(r);position:absolute;left:18px;top:16px;width:24px;height:24px;
+              border-radius:50%;background:#18181b;color:#fff;font:600 13px/24px ui-sans-serif,system-ui;text-align:center}
+  ol.rules b{display:block;margin-bottom:5px}
+  .yes,.no{display:inline-block;padding:2px 8px;border-radius:5px;font:12px/1.5 ui-monospace,Menlo,monospace;margin:2px 4px 2px 0}
+  .yes{background:#dcfce7;color:#14532d}
+  .no{background:#fee2e2;color:#7f1d1d;text-decoration:line-through}
+  .note{border-left:3px solid #a1a1aa;padding:10px 14px;background:#f4f4f5;margin:16px 0;max-width:86ch}
+  .bad{border-left-color:#dc2626;background:#fef2f2}
+  .good{border-left-color:#16a34a;background:#f0fdf4}
+  table{border-collapse:collapse;max-width:760px;width:100%;margin:10px 0}
+  th,td{text-align:left;padding:7px 10px;border-bottom:1px solid #e4e4e7}
+  th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:#71717a}
+</style>
+
+<h1>Motion contract</h1>
+<p class="lede">The card that decides whether a design is portable. Every animation in a returned spec must
+satisfy all six rules — a spec that breaks one cannot be built in React Native without redesigning it first.</p>
+
+<div class="note bad"><strong>This is a hard constraint list, not a style guide.</strong> The app is React
+Native, not the web. Motion runs on a worklet thread through <code>src/motion.js</code>; anything outside
+that budget either cannot be expressed or drops frames on a mid-range Android.</div>
+
+<ol class="rules">
+  <li><b>Only these four properties animate.</b>
+    <span class="yes">opacity</span><span class="yes">translateX</span><span class="yes">translateY</span><span class="yes">scale</span><span class="yes">rotate</span>
+    <br>Everything else is off-budget and will be rejected:
+    <span class="no">background-color</span><span class="no">width</span><span class="no">height</span><span class="no">blur</span><span class="no">box-shadow</span><span class="no">background-position</span>
+    <br><span style="color:#52525b;font-size:13px">Colour is excluded even though Reanimated <em>can</em>
+    interpolate it on the UI thread — the app's surfaces are token-driven, and animated colour fights the
+    theme system (a user can change palette and mode underneath you).</span>
+  </li>
+
+  <li><b>Every motion must name a <code>src/motion.js</code> primitive.</b>
+    Write "enter with <code>riseIn</code>, <code>stagger(i)</code> at 60ms" — one call, one place. A spec
+    that invents a new curve must say so explicitly and justify why an existing primitive will not do.
+  </li>
+
+  <li><b>Numbers, not vibes.</b>
+    Duration in ms, delay in ms, offset in dp, easing named from <code>EASE</code>.
+    "Gentle fade" is not a spec. "<code>fadeOut()</code>, <code>DUR.tap</code>" is.
+  </li>
+
+  <li><b>Durations come from <code>DUR</code>.</b>
+    <table>
+      <tr><th>Token</th><th>ms</th><th>Use</th></tr>
+      <tr><td><code>DUR.tap</code></td><td>120</td><td>Press feedback, instant acknowledgements</td></tr>
+      <tr><td><code>DUR.enter</code></td><td>320</td><td>Card and row entrances, screen change</td></tr>
+      <tr><td><code>DUR.settle</code></td><td>480</td><td>Longer settles, count-ups</td></tr>
+      <tr><td><code>DUR.celebrate</code></td><td>900</td><td>Reward moments only</td></tr>
+    </table>
+    Off-ladder values need justification.
+  </li>
+
+  <li><b>Nothing loops indefinitely</b> — except the existing <code>ProgressBar</code> shimmer, which is
+    already built and stays as it is. This is a journalling app opened once a day; ambient perpetual motion
+    reads as noise and costs battery.
+    <br><span style="color:#52525b;font-size:13px">The one apparent exception is the frozen celestial set:
+    <code>RayFan</code> and <code>NightRays</code> rotate once per 60s. They are pre-existing, frozen, and
+    not a licence for new loops.</span>
+  </li>
+
+  <li><b>Respect reduced-motion.</b> Every entrance must degrade to a plain cross-fade when the OS asks for
+    reduced motion. If a design only works <em>with</em> its movement, it is not finished.
+  </li>
+</ol>
+
+<h2>What a usable spec looks like</h2>
+<div class="note good">
+"Perk rows enter with <code>riseIn</code>, <code>stagger(i, 60)</code>, <code>DUR.enter</code>. The price
+card uses <code>popIn</code> on mount. CTA takes <code>usePressScale()</code>. Nothing loops. Under
+reduced-motion all three collapse to a cross-fade at <code>DUR.enter</code>."
+</div>
+<div class="note bad">
+"The perks gently cascade in with a soft blur that resolves as the card lifts, and the price gradient
+slowly shifts behind it." — three off-budget properties (blur, box-shadow lift, background-position), no
+named primitive, no numbers, and an indefinite loop.
+</div>
+
+<h2>The one thing that is never animated at all</h2>
+<div class="note bad"><strong>The celestial set is frozen.</strong> <code>BigSun</code>,
+<code>RayFan</code>, <code>NightSky</code>, <code>NightRays</code> and <code>BigMoon</code> are never
+redrawn, restyled, recoloured or re-timed. A design may position them, size them, and animate their
+<em>container</em> (opacity, translate, scale) — nothing inside. See the Frozen card.</div>
