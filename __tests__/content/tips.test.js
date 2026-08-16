@@ -1,55 +1,8 @@
-import { TIPS, EXPLAINERS, pendingTip, markTipSeen } from '../../src/content/tips';
-
-const SCREENS = ['today', 'archive', 'you'];
-
-describe('pendingTip', () => {
-  it('returns the tip for an unseen screen', () => {
-    const tip = pendingTip('today', []);
-    expect(tip).not.toBeNull();
-    expect(tip.screen).toBe('today');
-  });
-
-  it('returns null once its id is in seenTips', () => {
-    const tip = pendingTip('today', []);
-    expect(pendingTip('today', [tip.id])).toBeNull();
-  });
-
-  it("returns null for a screen with no tip ('insights')", () => {
-    expect(pendingTip('insights', [])).toBeNull();
-  });
-
-  it('tolerates undefined/null seenTips', () => {
-    expect(pendingTip('today', undefined)).not.toBeNull();
-    expect(pendingTip('today', null)).not.toBeNull();
-  });
-});
-
-describe('markTipSeen', () => {
-  it('returns a new array and does not mutate the input', () => {
-    const input = [];
-    const result = markTipSeen(input, 'today-streak');
-    expect(result).not.toBe(input);
-    expect(input).toEqual([]);
-    expect(result).toEqual(['today-streak']);
-  });
-
-  it('is idempotent (adding a seen id twice yields one entry)', () => {
-    const once = markTipSeen([], 'today-streak');
-    const twice = markTipSeen(once, 'today-streak');
-    expect(twice).toEqual(['today-streak']);
-  });
-});
-
-describe('TIPS', () => {
-  it('has every id unique', () => {
-    const ids = TIPS.map((t) => t.id);
-    expect(new Set(ids).size).toBe(ids.length);
-  });
-
-  it('has every screen one of today/archive/you', () => {
-    TIPS.forEach((t) => expect(SCREENS).toContain(t.screen));
-  });
-});
+import fs from 'fs';
+import path from 'path';
+import { EXPLAINERS } from '../../src/content/tips';
+import * as tipsModule from '../../src/content/tips';
+import { PERSISTED_KEYS, pickPersisted, deserialize } from '../../src/persistence/state';
 
 describe('EXPLAINERS', () => {
   it('has exactly six entries', () => {
@@ -70,5 +23,70 @@ describe('EXPLAINERS', () => {
   it('has every id unique', () => {
     const ids = EXPLAINERS.map((e) => e.id);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+describe('IMP-075 — the tip cards are gone', () => {
+  const readSrc = (rel) => fs.readFileSync(path.join(__dirname, '../../src', rel), 'utf8');
+
+  it('the tips module no longer exports TIPS', () => {
+    expect(tipsModule.TIPS).toBeUndefined();
+  });
+
+  it('the tips module no longer exports pendingTip', () => {
+    expect(tipsModule.pendingTip).toBeUndefined();
+  });
+
+  it('the tips module no longer exports markTipSeen', () => {
+    expect(tipsModule.markTipSeen).toBeUndefined();
+  });
+
+  it('still exports EXPLAINERS, unchanged', () => {
+    expect(EXPLAINERS.map((e) => e.id)).toEqual(['streak', 'embers', 'candles', 'rites', 'levels', 'keepsakes']);
+  });
+
+  it('TipCard.js is gone from the tree', () => {
+    expect(fs.existsSync(path.join(__dirname, '../../src/screens/TipCard.js'))).toBe(false);
+  });
+
+  it('HomeScreen renders no TipCard', () => {
+    const src = readSrc('screens/HomeScreen.js');
+    expect(src).not.toMatch(/TipCard/);
+    expect(src).not.toMatch(/onDismissTip/);
+  });
+
+  it('ArchiveScreen renders no TipCard', () => {
+    const src = readSrc('screens/ArchiveScreen.js');
+    expect(src).not.toMatch(/TipCard/);
+    expect(src).not.toMatch(/onDismissTip/);
+  });
+
+  it('YouScreen renders no TipCard but still imports EXPLAINERS', () => {
+    const src = readSrc('screens/YouScreen.js');
+    expect(src).not.toMatch(/TipCard/);
+    expect(src).not.toMatch(/onDismissTip/);
+    expect(src).toMatch(/EXPLAINERS/);
+  });
+
+  it('RitualsApp has no tip wiring left', () => {
+    const src = readSrc('RitualsApp.js');
+    expect(src).not.toMatch(/pendingTip/);
+    expect(src).not.toMatch(/markTipSeen/);
+    expect(src).not.toMatch(/seenTips/);
+    expect(src).not.toMatch(/TipCard/);
+  });
+
+  it('seenTips is no longer a persisted key', () => {
+    expect(PERSISTED_KEYS).not.toContain('seenTips');
+  });
+
+  it('pickPersisted drops a legacy seenTips value', () => {
+    expect(pickPersisted({ seenTips: ['today-streak'], xp: 5 })).toEqual({ xp: 5 });
+  });
+
+  it('a legacy payload carrying seenTips still deserializes', () => {
+    const result = deserialize(JSON.stringify({ version: 3, xp: 5, seenTips: ['today-streak'] }));
+    expect(result).not.toBeNull();
+    expect(result.xp).toBe(5);
   });
 });

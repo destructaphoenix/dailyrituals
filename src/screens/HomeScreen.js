@@ -18,7 +18,6 @@ import { StreakFreeze, DailyQuests } from '../gamify';
 import { EmberPill } from '../shopui';
 import { onThisDay } from '../memory/onThisDay';
 import { recapYears } from '../recap/annualRecap';
-import TipCard from './TipCard';
 import FreezeNoticeCard from './FreezeNoticeCard';
 import OnThisDayCard from './OnThisDayCard';
 import AnnualRecapCard from './AnnualRecapCard';
@@ -27,7 +26,7 @@ import AnnualRecapCard from './AnnualRecapCard';
 // for why (a "year in review" outside Dec–Jan is either premature or stale).
 const RECAP_WINDOW_MONTHS = [11, 0]; // Dec, Jan
 
-export default function HomeScreen({ copy, mode, streak, level, levelName, xpInto, xpToNext, entries, quests, freezes, onOpenAchievements, done, onWrite, onToggleMode, embers, plus, plusEnabled = false, onOpenShop, dailyPrompt = '', userName = '', tip, onDismissTip, pendingFreezeNotice = [], onDismissFreezeNotice, onThisDayDismissed = '', onDismissOnThisDay, onOpenOnThisDay, onOpenPaywall, recapSeen = null, onDismissAnnualRecap, onOpenAnnualRecap, frozenDays = [] }) {
+export default function HomeScreen({ copy, mode, streak, level, levelName, xpInto, xpToNext, entries, quests, freezes, onOpenAchievements, done, onWrite, onToggleMode, embers, plus, plusEnabled = false, onOpenShop, dailyPrompt = '', userName = '', pendingFreezeNotice = [], onDismissFreezeNotice, onThisDayDismissed = '', onDismissOnThisDay, onOpenOnThisDay, onOpenPaywall, recapSeen = null, onDismissAnnualRecap, onOpenAnnualRecap, frozenDays = [] }) {
   const t = useTheme();
   const c = t.colors;
   const Orb = mode === 'night' ? Moon : Sun;
@@ -50,12 +49,6 @@ export default function HomeScreen({ copy, mode, streak, level, levelName, xpInt
       contentContainerStyle={{ paddingTop: 4, paddingBottom: 26, gap: 14 }}
       showsVerticalScrollIndicator={false}
     >
-      {tip && (
-        <View style={{ paddingHorizontal: 20 }}>
-          <TipCard title={tip.title} body={tip.body} onDismiss={() => onDismissTip(tip.id)} />
-        </View>
-      )}
-
       {/* header: date left · icons right · greeting below */}
       <View style={{ paddingHorizontal: 20 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>

@@ -61,8 +61,6 @@ import { dayNumber } from './time/dailyPick';
 import { selectPrompt } from './content/deck';
 import { packById } from './content/packs';
 import { reminderCopy } from './content/reminders';
-import { pendingTip, markTipSeen } from './content/tips';
-import TipCard from './screens/TipCard';
 import PlusPerks from './screens/PlusPerks';
 import AnnualRecap from './screens/AnnualRecap';
 import { buildRecap } from './recap/annualRecap';
@@ -174,9 +172,6 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     () => selectPrompt(packById(settings.promptPack).prompts, promptDeck, dayNumber(), settings.promptPack),
     [promptDeck, settings.promptPack],
   );
-  // Tip cards seen (IMP-041) — an id is added once dismissed and never shown again.
-  const [seenTips, setSeenTips] = useState(initialState.seenTips ?? []);
-  const dismissTip = (id) => setSeenTips((s) => markTipSeen(s, id));
   const [plusPerksOpen, setPlusPerksOpen] = useState(false);
   // Which year's Annual Recap (IMP-046) is open, if any — null means closed.
   const [openRecapYear, setOpenRecapYear] = useState(null);
@@ -434,14 +429,14 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
         mode,
         entries, xp, done, quests, freezes, frozenDays, embers, plus,
         activePalette, ownedPalettes, activeSky, ownedSkies,
-        subCanceled, activePlan, lastActiveDay, settings, lastBackupAt, promptDeck, seenTips, trash,
+        subCanceled, activePlan, lastActiveDay, settings, lastBackupAt, promptDeck, trash,
         freeRestoresUsed,
       }));
     }, 400);
     return () => clearTimeout(id);
   }, [mode, entries, xp, done, quests, freezes, frozenDays, embers, plus,
     activePalette, ownedPalettes, activeSky, ownedSkies,
-    subCanceled, activePlan, lastActiveDay, settings, lastBackupAt, promptDeck, seenTips, trash,
+    subCanceled, activePlan, lastActiveDay, settings, lastBackupAt, promptDeck, trash,
     freeRestoresUsed]);
 
   const complete = ({ did, wished, moods }) => {
@@ -557,7 +552,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     onboarded: true,
     entries, xp, done, quests, freezes, frozenDays, embers, plus,
     activePalette, ownedPalettes, activeSky, ownedSkies,
-    subCanceled, activePlan, lastActiveDay, settings, lastBackupAt, promptDeck, seenTips, trash,
+    subCanceled, activePlan, lastActiveDay, settings, lastBackupAt, promptDeck, trash,
     freeRestoresUsed,
   });
 
@@ -692,7 +687,6 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
           <ArchiveScreen
             copy={copy} mode={mode} entries={entries}
             onOpen={openEntry}
-            tip={pendingTip('archive', seenTips)} onDismissTip={dismissTip}
             customMoods={settings.customMoods || []} customMoodEmoji={settings.customMoodEmoji || {}}
             frozenDays={frozenDays}
           />
@@ -725,7 +719,6 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             reminderValue={reminderRowValue(settings.reminder, reminderPermission)}
             onOpenReminder={() => setReminderOpen(true)}
             onOpenPlusPerks={() => setPlusPerksOpen(true)}
-            tip={pendingTip('you', seenTips)} onDismissTip={dismissTip}
             entries={entries} onOpenAnnualRecap={(year) => setOpenRecapYear(year)}
           />
         );
@@ -739,7 +732,6 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             embers={embers} plus={plus} plusEnabled={PLUS_ENABLED} onOpenShop={() => setShopOpen(true)}
             done={done} onWrite={() => setWriting(true)} onToggleMode={onToggleMode}
             dailyPrompt={promptSel.item} userName={(settings.name || '').trim()}
-            tip={pendingTip('today', seenTips)} onDismissTip={dismissTip}
             pendingFreezeNotice={settings.pendingFreezeNotice || []}
             onDismissFreezeNotice={() => setSettings((s) => ({ ...s, pendingFreezeNotice: [] }))}
             onThisDayDismissed={settings.onThisDayDismissed || ''}

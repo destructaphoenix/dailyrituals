@@ -1,27 +1,11 @@
-// content/tips.js — one-per-screen dismissible tips (IMP-041) and the
-// verbatim explainer copy for the "How it works" card + "What's in Plus"
-// sheet. Pure content + pure helpers; no rendering here.
-
-export const TIPS = [
-  {
-    id: 'today-streak',
-    screen: 'today',
-    title: 'Your streak',
-    body: "That number is how many days in a row you've laid to rest. Miss a day and it starts again at one — unless a candle is lit for you.",
-  },
-  {
-    id: 'archive-heat',
-    screen: 'archive',
-    title: 'Your days, at a glance',
-    body: 'Every square is a day. 💀 marks one that got away. Tap any reflection to read it again.',
-  },
-  {
-    id: 'you-safety',
-    screen: 'you',
-    title: 'It all lives here',
-    body: 'Your journal is kept on this phone and nowhere else. Back it up here, and it will be waiting on your next one.',
-  },
-];
+// content/tips.js — the verbatim explainer copy for the "How it works" card
+// (YouScreen) and the "What's in Plus" sheet. Pure content; no rendering here.
+//
+// IMP-041's per-screen dismissible tips were removed by IMP-075 — the owner's
+// call after walking them in WALK-10, not a defect. TIPS, pendingTip,
+// markTipSeen and the persisted `seenTips` key went with them; "How it works"
+// already carries the same six mechanics on demand. The filename is kept so
+// the build-log and walk history that cite this path still resolve.
 
 export const EXPLAINERS = [
   {
@@ -61,15 +45,3 @@ export const EXPLAINERS = [
     body: "Keepsakes arrive on their own for what you've already written — days kept, streaks held, words laid down. There's nothing to claim; they're simply there when you've earned them.",
   },
 ];
-
-export function pendingTip(screen, seenTips) {
-  const seen = seenTips || [];
-  const tip = TIPS.find((t) => t.screen === screen && !seen.includes(t.id));
-  return tip || null;
-}
-
-export function markTipSeen(seenTips, id) {
-  const seen = seenTips || [];
-  if (seen.includes(id)) return seen;
-  return [...seen, id];
-}

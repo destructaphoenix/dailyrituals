@@ -74,7 +74,7 @@ for (let i = 0; i < COUNT; i += 1) {
 }
 
 // The persisted slice exactly as vc11 wrote it. Note what is ABSENT on purpose:
-// frozenDays (IMP-039), seenTips (IMP-041), trash (IMP-036) and freeRestoresUsed
+// frozenDays (IMP-039), trash (IMP-036) and freeRestoresUsed
 // (IMP-048) all post-date vc11, so their `?? []` / `?? 0` fallbacks get tested too.
 const slice = {
   onboarded: true,

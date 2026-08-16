@@ -12,11 +12,10 @@ import { moodFace, hashKey } from '../entries/moodFace';
 import { entryForDayKey } from '../entries/find';
 import { useMoodTick } from '../ui/useMoodTick';
 import ArchiveFilters from './ArchiveFilters';
-import TipCard from './TipCard';
 
 const EMPTY_QUERY = { text: '', moods: [], from: null, to: null };
 
-export default function ArchiveScreen({ copy, mode, entries, onOpen, tip, onDismissTip, customMoods = [], customMoodEmoji = {}, frozenDays = [] }) {
+export default function ArchiveScreen({ copy, mode, entries, onOpen, customMoods = [], customMoodEmoji = {}, frozenDays = [] }) {
   const t = useTheme();
   const c = t.colors;
   const [query, setQuery] = useState(EMPTY_QUERY);
@@ -30,12 +29,6 @@ export default function ArchiveScreen({ copy, mode, entries, onOpen, tip, onDism
       contentContainerStyle={{ paddingTop: 8, paddingBottom: 26, gap: 18 }}
       showsVerticalScrollIndicator={false}
     >
-      {tip && (
-        <View style={{ paddingHorizontal: 20 }}>
-          <TipCard title={tip.title} body={tip.body} onDismiss={() => onDismissTip(tip.id)} />
-        </View>
-      )}
-
       <View style={{ paddingHorizontal: 20, paddingTop: 6 }}>
         <T d w={800} color={c.ink} style={{ fontSize: 24 }}>Reflections</T>
         <T w={600} color={c.muted} style={{ fontSize: 14, marginTop: 2 }}>{copy.arcSub}</T>

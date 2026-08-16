@@ -1,7 +1,7 @@
 // FreezeNoticeCard.js — Home card telling the user a streak-freeze candle
-// spent itself for them (IMP-060). TipCard's shape: a Card with an icon,
-// title/body, and a close button. Presentational — the caller decides
-// whether to mount this at all, and clears pendingFreezeNotice on dismiss.
+// spent itself for them (IMP-060): a Card with an icon, title/body, and a
+// close button. Presentational — the caller decides whether to mount this at
+// all, and clears pendingFreezeNotice on dismiss.
 
 import React from 'react';
 import { View, Pressable } from 'react-native';

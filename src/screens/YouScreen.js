@@ -13,7 +13,6 @@ import { backupHealth } from '../backup/backupHealth';
 import { formatBackupDate } from '../persistence/restoreDetect';
 import { recapYears } from '../recap/annualRecap';
 import NameEditModal from './NameEditModal';
-import TipCard from './TipCard';
 import Row from '../ui/Row';
 import { CHROME_FONT_SCALE } from '../ui/textScale';
 import { EXPLAINERS } from '../content/tips';
@@ -28,7 +27,6 @@ export default function YouScreen({
   trashCount = 0, onOpenTrash,
   customMoodsCount = 0, onOpenMoodManager,
   promptPackName, onOpenPromptPacks,
-  tip, onDismissTip,
   entries = [], onOpenAnnualRecap,
 }) {
   const t = useTheme();
@@ -67,12 +65,6 @@ export default function YouScreen({
       contentContainerStyle={{ paddingTop: 8, paddingBottom: 26, gap: 18 }}
       showsVerticalScrollIndicator={false}
     >
-      {tip && (
-        <View style={{ paddingHorizontal: 20 }}>
-          <TipCard title={tip.title} body={tip.body} onDismiss={() => onDismissTip(tip.id)} />
-        </View>
-      )}
-
       {/* profile header */}
       <View style={{ paddingHorizontal: 20, paddingTop: 6 }}>
         <Card style={{ padding: 20 }}>
