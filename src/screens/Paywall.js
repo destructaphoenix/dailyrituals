@@ -4,7 +4,7 @@
 // Reached from locked cosmetics, the You banner, onboarding, and Export.
 
 import React, { useState } from 'react';
-import { View, ScrollView, Pressable } from 'react-native';
+import { View, ScrollView, Pressable, useWindowDimensions } from 'react-native';
 import { useTheme } from '../theme';
 import { T, PrimaryButton } from '../ui';
 import { Close, Check, Sun, Restore } from '../icons';
@@ -16,6 +16,16 @@ import { LegalFooter, usePurchaseFlow } from './PlusFlow';
 export default function Paywall({ insets, platform = 'ios', service, alreadyPlus, onClose, onSubscribe, onLink }) {
   const t = useTheme();
   const c = t.colors;
+  // Android's Modal is a Dialog whose window size isn't known on the first measure
+  // pass, so `flex: 1` on this View resolves against nothing and the column sizes
+  // to its content: the ScrollView below goes unbounded and the fixed footer is
+  // pushed clean off-screen. A later re-render fires a correcting pass and the
+  // footer comes back — still overlapping the price and the last perks, which is
+  // the pre-IMP-068 bug returning. maxHeight caps us at the viewport from the very
+  // first pass, so the correction is optional rather than load-bearing. Same trap
+  // and same fix as Shop.js:23-29. (IMP-074 — and the `flex: 1` on the ScrollView
+  // below is the OTHER half of this fix, not a duplicate of it. Keep both.)
+  const { height: winH } = useWindowDimensions();
   const [plan, setPlan] = useState('annual');
   // The store's localized prices, falling back to the design constants. Never
   // render PLUS_PRICES directly here — Google charges the store price, not ours.
@@ -27,7 +37,7 @@ export default function Paywall({ insets, platform = 'ios', service, alreadyPlus
   });
 
   return (
-    <View style={{ flex: 1, backgroundColor: c.cream, paddingTop: insets.top }}>
+    <View testID="paywallRoot" style={{ flex: 1, maxHeight: winH, backgroundColor: c.cream, paddingTop: insets.top }}>
       {/* top bar */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingTop: 12, paddingBottom: 4 }}>
         <Pressable onPress={onClose} hitSlop={8} accessibilityRole="button" accessibilityLabel="Close Daily Rituals Plus"

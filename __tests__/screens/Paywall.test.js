@@ -1,5 +1,7 @@
 import React from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
+import fs from 'fs';
+import path from 'path';
+import { ScrollView, StyleSheet, Dimensions } from 'react-native';
 import { render } from '@testing-library/react-native';
 import Paywall from '../../src/screens/Paywall';
 import { PLUS_PERKS, PLUS_PRICES } from '../../src/data';
@@ -30,5 +32,23 @@ describe('Paywall — IMP-068', () => {
     const view = renderPaywall();
     expect(view.getAllByText(PLUS_PRICES.annual.price).length).toBeGreaterThan(0);
     expect(view.getByText('Start 7-day free trial')).toBeTruthy();
+  });
+});
+
+describe('Paywall — IMP-074', () => {
+  test('the root view is capped at the window height, so the first measure pass is bounded', () => {
+    const view = renderPaywall();
+    const flat = StyleSheet.flatten(view.getByTestId('paywallRoot').props.style) || {};
+    expect(flat.maxHeight).toBe(Dimensions.get('window').height);
+    expect(flat.flex).toBe(1);
+  });
+
+  // A source assertion on purpose: "the cap must track the window" is a decision
+  // about which API is used, and a single rendered frame cannot show that a
+  // one-shot read would have gone stale on rotation.
+  test('the cap comes from useWindowDimensions, not a one-shot Dimensions.get', () => {
+    const src = fs.readFileSync(path.join(__dirname, '../../src/screens/Paywall.js'), 'utf8');
+    expect(src).toMatch(/useWindowDimensions\(\)/);
+    expect(src).not.toMatch(/Dimensions\.get\(/);
   });
 });
