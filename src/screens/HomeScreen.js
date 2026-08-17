@@ -2,10 +2,10 @@
 
 import React from 'react';
 import { View, ScrollView, Pressable, Text } from 'react-native';
-import { useTheme, DARK_THEME } from '../theme';
+import { useTheme } from '../theme';
 import { T, Card, PrimaryButton, ProgressBar } from '../ui';
 import { Sun, Moon, Check, Pencil, BADGE_ICON } from '../icons';
-import { RayFan, NightSky, NightRays } from '../art';
+import { RayFan, NightRays } from '../art';
 import { greetingFor, todayLabel } from '../time/clock';
 import { dayKeyOf } from '../time/dayKey';
 import { pickForDay } from '../time/dailyPick';
@@ -40,8 +40,7 @@ export default function HomeScreen({ copy, mode, streak, level, levelName, xpInt
   const topRecapYear = plusEnabled && inRecapWindow ? (recapYears(entries || [], now)[0] ?? null) : null;
   const showRecapCard = topRecapYear != null && recapSeen !== topRecapYear;
   const streakShadow = { textShadowColor: 'rgba(0,0,0,0.7)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 10 };
-  const isNightV2 = t.dark && DARK_THEME === 'v2';
-  const numberGlow = isNightV2 ? { textShadowColor: c.accent + '8C', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 16 } : {};
+  const numberGlow = t.dark ? { textShadowColor: c.accent + '8C', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 16 } : {};
 
   return (
     <ScrollView
@@ -70,7 +69,7 @@ export default function HomeScreen({ copy, mode, streak, level, levelName, xpInt
       {/* streak hero */}
       <View style={{ paddingHorizontal: 20 }}>
         <Card style={{ paddingHorizontal: 22, paddingTop: 26, paddingBottom: 22, alignItems: 'center', overflow: 'hidden' }}>
-          {mode === 'night' ? (DARK_THEME === 'v2' ? <NightRays /> : <NightSky />) : <RayFan />}
+          {mode === 'night' ? <NightRays /> : <RayFan />}
           <View style={{ zIndex: 1, alignItems: 'center', marginTop: 13 }}>
             <T d w={800} color={c.accentDeep} style={[{ fontSize: 76, lineHeight: 82, includeFontPadding: false, textAlign: 'center' }, numberGlow]}>{streak}</T>
             <T d w={700} color={c.ink} style={[{ fontSize: 16, marginTop: 2 }, t.dark && streakShadow]}>day streak</T>

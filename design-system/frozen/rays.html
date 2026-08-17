@@ -1,7 +1,7 @@
 <!-- @dsCard group="Frozen" -->
 <!doctype html>
 <meta charset="utf-8">
-<title>Celestial set</title>
+<title>The rays</title>
 <style>
   *,*::before,*::after{box-sizing:border-box}
   body{margin:0;padding:32px;font:15px/1.55 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
@@ -26,26 +26,24 @@
   .pane{border:1px solid #e4e4e7;border-radius:12px;padding:16px;background:#fff}
   .pane h3{margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:.07em;color:#71717a}
 </style>
-<h1>Celestial set</h1>
-<p class="lede">The sun, the rays and the moons — rendered from the real components in <code>src/art.js</code>, at t=0.</p>
+<h1>The rays</h1>
+<p class="lede">The two hero backdrops — one per mode — rendered from the real components in <code>src/art.js</code>, at t=0.</p>
 <div class="note" style="border-left-color:#dc2626;background:#fef2f2">
-<strong>FROZEN — reference only.</strong> These are the app's signature. Compose around them. Never redraw,
-restyle, recolor, or re-time them. Designs may position them, size them, and animate their <em>container</em>
-(opacity, translate, scale) — nothing inside.
+<strong>FROZEN — reference only.</strong> This pair is the app's whole signature: the same 24-spoke fan,
+once for day and once for night. Compose around them. Never redraw, restyle, recolor, or re-time them.
+Designs may position them, size them, and animate their <em>container</em> (opacity, translate, scale)
+— nothing inside.
 </div>
 
 <div class="note">These are not mockups or redraws: each PNG is rasterised from the shipped component with
-the shipped default palette, so what you see is what renders. The two spinning heroes are captured at
-rotation 0 — <code>RayFan</code> and <code>NightRays</code> turn once per 60s in the app.</div>
+the shipped default palette, so what you see is what renders. Both are captured at rotation 0 —
+<code>RayFan</code> and <code>NightRays</code> turn once per 60s in the app.</div>
+
+<div class="note"><strong>Nothing else is frozen.</strong> Any other artwork you find in the app is
+ordinary decoration, not brand: a design is free to replace it. If it is not on this card, it is not
+the signature.</div>
 
 <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr));max-width:1180px">
-  <figure style="margin:0;border:1px solid #e4e4e7;border-radius:12px;overflow:hidden;background:#fff">
-    <img src="BigSun-day.png" alt="BigSun" style="display:block;width:100%;background:#f9f7f4">
-    <figcaption style="padding:10px 12px;border-top:1px solid #e4e4e7">
-      <code>BigSun</code> · mode day<br>
-      <span style="color:#52525b;font-size:13px">Celebration, day. 12 rays + radial-gradient disc.</span>
-    </figcaption>
-  </figure>
   <figure style="margin:0;border:1px solid #e4e4e7;border-radius:12px;overflow:hidden;background:#fff">
     <img src="RayFan-day.png" alt="RayFan" style="display:block;width:100%;background:#f9f7f4">
     <figcaption style="padding:10px 12px;border-top:1px solid #e4e4e7">
@@ -54,24 +52,10 @@ rotation 0 — <code>RayFan</code> and <code>NightRays</code> turn once per 60s 
     </figcaption>
   </figure>
   <figure style="margin:0;border:1px solid #e4e4e7;border-radius:12px;overflow:hidden;background:#fff">
-    <img src="BigMoon-night.png" alt="BigMoon" style="display:block;width:100%;background:#000000">
-    <figcaption style="padding:10px 12px;border-top:1px solid #e4e4e7">
-      <code>BigMoon</code> · mode night<br>
-      <span style="color:#52525b;font-size:13px">Celebration, night. Crescent + four stars.</span>
-    </figcaption>
-  </figure>
-  <figure style="margin:0;border:1px solid #e4e4e7;border-radius:12px;overflow:hidden;background:#fff">
-    <img src="NightSky-night.png" alt="NightSky" style="display:block;width:100%;background:#000000">
-    <figcaption style="padding:10px 12px;border-top:1px solid #e4e4e7">
-      <code>NightSky</code> · mode night<br>
-      <span style="color:#52525b;font-size:13px">Classic night hero. Breathing cheese-hole moon + twinkling stars.</span>
-    </figcaption>
-  </figure>
-  <figure style="margin:0;border:1px solid #e4e4e7;border-radius:12px;overflow:hidden;background:#fff">
     <img src="NightRays-night.png" alt="NightRays" style="display:block;width:100%;background:#000000">
     <figcaption style="padding:10px 12px;border-top:1px solid #e4e4e7">
       <code>NightRays</code> · mode night<br>
-      <span style="color:#52525b;font-size:13px">Shipped night hero (DARK_THEME v2). Same 24-spoke fan on black + amber bloom.</span>
+      <span style="color:#52525b;font-size:13px">Night hero. The same 24-spoke fan on true black + a central amber bloom.</span>
     </figcaption>
   </figure>
 </div>

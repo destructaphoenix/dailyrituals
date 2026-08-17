@@ -5,7 +5,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, Pressable, Animated, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useTheme, DARK_THEME } from './theme';
+import { useTheme } from './theme';
 import { MAX_FONT_SCALE } from './ui/textScale';
 
 // Themed <Text> wrappers. `w` = weight; `d` = use the display family.
@@ -39,7 +39,6 @@ export const CARD_SHEEN = {
 
 export function Card({ style, children, padded, ...rest }) {
   const t = useTheme();
-  const isNightV2 = t.dark && DARK_THEME === 'v2';
   return (
     <View
       {...rest}
@@ -51,14 +50,14 @@ export function Card({ style, children, padded, ...rest }) {
           borderRadius: t.radius.card,
           // overflow:hidden lets the sheen gradient respect the card radius; safe in
           // dark mode because t.shadow() returns null there (no Android elevation to lose).
-          overflow: isNightV2 ? 'hidden' : undefined,
+          overflow: t.dark ? 'hidden' : undefined,
         },
         t.dark ? null : t.shadow(14, t.colors.shadowColor, 0.16),
         padded && { padding: 18 },
         style,
       ]}
     >
-      {isNightV2 && (
+      {t.dark && (
         <LinearGradient
           pointerEvents="none"
           accessibilityElementsHidden

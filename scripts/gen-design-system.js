@@ -4,14 +4,14 @@
 // WHY GENERATED, NEVER HAND-WRITTEN: hand-copied hex drifts the first time the
 // accent palette changes; generated output cannot. Everything here is read from
 // src/theme.js (makeTheme), src/data.js (SHOP_PALETTES) and src/art.js (the
-// frozen celestial set) — this file owns layout and captions, never values.
+// frozen ray heroes) — this file owns layout and captions, never values.
 //
 // It emits:
 //   design-system/tokens/{color,type,shape,elevation}.html
-//   design-system/frozen/celestial.html  + frozen/*.png  (rasterised from art.js)
+//   design-system/frozen/rays.html  + frozen/*.png  (rasterised from art.js)
 //
-// The other cards (motion/, components/, screens/) are hand-written previews;
-// they are not derived from source and so are not generated here.
+// The components/ and screens/ cards are hand-written previews; they are not
+// derived from source and so are not generated here.
 //
 // HOW IT LOADS RN SOURCE IN NODE: src/*.js is ESM + JSX importing react-native
 // and react-native-svg, neither of which parses under plain node. We install a
@@ -389,12 +389,12 @@ function writePng(file, svg, bg) {
   fs.writeFileSync(file, r.render().asPng());
 }
 
+// The signature pair, and only the pair. Other art in src/art.js (BigSun,
+// BigMoon) still ships, but it is ordinary artwork a design may replace — it is
+// deliberately NOT presented here, because everything on this card is frozen.
 const FROZEN = [
-  { name: 'BigSun', C: art.BigSun, size: 132, mode: 'day', note: 'Celebration, day. 12 rays + radial-gradient disc.' },
   { name: 'RayFan', C: art.RayFan, size: 300, mode: 'day', note: 'Day hero backdrop. 24 spokes, one full rotation per 60s.' },
-  { name: 'BigMoon', C: art.BigMoon, size: 132, mode: 'night', note: 'Celebration, night. Crescent + four stars.' },
-  { name: 'NightSky', C: art.NightSky, size: 300, mode: 'night', note: 'Classic night hero. Breathing cheese-hole moon + twinkling stars.' },
-  { name: 'NightRays', C: art.NightRays, size: 300, mode: 'night', note: 'Shipped night hero (DARK_THEME v2). Same 24-spoke fan on black + amber bloom.' },
+  { name: 'NightRays', C: art.NightRays, size: 300, mode: 'night', note: 'Night hero. The same 24-spoke fan on true black + a central amber bloom.' },
 ];
 
 function frozenPage() {
@@ -416,18 +416,23 @@ function frozenPage() {
 
   return page(
     {
-      group: 'Frozen', name: 'Celestial set',
-      lede: 'The sun, the rays and the moons — rendered from the real components in <code>src/art.js</code>, at t=0.',
+      group: 'Frozen', name: 'The rays',
+      lede: 'The two hero backdrops — one per mode — rendered from the real components in <code>src/art.js</code>, at t=0.',
     },
     `<div class="note" style="border-left-color:#dc2626;background:#fef2f2">
-<strong>FROZEN — reference only.</strong> These are the app's signature. Compose around them. Never redraw,
-restyle, recolor, or re-time them. Designs may position them, size them, and animate their <em>container</em>
-(opacity, translate, scale) — nothing inside.
+<strong>FROZEN — reference only.</strong> This pair is the app's whole signature: the same 24-spoke fan,
+once for day and once for night. Compose around them. Never redraw, restyle, recolor, or re-time them.
+Designs may position them, size them, and animate their <em>container</em> (opacity, translate, scale)
+— nothing inside.
 </div>
 
 <div class="note">These are not mockups or redraws: each PNG is rasterised from the shipped component with
-the shipped default palette, so what you see is what renders. The two spinning heroes are captured at
-rotation 0 — <code>RayFan</code> and <code>NightRays</code> turn once per 60s in the app.</div>
+the shipped default palette, so what you see is what renders. Both are captured at rotation 0 —
+<code>RayFan</code> and <code>NightRays</code> turn once per 60s in the app.</div>
+
+<div class="note"><strong>Nothing else is frozen.</strong> Any other artwork you find in the app is
+ordinary decoration, not brand: a design is free to replace it. If it is not on this card, it is not
+the signature.</div>
 
 <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr));max-width:1180px">
 ${cards}
@@ -747,10 +752,9 @@ designing.</strong> Night is not "day, darker": the canvas goes to true AMOLED b
 dropped entirely in favour of a hairline border plus a 48dp sheen, and <code>c.accentDeep</code> flips to the
 <em>brighter</em> shade. A layout that only works on cream is not finished.</div>`
         : '')
-      : `<div class="note"><strong>This is night-v2, the shipped dark theme</strong> (<code>DARK_THEME =
-'v2'</code>) — true black rather than the older brown-tinted "classic" palette, which is kept in
-<code>theme.js</code> only as a safe revert. Note what carries the depth here: there are <em>no shadows</em>
-in night mode. Surface contrast, a 1px <code>c.border</code> hairline and the card sheen do all of it.</div>`;
+      : `<div class="note"><strong>This is the dark theme</strong> — true AMOLED black, and the only one.
+Note what carries the depth here: there are <em>no shadows</em> in night mode. Surface contrast, a 1px
+<code>c.border</code> hairline and the card sheen do all of it.</div>`;
 
     out.push([`screens/baseline-${mode}.html`, page(
       {
@@ -782,7 +786,7 @@ function main() {
     ['tokens/type.html', typePage()],
     ['tokens/shape.html', shapePage()],
     ['tokens/elevation.html', elevationPage()],
-    ['frozen/celestial.html', frozenPage()],
+    ['frozen/rays.html', frozenPage()],
     ['components/card.html', cardPage()],
     ['components/buttons.html', buttonsPage()],
     ['components/progress.html', progressPage()],

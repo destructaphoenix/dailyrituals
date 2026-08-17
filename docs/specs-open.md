@@ -130,8 +130,10 @@ every Claude Design spec will be written in.** One named primitive set, one plac
       is correct for sheets, and a custom presenter is far more change than the result justifies.
 
 6. **🔒 Freeze `src/art.js`, and leave working choreography alone.**
-   1. `RayFan`, `NightSky`, `NightRays`, `BigSun`, `BigMoon` are the app's signature and the owner's
-      explicit constraint. **Not ported to Reanimated, not restyled, not re-timed. No exceptions.**
+   1. `RayFan` and `NightRays` are the app's signature and the owner's explicit constraint (2026-08-17:
+      the signature is **these two and nothing else** — `BigSun` and `BigMoon` still ship but are ordinary
+      artwork, replaceable by a design). **Not ported to Reanimated, not restyled, not re-timed. No
+      exceptions.**
    2. `Celebration.js` and `Toast.js` **stay on `Animated`.** Rewriting working choreography buys
       nothing.
    3. **Coexistence is the design, not a compromise** — new motion uses `motion.js`, old motion is left

@@ -6,10 +6,6 @@
 import React from 'react';
 import { Platform } from 'react-native';
 
-// 'v2' = premium AMOLED dark (IMP-019); 'classic' = original night palette.
-// Revert: change to 'classic' and ship OTA — no other change needed.
-export const DARK_THEME = 'v2';
-
 // ── Palettes ────────────────────────────────────────────────────────────────
 export const PALETTES = {
   day: {
@@ -31,36 +27,18 @@ export const PALETTES = {
     navBg: 'rgba(255,255,255,0.92)',
   },
   night: {
-    // Classic dark — preserved byte-for-byte so DARK_THEME='classic' is a safe revert.
-    cream: '#000000',
-    surface: '#16120d',
+    // Premium AMOLED dark: true-black canvas, neutral near-black cards,
+    // amber-only accents. No brown. Depth via surface contrast + hairline borders.
+    cream: '#000000',       // pure AMOLED black
+    surface: '#0e0e10',     // near-black elevated card
     ink: '#f4eee4',
-    muted: '#9b9286',
-    border: '#2c261f',
-    dot: '#1c1710',
+    muted: '#8b857c',       // lighter than the ink ramp for legibility on pure black
+    border: '#26241f',      // hairline; faint amber tint
+    dot: '#0a0a0b',         // near-invisible on black bg
     // night fixes the accent regardless of the Tweaks accent choice (matches CSS)
     accent: '#f59e0b',
     accentDeep: '#fbbf24',
-    accentSoft: '#2a2113',
-    green: '#34d399',
-    greenSoft: '#14271a',
-    red: '#ef4444',
-    heat0: '#2a2113', heat1: '#4a3414', heat2: '#936412', heat3: '#f59e0b',
-    placeholder: '#5c544c',
-    navBg: 'rgba(0,0,0,0.72)',
-  },
-  nightV2: {
-    // Premium AMOLED dark (IMP-019): true-black canvas, neutral near-black cards,
-    // amber-only accents. No brown. Depth via surface contrast + hairline borders.
-    cream: '#000000',       // pure AMOLED black
-    surface: '#0e0e10',     // near-black elevated card (neutraler than classic #16120d)
-    ink: '#f4eee4',         // keep
-    muted: '#8b857c',       // slightly lighter for legibility on pure black
-    border: '#26241f',      // hairline; faint amber tint (was #2c261f)
-    dot: '#0a0a0b',         // near-invisible on black bg
-    accent: '#f59e0b',
-    accentDeep: '#fbbf24',
-    accentSoft: '#1c160c',  // near-black amber tint; crisp chips on black (was #2a2113)
+    accentSoft: '#1c160c',  // near-black amber tint; crisp chips on black
     green: '#34d399',
     greenSoft: '#14271a',
     red: '#ef4444',
@@ -159,12 +137,8 @@ export function hexRgba(hex, alpha = 1) {
   return `rgba(${parseInt(m[1], 16)},${parseInt(m[2], 16)},${parseInt(m[3], 16)},${alpha})`;
 }
 
-// _variant is a test seam ('v2'|'classic'); production code omits it (uses DARK_THEME).
-export function makeTheme(mode = 'day', settings = DEFAULT_SETTINGS, _variant) {
-  const nightVariant = _variant ?? DARK_THEME;
-  const base = mode === 'night'
-    ? (nightVariant === 'v2' ? PALETTES.nightV2 : PALETTES.night)
-    : PALETTES[mode];
+export function makeTheme(mode = 'day', settings = DEFAULT_SETTINGS) {
+  const base = PALETTES[mode];
   // In night mode the "deep" token flips meaning: on a dark canvas the brighter
   // shade is what gives contrast, not the darker one. Both accent tokens use
   // accent[0] so every consumer (streak number, links, badges, orbs) gets a
@@ -210,7 +184,7 @@ export function makeTheme(mode = 'day', settings = DEFAULT_SETTINGS, _variant) {
     deepBorder: hexRgba(settings.accent[1], 0.22),
     // Deep accent at 92% opacity — "active" check badge in shop palette cards
     accentMark: hexRgba(settings.accent[1], 0.92),
-    // Accent at 32% opacity — NightSky moon haze gradient stop
+    // Accent at 32% opacity — soft radial haze behind hero art
     accentHaze: hexRgba(settings.accent[0], 0.32),
     // Accent at 10% opacity — ambient glow circles (onboarding, etc.)
     glowSoft: hexRgba(settings.accent[0], 0.10),

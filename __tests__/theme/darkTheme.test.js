@@ -1,38 +1,24 @@
-import { makeTheme, lighten, PALETTES, DARK_THEME, DEFAULT_SETTINGS } from '../../src/theme';
+import { makeTheme, lighten, PALETTES, DEFAULT_SETTINGS } from '../../src/theme';
 
-describe('dark theme resolution (IMP-019)', () => {
-  it('DARK_THEME is v2 (premium AMOLED dark, owner-approved IMP-019 Round 4)', () => {
-    expect(DARK_THEME).toBe('v2');
-  });
-
-  it('makeTheme("night") with v2 variant uses nightV2 palette for structural tokens', () => {
-    const result = makeTheme('night', DEFAULT_SETTINGS, 'v2');
-    expect(result.colors.surface).toBe(PALETTES.nightV2.surface);
-    expect(result.colors.cream).toBe(PALETTES.nightV2.cream);
-    // accentSoft is now derived from settings.accent[0] in night mode, not inherited from base
-    expect(result.colors.accentSoft).not.toBe(PALETTES.nightV2.accentSoft);
-  });
-
-  it('makeTheme("night") with classic variant uses classic palette (revert guard)', () => {
-    const result = makeTheme('night', DEFAULT_SETTINGS, 'classic');
+describe('dark theme resolution', () => {
+  it('makeTheme("night") takes its structural tokens from PALETTES.night', () => {
+    const result = makeTheme('night', DEFAULT_SETTINGS);
     expect(result.colors.surface).toBe(PALETTES.night.surface);
-    expect(result.colors.surface).toBe('#16120d');
-    // accentSoft is now derived from settings.accent in night mode, not from the base palette
+    expect(result.colors.cream).toBe(PALETTES.night.cream);
+    // accentSoft is derived from settings.accent[0] in night mode, not inherited from base
     expect(result.colors.accentSoft).not.toBe(PALETTES.night.accentSoft);
   });
 
-  it('v2 and classic have different surface tokens', () => {
-    const v2 = makeTheme('night', DEFAULT_SETTINGS, 'v2');
-    const classic = makeTheme('night', DEFAULT_SETTINGS, 'classic');
-    expect(v2.colors.surface).not.toBe(classic.colors.surface);
+  it('night is true-black AMOLED with a neutral near-black card', () => {
+    expect(PALETTES.night.cream).toBe('#000000');
+    expect(PALETTES.night.surface).toBe('#0e0e10');
+    expect(PALETTES.night.border).toBe('#26241f');
+    expect(PALETTES.night.muted).toBe('#8b857c');
   });
 
-  it('PALETTES.night (classic) preserved byte-for-byte — revert is always safe', () => {
-    expect(PALETTES.night.cream).toBe('#000000');
-    expect(PALETTES.night.surface).toBe('#16120d');
-    expect(PALETTES.night.accentSoft).toBe('#2a2113');
-    expect(PALETTES.night.border).toBe('#2c261f');
-    expect(PALETTES.night.muted).toBe('#9b9286');
+  it('day and night resolve to different surface tokens', () => {
+    expect(makeTheme('night', DEFAULT_SETTINGS).colors.surface)
+      .not.toBe(makeTheme('day', DEFAULT_SETTINGS).colors.surface);
   });
 });
 
@@ -42,9 +28,8 @@ describe('accentSoft adapts to palette in night mode (no hardcoded amber bleed)'
     const amber = makeTheme('night', DEFAULT_SETTINGS);
     // Rose and amber should produce different accentSoft values
     expect(rose.colors.accentSoft).not.toBe(amber.colors.accentSoft);
-    // Neither should be the old hardcoded amber accentSoft values
+    // Neither should be the base palette's hardcoded amber accentSoft
     expect(rose.colors.accentSoft).not.toBe('#1c160c');
-    expect(rose.colors.accentSoft).not.toBe('#2a2113');
   });
 
   it('night accentSoft, heat0, heat1, heat2 are all palette-derived', () => {

@@ -136,9 +136,16 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 ## 🎨 Claude Design is set up — how to use it (IMP-078, 2026-08-17)
 
 **Project: `Daily Rituals Design System`** · id `7bf44d09-f93a-42d2-a8b6-d412d671cf60` · type
-`PROJECT_TYPE_DESIGN_SYSTEM`, writable. **26 files / 14 cards are already live**: Tokens (color, type,
-shape, elevation) · Frozen (the celestial set) · Motion (contract, primitives) · Components (card, buttons,
-progress, chips, nav, plus) · Screens (baseline-day).
+`PROJECT_TYPE_DESIGN_SYSTEM`, writable. **13 cards**: Tokens (color, type, shape, elevation) · Frozen
+(the rays) · Components (card, buttons, progress, chips, nav, plus) · Screens (baseline-day,
+baseline-night).
+
+> **Trimmed 2026-08-17 (owner).** The signature is **`RayFan` + `NightRays` only**. `BigSun`/`BigMoon`
+> were demoted out of Frozen (they still ship in Onboarding/Celebration/Paywall, but a design may replace
+> them); `NightSky` and the `DARK_THEME` revert flag were deleted from the app outright; the two Motion
+> cards were deleted because they documented a `src/motion.js` that IMP-077 has not built yet. **Do not
+> re-add any of it to the design system** — a card that describes something the app doesn't have is how
+> the design system gets corrupted.
 
 **To make a design request, open the Design System pane in Claude Design and ask for ONE screen.**
 "Redesign the app" produces mush. The four rules that make output portable:
