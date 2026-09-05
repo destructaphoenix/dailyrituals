@@ -24,33 +24,44 @@
 
 | # | Spec | Lane | From |
 | --- | --- | --- | --- |
-| 1 | [IMP-077 — a motion vocabulary the whole app can speak](#imp-077--a-motion-vocabulary-the-whole-app-can-speak) | **Build** | owner, 2026-08-17 |
+| 1 | [IMP-080 — the Paywall footer stops fighting the layout](#imp-080--the-paywall-footer-stops-fighting-the-layout) | **Build** | WALK-07, 2026-08-16 |
+| 2 | [IMP-077 — a motion vocabulary the whole app can speak](#imp-077--a-motion-vocabulary-the-whole-app-can-speak) | **Build** | owner, 2026-08-17 |
+
+> **IMP-080 is takeable right now — it is the only unblocked row in this file.** It has no gate, no
+> device dependency and no walk to wait on. IMP-077 below is still hard-blocked on WALK-16.
+>
+> **The number 079 is deliberately skipped.** It was used on 2026-09-05 for a baseline-capture path that
+> was written, reviewed and deleted in the same session (see `PROGRESS.md` session notes). Nothing
+> landed under it, but the note naming `IMP-079` is still in the log, so reusing the number would make
+> that note read as though it described this spec. **Do not reuse 079.**
 
 > **IMP-076 and IMP-078 are both ✅ code-complete (2026-08-17)** — specs archived to
 > [`build-log.md`](build-log.md). IMP-076 left the tree on **v1.0.7 / vc13**, New Arch on, with a clean
 > `assembleRelease` behind it; **its correctness is not settled yet — [WALK-16](walk-open.md) decides that.**
 > IMP-078 pushed `design-system/` live to a new Claude Design project — **15 cards, both themes**.
 >
-> **IMP-077 is the only spec left here, and it is BLOCKED on WALK-16 passing.** If you are a build chat and
-> WALK-16 has not passed, there is nothing in this queue for you.
+> **IMP-077 is BLOCKED on WALK-16 passing.** It is no longer the only spec here, though: **IMP-080 was
+> added 2026-09-05 and is unblocked**, so a build chat arriving before WALK-16 has run takes that one.
 
-> ### 🔒 ALL THREE ARE BRANCH-ONLY — `feat/design-push`, never pushed
+> ### 🔒 EVERYTHING HERE IS BRANCH-ONLY — `feat/design-push`, never pushed
 >
-> Owner instruction, 2026-08-17: **none of this work reaches GitHub.** For every one of these specs:
+> Owner instruction, 2026-08-17, and it covers IMP-080 too: **none of this work reaches GitHub.** For
+> every one of these specs:
 > **never `git push`** (the branch is created with no upstream so a bare push fails — do not set one),
 > **never add a `Release-Lane:` trailer**, and **do not merge to `main`.** Merging is a separate owner
 > decision taken after the walks pass. This replaces the usual "commit with the exact message, no
 > trailer = not shipped" ending: here, not-shipped also means not-pushed.
 
-> **Design source of truth:** all three are scoped from
+> **Design source of truth — IMP-076/077/078 only; IMP-080 came out of a walk, not the design doc.**
+> Those three are scoped from
 > [`docs/superpowers/specs/2026-08-16-motion-and-design-system-design.md`](superpowers/specs/2026-08-16-motion-and-design-system-design.md).
 > **Read that document before starting any of them** — it carries the *why* (the expired IMP-027 hold,
 > the dependency audit, the frozen-sun rule) that these Steps assume and do not repeat.
 
 > **Take them in order, and IMP-077 has a hard gate.** IMP-077 must not start until **WALK-16 has
 > passed** — Reanimated 4 cannot run on Legacy Architecture, so IMP-077 on an unproven IMP-076 is
-> unverifiable. **IMP-078 depends on neither** and may be taken first, last, or concurrently; it
-> touches no app code at all.
+> unverifiable. **IMP-080 has no gate at all** and does not touch anything IMP-077 touches, so the two
+> cannot collide. (IMP-078 depended on neither and is already done.)
 
 > **IMP-057 is still deliberately absent.** It is reserved for the historical `dayKey` migration IMP-056
 > deferred, and it cannot be written until a real device's numbers come back from the dev-panel Inspector's
@@ -62,6 +73,115 @@
 > build chat**, and do not read a missing walk as an unfinished spec. IMP-076 is the worked example: it
 > ended **code-complete at green tests plus a clean native build**, and its correctness is settled by
 > WALK-16, not by the chat that built it.
+
+---
+
+### IMP-080 — the Paywall footer stops fighting the layout
+
+**Lane:** Build · **Branch:** `feat/design-push`, never pushed · **Origin:** the 🔴 WALK-07 finding,
+2026-08-16. **No gate — this is takeable immediately.**
+
+**Why — read this before you touch anything, because two people have already fixed this screen.**
+
+`Paywall.js` has a fixed footer sitting as the last child of a flex column, above a `flex: 1`
+`ScrollView`. On Android the screen is inside a `Modal`, which is a Dialog whose window size is not
+known on the first measure pass, so the column resolves against nothing and the footer lands on top of
+the plan selector and the "Your journal lives on your device" disclaimer.
+
+**Two fixes have already been aimed at that measure pass, and both are still in the file, unchanged and
+correct:**
+
+- **IMP-068** put `style={{ flex: 1 }}` on the `ScrollView` ([`Paywall.js:56`](../src/screens/Paywall.js#L56)).
+- **IMP-074** put `maxHeight: winH` on the root `View` ([`Paywall.js:40`](../src/screens/Paywall.js#L40)),
+  fed by `useWindowDimensions()` so it tracks rotation.
+
+WALK-07's re-run on 2026-08-16 confirmed **both halves present in code** and the overlap **still
+happening from the very first frame** — not the delayed-then-correcting pass IMP-074's writeup
+described. Every other screen in that walk passed, both nav modes, max font scale.
+
+**So the decision is: stop tuning the measurement, and remove the race.** A third patch to the same
+flex column is the wrong bet. The footer's position must stop depending on the column measuring
+correctly at all. *(Owner's decision, 2026-09-05, choosing between this and folding the footer into the
+scroll content: the CTA stays pinned, because this is the screen that takes money.)*
+
+⚠️ **The alternative floated during the walk — "don't render the footer until a plan is picked" — does
+not work and must not be implemented.** `plan` is initialised to `'annual'`
+([`Paywall.js:29`](../src/screens/Paywall.js#L29)), so a plan is *always* picked and the footer would
+render on the first frame regardless. Recorded here so it is not rediscovered and retried.
+
+**Steps**
+
+1. **Root view: a fixed height, not a capped flex.**
+   [`Paywall.js:40`](../src/screens/Paywall.js#L40) becomes `height: winH` in place of
+   `flex: 1, maxHeight: winH`. `winH` still comes from `useWindowDimensions()` — **do not** switch to
+   `Dimensions.get()`, there is a source assertion guarding that. `paddingTop: insets.top`,
+   `backgroundColor: c.cream` and `testID="paywallRoot"` all stay exactly as they are.
+   **Why this and not the cap:** step 3 pins the footer with `bottom: 0`, which is only meaningful
+   against a root that is the viewport. Under `flex: 1 + maxHeight`, a *short* page sizes the root to
+   its content and `bottom: 0` would float the footer up the middle of the screen. An exact height is
+   what makes the pin correct in both directions.
+
+2. **Track the footer's height in state.** `const [footerH, setFooterH] = useState(96);`
+   **Seed it at 96, do not seed it at 0.** The footer is a `PrimaryButton` plus `LegalFooter` and its
+   real height is close to this; a 0 seed makes the first frame's bottom padding short. It self-corrects
+   on the first `onLayout` either way, but there is no reason to ship a wrong first frame.
+
+3. **The footer leaves the flex column.** The footer `View`
+   ([`Paywall.js:107-112`](../src/screens/Paywall.js#L107-L112)) gains
+   `position: 'absolute', left: 0, right: 0, bottom: 0` and
+   `onLayout={(e) => setFooterH(e.nativeEvent.layout.height)}`. Every existing style on it —
+   `paddingHorizontal: 26`, `paddingTop: 14`, `paddingBottom: 14 + insets.bottom`, `borderTopWidth: 1`,
+   `borderTopColor: c.border`, `backgroundColor: c.surface` — **stays**. `backgroundColor` is
+   load-bearing now: the content scrolls *underneath* this view, so a transparent footer would show it
+   through.
+
+4. **The ScrollView reserves that height.** Its `contentContainerStyle.paddingBottom` goes from `18` to
+   `18 + footerH`. Its `style={{ flex: 1 }}` **stays** — IMP-068's comment stays too, it is still true.
+
+5. **Rewrite the two comments, do not delete them.** The IMP-074 block at
+   [`Paywall.js:18-27`](../src/screens/Paywall.js#L18-L27) currently explains a cap that no longer
+   exists. Replace it with why the footer is absolutely positioned and why the root is a fixed height,
+   **naming IMP-068 and IMP-074 as superseded rather than wrong** — both were correct reasoning about a
+   race that this spec removes instead of tuning. The next reader must not read this as a silent
+   reversal. Same discipline IMP-076 used on the New Arch flags.
+
+6. **`flow.overlay` stays the last child**, after the footer, so the purchase overlay still draws above
+   everything. Do not move it.
+
+7. **Tests — [`__tests__/screens/Paywall.test.js`](../__tests__/screens/Paywall.test.js).**
+   1. The **IMP-068 block stays untouched and must still pass** — `flex: 1` on the ScrollView is not
+      changed by this spec.
+   2. The **IMP-074 block is rewritten, not deleted.** Rename the describe to
+      `Paywall — IMP-080 (supersedes IMP-074)`. The first test asserted `maxHeight` + `flex` on the
+      root; it now asserts `flat.height === Dimensions.get('window').height` and that `maxHeight` is
+      gone.
+   3. **Keep the `useWindowDimensions` source assertion exactly as it is.** It is the reason the cap
+      tracked rotation and it is the reason the height will.
+   4. **Add:** the footer view is absolutely positioned — find it by its `borderTopWidth: 1` +
+      `position: 'absolute'` style and assert `bottom === 0`, `left === 0`, `right === 0`.
+   5. **Add:** the ScrollView's `contentContainerStyle.paddingBottom` is `> 18`, i.e. it reserves the
+      seeded footer height rather than the bare original padding.
+   6. **Add a regression test naming the real defect:** with `insets={{ top: 0, bottom: 0 }}`, the
+      last perk, the disclaimer text and the annual price all render **and** the footer is not a
+      sibling that precedes them in the flex flow. A rendered-tree test cannot see pixels, so assert the
+      structural property that made the overlap possible: the footer carries `position: 'absolute'`.
+      **Comment this test with the fact that jest cannot see the overlap** — WALK-07 is the only thing
+      that can, exactly as the motion spec's mock comment does.
+
+8. **Green.**
+   1. `npm test` — **≥ 867 passed, 84 suites**, plus the zone suites.
+   2. `npx expo export --platform android` clean.
+   3. **No `bump:native`** — this is pure JS, no native dependency changes.
+
+9. **Do NOT flip `PLUS_ENABLED`.** It stays `false` in the commit. Technique **T1** in
+   [`walk-open.md`](walk-open.md) is how the walk chat reaches this screen; a build chat does not need
+   to render it to satisfy the steps above, and a flipped flag committed by accident is a shipping
+   incident.
+
+10. **Runtime proof: the Paywall half of [WALK-07](walk-open.md). Not from this chat.**
+
+**Commit:** `fix(paywall): the footer leaves the flex column (IMP-080)` — **no `Release-Lane` trailer,
+and do not push.**
 
 ---
 

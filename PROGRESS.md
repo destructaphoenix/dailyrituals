@@ -43,7 +43,7 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 > | a **runtime walk, no device to hand** | **[WALK-09](docs/walk-open.md)** — emulator, owner-run, unblocked since IMP-073 landed and never re-run. It is on **Insights**, the screen the live design request targets, so clearing it *before* that design is pulled means the redesign lands on a known-good baseline. **Read its rewritten steps, not the ❌ paragraph.** |
 > | a **runtime walk, device plugged in** | **[WALK-16](docs/walk-open.md)** — the single highest-value thing open and the *only* evidence IMP-076 has. Then **WALK-17**, then **WALK-13 / WALK-03 / WALK-08**, all in the same sitting on one vc13 build; **WALK-12 (R8) last**. ⚠️ **A vc13 build has to be cut first — none exists.** |
 > | a **design request** | The Claude Design project is **live** — see "Claude Design is set up" below. |
-> | a **build task** | **Nothing is takeable.** IMP-077 unblocks the moment WALK-16 passes. If the owner wants build work sooner, the open scoping debt is the 🔴 WALK-07 Paywall finding, which needs Opus to write a spec first. |
+> | a **build task** | **[IMP-080](docs/specs-open.md)** — the Paywall footer. Scoped 2026-09-05, **no gate, no device, takeable right now.** It is the only unblocked spec in the file; IMP-077 still needs WALK-16 to pass. |
 >
 > **The whole design push lives on `feat/design-push`, which is NEVER pushed, NEVER given a
 > `Release-Lane:` trailer, and NEVER merged to `main`** without a separate owner decision.
@@ -131,10 +131,11 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | --- | --- | --- | --- |
 | 001–075 | **Every free-track task, all ✅ except the two rows below.** Search, custody + 30-day trash, multi-moods, Annual Recap, deeper insights, heatmaps, local `dayKey`, prompt packs, a11y labels, the IMP-063…075 polish run, R8, dev harness, backup/restore, reminders. | mixed | ✅ — **full detail per task in [`docs/build-log.md`](docs/build-log.md)**; git is the record. Do not re-derive from this table. |
 | 022 | Save as PDF + About sheet (the two dead You-tab buttons) | Build | ⏸ **deferred (owner)** — spec in build-log → "Deferred specs"; **perk #6 gate** |
-| 044 | R8 on release builds (dev client was shipping to the public) | Build | 🟢 **code-complete, UNWALKED — rides v1.0.6 / vc12** (bumped 2026-08-16); walk = WALK-12, on hardware, before `internal` → `production` |
+| 044 | R8 on release builds (dev client was shipping to the public) | Build | 🟢 **code-complete, UNWALKED.** It rode vc12, but **vc12 is no longer the candidate** (2026-09-05) — R8 must be walked on the build you actually ship, so it now rides **vc13**; walk = WALK-12, on hardware, last in the sitting |
 | 076 | The app moves to the New Architecture | Build | ✅ code-complete 2026-08-17 · **branch-only, never pushed** (`feat/design-push`) · `assembleRelease` clean, **v1.0.7 / vc13** · walk = WALK-16 + WALK-17 |
 | 077 | A motion vocabulary the whole app can speak | Build | ⬜ **blocked on WALK-16** · branch-only, never pushed · walk = WALK-18 |
 | 078 | A design system Claude Design can work from | Dev-only | ✅ code-complete 2026-08-17 · **branch-only, never pushed** · **15 cards live** in Claude Design project `Daily Rituals Design System`, both themes |
+| 080 | The Paywall footer stops fighting the layout | Build | ⬜ **takeable now — no gate** · branch-only, never pushed · from the 🔴 WALK-07 finding · walk = the Paywall half of WALK-07 |
 
 ---
 
@@ -225,7 +226,7 @@ The plan selector stays tappable underneath, so this blocks nothing functionally
 visual bar. The owner floated an alternative design live: don't render the footer until a plan is picked,
 then let the page grow to fit it, instead of reserving space up front — a real option for whoever scopes the
 next spec to weigh. Full writeup in `docs/walk-open.md` → WALK-07 → "Re-run — 🟡 2026-08-16 (whole walk...)".
-**Needs Opus to scope a new `IMP-xxx`.**
+**✅ SCOPED 2026-09-05 as [`IMP-080`](docs/specs-open.md)** — the footer leaves the flex column for `position: absolute`, and the root takes an exact `height: winH` so the pin is correct on short pages too. Owner chose the pinned-CTA option over folding the footer into the scroll content, because this is the screen that takes money. ⚠️ **The alternative floated during the walk — hide the footer until a plan is picked — does not work**: `plan` initialises to `'annual'`, so a plan is always picked. This entry stays open until IMP-080 lands AND the Paywall half of WALK-07 re-runs green.
 
 ### 📏 Standing rule — how new tests build dates (from the 2026-08-16 timezone fix)
 
