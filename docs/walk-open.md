@@ -116,10 +116,11 @@ locked. It is the row that reopens the moment Plus becomes the active work.
 | WALK-10 | 🎨 | [Tips, explainers, empty states](build-log.md#walk-10--teach-the-app) | IMP-041 | emulator | 👤 | ✅ **2026-08-16** — full pass, all 4 steps; owner decided live to drop the tip cards anyway, reserved as **IMP-075**; detail in `build-log.md` → "Walk log" |
 | WALK-14 | ⏭ | [TalkBack can write an entry](build-log.md#-walk-14--talkback-can-write-an-entry--dropped-2026-08-16-owners-call-section-moved-here-2026-08-17) | IMP-059 | **device** | 👤 | ⏭ — **dropped 2026-08-16** per owner; section archived to `build-log.md` → "Walk log". Reopen trigger: an accessibility complaint, or institutional Plus buyers |
 | WALK-15 | ✅ | [Store screenshots regenerate](build-log.md#walk-15--store-screenshots-regenerate--closed-2026-08-16-emulator-agent-run-owners-call) | IMP-061 | emulator | 🤖 mostly | ✅ **2026-08-16 — closed at owner's call.** `npm run shots` green end to end, seven Play-legal assets committed; steps 1–3 + 7 passed, **4–6 accepted unrun**; detail in `build-log.md` → "Walk log" |
-| WALK-11 | ⏭ | [The Plus surfaces](#walk-11--the-plus-surfaces) | IMP-038, 046, 047, 043 | emulator | 👤 | ⬜ — **skip for this release.** `PLUS_ENABLED = false` makes every surface here *unmountable*, not locked; walking it needs T1, which must be reverted before committing |
+| WALK-11 | 🎨 | [The Plus surfaces](#walk-11--the-plus-surfaces) | IMP-038, 046, 047, 043 | emulator | 👤 | ⬜ — **REOPENED 2026-09-05. The reason it was skipped is gone:** `PLUS_ENABLED = true` (commit `7d2e515`), so these surfaces now mount on their own and **no T1 revert dance is needed.** Walkable on a debug build of `feat/design-push`. Covers the four *perks* (On this day, Annual Recap, Deeper insights, restores); the *purchase* half is **WALK-19**, which is a different row on a different build |
 | WALK-16 | 🚦 | [The New Architecture cold start](#walk-16--the-new-architecture-cold-start) | IMP-076 | **device** (native runtime) | 👤 | ✅ **2026-09-05 — closed on emulator evidence at owner's instruction.** All 7 steps exercised across two agent-run sittings (1-3 New Arch live: Bridgeless + Fabric + TurboModule; 4-7 storage / notification scheduling / export-share-reimport / Auto Backup via T5 with the quarantine offering not imposing). **Owner's call 2026-09-05: emulator results are recorded as done, not smoke.** ⚠️ **Named gap — never exercised anywhere:** real doze, OEM battery managers, delivery to a real share target, Google's own backup schedule. **Unblocks IMP-077.** |
 | WALK-17 | 🚦 | [Edge-to-edge, re-audited under New Arch](#walk-17--edge-to-edge-re-audited-under-new-arch) | IMP-076, IMP-027 regression | **device** | 👤 (visual) | ✅ **2026-09-05 — emulator, agent-run.** All four tabs clean under status bar + gesture bar in **both** day and night; bottom nav and write-FAB correct in **both** gesture and 3-button nav; onboarding + setup also clean. Sheets checked: trash, achievements, shop — the last two at night **and** max font. ⚠️ **Not opened: write flow, reading sheet, mood manager.** |
 | WALK-18 | 🎨 | [The app moves](#walk-18--the-app-moves) | IMP-077 | **device** (mid-range, real frame pacing) | 👤 (visual) | ⬜ — **branch-only. UNBLOCKED 2026-09-05: WALK-16 closed and IMP-077 landed.** ⚠️ **Needs a NEW build.** IMP-077 added `react-native-reanimated` + `react-native-worklets` (native deps) and bumped the tree to **v1.0.8 / vc14**, so neither vc13 artifact carries this code. **An emulator cannot settle this row** — it renders dropped frames as smooth, which is the thing being judged. The jest suite is blind here too: the Reanimated mock no-ops every hook |
+| WALK-19 | 🚦 | [Money actually changes hands](#walk-19--money-actually-changes-hands) | **Phase 10b.5**, IMP-028, IMP-082, `7d2e515`, `6590834` | **device** (real Play Billing + a license tester) | 👤 | ⬜ — **NEW 2026-09-05, and it is the gate on v1.1.** `PLUS_ENABLED` is true and v1.0.8 / vc14 is cut to Play `internal`; **every claim the paid surface makes is still unproven at runtime.** jest is structurally blind here — `simService` fakes every purchase result, so a green suite says nothing about Play Billing. **Nothing gets promoted `internal` → `production` until this passes.** |
 
 ---
 
@@ -575,3 +576,61 @@ scope as a normal `IMP-xxx`; nothing here justifies reverting IMP-076.
 - **Performance with 400+ entries on low-end hardware** — the search filter and heatmap re-render per
   keystroke.
 - **Share-sheet targets** for the JSON export.
+
+---
+
+## WALK-19 — money actually changes hands
+
+**Gate 🚦 · Target `device` · Runner 👤 · Build: v1.0.8 / vc14 from Play `internal`**
+
+**Why this row exists.** `PLUS_ENABLED` flipped to `true` on 2026-09-05 and the app now shows a real
+paywall wired to real Play products. **Every one of the following is asserted by code and proven by
+nothing:** that the offering returns live prices, that the trial is real, that a purchase completes,
+that entitlement survives a reinstall, that the perks are delivered. `npm test` cannot help — the
+suite runs `simService`, which fabricates every purchase result, so **a green suite is not evidence
+about billing.**
+
+**Set up first:** the tester's Google account must be on the Play Console **license tester** list, and
+installing from the `internal` track. A license tester walks the *full* purchase flow and is not
+charged — that is the whole point; do not test with a real card until step 8.
+
+- [ ] 1. **Install vc14 from Play internal** on the license-tester account. Confirm the version is
+      **1.0.8 / vc14** (You tab → app version). An older artifact proves nothing about this code.
+- [ ] 2. **Open the paywall. Are the prices REAL?** They must be the live Play prices for the tester's
+      country, **not** the `PLUS_PRICES` fallback constants (`$4.99` monthly / `$29.99` annual /
+      "Save 50%"). ⚠️ **Seeing exactly those three strings is a FAIL, not a pass** — it means the
+      offering returned nothing and the app quietly fell back. This is the runtime half of playbook
+      **10b.3**. Also check the annual sub-line reads "Billed yearly" and the savings badge, if shown,
+      matches the real numbers (`mergePrices` drops it rather than assert a saving it cannot compute).
+- [ ] 3. **Does the trial match?** The button is hardcoded `Start 7-day free trial`
+      ([`Paywall.js:118`](../src/screens/Paywall.js#L118)) and does **not** read the offer. Confirm
+      Play's own purchase sheet also offers **7 days free**. A mismatch is a copy fix, and a
+      misrepresentation until it lands.
+- [ ] 4. **Walk every purchase state.** The service contract is
+      `success | cancel | failed | network | owned | restored | restore-empty`. At minimum: complete a
+      purchase (**success**), back out of Play's sheet (**cancel**), buy again while subscribed
+      (**owned**), airplane-mode mid-purchase (**network**), Restore with an entitlement
+      (**restored**) and on a clean account (**restore-empty**). Each must show the right overlay and
+      leave the app in the right state — no silent no-ops.
+- [ ] 5. **The renewal date.** After the successful purchase, check the date on the **You** tab banner,
+      the **Shop** banner and **Manage**. ⚠️ **If any of them says `12 Jun 2026` that is
+      [IMP-082](specs-open.md) showing through** — mock data leaking to a real subscriber. Record it;
+      it is already specced and ships by OTA.
+- [ ] 6. **The ember packs must be ABSENT.** Open the Shop. There must be **no "Gather Embers" section**
+      and the strings `$1.99` / `$4.99` / `$9.99` must appear **nowhere**. This is the runtime proof of
+      commit `6590834` — the near-miss where enabling Plus armed a priced surface that gave its goods
+      away. `Shop.test.js` pins it structurally; this confirms it on the shipped build.
+- [ ] 7. **Are the five perks actually delivered?** With Plus active: the `tier: 'plus'` palettes and
+      skies unlock in the Shop; a missed day spends a candle; "On this day" resurfaces an old entry;
+      Deeper insights appear on Insights; the Annual Recap is reachable. **A perk that does not work
+      for a paying subscriber is the defect class this whole gate exists to catch.**
+- [ ] 8. **Then, and only then, one real transaction on a real card — and refund it.** Playbook 10b.5.
+      This is the only step that involves actual money; everything above is free via the license tester.
+- [ ] 9. **Reinstall and Restore.** Uninstall, reinstall from `internal`, tap Restore purchases.
+      Entitlement must come back without a second charge.
+- [ ] 10. **Cancel flow.** Manage → Cancel opens Play's subscription settings, and the copy about
+      keeping Plus until the period ends is accurate (see step 5 — the date must be real).
+
+**Recording it.** Same rule as every row: ✅/❌ + date in the index, a paragraph here. **A failure is
+the deliverable** — scope it as a new `IMP-xxx` in `PROGRESS.md`, do not fix it mid-walk. **Do not
+promote `internal` → `production` until this row is ✅**, whatever the build says.
