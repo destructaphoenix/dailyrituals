@@ -2820,6 +2820,42 @@ pitch. One screen per request. `PLUS_ENABLED` stays `false`; it is a design requ
 
 _Append-only handoff log moved out of PROGRESS.md to keep it light. Newest 1–2 notes stay live in PROGRESS.md; everything else is here. Git history is the full record._
 
+_2026-08-17 (IMP-076 — the app moves to the New Architecture; **branch-only, committed, NOT pushed**) —
+**code-complete. `newArchEnabled: true`, `assembleRelease` clean, v1.0.7 / vc13.** Landed exactly as
+specified and **changed no app code at all**, which is what keeps rollback to one line each way. Both flags
+flipped; both surrounding comments **rewritten, not deleted**, each naming the shipped v1.0.3 / vc9 build as
+the reason the IMP-027 hold ended, so the next reader sees a superseded decision rather than a silent
+reversal; `playbook.md`'s stack block rewritten to match.
+**⚠️ Read this before rebuilding locally: `android/` is gitignored** (`.gitignore:19`). The
+`android/gradle.properties` flip the spec asks for is what made **this machine's** gradle build honour New
+Arch, but it is **not in the commit and cannot be** — `app.config.js` is the one durable switch, and EAS
+regenerates `gradle.properties` from it at prebuild. From a clean checkout, run `expo prebuild` (or re-flip
+by hand) before `./gradlew`, or you will build Legacy Arch and not notice.
+**The permissions patch did not fire, and it is NOT retired.** `npm install` → exit 0,
+`patch(permissions): already null-safe — nothing to do`. The flag cannot affect that script either way (it
+inspects `node_modules`), so the real question was answered from source: `PermissionsService.kt` sits in
+`expo-modules-core/android/src/main/`, and the **only** arch-gated sourceset there is `src/fabric/`, which is
+**C++ only**. It is supplied unconditionally by `ReactAdapterPackage.createInternalModules()` and consumed by
+`ModuleRegistryAdapter.createNativeModules()` with **no** `IS_NEW_ARCHITECTURE_ENABLED` branch — that file's
+one arch branch (line 115) is additive, for Fabric *view managers*. Re-verified against a **pristine**
+`expo-modules-core@3.0.30` tarball per the spec: `requestedPermissions!!` is still there at line 174. Patch
+stays, unchanged.
+**Proof — the native build, which is the whole point.** `./gradlew assembleRelease` → **BUILD SUCCESSFUL in
+4m 34s**, 847 tasks, exit 0, 94 MB APK. **Verifiably** New Arch, not just built with the flag on: the APK
+carries `libappmodules.so`, `libreact_codegen_rnsvg.so` and `libreact_codegen_safeareacontext.so` — codegen
+artifacts that exist only under `newArchEnabled=true`. **Both RevenueCat modules assembled clean** (the
+audit's one soft spot), and R8 ran over the result. `npm test` → **867 passed, 84 suites** + 3 zone tests × 2
+pinned zones, exit 0; `npx expo export --platform android` clean — **but neither proves anything here**, no
+app code changed. `npm run bump:native` → **v1.0.7 / vc13**, which **shuts the OTA lane** (see above).
+**One environment gotcha, not New-Arch-specific:** the first build died in 2s on
+`Error resolving plugin [id: 'com.facebook.react.settings'] > 25.0.2` — **Android Studio's bundled JBR is
+Java 25**, which AGP rejects. Build with **JDK 17** (`/opt/homebrew/opt/openjdk@17/...`). The
+`~/.gradle/init.d` kapt fix was **not** needed and that directory does not exist; the issue did not
+resurface. `PLUS_ENABLED` untouched (`false`); WALK-11 not reopened.
+**NEXT: [WALK-16](docs/walk-open.md) on a device — the only evidence that exists for this spec.** Then
+WALK-17 (edge-to-edge, re-audited: IMP-027's pass was on Legacy Arch and does not carry over). **IMP-077 is
+gated on WALK-16 passing.** **IMP-078 needs no gate and can be taken now**, including in parallel._
+
 _2026-08-17 (planning only — no code changed; **branch-only, never pushed**) — **the design push is scoped:
 IMP-076/077/078 + WALK-16/17/18, on `feat/design-push`.** Owner's ask: the app has too little motion outside
 the sun, and the Plus surfaces need designing — via **Claude Design**, with two hard constraints (**the sun

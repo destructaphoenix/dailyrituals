@@ -150,10 +150,14 @@ baseline-night).
 **To make a design request, open the Design System pane in Claude Design and ask for ONE screen.**
 "Redesign the app" produces mush. The four rules that make output portable:
 
-1. **One screen per request.** First one should be **`PlusPerks`** — 44 lines carrying the entire "what you
-   get" pitch, against `YouScreen.js`'s 325. The surfaces that take money are the least designed.
-2. **Insist the spec comes back in token names and `motion.js` primitives** — `c.accentSoft`, `t.radius.card`,
-   `riseIn`, `DUR.enter`. Not hex, not "gentle fade". The cards are built so it never sees a raw hex.
+1. **One screen per request.** "Redesign the app" produces mush. **The live request is `Insights`**
+   (owner, 2026-09-05) — it is one of only two screens with a baseline that is also user-visible today.
+   ⚠️ **Check the screen has a baseline before you ask for it**: only `day-01…07`/`night-01…07` exist. For
+   one that does not, **paste its source into the request** rather than describing it.
+2. **Insist the spec comes back in token names** — `c.accentSoft`, `t.radius.card`. Not hex, not "gentle
+   fade". The cards are built so it never sees a raw hex. ⚠️ **Do NOT ask for `motion.js` primitives**
+   (`riseIn`, `DUR.enter`) — IMP-077 has not built that file and its two Motion cards were deleted from the
+   project. Asking for them returns a spec against an API that does not exist and cannot be ported.
 3. **The sun and rays are frozen.** The Frozen card says so in the project. If a returned design redraws
    them, reject it — that design cannot ship.
 4. **It is a *design* request, not an enablement.** `PLUS_ENABLED` stays `false`; `PLUS_PERKS` copy and
@@ -260,6 +264,37 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
+_2026-09-05 (Opus — design-queue triage; **planning only, no code changed, nothing committed**) — **The
+design system covers 7 screens, not the app**, and that is now a stated fact rather than an assumption.
+`design-system/screens/` holds `day-01…07` + `night-01…07` (today, write, moods, reflections, insights,
+achievements, shop). **`You`, every zero state, the whole sheet family and Onboarding have no baseline
+card.** The owner's design work so far — Plus hero cards, the celebration screens, the shop's new skies —
+sits mostly on `PLUS_ENABLED = false` surfaces, so **only the shop redesign is user-visible today**;
+the hero cards are Phase-10b pre-work.
+
+**A baseline-capture path (`IMP-079` + `WALK-19`) was written, reviewed and DELETED in the same session —
+do not re-propose it.** The plan was a sibling `.maestro/design-baselines.yaml` + `scripts/baselines.sh`
+(`npm run shots` cannot be extended: it hard-fails at exactly 7 captures and composes Play marketing
+frames). It was scrapped on the owner's call, and the reasoning holds: **the design system already carries
+the tokens and six generated component cards, including `card` and `nav`.** `YouScreen.js` is `Card` +
+`Row` × 8 — every primitive in it is already documented, so a screenshot adds little. **For a screen with
+no baseline, paste its actual source into the design request** — for a Row/Card stack that is *more*
+precise than a photo, because it names the real tokens. If a returned design comes back visibly wrong,
+capture that one screenshot by hand then; it does not need a spec or a walk. `docs/specs-open.md`,
+`docs/walk-open.md` and this file were restored byte-for-byte.
+
+**One real finding worth keeping:** the night pass never needed the owner's hand. The IMP-078 failure was
+`adb shell cmd uimode night yes`, an **OS-level** command the app ignores — but the dev panel's own **Mode**
+segmented control ([`StateSection.js:102`](src/dev/panel/StateSection.js#L102)) feeds `mode` through
+`buildState` → `App.js:97` and genuinely repaints the app. Any future in-app capture can drive night
+itself.
+
+**NEXT — the owner's design queue is ONE request: `Insights`.** Both its baselines exist (`day-05`,
+`night-05`); nothing blocks it. **`Keepsakes` is deferred, not scrapped** (owner, 2026-09-05) — the screen
+stays in the app: it is reachable from the Home Keepsakes row and the You tile, it is **Play screenshot
+06**, and it is where the new celebration screen implies you go to look at what you earned. The build queue
+is unchanged and still empty — IMP-077 remains blocked on WALK-16._
+
 _2026-08-17 (IMP-078 — a design system Claude Design can work from; **branch-only, committed, NOT pushed**)
 — **code-complete. `design-system/` is committed and 26 files are live in a new Claude Design project.**
 `scripts/gen-design-system.js` (new) emits **14 preview cards** — tokens (color/type/shape/elevation), the
@@ -293,39 +328,3 @@ connection at `design-system/` needs the branch published, so it waits on the ow
 **NEXT: the queue is empty for a build chat.** IMP-077 is the only open spec and is **blocked on WALK-16**.
 The useful next moves are **[WALK-16](docs/walk-open.md) on a device**, or the owner's **first design request
 — `PlusPerks`** (one screen per request; `PLUS_ENABLED` stays `false`)._
-
-_2026-08-17 (IMP-076 — the app moves to the New Architecture; **branch-only, committed, NOT pushed**) —
-**code-complete. `newArchEnabled: true`, `assembleRelease` clean, v1.0.7 / vc13.** Landed exactly as
-specified and **changed no app code at all**, which is what keeps rollback to one line each way. Both flags
-flipped; both surrounding comments **rewritten, not deleted**, each naming the shipped v1.0.3 / vc9 build as
-the reason the IMP-027 hold ended, so the next reader sees a superseded decision rather than a silent
-reversal; `playbook.md`'s stack block rewritten to match.
-**⚠️ Read this before rebuilding locally: `android/` is gitignored** (`.gitignore:19`). The
-`android/gradle.properties` flip the spec asks for is what made **this machine's** gradle build honour New
-Arch, but it is **not in the commit and cannot be** — `app.config.js` is the one durable switch, and EAS
-regenerates `gradle.properties` from it at prebuild. From a clean checkout, run `expo prebuild` (or re-flip
-by hand) before `./gradlew`, or you will build Legacy Arch and not notice.
-**The permissions patch did not fire, and it is NOT retired.** `npm install` → exit 0,
-`patch(permissions): already null-safe — nothing to do`. The flag cannot affect that script either way (it
-inspects `node_modules`), so the real question was answered from source: `PermissionsService.kt` sits in
-`expo-modules-core/android/src/main/`, and the **only** arch-gated sourceset there is `src/fabric/`, which is
-**C++ only**. It is supplied unconditionally by `ReactAdapterPackage.createInternalModules()` and consumed by
-`ModuleRegistryAdapter.createNativeModules()` with **no** `IS_NEW_ARCHITECTURE_ENABLED` branch — that file's
-one arch branch (line 115) is additive, for Fabric *view managers*. Re-verified against a **pristine**
-`expo-modules-core@3.0.30` tarball per the spec: `requestedPermissions!!` is still there at line 174. Patch
-stays, unchanged.
-**Proof — the native build, which is the whole point.** `./gradlew assembleRelease` → **BUILD SUCCESSFUL in
-4m 34s**, 847 tasks, exit 0, 94 MB APK. **Verifiably** New Arch, not just built with the flag on: the APK
-carries `libappmodules.so`, `libreact_codegen_rnsvg.so` and `libreact_codegen_safeareacontext.so` — codegen
-artifacts that exist only under `newArchEnabled=true`. **Both RevenueCat modules assembled clean** (the
-audit's one soft spot), and R8 ran over the result. `npm test` → **867 passed, 84 suites** + 3 zone tests × 2
-pinned zones, exit 0; `npx expo export --platform android` clean — **but neither proves anything here**, no
-app code changed. `npm run bump:native` → **v1.0.7 / vc13**, which **shuts the OTA lane** (see above).
-**One environment gotcha, not New-Arch-specific:** the first build died in 2s on
-`Error resolving plugin [id: 'com.facebook.react.settings'] > 25.0.2` — **Android Studio's bundled JBR is
-Java 25**, which AGP rejects. Build with **JDK 17** (`/opt/homebrew/opt/openjdk@17/...`). The
-`~/.gradle/init.d` kapt fix was **not** needed and that directory does not exist; the issue did not
-resurface. `PLUS_ENABLED` untouched (`false`); WALK-11 not reopened.
-**NEXT: [WALK-16](docs/walk-open.md) on a device — the only evidence that exists for this spec.** Then
-WALK-17 (edge-to-edge, re-audited: IMP-027's pass was on Legacy Arch and does not carry over). **IMP-077 is
-gated on WALK-16 passing.** **IMP-078 needs no gate and can be taken now**, including in parallel._
