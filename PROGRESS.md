@@ -40,7 +40,7 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 >
 > | If this chat is… | Take |
 > | --- | --- |
-> | a **runtime walk** | **[WALK-16](docs/walk-open.md)** — steps 1-3 already smoke-passed on the emulator (New Arch confirmed live); **steps 4-7 need hardware.** Then **WALK-17** (mostly emulator-coverable), then **WALK-13 / WALK-03 / WALK-08** on a device; **WALK-12 (R8) last, needs `assembleRelease`.** ✅ **A vc13 debug APK now exists locally — see "The vc13 build" below.** |
+> | a **runtime walk** | **[WALK-16](docs/walk-open.md)** — **all 7 steps have now smoke-passed on the emulator** (2026-09-05, agent-run: New Arch live, storage round trip, notification scheduling, export/share/re-import, Auto Backup with the quarantine offering not imposing). It stays ⬜ because it is a `device` row, but what is left for hardware is only **real doze + OEM battery managers, real share targets, and Google's own backup schedule.** Then **WALK-17** (mostly emulator-coverable), then **WALK-13 / WALK-03 / WALK-08** on a device; **WALK-12 (R8) last, needs `assembleRelease`.** ✅ **A vc13 debug APK exists locally — see "The vc13 build" below.** |
 > | a **design request** | The Claude Design project is **live** — see "Claude Design is set up" below. |
 > | a **build task** | **[IMP-080](docs/specs-open.md)** — the Paywall footer. Scoped 2026-09-05, **no gate, no device, takeable right now.** It is the only unblocked spec in the file; IMP-077 still needs WALK-16 to pass. |
 >
@@ -335,33 +335,32 @@ for at all. Steps 4-7 still need hardware. Also verified `expo prebuild` does no
 **NEXT: WALK-17 on the emulator that is already set up, the device sitting once hardware is to hand, or
 hand IMP-080 to a build chat.** All three are independent; any can go first._
 
-_2026-09-05 (Opus — design-queue triage; **planning only, no code changed, nothing committed**) — **The
-design system covers 7 screens, not the app**, and that is now a stated fact rather than an assumption.
-`design-system/screens/` holds `day-01…07` + `night-01…07` (today, write, moods, reflections, insights,
-achievements, shop). **`You`, every zero state, the whole sheet family and Onboarding have no baseline
-card.** The owner's design work so far — Plus hero cards, the celebration screens, the shop's new skies —
-sits mostly on `PLUS_ENABLED = false` surfaces, so **only the shop redesign is user-visible today**;
-the hero cards are Phase-10b pre-work.
+_2026-09-05 (Opus — WALK-16 emulator sweep, steps 4-7; **branch-only, committed, NOT pushed**) —
+**WALK-16 now has emulator evidence for all seven steps**, up from three. No app code was touched; this
+was a walk, and the deliverable is the record.
 
-**A baseline-capture path (`IMP-079` + `WALK-19`) was written, reviewed and DELETED in the same session —
-do not re-propose it.** The plan was a sibling `.maestro/design-baselines.yaml` + `scripts/baselines.sh`
-(`npm run shots` cannot be extended: it hard-fails at exactly 7 captures and composes Play marketing
-frames). It was scrapped on the owner's call, and the reasoning holds: **the design system already carries
-the tokens and six generated component cards, including `card` and `nav`.** `YouScreen.js` is `Card` +
-`Row` × 8 — every primitive in it is already documented, so a screenshot adds little. **For a screen with
-no baseline, paste its actual source into the design request** — for a Row/Card stack that is *more*
-precise than a photo, because it names the real tokens. If a returned design comes back visibly wrong,
-capture that one screenshot by hand then; it does not need a spec or a walk. `docs/specs-open.md`,
-`docs/walk-open.md` and this file were restored byte-for-byte.
+**Run on the live AVD** (`sdk_gphone16k_arm64` — Android 16 / API 36, 16 KB pages) against the installed
+v1.0.7 / vc13 debug APK. **Step 4 (storage round trip), step 5 (notification scheduling), step 6 (export →
+share sheet → re-import) and step 7 (Auto Backup via T5) all pass.** No redbox, no ANR, no `FATAL` at any
+point. Details and the exact evidence per step are in [`docs/walk-open.md`](docs/walk-open.md) → WALK-16.
 
-**One real finding worth keeping:** the night pass never needed the owner's hand. The IMP-078 failure was
-`adb shell cmd uimode night yes`, an **OS-level** command the app ignores — but the dev panel's own **Mode**
-segmented control ([`StateSection.js:102`](src/dev/panel/StateSection.js#L102)) feeds `mode` through
-`buildState` → `App.js:97` and genuinely repaints the app. Any future in-app capture can drive night
-itself.
+**The one result worth reading in full is step 7.** A genuine `bmgr` backup → uninstall → reinstall →
+restore did **not** put the restored journal straight into the app. It landed in
+`dailyrituals:v1:pendingRestore`, the live state key was cleared, onboarding ran, and only then did the
+**"We found your journal."** sheet offer it — correctly itemising *15 Embers, 1 palette, 2 skies*. That is
+IMP-033/IMP-029/IMP-062's "offered, not imposed" contract holding on a **real backup transport**, where
+WALK-02 could only prove it against a T4 clock fake. The promised recovery copy was written for real to
+`files/daily-rituals-recovery-*.json`.
 
-**NEXT — the owner's design queue is ONE request: `Insights`.** Both its baselines exist (`day-05`,
-`night-05`); nothing blocks it. **`Keepsakes` is deferred, not scrapped** (owner, 2026-09-05) — the screen
-stays in the app: it is reachable from the Home Keepsakes row and the You tile, it is **Play screenshot
-06**, and it is where the new celebration screen implies you go to look at what you earned. The build queue
-is unchanged and still empty — IMP-077 remains blocked on WALK-16._
+**One observation deliberately not scoped as a defect:** with the reminder set to 20:30 and the device
+clock at 15:16, `dumpsys alarm` showed 7 daily `RTC_WAKEUP` alarms starting **tomorrow** — today's was
+skipped. That is consistent with today's entry already being written, not a miss. If WALK-13 sees a
+missing same-day reminder on hardware, this is the first place to look.
+
+**WALK-16 stays ⬜.** It is a `device` row and the header rule is explicit that an emulator run is not a
+pass. But the hardware residue is now only three things: **real doze + OEM battery managers, real share
+targets, and Google's own backup schedule.** IMP-077's gate is the owner's call to make on that evidence,
+not a chat's.
+
+**NEXT: the internal build so the owner can walk the rest on hardware**, then WALK-17 / 13 / 03 / 08 in
+one sitting and WALK-12 (R8) last. `IMP-080` remains takeable in parallel — no gate, no device._

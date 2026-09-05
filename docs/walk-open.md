@@ -90,7 +90,7 @@ locked. It is the row that reopens the moment Plus becomes the active work.
 | WALK-14 | ⏭ | [TalkBack can write an entry](build-log.md#-walk-14--talkback-can-write-an-entry--dropped-2026-08-16-owners-call-section-moved-here-2026-08-17) | IMP-059 | **device** | 👤 | ⏭ — **dropped 2026-08-16** per owner; section archived to `build-log.md` → "Walk log". Reopen trigger: an accessibility complaint, or institutional Plus buyers |
 | WALK-15 | ✅ | [Store screenshots regenerate](build-log.md#walk-15--store-screenshots-regenerate--closed-2026-08-16-emulator-agent-run-owners-call) | IMP-061 | emulator | 🤖 mostly | ✅ **2026-08-16 — closed at owner's call.** `npm run shots` green end to end, seven Play-legal assets committed; steps 1–3 + 7 passed, **4–6 accepted unrun**; detail in `build-log.md` → "Walk log" |
 | WALK-11 | ⏭ | [The Plus surfaces](#walk-11--the-plus-surfaces) | IMP-038, 046, 047, 043 | emulator | 👤 | ⬜ — **skip for this release.** `PLUS_ENABLED = false` makes every surface here *unmountable*, not locked; walking it needs T1, which must be reverted before committing |
-| WALK-16 | 🚦 | [The New Architecture cold start](#walk-16--the-new-architecture-cold-start) | IMP-076 | **device** (native runtime) | 👤 | ⬜ — **branch-only** (`feat/design-push`). **Gates IMP-077.** Nothing in jest can see this. 🟡 **Emulator smoke 2026-09-05: steps 1-3 pass, New Arch confirmed live (Bridgeless + Fabric + TurboModule)** — real evidence for IMP-076, but steps 4-7 still need hardware |
+| WALK-16 | 🚦 | [The New Architecture cold start](#walk-16--the-new-architecture-cold-start) | IMP-076 | **device** (native runtime) | 👤 | ⬜ — **branch-only** (`feat/design-push`). **Gates IMP-077.** Nothing in jest can see this. 🟡 **Emulator smoke 2026-09-05, now covering all 7 steps: 1-3 pass (New Arch live — Bridgeless + Fabric + TurboModule), and 4-7 pass too** (storage round trip; notifications schedule 7 real `RTC_WAKEUP` alarms; export → share sheet → re-import; Auto Backup via T5 with the quarantine offering, not imposing). **What is left for hardware is only: real doze + OEM battery managers, real share targets, Google's own backup schedule.** |
 | WALK-17 | 🚦 | [Edge-to-edge, re-audited under New Arch](#walk-17--edge-to-edge-re-audited-under-new-arch) | IMP-076, IMP-027 regression | **device** | 👤 (visual) | ⬜ — **branch-only.** Runnable in the same session as WALK-16; do **not** assume IMP-027's pass carries over |
 | WALK-18 | 🎨 | [The app moves](#walk-18--the-app-moves) | IMP-077 | **device** (mid-range, real frame pacing) | 👤 (visual) | ⬜ — **branch-only.** Blocked until WALK-16 passes and IMP-077 lands |
 
@@ -361,10 +361,45 @@ draw, every tab icon draws) and step 3 (safe-area — status bar clear, bottom n
 all pass here.** `prebuild` was verified not to have undone IMP-076: `newArchEnabled=true` and
 `android.enableMinifyInReleaseBuilds=true` both survived.
 
-**Still unproven and still why this row is open:** step 4 (storage round trip), step 5 (notifications —
-needs real doze and an OEM battery manager), step 6 (file I/O + share — needs real share targets), step 7
-(Auto Backup). One log line was chased and is benign: `ReactNativeJS: W Error: undefined` is preceded by
+One log line was chased and is benign: `ReactNativeJS: W Error: undefined` is preceded by
 `URL: <host>:8081` and is dev-client connection logging, not an app error.
+
+**🟡 Emulator smoke, part two — 2026-09-05, agent-run. Steps 4-7 now exercised; the row still stays ⬜.**
+Same vc13 debug APK, same AVD (`sdk_gphone16k_arm64`, **Android 16 / API 36, 16 KB pages**). What an
+emulator genuinely cannot settle is now a much shorter list than "steps 4-7" — it is three specific
+things, all named under "Out of scope": **real doze + OEM battery managers, real share-sheet targets, and
+Google's own backup schedule.** Everything else in steps 4-7 ran green.
+
+- **Step 4 — storage round trip: PASS.** Wrote an entry through the real write flow (three steps, mood
+  picker, `Bury the day`), confirmed `+50 XP / 1 day streak / +15 Embers`, then `am force-stop` and a cold
+  relaunch. Home came back with streak 1, 50/100 XP, 15 Embers, "Today is at rest.", rites 20/30. The
+  record in `RKStorage` survived intact: `{dayKey: 2026-09-05, did: "WALK16probe", wished: "step4probe",
+  moods: ["Grateful"]}`. New Arch markers reproduced independently on this second cold start.
+- **Step 5 — notifications, the half that is not doze: PASS.** Toggling `Daily reminder` on drove the
+  Android 13+ `POST_NOTIFICATIONS` prompt, granted clean, and `dumpsys alarm` then showed **7 real
+  `RTC_WAKEUP` alarms, one per day at 20:30**, first at 2026-09-06. The module initialises and schedules
+  under New Arch — which is exactly what this step was written to prove. **Worth noting, not a defect:**
+  today's 20:30 was *skipped* even though it had not yet passed, consistent with the entry already being
+  written. Delivery discipline stays WALK-13's job on hardware.
+- **Step 6 — file I/O + share: PASS on both ends, share target unexercised.** `Back up my journal` wrote
+  `daily-rituals-2026-09-05.json` and opened the real Android share sheet (Quick Share / Drive / Gmail
+  resolved as targets). The envelope is well-formed — `format: daily-rituals-backup`, `appVersion: 1.0.7`,
+  `counts: {entries: 1, days: 1}`, payload a stringified state carrying the entry. Re-import through
+  `Restore from a backup` launched `expo-document-picker` (`OPEN_DOCUMENT`, `application/json`), read the
+  file back, and the confirm read **"This backup has 1 entry"** before replacing. State after import was
+  byte-equivalent. Only the delivery to a real share *target* remains out of scope.
+- **Step 7 — Android Auto Backup, via T5: PASS.** `bmgr` local transport → `backupnow` (Success,
+  8.2 MB) → `adb uninstall` → reinstall → `bmgr restore 1`. **The restore quarantine behaved exactly as
+  IMP-033/IMP-029/IMP-062 specify, and this is the part worth reading twice:** the restored state did not
+  go live. It landed in `dailyrituals:v1:pendingRestore` with `dailyrituals:v1:state` cleared, the app
+  showed onboarding, and only after onboarding did the **"We found your journal."** sheet offer it —
+  correctly itemising *15 Embers, 1 palette and 2 skies* and dated 5 Sep 2026. `Load my journal` →
+  a confirm reading **"This backup has 1 entry"** → data fully returned (1 entry, 50 XP, 15 Embers, both
+  skies) and `pendingRestore` was cleared. The recovery copy the dialog promises was written for real:
+  `files/daily-rituals-recovery-2026-09-05T09-42-22-485Z.json`. **Offered, not imposed — confirmed on a
+  genuine backup-transport restore, not a T4 clock fake.**
+
+No redbox, no ANR and no `FATAL`/`AndroidRuntime: E` at any point across all four steps.
 
 **Expect one specific stumble, at install rather than runtime:**
 `scripts/patch-permissions.js` may exit non-zero and fail `npm install` if New Arch moves the permissions

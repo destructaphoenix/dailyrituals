@@ -2818,6 +2818,38 @@ pitch. One screen per request. `PLUS_ENABLED` stays `false`; it is a design requ
 
 ## Session notes (archived from PROGRESS.md)
 
+_2026-09-05 (Opus — design-queue triage; **planning only, no code changed, nothing committed**) — **The
+design system covers 7 screens, not the app**, and that is now a stated fact rather than an assumption.
+`design-system/screens/` holds `day-01…07` + `night-01…07` (today, write, moods, reflections, insights,
+achievements, shop). **`You`, every zero state, the whole sheet family and Onboarding have no baseline
+card.** The owner's design work so far — Plus hero cards, the celebration screens, the shop's new skies —
+sits mostly on `PLUS_ENABLED = false` surfaces, so **only the shop redesign is user-visible today**;
+the hero cards are Phase-10b pre-work.
+
+**A baseline-capture path (`IMP-079` + `WALK-19`) was written, reviewed and DELETED in the same session —
+do not re-propose it.** The plan was a sibling `.maestro/design-baselines.yaml` + `scripts/baselines.sh`
+(`npm run shots` cannot be extended: it hard-fails at exactly 7 captures and composes Play marketing
+frames). It was scrapped on the owner's call, and the reasoning holds: **the design system already carries
+the tokens and six generated component cards, including `card` and `nav`.** `YouScreen.js` is `Card` +
+`Row` × 8 — every primitive in it is already documented, so a screenshot adds little. **For a screen with
+no baseline, paste its actual source into the design request** — for a Row/Card stack that is *more*
+precise than a photo, because it names the real tokens. If a returned design comes back visibly wrong,
+capture that one screenshot by hand then; it does not need a spec or a walk. `docs/specs-open.md`,
+`docs/walk-open.md` and this file were restored byte-for-byte.
+
+**One real finding worth keeping:** the night pass never needed the owner's hand. The IMP-078 failure was
+`adb shell cmd uimode night yes`, an **OS-level** command the app ignores — but the dev panel's own **Mode**
+segmented control ([`StateSection.js:102`](src/dev/panel/StateSection.js#L102)) feeds `mode` through
+`buildState` → `App.js:97` and genuinely repaints the app. Any future in-app capture can drive night
+itself.
+
+**NEXT — the owner's design queue is ONE request: `Insights`.** Both its baselines exist (`day-05`,
+`night-05`); nothing blocks it. **`Keepsakes` is deferred, not scrapped** (owner, 2026-09-05) — the screen
+stays in the app: it is reachable from the Home Keepsakes row and the You tile, it is **Play screenshot
+06**, and it is where the new celebration screen implies you go to look at what you earned. The build queue
+is unchanged and still empty — IMP-077 remains blocked on WALK-16._
+
+
 _Append-only handoff log moved out of PROGRESS.md to keep it light. Newest 1–2 notes stay live in PROGRESS.md; everything else is here. Git history is the full record._
 
 _2026-08-17 (IMP-078 — a design system Claude Design can work from; **branch-only, committed, NOT pushed**)
