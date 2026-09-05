@@ -40,7 +40,8 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 >
 > | If this chat is… | Take |
 > | --- | --- |
-> | a **runtime walk** | **[WALK-16](docs/walk-open.md)** — device, owner-run. The single highest-value thing open. It is the *only* evidence IMP-076 has. Then WALK-17 in the same sitting. |
+> | a **runtime walk, no device to hand** | **[WALK-09](docs/walk-open.md)** — emulator, owner-run, unblocked since IMP-073 landed and never re-run. It is on **Insights**, the screen the live design request targets, so clearing it *before* that design is pulled means the redesign lands on a known-good baseline. **Read its rewritten steps, not the ❌ paragraph.** |
+> | a **runtime walk, device plugged in** | **[WALK-16](docs/walk-open.md)** — the single highest-value thing open and the *only* evidence IMP-076 has. Then **WALK-17**, then **WALK-13 / WALK-03 / WALK-08**, all in the same sitting on one vc13 build; **WALK-12 (R8) last**. ⚠️ **A vc13 build has to be cut first — none exists.** |
 > | a **design request** | The Claude Design project is **live** — see "Claude Design is set up" below. |
 > | a **build task** | **Nothing is takeable.** IMP-077 unblocks the moment WALK-16 passes. If the owner wants build work sooner, the open scoping debt is the 🔴 WALK-07 Paywall finding, which needs Opus to write a spec first. |
 >
@@ -80,10 +81,14 @@ re-derive from an older note.**
 vc11 build on 2026-08-02**, and is **the first minified (R8) build of this app ever** — IMP-044 rides it
 **unwalked**, which is exactly what WALK-12 exists for.
 
-**🚦 vc12 is a BUILD CANDIDATE, not the release.** `internal` reaches the owner's devices and invited
-testers only. **WALK-13 → WALK-03 → WALK-12 (R8 last) must pass on real hardware before `internal` →
-`production`**, which is manual and gets the full ~7d review. If WALK-12 finds R8 stripping something, that
-is another bump and another build. The other three tracks below are unchanged and still on older code.
+**⛔ vc12 IS NO LONGER THE RELEASE CANDIDATE — owner's decision, 2026-09-05: "vc13 is the future."**
+The `internal` → `production` promotion of v1.0.6 / vc12 is **off**. vc12 stays on `internal` as a
+historical build; nothing is being walked *for* it any more. **The candidate is now a v1.0.7 / vc13 build
+cut from `feat/design-push`** (New Architecture), and **every remaining device walk regroups onto that one
+build** — WALK-16 → WALK-17 → WALK-13 → WALK-03 → WALK-08, with **WALK-12 (R8) last**, because R8 must be
+walked on the exact build you intend to ship. Reaching the public is still the manual `internal` →
+`production` promotion with the full ~7d review. The other three tracks below are unchanged and still on
+older code.
 
 **✅ API-36 compliance (deadline 2026-08-31) is met ACCOUNT-WIDE — blocker CLOSED 2026-08-13.** Every
 active release on every track is `targetSdkVersion 36`. Banner-reading procedure kept in the playbook.
@@ -192,13 +197,15 @@ again be filed as night — that exact mistake happened once.
 
 ### ▶️ Owner decisions still open
 
-- **🚦 The `internal` → `production` promotion is still open, and three device walks gate it.**
-  v1.0.6 / vc12 (~40 IMP tasks, and the app's first R8 build) reached `internal` on 2026-08-16 — that half is
-  **done**; full account in `build-log.md` → Session notes. **REMAINING: install vc12 on hardware →
-  WALK-13 → WALK-03 → WALK-12 (R8 last) → promote by hand** (full review, ~7d). vc12 is a *candidate*, not
-  the release: if WALK-12 finds R8 stripping something, that is another bump and another build.
-  ⚠️ **The repo has since moved to v1.0.7 / vc13** (IMP-076's `bump:native`), so the repo no longer matches
-  any built track — a vc13 build is its own decision, separate from promoting vc12.
+- **🚦 The `internal` → `production` promotion is still open — but it is now a vc13 promotion, not vc12.**
+  **Owner's decision, 2026-09-05: "vc13 is the future."** v1.0.6 / vc12 reached `internal` on 2026-08-16
+  carrying ~40 IMP tasks and the app's first R8 build (account in `build-log.md` → Session notes) — and it
+  **stops there**. It will not be promoted, and no walk is run for its sake any more. **REMAINING: cut a
+  v1.0.7 / vc13 build from `feat/design-push`, install it on hardware → WALK-16 → WALK-17 → WALK-13 →
+  WALK-03 → WALK-08 → WALK-12 (R8 last) → promote by hand** (full review, ~7d). Consolidating onto one
+  build is the whole point of the decision: the walks were only split because two candidates existed.
+  ⚠️ **A vc13 build has not been cut yet** — the tree is at v1.0.7 / vc13 from IMP-076's `bump:native`, but
+  nothing built from it has ever reached a device.
 - **Cash embers: settled in principle (dropped 2026-08-03), not finalised.** Must be decided before
   `PLUS_ENABLED` flips — it determines which Play products get created. Full argument in the playbook.
 - **`PLUS_ENABLED` must not flip until every `PLUS_PERKS` line is true.** The one remaining gap is perk #6,

@@ -32,10 +32,10 @@
 
 ## Index — take them in this order
 
-**The order encodes what gates the release** (re-sorted 2026-08-14). As of today **~25 IMP tasks are
-committed and unpublished** — the last release of any kind was the vc11 build on 2026-08-02, and vc11 lives
-on `alpha` only. Getting that work to the public needs a **build**, not an OTA, and that build carries
-IMP-044's R8. So the rows are grouped by *what a failure would cost*:
+**The order encodes what gates the release** (re-sorted 2026-08-14; re-tracked 2026-09-05). Everything
+committed since the vc11 build on 2026-08-02 is still unpublished, and reaching the public needs a
+**build**, not an OTA — a build that carries IMP-044's R8. So the rows are grouped by *what a failure
+would cost*:
 
 | Gate | Meaning |
 | --- | --- |
@@ -47,24 +47,31 @@ IMP-044's R8. So the rows are grouped by *what a failure would cost*:
 **Taking a walk is unchanged: take the first ⬜ row.** Passed walks live in `build-log.md` → "Walk log";
 only live rows are described here.
 
-**Two independent tracks are open. Either can go first — neither gates the other.**
+**ONE track now — the vc13 branch build (owner's decision, 2026-09-05).**
 
-**Track 1 — the vc12 release.** All remaining ⬜ rows are **device** rows (WALK-13, WALK-03, WALK-08,
-WALK-12), set aside pending real hardware — which the 2026-08-16 internal build exists to provide. Within
-them 🚦 comes first, and **WALK-12 sits last inside the 🚦 group on purpose**: R8 must be walked on the build
-you actually intend to ship, so any fix an earlier walk turns up would invalidate an R8 pass done before it.
-Two rows carry live findings — **WALK-07** (Paywall still fails after IMP-074; needs a new `IMP-xxx` from
-Opus, not a re-run) and **WALK-09** (unblocked by IMP-073; **its steps were rewritten to match IMP-073's
-design** — read them, not the ❌ paragraph under them).
+**vc12 is no longer the release candidate.** The owner's call: **vc13 is the future.** The
+`internal` → `production` promotion of v1.0.6 / vc12 is **off**, and with it the reason those walks
+were split across two builds. Every remaining ⬜ row now runs against **one device build of
+`feat/design-push`** — v1.0.7 / vc13, New Architecture — in as few sittings as possible.
 
-**Track 2 — the design push (new 2026-08-17): WALK-16, WALK-17, WALK-18.** They belong to IMP-076/077/078,
-scoped in [`specs-open.md`](specs-open.md) from
-[the design doc](superpowers/specs/2026-08-16-motion-and-design-system-design.md), and run against
-**`feat/design-push` — a branch that is never pushed to GitHub** (owner instruction). **WALK-16 matters
-most:** IMP-076 changes no app code, so `npm test` is structurally blind to it and WALK-16 is the *only*
-evidence the New Architecture migration works. It also gates IMP-077.
+**The order inside that build.** **WALK-16 first, always**: IMP-076 changes no app code, so `npm test`
+is structurally blind to it, WALK-16 is the *only* evidence it works, and it gates IMP-077. **WALK-17
+follows in the same sitting** (edge-to-edge: IMP-027's pass was on Legacy Arch and does not carry
+over). Then the feature rows carried over from the old Track 1 — **WALK-13, WALK-03, WALK-08** — which
+need nothing but a running app and are *better* covered here, since New Arch is the runtime they will
+actually ship on. **WALK-12 (R8) stays last and is the one row that cannot move**: R8 must be walked on
+the exact build you intend to ship, so any fix an earlier walk turns up invalidates an R8 pass taken
+before it. **WALK-18** needs IMP-077 landed first, so it is a later sitting by construction.
 
-**`PLUS_ENABLED = false` across both tracks, so WALK-11 stays ⏭** — those surfaces are *unmountable*, not
+**Two rows are not part of that sitting.** **WALK-09** is the only open walk that needs no device —
+emulator, runnable any time, and it is on **Insights**, the screen the live Claude Design request
+targets, so it is worth clearing *before* that design is pulled (read its rewritten steps, not the ❌
+paragraph under them). **WALK-07** is not a re-run at all: it needs a new `IMP-xxx` from Opus first.
+
+**Everything here still runs on `feat/design-push` — a branch that is never pushed to GitHub** (owner
+instruction, 2026-08-17).
+
+**`PLUS_ENABLED = false`, so WALK-11 stays ⏭** — those surfaces are *unmountable*, not
 locked. It is the row that reopens the moment Plus becomes the active work.
 
 | # | Gate | Walk | Covers | Target | Runner | Status |
@@ -73,12 +80,12 @@ locked. It is the row that reopens the moment Plus becomes the active work.
 | WALK-02 | 🚦 | [Restore quarantine — offered, not imposed](build-log.md#walk-02--restore-quarantine) | IMP-033, IMP-029, **IMP-062** | emulator | 👤 (clock changes + judgement on sheet copy) | ✅ **2026-08-15** — full pass, all 9 steps (incl. the new IMP-062 relaunch proof in steps 7–9); detail in `build-log.md` → "Walk log" |
 | WALK-05 | 🚦 | [Edit a past day, delete, trash allowance](build-log.md#walk-05--custody-of-your-words) | IMP-036, IMP-048 | emulator | 👤 | ✅ **2026-08-15** — full pass; the outstanding `applyCompletion` half confirmed no double-counting; detail in `build-log.md` → "Walk log" |
 | WALK-04 | 🎨 | [Search + the write flow's moods](build-log.md#walk-04--search--moods) | IMP-035, IMP-037, **IMP-053** | emulator | 👤 | ✅ **2026-08-16** — full pass on the third re-run (after IMP-069/070/071 landed); two more defects found and fixed live as IMP-072; detail in `build-log.md` → "Walk log" |
-| WALK-13 | 🚦 | [The reminder you can answer](#walk-13--the-reminder-you-can-answer) | IMP-054, **+ the duplicate-fire fix** | **device** (OEM behaviour + real doze) | 👤 | ⬜ — **unblocked 2026-08-13** (IMP-054 landed, `18d8c2e`) |
-| WALK-03 | 🚦 | [JSON export → share → restore round trip](#walk-03--json-export-round-trip) | IMP-020, IMP-043 | **device** (share-sheet targets) | 👤 | ⬜ — the user's data escape hatch |
-| WALK-12 | 🚦 | [The R8 release-variant pass](#walk-12--the-r8-release-variant-pass) | IMP-044 | **device** | 👤 | ⬜ — **the last 🚦, on the final build candidate.** First minified build ever; failure is silent |
+| WALK-13 | 🚦 | [The reminder you can answer](#walk-13--the-reminder-you-can-answer) | IMP-054, **+ the duplicate-fire fix** | **device** (OEM behaviour + real doze) | 👤 | ⬜ — **unblocked 2026-08-13** (IMP-054 landed, `18d8c2e`). **Runs on the vc13 branch build**, after WALK-16/17 |
+| WALK-03 | 🚦 | [JSON export → share → restore round trip](#walk-03--json-export-round-trip) | IMP-020, IMP-043 | **device** (share-sheet targets) | 👤 | ⬜ — the user's data escape hatch. **Runs on the vc13 branch build**, after WALK-16/17 |
+| WALK-12 | 🚦 | [The R8 release-variant pass](#walk-12--the-r8-release-variant-pass) | IMP-044 | **device** | 👤 | ⬜ — **the last 🚦, and it cannot move: R8 must be walked on the exact build you intend to ship.** That is now a **vc13** build, not vc12. First minified build ever; failure is silent |
 | WALK-06 | 🎨 | [Streak insurance — candles spend themselves](build-log.md#walk-06--streak-insurance) | IMP-039, IMP-063, IMP-064 | emulator | 👤 | ✅ **2026-08-16** — full pass, re-run after IMP-063 + IMP-064 landed; detail in `build-log.md` → "Walk log" |
 | WALK-07 | 🎨 | [Modal screens actually scroll](#walk-07--modal-scroll) | IMP-042 | emulator | 👤 (visual, two nav modes) | ❌ **2026-08-16 (whole-walk re-run, reopened again)** — the five other screens + both IMP-067 spot-checks all pass, both nav modes, max font. **Paywall still fails after IMP-074** — footer overlaps the plan selector + disclaimer from first open, both fix-halves confirmed present in code. Needs a new `IMP-xxx`, Opus's lane to scope. Paywall half needs T1 |
-| WALK-08 | 🎨 | [Font scale + layout on the nine new screens](#walk-08--font-scale) | IMP-030 regression | **device** (real font metrics) | 👤 | ⬜ |
+| WALK-08 | 🎨 | [Font scale + layout on the nine new screens](#walk-08--font-scale) | IMP-030 regression | **device** (real font metrics) | 👤 | ⬜ — **runs on the vc13 branch build**, same sitting as WALK-13/03 |
 | WALK-09 | 🎨 | [Lifetime heatmap's four states + the XP line](#walk-09--lifetime-heatmap) | IMP-045 | emulator | 👤 (visual) | ❌ **2026-08-16** — states compute correctly (kept/frozen/missed/not-yet-started/future, month labels present, XP line correct) but 3 layout defects found: legend wraps awkwardly, month labels wrap mid-word, grid cells render unevenly. **Scoped 2026-08-16 as IMP-073** (`docs/specs-open.md`), all three in one spec. **Re-run once it lands — against the rewritten steps**, which expect a three-entry legend by design |
 | WALK-10 | 🎨 | [Tips, explainers, empty states](build-log.md#walk-10--teach-the-app) | IMP-041 | emulator | 👤 | ✅ **2026-08-16** — full pass, all 4 steps; owner decided live to drop the tip cards anyway, reserved as **IMP-075**; detail in `build-log.md` → "Walk log" |
 | WALK-14 | ⏭ | [TalkBack can write an entry](build-log.md#-walk-14--talkback-can-write-an-entry--dropped-2026-08-16-owners-call-section-moved-here-2026-08-17) | IMP-059 | **device** | 👤 | ⏭ — **dropped 2026-08-16** per owner; section archived to `build-log.md` → "Walk log". Reopen trigger: an accessibility complaint, or institutional Plus buyers |
