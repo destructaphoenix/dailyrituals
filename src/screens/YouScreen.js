@@ -317,9 +317,14 @@ function BackupNudge({ icon, text }) {
   const t = useTheme();
   const c = t.colors;
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10, paddingHorizontal: 4 }}>
-      {icon}
-      <T w={600} color={c.muted} numberOfLines={2} style={{ flex: 1, fontSize: 12.5, lineHeight: 17 }}>{text}</T>
+    // 3 lines, not 2 (IMP-081): the `never` copy is 97 chars and was clamped mid-word
+    // at DEFAULT font scale, eating the clause the warning exists to say — "there's
+    // nothing to bring back". The clamp stays so a future long string can't push
+    // "General" off the card. At 3 lines a centred row floats the ⚠ below the first
+    // line, so the row aligns to the top and the icon takes a 1px optical nudge.
+    <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 10, paddingHorizontal: 4 }}>
+      <View style={{ marginTop: 1 }}>{icon}</View>
+      <T w={600} color={c.muted} numberOfLines={3} style={{ flex: 1, fontSize: 12.5, lineHeight: 17 }}>{text}</T>
     </View>
   );
 }
