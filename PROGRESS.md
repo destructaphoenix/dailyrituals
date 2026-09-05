@@ -32,21 +32,29 @@
 runtime proof is a separate WALK row for a separate chat, so a missing walk is *not* an unfinished spec.
 Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`](docs/playbook.md).
 
-> ## 🧭 WHAT TO TAKE RIGHT NOW — read this before the tables below (2026-08-17)
+> ## 🧭 WHAT TO TAKE RIGHT NOW — read this before the tables below (2026-09-05)
 >
-> **The build queue is effectively EMPTY. Do not "take the first ⬜ IMP row" today** — the only open spec,
-> `IMP-077`, is **hard-gated on WALK-16**, which has not run. Starting it would produce a green suite that
-> proves nothing (Reanimated 4 cannot run on Legacy Arch, and its Jest mock no-ops every hook).
+> **The build queue is EMPTY — genuinely, for the first time.** IMP-077, IMP-080 and IMP-081 all landed
+> 2026-09-05; with IMP-076 and IMP-078 that closes the whole 2026-08-16 design push. Specs are archived to
+> [`docs/build-log.md`](docs/build-log.md) and [`docs/specs-open.md`](docs/specs-open.md) holds no open
+> spec. **Nothing is queued and nothing should be invented to fill it** — new work comes from a 🔴 walk
+> finding, the owner, or a design doc.
+>
+> **⚠️ So the next task is a WALK, not a build.** Three of those specs end in runtime proof that has not
+> run: **WALK-07** (Paywall half — IMP-080), **WALK-03 step 4** (`neverBackedUp` — IMP-081) and
+> **WALK-18** (IMP-077). Two of them are ready right now; the third needs a new build, see below.
 >
 > | If this chat is… | Take |
 > | --- | --- |
-> | a **runtime walk** | ⚠️ **WALK-16 and WALK-17 are CLOSED ✅ on emulator evidence (owner's instruction, 2026-09-05: record emulator results as done, not smoke). WALK-13 is DROPPED at the same instruction.** What is left needs either a spec or the Play build: **WALK-03 step 4** (`neverBackedUp` only) waits on `IMP-081`; **WALK-07** (Paywall only) waits on `IMP-080`; **WALK-08 is PARTIAL** — cap confirmed, eight of nine screens plus rotation and `longName` unrun; **WALK-12 (R8) is LAST** and needs the Play `internal` build (A), which has no dev harness. ⚠️ **Named gap that no closed row covers:** real doze, OEM battery managers, delivery to a real share target, Google's own backup schedule. |
+> | a **runtime walk** | **This is the lane with work in it.** ✅ **READY NOW on a debug build of `feat/design-push` (both pure-JS):** **WALK-07** (the Paywall half only — IMP-080 landed) and **WALK-03 step 4** (`neverBackedUp` only — IMP-081 landed; run it at default **and** max font scale, since max is where the third line gets tested). ⚠️ **WALK-18 is unblocked but needs a NEW build** — IMP-077's native deps put the tree on **v1.0.8 / vc14**, which no vc13 artifact carries; it also needs a **mid-range device**, because an emulator renders dropped frames as smooth. **WALK-08 is PARTIAL** — cap confirmed, eight of nine screens plus rotation and `longName` unrun. **WALK-12 (R8) is LAST** and needs the Play `internal` build (A), which has no dev harness. **WALK-16 and WALK-17 are CLOSED ✅ on emulator evidence; WALK-13 is DROPPED** (owner's instruction, 2026-09-05: record emulator results as done, not smoke). ⚠️ **Named gap that no closed row covers:** real doze, OEM battery managers, delivery to a real share target, Google's own backup schedule. |
 > | a **design request** | The Claude Design project is **live** — see "Claude Design is set up" below. |
-> | a **build task** | **[IMP-080](docs/specs-open.md)** (Paywall footer) or **[IMP-081](docs/specs-open.md)** (the never-backed-up warning truncates mid-word — from WALK-03, 2026-09-05). **Both are takeable right now — no gate, no device — and they touch different files, so either order or in parallel.** **IMP-077 is now UNBLOCKED** too: WALK-16 closed 2026-09-05. |
+> | a **build task** | **Nothing. The queue is empty** — see [`docs/specs-open.md`](docs/specs-open.md), which now explains where the next spec comes from instead of holding one. Do not take a walk row as a build task, and do not scope a spec yourself. |
 >
 > **The whole design push lives on `feat/design-push`, which is NEVER pushed, NEVER given a
 > `Release-Lane:` trailer, and NEVER merged to `main`** without a separate owner decision.
 > **IMP-076 ✅ and IMP-078 ✅ are both code-complete (2026-08-17)**; commits `22fcb96` and `4c1e34b`.
+> **IMP-080 ✅, IMP-081 ✅ and IMP-077 ✅ followed on 2026-09-05**; commits `22c9c06`, `c649d7e` and
+> `53d20e8`. All five are committed, none is pushed, and the tree now stands at **v1.0.8 / vc14**.
 
 > **🔵 2026-08-16 — the free-app improvement track is CLOSED; active work is Plus (Phase 10b) + the design
 > push.** Owner's call. `IMP-001`–`IMP-075` are done bar the deferred `IMP-022` and the reserved `IMP-057`.
@@ -55,8 +63,8 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 > closures (WALK-04/06/10 ✅, WALK-15 closed, WALK-14 dropped) and IMP-072's no-spec fix: `build-log.md`.
 >
 > **Still owed, and neither is done:**
-> - **The 🔴 WALK-07 Paywall regression needs a new `IMP-xxx` — Opus's lane to scope** (see Open items). It
->   is a Plus surface. **Nothing about Plus should ship past this.**
+> - **The 🔴 WALK-07 Paywall regression is FIXED in code (IMP-080, 2026-09-05) but NOT yet re-walked.** It
+>   is a Plus surface. **Nothing about Plus should ship past this** — a fix jest cannot see is not a pass.
 > - **WALK-09 is now ✅ (2026-09-05)** — re-run after IMP-073, full pass, closed. **Every remaining walk
 >   needs a device.**
 >
@@ -73,6 +81,7 @@ re-derive from an older note.**
 | `beta` (open testing) | **1.0.3 / vc9** | 36 ✅ | was vc8/API 35 — promoted, compliance gap closed |
 | `alpha` (closed testing) | **1.0.5 / vc11** | 36 ✅ | frozen by design 2026-08-08; the newest *built* code |
 | `internal` | **1.0.7 / vc13** | 36 ✅ | **shipped 2026-09-05** — the New Arch build; see below |
+| _(unshipped)_ | **1.0.8 / vc14** | 36 ✅ | ⚠️ **the working tree, on `feat/design-push`** — IMP-077's native deps (reanimated + worklets). **Not built, not submitted, on no track.** WALK-18 needs it cut; it also re-shuts the OTA lane until it ships |
 
 **✅ v1.0.6 / vc12 SHIPPED to `internal` on 2026-08-16.** Confirmed from the submit output, not inferred:
 `Release track: internal`, `Version code: 12`, `✔ Submitted your app to Google Play Store!` (GH run
@@ -99,6 +108,14 @@ active release on every track is `targetSdkVersion 36`. Banner-reading procedure
 `a299af7`; CI already does it). Reaching the public stays manual: promote `internal` → `production` in Play
 Console, which *does* get the full review.
 
+> 🔴 **AND IT SHUT AGAIN THE SAME DAY. IMP-077's `bump:native` moved the repo to `1.0.8` / vc14
+> (2026-09-05), so `runtimeVersion` (= `appVersion`) once more matches NO shipped build.** This is the
+> identical trap IMP-076 sprang on 2026-08-17, one spec later — **a `bump:native` always closes the OTA
+> lane until the new versionCode actually ships.** An `eas update` from this tree targets runtime `1.0.8`,
+> which is **zero installs anywhere**. It is not broken and needs no fix; **the reopening condition is
+> vc14 reaching `internal`**, exactly as vc13's was. Read the paragraph below as the description of the
+> state the repo was in *before* the IMP-077 commit, and as what returns once vc14 ships.
+
 **✅ THE OTA LANE REOPENED on 2026-09-05 — but only onto `internal`.** It was shut from 2026-08-17,
 when IMP-076's `bump:native` moved the repo to `1.0.7` / vc13 and left `runtimeVersion` (= `appVersion`)
 matching no shipped build. **vc13 shipping to `internal` is the exact condition that reopens it.** An
@@ -117,9 +134,11 @@ which track it came from. (Once a `bump:native` lands, the OTA lane is closed fo
 build ships.)
 
 **Current stack:** Expo SDK **54** · RN **0.81.5** · React **19.1.0** · **New Architecture**
-(`newArchEnabled: true` since IMP-076, 2026-08-17 — **unwalked, WALK-16 is the gate**) ·
+(`newArchEnabled: true` since IMP-076, 2026-08-17 — **walked ✅, WALK-16 closed 2026-09-05**) ·
+**Reanimated 4.1.1 + worklets 0.5.1** (IMP-077, 2026-09-05 — New-Arch-only, which is why WALK-16 gated it;
+**`babel.config.js` is deliberately untouched**, `babel-preset-expo` auto-injects the worklets plugin) ·
 `targetSdkVersion` **36**, `minSdk` **24** · `npm test` →
-**867 passed, 84 suites**, plus **3 zone tests × 2 pinned zones**. **`npm test` = `test:suite` (the ambient
+**873 passed, 85 suites**, plus **3 zone tests × 2 pinned zones**. **`npm test` = `test:suite` (the ambient
 suite, no TZ pin) + `test:zone`** (`__tests__/zone/`, run at UTC+14 and UTC−11 via `jest.zone.config.js`).
 **Verified `exit=0` under five ambient zones** — UTC, +5:30, +14, −11, −5. **Run `npm test`, not bare
 `npx jest`**, or the zone half is skipped. Details in [`docs/playbook.md`](docs/playbook.md).
@@ -139,10 +158,10 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 022 | Save as PDF + About sheet (the two dead You-tab buttons) | Build | ⏸ **deferred (owner)** — spec in build-log → "Deferred specs"; **perk #6 gate** |
 | 044 | R8 on release builds (dev client was shipping to the public) | Build | 🟢 **code-complete, UNWALKED.** It rode vc12, but **vc12 is no longer the candidate** (2026-09-05) — R8 must be walked on the build you actually ship, so it now rides **vc13**; walk = WALK-12, on hardware, last in the sitting |
 | 076 | The app moves to the New Architecture | Build | ✅ code-complete 2026-08-17 · **branch-only, never pushed** (`feat/design-push`) · `assembleRelease` clean, **v1.0.7 / vc13** · walk = WALK-16 + WALK-17 |
-| 077 | A motion vocabulary the whole app can speak | Build | ⬜ **UNBLOCKED 2026-09-05** — WALK-16 closed ✅ on emulator evidence at the owner's instruction · branch-only, never pushed · walk = WALK-18 |
+| 077 | A motion vocabulary the whole app can speak | Build | ✅ code-complete 2026-09-05 · **branch-only, never pushed** · new `src/motion.js` (DUR/EASE/riseIn/popIn/fadeOut/stagger/usePressScale/useCountUp/ScreenFade), adopted in exactly two places; `art.js` + `Celebration.js` + `Toast.js` + `babel.config.js` all byte-identical · reanimated 4.1.1 + worklets 0.5.1 → **v1.0.8 / vc14** · ⚠️ **873 green tests prove nothing about the motion** — the Reanimated jest mock no-ops every hook · walk = WALK-18, **needs a new build** |
 | 078 | A design system Claude Design can work from | Dev-only | ✅ code-complete 2026-08-17 · **branch-only, never pushed** · **15 cards live** in Claude Design project `Daily Rituals Design System`, both themes |
-| 080 | The Paywall footer stops fighting the layout | Build | ⬜ **takeable now — no gate** · branch-only, never pushed · from the 🔴 WALK-07 finding · walk = the Paywall half of WALK-07 |
-| 081 | The never-backed-up warning says the whole sentence | Build | ⬜ **takeable now — no gate, no device** · branch-only, never pushed · from the WALK-03 step 4 finding, 2026-09-05 · `BackupNudge` clamps at `numberOfLines={2}` and the 97-char `never` string cuts mid-word at **default** font scale · walk = step 4 of WALK-03 |
+| 080 | The Paywall footer stops fighting the layout | Build | ✅ code-complete 2026-09-05 · **branch-only, never pushed** · from the 🔴 WALK-07 finding · the footer left the flex column for `position: absolute, bottom: 0`, root took an exact `height: winH`; IMP-068 + IMP-074 recorded as **superseded, not wrong** · pure JS, no bump · walk = the Paywall half of WALK-07, **ready to re-run** |
+| 081 | The never-backed-up warning says the whole sentence | Build | ✅ code-complete 2026-09-05 · **branch-only, never pushed** · from the WALK-03 step 4 finding · `BackupNudge` goes `numberOfLines` 2 → 3 with the row top-aligned; **the clamp stays** (it is what keeps a long string from pushing "General" off the card) and **the copy was not shortened** · pure JS, no bump · walk = step 4 of WALK-03, **ready to re-run at default AND max font scale** |
 
 ---
 
@@ -156,9 +175,16 @@ baseline-night).
 > **Trimmed 2026-08-17 (owner).** The signature is **`RayFan` + `NightRays` only**. `BigSun`/`BigMoon`
 > were demoted out of Frozen (they still ship in Onboarding/Celebration/Paywall, but a design may replace
 > them); `NightSky` and the `DARK_THEME` revert flag were deleted from the app outright; the two Motion
-> cards were deleted because they documented a `src/motion.js` that IMP-077 has not built yet. **Do not
+> cards were deleted because they documented a `src/motion.js` that IMP-077 had not built yet. **Do not
 > re-add any of it to the design system** — a card that describes something the app doesn't have is how
 > the design system gets corrupted.
+>
+> ⚠️ **The Motion exception has now flipped: `src/motion.js` EXISTS as of IMP-077, 2026-09-05.** The two
+> Motion cards may be re-added, but **written from the file, not from the old deleted cards** — the real
+> exports are `DUR` (`tap: 120, enter: 320, settle: 480, celebrate: 900`), `EASE`, `riseIn`, `popIn`,
+> `fadeOut`, `stagger`, `usePressScale`, `useCountUp`, `ScreenFade`. **The Frozen rule is unchanged and
+> IMP-077 did not touch it**: `RayFan` + `NightRays` are still the signature, still on `Animated`, still
+> not ported. So are `Celebration.js` and `Toast.js` — coexistence is the design.
 
 **To make a design request, open the Design System pane in Claude Design and ask for ONE screen.**
 "Redesign the app" produces mush. The four rules that make output portable:
@@ -198,6 +224,15 @@ again be filed as night — that exact mistake happened once.
 ---
 
 ## 🔨 The vc13 builds — what exists, and where (2026-09-05)
+
+> ⚠️ **The tree has moved past both of these. IMP-077 bumped it to v1.0.8 / vc14 on 2026-09-05** —
+> `react-native-reanimated` and `react-native-worklets` are native deps, so **neither artifact below
+> contains IMP-077's code and no OTA can add it.** What that means per walk row:
+> **WALK-18 needs a NEW build cut from `feat/design-push` at vc14** — nothing here will do.
+> **WALK-07 and WALK-03 step 4 are fine on B**, the local debug APK: IMP-080 and IMP-081 are pure JS, so
+> rebuilding the debug APK from the current branch picks them up without a native rebuild story.
+> **WALK-12 (R8) still needs A specifically** — R8 must be walked on the build you intend to ship, and
+> that is still the vc13 on `internal`.
 
 **There are TWO vc13 artifacts and they are not interchangeable.** Picking the wrong one is the easiest
 way to waste a device sitting, because the release build has **no dev harness**.
@@ -271,7 +306,7 @@ The plan selector stays tappable underneath, so this blocks nothing functionally
 visual bar. The owner floated an alternative design live: don't render the footer until a plan is picked,
 then let the page grow to fit it, instead of reserving space up front — a real option for whoever scopes the
 next spec to weigh. Full writeup in `docs/walk-open.md` → WALK-07 → "Re-run — 🟡 2026-08-16 (whole walk...)".
-**✅ SCOPED 2026-09-05 as [`IMP-080`](docs/specs-open.md)** — the footer leaves the flex column for `position: absolute`, and the root takes an exact `height: winH` so the pin is correct on short pages too. Owner chose the pinned-CTA option over folding the footer into the scroll content, because this is the screen that takes money. ⚠️ **The alternative floated during the walk — hide the footer until a plan is picked — does not work**: `plan` initialises to `'annual'`, so a plan is always picked. This entry stays open until IMP-080 lands AND the Paywall half of WALK-07 re-runs green.
+**✅ FIXED 2026-09-05 — IMP-080 landed** (commit `22c9c06`; spec archived to [`build-log.md`](docs/build-log.md)). — the footer leaves the flex column for `position: absolute`, and the root takes an exact `height: winH` so the pin is correct on short pages too. Owner chose the pinned-CTA option over folding the footer into the scroll content, because this is the screen that takes money. ⚠️ **The alternative floated during the walk — hide the footer until a plan is picked — does not work**: `plan` initialises to `'annual'`, so a plan is always picked. **The code half is done; this entry stays open until the Paywall half of WALK-07 re-runs green** — jest renders a tree, not pixels, and structurally cannot see the overlap, so only the walk can close it.
 
 ### 📏 Standing rule — how new tests build dates (from the 2026-08-16 timezone fix)
 
@@ -317,6 +352,50 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
+_2026-09-05 (Opus — **IMP-080, IMP-081 and IMP-077 all landed; the build queue is now empty**;
+branch-only, committed, NOT pushed) — **a build session. Three specs closed, no walk run.**_
+
+**IMP-080 — the Paywall footer left the flex column.** Two previous fixes (IMP-068's `flex: 1`,
+IMP-074's `maxHeight: winH`) were both aimed at Android's unknown-on-first-measure Modal window, both
+present in code, and the overlap was still happening from the first frame. So this stopped tuning the
+measurement and removed the race: root `View` → an exact **`height: winH`** (a cap would let a *short*
+page size to its content and float the pin up the middle), footer → `position: absolute, bottom: 0` with
+`onLayout` feeding `useState(96)`, ScrollView `paddingBottom` → `18 + footerH`. Both comments **rewritten
+to name IMP-068/074 as superseded rather than wrong**. Tests: the IMP-074 describe became
+`IMP-080 (supersedes IMP-074)`, four assertions added, the `useWindowDimensions` source assertion
+untouched. Commit `22c9c06`, pure JS, no bump.
+
+**IMP-081 — the never-backed-up warning fits.** `numberOfLines` 2 → 3 with the row top-aligned and a 1px
+optical nudge on the ⚠. **The clamp stays** (it is what keeps a future long string from pushing "General"
+off the card) and **the copy was not shortened**. Commit `c649d7e`, pure JS, no bump.
+
+**IMP-077 — the motion vocabulary, after its WALK-16 gate cleared.** New `src/motion.js`: `DUR`, `EASE`,
+`riseIn`, `popIn`, `fadeOut`, `stagger`, `usePressScale`, `useCountUp`, `ScreenFade` — the feel
+generalized from `Celebration.js` rather than invented. Adopted in **exactly two places** (PrimaryButton's
+press spring, the screen container's cross-fade); `ProgressBar`'s shimmer untouched. **The freeze held and
+is verifiable:** `art.js`, `Celebration.js`, `Toast.js` and `babel.config.js` are all **byte-identical** —
+the last one deliberately, because `babel-preset-expo` auto-injects the worklets plugin and adding it by
+hand risks double-application. Purity (no state, no `persistence`/`billing`/`gamify`/`insights` imports) is
+**asserted, not intended**. Commit `53d20e8`.
+
+**Proof: 873 passed / 85 suites** (up from 867/84), both zone suites green, `npx expo export --platform
+android` clean, bundle 3.87 → 4.95 MB. `bump:native` → **v1.0.8 / vc14**, because reanimated and worklets
+are native deps.
+
+⚠️ **What the green suite does NOT mean.** `jest.setup.js` mocks Reanimated to a no-op — every hook, every
+worklet. It proves the screens still render and **nothing** about the native side. And jest renders a tree,
+not pixels, so it structurally cannot see IMP-080's overlap either. **All three specs are code-complete and
+none is verified.**
+
+**NEXT: this is a walk lane now — the build queue is genuinely empty and nothing should be scoped to fill
+it.** In order: **WALK-07 (Paywall half)** and **WALK-03 step 4 (`neverBackedUp`, at default AND max font
+scale)** — both pure-JS, both ready on a debug build of this branch, both needed to actually close IMP-080
+and IMP-081. Then **WALK-18**, which is unblocked but **needs a new vc14 build and a mid-range device** —
+no vc13 artifact carries Reanimated, and an emulator renders dropped frames as smooth. Then WALK-08's eight
+remaining screens, and **WALK-12 (R8) LAST** on the Play `internal` build._
+
+---
+
 _2026-09-05 (Opus — WALK-03 / WALK-17 / WALK-08 emulator pass, WALK-16 + WALK-17 closed, IMP-081 scoped;
 **branch-only, committed, NOT pushed**) — **a walk session; no app code was touched and the record is the
 deliverable.**
@@ -351,56 +430,3 @@ landscape, are still unrun — the row stays open.**
 files, either order. `IMP-077` is also open now that WALK-16 is closed. **The remaining walk work is
 WALK-08's eight screens, then WALK-03 step 4 and WALK-07's Paywall half once their specs land, then
 WALK-12 (R8) LAST on the Play `internal` build.**_
-
-
-_2026-09-05 (Opus — WALK-16 emulator sweep, steps 4-7; **branch-only, committed, NOT pushed**) —
-**WALK-16 now has emulator evidence for all seven steps**, up from three. No app code was touched; this
-was a walk, and the deliverable is the record.
-
-**Run on the live AVD** (`sdk_gphone16k_arm64` — Android 16 / API 36, 16 KB pages) against the installed
-v1.0.7 / vc13 debug APK. **Step 4 (storage round trip), step 5 (notification scheduling), step 6 (export →
-share sheet → re-import) and step 7 (Auto Backup via T5) all pass.** No redbox, no ANR, no `FATAL` at any
-point. Details and the exact evidence per step are in [`docs/walk-open.md`](docs/walk-open.md) → WALK-16.
-
-**The one result worth reading in full is step 7.** A genuine `bmgr` backup → uninstall → reinstall →
-restore did **not** put the restored journal straight into the app. It landed in
-`dailyrituals:v1:pendingRestore`, the live state key was cleared, onboarding ran, and only then did the
-**"We found your journal."** sheet offer it — correctly itemising *15 Embers, 1 palette, 2 skies*. That is
-IMP-033/IMP-029/IMP-062's "offered, not imposed" contract holding on a **real backup transport**, where
-WALK-02 could only prove it against a T4 clock fake. The promised recovery copy was written for real to
-`files/daily-rituals-recovery-*.json`.
-
-**One observation deliberately not scoped as a defect:** with the reminder set to 20:30 and the device
-clock at 15:16, `dumpsys alarm` showed 7 daily `RTC_WAKEUP` alarms starting **tomorrow** — today's was
-skipped. That is consistent with today's entry already being written, not a miss. If WALK-13 sees a
-missing same-day reminder on hardware, this is the first place to look.
-
-**WALK-16 stays ⬜.** It is a `device` row and the header rule is explicit that an emulator run is not a
-pass. But the hardware residue is now only three things: **real doze + OEM battery managers, real share
-targets, and Google's own backup schedule.** IMP-077's gate is the owner's call to make on that evidence,
-not a chat's.
-
-**Then the owner shipped it.** ✅ **v1.0.7 / vc13 is on Play `internal` as of 2026-09-05** — EAS build
-`11dce1c2-3ba5-4654-9ea3-b3723e1ee457`, submission `bcb6c944-f3eb-4ec1-8f96-cb0da21c39f0`, `Release
-Status: completed`, built from commit `bbd5f45`. It is **the first New Architecture build to reach any
-track**, and it replaced vc12 on `internal`.
-
-**Two consequences a new chat must not miss.**
-
-1. **There are now TWO vc13 artifacts and they are not interchangeable.** The Play build is a *release*
-   build — `__DEV__` false, no Metro, **no dev harness**, so **T1/T2/T3 do not exist on it**. **WALK-13**
-   (needs T2 → Notify) and **WALK-03 step 4** (needs the `staleBackup`/`neverBackedUp` scenarios)
-   therefore **cannot** be walked on it; they need the local debug APK. Everything else — WALK-17,
-   WALK-08, WALK-03's other steps, WALK-16's hardware residue and **WALK-12** — runs on the Play build.
-   They cannot coexist (same `applicationId`, different signing keys), so swapping means uninstall and a
-   data wipe: **export a backup first, which is WALK-03 step 1 for free.** Full table in "The vc13
-   builds" above.
-2. **The OTA lane reopened**, because a 1.0.7 build finally shipped — but it reaches **vc13 installs
-   only** (internal testers), not `alpha`'s vc11 and not the public on vc9. A JS-only walk finding can go
-   out as an OTA; anything native still needs a build, and re-cutting a build invalidates any WALK-12
-   pass taken before it.
-
-**NEXT: the device sitting, in this order** — install the **debug APK** and take **WALK-13 + WALK-03
-step 4**; export a backup; uninstall; install **vc13 from Play internal** and take **WALK-17, WALK-08,
-WALK-03 steps 1-3+5, WALK-16's residue**; then **WALK-12 (R8) LAST**. `IMP-080` remains takeable in
-parallel by a build chat — no gate, no device._
