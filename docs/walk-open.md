@@ -90,7 +90,7 @@ locked. It is the row that reopens the moment Plus becomes the active work.
 | WALK-14 | ⏭ | [TalkBack can write an entry](build-log.md#-walk-14--talkback-can-write-an-entry--dropped-2026-08-16-owners-call-section-moved-here-2026-08-17) | IMP-059 | **device** | 👤 | ⏭ — **dropped 2026-08-16** per owner; section archived to `build-log.md` → "Walk log". Reopen trigger: an accessibility complaint, or institutional Plus buyers |
 | WALK-15 | ✅ | [Store screenshots regenerate](build-log.md#walk-15--store-screenshots-regenerate--closed-2026-08-16-emulator-agent-run-owners-call) | IMP-061 | emulator | 🤖 mostly | ✅ **2026-08-16 — closed at owner's call.** `npm run shots` green end to end, seven Play-legal assets committed; steps 1–3 + 7 passed, **4–6 accepted unrun**; detail in `build-log.md` → "Walk log" |
 | WALK-11 | ⏭ | [The Plus surfaces](#walk-11--the-plus-surfaces) | IMP-038, 046, 047, 043 | emulator | 👤 | ⬜ — **skip for this release.** `PLUS_ENABLED = false` makes every surface here *unmountable*, not locked; walking it needs T1, which must be reverted before committing |
-| WALK-16 | 🚦 | [The New Architecture cold start](#walk-16--the-new-architecture-cold-start) | IMP-076 | **device** (native runtime) | 👤 | ⬜ — **branch-only** (`feat/design-push`). **Gates IMP-077.** Nothing in jest can see this |
+| WALK-16 | 🚦 | [The New Architecture cold start](#walk-16--the-new-architecture-cold-start) | IMP-076 | **device** (native runtime) | 👤 | ⬜ — **branch-only** (`feat/design-push`). **Gates IMP-077.** Nothing in jest can see this. 🟡 **Emulator smoke 2026-09-05: steps 1-3 pass, New Arch confirmed live (Bridgeless + Fabric + TurboModule)** — real evidence for IMP-076, but steps 4-7 still need hardware |
 | WALK-17 | 🚦 | [Edge-to-edge, re-audited under New Arch](#walk-17--edge-to-edge-re-audited-under-new-arch) | IMP-076, IMP-027 regression | **device** | 👤 (visual) | ⬜ — **branch-only.** Runnable in the same session as WALK-16; do **not** assume IMP-027's pass carries over |
 | WALK-18 | 🎨 | [The app moves](#walk-18--the-app-moves) | IMP-077 | **device** (mid-range, real frame pacing) | 👤 (visual) | ⬜ — **branch-only.** Blocked until WALK-16 passes and IMP-077 lands |
 
@@ -345,6 +345,26 @@ both `newArchEnabled` flags back to `false`, rebuild, confirm the failure clears
 back to bare `Animated`** — Reanimated 4 is New Arch-only, but the design work (IMP-078) is *not* blocked
 either way, and the motion contract was deliberately written to survive this outcome. Scope the failure
 as a new `IMP-xxx` for Opus.
+
+**🟡 Emulator smoke run — 2026-09-05. NOT A PASS; this row stays ⬜.** A `device` row run on an emulator
+is not a pass (see the header rule), and steps 5-7 are exactly the ones an emulator cannot settle. But
+IMP-076 had *no* runtime evidence at all, and this closes part of that gap. Run on `feat/design-push`
+with a **v1.0.7 / vc13** debug APK (`expo prebuild` first, so the install genuinely stamps vc13 — an
+earlier local build silently reported vc11 off a stale gradle cache).
+
+**New Architecture is confirmed live at runtime, not merely configured.** logcat on cold start carries
+`jni_lib_merge: Preparing to register libfabricjni_so`, the same for `libturbomodulejsijni_so`, and
+`BridgelessReact: ReactHost{0}.startSurface(surfaceId = 0)`. Bridgeless is New-Arch-only. IMP-076's
+evidence was previously limited to codegen `.so` files being *present* in the APK; this is the runtime
+entering New Arch and rendering. **Step 1 (cold start, no redbox, no ANR), step 2 (SVG — the sun and rays
+draw, every tab icon draws) and step 3 (safe-area — status bar clear, bottom nav above the gesture bar)
+all pass here.** `prebuild` was verified not to have undone IMP-076: `newArchEnabled=true` and
+`android.enableMinifyInReleaseBuilds=true` both survived.
+
+**Still unproven and still why this row is open:** step 4 (storage round trip), step 5 (notifications —
+needs real doze and an OEM battery manager), step 6 (file I/O + share — needs real share targets), step 7
+(Auto Backup). One log line was chased and is benign: `ReactNativeJS: W Error: undefined` is preceded by
+`URL: <host>:8081` and is dev-client connection logging, not an app error.
 
 **Expect one specific stumble, at install rather than runtime:**
 `scripts/patch-permissions.js` may exit non-zero and fail `npm install` if New Arch moves the permissions
