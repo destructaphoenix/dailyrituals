@@ -7,7 +7,13 @@ import { RENEW_DATE } from '../data';
 const FALLBACK_RENEW_ISO = '2026-06-12T00:00:00.000Z'; // matches RENEW_DATE
 
 function ent(plan) {
-  return { active: true, willRenew: true, plan, renewISO: FALLBACK_RENEW_ISO, priceString: null };
+  // IMP-083: the sim carries a productId too, so Expo Go and the dev panel walk
+  // the real manage/cancel path rather than a stub that cannot fail.
+  return {
+    active: true, willRenew: true, plan,
+    productId: plan === 'annual' ? 'plus_annual' : 'plus_monthly',
+    renewISO: FALLBACK_RENEW_ISO, priceString: null,
+  };
 }
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 

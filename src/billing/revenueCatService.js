@@ -3,7 +3,9 @@ import { ENTITLEMENT_ID } from './config';
 import { formatRenewDate, planFromProductId } from './format';
 import { mapPurchaseError } from './mapError';
 
-function toEntitlement(customerInfo) {
+// Exported for test: IMP-083 depends on `productId` surviving onto the object,
+// and a refactor that quietly drops it silently restores the account-wide list.
+export function toEntitlement(customerInfo) {
   const ent = customerInfo && customerInfo.entitlements
     && customerInfo.entitlements.active && customerInfo.entitlements.active[ENTITLEMENT_ID];
   if (!ent) return null;
@@ -11,6 +13,9 @@ function toEntitlement(customerInfo) {
     active: true,
     willRenew: ent.willRenew !== false,
     plan: planFromProductId(ent.productIdentifier),
+    // IMP-083: kept raw (Play returns `product:basePlan`); manageUrl strips the
+    // suffix so Cancel opens THIS subscription, not the account-wide list.
+    productId: ent.productIdentifier || null,
     renewISO: ent.expirationDate || null,
     priceString: null,
   };

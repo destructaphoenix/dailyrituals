@@ -189,7 +189,10 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     () => createPurchaseService({ sim, alreadyPlus: plus, platform: PLATFORM }),
     [sim.purchase, sim.restore, plus]
   );
-  const openLink = (k) => { openExternal(k, PLATFORM); };
+  // IMP-083: every route to the store's subscription settings carries the
+  // product so Play opens THIS subscription instead of the account-wide list.
+  const manageOpts = () => ({ productId: liveEntitlement && liveEntitlement.productId });
+  const openLink = (k) => { openExternal(k, PLATFORM, manageOpts()); };
 
   // While there is no cash ember purchase to route to, say so instead of
   // opening the shop. This is gated on EMBER_PACKS_ENABLED, not PLUS_ENABLED:
@@ -241,12 +244,12 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   // Cancel: route to the OS subscription settings (Apple/Google own cancellation),
   // then optimistically mark ending. A focus-refresh (below) corrects from truth.
   const doCancel = async () => {
-    await openExternal('manage', PLATFORM);
+    await openExternal('manage', PLATFORM, manageOpts());
     setSubCanceled(true);
     showToast('Manage your subscription in ' + (PLATFORM === 'android' ? 'Google Play' : 'the App Store'));
   };
   const doResume = async () => {
-    await openExternal('manage', PLATFORM);
+    await openExternal('manage', PLATFORM, manageOpts());
     showToast('Resume your subscription in ' + (PLATFORM === 'android' ? 'Google Play' : 'the App Store'));
   };
   const doGetHelp = async () => {

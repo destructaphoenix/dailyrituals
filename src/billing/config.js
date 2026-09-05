@@ -18,11 +18,21 @@ export const RC_KEYS = {
   android: extra.rcAndroidKey || '',
 };
 
+// The Android application id, read from app.config.js rather than hardcoded so
+// it cannot drift from what Play actually knows. '' when absent (iOS, or a
+// context with no expoConfig such as jest) — IMP-083's manageUrl treats that as
+// "no deep link possible" and degrades to the generic subscriptions URL.
+export const PACKAGE_NAME = (Constants.expoConfig && Constants.expoConfig.android
+  && Constants.expoConfig.android.package) || '';
+
 // Real legal + store URLs. Replace the placeholders before any store submission.
 export const LINKS = {
   terms: extra.termsUrl || 'https://dailyrituals.app/terms',
   privacy: extra.privacyUrl || 'https://dailyrituals.app/privacy',
-  // OS-managed subscription settings (used by Cancel / manage deep-links).
+  // OS-managed subscription settings. These are the GENERIC destinations — the
+  // account-wide list. IMP-083: prefer links.js's manageUrl(), which deep-links
+  // straight to this app's subscription when the product id is known and falls
+  // back to these only when it is not.
   manageIos: 'https://apps.apple.com/account/subscriptions',
   manageAndroid: 'https://play.google.com/store/account/subscriptions',
 };

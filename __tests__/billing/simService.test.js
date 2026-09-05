@@ -20,6 +20,19 @@ describe('createSimService', () => {
     const svc = createSimService({ purchase: 'success', restore: 'empty' }, false, 0);
     await expect(svc.restore()).resolves.toMatchObject({ kind: 'restore-empty' });
   });
+  // IMP-083: manageUrl is only reachable if the productId survives the trip from
+  // the store to RitualsApp. This stops a refactor quietly dropping the field and
+  // silently restoring the account-wide Play list.
+  test('every sim entitlement carries a productId for the manage deep link', async () => {
+    const svc = createSimService({ purchase: 'success', restore: 'found' }, false, 0, 0);
+    expect((await svc.buy('annual')).entitlement.productId).toBe('plus_annual');
+    expect((await svc.buy('monthly')).entitlement.productId).toBe('plus_monthly');
+    expect((await svc.restore()).entitlement.productId).toBe('plus_annual');
+  });
+  test('getEntitlement carries it too', async () => {
+    const svc = createSimService({ purchase: 'success', restore: 'empty' }, true, 0, 0);
+    expect((await svc.getEntitlement()).productId).toBe('plus_annual');
+  });
   test('restore finds when sim says found', async () => {
     const svc = createSimService({ purchase: 'success', restore: 'found' }, false, 0);
     await expect(svc.restore()).resolves.toMatchObject({ kind: 'restored' });
