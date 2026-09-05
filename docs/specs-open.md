@@ -97,6 +97,77 @@
 
 - **Ship after merge:** OTA — pure JS, and the lane reopens once vc14 is on `internal`.
 
+## IMP-083 — Cancel goes to the subscription, not to a list
+
+### IMP-083 — the manage/cancel deep link carries the product   ·   Lane: OTA   ·   Status: ⬜
+
+- **Goal:** tapping Cancel or Manage opens **the Daily Rituals subscription** in Google Play, not the
+  full list of everything the user subscribes to.
+
+- **Why / context:** found 2026-09-06 when the owner, mid license-tester purchase, went to cancel and
+  could not find the subscription. [`config.js:27`](../src/billing/config.js#L27) is a bare
+  `https://play.google.com/store/account/subscriptions` with no product on it, so
+  [`links.js:10`](../src/billing/links.js#L10) hands Play a list to hunt through. Google's billing docs
+  specify `?sku=<productId>&package=<packageName>` for exactly this case. **The app already knows the
+  product** — `toEntitlement` reads `ent.productIdentifier` ([`revenueCatService.js:11`](../src/billing/revenueCatService.js#L11))
+  to derive the plan and then throws it away. This is the cancel path, i.e. the moment a subscriber is
+  already mildly annoyed; making them search is how a cancel becomes a support mail.
+
+- **Files likely touched:** `src/billing/links.js`, `src/billing/config.js`,
+  `src/billing/revenueCatService.js`, `src/billing/simService.js`, `src/RitualsApp.js`, and tests.
+
+- **Approach (decided by Opus — do not re-litigate):**
+
+  1. **Extract a pure URL builder.** `links.js` gains an exported
+     `manageUrl({ platform, productId, packageName })` that returns a string. `openExternal` calls it.
+     This is the only way to test the thing without mocking `Linking`, and the URL shape is the whole
+     defect.
+  2. **Never produce a broken link.** Missing `productId` **or** missing `packageName` ⇒ return the
+     existing generic `LINKS.manageAndroid`. iOS is unchanged in every case — Apple has no equivalent
+     parameter. A degraded link must be today's link, not a 404.
+  3. ⚠️ **Strip the base-plan suffix.** RevenueCat returns Google Play subscription identifiers as
+     `product:basePlan` — the project's own dashboard shows `plus_annual:annual` and
+     `plus_monthly:monthly`. **Play's `sku` parameter wants the product only** (`plus_annual`), so take
+     everything before the first `:`. Passing the full string produces a link that resolves to nothing,
+     which is worse than the list we are replacing.
+  4. `packageName` comes from `Constants.expoConfig?.android?.package`, exposed as `PACKAGE_NAME` in
+     `config.js` beside the other constants. **Do not hardcode `app.dailyrituals.mobile`** in `links.js`.
+  5. `encodeURIComponent` both values.
+
+- **TDD:** RED-first on `manageUrl`. It is pure and it is the entire fix.
+
+- **Steps:**
+  - [ ] 1. **RED** — `manageUrl` tests: android + `plus_annual` ⇒
+        `https://play.google.com/store/account/subscriptions?sku=plus_annual&package=app.dailyrituals.mobile`;
+        android + `plus_annual:annual` ⇒ **the same string** (suffix stripped); android + no productId
+        ⇒ the generic URL; android + productId but no packageName ⇒ the generic URL; ios ⇒
+        `LINKS.manageIos` regardless of productId.
+  - [ ] 2. Add `PACKAGE_NAME` to `config.js` from `Constants.expoConfig?.android?.package` (`''` when absent).
+  - [ ] 3. Implement `manageUrl` in `links.js` per the rules above; `openExternal(kind, platform, opts)`
+        takes an optional `opts = { productId }` and uses it for `kind === 'manage'`. **The existing
+        two-argument calls must keep working unchanged** — `opts` defaults to `{}`.
+  - [ ] 4. `toEntitlement` ([`revenueCatService.js`](../src/billing/revenueCatService.js)) adds
+        `productId: ent.productIdentifier || null` to the object it returns. Do not alter `plan`.
+  - [ ] 5. `simService`'s `ent(plan)` adds `productId: plan === 'annual' ? 'plus_annual' : 'plus_monthly'`,
+        so Expo Go and the dev panel walk the same path rather than a stub that cannot fail.
+  - [ ] 6. `RitualsApp` — `doCancel` and `doResume` ([`RitualsApp.js:242`](../src/RitualsApp.js#L242),
+        [`:247`](../src/RitualsApp.js#L247)) pass `{ productId: liveEntitlement && liveEntitlement.productId }`.
+        `openLink` ([`:190`](../src/RitualsApp.js#L190)) does the same so the Manage sheet's own link matches.
+  - [ ] 7. `npm test` green (must stay ≥ **875**).
+  - [ ] 8. `npx expo export --platform android` clean.
+
+- **Tests:** the five `manageUrl` cases in step 1. Plus one on `toEntitlement` asserting `productId`
+  survives onto the returned object, and one on `simService` asserting `ent()` carries it — that pair is
+  what stops a future refactor quietly dropping the field and silently restoring the old behaviour.
+
+- **Commit:** `fix(billing): cancel opens the subscription, not the whole list`
+
+- **Acceptance:** on a device with an active subscription, Manage → Cancel lands on the Daily Rituals
+  subscription page in Play with its own Cancel button, not the account-wide list. Confirmed as step 10
+  of **WALK-19**.
+
+- **Ship after merge:** OTA — pure JS.
+
 ### Numbers that must not be reused
 
 - **079** — used on 2026-09-05 for a baseline-capture path written, reviewed and deleted in the same
