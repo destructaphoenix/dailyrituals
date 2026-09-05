@@ -9,7 +9,6 @@ import { useTheme } from './theme';
 import { T } from './ui';
 import { CHROME_FONT_SCALE } from './ui/textScale';
 import { Ember, Lock, Check, Sun, Moon, Chevron } from './icons';
-import { RENEW_DATE } from './data';
 
 // ── Embers balance pill ───────────────────────────────────────────────────────
 export function EmberPill({ embers, plus, onPress, lg }) {
@@ -37,7 +36,10 @@ export function EmberPill({ embers, plus, onPress, lg }) {
 }
 
 // ── Plus banner / member status ───────────────────────────────────────────────
-export function PlusBanner({ plus, onOpenPaywall, onManage, compact }) {
+// IMP-082: `renewLabel` is the real date or null. Null means the app does not
+// know when this subscription renews, so it says nothing about renewal — it
+// does NOT reach for the RENEW_DATE design mock.
+export function PlusBanner({ plus, onOpenPaywall, onManage, compact, renewLabel = null }) {
   const t = useTheme();
   const c = t.colors;
   if (plus) {
@@ -49,7 +51,7 @@ export function PlusBanner({ plus, onOpenPaywall, onManage, compact }) {
         </View>
         <View style={{ flex: 1 }}>
           <T d w={800} color={c.ink} style={{ fontSize: 16 }}>Daily Rituals Plus</T>
-          <T w={600} color={c.muted} style={{ fontSize: 12.5, marginTop: 1 }}>Member · renews {RENEW_DATE}</T>
+          <T w={600} color={c.muted} style={{ fontSize: 12.5, marginTop: 1 }}>{renewLabel ? `Member · renews ${renewLabel}` : 'Member'}</T>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
           <T d w={800} color={c.accentDeep} style={{ fontSize: 12.5 }}>Manage</T>

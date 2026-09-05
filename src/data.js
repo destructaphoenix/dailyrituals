@@ -179,5 +179,11 @@ export const PLUS_PERKS = [
   'Your year, remembered — the Annual Recap',
 ];
 
-// Next renewal date shown across the member status + manage surfaces.
+// MOCK DATA — the dev panel and test fixtures ONLY. Never a user-facing
+// fallback. This is a design-prototype date; with Plus live (PLUS_ENABLED true
+// since 2026-09-05) every real subscriber it reached would have been told a
+// wrong renewal date. IMP-082 cut it out of format.js, RitualsApp, shopui's
+// PlusBanner, ManageSubscription and CancelSheet: when there is no live date
+// from RevenueCat the surface drops the renewal claim instead of inventing one.
+// If you are about to write `renewLabel || RENEW_DATE`, that is the bug.
 export const RENEW_DATE = '12 Jun 2026';

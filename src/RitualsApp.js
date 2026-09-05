@@ -18,7 +18,7 @@ import { T } from './ui';
 import { ScreenFade } from './motion';
 import { CHROME_FONT_SCALE } from './ui/textScale';
 import { HomeIcon, BookIcon, Pencil, ChartIcon, UserIcon } from './icons';
-import { COPY, DAILY_QUESTS, STREAK_MILESTONES, SHOP_PALETTES, EMBER_GAIN, RENEW_DATE } from './data';
+import { COPY, DAILY_QUESTS, STREAK_MILESTONES, SHOP_PALETTES, EMBER_GAIN } from './data';
 import HomeScreen from './screens/HomeScreen';
 import ArchiveScreen from './screens/ArchiveScreen';
 import InsightsScreen from './screens/InsightsScreen';
@@ -177,7 +177,9 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   // Which year's Annual Recap (IMP-046) is open, if any — null means closed.
   const [openRecapYear, setOpenRecapYear] = useState(null);
   const [liveEntitlement, setLiveEntitlement] = useState(null);
-  const renewLabel = liveEntitlement ? formatRenewDate(liveEntitlement.renewISO) : RENEW_DATE;
+  // IMP-082: null when there is no live date — every member surface drops the
+  // renewal claim rather than falling back to the RENEW_DATE design mock.
+  const renewLabel = liveEntitlement ? formatRenewDate(liveEntitlement.renewISO) : null;
   const livePlan = liveEntitlement ? liveEntitlement.plan : activePlan;
   const livePrice = liveEntitlement ? liveEntitlement.priceString : null;
   // Store outcome is driven by settings so every purchase/restore state is
@@ -701,7 +703,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             streak={streak} level={level} levelName={levelName} xpInto={xpInto} xpToNext={xpToNext}
             entriesCount={entries.length} badgesEarned={badgesEarned}
             embers={embers} plus={plus} onOpenShop={() => setShopOpen(true)}
-            plusEnabled={PLUS_ENABLED}
+            plusEnabled={PLUS_ENABLED} renewLabel={renewLabel}
             onOpenPaywall={PLUS_ENABLED ? () => setPaywall(true) : () => {}}
             onOpenManage={PLUS_ENABLED ? () => setManageOpen(true) : () => {}}
             onRestorePurchases={() => doRestore()}
@@ -880,7 +882,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
               activePalette={activePalette} ownedPalettes={ownedPalettes} onApplyPalette={applyPalette} onBuyPalette={buyPalette}
               activeSky={activeSky} ownedSkies={ownedSkies} onApplySky={applySky} onBuySky={buySky}
               freezes={freezes} onBuyCandles={buyCandles}
-              plusEnabled={PLUS_ENABLED}
+              plusEnabled={PLUS_ENABLED} renewLabel={renewLabel}
               onOpenPaywall={PLUS_ENABLED ? () => setPaywall(true) : () => {}}
               onGetEmbers={getEmbers}
               embersForCash={EMBER_PACKS_ENABLED}

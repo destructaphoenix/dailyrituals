@@ -16,6 +16,7 @@ export default function Shop({
   activePalette, ownedPalettes, onApplyPalette, onBuyPalette,
   activeSky, ownedSkies, onApplySky, onBuySky,
   freezes, onBuyCandles, onOpenPaywall, onGetEmbers, onManage, plusEnabled = true,
+  renewLabel = null, // IMP-082 — the real renewal date, or null to say nothing about renewal
   embersForCash = false,
 }) {
   const t = useTheme();
@@ -73,7 +74,7 @@ export default function Shop({
         {/* Plus upsell / status */}
         {plusEnabled && (
           <View style={{ marginTop: 4 }}>
-            <PlusBanner plus={plus} onOpenPaywall={onOpenPaywall} onManage={onManage} />
+            <PlusBanner plus={plus} onOpenPaywall={onOpenPaywall} onManage={onManage} renewLabel={renewLabel} />
           </View>
         )}
 

@@ -21,6 +21,7 @@ export default function YouScreen({
   mode, onToggleMode, settings, setSettings,
   streak, level, levelName, xpInto, xpToNext, entriesCount, badgesEarned, onOpenAchievements,
   embers, plus, onOpenShop, onOpenPaywall, onOpenManage, onRestorePurchases, plusEnabled = true, onResetData,
+  renewLabel = null, // IMP-082 — the real renewal date, or null to say nothing about renewal
   lastBackupAt, onExportData, onImportData, onExplainAutoBackup, onOpenDev,
   pendingRestore, onReopenPendingRestore, onDiscardPendingRestore,
   reminderValue, onOpenReminder, onOpenPlusPerks,
@@ -108,7 +109,7 @@ export default function YouScreen({
 
       {/* Plus + Shop */}
       <View style={{ paddingHorizontal: 20, gap: 12 }}>
-        {plusEnabled && <PlusBanner plus={plus} onOpenPaywall={onOpenPaywall} onManage={onOpenManage} compact />}
+        {plusEnabled && <PlusBanner plus={plus} onOpenPaywall={onOpenPaywall} onManage={onOpenManage} renewLabel={renewLabel} compact />}
         {plusEnabled && onOpenPlusPerks && (
           <Card>
             <Row icon={<Sun size={20} color={c.accentDeep} />} label="What's in Plus" onPress={onOpenPlusPerks} />

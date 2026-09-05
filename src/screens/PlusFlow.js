@@ -181,7 +181,9 @@ export function ManageSubscription({ insets, platform, plan, canceled, renewLabe
   const c = t.colors;
   const w = storeWords(platform);
   const p = PLUS_PRICES[plan] || PLUS_PRICES.annual;
-  const renew = renewLabel || RENEW_DATE;
+  // IMP-082: null means the app has no live renewal date. Drop the claim —
+  // never substitute the RENEW_DATE design mock.
+  const renew = renewLabel;
   const priceText = priceString || p.price;
   const [cancelSheet, setCancelSheet] = useState(false);
 
@@ -211,7 +213,9 @@ export function ManageSubscription({ insets, platform, plan, canceled, renewLabe
           <View style={{ flex: 1 }}>
             <T d w={800} color={c.ink} style={{ fontSize: 16 }}>Daily Rituals Plus</T>
             <T w={600} color={c.muted} style={{ fontSize: 12.5, marginTop: 1 }}>
-              {canceled ? `Ends ${renew} · access until then` : `${p.label} · renews ${renew}`}
+              {canceled
+                ? (renew ? `Ends ${renew} · access until then` : 'Ends soon · access until then')
+                : (renew ? `${p.label} · renews ${renew}` : p.label)}
             </T>
           </View>
           <View style={{ backgroundColor: canceled ? c.cancelSoft : c.greenSoft, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999 }}>
@@ -253,8 +257,8 @@ export function ManageSubscription({ insets, platform, plan, canceled, renewLabe
 
         <T w={600} color={c.muted} style={{ fontSize: 12, lineHeight: 18, textAlign: 'center', marginTop: 18, marginHorizontal: 4 }}>
           Billing is handled by {w.store}. {canceled
-            ? `Your subscription won't renew. You'll keep Plus until ${renew}.`
-            : `Cancelling stops the next renewal — you keep Plus until ${renew}.`}
+            ? (renew ? `Your subscription won't renew. You'll keep Plus until ${renew}.` : "Your subscription won't renew.")
+            : (renew ? `Cancelling stops the next renewal — you keep Plus until ${renew}.` : 'Cancelling stops the next renewal.')}
         </T>
       </ScrollView>
 
@@ -272,7 +276,7 @@ export function CancelSheet({ platform, renewLabel, onKeep, onConfirm }) {
   const t = useTheme();
   const c = t.colors;
   const w = storeWords(platform);
-  const renew = renewLabel || RENEW_DATE;
+  const renew = renewLabel; // IMP-082 — no live date, no promise about one
   return (
     <Pressable onPress={onKeep} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 31, alignItems: 'center', justifyContent: 'flex-end', padding: 16, backgroundColor: c.scrim }}>
       <Pressable onPress={() => {}} style={[{ width: '100%', maxWidth: 400, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, borderRadius: t.radius.card, padding: 24, alignItems: 'center' }, t.shadow(30, '#000', 0.45)]}>
@@ -281,8 +285,8 @@ export function CancelSheet({ platform, renewLabel, onKeep, onConfirm }) {
         </View>
         <T d w={800} color={c.ink} style={{ fontSize: 22, lineHeight: 26, textAlign: 'center' }}>Cancel Daily Rituals Plus?</T>
         <T w={600} color={c.muted} style={{ fontSize: 14.5, lineHeight: 21, textAlign: 'center', marginTop: 9 }}>
-          Subscriptions are managed by {w.store}. We'll open your subscription settings so you can cancel — you'll keep
-          Plus until {renew}.
+          Subscriptions are managed by {w.store}. We'll open your subscription settings so you can cancel
+          {renew ? ` — you'll keep Plus until ${renew}.` : '.'}
         </T>
         <View style={{ width: '100%', gap: 9, marginTop: 22 }}>
           <DangerButton label={`Open ${w.storeShort} settings`} onPress={onConfirm} />

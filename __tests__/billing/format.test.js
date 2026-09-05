@@ -1,13 +1,23 @@
 // __tests__/billing/format.test.js
 import { formatRenewDate, planFromProductId } from '../../src/billing/format';
+import { RENEW_DATE } from '../../src/data';
 
 describe('formatRenewDate', () => {
   test('formats an ISO date as "D Mon YYYY"', () => {
     expect(formatRenewDate('2026-06-12T00:00:00.000Z')).toBe('12 Jun 2026');
   });
-  test('returns the fallback constant for null/invalid input', () => {
-    expect(formatRenewDate(null)).toBe('12 Jun 2026');
-    expect(formatRenewDate('not-a-date')).toBe('12 Jun 2026');
+  // IMP-082: never fabricate a renewal date. No live date ⇒ no claim.
+  test('returns null for missing input rather than a fabricated date', () => {
+    expect(formatRenewDate(null)).toBeNull();
+    expect(formatRenewDate(undefined)).toBeNull();
+    expect(formatRenewDate('')).toBeNull();
+  });
+  test('returns null for an unparseable date string', () => {
+    expect(formatRenewDate('not-a-date')).toBeNull();
+  });
+  test('never returns the design mock constant', () => {
+    expect(formatRenewDate(null)).not.toBe(RENEW_DATE);
+    expect(formatRenewDate('not-a-date')).not.toBe(RENEW_DATE);
   });
 });
 
