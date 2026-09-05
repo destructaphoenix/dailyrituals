@@ -63,10 +63,9 @@ actually ship on. **WALK-12 (R8) stays last and is the one row that cannot move*
 the exact build you intend to ship, so any fix an earlier walk turns up invalidates an R8 pass taken
 before it. **WALK-18** needs IMP-077 landed first, so it is a later sitting by construction.
 
-**Two rows are not part of that sitting.** **WALK-09** is the only open walk that needs no device —
-emulator, runnable any time, and it is on **Insights**, the screen the live Claude Design request
-targets, so it is worth clearing *before* that design is pulled (read its rewritten steps, not the ❌
-paragraph under them). **WALK-07** is not a re-run at all: it needs a new `IMP-xxx` from Opus first.
+**WALK-09 is closed (✅ 2026-09-05)** — it was the last walk that needed no device, and it cleared
+Insights before the Claude Design request lands on that screen. **WALK-07 is the one row that is not a
+re-run**: its Paywall half needs `IMP-080` to land first, then only that half is walked again.
 
 **Everything here still runs on `feat/design-push` — a branch that is never pushed to GitHub** (owner
 instruction, 2026-08-17).
@@ -86,7 +85,7 @@ locked. It is the row that reopens the moment Plus becomes the active work.
 | WALK-06 | 🎨 | [Streak insurance — candles spend themselves](build-log.md#walk-06--streak-insurance) | IMP-039, IMP-063, IMP-064 | emulator | 👤 | ✅ **2026-08-16** — full pass, re-run after IMP-063 + IMP-064 landed; detail in `build-log.md` → "Walk log" |
 | WALK-07 | 🎨 | [Modal screens actually scroll](#walk-07--modal-scroll) | IMP-042 | emulator | 👤 (visual, two nav modes) | ❌ **2026-08-16 (whole-walk re-run, reopened again)** — the five other screens + both IMP-067 spot-checks all pass, both nav modes, max font. **Paywall still fails after IMP-074** — footer overlaps the plan selector + disclaimer from first open, both fix-halves confirmed present in code. **Scoped 2026-09-05 as `IMP-080`** (`docs/specs-open.md`) — footer goes `position: absolute`, root takes an exact `height: winH`. **Re-run the Paywall half only, once IMP-080 lands.** Needs T1 |
 | WALK-08 | 🎨 | [Font scale + layout on the nine new screens](#walk-08--font-scale) | IMP-030 regression | **device** (real font metrics) | 👤 | ⬜ — **runs on the vc13 branch build**, same sitting as WALK-13/03 |
-| WALK-09 | 🎨 | [Lifetime heatmap's four states + the XP line](#walk-09--lifetime-heatmap) | IMP-045 | emulator | 👤 (visual) | ❌ **2026-08-16** — states compute correctly (kept/frozen/missed/not-yet-started/future, month labels present, XP line correct) but 3 layout defects found: legend wraps awkwardly, month labels wrap mid-word, grid cells render unevenly. **Scoped 2026-08-16 as IMP-073** (`docs/specs-open.md`), all three in one spec. **Re-run once it lands — against the rewritten steps**, which expect a three-entry legend by design |
+| WALK-09 | 🎨 | [Lifetime heatmap's four states + the XP line](build-log.md#walk-09--lifetime-heatmap--closed-2026-09-05-emulator-owner-run) | IMP-045, **IMP-073** | emulator | 👤 (visual) | ✅ **2026-09-05** — full pass on the re-run after IMP-073; all three 2026-08-16 defects fixed, re-confirmed at max font. **`not yet started` was not exercised** (fixture has no pre-first-entry days) and the walk was closed with that gap recorded; detail in `build-log.md` → "Walk log" |
 | WALK-10 | 🎨 | [Tips, explainers, empty states](build-log.md#walk-10--teach-the-app) | IMP-041 | emulator | 👤 | ✅ **2026-08-16** — full pass, all 4 steps; owner decided live to drop the tip cards anyway, reserved as **IMP-075**; detail in `build-log.md` → "Walk log" |
 | WALK-14 | ⏭ | [TalkBack can write an entry](build-log.md#-walk-14--talkback-can-write-an-entry--dropped-2026-08-16-owners-call-section-moved-here-2026-08-17) | IMP-059 | **device** | 👤 | ⏭ — **dropped 2026-08-16** per owner; section archived to `build-log.md` → "Walk log". Reopen trigger: an accessibility complaint, or institutional Plus buyers |
 | WALK-15 | ✅ | [Store screenshots regenerate](build-log.md#walk-15--store-screenshots-regenerate--closed-2026-08-16-emulator-agent-run-owners-call) | IMP-061 | emulator | 🤖 mostly | ✅ **2026-08-16 — closed at owner's call.** `npm run shots` green end to end, seven Play-legal assets committed; steps 1–3 + 7 passed, **4–6 accepted unrun**; detail in `build-log.md` → "Walk log" |
@@ -213,50 +212,6 @@ Emulator → Settings → Display → **font size max + display size largest**. 
 one-character-per-line column; rows auto-stack. Also run the harness `longName` scenario (40 chars) across
 Home / You / Recap, and rotate each new sheet to landscape. Harness → Inspect shows
 `PixelRatio.getFontScale()` next to `MAX_FONT_SCALE` / `CHROME_FONT_SCALE` — confirm the cap is biting.
-
----
-
-## WALK-09 — lifetime heatmap
-
-**Covers:** IMP-045, IMP-063's `frozen` state, and **IMP-073's layout pass**. Use the `brokenStreak` scenario.
-
-> **Read this before re-running: the expected result changed on 2026-08-16.** The steps below describe the
-> design **IMP-073** specifies, not the one the ❌ result at the bottom was walked against. In particular the
-> legend is **three** entries **by design** and "not yet started" is deliberately **not** one of them — that
-> is the fix, not a regression. Do not fail the walk for its absence.
-
-Insights → "Your record":
-
-1. **Five distinct cell states.** kept (solid accent fill) · **a candle kept it** (soft fill + accentDeep
-   ring) · **missed** (soft fill + border ring) · **not yet started** (a flat, faint, ring-less tile —
-   quieter than everything else, no dashed outline) · future (invisible). "Not yet started" should read as
-   *nothing here* without needing a key; if it draws your eye and makes you ask what it means, IMP-073's
-   decision 2 did not land.
-2. **The legend is exactly three entries — `kept` · `a candle kept it` · `missed` — on ONE row**, and it
-   lines up with the left edge of the first grid cell, not with the month labels. Check at normal font
-   scale; if a large scale pushes it to two rows, the rows must be spaced, not cramped.
-3. **Month labels appear once per month down the left gutter, each on a single line.** No "Au"/"g" wrap.
-   Re-check at max OS font size — the gutter is supposed to grow with the text, so the labels stay whole and
-   the grid just gets slightly narrower.
-4. **The grid reads as one grid.** Every cell is the same size regardless of state — sight down a row of
-   mixed kept/missed/frozen days and look for kept days rendering visibly small.
-5. The level line renders XP: `Lv 4 · {name} · 1,250 XP`.
-
-**Result — ❌ 2026-08-16.** All the computed content passed: kept/missed/not-yet-started/future all render
-distinctly, plus the `frozen` ("a candle kept it") state added by IMP-063 is correctly wired in and shows up
-in the legend; month labels appear once per month; the level line reads correct XP. Three layout defects
-surfaced, all cosmetic (nothing miscomputed): (a) the legend (`InsightsScreen.js:197-202`, 4 entries now that
-`frozen` was added) wraps awkwardly under `flexWrap: 'wrap'` — "not yet started" most often forced onto its
-own row; owner's call is that this entry may not need a legend row at all, with that state represented
-in-cell instead, rather than just patching the wrap. (b) Month labels wrap mid-word ("Au"/"g") —
-`InsightsScreen.js:232-233` renders `monthLabelsForRows` output in a fixed `width: 24` box with no
-`numberOfLines`/`ellipsizeMode`; that gutter width also doesn't match the legend's `paddingLeft: 28`. (c)
-Grid cells render at visibly inconsistent sizes — `heatCellStyle` (`InsightsScreen.js:207-222`) varies
-`borderWidth` by state (0 for `done`, 1 for `frozen`/`missed`/`empty`), and the function's own comment
-already documents Android bleeding stroked rounded borders half outside the box, the likely cause. Full
-writeup in `PROGRESS.md` → Open items → "WALK-09 finding". **Scoped 2026-08-16 as `IMP-073` — all three
-defects in one spec** (`docs/specs-open.md`). Re-run this walk **against the rewritten steps above**, not
-against this paragraph, once IMP-073 lands.
 
 ---
 

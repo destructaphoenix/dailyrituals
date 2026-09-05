@@ -40,8 +40,7 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 >
 > | If this chat is… | Take |
 > | --- | --- |
-> | a **runtime walk, no device to hand** | **[WALK-09](docs/walk-open.md)** — emulator, owner-run, unblocked since IMP-073 landed and never re-run. It is on **Insights**, the screen the live design request targets, so clearing it *before* that design is pulled means the redesign lands on a known-good baseline. **Read its rewritten steps, not the ❌ paragraph.** |
-> | a **runtime walk, device plugged in** | **[WALK-16](docs/walk-open.md)** — the single highest-value thing open and the *only* evidence IMP-076 has. Then **WALK-17**, then **WALK-13 / WALK-03 / WALK-08**, all in the same sitting on one vc13 build; **WALK-12 (R8) last**. ⚠️ **A vc13 build has to be cut first — none exists.** |
+> | a **runtime walk** | **[WALK-16](docs/walk-open.md)** — the single highest-value thing open and the *only* evidence IMP-076 has. Then **WALK-17**, then **WALK-13 / WALK-03 / WALK-08**, all in the same sitting on one vc13 build; **WALK-12 (R8) last**. ⚠️ **A vc13 build has to be cut first — none exists.** |
 > | a **design request** | The Claude Design project is **live** — see "Claude Design is set up" below. |
 > | a **build task** | **[IMP-080](docs/specs-open.md)** — the Paywall footer. Scoped 2026-09-05, **no gate, no device, takeable right now.** It is the only unblocked spec in the file; IMP-077 still needs WALK-16 to pass. |
 >
@@ -58,7 +57,8 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 > **Still owed, and neither is done:**
 > - **The 🔴 WALK-07 Paywall regression needs a new `IMP-xxx` — Opus's lane to scope** (see Open items). It
 >   is a Plus surface. **Nothing about Plus should ship past this.**
-> - **WALK-09 (lifetime heatmap) is unblocked and never re-run** — IMP-073 landed; a walk chat can take it.
+> - **WALK-09 is now ✅ (2026-09-05)** — re-run after IMP-073, full pass, closed. **Every remaining walk
+>   needs a device.**
 >
 > **`IMP-057` is reserved, not missing** — the `dayKey` migration IMP-056 deferred; needs real device
 > numbers first (see Open items). **Do not reuse the number.** **IMP-044 claims no queue slot** — it rides
@@ -272,6 +272,37 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
+_2026-09-05 (Opus — vc13 retrack, IMP-080 scoped, WALK-09 closed; **branch-only, committed, NOT
+pushed**) — **five commits, no app code touched.** The dangling 2026-09-05 triage and the adaptive icon
+swapped on 2026-08-19 both landed; they had been sitting uncommitted.
+
+**"vc13 is the future" (owner) retires vc12 as the release candidate.** Its `internal` → `production`
+promotion is off; it stays on `internal` as history. The walk queue was split across two builds only
+because two candidates existed, so it collapses to **one device sitting on a vc13 build cut from this
+branch**: WALK-16 → WALK-17 → WALK-13 → WALK-03 → WALK-08, **WALK-12 (R8) last and immovable.** IMP-044
+retracked to match. **No vc13 build exists yet**, and cutting one auto-submits to `internal` per
+`eas.json` — owner's call.
+
+**[`IMP-080`](docs/specs-open.md) closes the last scoping debt — takeable now, no gate, no device.** The
+🔴 WALK-07 Paywall regression: IMP-068's `flex: 1` and IMP-074's `maxHeight: winH` are both still present
+and correct, so a third patch to the same flex column is the wrong bet. The footer leaves the column for
+`position: absolute` + `onLayout`-measured padding; root takes an exact `height: winH`. Owner kept the CTA
+pinned over folding it into the scroll content. ⚠️ Hiding the footer until a plan is picked **cannot
+work** — `plan` initialises to `'annual'`. **079 is skipped, not reused.**
+
+**WALK-09 ✅ closed** — full pass, all three IMP-073 defects fixed, re-confirmed at max font; the
+`not yet started` state went unexercised and is recorded as such in `build-log.md`. **Every remaining walk
+needs a device.**
+
+**Trap:** a local `expo run:android` finished in 13s on `assembleDebug UP-TO-DATE` and installed an APK
+reporting **v1.0.5 / vc11** though `app.config.js` has said 1.0.7 / vc13 since IMP-076 — gradle's inputs
+are the untracked `android/` dir, so a version bump alone never busts that cache. Harmless for a debug
+walk (Metro serves JS live), but **never read a version off a local install**, and `npx expo prebuild`
+first if a local build needs the new icon.
+
+**NEXT: cut the vc13 build and take the device sitting, or hand IMP-080 to a build chat.** Independent;
+either can go first._
+
 _2026-09-05 (Opus — design-queue triage; **planning only, no code changed, nothing committed**) — **The
 design system covers 7 screens, not the app**, and that is now a stated fact rather than an assumption.
 `design-system/screens/` holds `day-01…07` + `night-01…07` (today, write, moods, reflections, insights,
@@ -302,37 +333,3 @@ itself.
 stays in the app: it is reachable from the Home Keepsakes row and the You tile, it is **Play screenshot
 06**, and it is where the new celebration screen implies you go to look at what you earned. The build queue
 is unchanged and still empty — IMP-077 remains blocked on WALK-16._
-
-_2026-08-17 (IMP-078 — a design system Claude Design can work from; **branch-only, committed, NOT pushed**)
-— **code-complete. `design-system/` is committed and 26 files are live in a new Claude Design project.**
-`scripts/gen-design-system.js` (new) emits **14 preview cards** — tokens (color/type/shape/elevation), the
-frozen celestial set, six component cards and the day screen baseline — plus 12 PNGs. No app code changed.
-**The generator loads the real source rather than mirroring it:** a babel require-hook (JSX +
-modules-commonjs, scoped to `src/`) plus stubs that map `react-native-svg` to DOM SVG tags and
-`View`/`Animated.View` to `<g>`, so a real component tree renders via `react-dom/server` and rasterises with
-`@resvg/resvg-js`. `Animated.Value.interpolate()` returns its first output value — the frame at t=0, which is
-what "frozen" means. **The five celestial PNGs are therefore the shipped components, not redraws** (visually
-verified: gradient sun disc, cheese-hole moon with haze and stars, 24-spoke fan with amber bloom).
-`tokens/color.html` covers **all 8 `SHOP_PALETTES` × both modes**, and **no raw hex is readable anywhere** —
-values reach the browser only as CSS custom properties, so every visible label is a token name. Only the two
-`motion/` cards are hand-written (they encode rules, not values).
-**Pushed — new project `Daily Rituals Design System` (`7bf44d09-f93a-42d2-a8b6-d412d671cf60`)**, created
-because `list_projects` returned empty exactly as the spec predicted. Verified
-`type: PROJECT_TYPE_DESIGN_SYSTEM`, `canEdit: true`. **Two plans, guardrails first** — frozen + motion
-contract (8 files), then the rest (18) — because whatever is in the project at request time is what
-constrains output. All 14 previews carry `<!-- @dsCard -->` as line 1.
-**Both themes are now captured (night added later the same day, after the owner switched the app to dark by
-hand).** The catch worth remembering: **the app's day/night mode is its own setting, not the OS's**
-(`App.js:40` holds `mode`, `App.js:97` loads it, the header toggle drives it), so `cmd uimode night yes`
-does nothing — the first night attempt silently produced a **second set of day screenshots**, four
-byte-identical to their day twins, and those were deleted rather than shipped. A stdlib PNG mean-luma check
-now gates the copy (all seven measured 14.5–40.2 against a threshold of 90). **To re-shoot night: set the
-app to dark FIRST, then `npm run shots`.**
-**Proof:** `npm test` → **867 passed, 84 suites** + 3 zone tests × 2 zones, exit 0 — **unchanged**, which is
-exactly what step 9 demands of a spec touching no app code. `npm run shots` also recomposed three committed
-`store/play/*.png` listing assets as a side effect; **reverted** — a dev-only spec should not edit shipped
-store assets. **Steady state noted, deliberately not done:** pointing the Design System pane's own GitHub
-connection at `design-system/` needs the branch published, so it waits on the owner.
-**NEXT: the queue is empty for a build chat.** IMP-077 is the only open spec and is **blocked on WALK-16**.
-The useful next moves are **[WALK-16](docs/walk-open.md) on a device**, or the owner's **first design request
-— `PlusPerks`** (one screen per request; `PLUS_ENABLED` stays `false`)._

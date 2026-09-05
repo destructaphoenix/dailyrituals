@@ -2820,6 +2820,40 @@ pitch. One screen per request. `PLUS_ENABLED` stays `false`; it is a design requ
 
 _Append-only handoff log moved out of PROGRESS.md to keep it light. Newest 1–2 notes stay live in PROGRESS.md; everything else is here. Git history is the full record._
 
+_2026-08-17 (IMP-078 — a design system Claude Design can work from; **branch-only, committed, NOT pushed**)
+— **code-complete. `design-system/` is committed and 26 files are live in a new Claude Design project.**
+`scripts/gen-design-system.js` (new) emits **14 preview cards** — tokens (color/type/shape/elevation), the
+frozen celestial set, six component cards and the day screen baseline — plus 12 PNGs. No app code changed.
+**The generator loads the real source rather than mirroring it:** a babel require-hook (JSX +
+modules-commonjs, scoped to `src/`) plus stubs that map `react-native-svg` to DOM SVG tags and
+`View`/`Animated.View` to `<g>`, so a real component tree renders via `react-dom/server` and rasterises with
+`@resvg/resvg-js`. `Animated.Value.interpolate()` returns its first output value — the frame at t=0, which is
+what "frozen" means. **The five celestial PNGs are therefore the shipped components, not redraws** (visually
+verified: gradient sun disc, cheese-hole moon with haze and stars, 24-spoke fan with amber bloom).
+`tokens/color.html` covers **all 8 `SHOP_PALETTES` × both modes**, and **no raw hex is readable anywhere** —
+values reach the browser only as CSS custom properties, so every visible label is a token name. Only the two
+`motion/` cards are hand-written (they encode rules, not values).
+**Pushed — new project `Daily Rituals Design System` (`7bf44d09-f93a-42d2-a8b6-d412d671cf60`)**, created
+because `list_projects` returned empty exactly as the spec predicted. Verified
+`type: PROJECT_TYPE_DESIGN_SYSTEM`, `canEdit: true`. **Two plans, guardrails first** — frozen + motion
+contract (8 files), then the rest (18) — because whatever is in the project at request time is what
+constrains output. All 14 previews carry `<!-- @dsCard -->` as line 1.
+**Both themes are now captured (night added later the same day, after the owner switched the app to dark by
+hand).** The catch worth remembering: **the app's day/night mode is its own setting, not the OS's**
+(`App.js:40` holds `mode`, `App.js:97` loads it, the header toggle drives it), so `cmd uimode night yes`
+does nothing — the first night attempt silently produced a **second set of day screenshots**, four
+byte-identical to their day twins, and those were deleted rather than shipped. A stdlib PNG mean-luma check
+now gates the copy (all seven measured 14.5–40.2 against a threshold of 90). **To re-shoot night: set the
+app to dark FIRST, then `npm run shots`.**
+**Proof:** `npm test` → **867 passed, 84 suites** + 3 zone tests × 2 zones, exit 0 — **unchanged**, which is
+exactly what step 9 demands of a spec touching no app code. `npm run shots` also recomposed three committed
+`store/play/*.png` listing assets as a side effect; **reverted** — a dev-only spec should not edit shipped
+store assets. **Steady state noted, deliberately not done:** pointing the Design System pane's own GitHub
+connection at `design-system/` needs the branch published, so it waits on the owner.
+**NEXT: the queue is empty for a build chat.** IMP-077 is the only open spec and is **blocked on WALK-16**.
+The useful next moves are **[WALK-16](docs/walk-open.md) on a device**, or the owner's **first design request
+— `PlusPerks`** (one screen per request; `PLUS_ENABLED` stays `false`)._
+
 _2026-08-17 (IMP-076 — the app moves to the New Architecture; **branch-only, committed, NOT pushed**) —
 **code-complete. `newArchEnabled: true`, `assembleRelease` clean, v1.0.7 / vc13.** Landed exactly as
 specified and **changed no app code at all**, which is what keeps rollback to one line each way. Both flags
@@ -3817,6 +3851,77 @@ Owner: *"When I press 'Backup my journal' it gives me the option to send or shar
 ---
 
 ## Walk log (passed walks, moved out of docs/walk-open.md)
+
+### WALK-09 — lifetime heatmap — ✅ CLOSED 2026-09-05 (emulator, owner-run)
+
+**Covers:** IMP-045, IMP-063's `frozen` state, and **IMP-073's layout pass**. Use the `brokenStreak` scenario.
+
+> **Read this before re-running: the expected result changed on 2026-08-16.** The steps below describe the
+> design **IMP-073** specifies, not the one the ❌ result at the bottom was walked against. In particular the
+> legend is **three** entries **by design** and "not yet started" is deliberately **not** one of them — that
+> is the fix, not a regression. Do not fail the walk for its absence.
+
+Insights → "Your record":
+
+1. **Five distinct cell states.** kept (solid accent fill) · **a candle kept it** (soft fill + accentDeep
+   ring) · **missed** (soft fill + border ring) · **not yet started** (a flat, faint, ring-less tile —
+   quieter than everything else, no dashed outline) · future (invisible). "Not yet started" should read as
+   *nothing here* without needing a key; if it draws your eye and makes you ask what it means, IMP-073's
+   decision 2 did not land.
+2. **The legend is exactly three entries — `kept` · `a candle kept it` · `missed` — on ONE row**, and it
+   lines up with the left edge of the first grid cell, not with the month labels. Check at normal font
+   scale; if a large scale pushes it to two rows, the rows must be spaced, not cramped.
+3. **Month labels appear once per month down the left gutter, each on a single line.** No "Au"/"g" wrap.
+   Re-check at max OS font size — the gutter is supposed to grow with the text, so the labels stay whole and
+   the grid just gets slightly narrower.
+4. **The grid reads as one grid.** Every cell is the same size regardless of state — sight down a row of
+   mixed kept/missed/frozen days and look for kept days rendering visibly small.
+5. The level line renders XP: `Lv 4 · {name} · 1,250 XP`.
+
+**Result — ❌ 2026-08-16.** All the computed content passed: kept/missed/not-yet-started/future all render
+distinctly, plus the `frozen` ("a candle kept it") state added by IMP-063 is correctly wired in and shows up
+in the legend; month labels appear once per month; the level line reads correct XP. Three layout defects
+surfaced, all cosmetic (nothing miscomputed): (a) the legend (`InsightsScreen.js:197-202`, 4 entries now that
+`frozen` was added) wraps awkwardly under `flexWrap: 'wrap'` — "not yet started" most often forced onto its
+own row; owner's call is that this entry may not need a legend row at all, with that state represented
+in-cell instead, rather than just patching the wrap. (b) Month labels wrap mid-word ("Au"/"g") —
+`InsightsScreen.js:232-233` renders `monthLabelsForRows` output in a fixed `width: 24` box with no
+`numberOfLines`/`ellipsizeMode`; that gutter width also doesn't match the legend's `paddingLeft: 28`. (c)
+Grid cells render at visibly inconsistent sizes — `heatCellStyle` (`InsightsScreen.js:207-222`) varies
+`borderWidth` by state (0 for `done`, 1 for `frozen`/`missed`/`empty`), and the function's own comment
+already documents Android bleeding stroked rounded borders half outside the box, the likely cause. Full
+writeup in `PROGRESS.md` → Open items → "WALK-09 finding". **Scoped 2026-08-16 as `IMP-073` — all three
+defects in one spec** (`docs/specs-open.md`). Re-run this walk **against the rewritten steps above**, not
+against this paragraph, once IMP-073 lands.
+
+**Result — ✅ 2026-09-05 (re-run against the rewritten steps, emulator, after IMP-073 landed). FULL PASS
+on all five steps; all three defects from the 2026-08-16 ❌ are fixed.** Run on `feat/design-push` with a
+debug build serving JS live from Metro, so the code walked was the current tree. The default 210-entry
+fixture turned out to be the right one rather than `brokenStreak`: it carries `CURRENT STREAK 0` against
+`LONGEST 210` plus three burned candles, so **kept, frozen and missed all appear together in the recent
+rows** — which is what makes step 4 meaningful. Observed: kept solid accent through Jun/Jul/Aug; exactly
+three `frozen` cells in soft fill with the `accentDeep` ring, matching the three candles Today reports;
+`missed` in soft fill with no ring; and **`future` correctly rendering as nothing** — the final row simply
+stops after six cells. **(a) The legend is three entries on ONE row** — `kept · a candle kept it · missed` —
+**and its left edge lines up with the first grid column, not the month gutter**, which was the specific
+alignment IMP-073 specified. **(b) Month labels are one per month, each on a single line** — Jan, Feb, Mar,
+Jun, Jul, Aug all whole, no `Au`/`g` wrap. **(c) The grid reads as one grid**: sighting down a row of mixed
+kept/frozen/missed, every cell measures the same. That one is only testable *because* the states are mixed
+— IMP-073 made every state return `borderWidth: 1` with a transparent ring where none should show
+(`InsightsScreen.js:217-237`), so the Android half-outside-stroke problem can no longer vary geometry by
+state. Step 5's level line reads `Lv 7 · Keeper of Days · 8 months in · 6,400 XP`. **All of the above
+re-confirmed at max OS font size** (owner), which is where the legend and gutter defects were worst.
+
+**⚠️ One of the five cell states was NOT exercised, and this pass does not cover it: `not yet started`.**
+Those are days before the first entry, and this fixture's grid opens already-kept in January, so there were
+none to draw. The code matches IMP-073's decision 2 — `empty` returns a `ghostBtn` fill with a transparent
+border and is deliberately absent from `LEGEND` (`InsightsScreen.js:228-235`) — but the acceptance criterion
+for it is subjective ("it should read as *nothing here*; if it draws your eye and makes you ask what it
+means, decision 2 did not land") and **source is not a substitute for eyes**. Closing it needs one run
+against a fixture with pre-first-entry days — `emptyInsights` is the cheap one. Owner accepted the walk as
+done with this gap recorded (2026-09-05), the same way WALK-15 was closed with steps 4-6 accepted unrun.
+**Do not re-open WALK-09 for it**; if that tile is ever redesigned, walk it then.
+
 
 ### ⏭ WALK-14 — TalkBack can write an entry — DROPPED 2026-08-16 (owner's call), section moved here 2026-08-17
 
