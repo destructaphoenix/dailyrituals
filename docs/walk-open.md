@@ -597,9 +597,9 @@ charged — that is the whole point; do not test with a real card until step 8.
 - [ ] 0. **Confirm the device is on the right track AND took the OTA — steps 5 and 10 are void without
       this.** Two separate traps, and each has already cost a debugging round:
       **(a) Track.** Play serves the **highest-priority track the account qualifies for**
-      (internal > closed > open > production). PROGRESS.md records the owner's phone on **`alpha` (vc12)**,
-      so unless that account is also on the **`internal`** tester list it will keep getting vc12 and see
-      none of this. Verify with
+      (internal > closed > open > production), so an account on closed testing only keeps getting vc12 and
+      sees none of this. ✅ **The owner's own phone is on `internal` at vc14** (confirmed 2026-09-06) —
+      the older note putting it on `alpha` is stale and has now misled twice. Verify any *other* tester with
       `adb shell dumpsys package app.dailyrituals.mobile | grep versionName` — it must read **1.0.8**.
       **(b) The OTA.** IMP-082 and IMP-083 are **not in the vc14 binary**; they arrived as update group
       `ac5c4189-736c-44f0-96ae-6ceea4fe4712` (runtime 1.0.8, published 2026-09-06). `expo-updates` here uses the

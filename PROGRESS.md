@@ -103,7 +103,7 @@ the `alpha` row, which had been wrong since 2026-08-13. Authoritative; do not re
 | --- | --- | --- | --- |
 | `production` (public) | **1.0.3 / vc9** | 36 ✅ | live since 2026-07-30 |
 | `beta` (open testing) | **1.0.3 / vc9** | 36 ✅ | was vc8/API 35 — promoted, compliance gap closed |
-| `alpha` (closed testing) | **1.0.6 / vc12** | 36 ✅ | ⚠️ **corrected 2026-09-05 from the Play Developer API — this row said 1.0.5 / vc11 and was wrong.** 🔴 **THIS IS THE TRACK THE OWNER'S PHONE IS ON.** That cost a debugging round on 2026-09-05: vc14 shipped to `internal`, the owner installed, and saw no Plus — because Play serves the **highest-priority track the account qualifies for** (internal > closed > open > production), and their account was on the alpha list but not the internal one, so vc12 won. **A build on `internal` is invisible to a device that is only a closed tester.** Check the track before debugging the build |
+| `alpha` (closed testing) | **1.0.6 / vc12** | 36 ✅ | ⚠️ **corrected 2026-09-05 from the Play Developer API — this row said 1.0.5 / vc11 and was wrong.** ✅ **NO LONGER THE OWNER'S TRACK — corrected 2026-09-06, owner-confirmed: their phone is on `internal` at 1.0.8 / vc14.** ⚠️ **This row said otherwise and it caused a second round of confusion on 2026-09-06** — do not re-derive the owner's device from this row again. The 2026-09-05 history it records is still true and still the lesson: vc14 shipped to `internal`, the owner installed, saw no Plus, and the cause was that Play serves the **highest-priority track the account qualifies for** (internal > closed > open > production) and their account was then on the alpha list but not the internal one, so vc12 won. **A build on `internal` is invisible to a device that is only a closed tester** — true in general, no longer true of this device |
 | _(superseded)_ | ~~1.0.7 / vc13~~ | 36 ✅ | shipped to `internal` 2026-09-05 and **replaced by vc14 the same day**. No longer on any track. Kept here only because WALK-12 and the two local artifacts still reference it |
 | `internal` | **1.0.8 / vc14** | 36 ✅ | ✅ **SHIPPED 2026-09-05, 19:09 — it replaced vc13 on this track.** Confirmed from `eas submit:list`, not inferred: `Track: internal`, `Status: finished`, `Release Status: completed`, `App Version 1.0.8`, `Version code 14`. EAS build `87f81b24-cd34-4d42-95d8-6fea4ea76c79`, submission `4b7cf3a2-d946-4f49-8182-74afb9f870b9`, from commit `6590834` on `feat/design-push`. **The first build with `PLUS_ENABLED = true`** and the first carrying reanimated/worklets. ⚠️ **A first vc14 build (`aa89e355…`) was CANCELLED mid-flight** — it carried the armed ember-pack surface; its submission `8074b63c…` reads `canceled`, so it never reached Play. Unblocks WALK-18, WALK-19, WALK-11; reopened the OTA lane |
 
@@ -475,9 +475,11 @@ commit `8abf11f`. **The branch was NOT pushed** — the never-push rule still st
 CDN, not GitHub. Three things this does and does not mean, all of them load-bearing:
 **(1) It reaches vc14 `internal` installs only.** `alpha` (vc12), `beta` and `production` (vc9) are on
 older runtimes and received nothing — the public still has none of this.
-**(2) The owner's own phone may not get it.** PROGRESS.md records that phone on the **`alpha`** track;
-Play serves the highest-priority track an account qualifies for, so unless it is also on the `internal`
-tester list it stays on vc12 and shows neither fix. That exact trap cost a debugging round on 2026-09-05.
+**(2) ~~The owner's own phone may not get it~~ — WRONG, corrected 2026-09-06.** The owner is on
+**`internal` at vc14**, so it does reach them. This was asserted from the stale `alpha` row in the track
+table (now fixed) and it wasted a round. The general rule still holds for *other* testers: Play serves the
+highest-priority track an account qualifies for, so a closed-testing-only account stays on vc12 and
+receives no 1.0.8 OTA at all.
 **(3) It applies on the SECOND launch.** `expo-updates` runs on defaults here — check on load, download in
 background, swap in next launch — so testers must open, fully close, and reopen. "Nothing changed" is
 almost certainly this.
