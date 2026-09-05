@@ -92,8 +92,8 @@ re-derive from an older note.**
 | `production` (public) | **1.0.3 / vc9** | 36 ✅ | live since 2026-07-30 |
 | `beta` (open testing) | **1.0.3 / vc9** | 36 ✅ | was vc8/API 35 — promoted, compliance gap closed |
 | `alpha` (closed testing) | **1.0.5 / vc11** | 36 ✅ | frozen by design 2026-08-08; the newest *built* code |
-| `internal` | **1.0.7 / vc13** | 36 ✅ | **shipped 2026-09-05** — the New Arch build; see below |
-| `internal` | **1.0.8 / vc14** | 36 ✅ | 🚧 **BUILDING / SUBMITTING 2026-09-05** from `feat/design-push` — IMP-077's native deps (reanimated + worklets) **and the first build with `PLUS_ENABLED = true`.** Auto-submits to `internal` via `eas.json`. ⚠️ **The first attempt (`aa89e355…`) was CANCELLED mid-flight** — it carried the armed ember-pack surface; the shipping one is `87f81b24…` from commit `6590834`. Unblocks WALK-18, WALK-19 and WALK-12; reopens the OTA lane once it lands |
+| _(superseded)_ | ~~1.0.7 / vc13~~ | 36 ✅ | shipped to `internal` 2026-09-05 and **replaced by vc14 the same day**. No longer on any track. Kept here only because WALK-12 and the two local artifacts still reference it |
+| `internal` | **1.0.8 / vc14** | 36 ✅ | ✅ **SHIPPED 2026-09-05, 19:09 — it replaced vc13 on this track.** Confirmed from `eas submit:list`, not inferred: `Track: internal`, `Status: finished`, `Release Status: completed`, `App Version 1.0.8`, `Version code 14`. EAS build `87f81b24-cd34-4d42-95d8-6fea4ea76c79`, submission `4b7cf3a2-d946-4f49-8182-74afb9f870b9`, from commit `6590834` on `feat/design-push`. **The first build with `PLUS_ENABLED = true`** and the first carrying reanimated/worklets. ⚠️ **A first vc14 build (`aa89e355…`) was CANCELLED mid-flight** — it carried the armed ember-pack surface; its submission `8074b63c…` reads `canceled`, so it never reached Play. Unblocks WALK-18, WALK-19, WALK-11; reopened the OTA lane |
 
 **✅ v1.0.6 / vc12 SHIPPED to `internal` on 2026-08-16.** Confirmed from the submit output, not inferred:
 `Release track: internal`, `Version code: 12`, `✔ Submitted your app to Google Play Store!` (GH run
@@ -120,13 +120,13 @@ active release on every track is `targetSdkVersion 36`. Banner-reading procedure
 `a299af7`; CI already does it). Reaching the public stays manual: promote `internal` → `production` in Play
 Console, which *does* get the full review.
 
-> 🔴 **AND IT SHUT AGAIN THE SAME DAY. IMP-077's `bump:native` moved the repo to `1.0.8` / vc14
-> (2026-09-05), so `runtimeVersion` (= `appVersion`) once more matches NO shipped build.** This is the
-> identical trap IMP-076 sprang on 2026-08-17, one spec later — **a `bump:native` always closes the OTA
-> lane until the new versionCode actually ships.** An `eas update` from this tree targets runtime `1.0.8`,
-> which is **zero installs anywhere**. It is not broken and needs no fix; **the reopening condition is
-> vc14 reaching `internal`**, exactly as vc13's was. Read the paragraph below as the description of the
-> state the repo was in *before* the IMP-077 commit, and as what returns once vc14 ships.
+> ✅ **AND IT REOPENED THE SAME DAY — the condition was met. vc14 reached `internal` at 19:09 on
+> 2026-09-05**, so `runtimeVersion` `1.0.8` now matches a shipped build and the OTA lane is **open onto
+> `internal`**. IMP-077's `bump:native` had shut it that morning — the identical trap IMP-076 sprang on
+> 2026-08-17, one spec later — and **a `bump:native` always closes the OTA lane until the new versionCode
+> actually ships.** The rule is unchanged for next time; this instance is closed. **[IMP-082](docs/specs-open.md)
+> is pure JS and is the first thing that can ride this lane.** ⚠️ It reaches `internal` installs only —
+> `production` is still on 1.0.3 / vc9, whose runtime an `eas update` from this tree does not match.
 
 **✅ THE OTA LANE REOPENED on 2026-09-05 — but only onto `internal`.** It was shut from 2026-08-17,
 when IMP-076's `bump:native` moved the repo to `1.0.7` / vc13 and left `runtimeVersion` (= `appVersion`)
