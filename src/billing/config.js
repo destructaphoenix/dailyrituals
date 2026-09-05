@@ -45,3 +45,16 @@ export function hasKeyFor(platform) {
 // .github/workflows/release.yml: a local "eas build" skips the preflight
 // entirely, so run the script by hand before any off-CI build.
 export const PLUS_ENABLED = true;
+
+// Cash ember top-ups are a SEPARATE surface from Plus and must NOT ride its
+// flag. EMBER_PACKS in src/data.js carry real price strings ($1.99 / $4.99 /
+// $9.99), but every buy handler behind them is a bare counter increment — no
+// purchaseService, no RevenueCat, no IAP of any kind. They were gated on
+// PLUS_ENABLED on the assumption that consumables would be wired by the time
+// Plus went live. They were not, so on 2026-09-05 the two were decoupled:
+// flipping PLUS_ENABLED must not put a priced surface on screen that gives its
+// goods away. While this is false the Shop's "Gather Embers" section and the
+// GetEmbers sheet stay hidden, and embers stay free-only — one per day kept,
+// which is exactly what ships today. Flip it only once the packs are attached
+// to real Play consumable products.
+export const EMBER_PACKS_ENABLED = false;

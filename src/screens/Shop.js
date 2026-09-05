@@ -16,6 +16,7 @@ export default function Shop({
   activePalette, ownedPalettes, onApplyPalette, onBuyPalette,
   activeSky, ownedSkies, onApplySky, onBuySky,
   freezes, onBuyCandles, onOpenPaywall, onGetEmbers, onManage, plusEnabled = true,
+  embersForCash = false,
 }) {
   const t = useTheme();
   const c = t.colors;
@@ -178,8 +179,11 @@ export default function Shop({
           </View>
         </View>
 
-        {/* Gather embers — cash top-ups; hidden while the app ships free (IMP-034) */}
-        {plusEnabled && (
+        {/* Gather embers — cash top-ups. Gated on its OWN flag, not plusEnabled:
+            these packs display real prices but are wired to a bare counter
+            increment, so they stay hidden even when Plus is live (IMP-034, and
+            the 2026-09-05 decoupling — see src/billing/config.js). */}
+        {embersForCash && (
           <View style={{ marginTop: 26 }}>
             <Sec title="Gather Embers" />
             <Note>Embers also gather on their own — one for every day you keep.</Note>

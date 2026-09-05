@@ -40,7 +40,7 @@ import GetEmbers from './screens/GetEmbers';
 import Toast from './screens/Toast';
 import { openExternal } from './billing/links';
 import { createPurchaseService, isBillingConfigured } from './billing';
-import { PLUS_ENABLED } from './billing/config';
+import { PLUS_ENABLED, EMBER_PACKS_ENABLED } from './billing/config';
 import { formatRenewDate } from './billing/format';
 import { checkEntitlement, nextPlusState, useLaunchEntitlementCheck } from './billing/entitlementSync';
 import { saveState } from './persistence/storage';
@@ -189,11 +189,13 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   );
   const openLink = (k) => { openExternal(k, PLATFORM); };
 
-  // While the app ships free (PLUS_ENABLED = false, IMP-034) there is no cash
-  // ember purchase to route to — say so instead of opening the shop.
+  // While there is no cash ember purchase to route to, say so instead of
+  // opening the shop. This is gated on EMBER_PACKS_ENABLED, not PLUS_ENABLED:
+  // the packs show prices but are wired to nothing, so they must stay hidden
+  // even in a build where Plus is live. See src/billing/config.js.
   const EMBERS_ARE_FREE_COPY = 'Embers also gather on their own — one for every day you keep';
   const openGetEmbers = () => {
-    if (PLUS_ENABLED) setGetEmbersOpen(true);
+    if (EMBER_PACKS_ENABLED) setGetEmbersOpen(true);
     else showToast(EMBERS_ARE_FREE_COPY);
   };
 
@@ -221,7 +223,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     showToast(pack.count + (pack.count > 1 ? ' candles lit' : ' candle lit'));
   };
   const getEmbers = (pack) => {
-    if (pack && pack.amount) { setEmbers((e) => e + pack.amount); showToast('+' + pack.amount + ' Embers'); setGetEmbersOpen(false); }
+    if (EMBER_PACKS_ENABLED && pack && pack.amount) { setEmbers((e) => e + pack.amount); showToast('+' + pack.amount + ' Embers'); setGetEmbersOpen(false); }
     else { openGetEmbers(); }
   };
   const subscribe = (plan, entitlement) => {
@@ -881,13 +883,14 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
               plusEnabled={PLUS_ENABLED}
               onOpenPaywall={PLUS_ENABLED ? () => setPaywall(true) : () => {}}
               onGetEmbers={getEmbers}
+              embersForCash={EMBER_PACKS_ENABLED}
               onManage={PLUS_ENABLED ? () => setManageOpen(true) : () => {}}
             />
             {toast && <Toast key={toast.key} message={toast.msg} bottom={insets.bottom} />}
           </ThemeContext.Provider>
         </Modal>
 
-        <Modal visible={PLUS_ENABLED && getEmbersOpen} animationType="slide" presentationStyle="overFullScreen" onRequestClose={() => setGetEmbersOpen(false)}>
+        <Modal visible={EMBER_PACKS_ENABLED && getEmbersOpen} animationType="slide" presentationStyle="overFullScreen" onRequestClose={() => setGetEmbersOpen(false)}>
           <ThemeContext.Provider value={theme}>
             <GetEmbers insets={insets} onClose={() => setGetEmbersOpen(false)} embers={embers}
               onBuy={(pack) => { setEmbers((e) => e + pack.amount); showToast('+' + pack.amount + ' Embers'); setGetEmbersOpen(false); }} />
@@ -965,7 +968,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
               onOpenCelebration={(opts) => setCelebrate({ streak: opts.streak, xp: XP_GAIN, embers: EMBER_GAIN, milestone: opts.milestone || null })}
               onOpenAchievements={() => setShowAch(true)}
               onOpenShop={() => setShopOpen(true)}
-              onOpenGetEmbers={() => setGetEmbersOpen(true)}
+              onOpenGetEmbers={openGetEmbers}
               onOpenReminder={() => setReminderOpen(true)}
               onShowToast={(msg) => showToast(msg)}
               onOpenReading={(entry) => setReading(entry)}
