@@ -84,14 +84,24 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 > numbers first (see Open items). **Do not reuse the number.** **IMP-044 claims no queue slot** — it rides
 > the next build; don't "start" it, it needs only WALK-12.
 
-**App status — all four Play tracks, read from the Play Developer API 2026-08-13. Authoritative; do not
-re-derive from an older note.**
+**App status — all four Play tracks. Re-read from the Play Developer API 2026-09-05; that read corrected
+the `alpha` row, which had been wrong since 2026-08-13. Authoritative; do not re-derive from an older note.**
+
+> ⚠️ **There is no user-visible version string in a release build.** `APP_VERSION` is passed only to the
+> dev panel ([`RitualsApp.js:966`](src/RitualsApp.js#L966)), which is `__DEV__`-only, and the About sheet
+> that would show it is IMP-022 (deferred). **To check what a phone actually has: Android Settings → Apps
+> → Daily Rituals → App details**, or `adb shell dumpsys package app.dailyrituals.mobile | grep versionName`.
+> Do this **first** whenever a shipped change appears to be missing — on 2026-09-05 it was the whole answer.
+>
+> **To re-read the live tracks** (read-only; opens an edit and deletes it, never commits): a ~35-line
+> script using `play-service-account.json` + the `androidpublisher` v3 `edits/{id}/tracks` endpoint. It is
+> not committed — `googleapis` is not a dependency and the JWT is 15 lines of `node:crypto`.
 
 | Track | Active | API | Note |
 | --- | --- | --- | --- |
 | `production` (public) | **1.0.3 / vc9** | 36 ✅ | live since 2026-07-30 |
 | `beta` (open testing) | **1.0.3 / vc9** | 36 ✅ | was vc8/API 35 — promoted, compliance gap closed |
-| `alpha` (closed testing) | **1.0.5 / vc11** | 36 ✅ | frozen by design 2026-08-08; the newest *built* code |
+| `alpha` (closed testing) | **1.0.6 / vc12** | 36 ✅ | ⚠️ **corrected 2026-09-05 from the Play Developer API — this row said 1.0.5 / vc11 and was wrong.** 🔴 **THIS IS THE TRACK THE OWNER'S PHONE IS ON.** That cost a debugging round on 2026-09-05: vc14 shipped to `internal`, the owner installed, and saw no Plus — because Play serves the **highest-priority track the account qualifies for** (internal > closed > open > production), and their account was on the alpha list but not the internal one, so vc12 won. **A build on `internal` is invisible to a device that is only a closed tester.** Check the track before debugging the build |
 | _(superseded)_ | ~~1.0.7 / vc13~~ | 36 ✅ | shipped to `internal` 2026-09-05 and **replaced by vc14 the same day**. No longer on any track. Kept here only because WALK-12 and the two local artifacts still reference it |
 | `internal` | **1.0.8 / vc14** | 36 ✅ | ✅ **SHIPPED 2026-09-05, 19:09 — it replaced vc13 on this track.** Confirmed from `eas submit:list`, not inferred: `Track: internal`, `Status: finished`, `Release Status: completed`, `App Version 1.0.8`, `Version code 14`. EAS build `87f81b24-cd34-4d42-95d8-6fea4ea76c79`, submission `4b7cf3a2-d946-4f49-8182-74afb9f870b9`, from commit `6590834` on `feat/design-push`. **The first build with `PLUS_ENABLED = true`** and the first carrying reanimated/worklets. ⚠️ **A first vc14 build (`aa89e355…`) was CANCELLED mid-flight** — it carried the armed ember-pack surface; its submission `8074b63c…` reads `canceled`, so it never reached Play. Unblocks WALK-18, WALK-19, WALK-11; reopened the OTA lane |
 
