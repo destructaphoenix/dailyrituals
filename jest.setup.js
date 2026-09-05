@@ -25,3 +25,14 @@ jest.mock('expo-sharing', () => ({
 jest.mock('expo-document-picker', () => ({
   getDocumentAsync: jest.fn(async () => ({ canceled: true })),
 }));
+
+// ⚠️ This mock no-ops EVERY Reanimated hook and worklet: useSharedValue returns a
+// plain object, useAnimatedStyle returns {}, withTiming/withSpring resolve to their
+// target instantly, and nothing is ever scheduled on the UI thread. So a green suite
+// proves the screens still RENDER with motion.js wired in, and proves nothing
+// whatsoever about the native side — not that Reanimated 4 initialized, not that the
+// New Architecture is live under it, not that a single frame actually moved.
+// Reanimated 4 is New-Architecture-only; that is why IMP-077 was gated on WALK-16 and
+// why its runtime proof is WALK-18 on a device, not this suite. Do not read a passing
+// motion test as evidence the animation works.
+jest.mock('react-native-reanimated', () => require('react-native-reanimated/mock'));

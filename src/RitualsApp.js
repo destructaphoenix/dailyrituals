@@ -15,6 +15,7 @@ import * as backupIO from './backup/io';
 import { ThemeContext, makeTheme } from './theme';
 import { dayKeyOf } from './time/dayKey';
 import { T } from './ui';
+import { ScreenFade } from './motion';
 import { CHROME_FONT_SCALE } from './ui/textScale';
 import { HomeIcon, BookIcon, Pencil, ChartIcon, UserIcon } from './icons';
 import { COPY, DAILY_QUESTS, STREAK_MILESTONES, SHOP_PALETTES, EMBER_GAIN, RENEW_DATE } from './data';
@@ -750,8 +751,10 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   return (
     <ThemeContext.Provider value={theme}>
       <View style={{ flex: 1, backgroundColor: c.cream }}>
-        {/* screen area */}
-        <View style={{ flex: 1, paddingTop: insets.top }}>{screen()}</View>
+        {/* screen area — ScreenFade keyed on the active tab, so the swap at the nav
+            below reads as a transition instead of an instant substitution (IMP-077).
+            Presentation only: no routing change, no state change, no nav library. */}
+        <ScreenFade tabKey={tab} style={{ flex: 1, paddingTop: insets.top }}>{screen()}</ScreenFade>
 
         {/* bottom nav: 4 tabs + centered write FAB */}
         <View style={[styles.nav, { backgroundColor: c.navBg, borderTopColor: c.border, paddingBottom: insets.bottom }]}>

@@ -7,6 +7,11 @@ import { View, Text, Pressable, Animated, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from './theme';
 import { MAX_FONT_SCALE } from './ui/textScale';
+// The one adoption of motion.js in this file (IMP-077). ProgressBar's shimmer below
+// stays on `Animated` on purpose: it works, it is native-driven, and the regression
+// risk buys nothing.
+import RNAnimated from 'react-native-reanimated';
+import { usePressScale } from './motion';
 
 // Themed <Text> wrappers. `w` = weight; `d` = use the display family.
 export function T({ d = false, w, italic, style, color, maxFontSizeMultiplier = MAX_FONT_SCALE, children, ...rest }) {
@@ -79,16 +84,14 @@ export function Card({ style, children, padded, ...rest }) {
 // ── Primary button ───────────────────────────────────────────────────────────
 export function PrimaryButton({ label, onPress, disabled, icon, style }) {
   const t = useTheme();
-  const press = useRef(new Animated.Value(0)).current;
-  const scale = press.interpolate({ inputRange: [0, 1], outputRange: [1, 0.99] });
-  const to = (v) => Animated.spring(press, { toValue: v, useNativeDriver: true, speed: 40, bounciness: 0 }).start();
+  const press = usePressScale();
 
   return (
-    <Animated.View style={[{ width: '100%', transform: [{ scale }], opacity: disabled ? 0.4 : 1 }, style]}>
+    <RNAnimated.View style={[{ width: '100%', opacity: disabled ? 0.4 : 1 }, press.style, style]}>
       <Pressable
         onPress={disabled ? undefined : onPress}
-        onPressIn={() => to(1)}
-        onPressOut={() => to(0)}
+        onPressIn={press.onPressIn}
+        onPressOut={press.onPressOut}
         disabled={disabled}
       >
         <LinearGradient
@@ -106,7 +109,7 @@ export function PrimaryButton({ label, onPress, disabled, icon, style }) {
           <T d w={700} color={t.colors.onAccent} style={styles.btnLabel}>{label}</T>
         </LinearGradient>
       </Pressable>
-    </Animated.View>
+    </RNAnimated.View>
   );
 }
 
