@@ -47,16 +47,34 @@ would cost*:
 **Taking a walk is unchanged: take the first ⬜ row.** Passed walks live in `build-log.md` → "Walk log";
 only live rows are described here.
 
-**ONE track now — the vc13 branch build (owner's decision, 2026-09-05).**
+**ONE track now — the vc13 build, and it is SHIPPED (2026-09-05).**
 
 **vc12 is no longer the release candidate.** The owner's call: **vc13 is the future.** The
 `internal` → `production` promotion of v1.0.6 / vc12 is **off**, and with it the reason those walks
-were split across two builds. Every remaining ⬜ row now runs against **one device build of
-`feat/design-push`** — v1.0.7 / vc13, New Architecture — in as few sittings as possible.
+were split across two builds. Every remaining ⬜ row now runs against **one build of
+`feat/design-push`** — v1.0.7 / vc13, New Architecture.
+
+✅ **That build now exists on Play `internal`** (submitted 2026-09-05 from commit `bbd5f45`; EAS build
+`11dce1c2-…`, submission `bcb6c944-…`). **The device sitting is no longer blocked on cutting a build.**
+
+⚠️ **But read this before installing anything.** There are **two** vc13 artifacts and they are not
+interchangeable — the Play one is a **release** build with **no dev harness** (`__DEV__` false, no Metro),
+so **T1, T2 and T3 do not exist on it**. That splits the remaining rows:
+
+| Needs the **local debug APK** (harness) | Runs on the **Play `internal`** build |
+| --- | --- |
+| **WALK-13** (T2 → Notify, to fire a reminder minutes out) | **WALK-12** — and it *must* be this build |
+| **WALK-03 step 4** (`staleBackup` / `neverBackedUp` scenarios) | **WALK-17**, **WALK-08**, WALK-03 steps 1-3 + 5, WALK-16's hardware residue |
+
+**They cannot coexist** — same `applicationId`, different signing keys, so swapping means uninstall, which
+wipes data. **Export a backup first**; that export *is* WALK-03 step 1, so sequence the sitting to get it
+for free. Full artifact table in [`PROGRESS.md`](../PROGRESS.md) → "The vc13 builds".
 
 **The order inside that build.** **WALK-16 first, always**: IMP-076 changes no app code, so `npm test`
-is structurally blind to it, WALK-16 is the *only* evidence it works, and it gates IMP-077. **WALK-17
-follows in the same sitting** (edge-to-edge: IMP-027's pass was on Legacy Arch and does not carry
+is structurally blind to it, WALK-16 is the *only* evidence it works, and it gates IMP-077. **Its seven
+steps have now all passed on an emulator** (2026-09-05), so on hardware it is down to the three things an
+emulator cannot settle — real doze + OEM battery managers, real share targets, Google's own backup
+schedule. **WALK-17 follows in the same sitting** (edge-to-edge: IMP-027's pass was on Legacy Arch and does not carry
 over). Then the feature rows carried over from the old Track 1 — **WALK-13, WALK-03, WALK-08** — which
 need nothing but a running app and are *better* covered here, since New Arch is the runtime they will
 actually ship on. **WALK-12 (R8) stays last and is the one row that cannot move**: R8 must be walked on
@@ -79,19 +97,19 @@ locked. It is the row that reopens the moment Plus becomes the active work.
 | WALK-02 | 🚦 | [Restore quarantine — offered, not imposed](build-log.md#walk-02--restore-quarantine) | IMP-033, IMP-029, **IMP-062** | emulator | 👤 (clock changes + judgement on sheet copy) | ✅ **2026-08-15** — full pass, all 9 steps (incl. the new IMP-062 relaunch proof in steps 7–9); detail in `build-log.md` → "Walk log" |
 | WALK-05 | 🚦 | [Edit a past day, delete, trash allowance](build-log.md#walk-05--custody-of-your-words) | IMP-036, IMP-048 | emulator | 👤 | ✅ **2026-08-15** — full pass; the outstanding `applyCompletion` half confirmed no double-counting; detail in `build-log.md` → "Walk log" |
 | WALK-04 | 🎨 | [Search + the write flow's moods](build-log.md#walk-04--search--moods) | IMP-035, IMP-037, **IMP-053** | emulator | 👤 | ✅ **2026-08-16** — full pass on the third re-run (after IMP-069/070/071 landed); two more defects found and fixed live as IMP-072; detail in `build-log.md` → "Walk log" |
-| WALK-13 | 🚦 | [The reminder you can answer](#walk-13--the-reminder-you-can-answer) | IMP-054, **+ the duplicate-fire fix** | **device** (OEM behaviour + real doze) | 👤 | ⬜ — **unblocked 2026-08-13** (IMP-054 landed, `18d8c2e`). **Runs on the vc13 branch build**, after WALK-16/17 |
-| WALK-03 | 🚦 | [JSON export → share → restore round trip](#walk-03--json-export-round-trip) | IMP-020, IMP-043 | **device** (share-sheet targets) | 👤 | ⬜ — the user's data escape hatch. **Runs on the vc13 branch build**, after WALK-16/17 |
-| WALK-12 | 🚦 | [The R8 release-variant pass](#walk-12--the-r8-release-variant-pass) | IMP-044 | **device** | 👤 | ⬜ — **the last 🚦, and it cannot move: R8 must be walked on the exact build you intend to ship.** That is now a **vc13** build, not vc12. First minified build ever; failure is silent |
+| WALK-13 | 🚦 | [The reminder you can answer](#walk-13--the-reminder-you-can-answer) | IMP-054, **+ the duplicate-fire fix** | **device** (OEM behaviour + real doze) | 👤 | ⬜ — **unblocked 2026-08-13** (IMP-054 landed, `18d8c2e`). ⚠️ **Needs the LOCAL DEBUG APK, not the Play `internal` build** — step 2 fires a reminder minutes out via T2 → Notify, and the release build has no harness. Take it with WALK-03 step 4 in the same debug install |
+| WALK-03 | 🚦 | [JSON export → share → restore round trip](#walk-03--json-export-round-trip) | IMP-020, IMP-043 | **device** (share-sheet targets) | 👤 | ⬜ — the user's data escape hatch. **Split across both artifacts:** steps 1-3 + 5 run on the Play `internal` build; **step 4 needs the local debug APK** (`staleBackup` / `neverBackedUp` scenarios). Step 1's export is also what you do before swapping builds |
+| WALK-12 | 🚦 | [The R8 release-variant pass](#walk-12--the-r8-release-variant-pass) | IMP-044 | **device** | 👤 | ⬜ — **the last 🚦, and it cannot move: R8 must be walked on the exact build you intend to ship.** ✅ **That build now exists: v1.0.7 / vc13 on Play `internal`** (2026-09-05) — install it from Play and walk this row **last**, after every other row has cleared, because any re-cut build invalidates a pass taken before it. Failure is silent |
 | WALK-06 | 🎨 | [Streak insurance — candles spend themselves](build-log.md#walk-06--streak-insurance) | IMP-039, IMP-063, IMP-064 | emulator | 👤 | ✅ **2026-08-16** — full pass, re-run after IMP-063 + IMP-064 landed; detail in `build-log.md` → "Walk log" |
 | WALK-07 | 🎨 | [Modal screens actually scroll](#walk-07--modal-scroll) | IMP-042 | emulator | 👤 (visual, two nav modes) | ❌ **2026-08-16 (whole-walk re-run, reopened again)** — the five other screens + both IMP-067 spot-checks all pass, both nav modes, max font. **Paywall still fails after IMP-074** — footer overlaps the plan selector + disclaimer from first open, both fix-halves confirmed present in code. **Scoped 2026-09-05 as `IMP-080`** (`docs/specs-open.md`) — footer goes `position: absolute`, root takes an exact `height: winH`. **Re-run the Paywall half only, once IMP-080 lands.** Needs T1 |
-| WALK-08 | 🎨 | [Font scale + layout on the nine new screens](#walk-08--font-scale) | IMP-030 regression | **device** (real font metrics) | 👤 | ⬜ — **runs on the vc13 branch build**, same sitting as WALK-13/03 |
+| WALK-08 | 🎨 | [Font scale + layout on the nine new screens](#walk-08--font-scale) | IMP-030 regression | **device** (real font metrics) | 👤 | ⬜ — **runs on the Play `internal` build**, same sitting as WALK-17; no harness needed |
 | WALK-09 | 🎨 | [Lifetime heatmap's four states + the XP line](build-log.md#walk-09--lifetime-heatmap--closed-2026-09-05-emulator-owner-run) | IMP-045, **IMP-073** | emulator | 👤 (visual) | ✅ **2026-09-05** — full pass on the re-run after IMP-073; all three 2026-08-16 defects fixed, re-confirmed at max font. **`not yet started` was not exercised** (fixture has no pre-first-entry days) and the walk was closed with that gap recorded; detail in `build-log.md` → "Walk log" |
 | WALK-10 | 🎨 | [Tips, explainers, empty states](build-log.md#walk-10--teach-the-app) | IMP-041 | emulator | 👤 | ✅ **2026-08-16** — full pass, all 4 steps; owner decided live to drop the tip cards anyway, reserved as **IMP-075**; detail in `build-log.md` → "Walk log" |
 | WALK-14 | ⏭ | [TalkBack can write an entry](build-log.md#-walk-14--talkback-can-write-an-entry--dropped-2026-08-16-owners-call-section-moved-here-2026-08-17) | IMP-059 | **device** | 👤 | ⏭ — **dropped 2026-08-16** per owner; section archived to `build-log.md` → "Walk log". Reopen trigger: an accessibility complaint, or institutional Plus buyers |
 | WALK-15 | ✅ | [Store screenshots regenerate](build-log.md#walk-15--store-screenshots-regenerate--closed-2026-08-16-emulator-agent-run-owners-call) | IMP-061 | emulator | 🤖 mostly | ✅ **2026-08-16 — closed at owner's call.** `npm run shots` green end to end, seven Play-legal assets committed; steps 1–3 + 7 passed, **4–6 accepted unrun**; detail in `build-log.md` → "Walk log" |
 | WALK-11 | ⏭ | [The Plus surfaces](#walk-11--the-plus-surfaces) | IMP-038, 046, 047, 043 | emulator | 👤 | ⬜ — **skip for this release.** `PLUS_ENABLED = false` makes every surface here *unmountable*, not locked; walking it needs T1, which must be reverted before committing |
 | WALK-16 | 🚦 | [The New Architecture cold start](#walk-16--the-new-architecture-cold-start) | IMP-076 | **device** (native runtime) | 👤 | ⬜ — **branch-only** (`feat/design-push`). **Gates IMP-077.** Nothing in jest can see this. 🟡 **Emulator smoke 2026-09-05, now covering all 7 steps: 1-3 pass (New Arch live — Bridgeless + Fabric + TurboModule), and 4-7 pass too** (storage round trip; notifications schedule 7 real `RTC_WAKEUP` alarms; export → share sheet → re-import; Auto Backup via T5 with the quarantine offering, not imposing). **What is left for hardware is only: real doze + OEM battery managers, real share targets, Google's own backup schedule.** |
-| WALK-17 | 🚦 | [Edge-to-edge, re-audited under New Arch](#walk-17--edge-to-edge-re-audited-under-new-arch) | IMP-076, IMP-027 regression | **device** | 👤 (visual) | ⬜ — **branch-only.** Runnable in the same session as WALK-16; do **not** assume IMP-027's pass carries over |
+| WALK-17 | 🚦 | [Edge-to-edge, re-audited under New Arch](#walk-17--edge-to-edge-re-audited-under-new-arch) | IMP-076, IMP-027 regression | **device** | 👤 (visual) | ⬜ — **runs on the Play `internal` build** (no harness needed — both themes are reachable via You → Appearance). Runnable in the same sitting as WALK-16; do **not** assume IMP-027's pass carries over |
 | WALK-18 | 🎨 | [The app moves](#walk-18--the-app-moves) | IMP-077 | **device** (mid-range, real frame pacing) | 👤 (visual) | ⬜ — **branch-only.** Blocked until WALK-16 passes and IMP-077 lands |
 
 ---

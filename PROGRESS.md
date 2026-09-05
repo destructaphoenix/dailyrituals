@@ -40,7 +40,7 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 >
 > | If this chat is… | Take |
 > | --- | --- |
-> | a **runtime walk** | **[WALK-16](docs/walk-open.md)** — **all 7 steps have now smoke-passed on the emulator** (2026-09-05, agent-run: New Arch live, storage round trip, notification scheduling, export/share/re-import, Auto Backup with the quarantine offering not imposing). It stays ⬜ because it is a `device` row, but what is left for hardware is only **real doze + OEM battery managers, real share targets, and Google's own backup schedule.** Then **WALK-17** (mostly emulator-coverable), then **WALK-13 / WALK-03 / WALK-08** on a device; **WALK-12 (R8) last, needs `assembleRelease`.** ✅ **A vc13 debug APK exists locally — see "The vc13 build" below.** |
+> | a **runtime walk** | ✅ **The device sitting is UNBLOCKED — v1.0.7 / vc13 is on Play `internal` as of 2026-09-05.** Read **"The vc13 builds"** below first: there are **two** artifacts and the Play one has **no dev harness**, so WALK-13 and WALK-03 step 4 need the local debug APK instead. **WALK-16's 7 steps have all smoke-passed on the emulator** (agent-run, 2026-09-05); it stays ⬜ as a `device` row, with only **real doze + OEM battery managers, real share targets and Google's own backup schedule** left. Order: **WALK-13 + WALK-03 step 4 on debug → WALK-17 / WALK-08 / WALK-03 rest / WALK-16 residue on the internal build → WALK-12 (R8) LAST.** |
 > | a **design request** | The Claude Design project is **live** — see "Claude Design is set up" below. |
 > | a **build task** | **[IMP-080](docs/specs-open.md)** — the Paywall footer. Scoped 2026-09-05, **no gate, no device, takeable right now.** It is the only unblocked spec in the file; IMP-077 still needs WALK-16 to pass. |
 >
@@ -72,7 +72,7 @@ re-derive from an older note.**
 | `production` (public) | **1.0.3 / vc9** | 36 ✅ | live since 2026-07-30 |
 | `beta` (open testing) | **1.0.3 / vc9** | 36 ✅ | was vc8/API 35 — promoted, compliance gap closed |
 | `alpha` (closed testing) | **1.0.5 / vc11** | 36 ✅ | frozen by design 2026-08-08; the newest *built* code |
-| `internal` | **1.0.6 / vc12** | 36 ✅ | **shipped 2026-08-16** — see below |
+| `internal` | **1.0.7 / vc13** | 36 ✅ | **shipped 2026-09-05** — the New Arch build; see below |
 
 **✅ v1.0.6 / vc12 SHIPPED to `internal` on 2026-08-16.** Confirmed from the submit output, not inferred:
 `Release track: internal`, `Version code: 12`, `✔ Submitted your app to Google Play Store!` (GH run
@@ -81,14 +81,16 @@ re-derive from an older note.**
 vc11 build on 2026-08-02**, and is **the first minified (R8) build of this app ever** — IMP-044 rides it
 **unwalked**, which is exactly what WALK-12 exists for.
 
-**⛔ vc12 IS NO LONGER THE RELEASE CANDIDATE — owner's decision, 2026-09-05: "vc13 is the future."**
-The `internal` → `production` promotion of v1.0.6 / vc12 is **off**. vc12 stays on `internal` as a
-historical build; nothing is being walked *for* it any more. **The candidate is now a v1.0.7 / vc13 build
-cut from `feat/design-push`** (New Architecture), and **every remaining device walk regroups onto that one
-build** — WALK-16 → WALK-17 → WALK-13 → WALK-03 → WALK-08, with **WALK-12 (R8) last**, because R8 must be
-walked on the exact build you intend to ship. Reaching the public is still the manual `internal` →
-`production` promotion with the full ~7d review. The other three tracks below are unchanged and still on
-older code.
+**✅ v1.0.7 / vc13 SHIPPED to `internal` on 2026-09-05 — it replaced vc12 on that track.** Confirmed
+from `eas submit:list`, not inferred: `Track: internal`, `Release Status: completed`, `Version code 13`,
+EAS build `11dce1c2-3ba5-4654-9ea3-b3723e1ee457`, submission `bcb6c944-f3eb-4ec1-8f96-cb0da21c39f0`,
+built from commit `bbd5f45` on `feat/design-push`. Runtime `1.0.7`, fingerprint `e6dc620c…`. **This is
+the first New Architecture build to reach any track**, and the artifact every remaining device walk runs
+against. vc12 is history; its `internal` → `production` promotion is off for good.
+
+**The promotion still open is a vc13 one** — the manual `internal` → `production` with the full ~7d
+review, and it should not be taken until the device walks clear. The other three tracks are unchanged and
+still on older code.
 
 **✅ API-36 compliance (deadline 2026-08-31) is met ACCOUNT-WIDE — blocker CLOSED 2026-08-13.** Every
 active release on every track is `targetSdkVersion 36`. Banner-reading procedure kept in the playbook.
@@ -97,13 +99,17 @@ active release on every track is `targetSdkVersion 36`. Banner-reading procedure
 `a299af7`; CI already does it). Reaching the public stays manual: promote `internal` → `production` in Play
 Console, which *does* get the full review.
 
-**⛔ THE OTA LANE IS SHUT — IMP-076's `bump:native` closed it on 2026-08-17.** The repo is now
-`version: 1.0.7` / vc13, and `runtimeVersion` = `appVersion`, so **1.0.7 matches no build on any track**: an
-`eas update` would publish to a runtime nothing is running. It reopens only when a 1.0.7 build actually
-ships. (For the record of what it was: while the repo sat at 1.0.6 the lane reached **`internal` only** —
-vc12's track — never `alpha`'s orphaned vc11 and never the public on vc9.) **Anything found in the device
-walks now needs a build, not an OTA**, and reaching the public still means the manual `internal` →
-`production` promotion.
+**✅ THE OTA LANE REOPENED on 2026-09-05 — but only onto `internal`.** It was shut from 2026-08-17,
+when IMP-076's `bump:native` moved the repo to `1.0.7` / vc13 and left `runtimeVersion` (= `appVersion`)
+matching no shipped build. **vc13 shipping to `internal` is the exact condition that reopens it.** An
+`eas update --channel production` now lands on runtime `1.0.7`, which is **vc13 installs and nothing
+else** — not `alpha`'s orphaned vc11, not the public on vc9, both of which are on older runtimes.
+
+**What that means in practice:** a JS-only fix found in the device walks can now go out as an OTA to the
+internal testers, *but* **anything native still needs a build**, and **WALK-12 must be re-walked if any
+build is re-cut.** Reaching the public is still the manual `internal` → `production` promotion. **Do not
+OTA a fix and then treat WALK-12's R8 pass as still valid** — R8 runs at build time, so an OTA does not
+change what was minified, but it does mean the code on the device is no longer the code that was walked.
 
 **⚠️ OTA has no Play track.** `eas update` publishes to Expo's CDN — no Google, no review. Gated only by
 **channel** (`production`) + **matching `runtimeVersion`**. An installed build receives an OTA regardless of
@@ -190,36 +196,41 @@ again be filed as night — that exact mistake happened once.
 
 ---
 
-## 🔨 The vc13 build — what exists, and where (2026-09-05)
+## 🔨 The vc13 builds — what exists, and where (2026-09-05)
 
-**A local DEBUG APK exists. Nothing vc13 has reached any Play track.** The four track rows above are
-unchanged: `production`/`beta` on vc9, `alpha` on vc11, `internal` on vc12 — all older code than this
-branch.
+**There are TWO vc13 artifacts and they are not interchangeable.** Picking the wrong one is the easiest
+way to waste a device sitting, because the release build has **no dev harness**.
 
-| | |
-| --- | --- |
-| **Artifact** | `android/app/build/outputs/apk/debug/app-debug.apk` (~172 MB — debug, all ABIs, unminified) |
-| **Stamps** | **v1.0.7 / vc13**, `app.dailyrituals.mobile`, minSdk 24 / target 36 |
-| **Built from** | `feat/design-push`, JDK 17, `expo prebuild` → `./gradlew assembleDebug` |
-| **Installed on** | the `Pixel_9_Pro` emulator (AVD), verified `versionCode=13 versionName=1.0.7` |
-| **New Arch** | ✅ confirmed **live at runtime** — see [WALK-16](docs/walk-open.md)'s smoke note |
+| | **A · Play `internal` (release)** | **B · local debug APK** |
+| --- | --- | --- |
+| **What** | AAB → Play-generated APKs, **R8 minified** | `android/app/build/outputs/apk/debug/app-debug.apk` (~172 MB, all ABIs, unminified) |
+| **Stamps** | v1.0.7 / vc13 | v1.0.7 / vc13 |
+| **Get it** | Play Store → internal testing (owner's account) | `adb install -r <path>` |
+| **Built from** | commit `bbd5f45`, EAS `11dce1c2-…`, submission `bcb6c944-…` | `expo prebuild` → `./gradlew assembleDebug` |
+| **Dev harness (T1/T2/T3)** | ❌ **absent** — `__DEV__` false, no Metro | ✅ present |
+| **Covers** | **WALK-12**, WALK-17, WALK-08, WALK-16's hardware residue, WALK-03 steps 1-3+5 | WALK-13, WALK-03 step 4, anything needing T1/T2/T3 |
 
-**⚠️ `npx expo prebuild` first, or a local build is a lie.** Gradle's inputs are the untracked `android/`
-directory, so bumping `version`/`versionCode` in `app.config.js` alone never invalidates its cache. A
-local build on 2026-09-05 finished in 13s on `assembleDebug UP-TO-DATE` and installed an APK still
-reporting **v1.0.5 / vc11**, twelve versions stale, with no warning of any kind. Prebuild is also what
-regenerates the launcher icon from `assets/adaptive-icon.png`. **Verified safe:** prebuild does *not*
-undo IMP-076 — `newArchEnabled=true` and `android.enableMinifyInReleaseBuilds=true` both survive it.
+**⚠️ They cannot coexist, and swapping wipes data.** Same `applicationId`, different signing keys (Play
+vs the debug keystore), so `adb install -r` across them fails `INSTALL_FAILED_UPDATE_INCOMPATIBLE` and you
+must uninstall first. **Export a backup before swapping** — and note that doing so is itself WALK-03
+step 1, so sequence the sitting to get that for free.
 
-**This APK does not cover WALK-12.** That row is specifically the R8 release-variant pass, so it needs
-`./gradlew assembleRelease` — which works locally with no keystore setup, because `android/app/build.gradle`
-signs `release` with the **debug** keystore (technique T6). A release build has **no dev harness**
-(`__DEV__` false, no Metro), and WALK-03 step 4 needs that harness — which is why the debug APK comes
-first and WALK-12 comes last.
+**Suggested order for one device sitting:** install **B** first and take WALK-13 + WALK-03 step 4 (the two
+harness-dependent items), export a backup, then uninstall, install **A** from Play and take WALK-17,
+WALK-08, WALK-03's remaining steps and WALK-16's residue — with **WALK-12 last**, on **A**, because R8
+must be walked on the exact build you intend to ship.
 
-**Getting it onto real hardware** is `adb install -r <the APK above>`, then **`adb reverse tcp:8081 tcp:8081`**
-and `npx expo start --dev-client`. Miss the `adb reverse` and the phone cannot reach Metro; the blank
-screen that follows looks exactly like a WALK-16 step-1 cold-start failure and is not one.
+**⚠️ For B only: `npx expo prebuild` first, or a local build is a lie.** Gradle's inputs are the untracked
+`android/` directory, so bumping `version`/`versionCode` in `app.config.js` alone never invalidates its
+cache. A local build on 2026-09-05 finished in 13s on `assembleDebug UP-TO-DATE` and installed an APK
+still reporting **v1.0.5 / vc11**, twelve versions stale, with no warning of any kind. Prebuild also
+regenerates the launcher icon from `assets/adaptive-icon.png` (the new adaptive icon is confirmed in both
+artifacts). **Verified safe:** prebuild does *not* undo IMP-076 — `newArchEnabled=true` and
+`android.enableMinifyInReleaseBuilds=true` both survive it.
+
+**Metro, for B on hardware:** `adb reverse tcp:8081 tcp:8081` then `npx expo start --dev-client`. Miss the
+`adb reverse` and the phone cannot reach Metro; the blank screen that follows looks exactly like a
+WALK-16 step-1 cold-start failure and is not one. **A needs none of this** — it is self-contained.
 
 ---
 
@@ -234,12 +245,12 @@ screen that follows looks exactly like a WALK-16 step-1 cold-start failure and i
 - **🚦 The `internal` → `production` promotion is still open — but it is now a vc13 promotion, not vc12.**
   **Owner's decision, 2026-09-05: "vc13 is the future."** v1.0.6 / vc12 reached `internal` on 2026-08-16
   carrying ~40 IMP tasks and the app's first R8 build (account in `build-log.md` → Session notes) — and it
-  **stops there**. It will not be promoted, and no walk is run for its sake any more. **REMAINING: cut a
-  v1.0.7 / vc13 build from `feat/design-push`, install it on hardware → WALK-16 → WALK-17 → WALK-13 →
-  WALK-03 → WALK-08 → WALK-12 (R8 last) → promote by hand** (full review, ~7d). Consolidating onto one
-  build is the whole point of the decision: the walks were only split because two candidates existed.
-  ⚠️ **A vc13 build has not been cut yet** — the tree is at v1.0.7 / vc13 from IMP-076's `bump:native`, but
-  nothing built from it has ever reached a device.
+  **stops there**. It will not be promoted, and no walk is run for its sake any more.
+  ✅ **The build step is DONE: v1.0.7 / vc13 reached `internal` on 2026-09-05.** **REMAINING: the device
+  walks, then promote by hand** (full review, ~7d) — WALK-13 + WALK-03 step 4 on the **local debug APK**
+  (the Play build has no harness), then WALK-17 / WALK-08 / WALK-03's rest / WALK-16's residue on the
+  **Play build**, with **WALK-12 (R8) last**. Consolidating onto one build is the whole point of the
+  decision: the walks were only split because two candidates existed.
 - **Cash embers: settled in principle (dropped 2026-08-03), not finalised.** Must be decided before
   `PLUS_ENABLED` flips — it determines which Play products get created. Full argument in the playbook.
 - **`PLUS_ENABLED` must not flip until every `PLUS_PERKS` line is true.** The one remaining gap is perk #6,
@@ -314,9 +325,10 @@ promotion is off; vc12 stays on `internal` as history. The walk queue was split 
 because two candidates existed, so it collapses to **one sitting**: WALK-16 → WALK-17 → WALK-13 →
 WALK-03 → WALK-08, **WALK-12 (R8) last and immovable.** IMP-044 retracked to match.
 
-**A vc13 debug APK now exists and is installed on the emulator** — see "The vc13 build" above for the
+**A vc13 debug APK now exists and is installed on the emulator** — see "The vc13 builds" above for the
 path, what it stamps, and the `expo prebuild` trap that made an earlier local build silently install
-vc11. Nothing vc13 has reached a Play track.
+vc11. ~~Nothing vc13 has reached a Play track.~~ **← superseded the same day: vc13 shipped to `internal`
+on 2026-09-05. See the newest note below.**
 
 **[`IMP-080`](docs/specs-open.md) closes the last scoping debt — takeable now, no gate, no device.** The
 🔴 WALK-07 Paywall regression: IMP-068's `flex: 1` and IMP-074's `maxHeight: winH` are both still present
@@ -362,5 +374,27 @@ pass. But the hardware residue is now only three things: **real doze + OEM batte
 targets, and Google's own backup schedule.** IMP-077's gate is the owner's call to make on that evidence,
 not a chat's.
 
-**NEXT: the internal build so the owner can walk the rest on hardware**, then WALK-17 / 13 / 03 / 08 in
-one sitting and WALK-12 (R8) last. `IMP-080` remains takeable in parallel — no gate, no device._
+**Then the owner shipped it.** ✅ **v1.0.7 / vc13 is on Play `internal` as of 2026-09-05** — EAS build
+`11dce1c2-3ba5-4654-9ea3-b3723e1ee457`, submission `bcb6c944-f3eb-4ec1-8f96-cb0da21c39f0`, `Release
+Status: completed`, built from commit `bbd5f45`. It is **the first New Architecture build to reach any
+track**, and it replaced vc12 on `internal`.
+
+**Two consequences a new chat must not miss.**
+
+1. **There are now TWO vc13 artifacts and they are not interchangeable.** The Play build is a *release*
+   build — `__DEV__` false, no Metro, **no dev harness**, so **T1/T2/T3 do not exist on it**. **WALK-13**
+   (needs T2 → Notify) and **WALK-03 step 4** (needs the `staleBackup`/`neverBackedUp` scenarios)
+   therefore **cannot** be walked on it; they need the local debug APK. Everything else — WALK-17,
+   WALK-08, WALK-03's other steps, WALK-16's hardware residue and **WALK-12** — runs on the Play build.
+   They cannot coexist (same `applicationId`, different signing keys), so swapping means uninstall and a
+   data wipe: **export a backup first, which is WALK-03 step 1 for free.** Full table in "The vc13
+   builds" above.
+2. **The OTA lane reopened**, because a 1.0.7 build finally shipped — but it reaches **vc13 installs
+   only** (internal testers), not `alpha`'s vc11 and not the public on vc9. A JS-only walk finding can go
+   out as an OTA; anything native still needs a build, and re-cutting a build invalidates any WALK-12
+   pass taken before it.
+
+**NEXT: the device sitting, in this order** — install the **debug APK** and take **WALK-13 + WALK-03
+step 4**; export a backup; uninstall; install **vc13 from Play internal** and take **WALK-17, WALK-08,
+WALK-03 steps 1-3+5, WALK-16's residue**; then **WALK-12 (R8) LAST**. `IMP-080` remains takeable in
+parallel by a build chat — no gate, no device._
