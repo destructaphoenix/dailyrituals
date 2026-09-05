@@ -2818,6 +2818,37 @@ pitch. One screen per request. `PLUS_ENABLED` stays `false`; it is a design requ
 
 ## Session notes (archived from PROGRESS.md)
 
+_2026-09-05 (Opus — vc13 retrack, IMP-080 scoped, WALK-09 closed, vc13 built; **branch-only, committed,
+NOT pushed**) — **seven commits, no app code touched.** The dangling 2026-09-05 triage and the adaptive
+icon swapped on 2026-08-19 both landed; both had been sitting uncommitted.
+
+**"vc13 is the future" (owner) retires vc12 as the release candidate.** Its `internal` → `production`
+promotion is off; vc12 stays on `internal` as history. The walk queue was split across two builds only
+because two candidates existed, so it collapses to **one sitting**: WALK-16 → WALK-17 → WALK-13 →
+WALK-03 → WALK-08, **WALK-12 (R8) last and immovable.** IMP-044 retracked to match.
+
+**A vc13 debug APK now exists and is installed on the emulator** — see "The vc13 builds" above for the
+path, what it stamps, and the `expo prebuild` trap that made an earlier local build silently install
+vc11. ~~Nothing vc13 has reached a Play track.~~ **← superseded the same day: vc13 shipped to `internal`
+on 2026-09-05. See the newest note below.**
+
+**[`IMP-080`](docs/specs-open.md) closes the last scoping debt — takeable now, no gate, no device.** The
+🔴 WALK-07 Paywall regression: IMP-068's `flex: 1` and IMP-074's `maxHeight: winH` are both still present
+and correct, so a third patch to the same flex column is the wrong bet. The footer leaves the column for
+`position: absolute` + `onLayout`-measured padding; the root takes an exact `height: winH`. Owner kept the
+CTA pinned over folding it into the scroll content. ⚠️ Hiding the footer until a plan is picked **cannot
+work** — `plan` initialises to `'annual'`. **079 is skipped, not reused.**
+
+**WALK-09 ✅ closed** — full pass, all three IMP-073 defects fixed, re-confirmed at max font; the
+`not yet started` state went unexercised and is recorded as such.
+
+**WALK-16 🟡 emulator smoke — row stays ⬜.** Steps 1-3 pass and **New Architecture is confirmed live at
+runtime** (Bridgeless + Fabric + TurboModule JNI registration), which IMP-076 previously had no evidence
+for at all. Steps 4-7 still need hardware. Also verified `expo prebuild` does not undo IMP-076.
+
+**NEXT: WALK-17 on the emulator that is already set up, the device sitting once hardware is to hand, or
+hand IMP-080 to a build chat.** All three are independent; any can go first._
+
 _2026-09-05 (Opus — design-queue triage; **planning only, no code changed, nothing committed**) — **The
 design system covers 7 screens, not the app**, and that is now a stated fact rather than an assumption.
 `design-system/screens/` holds `day-01…07` + `night-01…07` (today, write, moods, reflections, insights,

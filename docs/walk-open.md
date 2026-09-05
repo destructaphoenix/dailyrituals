@@ -70,20 +70,29 @@ so **T1, T2 and T3 do not exist on it**. That splits the remaining rows:
 wipes data. **Export a backup first**; that export *is* WALK-03 step 1, so sequence the sitting to get it
 for free. Full artifact table in [`PROGRESS.md`](../PROGRESS.md) → "The vc13 builds".
 
-**The order inside that build.** **WALK-16 first, always**: IMP-076 changes no app code, so `npm test`
-is structurally blind to it, WALK-16 is the *only* evidence it works, and it gates IMP-077. **Its seven
-steps have now all passed on an emulator** (2026-09-05), so on hardware it is down to the three things an
-emulator cannot settle — real doze + OEM battery managers, real share targets, Google's own backup
-schedule. **WALK-17 follows in the same sitting** (edge-to-edge: IMP-027's pass was on Legacy Arch and does not carry
-over). Then the feature rows carried over from the old Track 1 — **WALK-13, WALK-03, WALK-08** — which
-need nothing but a running app and are *better* covered here, since New Arch is the runtime they will
-actually ship on. **WALK-12 (R8) stays last and is the one row that cannot move**: R8 must be walked on
-the exact build you intend to ship, so any fix an earlier walk turns up invalidates an R8 pass taken
-before it. **WALK-18** needs IMP-077 landed first, so it is a later sitting by construction.
+**⚠️ The owner set the emulator bar on 2026-09-05, and it changes how these rows close.** The instruction
+was explicit: **run what the emulator can run and record it as done, not as smoke.** So **WALK-16 and
+WALK-17 are closed ✅ on emulator evidence**, and the `device`-≠-`emulator` rule in the header above is
+knowingly set aside for those two rows. What that buys is real — **IMP-077 is unblocked**. What it costs
+is named in each row and does not go away by being closed: nothing here has met real doze, an OEM battery
+manager, a real share target, or Google's own backup schedule. **WALK-13 was dropped from the pass at the
+same instruction** — neither run nor failed, and IMP-054 plus `b773352` remain unproven on any running app.
 
-**WALK-09 is closed (✅ 2026-09-05)** — it was the last walk that needed no device, and it cleared
-Insights before the Claude Design request lands on that screen. **WALK-07 is the one row that is not a
-re-run**: its Paywall half needs `IMP-080` to land first, then only that half is walked again.
+**What is actually left.**
+- **WALK-03 step 4 (`neverBackedUp` only)** — waiting on `IMP-081`. Steps 1, 2, 3 and 5 passed.
+- **WALK-07 (Paywall only)** — waiting on `IMP-080`. Every other screen in it passed.
+- **WALK-08 — partial.** The font cap is confirmed biting; eight of its nine named screens, plus rotation
+  and the `longName` scenario, are still unrun.
+- **WALK-12 (R8) — last, and the one row that cannot move.** R8 must be walked on the exact build you
+  intend to ship, so any fix an earlier walk turns up invalidates an R8 pass taken before it. It needs the
+  Play `internal` build (A), which has no dev harness.
+- **WALK-18** — needs IMP-077 landed first, so it is a later sitting by construction.
+
+**Both blocking specs are takeable right now and neither needs a device** — `IMP-080` and `IMP-081` touch
+different files, so they can go in either order or in parallel.
+
+**WALK-09 is closed (✅ 2026-09-05)** — it cleared Insights before the Claude Design request lands on that
+screen.
 
 **Everything here still runs on `feat/design-push` — a branch that is never pushed to GitHub** (owner
 instruction, 2026-08-17).
@@ -97,19 +106,19 @@ locked. It is the row that reopens the moment Plus becomes the active work.
 | WALK-02 | 🚦 | [Restore quarantine — offered, not imposed](build-log.md#walk-02--restore-quarantine) | IMP-033, IMP-029, **IMP-062** | emulator | 👤 (clock changes + judgement on sheet copy) | ✅ **2026-08-15** — full pass, all 9 steps (incl. the new IMP-062 relaunch proof in steps 7–9); detail in `build-log.md` → "Walk log" |
 | WALK-05 | 🚦 | [Edit a past day, delete, trash allowance](build-log.md#walk-05--custody-of-your-words) | IMP-036, IMP-048 | emulator | 👤 | ✅ **2026-08-15** — full pass; the outstanding `applyCompletion` half confirmed no double-counting; detail in `build-log.md` → "Walk log" |
 | WALK-04 | 🎨 | [Search + the write flow's moods](build-log.md#walk-04--search--moods) | IMP-035, IMP-037, **IMP-053** | emulator | 👤 | ✅ **2026-08-16** — full pass on the third re-run (after IMP-069/070/071 landed); two more defects found and fixed live as IMP-072; detail in `build-log.md` → "Walk log" |
-| WALK-13 | 🚦 | [The reminder you can answer](#walk-13--the-reminder-you-can-answer) | IMP-054, **+ the duplicate-fire fix** | **device** (OEM behaviour + real doze) | 👤 | ⬜ — **unblocked 2026-08-13** (IMP-054 landed, `18d8c2e`). ⚠️ **Needs the LOCAL DEBUG APK, not the Play `internal` build** — step 2 fires a reminder minutes out via T2 → Notify, and the release build has no harness. Take it with WALK-03 step 4 in the same debug install |
-| WALK-03 | 🚦 | [JSON export → share → restore round trip](#walk-03--json-export-round-trip) | IMP-020, IMP-043 | **device** (share-sheet targets) | 👤 | ⬜ — the user's data escape hatch. **Split across both artifacts:** steps 1-3 + 5 run on the Play `internal` build; **step 4 needs the local debug APK** (`staleBackup` / `neverBackedUp` scenarios). Step 1's export is also what you do before swapping builds |
+| WALK-13 | 🚦 | [The reminder you can answer](#walk-13--the-reminder-you-can-answer) | IMP-054, **+ the duplicate-fire fix** | **device** (OEM behaviour + real doze) | 👤 | ⏸ **DROPPED from this pass — owner's instruction, 2026-09-05.** Not run, not failed. IMP-054 and `b773352` remain unproven on any running app. The row stays here because the debt is real; it reopens whenever the owner wants it. |
+| WALK-03 | 🚦 | [JSON export → share → restore round trip](#walk-03--json-export-round-trip) | IMP-020, IMP-043 | **device** (share-sheet targets) | 👤 | ❌ **2026-09-05 (emulator, agent-run) — steps 1, 2, 3 and 5 all pass; step 4 fails on one of its two cases.** Export → share sheet → well-formed envelope ✅; the IMP-033 two-systems toast ✅; reset → restore → everything returns ✅; truncated file → clean *"That file isn't readable as a backup."*, no crash ✅. **`staleBackup` card ✅ but `neverBackedUp` truncates mid-word** — scoped as `IMP-081`. **Re-run step 4 only, once IMP-081 lands.** Delivery to a real share target stays unexercised. |
 | WALK-12 | 🚦 | [The R8 release-variant pass](#walk-12--the-r8-release-variant-pass) | IMP-044 | **device** | 👤 | ⬜ — **the last 🚦, and it cannot move: R8 must be walked on the exact build you intend to ship.** ✅ **That build now exists: v1.0.7 / vc13 on Play `internal`** (2026-09-05) — install it from Play and walk this row **last**, after every other row has cleared, because any re-cut build invalidates a pass taken before it. Failure is silent |
 | WALK-06 | 🎨 | [Streak insurance — candles spend themselves](build-log.md#walk-06--streak-insurance) | IMP-039, IMP-063, IMP-064 | emulator | 👤 | ✅ **2026-08-16** — full pass, re-run after IMP-063 + IMP-064 landed; detail in `build-log.md` → "Walk log" |
 | WALK-07 | 🎨 | [Modal screens actually scroll](#walk-07--modal-scroll) | IMP-042 | emulator | 👤 (visual, two nav modes) | ❌ **2026-08-16 (whole-walk re-run, reopened again)** — the five other screens + both IMP-067 spot-checks all pass, both nav modes, max font. **Paywall still fails after IMP-074** — footer overlaps the plan selector + disclaimer from first open, both fix-halves confirmed present in code. **Scoped 2026-09-05 as `IMP-080`** (`docs/specs-open.md`) — footer goes `position: absolute`, root takes an exact `height: winH`. **Re-run the Paywall half only, once IMP-080 lands.** Needs T1 |
-| WALK-08 | 🎨 | [Font scale + layout on the nine new screens](#walk-08--font-scale) | IMP-030 regression | **device** (real font metrics) | 👤 | ⬜ — **runs on the Play `internal` build**, same sitting as WALK-17; no harness needed |
+| WALK-08 | 🎨 | [Font scale + layout on the nine new screens](#walk-08--font-scale) | IMP-030 regression | **device** (real font metrics) | 👤 | 🟠 **PARTIAL — 2026-09-05 (emulator, agent-run).** Cap confirmed biting: OS `font_scale` 2.0 clamps to `MAX_FONT_SCALE` 1.5 body / `CHROME_FONT_SCALE` 1.2 chrome, and **the app must be restarted for a scale change to take** (RN reads it at startup — a live change moves system UI only, which reads exactly like a passing cap and is not one). Clean at max font: Home, Insights, Reflections + `ArchiveFilters`, You (rows auto-stack), achievements + shop sheets. ⚠️ **Still unrun: `TrashSheet`, `DeeperInsights`, `AnnualRecap`, `AnnualRecapCard`, `PlusPerks` (needs T1), `TipCard`, `RestoreOffer`, `OnThisDayCard`; the `longName` scenario; landscape rotation.** |
 | WALK-09 | 🎨 | [Lifetime heatmap's four states + the XP line](build-log.md#walk-09--lifetime-heatmap--closed-2026-09-05-emulator-owner-run) | IMP-045, **IMP-073** | emulator | 👤 (visual) | ✅ **2026-09-05** — full pass on the re-run after IMP-073; all three 2026-08-16 defects fixed, re-confirmed at max font. **`not yet started` was not exercised** (fixture has no pre-first-entry days) and the walk was closed with that gap recorded; detail in `build-log.md` → "Walk log" |
 | WALK-10 | 🎨 | [Tips, explainers, empty states](build-log.md#walk-10--teach-the-app) | IMP-041 | emulator | 👤 | ✅ **2026-08-16** — full pass, all 4 steps; owner decided live to drop the tip cards anyway, reserved as **IMP-075**; detail in `build-log.md` → "Walk log" |
 | WALK-14 | ⏭ | [TalkBack can write an entry](build-log.md#-walk-14--talkback-can-write-an-entry--dropped-2026-08-16-owners-call-section-moved-here-2026-08-17) | IMP-059 | **device** | 👤 | ⏭ — **dropped 2026-08-16** per owner; section archived to `build-log.md` → "Walk log". Reopen trigger: an accessibility complaint, or institutional Plus buyers |
 | WALK-15 | ✅ | [Store screenshots regenerate](build-log.md#walk-15--store-screenshots-regenerate--closed-2026-08-16-emulator-agent-run-owners-call) | IMP-061 | emulator | 🤖 mostly | ✅ **2026-08-16 — closed at owner's call.** `npm run shots` green end to end, seven Play-legal assets committed; steps 1–3 + 7 passed, **4–6 accepted unrun**; detail in `build-log.md` → "Walk log" |
 | WALK-11 | ⏭ | [The Plus surfaces](#walk-11--the-plus-surfaces) | IMP-038, 046, 047, 043 | emulator | 👤 | ⬜ — **skip for this release.** `PLUS_ENABLED = false` makes every surface here *unmountable*, not locked; walking it needs T1, which must be reverted before committing |
-| WALK-16 | 🚦 | [The New Architecture cold start](#walk-16--the-new-architecture-cold-start) | IMP-076 | **device** (native runtime) | 👤 | ⬜ — **branch-only** (`feat/design-push`). **Gates IMP-077.** Nothing in jest can see this. 🟡 **Emulator smoke 2026-09-05, now covering all 7 steps: 1-3 pass (New Arch live — Bridgeless + Fabric + TurboModule), and 4-7 pass too** (storage round trip; notifications schedule 7 real `RTC_WAKEUP` alarms; export → share sheet → re-import; Auto Backup via T5 with the quarantine offering, not imposing). **What is left for hardware is only: real doze + OEM battery managers, real share targets, Google's own backup schedule.** |
-| WALK-17 | 🚦 | [Edge-to-edge, re-audited under New Arch](#walk-17--edge-to-edge-re-audited-under-new-arch) | IMP-076, IMP-027 regression | **device** | 👤 (visual) | ⬜ — **runs on the Play `internal` build** (no harness needed — both themes are reachable via You → Appearance). Runnable in the same sitting as WALK-16; do **not** assume IMP-027's pass carries over |
+| WALK-16 | 🚦 | [The New Architecture cold start](#walk-16--the-new-architecture-cold-start) | IMP-076 | **device** (native runtime) | 👤 | ✅ **2026-09-05 — closed on emulator evidence at owner's instruction.** All 7 steps exercised across two agent-run sittings (1-3 New Arch live: Bridgeless + Fabric + TurboModule; 4-7 storage / notification scheduling / export-share-reimport / Auto Backup via T5 with the quarantine offering not imposing). **Owner's call 2026-09-05: emulator results are recorded as done, not smoke.** ⚠️ **Named gap — never exercised anywhere:** real doze, OEM battery managers, delivery to a real share target, Google's own backup schedule. **Unblocks IMP-077.** |
+| WALK-17 | 🚦 | [Edge-to-edge, re-audited under New Arch](#walk-17--edge-to-edge-re-audited-under-new-arch) | IMP-076, IMP-027 regression | **device** | 👤 (visual) | ✅ **2026-09-05 — emulator, agent-run.** All four tabs clean under status bar + gesture bar in **both** day and night; bottom nav and write-FAB correct in **both** gesture and 3-button nav; onboarding + setup also clean. Sheets checked: trash, achievements, shop — the last two at night **and** max font. ⚠️ **Not opened: write flow, reading sheet, mood manager.** |
 | WALK-18 | 🎨 | [The app moves](#walk-18--the-app-moves) | IMP-077 | **device** (mid-range, real frame pacing) | 👤 (visual) | ⬜ — **branch-only.** Blocked until WALK-16 passes and IMP-077 lands |
 
 ---
@@ -162,6 +171,31 @@ harness** (`__DEV__` false) and no Metro.
 5. Restore a deliberately corrupt file (truncate the JSON in a text editor) → a clean *"That backup file
    looks damaged"* message, **not** a crash. *(Note: this is the surface IMP-049 hardens — expect the
    envelope-level rejection to work today and shape-level damage to slip through until IMP-049 lands.)*
+
+**Result — ❌ 2026-09-05 (emulator, agent-run; v1.0.7 / vc13 debug APK, `sdk_gphone16k_arm64`, API 36).**
+Four of the five steps pass and one fails on half its cases. **Step 1:** `Back up my journal` wrote
+`daily-rituals-2026-09-05.json` and opened the real Android share sheet (Quick Share / Drive / Gmail
+resolved); the envelope pulled off the device is well-formed — `format: daily-rituals-backup`,
+`appVersion: 1.0.7`, `counts: {entries: 5, days: 5}`, payload a stringified state. **Step 2:** the toast
+reads *"Backup ready — save it somewhere off this phone. This doesn't update your Google backup."* — the
+IMP-033 copy, saying plainly that the two systems are separate; the row flipped to "Backed up today" and
+the health nudge cleared. **Step 3:** `Reset all data` → onboarding → skip → restore `dr-good.json` → the
+confirm read *"This backup has 5 entries. It will replace what's on this phone now (0 entries)."* and the
+data came back exactly (5-day streak, Lv 3 Contemplative, rites 20/30, 5 entries / 32 words). **Step 5:**
+a file truncated to 1200 bytes was rejected with *"That file isn't readable as a backup."* — a toast, not
+a crash, exactly the envelope-level rejection this walk predicted would work today.
+
+**Step 4 is the failure, and only on one of its two cases.** `staleBackup` (42d) is correct: the row reads
+"Backed up 42 days ago — back up again soon" and the warning reads in full, over two lines. `neverBackedUp`
+truncates mid-word — *"…there's nothing to bring ba…"* — **at default font scale**, and worse at max
+(*"there's nothing t…"*). Cause found in the file, not guessed:
+[`BackupNudge`](../src/screens/YouScreen.js#L316) clamps at `numberOfLines={2}` and the `never` string is
+97 chars against `stale`'s 62. **Scoped 2026-09-05 as [`IMP-081`](specs-open.md).** Re-run **step 4 only**
+once it lands, at both font scales.
+
+**Unexercised, and an emulator cannot settle it:** delivery to a real share *target*. The sheet resolves
+targets and hands off; nothing on this machine receives the file.
+
 
 ---
 
@@ -230,6 +264,27 @@ Emulator → Settings → Display → **font size max + display size largest**. 
 one-character-per-line column; rows auto-stack. Also run the harness `longName` scenario (40 chars) across
 Home / You / Recap, and rotate each new sheet to landscape. Harness → Inspect shows
 `PixelRatio.getFontScale()` next to `MAX_FONT_SCALE` / `CHROME_FONT_SCALE` — confirm the cap is biting.
+
+**Result — 🟠 PARTIAL, 2026-09-05 (emulator, agent-run).** The cap is real and biting: with OS `font_scale`
+at 2.0, app text renders at `MAX_FONT_SCALE` 1.5 and chrome at `CHROME_FONT_SCALE` 1.2
+([`src/ui/textScale.js`](../src/ui/textScale.js)) — tab labels stay small while body text grows.
+
+**One trap worth more than the result.** React Native reads the font scale **at startup**. Changing
+`font_scale` under a running app moves the system UI immediately and the app not at all — which looks
+exactly like a correctly-clamping cap and is not. The app must be force-stopped and relaunched (and for
+build B, re-attached to Metro) before any measurement here means anything. The first pass of this walk was
+read wrong for precisely that reason before the relaunch corrected it.
+
+**Clean at max font:** Home (hero, rites, "No candles…" wrapping to two lines), Insights, Reflections
+including `ArchiveFilters` (mood chips scroll horizontally as designed, From/To stay side by side), You —
+where rows auto-stack rather than collide ("Writing prompts / Everyday", "About Daily Rituals / v1.0").
+Achievements and shop sheets also clean at max font. No row anywhere collapsed to one character per line.
+
+⚠️ **Still unrun and this row stays open for them:** `TrashSheet`, `DeeperInsights`, `AnnualRecap`,
+`AnnualRecapCard`, `PlusPerks` (needs T1), `TipCard`, `RestoreOffer`, `OnThisDayCard`; the harness
+`longName` (40-char) scenario across Home / You / Recap; landscape rotation of each new sheet; and the
+harness Inspect readout of `PixelRatio.getFontScale()` against the two caps.
+
 
 ---
 
@@ -446,6 +501,26 @@ Runnable in the same sitting as WALK-16, after it passes.
    mode is invisible until it is not.
 
 **On failure:** record it, scope as a new `IMP-xxx`. Do not fix mid-walk.
+
+**Result — ✅ 2026-09-05 (emulator, agent-run).** Recorded as a pass at the owner's instruction that
+emulator results close these rows; the header's `device`-≠-`emulator` rule is knowingly set aside here.
+**Step 1:** Today, Insights, Reflections and You all draw under the status bar and gesture bar with no
+clipped content and no double padding; You scrolls to `Reset all data` sitting clear of the nav. Onboarding
+and the setup screen are clean at both ends too. **Step 2:** the bottom nav and the centre write-FAB sit
+correctly above the gesture bar in gesture nav, and above the system bar in three-button nav — switched
+live with `cmd overlay`, no relayout damage either way. **Step 3:** trash sheet clean in day; achievements
+(Keepsakes) and shop clean in night **at max font**, headers clear of the status bar, content scrolling
+under nothing. **Step 4:** both themes walked. Night-v2 is a true pure black and no inset error hid in it —
+the sun and rays, heatmaps and tab icons all repaint in the night palette, and the sky pill switches to the
+moon.
+
+⚠️ **Three sheets were not opened: write flow, reading sheet, mood manager.** The three that were opened
+were consistent, but that is inference, not observation.
+
+**Out of scope, noted not scoped:** the Dev Harness draws its own header under the status bar, and at max
+font its "Last backup" stepper value clips off the right edge. `__DEV__`-only, absent from the release
+build — not a release defect.
+
 
 ---
 

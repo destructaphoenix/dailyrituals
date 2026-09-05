@@ -40,9 +40,9 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 >
 > | If this chat is… | Take |
 > | --- | --- |
-> | a **runtime walk** | ✅ **The device sitting is UNBLOCKED — v1.0.7 / vc13 is on Play `internal` as of 2026-09-05.** Read **"The vc13 builds"** below first: there are **two** artifacts and the Play one has **no dev harness**, so WALK-13 and WALK-03 step 4 need the local debug APK instead. **WALK-16's 7 steps have all smoke-passed on the emulator** (agent-run, 2026-09-05); it stays ⬜ as a `device` row, with only **real doze + OEM battery managers, real share targets and Google's own backup schedule** left. Order: **WALK-13 + WALK-03 step 4 on debug → WALK-17 / WALK-08 / WALK-03 rest / WALK-16 residue on the internal build → WALK-12 (R8) LAST.** |
+> | a **runtime walk** | ⚠️ **WALK-16 and WALK-17 are CLOSED ✅ on emulator evidence (owner's instruction, 2026-09-05: record emulator results as done, not smoke). WALK-13 is DROPPED at the same instruction.** What is left needs either a spec or the Play build: **WALK-03 step 4** (`neverBackedUp` only) waits on `IMP-081`; **WALK-07** (Paywall only) waits on `IMP-080`; **WALK-08 is PARTIAL** — cap confirmed, eight of nine screens plus rotation and `longName` unrun; **WALK-12 (R8) is LAST** and needs the Play `internal` build (A), which has no dev harness. ⚠️ **Named gap that no closed row covers:** real doze, OEM battery managers, delivery to a real share target, Google's own backup schedule. |
 > | a **design request** | The Claude Design project is **live** — see "Claude Design is set up" below. |
-> | a **build task** | **[IMP-080](docs/specs-open.md)** — the Paywall footer. Scoped 2026-09-05, **no gate, no device, takeable right now.** It is the only unblocked spec in the file; IMP-077 still needs WALK-16 to pass. |
+> | a **build task** | **[IMP-080](docs/specs-open.md)** (Paywall footer) or **[IMP-081](docs/specs-open.md)** (the never-backed-up warning truncates mid-word — from WALK-03, 2026-09-05). **Both are takeable right now — no gate, no device — and they touch different files, so either order or in parallel.** **IMP-077 is now UNBLOCKED** too: WALK-16 closed 2026-09-05. |
 >
 > **The whole design push lives on `feat/design-push`, which is NEVER pushed, NEVER given a
 > `Release-Lane:` trailer, and NEVER merged to `main`** without a separate owner decision.
@@ -139,9 +139,10 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 022 | Save as PDF + About sheet (the two dead You-tab buttons) | Build | ⏸ **deferred (owner)** — spec in build-log → "Deferred specs"; **perk #6 gate** |
 | 044 | R8 on release builds (dev client was shipping to the public) | Build | 🟢 **code-complete, UNWALKED.** It rode vc12, but **vc12 is no longer the candidate** (2026-09-05) — R8 must be walked on the build you actually ship, so it now rides **vc13**; walk = WALK-12, on hardware, last in the sitting |
 | 076 | The app moves to the New Architecture | Build | ✅ code-complete 2026-08-17 · **branch-only, never pushed** (`feat/design-push`) · `assembleRelease` clean, **v1.0.7 / vc13** · walk = WALK-16 + WALK-17 |
-| 077 | A motion vocabulary the whole app can speak | Build | ⬜ **blocked on WALK-16** · branch-only, never pushed · walk = WALK-18 |
+| 077 | A motion vocabulary the whole app can speak | Build | ⬜ **UNBLOCKED 2026-09-05** — WALK-16 closed ✅ on emulator evidence at the owner's instruction · branch-only, never pushed · walk = WALK-18 |
 | 078 | A design system Claude Design can work from | Dev-only | ✅ code-complete 2026-08-17 · **branch-only, never pushed** · **15 cards live** in Claude Design project `Daily Rituals Design System`, both themes |
 | 080 | The Paywall footer stops fighting the layout | Build | ⬜ **takeable now — no gate** · branch-only, never pushed · from the 🔴 WALK-07 finding · walk = the Paywall half of WALK-07 |
+| 081 | The never-backed-up warning says the whole sentence | Build | ⬜ **takeable now — no gate, no device** · branch-only, never pushed · from the WALK-03 step 4 finding, 2026-09-05 · `BackupNudge` clamps at `numberOfLines={2}` and the 97-char `never` string cuts mid-word at **default** font scale · walk = step 4 of WALK-03 |
 
 ---
 
@@ -316,36 +317,41 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
-_2026-09-05 (Opus — vc13 retrack, IMP-080 scoped, WALK-09 closed, vc13 built; **branch-only, committed,
-NOT pushed**) — **seven commits, no app code touched.** The dangling 2026-09-05 triage and the adaptive
-icon swapped on 2026-08-19 both landed; both had been sitting uncommitted.
+_2026-09-05 (Opus — WALK-03 / WALK-17 / WALK-08 emulator pass, WALK-16 + WALK-17 closed, IMP-081 scoped;
+**branch-only, committed, NOT pushed**) — **a walk session; no app code was touched and the record is the
+deliverable.**
 
-**"vc13 is the future" (owner) retires vc12 as the release candidate.** Its `internal` → `production`
-promotion is off; vc12 stays on `internal` as history. The walk queue was split across two builds only
-because two candidates existed, so it collapses to **one sitting**: WALK-16 → WALK-17 → WALK-13 →
-WALK-03 → WALK-08, **WALK-12 (R8) last and immovable.** IMP-044 retracked to match.
+**The owner changed the bar mid-session, and every status below follows from it.** The instruction was to
+run what the emulator can run and **record it as done, not as smoke**, and to **drop WALK-13** ("to hell
+with the reminders"). So **WALK-16 and WALK-17 are closed ✅ on emulator evidence** — the
+`device`-≠-`emulator` rule in `walk-open.md`'s header is knowingly set aside for those two rows.
+**IMP-077 is unblocked as a direct result.** What that does *not* buy is named in both rows and in the
+walk file's header: **nothing in this project has yet met real doze, an OEM battery manager, delivery to a
+real share target, or Google's own backup schedule.** WALK-13 is ⏸ dropped — neither run nor failed — so
+IMP-054 and `b773352` are still unproven on any running app.
 
-**A vc13 debug APK now exists and is installed on the emulator** — see "The vc13 builds" above for the
-path, what it stamps, and the `expo prebuild` trap that made an earlier local build silently install
-vc11. ~~Nothing vc13 has reached a Play track.~~ **← superseded the same day: vc13 shipped to `internal`
-on 2026-09-05. See the newest note below.**
+**WALK-03 — ❌, and the failure is the deliverable.** Steps 1, 2, 3 and 5 all pass: the export writes a
+well-formed envelope (`format: daily-rituals-backup`, `appVersion: 1.0.7`, `counts: {entries: 5, days: 5}`)
+and opens the real share sheet; the toast carries the IMP-033 two-systems copy; reset → restore returns the
+state exactly; a truncated file is rejected with *"That file isn't readable as a backup."* and no crash.
+**Step 4 fails on `neverBackedUp`:** the warning truncates mid-word — *"there's nothing to bring ba…"* —
+**at default font scale**, worse at max. Cause read out of the file, not guessed:
+[`BackupNudge`](src/screens/YouScreen.js#L322) clamps at `numberOfLines={2}` and the `never` string is
+97 chars against `stale`'s 62. **Scoped as [`IMP-081`](docs/specs-open.md).**
 
-**[`IMP-080`](docs/specs-open.md) closes the last scoping debt — takeable now, no gate, no device.** The
-🔴 WALK-07 Paywall regression: IMP-068's `flex: 1` and IMP-074's `maxHeight: winH` are both still present
-and correct, so a third patch to the same flex column is the wrong bet. The footer leaves the column for
-`position: absolute` + `onLayout`-measured padding; the root takes an exact `height: winH`. Owner kept the
-CTA pinned over folding it into the scroll content. ⚠️ Hiding the footer until a plan is picked **cannot
-work** — `plan` initialises to `'annual'`. **079 is skipped, not reused.**
+**WALK-08 — 🟠 partial, and the trap in it is worth more than the result.** React Native reads the font
+scale **at startup**. Changing `font_scale` under a running app moves system UI and not the app, which
+looks exactly like a correctly-clamping cap and is not one; this pass was read wrong until a force-stop and
+relaunch corrected it. After the relaunch the cap is confirmed genuine (`MAX_FONT_SCALE` 1.5 body,
+`CHROME_FONT_SCALE` 1.2 chrome). Clean at max font: Home, Insights, Reflections + `ArchiveFilters`, You
+(rows auto-stack), achievements and shop sheets. **Eight of the nine named screens, plus `longName` and
+landscape, are still unrun — the row stays open.**
 
-**WALK-09 ✅ closed** — full pass, all three IMP-073 defects fixed, re-confirmed at max font; the
-`not yet started` state went unexercised and is recorded as such.
+**NEXT: hand `IMP-080` and `IMP-081` to a build chat** — both takeable now, no gate, no device, different
+files, either order. `IMP-077` is also open now that WALK-16 is closed. **The remaining walk work is
+WALK-08's eight screens, then WALK-03 step 4 and WALK-07's Paywall half once their specs land, then
+WALK-12 (R8) LAST on the Play `internal` build.**_
 
-**WALK-16 🟡 emulator smoke — row stays ⬜.** Steps 1-3 pass and **New Architecture is confirmed live at
-runtime** (Bridgeless + Fabric + TurboModule JNI registration), which IMP-076 previously had no evidence
-for at all. Steps 4-7 still need hardware. Also verified `expo prebuild` does not undo IMP-076.
-
-**NEXT: WALK-17 on the emulator that is already set up, the device sitting once hardware is to hand, or
-hand IMP-080 to a build chat.** All three are independent; any can go first._
 
 _2026-09-05 (Opus — WALK-16 emulator sweep, steps 4-7; **branch-only, committed, NOT pushed**) —
 **WALK-16 now has emulator evidence for all seven steps**, up from three. No app code was touched; this

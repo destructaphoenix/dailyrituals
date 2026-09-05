@@ -25,10 +25,12 @@
 | # | Spec | Lane | From |
 | --- | --- | --- | --- |
 | 1 | [IMP-080 — the Paywall footer stops fighting the layout](#imp-080--the-paywall-footer-stops-fighting-the-layout) | **Build** | WALK-07, 2026-08-16 |
-| 2 | [IMP-077 — a motion vocabulary the whole app can speak](#imp-077--a-motion-vocabulary-the-whole-app-can-speak) | **Build** | owner, 2026-08-17 |
+| 2 | [IMP-081 — the never-backed-up warning says the whole sentence](#imp-081--the-never-backed-up-warning-says-the-whole-sentence) | **Build** | WALK-03, 2026-09-05 |
+| 3 | [IMP-077 — a motion vocabulary the whole app can speak](#imp-077--a-motion-vocabulary-the-whole-app-can-speak) | **Build** | owner, 2026-08-17 |
 
-> **IMP-080 is takeable right now — it is the only unblocked row in this file.** It has no gate, no
-> device dependency and no walk to wait on. IMP-077 below is still hard-blocked on WALK-16.
+> **IMP-080 and IMP-081 are both takeable right now** — no gate, no device dependency, no walk to wait
+> on, and they touch different files (`Paywall.js` / `YouScreen.js`), so they can go in either order or
+> in parallel. IMP-077 below is still hard-blocked on WALK-16.
 >
 > **The number 079 is deliberately skipped.** It was used on 2026-09-05 for a baseline-capture path that
 > was written, reviewed and deleted in the same session (see `PROGRESS.md` session notes). Nothing
@@ -182,6 +184,56 @@ render on the first frame regardless. Recorded here so it is not rediscovered an
 
 **Commit:** `fix(paywall): the footer leaves the flex column (IMP-080)` — **no `Release-Lane` trailer,
 and do not push.**
+
+---
+
+### IMP-081 — the never-backed-up warning says the whole sentence
+
+**Lane:** Build · **Branch:** `feat/design-push`, never pushed · **Origin:** the WALK-03 step 4 finding,
+2026-09-05 (emulator, agent-run). **No gate, no device — takeable immediately.**
+
+**What was seen.** On the You tab, with backup health `never`, the warning line under the "Your journal
+is safe" card renders as:
+
+> ⚠ You haven't backed up your journal yet — if this device is lost, there's nothing to bring ba…
+
+It is cut mid-word, **at default font scale**, on a 1280×2856 screen. At max font scale it loses more
+still ("there's nothing t…"). The `stale` case on the same component renders in full, so this reads as
+a one-off copy problem rather than a broken component — it is not.
+
+**Why it happens.** [`BackupNudge`](../src/screens/YouScreen.js#L316) clamps its text with
+`numberOfLines={2}` at `fontSize: 12.5 / lineHeight: 17`
+([`YouScreen.js:322`](../src/screens/YouScreen.js#L322)). The two strings it is given
+([`YouScreen.js:257-259`](../src/screens/YouScreen.js#L257-L259)) are not the same length:
+
+| health | copy | chars | fits in 2 lines? |
+| --- | --- | --- | --- |
+| `stale` | "Your last backup was over 30 days ago. A lot has been written since." | 62 | ✅ |
+| `never` | "You haven't backed up your journal yet — if this device is lost, there's nothing to bring back." | 97 | ❌ |
+
+**Why it matters more than a normal truncation.** The clause that gets eaten is the consequence —
+*there's nothing to bring back*. The warning exists to say exactly that. A user who has never backed up
+is the one person this line is written for, and they are the one person who cannot read it.
+
+**Steps**
+
+1. **Let the nudge grow.** [`YouScreen.js:322`](../src/screens/YouScreen.js#L322): `numberOfLines={2}`
+   becomes `numberOfLines={3}`. Do **not** remove the clamp entirely — it is what stops a future long
+   string from pushing "General" off the card, and 3 lines is enough for the 97-char string at
+   `MAX_FONT_SCALE` on a narrow screen.
+2. **Fix the row's alignment while you are in it.** The container is
+   `flexDirection: 'row', alignItems: 'center'` ([`YouScreen.js:320`](../src/screens/YouScreen.js#L320)).
+   At two lines that centres acceptably; at three the ⚠ icon floats visibly below the first line.
+   Change to `alignItems: 'flex-start'` and add `marginTop: 1` to the icon so it optically aligns with
+   the first line of text. **The `gap: 8`, `marginTop: 10` and `paddingHorizontal: 4` all stay.**
+3. **Do not shorten the copy instead.** It was written deliberately and the owner has not asked for a
+   rewrite; the layout is what is wrong here, not the sentence.
+4. **Runtime proof: the step 4 half of [WALK-03](walk-open.md), `neverBackedUp` scenario. Not from this
+   chat.** Check it at default *and* max font scale — default alone would have missed nothing here, but
+   max font is where 3 lines gets tested.
+
+**Commit:** `fix(you): the never-backed-up warning fits (IMP-081)` — **no `Release-Lane` trailer, and do
+not push.**
 
 ---
 
