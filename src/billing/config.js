@@ -35,5 +35,13 @@ export function hasKeyFor(platform) {
 
 // Master switch for the paid Plus surface. FALSE = free release (v1): every
 // paywall/upgrade/manage entry point is hidden, no purchases are possible.
-// Flip to TRUE in Phase 10b once Play products + production RevenueCat key exist.
-export const PLUS_ENABLED = false;
+//
+// TRUE since 2026-09-05 (Phase 10b): Play subscription products are live and
+// attached to the RevenueCat "current" offering, and RC_ANDROID_KEY now exists
+// as an EAS project env var + a GitHub repo secret. Without that last one a
+// cloud build resolves the key to '' and silently ships simService — a paywall
+// that fakes a successful purchase and grants Plus for free. That combination
+// is guarded by scripts/check-billing-config.js, but ONLY from
+// .github/workflows/release.yml: a local "eas build" skips the preflight
+// entirely, so run the script by hand before any off-CI build.
+export const PLUS_ENABLED = true;

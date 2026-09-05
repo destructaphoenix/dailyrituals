@@ -165,11 +165,16 @@ export const PLUS_PRICES = {
   annual:  { id: 'annual',  label: 'Annual',  price: '$29.99', per: 'per year', sub: '$2.50 / mo · billed yearly', save: 'Save 50%' },
 };
 
+// Every line here is a promise the paid surface makes. "Your Book — export your
+// days as a PDF" was removed 2026-09-05 when Plus was enabled: it sold IMP-022,
+// which is deferred and has no code in the tree. Re-add it when IMP-022 lands,
+// not before. NB: the "PLUS_PERKS #n" comments scattered through src/screens and
+// src/recap were numbered against the old six-item list and are now off by one
+// past #3.
 export const PLUS_PERKS = [
   'Every palette & sky — unlocked forever',
   'Streak insurance — a candle spends itself when you miss a day',
   'On this day — your own words, brought back to you',
-  'Your Book — export your days as a PDF',
   'Deeper insights — moods & seasonal themes',
   'Your year, remembered — the Annual Recap',
 ];

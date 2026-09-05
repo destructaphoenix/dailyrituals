@@ -1,7 +1,8 @@
 // PlusPerks.js — "What's in Plus", reachable from the You tab outside the
 // paywall (IMP-041). Mounted only when PLUS_ENABLED, per the decided design:
-// PLUS_PERKS carries three untrue lines while the app ships free, so this
-// sheet must not exist outside a build where every line is honest.
+// this sheet must not exist outside a build where every line is honest. As of
+// 2026-09-05 every line in PLUS_PERKS is real — the PDF line that was not was
+// removed from src/data.js when Plus was enabled. Keep that true.
 
 import React from 'react';
 import { View, ScrollView, Pressable } from 'react-native';
