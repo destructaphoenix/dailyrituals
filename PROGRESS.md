@@ -40,7 +40,7 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 >
 > | If this chat is… | Take |
 > | --- | --- |
-> | a **runtime walk** | **[WALK-16](docs/walk-open.md)** — the single highest-value thing open and the *only* evidence IMP-076 has. Then **WALK-17**, then **WALK-13 / WALK-03 / WALK-08**, all in the same sitting on one vc13 build; **WALK-12 (R8) last**. ⚠️ **A vc13 build has to be cut first — none exists.** |
+> | a **runtime walk** | **[WALK-16](docs/walk-open.md)** — steps 1-3 already smoke-passed on the emulator (New Arch confirmed live); **steps 4-7 need hardware.** Then **WALK-17** (mostly emulator-coverable), then **WALK-13 / WALK-03 / WALK-08** on a device; **WALK-12 (R8) last, needs `assembleRelease`.** ✅ **A vc13 debug APK now exists locally — see "The vc13 build" below.** |
 > | a **design request** | The Claude Design project is **live** — see "Claude Design is set up" below. |
 > | a **build task** | **[IMP-080](docs/specs-open.md)** — the Paywall footer. Scoped 2026-09-05, **no gate, no device, takeable right now.** It is the only unblocked spec in the file; IMP-077 still needs WALK-16 to pass. |
 >
@@ -190,6 +190,39 @@ again be filed as night — that exact mistake happened once.
 
 ---
 
+## 🔨 The vc13 build — what exists, and where (2026-09-05)
+
+**A local DEBUG APK exists. Nothing vc13 has reached any Play track.** The four track rows above are
+unchanged: `production`/`beta` on vc9, `alpha` on vc11, `internal` on vc12 — all older code than this
+branch.
+
+| | |
+| --- | --- |
+| **Artifact** | `android/app/build/outputs/apk/debug/app-debug.apk` (~172 MB — debug, all ABIs, unminified) |
+| **Stamps** | **v1.0.7 / vc13**, `app.dailyrituals.mobile`, minSdk 24 / target 36 |
+| **Built from** | `feat/design-push`, JDK 17, `expo prebuild` → `./gradlew assembleDebug` |
+| **Installed on** | the `Pixel_9_Pro` emulator (AVD), verified `versionCode=13 versionName=1.0.7` |
+| **New Arch** | ✅ confirmed **live at runtime** — see [WALK-16](docs/walk-open.md)'s smoke note |
+
+**⚠️ `npx expo prebuild` first, or a local build is a lie.** Gradle's inputs are the untracked `android/`
+directory, so bumping `version`/`versionCode` in `app.config.js` alone never invalidates its cache. A
+local build on 2026-09-05 finished in 13s on `assembleDebug UP-TO-DATE` and installed an APK still
+reporting **v1.0.5 / vc11**, twelve versions stale, with no warning of any kind. Prebuild is also what
+regenerates the launcher icon from `assets/adaptive-icon.png`. **Verified safe:** prebuild does *not*
+undo IMP-076 — `newArchEnabled=true` and `android.enableMinifyInReleaseBuilds=true` both survive it.
+
+**This APK does not cover WALK-12.** That row is specifically the R8 release-variant pass, so it needs
+`./gradlew assembleRelease` — which works locally with no keystore setup, because `android/app/build.gradle`
+signs `release` with the **debug** keystore (technique T6). A release build has **no dev harness**
+(`__DEV__` false, no Metro), and WALK-03 step 4 needs that harness — which is why the debug APK comes
+first and WALK-12 comes last.
+
+**Getting it onto real hardware** is `adb install -r <the APK above>`, then **`adb reverse tcp:8081 tcp:8081`**
+and `npx expo start --dev-client`. Miss the `adb reverse` and the phone cannot reach Metro; the blank
+screen that follows looks exactly like a WALK-16 step-1 cold-start failure and is not one.
+
+---
+
 ## Open items / blockers
 
 > Only what is **live**. Resolved findings and closed walk debts are in
@@ -272,36 +305,35 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
-_2026-09-05 (Opus — vc13 retrack, IMP-080 scoped, WALK-09 closed; **branch-only, committed, NOT
-pushed**) — **five commits, no app code touched.** The dangling 2026-09-05 triage and the adaptive icon
-swapped on 2026-08-19 both landed; they had been sitting uncommitted.
+_2026-09-05 (Opus — vc13 retrack, IMP-080 scoped, WALK-09 closed, vc13 built; **branch-only, committed,
+NOT pushed**) — **seven commits, no app code touched.** The dangling 2026-09-05 triage and the adaptive
+icon swapped on 2026-08-19 both landed; both had been sitting uncommitted.
 
 **"vc13 is the future" (owner) retires vc12 as the release candidate.** Its `internal` → `production`
-promotion is off; it stays on `internal` as history. The walk queue was split across two builds only
-because two candidates existed, so it collapses to **one device sitting on a vc13 build cut from this
-branch**: WALK-16 → WALK-17 → WALK-13 → WALK-03 → WALK-08, **WALK-12 (R8) last and immovable.** IMP-044
-retracked to match. **No vc13 build exists yet**, and cutting one auto-submits to `internal` per
-`eas.json` — owner's call.
+promotion is off; vc12 stays on `internal` as history. The walk queue was split across two builds only
+because two candidates existed, so it collapses to **one sitting**: WALK-16 → WALK-17 → WALK-13 →
+WALK-03 → WALK-08, **WALK-12 (R8) last and immovable.** IMP-044 retracked to match.
+
+**A vc13 debug APK now exists and is installed on the emulator** — see "The vc13 build" above for the
+path, what it stamps, and the `expo prebuild` trap that made an earlier local build silently install
+vc11. Nothing vc13 has reached a Play track.
 
 **[`IMP-080`](docs/specs-open.md) closes the last scoping debt — takeable now, no gate, no device.** The
 🔴 WALK-07 Paywall regression: IMP-068's `flex: 1` and IMP-074's `maxHeight: winH` are both still present
 and correct, so a third patch to the same flex column is the wrong bet. The footer leaves the column for
-`position: absolute` + `onLayout`-measured padding; root takes an exact `height: winH`. Owner kept the CTA
-pinned over folding it into the scroll content. ⚠️ Hiding the footer until a plan is picked **cannot
+`position: absolute` + `onLayout`-measured padding; the root takes an exact `height: winH`. Owner kept the
+CTA pinned over folding it into the scroll content. ⚠️ Hiding the footer until a plan is picked **cannot
 work** — `plan` initialises to `'annual'`. **079 is skipped, not reused.**
 
 **WALK-09 ✅ closed** — full pass, all three IMP-073 defects fixed, re-confirmed at max font; the
-`not yet started` state went unexercised and is recorded as such in `build-log.md`. **Every remaining walk
-needs a device.**
+`not yet started` state went unexercised and is recorded as such.
 
-**Trap:** a local `expo run:android` finished in 13s on `assembleDebug UP-TO-DATE` and installed an APK
-reporting **v1.0.5 / vc11** though `app.config.js` has said 1.0.7 / vc13 since IMP-076 — gradle's inputs
-are the untracked `android/` dir, so a version bump alone never busts that cache. Harmless for a debug
-walk (Metro serves JS live), but **never read a version off a local install**, and `npx expo prebuild`
-first if a local build needs the new icon.
+**WALK-16 🟡 emulator smoke — row stays ⬜.** Steps 1-3 pass and **New Architecture is confirmed live at
+runtime** (Bridgeless + Fabric + TurboModule JNI registration), which IMP-076 previously had no evidence
+for at all. Steps 4-7 still need hardware. Also verified `expo prebuild` does not undo IMP-076.
 
-**NEXT: cut the vc13 build and take the device sitting, or hand IMP-080 to a build chat.** Independent;
-either can go first._
+**NEXT: WALK-17 on the emulator that is already set up, the device sitting once hardware is to hand, or
+hand IMP-080 to a build chat.** All three are independent; any can go first._
 
 _2026-09-05 (Opus — design-queue triage; **planning only, no code changed, nothing committed**) — **The
 design system covers 7 screens, not the app**, and that is now a stated fact rather than an assumption.
