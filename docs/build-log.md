@@ -2901,6 +2901,197 @@ branch, so it cannot happen while the no-push instruction stands.** The owner ca
 **First design request, when the owner wants it:** `PlusPerks` — 44 lines carrying the whole "what you get"
 pitch. One screen per request. `PLUS_ENABLED` stays `false`; it is a design request, not an enablement.
 
+### The two Manage-screen truthfulness fixes (IMP-082 + IMP-083, 2026-09-06)
+
+> Both from the same source — the owner putting a **real license-tester subscription** through the app
+> after `PLUS_ENABLED` went true — and both the same defect class as the cut PDF perk and the decoupled
+> ember packs: **the paid surface asserting something the app cannot back.** Neither was findable by
+> reading code with Plus off, and neither is findable by jest, which runs `simService`.
+
+
+### IMP-082 — RENEW_DATE stops being a runtime fallback   ·   Lane: OTA   ·   Status: ✅ code-complete (2026-09-06)
+
+- **Goal:** no surface ever shows a fabricated subscription renewal date. A real subscriber sees the
+  real date from RevenueCat; when no live date exists, the app says nothing about renewal rather than
+  making one up.
+
+- **Why / context:** found 2026-09-05 while enabling Plus (`PLUS_ENABLED = true`, commit `7d2e515`).
+  `RENEW_DATE = '12 Jun 2026'` ([`data.js:183`](../src/data.js#L183)) is **design-mock data from the
+  prototype** and it is wired into live surfaces as a fallback. With Plus off nobody could see it.
+  With Plus on, a real paying subscriber can — and it will be wrong for every one of them. **Five
+  sites, and the rot starts in the pure layer:**
+  - [`format.js:8,10`](../src/billing/format.js#L8) — `formatRenewDate(iso)` returns `RENEW_DATE`
+    when the ISO is missing **or unparseable**. So even the "live" path fabricates a date when
+    RevenueCat hands back an entitlement without a usable renewal timestamp.
+  - [`RitualsApp.js:180`](../src/RitualsApp.js#L180) — `liveEntitlement ? formatRenewDate(…) : RENEW_DATE`.
+  - [`shopui.js:52`](../src/shopui.js#L52) — `PlusBanner` renders `Member · renews {RENEW_DATE}` from the
+    **imported constant directly**. It takes no `renewLabel` prop at all, so it shows `12 Jun 2026` to
+    every subscriber on **both** the You tab ([`YouScreen.js:111`](../src/screens/YouScreen.js#L111)) and
+    the Shop ([`Shop.js:76`](../src/screens/Shop.js#L76)).
+  - [`PlusFlow.js:184`](../src/screens/PlusFlow.js#L184) + `:214`, `:256`, `:257` — `ManageSubscription`.
+  - [`PlusFlow.js:275`](../src/screens/PlusFlow.js#L275) + `:285` — `CancelSheet`.
+
+  This is the same class as the PDF perk and the ember packs: **the paid surface asserting something
+  the app cannot back.** It is not a giveaway, so it did not block the vc14 build — it is pure JS and
+  **ships by OTA** once vc14 is on `internal`.
+
+- **Files likely touched:** `src/billing/format.js`, `src/RitualsApp.js`, `src/shopui.js`,
+  `src/screens/YouScreen.js`, `src/screens/Shop.js`, `src/screens/PlusFlow.js`, and their tests.
+
+- **Approach (decided by Opus — do not re-litigate):** `RENEW_DATE` stops being a **runtime** fallback
+  everywhere. The rule, already established by [`prices.js`](../src/billing/prices.js) for prices and
+  stated in its header: *never assert what cannot be computed from real data — drop the claim instead of
+  showing it stale.* Apply it to dates. `RENEW_DATE` itself is **not deleted** — it stays in `data.js`
+  for the dev panel and test fixtures — but nothing user-facing may fall back to it.
+
+- **TDD:** RED-first on `formatRenewDate` (pure, already has a test file) and on `PlusBanner`.
+
+- **Steps:**
+  - [x] 1. **RED** — a `formatRenewDate` test asserting `null` for `undefined`, `''`, and an
+        unparseable string like `'not-a-date'`. Update the existing cases that expect `RENEW_DATE`.
+  - [x] 2. `formatRenewDate(iso)` returns **`null`** instead of `RENEW_DATE` on both the missing and
+        the `isNaN` branch. Its valid-ISO formatting is unchanged.
+  - [x] 3. [`RitualsApp.js:180`](../src/RitualsApp.js#L180) → `const renewLabel = liveEntitlement ? formatRenewDate(liveEntitlement.renewISO) : null;`
+  - [x] 4. **RED** — a `PlusBanner` test: with `plus` and a `renewLabel` it renders `Member · renews <that label>`;
+        with `plus` and **no** `renewLabel` it renders `Member` and the string `renews` appears nowhere.
+  - [x] 5. `PlusBanner` takes a `renewLabel` prop (default `null`). Line 52 becomes
+        `Member · renews {renewLabel}` when truthy, otherwise the bare word `Member`. **Drop the
+        `RENEW_DATE` import from `shopui.js`.**
+  - [x] 6. Thread it: `YouScreen` and `Shop` each take a `renewLabel` prop and pass it to `PlusBanner`;
+        `RitualsApp` passes `renewLabel={renewLabel}` to both.
+  - [x] 7. `ManageSubscription` — `const renew = renewLabel;` (drop `|| RENEW_DATE`). Then:
+        **`:214`** — when `renew` is null the row shows `${p.label}` alone (or `Ends soon · access until then`
+        when `canceled`); **`:256`/`:257`** — when null, use `Your subscription won't renew.` and
+        `Cancelling stops the next renewal.` respectively, i.e. **drop the trailing "until …" clause**,
+        keeping the full stop.
+  - [x] 8. `CancelSheet` — same: drop `|| RENEW_DATE`; when null the sentence ends at
+        `…so you can cancel.` and the ` — you'll keep Plus until {renew}` clause is not rendered.
+  - [x] 9. Add a comment on `RENEW_DATE` in `data.js` saying it is **mock data for the dev panel and
+        fixtures only** and must never be a user-facing fallback — with a pointer to this IMP.
+  - [x] 10. `npm test` green (must stay ≥ **875**, the count after commit `6590834`).
+  - [x] 11. `npx expo export --platform android` clean.
+
+- **Tests:** `formatRenewDate` — null on undefined/empty/unparseable, correct format on a valid ISO
+  (existing case). `PlusBanner` — with and without `renewLabel`, asserting `renews` is absent in the
+  second. `ManageSubscription` / `CancelSheet` — render with `renewLabel={null}` and assert the copy
+  contains no `until` clause and no `12 Jun 2026`. A guard test asserting the string `12 Jun 2026`
+  does not appear in any rendered member surface is welcome but not required.
+
+- **Commit:** `fix(billing): the member surfaces stop inventing a renewal date`
+
+- **Acceptance:** on the internal build, a license-tester subscriber sees their **real** renewal date on
+  the You tab, the Shop banner and Manage. Confirmed as step 5 of **WALK-19**.
+
+- **Ship after merge:** OTA — pure JS, and the lane reopens once vc14 is on `internal`.
+
+- **Outcome (2026-09-06):** all 11 steps done as written; nothing in the spec turned out to be wrong.
+  `formatRenewDate` returns `null` on both the missing and the `isNaN` branch and **no longer imports
+  `RENEW_DATE` at all**; `RitualsApp`'s import of it is gone too. `PlusBanner` takes `renewLabel`
+  (default `null`) and renders the bare word `Member` without it; `YouScreen` and `Shop` each thread
+  the prop. `ManageSubscription` shows `Ends soon · access until then` / the bare plan label, and both
+  billing footnotes drop the "until …" clause. `CancelSheet` ends at *"…so you can cancel."*.
+  `data.js` carries the "mock data, never a user-facing fallback" comment naming this IMP.
+  **Two new test files**: `__tests__/ui/PlusBanner.test.js` and
+  `__tests__/screens/ManageSubscription.test.js` (the first tests for either component), plus the
+  rewritten `formatRenewDate` cases. Each asserts the literal `12 Jun 2026` is absent, which is the
+  guard the spec called welcome-but-not-required.
+  **Proof:** `npm test` → **890 passed / 87 suites** (from 875/85), both zone suites green,
+  `npx expo export --platform android` clean. Commit `0e73c76`, pure JS, no bump, **not pushed**.
+  ⚠️ **Still unwalked** — acceptance is step 5 of WALK-19, which needs a device and a license tester.
+
+
+
+### IMP-083 — the manage/cancel deep link carries the product   ·   Lane: OTA   ·   Status: ✅ code-complete (2026-09-06)
+
+- **Goal:** tapping Cancel or Manage opens **the Daily Rituals subscription** in Google Play, not the
+  full list of everything the user subscribes to.
+
+- **Why / context:** found 2026-09-06 when the owner, mid license-tester purchase, went to cancel and
+  could not find the subscription. [`config.js:27`](../src/billing/config.js#L27) is a bare
+  `https://play.google.com/store/account/subscriptions` with no product on it, so
+  [`links.js:10`](../src/billing/links.js#L10) hands Play a list to hunt through. Google's billing docs
+  specify `?sku=<productId>&package=<packageName>` for exactly this case. **The app already knows the
+  product** — `toEntitlement` reads `ent.productIdentifier` ([`revenueCatService.js:11`](../src/billing/revenueCatService.js#L11))
+  to derive the plan and then throws it away. This is the cancel path, i.e. the moment a subscriber is
+  already mildly annoyed; making them search is how a cancel becomes a support mail.
+
+- **Files likely touched:** `src/billing/links.js`, `src/billing/config.js`,
+  `src/billing/revenueCatService.js`, `src/billing/simService.js`, `src/RitualsApp.js`, and tests.
+
+- **Approach (decided by Opus — do not re-litigate):**
+
+  1. **Extract a pure URL builder.** `links.js` gains an exported
+     `manageUrl({ platform, productId, packageName })` that returns a string. `openExternal` calls it.
+     This is the only way to test the thing without mocking `Linking`, and the URL shape is the whole
+     defect.
+  2. **Never produce a broken link.** Missing `productId` **or** missing `packageName` ⇒ return the
+     existing generic `LINKS.manageAndroid`. iOS is unchanged in every case — Apple has no equivalent
+     parameter. A degraded link must be today's link, not a 404.
+  3. ⚠️ **Strip the base-plan suffix.** RevenueCat returns Google Play subscription identifiers as
+     `product:basePlan` — the project's own dashboard shows `plus_annual:annual` and
+     `plus_monthly:monthly`. **Play's `sku` parameter wants the product only** (`plus_annual`), so take
+     everything before the first `:`. Passing the full string produces a link that resolves to nothing,
+     which is worse than the list we are replacing.
+  4. `packageName` comes from `Constants.expoConfig?.android?.package`, exposed as `PACKAGE_NAME` in
+     `config.js` beside the other constants. **Do not hardcode `app.dailyrituals.mobile`** in `links.js`.
+  5. `encodeURIComponent` both values.
+
+- **TDD:** RED-first on `manageUrl`. It is pure and it is the entire fix.
+
+- **Steps:**
+  - [x] 1. **RED** — `manageUrl` tests: android + `plus_annual` ⇒
+        `https://play.google.com/store/account/subscriptions?sku=plus_annual&package=app.dailyrituals.mobile`;
+        android + `plus_annual:annual` ⇒ **the same string** (suffix stripped); android + no productId
+        ⇒ the generic URL; android + productId but no packageName ⇒ the generic URL; ios ⇒
+        `LINKS.manageIos` regardless of productId.
+  - [x] 2. Add `PACKAGE_NAME` to `config.js` from `Constants.expoConfig?.android?.package` (`''` when absent).
+  - [x] 3. Implement `manageUrl` in `links.js` per the rules above; `openExternal(kind, platform, opts)`
+        takes an optional `opts = { productId }` and uses it for `kind === 'manage'`. **The existing
+        two-argument calls must keep working unchanged** — `opts` defaults to `{}`.
+  - [x] 4. `toEntitlement` ([`revenueCatService.js`](../src/billing/revenueCatService.js)) adds
+        `productId: ent.productIdentifier || null` to the object it returns. Do not alter `plan`.
+  - [x] 5. `simService`'s `ent(plan)` adds `productId: plan === 'annual' ? 'plus_annual' : 'plus_monthly'`,
+        so Expo Go and the dev panel walk the same path rather than a stub that cannot fail.
+  - [x] 6. `RitualsApp` — `doCancel` and `doResume` ([`RitualsApp.js:242`](../src/RitualsApp.js#L242),
+        [`:247`](../src/RitualsApp.js#L247)) pass `{ productId: liveEntitlement && liveEntitlement.productId }`.
+        `openLink` ([`:190`](../src/RitualsApp.js#L190)) does the same so the Manage sheet's own link matches.
+  - [x] 7. `npm test` green (must stay ≥ **875**).
+  - [x] 8. `npx expo export --platform android` clean.
+
+- **Tests:** the five `manageUrl` cases in step 1. Plus one on `toEntitlement` asserting `productId`
+  survives onto the returned object, and one on `simService` asserting `ent()` carries it — that pair is
+  what stops a future refactor quietly dropping the field and silently restoring the old behaviour.
+
+- **Commit:** `fix(billing): cancel opens the subscription, not the whole list`
+
+- **Acceptance:** on a device with an active subscription, Manage → Cancel lands on the Daily Rituals
+  subscription page in Play with its own Cancel button, not the account-wide list. Confirmed as step 10
+  of **WALK-19**.
+
+- **Ship after merge:** OTA — pure JS.
+
+- **Outcome (2026-09-06):** all 8 steps done as written. `manageUrl({ platform, productId, packageName })`
+  lives in `links.js`; `openExternal(kind, platform, opts = {})` calls it and the existing two-argument
+  calls are untouched. `PACKAGE_NAME` reads `Constants.expoConfig?.android?.package` in `config.js`, and
+  `LINKS.manageIos/manageAndroid` gained a comment naming them the **generic** fallbacks. `toEntitlement`
+  is now **exported** (it had no test before — see the trap below) and carries `productId` raw, suffix and
+  all: stripping is `manageUrl`'s job alone. `simService`'s `ent()` carries one too. `RitualsApp` gained a
+  single `manageOpts()` helper feeding `openLink`, `doCancel` and `doResume`, so all three routes match.
+  ⚠️ **Trap found while writing the tests, worth keeping:** `Constants.expoConfig` is **undefined under
+  jest**, so `PACKAGE_NAME` is `''` in the suite. The spec's `manageUrl({...packageName})` signature is
+  what makes this testable at all — a version reading the constant directly would have been untestable and
+  would have silently degraded to the generic list. Separately, importing `revenueCatService` into a test
+  fails to parse: `react-native-purchases` pulls in `@revenuecat/purchases-js-hybrid-mappings`, ESM that
+  `transformIgnorePatterns` does not cover. `__tests__/billing/revenueCatService.test.js` opens with
+  `jest.mock('react-native-purchases', ...)` so the real module is never loaded. **Do not remove that mock.**
+  **Proof:** `npm test` → **902 passed / 89 suites** (from 890/87), both zone suites green,
+  `npx expo export --platform android` clean. Commit `1f4f037`, pure JS, no bump, **not pushed**.
+  ⚠️ **Still unwalked** — acceptance is step 10 of WALK-19. The suffix strip in particular is unproven
+  against a real Play id; the dashboard reading `plus_annual:annual` is the only evidence it is needed.
+
+
+---
+
 ---
 
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
@@ -2945,6 +3136,43 @@ pitch. One screen per request. `PLUS_ENABLED` stays `false`; it is a design requ
 ---
 
 ## Session notes (archived from PROGRESS.md)
+
+_2026-09-05 (Opus — WALK-03 / WALK-17 / WALK-08 emulator pass, WALK-16 + WALK-17 closed, IMP-081 scoped;
+**branch-only, committed, NOT pushed**) — **a walk session; no app code was touched and the record is the
+deliverable.**
+
+**The owner changed the bar mid-session, and every status below follows from it.** The instruction was to
+run what the emulator can run and **record it as done, not as smoke**, and to **drop WALK-13** ("to hell
+with the reminders"). So **WALK-16 and WALK-17 are closed ✅ on emulator evidence** — the
+`device`-≠-`emulator` rule in `walk-open.md`'s header is knowingly set aside for those two rows.
+**IMP-077 is unblocked as a direct result.** What that does *not* buy is named in both rows and in the
+walk file's header: **nothing in this project has yet met real doze, an OEM battery manager, delivery to a
+real share target, or Google's own backup schedule.** WALK-13 is ⏸ dropped — neither run nor failed — so
+IMP-054 and `b773352` are still unproven on any running app.
+
+**WALK-03 — ❌, and the failure is the deliverable.** Steps 1, 2, 3 and 5 all pass: the export writes a
+well-formed envelope (`format: daily-rituals-backup`, `appVersion: 1.0.7`, `counts: {entries: 5, days: 5}`)
+and opens the real share sheet; the toast carries the IMP-033 two-systems copy; reset → restore returns the
+state exactly; a truncated file is rejected with *"That file isn't readable as a backup."* and no crash.
+**Step 4 fails on `neverBackedUp`:** the warning truncates mid-word — *"there's nothing to bring ba…"* —
+**at default font scale**, worse at max. Cause read out of the file, not guessed:
+[`BackupNudge`](src/screens/YouScreen.js#L322) clamps at `numberOfLines={2}` and the `never` string is
+97 chars against `stale`'s 62. **Scoped as [`IMP-081`](docs/specs-open.md).**
+
+**WALK-08 — 🟠 partial, and the trap in it is worth more than the result.** React Native reads the font
+scale **at startup**. Changing `font_scale` under a running app moves system UI and not the app, which
+looks exactly like a correctly-clamping cap and is not one; this pass was read wrong until a force-stop and
+relaunch corrected it. After the relaunch the cap is confirmed genuine (`MAX_FONT_SCALE` 1.5 body,
+`CHROME_FONT_SCALE` 1.2 chrome). Clean at max font: Home, Insights, Reflections + `ArchiveFilters`, You
+(rows auto-stack), achievements and shop sheets. **Eight of the nine named screens, plus `longName` and
+landscape, are still unrun — the row stays open.**
+
+**NEXT: hand `IMP-080` and `IMP-081` to a build chat** — both takeable now, no gate, no device, different
+files, either order. `IMP-077` is also open now that WALK-16 is closed. **The remaining walk work is
+WALK-08's eight screens, then WALK-03 step 4 and WALK-07's Paywall half once their specs land, then
+WALK-12 (R8) LAST on the Play `internal` build.**_
+
+---
 
 _2026-09-05 (Opus — WALK-16 emulator sweep, steps 4-7; **branch-only, committed, NOT pushed**) —
 **WALK-16 now has emulator evidence for all seven steps**, up from three. No app code was touched; this

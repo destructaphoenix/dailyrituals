@@ -120,7 +120,7 @@ locked. It is the row that reopens the moment Plus becomes the active work.
 | WALK-16 | 🚦 | [The New Architecture cold start](#walk-16--the-new-architecture-cold-start) | IMP-076 | **device** (native runtime) | 👤 | ✅ **2026-09-05 — closed on emulator evidence at owner's instruction.** All 7 steps exercised across two agent-run sittings (1-3 New Arch live: Bridgeless + Fabric + TurboModule; 4-7 storage / notification scheduling / export-share-reimport / Auto Backup via T5 with the quarantine offering not imposing). **Owner's call 2026-09-05: emulator results are recorded as done, not smoke.** ⚠️ **Named gap — never exercised anywhere:** real doze, OEM battery managers, delivery to a real share target, Google's own backup schedule. **Unblocks IMP-077.** |
 | WALK-17 | 🚦 | [Edge-to-edge, re-audited under New Arch](#walk-17--edge-to-edge-re-audited-under-new-arch) | IMP-076, IMP-027 regression | **device** | 👤 (visual) | ✅ **2026-09-05 — emulator, agent-run.** All four tabs clean under status bar + gesture bar in **both** day and night; bottom nav and write-FAB correct in **both** gesture and 3-button nav; onboarding + setup also clean. Sheets checked: trash, achievements, shop — the last two at night **and** max font. ⚠️ **Not opened: write flow, reading sheet, mood manager.** |
 | WALK-18 | 🎨 | [The app moves](#walk-18--the-app-moves) | IMP-077 | **device** (mid-range, real frame pacing) | 👤 (visual) | ⬜ — **branch-only. UNBLOCKED 2026-09-05: WALK-16 closed and IMP-077 landed.** ✅ **The build now exists: v1.0.8 / vc14 shipped to Play `internal` 2026-09-05 19:09** (EAS `87f81b24…`, submission `4b7cf3a2…`, from commit `6590834`). IMP-077 added `react-native-reanimated` + `react-native-worklets` (native deps), so **neither vc13 artifact carries this code** — install vc14 from Play, not an older APK. **An emulator cannot settle this row** — it renders dropped frames as smooth, which is the thing being judged. The jest suite is blind here too: the Reanimated mock no-ops every hook |
-| WALK-19 | 🚦 | [Money actually changes hands](#walk-19--money-actually-changes-hands) | **Phase 10b.5**, IMP-028, IMP-082, `7d2e515`, `6590834` | **device** (real Play Billing + a license tester) | 👤 | ⬜ — **NEW 2026-09-05, and it is the gate on v1.1.** `PLUS_ENABLED` is true and v1.0.8 / vc14 is cut to Play `internal`; **every claim the paid surface makes is still unproven at runtime.** jest is structurally blind here — `simService` fakes every purchase result, so a green suite says nothing about Play Billing. **Nothing gets promoted `internal` → `production` until this passes.** |
+| WALK-19 | 🚦 | [Money actually changes hands](#walk-19--money-actually-changes-hands) | **Phase 10b.5**, IMP-028, **IMP-082 + IMP-083** (steps 5 and 10 are their acceptance — ⚠️ **both landed after vc14 and need an OTA published first**), `7d2e515`, `6590834` | **device** (real Play Billing + a license tester) | 👤 | ⬜ — **NEW 2026-09-05, and it is the gate on v1.1.** `PLUS_ENABLED` is true and v1.0.8 / vc14 is cut to Play `internal`; **every claim the paid surface makes is still unproven at runtime.** jest is structurally blind here — `simService` fakes every purchase result, so a green suite says nothing about Play Billing. **Nothing gets promoted `internal` → `production` until this passes.** |
 
 ---
 
@@ -612,10 +612,16 @@ charged — that is the whole point; do not test with a real card until step 8.
       (**owned**), airplane-mode mid-purchase (**network**), Restore with an entitlement
       (**restored**) and on a clean account (**restore-empty**). Each must show the right overlay and
       leave the app in the right state — no silent no-ops.
-- [ ] 5. **The renewal date.** After the successful purchase, check the date on the **You** tab banner,
-      the **Shop** banner and **Manage**. ⚠️ **If any of them says `12 Jun 2026` that is
-      [IMP-082](specs-open.md) showing through** — mock data leaking to a real subscriber. Record it;
-      it is already specced and ships by OTA.
+- [ ] 5. **The renewal date — this is now IMP-082's acceptance.** After the successful purchase, check
+      the date on the **You** tab banner, the **Shop** banner and **Manage**. It must be the tester's
+      **real** next-renewal date from RevenueCat. Two distinct failures, and they mean different things:
+      ⚠️ **`12 Jun 2026` anywhere is a REGRESSION of [IMP-082](build-log.md)** — the mock is back as a
+      runtime fallback. **A surface showing the bare word `Member` (or a plan label with no "renews …")
+      is NOT that bug** — it is IMP-082 working as designed, and it means RevenueCat handed back no
+      usable `expirationDate`. Record which one you saw; they need opposite fixes.
+      ⚠️ **Gate:** IMP-082 landed 2026-09-06, **after** vc14 was cut. It is on `feat/design-push` and
+      **has not been OTA'd**, so a plain vc14 install still carries the old fabricating code. **Publish
+      the OTA first, or this step tests nothing.**
 - [ ] 6. **The ember packs must be ABSENT.** Open the Shop. There must be **no "Gather Embers" section**
       and the strings `$1.99` / `$4.99` / `$9.99` must appear **nowhere**. This is the runtime proof of
       commit `6590834` — the near-miss where enabling Plus armed a priced surface that gave its goods
@@ -628,8 +634,15 @@ charged — that is the whole point; do not test with a real card until step 8.
       This is the only step that involves actual money; everything above is free via the license tester.
 - [ ] 9. **Reinstall and Restore.** Uninstall, reinstall from `internal`, tap Restore purchases.
       Entitlement must come back without a second charge.
-- [ ] 10. **Cancel flow.** Manage → Cancel opens Play's subscription settings, and the copy about
-      keeping Plus until the period ends is accurate (see step 5 — the date must be real).
+- [ ] 10. **Cancel flow — this is now IMP-083's acceptance.** Manage → Cancel must land on **the Daily
+      Rituals subscription page** in Play, with its own Cancel button — **not** the account-wide list of
+      everything the tester subscribes to. That was the 2026-09-06 finding. The copy about keeping Plus
+      until the period ends must also be accurate (see step 5 — the date must be real, or the clause is
+      correctly absent). ⚠️ **If Play shows a "not found" / empty page rather than the subscription, the
+      first suspect is the base-plan suffix strip**, not the `?sku=&package=` shape: `manageUrl` sends
+      everything before the first `:` (so `plus_annual:annual` → `plus_annual`) on the strength of what
+      the RevenueCat dashboard shows, and nothing has verified that against a real Play id. Record the
+      exact URL Play opened. **Same OTA gate as step 5** — IMP-083 is not in vc14.
 
 **Recording it.** Same rule as every row: ✅/❌ + date in the index, a paragraph here. **A failure is
 the deliverable** — scope it as a new `IMP-xxx` in `PROGRESS.md`, do not fix it mid-walk. **Do not

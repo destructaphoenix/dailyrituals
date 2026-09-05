@@ -42,11 +42,11 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 > Plus flag after flipping it armed a priced surface that gave its goods away (the first vc14 build was
 > **cancelled mid-flight** over it, commit `6590834`).
 >
-> **The build queue holds two specs: [IMP-082](docs/specs-open.md) and [IMP-083](docs/specs-open.md)** — the third instance of
-> that same class, found in the same sweep. `RENEW_DATE = '12 Jun 2026'` is prototype mock data wired in
-> as a runtime fallback, so a real subscriber sees a fabricated renewal date. Pure JS, **OTA lane**.
-> **Nothing else should be invented to fill the queue** — new work comes from a 🔴 walk finding, the
-> owner, or a design doc.
+> **✅ The build queue is EMPTY again as of 2026-09-06. IMP-082 and IMP-083 both landed** (commits
+> `0e73c76`, `1f4f037`) — the third and fourth instances of that same class, both found by putting a real
+> license-tester subscription through the app rather than by reading code. Pure JS, **OTA lane, and
+> neither has shipped.** **Nothing should be invented to fill the queue** — new work comes from a 🔴 walk
+> finding, the owner, or a design doc.
 >
 > **⚠️ So the next task is a WALK, not a build.** Three of those specs end in runtime proof that has not
 > run: **WALK-07** (Paywall half — IMP-080), **WALK-03 step 4** (`neverBackedUp` — IMP-081) and
@@ -56,13 +56,14 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 > | --- | --- |
 > | a **runtime walk** | **Still the lane with the most work in it, and it now has a 🚦 at the front.** **[WALK-19](docs/walk-open.md) — "money actually changes hands" — is NEW and gates the v1.1 promotion:** Plus is live and *nothing* about billing is proven (live prices, the trial, every purchase state, entitlement after reinstall, perk delivery). jest is **structurally blind** to all of it, because the suite runs `simService`. Needs a **device**, a **license tester** and the **vc14 `internal` build**. **[WALK-11](docs/walk-open.md) also REOPENED** — the Plus perk surfaces mount on their own now, so the old "unmountable, needs T1" reason is gone; that one is emulator-friendly. Then the pre-existing rows: ✅ **READY NOW on a debug build of `feat/design-push` (both pure-JS):** **WALK-07** (the Paywall half only — IMP-080 landed) and **WALK-03 step 4** (`neverBackedUp` only — IMP-081 landed; run it at default **and** max font scale, since max is where the third line gets tested). ⚠️ **WALK-18 is unblocked but needs a NEW build** — IMP-077's native deps put the tree on **v1.0.8 / vc14**, which no vc13 artifact carries; it also needs a **mid-range device**, because an emulator renders dropped frames as smooth. **WALK-08 is PARTIAL** — cap confirmed, eight of nine screens plus rotation and `longName` unrun. **WALK-12 (R8) is LAST** and needs the Play `internal` build (A), which has no dev harness. **WALK-16 and WALK-17 are CLOSED ✅ on emulator evidence; WALK-13 is DROPPED** (owner's instruction, 2026-09-05: record emulator results as done, not smoke). ⚠️ **Named gap that no closed row covers:** real doze, OEM battery managers, delivery to a real share target, Google's own backup schedule. |
 > | a **design request** | The Claude Design project is **live** — see "Claude Design is set up" below. |
-> | a **build task** | **[IMP-082](docs/specs-open.md)** first, then **[IMP-083](docs/specs-open.md)** — both Manage-screen truthfulness fixes, both **OTA lane**, both found by putting a real subscription through the app rather than by reading code. ~~Nothing. The queue is empty~~ — see [`docs/specs-open.md`](docs/specs-open.md), which now explains where the next spec comes from instead of holding one. Do not take a walk row as a build task, and do not scope a spec yourself. |
+> | a **build task** | **Nothing. The queue is empty** — ~~IMP-082 first, then IMP-083~~; both landed 2026-09-06, and their proof is WALK-19, not another build. See [`docs/specs-open.md`](docs/specs-open.md), which now explains where the next spec comes from instead of holding one. Do not take a walk row as a build task, and do not scope a spec yourself. |
 >
 > **The whole design push lives on `feat/design-push`, which is NEVER pushed, NEVER given a
 > `Release-Lane:` trailer, and NEVER merged to `main`** without a separate owner decision.
 > **IMP-076 ✅ and IMP-078 ✅ are both code-complete (2026-08-17)**; commits `22fcb96` and `4c1e34b`.
 > **IMP-080 ✅, IMP-081 ✅ and IMP-077 ✅ followed on 2026-09-05**; commits `22c9c06`, `c649d7e` and
-> `53d20e8`. All five are committed, none is pushed, and the tree now stands at **v1.0.8 / vc14**.
+> `53d20e8`. **IMP-082 ✅ and IMP-083 ✅ landed 2026-09-06**; commits `0e73c76` and `1f4f037`. All seven
+> are committed, none is pushed, and the tree now stands at **v1.0.8 / vc14**.
 
 > **🔵 2026-08-16 — the free-app improvement track is CLOSED; active work is Plus (Phase 10b) + the design
 > push.** Owner's call. `IMP-001`–`IMP-075` are done bar the deferred `IMP-022` and the reserved `IMP-057`.
@@ -134,8 +135,9 @@ Console, which *does* get the full review.
 > 2026-09-05**, so `runtimeVersion` `1.0.8` now matches a shipped build and the OTA lane is **open onto
 > `internal`**. IMP-077's `bump:native` had shut it that morning — the identical trap IMP-076 sprang on
 > 2026-08-17, one spec later — and **a `bump:native` always closes the OTA lane until the new versionCode
-> actually ships.** The rule is unchanged for next time; this instance is closed. **[IMP-082](docs/specs-open.md)
-> is pure JS and is the first thing that can ride this lane.** ⚠️ It reaches `internal` installs only —
+> actually ships.** The rule is unchanged for next time; this instance is closed. **IMP-082 and IMP-083
+> are pure JS and are the first things that can ride this lane — and neither has been shipped**, nor
+> should be until WALK-19 proves them. ⚠️ It reaches `internal` installs only —
 > `production` is still on 1.0.3 / vc9, whose runtime an `eas update` from this tree does not match.
 
 **✅ THE OTA LANE REOPENED on 2026-09-05 — but only onto `internal`.** It was shut from 2026-08-17,
@@ -160,7 +162,7 @@ build ships.)
 **Reanimated 4.1.1 + worklets 0.5.1** (IMP-077, 2026-09-05 — New-Arch-only, which is why WALK-16 gated it;
 **`babel.config.js` is deliberately untouched**, `babel-preset-expo` auto-injects the worklets plugin) ·
 `targetSdkVersion` **36**, `minSdk` **24** · `npm test` →
-**873 passed, 85 suites**, plus **3 zone tests × 2 pinned zones**. **`npm test` = `test:suite` (the ambient
+**902 passed, 89 suites**, plus **3 zone tests × 2 pinned zones**. **`npm test` = `test:suite` (the ambient
 suite, no TZ pin) + `test:zone`** (`__tests__/zone/`, run at UTC+14 and UTC−11 via `jest.zone.config.js`).
 **Verified `exit=0` under five ambient zones** — UTC, +5:30, +14, −11, −5. **Run `npm test`, not bare
 `npx jest`**, or the zone half is skipped. Details in [`docs/playbook.md`](docs/playbook.md).
@@ -184,8 +186,8 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 078 | A design system Claude Design can work from | Dev-only | ✅ code-complete 2026-08-17 · **branch-only, never pushed** · **15 cards live** in Claude Design project `Daily Rituals Design System`, both themes |
 | 080 | The Paywall footer stops fighting the layout | Build | ✅ code-complete 2026-09-05 · **branch-only, never pushed** · from the 🔴 WALK-07 finding · the footer left the flex column for `position: absolute, bottom: 0`, root took an exact `height: winH`; IMP-068 + IMP-074 recorded as **superseded, not wrong** · pure JS, no bump · walk = the Paywall half of WALK-07, **ready to re-run** |
 | 081 | The never-backed-up warning says the whole sentence | Build | ✅ code-complete 2026-09-05 · **branch-only, never pushed** · from the WALK-03 step 4 finding · `BackupNudge` goes `numberOfLines` 2 → 3 with the row top-aligned; **the clamp stays** (it is what keeps a long string from pushing "General" off the card) and **the copy was not shortened** · pure JS, no bump · walk = step 4 of WALK-03, **ready to re-run at default AND max font scale** |
-| **082** | **The member surfaces stop inventing a renewal date** | **Build** | ⬜ **OPEN — the only spec in the queue.** From the 2026-09-05 Plus-enablement sweep. `RENEW_DATE = '12 Jun 2026'` is prototype mock data wired in as a **runtime fallback** in five places, starting in `formatRenewDate` itself — so a real subscriber sees a fabricated renewal date on the You banner, the Shop banner, Manage and Cancel. Invisible while Plus was off; live now. **Lane: OTA**, pure JS. Spec in [`docs/specs-open.md`](docs/specs-open.md) · acceptance = step 5 of WALK-19 |
-| **083** | **Cancel goes to the subscription, not to a list** | **Build** | ⬜ **OPEN.** From the owner's license-tester purchase, 2026-09-06: Cancel routes to the account-wide Play subscriptions list because [`config.js:27`](src/billing/config.js#L27) carries no product. Google specifies `?sku=&package=` for this; the app already reads `productIdentifier` and discards it. ⚠️ **The suffix trap:** RevenueCat returns `plus_annual:annual`, Play's `sku` wants `plus_annual`. **Lane: OTA**, pure JS. Spec in [`docs/specs-open.md`](docs/specs-open.md) · acceptance = step 10 of WALK-19 |
+| 082 | The member surfaces stop inventing a renewal date | Build | ✅ code-complete 2026-09-06 · **branch-only, never pushed** · `formatRenewDate` returns **`null`** instead of the `12 Jun 2026` mock on both the missing and the unparseable branch; `PlusBanner` gained a `renewLabel` prop and says the bare word **`Member`** without one; Manage and Cancel drop their "until …" clauses. `RENEW_DATE` **stays in `data.js`** for the dev panel + fixtures, now commented as never-a-fallback · pure JS, no bump, **not shipped** · walk = **step 5 of WALK-19**, needs a device + license tester |
+| 083 | Cancel goes to the subscription, not to a list | Build | ✅ code-complete 2026-09-06 · **branch-only, never pushed** · new pure `manageUrl({platform, productId, packageName})` in `links.js` builds `?sku=&package=`; `openExternal` takes an optional third `opts`; `PACKAGE_NAME` reads `expoConfig.android.package`; `toEntitlement` + `simService` now carry `productId`. Missing either value **degrades to today's generic URL**, never a 404 · pure JS, no bump, **not shipped** · ⚠️ **the `plus_annual:annual` → `plus_annual` strip is unproven against a real Play id** · walk = **step 10 of WALK-19** |
 | — | **Plus is ON** (`PLUS_ENABLED = true`) | Build | ✅ 2026-09-05 · commit `7d2e515` · **branch-only, never pushed** · playbook **10b.2/10b.3/10b.4 all closed**; 10b.5 in flight. The dead PDF perk was **cut** from `PLUS_PERKS` rather than built — five perks remain, all real. **Everything about billing is still unproven at runtime: WALK-19** |
 | — | Cash ember packs decoupled from the Plus flag | Build | ✅ 2026-09-05 · commit `6590834` · **caught mid-build and the build was cancelled.** Flipping `PLUS_ENABLED` armed the Shop's "Gather Embers" section + the GetEmbers sheet, which show `$1.99/$4.99/$9.99` against a **bare counter increment** — a priced surface giving its goods away. New `EMBER_PACKS_ENABLED` (false) gates it; `Shop` takes `embersForCash` defaulting to **false**. 875 tests |
 
@@ -422,37 +424,51 @@ remaining screens, and **WALK-12 (R8) LAST** on the Play `internal` build._
 
 ---
 
-_2026-09-05 (Opus — WALK-03 / WALK-17 / WALK-08 emulator pass, WALK-16 + WALK-17 closed, IMP-081 scoped;
-**branch-only, committed, NOT pushed**) — **a walk session; no app code was touched and the record is the
-deliverable.**
+_2026-09-06 (Opus — **IMP-082 and IMP-083 both landed; the build queue is empty again**; branch-only,
+committed, NOT pushed) — **a build session. Two specs closed, no walk run.** Both came from the owner
+putting a **real license-tester subscription** through the app, not from reading code, and both are the
+same class as the cut PDF perk and the decoupled ember packs: **the paid surface asserting something the
+app cannot back.**_
 
-**The owner changed the bar mid-session, and every status below follows from it.** The instruction was to
-run what the emulator can run and **record it as done, not as smoke**, and to **drop WALK-13** ("to hell
-with the reminders"). So **WALK-16 and WALK-17 are closed ✅ on emulator evidence** — the
-`device`-≠-`emulator` rule in `walk-open.md`'s header is knowingly set aside for those two rows.
-**IMP-077 is unblocked as a direct result.** What that does *not* buy is named in both rows and in the
-walk file's header: **nothing in this project has yet met real doze, an OEM battery manager, delivery to a
-real share target, or Google's own backup schedule.** WALK-13 is ⏸ dropped — neither run nor failed — so
-IMP-054 and `b773352` are still unproven on any running app.
+**IMP-082 — the member surfaces stop inventing a renewal date.** `RENEW_DATE = '12 Jun 2026'` is
+prototype mock data and it was the **runtime fallback in five places, starting in the pure layer**:
+`formatRenewDate` handed it back on both the missing *and* the unparseable branch, so even the "live"
+path fabricated. Now it returns **`null`**, and every surface drops the claim rather than substituting:
+`PlusBanner` gained a `renewLabel` prop and renders the bare word **`Member`** without one (`YouScreen`
+and `Shop` thread it), `ManageSubscription` shows `Ends soon · access until then` or the bare plan label
+and both billing footnotes lose their "until …" clause, and `CancelSheet` ends at *"…so you can cancel."*.
+`RENEW_DATE` **was not deleted** — it stays in `data.js` for the dev panel and fixtures, now carrying a
+comment that says so and names the bug shape (`renewLabel || RENEW_DATE`). Neither `format.js` nor
+`RitualsApp.js` imports it any more. Commit `0e73c76`, pure JS, no bump.
 
-**WALK-03 — ❌, and the failure is the deliverable.** Steps 1, 2, 3 and 5 all pass: the export writes a
-well-formed envelope (`format: daily-rituals-backup`, `appVersion: 1.0.7`, `counts: {entries: 5, days: 5}`)
-and opens the real share sheet; the toast carries the IMP-033 two-systems copy; reset → restore returns the
-state exactly; a truncated file is rejected with *"That file isn't readable as a backup."* and no crash.
-**Step 4 fails on `neverBackedUp`:** the warning truncates mid-word — *"there's nothing to bring ba…"* —
-**at default font scale**, worse at max. Cause read out of the file, not guessed:
-[`BackupNudge`](src/screens/YouScreen.js#L322) clamps at `numberOfLines={2}` and the `never` string is
-97 chars against `stale`'s 62. **Scoped as [`IMP-081`](docs/specs-open.md).**
+**IMP-083 — Cancel goes to the subscription, not to a list.** `config.js` carried a bare
+`play.google.com/store/account/subscriptions`, so a subscriber mid-cancel got the account-wide list to
+hunt through. New pure `manageUrl({ platform, productId, packageName })` builds
+`?sku=&package=`; `openExternal` gained an optional third `opts` argument (existing two-arg calls
+untouched); `PACKAGE_NAME` comes from `Constants.expoConfig?.android?.package`, not a hardcode;
+`toEntitlement` and `simService`'s `ent()` both carry `productId` now, and one `manageOpts()` helper feeds
+`openLink`, `doCancel` and `doResume` so all three routes match. **Missing product id or package name
+degrades to today's generic URL** — a broken link is worse than a list. Commit `1f4f037`, pure JS, no bump.
 
-**WALK-08 — 🟠 partial, and the trap in it is worth more than the result.** React Native reads the font
-scale **at startup**. Changing `font_scale` under a running app moves system UI and not the app, which
-looks exactly like a correctly-clamping cap and is not one; this pass was read wrong until a force-stop and
-relaunch corrected it. After the relaunch the cap is confirmed genuine (`MAX_FONT_SCALE` 1.5 body,
-`CHROME_FONT_SCALE` 1.2 chrome). Clean at max font: Home, Insights, Reflections + `ArchiveFilters`, You
-(rows auto-stack), achievements and shop sheets. **Eight of the nine named screens, plus `longName` and
-landscape, are still unrun — the row stays open.**
+**Two traps found while testing, both recorded in `build-log.md`:** `Constants.expoConfig` is **undefined
+under jest**, so `PACKAGE_NAME` is `''` in the suite — the spec's decision to make `packageName` a
+*parameter* is the only reason `manageUrl` is testable at all. And `react-native-purchases` pulls in ESM
+`transformIgnorePatterns` does not cover, which is why `revenueCatService` had no test until now;
+`__tests__/billing/revenueCatService.test.js` opens with a `jest.mock` of it. **Do not remove that mock.**
 
-**NEXT: hand `IMP-080` and `IMP-081` to a build chat** — both takeable now, no gate, no device, different
-files, either order. `IMP-077` is also open now that WALK-16 is closed. **The remaining walk work is
-WALK-08's eight screens, then WALK-03 step 4 and WALK-07's Paywall half once their specs land, then
-WALK-12 (R8) LAST on the Play `internal` build.**_
+**Proof: 902 passed / 89 suites** (up from 875/85 — four new files:
+`__tests__/ui/PlusBanner.test.js`, `__tests__/screens/ManageSubscription.test.js`,
+`__tests__/billing/links.test.js`, `__tests__/billing/revenueCatService.test.js`), both zone suites green,
+`npx expo export --platform android` clean at each commit.
+
+⚠️ **What the green suite does NOT mean.** The suite runs `simService`, which fabricates every purchase
+result — **jest is structurally blind to billing.** Neither fix is verified against a real subscription.
+The suffix strip in particular (`plus_annual:annual` → `plus_annual`) rests only on what the RevenueCat
+dashboard shows; if WALK-19 step 10 lands on a "not found" page, that is the first suspect.
+
+**NEXT: this is a walk lane, and the build queue is genuinely empty — do not scope a spec to fill it.**
+**[WALK-19](docs/walk-open.md) is the gate on v1.1** and now carries the acceptance for both of these
+(steps 5 and 10); it needs a **device**, a **license tester** and the vc14 `internal` build. Also ready:
+**WALK-11**, **WALK-07 (Paywall half)** and **WALK-03 step 4** on a debug build of this branch; **WALK-18**
+needs a mid-range device; **WALK-12 (R8) LAST**. **Neither fix has shipped** — no `Release-Lane:` trailer,
+per the branch rule; the OTA lane is open onto `internal` only._
