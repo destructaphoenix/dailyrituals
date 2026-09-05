@@ -44,9 +44,10 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 >
 > **✅ The build queue is EMPTY again as of 2026-09-06. IMP-082 and IMP-083 both landed** (commits
 > `0e73c76`, `1f4f037`) — the third and fourth instances of that same class, both found by putting a real
-> license-tester subscription through the app rather than by reading code. Pure JS, **OTA lane, and
-> neither has shipped.** **Nothing should be invented to fill the queue** — new work comes from a 🔴 walk
-> finding, the owner, or a design doc.
+> license-tester subscription through the app rather than by reading code. Pure JS, **OTA lane — and
+> ✅ both SHIPPED by OTA on 2026-09-06** (owner's instruction; update group `ac5c4189-736c-44f0-96ae-6ceea4fe4712`,
+> runtime 1.0.8, Android, from commit `8abf11f`). **Nothing should be invented to fill the queue** — new
+> work comes from a 🔴 walk finding, the owner, or a design doc.
 >
 > **⚠️ So the next task is a WALK, not a build.** Three of those specs end in runtime proof that has not
 > run: **WALK-07** (Paywall half — IMP-080), **WALK-03 step 4** (`neverBackedUp` — IMP-081) and
@@ -136,8 +137,9 @@ Console, which *does* get the full review.
 > `internal`**. IMP-077's `bump:native` had shut it that morning — the identical trap IMP-076 sprang on
 > 2026-08-17, one spec later — and **a `bump:native` always closes the OTA lane until the new versionCode
 > actually ships.** The rule is unchanged for next time; this instance is closed. **IMP-082 and IMP-083
-> are pure JS and are the first things that can ride this lane — and neither has been shipped**, nor
-> should be until WALK-19 proves them. ⚠️ It reaches `internal` installs only —
+> are pure JS and they DID ride this lane — the first OTA ever published on it, 2026-09-06**, update
+> group `ac5c4189-736c-44f0-96ae-6ceea4fe4712`. They shipped **before** WALK-19 proved them, on the owner's
+> instruction; the walk is still owed. ⚠️ It reaches `internal` installs only —
 > `production` is still on 1.0.3 / vc9, whose runtime an `eas update` from this tree does not match.
 
 **✅ THE OTA LANE REOPENED on 2026-09-05 — but only onto `internal`.** It was shut from 2026-08-17,
@@ -186,8 +188,8 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 078 | A design system Claude Design can work from | Dev-only | ✅ code-complete 2026-08-17 · **branch-only, never pushed** · **15 cards live** in Claude Design project `Daily Rituals Design System`, both themes |
 | 080 | The Paywall footer stops fighting the layout | Build | ✅ code-complete 2026-09-05 · **branch-only, never pushed** · from the 🔴 WALK-07 finding · the footer left the flex column for `position: absolute, bottom: 0`, root took an exact `height: winH`; IMP-068 + IMP-074 recorded as **superseded, not wrong** · pure JS, no bump · walk = the Paywall half of WALK-07, **ready to re-run** |
 | 081 | The never-backed-up warning says the whole sentence | Build | ✅ code-complete 2026-09-05 · **branch-only, never pushed** · from the WALK-03 step 4 finding · `BackupNudge` goes `numberOfLines` 2 → 3 with the row top-aligned; **the clamp stays** (it is what keeps a long string from pushing "General" off the card) and **the copy was not shortened** · pure JS, no bump · walk = step 4 of WALK-03, **ready to re-run at default AND max font scale** |
-| 082 | The member surfaces stop inventing a renewal date | Build | ✅ code-complete 2026-09-06 · **branch-only, never pushed** · `formatRenewDate` returns **`null`** instead of the `12 Jun 2026` mock on both the missing and the unparseable branch; `PlusBanner` gained a `renewLabel` prop and says the bare word **`Member`** without one; Manage and Cancel drop their "until …" clauses. `RENEW_DATE` **stays in `data.js`** for the dev panel + fixtures, now commented as never-a-fallback · pure JS, no bump, **not shipped** · walk = **step 5 of WALK-19**, needs a device + license tester |
-| 083 | Cancel goes to the subscription, not to a list | Build | ✅ code-complete 2026-09-06 · **branch-only, never pushed** · new pure `manageUrl({platform, productId, packageName})` in `links.js` builds `?sku=&package=`; `openExternal` takes an optional third `opts`; `PACKAGE_NAME` reads `expoConfig.android.package`; `toEntitlement` + `simService` now carry `productId`. Missing either value **degrades to today's generic URL**, never a 404 · pure JS, no bump, **not shipped** · ⚠️ **the `plus_annual:annual` → `plus_annual` strip is unproven against a real Play id** · walk = **step 10 of WALK-19** |
+| 082 | The member surfaces stop inventing a renewal date | Build | ✅ code-complete 2026-09-06 · **branch-only, never pushed** · `formatRenewDate` returns **`null`** instead of the `12 Jun 2026` mock on both the missing and the unparseable branch; `PlusBanner` gained a `renewLabel` prop and says the bare word **`Member`** without one; Manage and Cancel drop their "until …" clauses. `RENEW_DATE` **stays in `data.js`** for the dev panel + fixtures, now commented as never-a-fallback · pure JS, no bump · ✅ **SHIPPED BY OTA 2026-09-06** (update group `ac5c4189-736c-44f0-96ae-6ceea4fe4712`) — reaches **vc14 `internal` installs only** · walk = **step 5 of WALK-19**, needs a device + license tester |
+| 083 | Cancel goes to the subscription, not to a list | Build | ✅ code-complete 2026-09-06 · **branch-only, never pushed** · new pure `manageUrl({platform, productId, packageName})` in `links.js` builds `?sku=&package=`; `openExternal` takes an optional third `opts`; `PACKAGE_NAME` reads `expoConfig.android.package`; `toEntitlement` + `simService` now carry `productId`. Missing either value **degrades to today's generic URL**, never a 404 · pure JS, no bump · ✅ **SHIPPED BY OTA 2026-09-06** (same update group) · ⚠️ **the `plus_annual:annual` → `plus_annual` strip is unproven against a real Play id** · walk = **step 10 of WALK-19** |
 | — | **Plus is ON** (`PLUS_ENABLED = true`) | Build | ✅ 2026-09-05 · commit `7d2e515` · **branch-only, never pushed** · playbook **10b.2/10b.3/10b.4 all closed**; 10b.5 in flight. The dead PDF perk was **cut** from `PLUS_PERKS` rather than built — five perks remain, all real. **Everything about billing is still unproven at runtime: WALK-19** |
 | — | Cash ember packs decoupled from the Plus flag | Build | ✅ 2026-09-05 · commit `6590834` · **caught mid-build and the build was cancelled.** Flipping `PLUS_ENABLED` armed the Shop's "Gather Embers" section + the GetEmbers sheet, which show `$1.99/$4.99/$9.99` against a **bare counter increment** — a priced surface giving its goods away. New `EMBER_PACKS_ENABLED` (false) gates it; `Shop` takes `embersForCash` defaulting to **false**. 875 tests |
 
@@ -465,6 +467,24 @@ under jest**, so `PACKAGE_NAME` is `''` in the suite — the spec's decision to 
 result — **jest is structurally blind to billing.** Neither fix is verified against a real subscription.
 The suffix strip in particular (`plus_annual:annual` → `plus_annual`) rests only on what the RevenueCat
 dashboard shows; if WALK-19 step 10 lands on a "not found" page, that is the first suspect.
+
+**✅ SHIPPED THE SAME DAY, by OTA, on the owner's instruction — the first update ever published on this
+lane.** `eas update --channel production --platform android`, update group
+`ac5c4189-736c-44f0-96ae-6ceea4fe4712` (Android update `01a0737f-bba2-70e6-ae80-4beda488dfc1`), runtime **1.0.8**, from
+commit `8abf11f`. **The branch was NOT pushed** — the never-push rule still stands; an OTA goes to Expo's
+CDN, not GitHub. Three things this does and does not mean, all of them load-bearing:
+**(1) It reaches vc14 `internal` installs only.** `alpha` (vc12), `beta` and `production` (vc9) are on
+older runtimes and received nothing — the public still has none of this.
+**(2) The owner's own phone may not get it.** PROGRESS.md records that phone on the **`alpha`** track;
+Play serves the highest-priority track an account qualifies for, so unless it is also on the `internal`
+tester list it stays on vc12 and shows neither fix. That exact trap cost a debugging round on 2026-09-05.
+**(3) It applies on the SECOND launch.** `expo-updates` runs on defaults here — check on load, download in
+background, swap in next launch — so testers must open, fully close, and reopen. "Nothing changed" is
+almost certainly this.
+⚠️ **Shipped ahead of its proof.** WALK-19 has not run; both fixes are now in front of real testers
+unverified. **Shipping is not proof, and the walk is still owed** — a new **step 0** was added to WALK-19
+covering the track and OTA checks above, because a walk run on a device that never took the update would
+record a result against the wrong build.
 
 **NEXT: this is a walk lane, and the build queue is genuinely empty — do not scope a spec to fill it.**
 **[WALK-19](docs/walk-open.md) is the gate on v1.1** and now carries the acceptance for both of these

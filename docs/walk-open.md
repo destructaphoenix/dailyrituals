@@ -594,6 +594,19 @@ about billing.**
 installing from the `internal` track. A license tester walks the *full* purchase flow and is not
 charged — that is the whole point; do not test with a real card until step 8.
 
+- [ ] 0. **Confirm the device is on the right track AND took the OTA — steps 5 and 10 are void without
+      this.** Two separate traps, and each has already cost a debugging round:
+      **(a) Track.** Play serves the **highest-priority track the account qualifies for**
+      (internal > closed > open > production). PROGRESS.md records the owner's phone on **`alpha` (vc12)**,
+      so unless that account is also on the **`internal`** tester list it will keep getting vc12 and see
+      none of this. Verify with
+      `adb shell dumpsys package app.dailyrituals.mobile | grep versionName` — it must read **1.0.8**.
+      **(b) The OTA.** IMP-082 and IMP-083 are **not in the vc14 binary**; they arrived as update group
+      `ac5c4189-736c-44f0-96ae-6ceea4fe4712` (runtime 1.0.8, published 2026-09-06). `expo-updates` here uses the
+      defaults — **check on launch, download in the background, apply on the NEXT launch** — so a fresh
+      install or a first open shows the OLD code. **Open the app, fully close it, open it again** before
+      walking steps 5 and 10. "I opened it and nothing changed" is this, not a failed publish.
+
 - [ ] 1. **Install vc14 from Play internal** on the license-tester account. Confirm the version is
       **1.0.8 / vc14** (You tab → app version). An older artifact proves nothing about this code.
 - [ ] 2. **Open the paywall. Are the prices REAL?** They must be the live Play prices for the tester's
@@ -619,9 +632,11 @@ charged — that is the whole point; do not test with a real card until step 8.
       runtime fallback. **A surface showing the bare word `Member` (or a plan label with no "renews …")
       is NOT that bug** — it is IMP-082 working as designed, and it means RevenueCat handed back no
       usable `expirationDate`. Record which one you saw; they need opposite fixes.
-      ⚠️ **Gate:** IMP-082 landed 2026-09-06, **after** vc14 was cut. It is on `feat/design-push` and
-      **has not been OTA'd**, so a plain vc14 install still carries the old fabricating code. **Publish
-      the OTA first, or this step tests nothing.**
+      ✅ **The OTA gate is CLEARED.** IMP-082 landed after vc14 was cut, so the shipped binary does not
+      contain it — but it was **published as an OTA on 2026-09-06**, update group `ac5c4189-736c-44f0-96ae-6ceea4fe4712`,
+      runtime 1.0.8. **Confirm the device actually took it before trusting this step** (see step 0 above);
+      a device still on the binary's bundled JS will show the old fabricating code and you will record a
+      pass or fail against the wrong build.
 - [ ] 6. **The ember packs must be ABSENT.** Open the Shop. There must be **no "Gather Embers" section**
       and the strings `$1.99` / `$4.99` / `$9.99` must appear **nowhere**. This is the runtime proof of
       commit `6590834` — the near-miss where enabling Plus armed a priced surface that gave its goods
@@ -642,7 +657,8 @@ charged — that is the whole point; do not test with a real card until step 8.
       first suspect is the base-plan suffix strip**, not the `?sku=&package=` shape: `manageUrl` sends
       everything before the first `:` (so `plus_annual:annual` → `plus_annual`) on the strength of what
       the RevenueCat dashboard shows, and nothing has verified that against a real Play id. Record the
-      exact URL Play opened. **Same OTA gate as step 5** — IMP-083 is not in vc14.
+      exact URL Play opened. **Same OTA requirement as step 5** — IMP-083 is not in the vc14 binary
+      either, so it is only present if the device took the 2026-09-06 update.
 
 **Recording it.** Same rule as every row: ✅/❌ + date in the index, a paragraph here. **A failure is
 the deliverable** — scope it as a new `IMP-xxx` in `PROGRESS.md`, do not fix it mid-walk. **Do not

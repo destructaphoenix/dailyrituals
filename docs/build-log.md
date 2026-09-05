@@ -2997,7 +2997,10 @@ pitch. One screen per request. `PLUS_ENABLED` stays `false`; it is a design requ
   guard the spec called welcome-but-not-required.
   **Proof:** `npm test` → **890 passed / 87 suites** (from 875/85), both zone suites green,
   `npx expo export --platform android` clean. Commit `0e73c76`, pure JS, no bump, **not pushed**.
-  ⚠️ **Still unwalked** — acceptance is step 5 of WALK-19, which needs a device and a license tester.
+  ✅ **SHIPPED by OTA 2026-09-06** with IMP-083 — update group `ac5c4189-736c-44f0-96ae-6ceea4fe4712`, runtime 1.0.8,
+  Android, from commit `8abf11f`. **The first OTA ever published on this lane.**
+  ⚠️ **Shipped BEFORE it was walked**, on the owner's instruction — acceptance is still step 5 of
+  WALK-19, which needs a device and a license tester. Shipping is not proof.
 
 
 
@@ -3086,8 +3089,10 @@ pitch. One screen per request. `PLUS_ENABLED` stays `false`; it is a design requ
   `jest.mock('react-native-purchases', ...)` so the real module is never loaded. **Do not remove that mock.**
   **Proof:** `npm test` → **902 passed / 89 suites** (from 890/87), both zone suites green,
   `npx expo export --platform android` clean. Commit `1f4f037`, pure JS, no bump, **not pushed**.
-  ⚠️ **Still unwalked** — acceptance is step 10 of WALK-19. The suffix strip in particular is unproven
-  against a real Play id; the dashboard reading `plus_annual:annual` is the only evidence it is needed.
+  ✅ **SHIPPED by OTA 2026-09-06** with IMP-082 — same update group `ac5c4189-736c-44f0-96ae-6ceea4fe4712`.
+  ⚠️ **Shipped BEFORE it was walked**, on the owner's instruction — acceptance is still step 10 of
+  WALK-19. The suffix strip in particular is unproven against a real Play id; the dashboard reading
+  `plus_annual:annual` is the only evidence it is needed, and it is now live in front of testers.
 
 
 ---

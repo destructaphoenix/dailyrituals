@@ -39,9 +39,11 @@ them the queue that opened on 2026-09-05 is closed. **The tree is on v1.0.8 / vc
 > lands on a "not found" page rather than the subscription, the strip is the first suspect — not the
 > `?sku=&package=` shape.
 >
-> **Both are OTA-shippable and neither has shipped.** No `Release-Lane:` trailer was added, per the
-> branch rule below. The lane is open onto `internal` only — `production` is on 1.0.3 / vc9, whose
-> runtime an `eas update` from this tree does not match.
+> ✅ **Both SHIPPED by OTA on 2026-09-06**, on the owner's instruction and **ahead of their walk** —
+> update group `ac5c4189-736c-44f0-96ae-6ceea4fe4712`, runtime 1.0.8, Android, from commit `8abf11f`. This is
+> the **first OTA ever published on this lane**. It reaches **vc14 `internal` installs only**;
+> `alpha` (vc12), `beta` and `production` (vc9) are on older runtimes and got nothing. The branch itself
+> is still **not pushed** — shipping by OTA does not touch GitHub.
 
 **Where the next spec comes from.** Nothing is queued. New work arrives from one of three places: a 🔴
 finding in a walk (that is where IMP-080 and IMP-081 came from), the owner **putting the real app through
