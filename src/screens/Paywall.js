@@ -17,16 +17,22 @@ export default function Paywall({ insets, platform = 'ios', service, alreadyPlus
   const t = useTheme();
   const c = t.colors;
   // Android's Modal is a Dialog whose window size isn't known on the first measure
-  // pass, so `flex: 1` on this View resolves against nothing and the column sizes
-  // to its content: the ScrollView below goes unbounded and the fixed footer is
-  // pushed clean off-screen. A later re-render fires a correcting pass and the
-  // footer comes back — still overlapping the price and the last perks, which is
-  // the pre-IMP-068 bug returning. maxHeight caps us at the viewport from the very
-  // first pass, so the correction is optional rather than load-bearing. Same trap
-  // and same fix as Shop.js:23-29. (IMP-074 — and the `flex: 1` on the ScrollView
-  // below is the OTHER half of this fix, not a duplicate of it. Keep both.)
+  // pass, so a flex column here resolves against nothing and the fixed footer lands
+  // on top of the plan price and the last perks. IMP-068 (`flex: 1` on the ScrollView)
+  // and IMP-074 (`maxHeight: winH` here) were both correct reasoning about that
+  // measure pass, and both are SUPERSEDED rather than wrong: WALK-07's 2026-08-16
+  // re-run found both halves present in code and the overlap still happening from the
+  // very first frame. So IMP-080 stops tuning the measurement and removes the race —
+  // the root is an exact `height: winH` (the viewport, not a cap, so `bottom: 0`
+  // below is meaningful even when the page is short), and the footer is lifted out of
+  // the flex column entirely with `position: 'absolute', bottom: 0`. Its position no
+  // longer depends on the column measuring correctly at all. `winH` must keep coming
+  // from useWindowDimensions() so it tracks rotation — a source assertion guards that.
   const { height: winH } = useWindowDimensions();
   const [plan, setPlan] = useState('annual');
+  // Seeded at the footer's real approximate height (PrimaryButton + LegalFooter), not
+  // 0: onLayout corrects it either way, but a 0 seed ships a short first frame.
+  const [footerH, setFooterH] = useState(96);
   // The store's localized prices, falling back to the design constants. Never
   // render PLUS_PRICES directly here — Google charges the store price, not ours.
   const prices = useLivePrices(service);
@@ -37,7 +43,7 @@ export default function Paywall({ insets, platform = 'ios', service, alreadyPlus
   });
 
   return (
-    <View testID="paywallRoot" style={{ flex: 1, maxHeight: winH, backgroundColor: c.cream, paddingTop: insets.top }}>
+    <View testID="paywallRoot" style={{ height: winH, backgroundColor: c.cream, paddingTop: insets.top }}>
       {/* top bar */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingTop: 12, paddingBottom: 4 }}>
         <Pressable onPress={onClose} hitSlop={8} accessibilityRole="button" accessibilityLabel="Close Daily Rituals Plus"
@@ -53,7 +59,7 @@ export default function Paywall({ insets, platform = 'ios', service, alreadyPlus
       {/* style={{ flex: 1 }} is load-bearing (IMP-068): without it this ScrollView
           lays out at full content height inside the flex column and the fixed footer
           below is drawn over the plan price and the last perks. */}
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 26, paddingBottom: 18, alignItems: 'center' }} showsVerticalScrollIndicator={false}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 26, paddingBottom: 18 + footerH, alignItems: 'center' }} showsVerticalScrollIndicator={false}>
         <View style={{ marginTop: 4 }}><BigSun size={92} /></View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6, backgroundColor: c.accentSoft, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999 }}>
           <Sun size={14} color={c.accentDeep} />
@@ -104,8 +110,11 @@ export default function Paywall({ insets, platform = 'ios', service, alreadyPlus
         </View>
       </ScrollView>
 
-      {/* footer CTA + legal */}
-      <View style={{ paddingHorizontal: 26, paddingTop: 14, paddingBottom: 14 + insets.bottom, borderTopWidth: 1, borderTopColor: c.border, backgroundColor: c.surface }}>
+      {/* footer CTA + legal — outside the flex column (IMP-080). backgroundColor is
+          load-bearing now: the ScrollView's content passes underneath this view. */}
+      <View
+        onLayout={(e) => setFooterH(e.nativeEvent.layout.height)}
+        style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 26, paddingTop: 14, paddingBottom: 14 + insets.bottom, borderTopWidth: 1, borderTopColor: c.border, backgroundColor: c.surface }}>
         <PrimaryButton label="Start 7-day free trial" onPress={() => flow.buy(plan)} />
         <LegalFooter platform={platform} plan={plan} prices={prices}
           onLink={(k) => (k === 'restore' ? flow.restore() : onLink && onLink(k))} />
