@@ -65,26 +65,25 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 > playbook's copy corrected, **and onboarding brought under the gate** (see below). `npm test` **936**
 > green (was 915), `npx expo export` clean.
 >
-> 🚦 **THE ONE THING OWED: publish the corrected OTA.** Nothing on any device changes until this runs,
-> and it must be run from a machine with EAS auth:
+> ✅ **The corrected OTA IS PUBLISHED** — group `62a8f8cf-9853-47e8-b013-907544e85f0c`, runtime `1.0.9`,
+> 2026-09-06, and the owner confirmed the manifest reads back **non-empty**. The key half is closed.
 >
-> ```
-> eas update --branch production --environment production \
->   --message "IMP-086: the OTA lane stops publishing an empty RevenueCat key (c50e7e7)"
-> ```
+> 🔴 **BUT THE DEVICE STILL SHOWS THE OLD BEHAVIOUR** (owner, 2026-09-06): the onboarding trial offer
+> still appears, and the You tab is still empty after skipping it. **That combination cannot be produced
+> by the IMP-086 bundle** — under it, `OB_PAYWALL_LIVE` false means the Premium step is **not mounted at
+> all** and there is no offer to skip; `OB_PAYWALL_LIVE` true means the You tab shows `PlusBanner`. An
+> offer *plus* an empty You tab is the signature of a bundle **older than `c50e7e7`** — either the
+> **embedded vc15** (clear-data wipes downloaded updates and sends the next launch back to it) or the
+> IMP-085 update `d5f03a47`. **Do not conclude the fix failed. Establish which JS is running first.**
+> ⚠️ Remember the lane's own rule: **an OTA applies on the SECOND launch**, and **clearing data restarts
+> that cycle** — the very act used to reproduce the bug is what keeps the fix off the phone.
 >
-> **Then verify the manifest before believing it** — the whole incident is that a green publish proves
-> nothing:
->
-> ```
-> curl -sS -H 'expo-platform: android' -H 'expo-runtime-version: 1.0.9' \
->   -H 'expo-channel-name: production' -H 'expo-protocol-version: 1' \
->   -H 'accept: multipart/mixed' https://u.expo.dev/1a0f9b15-cb1a-4cec-9577-3cd66e9f1d36 \
->   | grep -o 'rcAndroidKey":"[^"]*"'
-> ```
->
-> It must come back **non-empty**. Then on the device: **the OTA applies on the SECOND launch**, and the
-> owner's leftover **fake** Plus must be cleared (dev panel reset / clear data) or it masks the result.
+> ✅ **[IMP-087](docs/build-log.md), commit `74084e5`, exists so this is never a guess again.** The You
+> tab now renders a **"Plus is unavailable"** row where the paid surface would be, naming which fact is
+> false (`module` / `key` / `none`) **and the running bundle** — `describeUpdate(expo-updates)` prints
+> either `built-in bundle (no update applied)` or `update <id> · <when>`. A release build carries no
+> version string (IMP-022, deferred), which is why "is the fix even on the phone?" has cost half of every
+> round trip so far. 952 green. 🚦 **It needs its own OTA published to be of any use.**
 >
 > ⚠️ **The owner's Plus is still a leftover FAKE entitlement** from a `simService` purchase, persisted
 > locally — which is why the skins stayed unlocked while the paid surface vanished. **There is almost
@@ -144,7 +143,7 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 >
 > | If this chat is… | Take |
 > | --- | --- |
-> | a **build task** | ✅ **The queue is EMPTY** — IMP-086 (`c50e7e7`) was the last row, and it is code-complete but **UNSHIPPED** (publish the OTA, see the 🔴 above). **Nothing should be invented to fill it**; new work comes from a 🔴 walk finding, the owner, or a design doc. |
+> | a **build task** | ✅ **The queue is EMPTY** — IMP-087 (`74084e5`) was the last row. IMP-086 is **shipped** (group `62a8f8cf`); **IMP-087 is not** (see the 🔴 above). **Nothing should be invented to fill it**; new work comes from a 🔴 walk finding, the owner, or a design doc. |
 > | a **runtime walk** | **The lane with the work in it.** 🚦 **[WALK-19](docs/walk-open.md) — "money actually changes hands" — gates the v1.1 promotion and is BLOCKED**: it needs a build carrying `da77a7d`, a **device** and a **license tester**. vc14 fakes purchases, so a run against it records a result about the simulation. ✅ **Ready now on a debug build of this branch (all pure-JS):** **WALK-07** (Paywall half — IMP-080), **WALK-03 step 4** (`neverBackedUp` — IMP-081; run at default **and** max font scale, where the third line gets tested) and **WALK-11** (the Plus perk surfaces mount on their own now, so the old "needs T1" reason is gone). ⚠️ **WALK-18 needs a NEW build** — IMP-077's native deps put the tree on v1.0.8/vc14, which no vc13 artifact carries — **and a mid-range device**, because an emulator renders dropped frames as smooth. **WALK-08 is PARTIAL** (cap confirmed; eight of nine screens, rotation and `longName` unrun). **WALK-12 (R8) is LAST** and needs the Play `internal` build, which has no dev harness. **WALK-16/17 CLOSED ✅ on emulator evidence; WALK-13 DROPPED** (owner, 2026-09-05: record emulator results as done, not smoke). ⚠️ **Gap no closed row covers:** real doze, OEM battery managers, delivery to a real share target, Google's own backup schedule. |
 > | a **design request** | See "Claude Design" below. The live request is **Insights**. |
 
@@ -231,6 +230,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | **084** | **The release build stops shipping the purchase simulation** | **Build** | ✅ code-complete + **SHIPPED 2026-09-06** · commit `da77a7d` · three layers: all three `eas.json` profiles bind an `environment`, `easEnvironmentPreflight` fails CI when `build.production.environment` is absent or wrong, and `paywallLive({plusEnabled, billingConfigured, dev})` gates the paid surface (all 16 `PLUS_ENABLED` uses in `RitualsApp.js` → `PAYWALL_LIVE`; `config.js` unchanged) · ✅ **layer C by OTA** (group `90aa2074-…`, runtime 1.0.8) then ✅ **layers A+B in v1.0.9 / vc15 → `internal`** (`980cdad`) · **branch still never pushed** · ⚠️ **UNWALKED — WALK-19 step 0(c): airplane mode, the purchase must FAIL** |
 | **085** | **The SDK probe that has always said no** | **OTA** | ✅ code-complete 2026-09-06 · commit `2672bf2` · **branch-only, never pushed** · `require.resolve` is not implemented by Metro, so `isBillingConfigured()` returned **false in every build ever shipped** — every release ran `simService`. Now a static `require` + pure `billingModuleOk(mod)` (`typeof mod.configure === 'function'`), with a source assertion banning `require.resolve` from code lines · **and a subscriber keeps the cancel route**: Manage gates on `plus`, `PlusBanner` renders on `plusEnabled || plus` in YouScreen **and** Shop (the render gate, not the handler, was what hid it), falling back to Play's own subscription screen · pure JS · ✅ **SHIPPED by OTA 2026-09-06** (group `d5f03a47-…`, runtime 1.0.9) · ⚠️ **UNWALKED — WALK-19 step 0(c) inverted: the paywall must be VISIBLE and an airplane-mode purchase must FAIL** |
 | **086** | **The OTA lane publishes an empty RevenueCat key** | **OTA** | ✅ code-complete 2026-09-06 · commit `c50e7e7` · **branch-only, never pushed** · `eas update` evaluates `app.config.js` on the machine that runs it and an `eas.json` profile `environment` binds the **build** lane only, so every OTA ever published here shipped `extra.rcAndroidKey: ""` — **overwriting the key the installed build embedded**. Measured from the live `1.0.9` manifest (group `d5f03a47`), not derived. Now `--environment production` on the workflow command + in the playbook, a third pure check `otaEnvironmentPreflight` failing CI on any naked `eas update` line, **and onboarding's three paid mounts moved off bare `PLUS_ENABLED` onto `OB_PAYWALL_LIVE`** (the `simService` free-Plus giveaway was still reachable on first run) · 936 green (was 915) · 🚦 **NOT SHIPPED — the corrected OTA still has to be published**, see the 🔴 above |
+| **087** | **The paid surface says why it is missing** | **OTA** | ✅ code-complete 2026-09-06 · commit `74084e5` · **branch-only, never pushed** · vc14, vc15 and the IMP-085 OTA all rendered as **one empty You tab** from three different causes, each costing a device round trip · new `billingStatus()` splits the two facts `isBillingConfigured()` collapses, pure `billingDiagnostic()` names whichever is false, and a **"Plus is unavailable"** row stands where the paid surface would be — **null in every healthy build** (live / Plus off / dev) so it cannot become noise · also reports the running bundle via pure `describeUpdate(expo-updates)`, required in a try/catch · IMP-084's `PLUS_ENABLED` pin **updated, not loosened** · 952 green (was 936) · 🚦 **NOT SHIPPED — needs an OTA** |
 | — | **Plus is ON** (`PLUS_ENABLED = true`) | Build | ⚠️ **the FLAG is on; the BUILD cannot take money — see 🔴 IMP-084 (2026-09-06).** `PLUS_ENABLED = true` shipped, but vc14 has no RevenueCat key and runs `simService`, so **10b.3 is NOT closed** and the "all real" claim below covers the perks, not the payments · ✅ 2026-09-05 · commit `7d2e515` · **branch-only, never pushed** · ~~playbook 10b.2/10b.3/10b.4 all closed~~; 10b.5 in flight. The dead PDF perk was **cut** from `PLUS_PERKS` rather than built — five perks remain, all real. **Everything about billing is still unproven at runtime: WALK-19** |
 | — | Cash ember packs decoupled from the Plus flag | Build | ✅ 2026-09-05 · commit `6590834` · **caught mid-build and the build was cancelled.** Flipping `PLUS_ENABLED` armed the Shop's "Gather Embers" section + the GetEmbers sheet, which show `$1.99/$4.99/$9.99` against a **bare counter increment** — a priced surface giving its goods away. New `EMBER_PACKS_ENABLED` (false) gates it; `Shop` takes `embersForCash` defaulting to **false**. 875 tests |
 
