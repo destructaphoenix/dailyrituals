@@ -232,7 +232,18 @@ export function usePurchaseFlow({ service, platform, onComplete, onAbandon, grac
       flow={flow}
       stuck={stuck}
       platform={platform}
-      onRetry={() => { clearTimer(); setStuck(false); setFlow(null); buy(lastPlanRef.current); }}
+      // IMP-089: retry must repeat what the user actually asked for. This
+      // called buy() unconditionally, so "Try again" on the restore-empty and
+      // network cards opened Play's purchase sheet — one tap from charging
+      // someone whose only gesture was "I already paid". The mode is already
+      // tracked for dismiss(); retry simply never consulted it.
+      onRetry={() => {
+        clearTimer();
+        setStuck(false);
+        setFlow(null);
+        if (lastModeRef.current === 'restore') restore();
+        else buy(lastPlanRef.current);
+      }}
       onDismiss={dismiss}
       onComplete={() => { clearTimer(); setFlow(null); onComplete(lastEntitlement.current); }}
     />
