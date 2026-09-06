@@ -39,7 +39,7 @@ import { ManageSubscription } from './screens/PlusFlow';
 import GetEmbers from './screens/GetEmbers';
 import Toast from './screens/Toast';
 import { openExternal } from './billing/links';
-import { createPurchaseService, isBillingConfigured } from './billing';
+import { createPurchaseService, isBillingConfigured, paywallLive } from './billing';
 import { PLUS_ENABLED, EMBER_PACKS_ENABLED } from './billing/config';
 import { formatRenewDate } from './billing/format';
 import { checkEntitlement, nextPlusState, useLaunchEntitlementCheck } from './billing/entitlementSync';
@@ -85,6 +85,18 @@ const IMPORT_ERROR = {
   'unreadable': "That backup file looks damaged and can't be restored.",
 };
 const PLATFORM = Platform.OS === 'android' ? 'android' : 'ios';
+
+// IMP-084: PLUS_ENABLED says the paid surface is INTENDED; this says it can
+// actually transact. In a store build with no RevenueCat key the service falls
+// back to simService, which fakes purchases and grants Plus free — so the whole
+// paid surface hides instead. __DEV__ keeps the simulation reviewable in Expo Go,
+// which is the only place it is legitimate. The surface stands or falls as one:
+// a Restore button on a build that cannot restore is the same defect.
+const PAYWALL_LIVE = paywallLive({
+  plusEnabled: PLUS_ENABLED,
+  billingConfigured: isBillingConfigured(PLATFORM),
+  dev: __DEV__,
+});
 export default function RitualsApp({ mode = 'day', settings, setSettings, onToggleMode, initialPlus = false, initialState = {}, onResetData, onReplaceAllData, restoredFromMs = null, onDismissRestoreNotice, pendingRestore = null, onConsumePendingRestore, restoreOfferAnswered = false, onAnswerRestoreOffer, onReopenRestoreOffer }) {
   const theme = useMemo(() => makeTheme(mode, settings), [mode, settings]);
   const c = theme.colors;
@@ -544,7 +556,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   // closes. The row leaving the list and the allowance line ticking down are
   // the feedback.
   const restoreFromTrash = (dayKey) => {
-    const access = restoreAccess({ used: freeRestoresUsed, plus, plusEnabled: PLUS_ENABLED });
+    const access = restoreAccess({ used: freeRestoresUsed, plus, plusEnabled: PAYWALL_LIVE });
     if (access.kind !== 'free' && access.kind !== 'plus') return;
     const result = applyRestore({ entries, trash }, dayKey);
     if (result.entries === entries) return; // absent dayKey — spend nothing
@@ -683,8 +695,8 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
         return (
           <InsightsScreen
             copy={copy} entries={entries} streak={streak} xp={xp}
-            plus={plus} plusEnabled={PLUS_ENABLED}
-            onOpenPaywall={PLUS_ENABLED ? () => setPaywall(true) : () => {}}
+            plus={plus} plusEnabled={PAYWALL_LIVE}
+            onOpenPaywall={PAYWALL_LIVE ? () => setPaywall(true) : () => {}}
             customMoodEmoji={settings.customMoodEmoji || {}}
             onOpen={openEntry}
             frozenDays={frozenDays}
@@ -706,9 +718,9 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             streak={streak} level={level} levelName={levelName} xpInto={xpInto} xpToNext={xpToNext}
             entriesCount={entries.length} badgesEarned={badgesEarned}
             embers={embers} plus={plus} onOpenShop={() => setShopOpen(true)}
-            plusEnabled={PLUS_ENABLED} renewLabel={renewLabel}
-            onOpenPaywall={PLUS_ENABLED ? () => setPaywall(true) : () => {}}
-            onOpenManage={PLUS_ENABLED ? () => setManageOpen(true) : () => {}}
+            plusEnabled={PAYWALL_LIVE} renewLabel={renewLabel}
+            onOpenPaywall={PAYWALL_LIVE ? () => setPaywall(true) : () => {}}
+            onOpenManage={PAYWALL_LIVE ? () => setManageOpen(true) : () => {}}
             onRestorePurchases={() => doRestore()}
             onOpenAchievements={() => setShowAch(true)}
             onResetData={onResetData}
@@ -737,7 +749,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             copy={copy} mode={mode}
             streak={streak} level={level} levelName={levelName} xpInto={xpInto} xpToNext={xpToNext} entries={entries}
             quests={quests} freezes={freezes} onOpenAchievements={() => setShowAch(true)}
-            embers={embers} plus={plus} plusEnabled={PLUS_ENABLED} onOpenShop={() => setShopOpen(true)}
+            embers={embers} plus={plus} plusEnabled={PAYWALL_LIVE} onOpenShop={() => setShopOpen(true)}
             done={done} onWrite={() => setWriting(true)} onToggleMode={onToggleMode}
             dailyPrompt={promptSel.item} userName={(settings.name || '').trim()}
             pendingFreezeNotice={settings.pendingFreezeNotice || []}
@@ -745,7 +757,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             onThisDayDismissed={settings.onThisDayDismissed || ''}
             onDismissOnThisDay={() => setSettings((s) => ({ ...s, onThisDayDismissed: dayKeyOf() }))}
             onOpenOnThisDay={(e) => { setReading(e); setQuests((qs) => markRevisited(qs, e, dayKeyOf())); }}
-            onOpenPaywall={PLUS_ENABLED ? () => setPaywall(true) : () => {}}
+            onOpenPaywall={PAYWALL_LIVE ? () => setPaywall(true) : () => {}}
             recapSeen={settings.recapSeen ?? null}
             onDismissAnnualRecap={(year) => setSettings((s) => ({ ...s, recapSeen: year }))}
             onOpenAnnualRecap={(year) => setOpenRecapYear(year)}
@@ -835,7 +847,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             <TrashSheet
               trash={trash} insets={insets} onClose={() => setTrashOpen(false)}
               onRestore={restoreFromTrash} onDeleteForever={forgetFromTrash}
-              plus={plus} plusEnabled={PLUS_ENABLED} freeRestoresUsed={freeRestoresUsed}
+              plus={plus} plusEnabled={PAYWALL_LIVE} freeRestoresUsed={freeRestoresUsed}
               onOpenPaywall={() => { setTrashOpen(false); setPaywall(true); }}
             />
           </ThemeContext.Provider>
@@ -885,11 +897,11 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
               activePalette={activePalette} ownedPalettes={ownedPalettes} onApplyPalette={applyPalette} onBuyPalette={buyPalette}
               activeSky={activeSky} ownedSkies={ownedSkies} onApplySky={applySky} onBuySky={buySky}
               freezes={freezes} onBuyCandles={buyCandles}
-              plusEnabled={PLUS_ENABLED} renewLabel={renewLabel}
-              onOpenPaywall={PLUS_ENABLED ? () => setPaywall(true) : () => {}}
+              plusEnabled={PAYWALL_LIVE} renewLabel={renewLabel}
+              onOpenPaywall={PAYWALL_LIVE ? () => setPaywall(true) : () => {}}
               onGetEmbers={getEmbers}
               embersForCash={EMBER_PACKS_ENABLED}
-              onManage={PLUS_ENABLED ? () => setManageOpen(true) : () => {}}
+              onManage={PAYWALL_LIVE ? () => setManageOpen(true) : () => {}}
             />
             {toast && <Toast key={toast.key} message={toast.msg} bottom={insets.bottom} />}
           </ThemeContext.Provider>
@@ -902,14 +914,14 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
           </ThemeContext.Provider>
         </Modal>
 
-        <Modal visible={PLUS_ENABLED && paywall} animationType="slide" presentationStyle="overFullScreen" onRequestClose={() => setPaywall(false)}>
+        <Modal visible={PAYWALL_LIVE && paywall} animationType="slide" presentationStyle="overFullScreen" onRequestClose={() => setPaywall(false)}>
           <ThemeContext.Provider value={theme}>
             <Paywall insets={insets} platform={PLATFORM} service={service} alreadyPlus={plus}
               onClose={() => setPaywall(false)} onSubscribe={subscribe} onLink={openLink} />
           </ThemeContext.Provider>
         </Modal>
 
-        <Modal visible={PLUS_ENABLED && manageOpen} animationType="slide" presentationStyle="overFullScreen" onRequestClose={() => setManageOpen(false)}>
+        <Modal visible={PAYWALL_LIVE && manageOpen} animationType="slide" presentationStyle="overFullScreen" onRequestClose={() => setManageOpen(false)}>
           <ThemeContext.Provider value={theme}>
             <ManageSubscription
               insets={insets} platform={PLATFORM} plan={livePlan} canceled={subCanceled}
@@ -926,13 +938,13 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
           </ThemeContext.Provider>
         </Modal>
 
-        <Modal visible={PLUS_ENABLED && plusPerksOpen} animationType="slide" presentationStyle="overFullScreen" onRequestClose={() => setPlusPerksOpen(false)}>
+        <Modal visible={PAYWALL_LIVE && plusPerksOpen} animationType="slide" presentationStyle="overFullScreen" onRequestClose={() => setPlusPerksOpen(false)}>
           <ThemeContext.Provider value={theme}>
             <PlusPerks insets={insets} onClose={() => setPlusPerksOpen(false)} />
           </ThemeContext.Provider>
         </Modal>
 
-        <Modal visible={PLUS_ENABLED && openRecapYear != null} animationType="slide" presentationStyle="overFullScreen" onRequestClose={() => setOpenRecapYear(null)}>
+        <Modal visible={PAYWALL_LIVE && openRecapYear != null} animationType="slide" presentationStyle="overFullScreen" onRequestClose={() => setOpenRecapYear(null)}>
           <ThemeContext.Provider value={theme}>
             {openRecapYear != null && (
               <AnnualRecap

@@ -1,6 +1,10 @@
 // __tests__/scripts/checkBillingConfig.test.js — the guard that stops a build
 // shipping a paywall wired to the simulation. See scripts/check-billing-config.js.
-const { parsePlusEnabled, billingPreflight } = require('../../scripts/check-billing-config');
+const {
+  parsePlusEnabled,
+  billingPreflight,
+  easEnvironmentPreflight,
+} = require('../../scripts/check-billing-config');
 
 describe('parsePlusEnabled', () => {
   test('reads the flag from the real config source shape', () => {
@@ -46,5 +50,36 @@ describe('billingPreflight', () => {
 
   test('FAILS on a whitespace-only key', () => {
     expect(billingPreflight({ plusEnabled: true, androidKey: '   ' }).ok).toBe(false);
+  });
+});
+
+// IMP-084: the check above reads the CI RUNNER's env, which is not the machine
+// that decides sim-vs-real — EAS Build resolves app.config.js on its own servers
+// and only sees values bound through an eas.json `environment`. This one asserts
+// the lever itself exists.
+describe('easEnvironmentPreflight', () => {
+  const withEnv = (environment) => ({ build: { production: { channel: 'production', environment } } });
+
+  test('passes when the production profile binds the production environment', () => {
+    const res = easEnvironmentPreflight({ easJson: withEnv('production') });
+    expect(res.ok).toBe(true);
+  });
+
+  test('FAILS when the production profile declares no environment — the vc14 case', () => {
+    const res = easEnvironmentPreflight({ easJson: { build: { production: { channel: 'production' } } } });
+    expect(res.ok).toBe(false);
+    expect(res.reason).toMatch(/environment/);
+  });
+
+  test('FAILS when the production profile binds a different environment', () => {
+    const res = easEnvironmentPreflight({ easJson: withEnv('preview') });
+    expect(res.ok).toBe(false);
+    expect(res.reason).toMatch(/preview/);
+  });
+
+  test('FAILS naming the profile when build.production is missing entirely', () => {
+    const res = easEnvironmentPreflight({ easJson: { build: { preview: {} } } });
+    expect(res.ok).toBe(false);
+    expect(res.reason).toMatch(/production/);
   });
 });
