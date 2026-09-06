@@ -34,6 +34,41 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 
 > ## 🧭 WHAT TO TAKE RIGHT NOW (2026-09-06)
 >
+> ## 🔴 STOP — `isBillingConfigured()` HAS ALWAYS RETURNED FALSE. IMP-084's DIAGNOSIS WAS INCOMPLETE.
+>
+> **Found 2026-09-06 from the owner's device report: after vc15, the Manage Subscription option is GONE
+> from the app entirely, while Plus is still applied and the skins are still unlocked.** That is the exact
+> signature of `PAYWALL_LIVE === false`, and the cause is **not** the RevenueCat key.
+>
+> **The mechanism, verified in the toolchain source (not on a device yet):**
+> [`src/billing/index.js`](src/billing/index.js) probes for the SDK with **`require.resolve('react-native-purchases')`**.
+> - `node_modules/metro-runtime/src/polyfills/require.js` assigns `importDefault`, `importAll`, `context`,
+>   **`resolveWeak`**, `unpackModuleId`, `packModuleId` — and **never `resolve`**.
+> - `metro/src/ModuleGraph/worker/collectDependencies.js` statically rewrites `require.resolveWeak` and
+>   `require.context`; **`require.resolve` is not handled.**
+>
+> So in **any** Metro bundle that call throws `require.resolve is not a function`, the `catch` sets
+> `_rcModuleOk = false`, and **`isBillingConfigured()` returns false unconditionally — in every build this
+> app has ever shipped, regardless of the key.** Consequences, and they rewrite the record:
+> - **The RevenueCat SDK is bundled and would work** (`revenueCatService.js` statically imports it, so
+>   Metro does include it). The guard in front of it simply never says yes.
+> - **Every release build has run `simService`, not just vc14.** **vc15 does too.** IMP-084 layer A is real
+>   and its proof stands — EAS now injects the key — but **the runtime gate never consults it.**
+> - **No real purchase has ever been possible in this app**, so there is almost certainly **no Play
+>   subscription to cancel** and no real charge has occurred. Confirm in Play before trusting this.
+> - **The owner's Plus is a leftover FAKE entitlement** from a vc14 `simService` purchase, persisted
+>   locally — which is why the skins stayed unlocked while the paid surface vanished.
+> - **jest is blind to this by construction**: under jest, `require` is **node's**, where `require.resolve`
+>   works fine. 915 green tests cannot see it. Nor can the preflight, which never runs on a device.
+>
+> **⚠️ IMP-084 layer C did not cause this — it revealed it**, by refusing to show a paywall that cannot
+> transact. But it also **hid the management path from someone who believes they are a subscriber**, which
+> is its own defect and is the owner-visible symptom. **Scoped as IMP-085. Do not "fix" it by reverting
+> layer C** — that restores the giveaway.
+>
+> **Current state is inert, not dangerous:** the paywall is hidden, so nothing can be fake-bought and
+> nothing real can be sold. **Do not promote to `production`.**
+>
 > ## ✅ THE PURCHASE SIMULATION IS OFF THE TRACK — v1.0.9 / vc15 shipped 2026-09-06
 >
 > **The incident:** the owner subscribed in **AIRPLANE MODE and it succeeded** (2026-09-06, proven on a
@@ -162,6 +197,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 082 | The member surfaces stop inventing a renewal date | Build | ✅ code-complete 2026-09-06 · **branch-only, never pushed** · `formatRenewDate` returns **`null`** instead of the `12 Jun 2026` mock on both the missing and the unparseable branch; `PlusBanner` gained a `renewLabel` prop and says the bare word **`Member`** without one; Manage and Cancel drop their "until …" clauses. `RENEW_DATE` **stays in `data.js`** for the dev panel + fixtures, now commented as never-a-fallback · pure JS, no bump · ✅ **SHIPPED BY OTA 2026-09-06** (update group `ac5c4189-736c-44f0-96ae-6ceea4fe4712`) — reaches **vc14 `internal` installs only** · walk = **step 5 of WALK-19**, needs a device + license tester |
 | 083 | Cancel goes to the subscription, not to a list | Build | ✅ code-complete 2026-09-06 · **branch-only, never pushed** · new pure `manageUrl({platform, productId, packageName})` in `links.js` builds `?sku=&package=`; `openExternal` takes an optional third `opts`; `PACKAGE_NAME` reads `expoConfig.android.package`; `toEntitlement` + `simService` now carry `productId`. Missing either value **degrades to today's generic URL**, never a 404 · pure JS, no bump · ✅ **SHIPPED BY OTA 2026-09-06** (same update group) · ⚠️ **the `plus_annual:annual` → `plus_annual` strip is unproven against a real Play id** · walk = **step 10 of WALK-19** |
 | **084** | **The release build stops shipping the purchase simulation** | **Build** | ✅ code-complete + **SHIPPED 2026-09-06** · commit `da77a7d` · three layers: all three `eas.json` profiles bind an `environment`, `easEnvironmentPreflight` fails CI when `build.production.environment` is absent or wrong, and `paywallLive({plusEnabled, billingConfigured, dev})` gates the paid surface (all 16 `PLUS_ENABLED` uses in `RitualsApp.js` → `PAYWALL_LIVE`; `config.js` unchanged) · ✅ **layer C by OTA** (group `90aa2074-…`, runtime 1.0.8) then ✅ **layers A+B in v1.0.9 / vc15 → `internal`** (`980cdad`) · **branch still never pushed** · ⚠️ **UNWALKED — WALK-19 step 0(c): airplane mode, the purchase must FAIL** |
+| **085** | **The SDK probe that has always said no** | **Build** | 🔴 ⬜ **OPEN — top of the queue.** `require.resolve` is not implemented by Metro's runtime and not rewritten by its transformer, so `isBillingConfigured()` has returned **false in every build ever shipped** and every release has run `simService`. IMP-084 layer A is correct and proven, but the runtime gate never reads the key. Also carries the owner-visible half: **a subscriber must never lose the route to cancel.** Spec in [`docs/specs-open.md`](docs/specs-open.md) |
 | — | **Plus is ON** (`PLUS_ENABLED = true`) | Build | ⚠️ **the FLAG is on; the BUILD cannot take money — see 🔴 IMP-084 (2026-09-06).** `PLUS_ENABLED = true` shipped, but vc14 has no RevenueCat key and runs `simService`, so **10b.3 is NOT closed** and the "all real" claim below covers the perks, not the payments · ✅ 2026-09-05 · commit `7d2e515` · **branch-only, never pushed** · ~~playbook 10b.2/10b.3/10b.4 all closed~~; 10b.5 in flight. The dead PDF perk was **cut** from `PLUS_PERKS` rather than built — five perks remain, all real. **Everything about billing is still unproven at runtime: WALK-19** |
 | — | Cash ember packs decoupled from the Plus flag | Build | ✅ 2026-09-05 · commit `6590834` · **caught mid-build and the build was cancelled.** Flipping `PLUS_ENABLED` armed the Shop's "Gather Embers" section + the GetEmbers sheet, which show `$1.99/$4.99/$9.99` against a **bare counter increment** — a priced surface giving its goods away. New `EMBER_PACKS_ENABLED` (false) gates it; `Shop` takes `embersForCash` defaulting to **false**. 875 tests |
 
