@@ -5057,3 +5057,121 @@ per the branch rule; the OTA lane is open onto `internal` only._
 
 ---
 
+---
+
+### IMP-085 — the SDK probe that has always said no (2026-09-06)
+
+### IMP-085 — `isBillingConfigured()` must be able to return true   ·   Lane: OTA (pure JS)   ·   Status: ✅ code-complete (2026-09-06)
+
+- ✅ **LANDED 2026-09-06, commit `2672bf2`.** It supersedes the "vc14 had no key" story as the primary cause.
+
+- **Goal:** the app can actually detect the RevenueCat SDK, so a build carrying a key transacts for real —
+  and a person who already has Plus can always reach the cancel route, whatever the gate says.
+
+- **Why / context — verified in the toolchain source 2026-09-06, and it rewrites IMP-084's record.**
+  `src/billing/index.js` probes with `require.resolve('react-native-purchases')` inside a try/catch.
+  **Metro does not implement it:** `metro-runtime/src/polyfills/require.js` assigns `resolveWeak` but never
+  `resolve`, and `metro/src/ModuleGraph/worker/collectDependencies.js` rewrites `require.resolveWeak` and
+  `require.context` but not `require.resolve`. The call therefore throws in every Metro bundle, the catch
+  swallows it, and **`isBillingConfigured()` has returned `false` in every build this app has ever
+  shipped.** Every release has run `simService`. **vc15 does too** — IMP-084 layer A really does inject the
+  key now (proven in its build log) but nothing reads it.
+  - **The SDK is bundled and would work.** `revenueCatService.js` does a static
+    `import Purchases from 'react-native-purchases'`, which Metro *does* collect. Only the probe is broken.
+  - **jest cannot see this**: under jest `require` is node's, where `require.resolve` works. 915 green.
+  - **The owner-visible symptom** (2026-09-06, on device): Manage Subscription vanished from the app while
+    Plus stayed applied and the skins stayed unlocked — `PAYWALL_LIVE === false` with a stale local `plus`.
+
+- **Files likely touched:** `src/billing/index.js`, `src/RitualsApp.js`, `src/screens/PlusFlow.js`, tests.
+
+- **Approach (decided by Opus — do not re-litigate).**
+
+  **A — probe by loading, not by resolving.** A static `require` is collected by Metro; the presence of a
+  working native module is proven by the shape of what comes back, not by whether a path resolves.
+  Add a pure exported `billingModuleOk(mod)` returning true only when
+  `mod && typeof mod.configure === 'function'` (RevenueCat's own entry point), then:
+
+  ```js
+  let _rcModule = null;
+  try {
+    // Static require: Metro collects this. require.resolve does NOT exist in a
+    // Metro bundle (IMP-085) and threw here in every build ever shipped.
+    const m = require('react-native-purchases');
+    _rcModule = (m && m.default) || m;
+  } catch (e) {
+    _rcModule = null; // Expo Go / no native module linked
+  }
+  const _rcModuleOk = billingModuleOk(_rcModule);
+  ```
+
+  **B — a subscriber never loses the route to cancel.** This is the same "never assert what you cannot
+  back" rule read from the other side: hiding the *management* path from someone who believes they are a
+  subscriber is worse than hiding the paywall. **Gate Manage on entitlement, not on saleability.** Where
+  `RitualsApp.js` currently passes `onOpenManage={PAYWALL_LIVE ? … : () => {}}` and
+  `onManage={PAYWALL_LIVE ? … : () => {}}`, the condition becomes **`plus`**. When `plus && !PAYWALL_LIVE`,
+  **do not open the in-app sheet** (it would render numbers billing cannot back) — call
+  `openExternal(manageUrl({ … }))` so the person lands in Play's own subscription screen, which is the one
+  place the truth lives. `visible={PAYWALL_LIVE && manageOpen}` becomes `visible={manageOpen}`, since the
+  sheet is now only ever opened on a path that already checked. **Every other `PAYWALL_LIVE` use in that
+  file stays exactly as IMP-084 left it** — the paywall, the Restore button and the perk modals still hide.
+
+- **TDD:** RED-first on `billingModuleOk`, and on the source assertion in A.
+
+- **Steps:**
+  - [x] 1. **RED** — `billingModuleOk`: a module exposing `configure` ⇒ true; `{}` ⇒ false; `null` ⇒ false;
+        `undefined` ⇒ false; a module whose `configure` is not a function ⇒ false.
+  - [x] 2. Implement `billingModuleOk`, export it, and rewire `_rcModuleOk` per A.
+  - [x] 3. **RED** — a source assertion that `src/billing/index.js` contains **no `require.resolve`**. That
+        one string is the whole defect and nothing else in the suite can catch its return.
+  - [x] 4. Rewire the Manage route per B, including the `plus && !PAYWALL_LIVE` external fallback.
+  - [x] 5. Tests for B: with `plus` true and the gate false, the Manage handler is **not** a no-op and the
+        in-app sheet is **not** opened; with `plus` false the entry point stays hidden.
+  - [x] 6. `npm test` green (≥ **915**). 7. `npx expo export --platform android` clean.
+
+- **Tests:** the five `billingModuleOk` cases, the `require.resolve` source assertion, and the two Manage
+  routing cases.
+
+- **Commit:** `fix(billing): the SDK probe stops answering no in every build`
+
+- **Acceptance — RUNTIME ONLY, and it is the whole point of this spec.** No test can close it.
+  **WALK-19 step 0(c) inverted:** on a build carrying this fix and a key, the paywall must be **VISIBLE**,
+  a purchase in airplane mode must **FAIL**, and a purchase online must appear **in Play's subscription
+  list**. Until that runs, treat billing as unproven — that has been true of every build to date.
+
+- ⚠️ **Do not fix this by reverting IMP-084 layer C.** Layer C did not cause the outage; it revealed it,
+  and reverting restores the free-Plus giveaway.
+
+- ⚠️ **Open question for the owner, not for the build chat:** the owner's current Plus is a **stale fake
+  entitlement** written by `simService`. Once billing is real, that local flag will disagree with
+  RevenueCat. Whether to clear it on first real launch is a product decision and is **not** in this spec.
+
+---
+
+  **Outcome (2026-09-06, commit `2672bf2`).** Both halves landed as specified.
+  **A —** `billingModuleOk(mod)` is pure and exported (`Boolean(mod) && typeof mod.configure === 'function'`);
+  `_rcModule` comes from a plain static `require('react-native-purchases')` in a try/catch, unwrapping
+  `.default`. Two source assertions pin it: no **code** line may call `require.resolve` (comments naming
+  the defect are allowed, and one does), and the file must contain the static require.
+  **B —** `openManage()` in `RitualsApp.js` opens the in-app sheet when `PAYWALL_LIVE` and otherwise calls
+  `openExternal('manage', PLATFORM, manageOpts())`; `onOpenManage`/`onManage` are gated on **`plus`**;
+  `visible={PAYWALL_LIVE && manageOpen}` became `visible={manageOpen}`.
+
+  ⚠️ **One thing the spec did not anticipate, and it was the actual cause of the owner's symptom.**
+  Changing the handlers was **not sufficient**: `PlusBanner` — which *is* the Manage route — was rendered
+  behind `{plusEnabled && …}` in **both** `YouScreen.js` (line ~114) and `Shop.js` (line ~76), so the whole
+  affordance was unmounted before any handler could matter. Both gates became `{(plusEnabled || plus) && …}`.
+  The spec's Step 4 named only `RitualsApp.js`; the fix needed two more files to meet the spec's own stated
+  goal. **Recorded rather than quietly widened.**
+
+  **Proof:** `npm test` → **926 passed / 91 suites** (from 915/90 — one new file
+  `__tests__/screens/manageRouteSurvives.test.js`, seven cases appended to
+  `__tests__/billing/paywallLive.test.js`), both zone suites green, `npx expo export --platform android`
+  clean. **The two render-gate tests were verified to FAIL against the pre-fix gate** — reverted by hand,
+  re-run, one red, restored — because a test that passes either way would have been worthless here.
+
+  ⚠️ **Acceptance is RUNTIME and it has NOT run.** No test can close this: under jest `require` is node's,
+  and the suite runs `simService` regardless. **WALK-19 step 0(c), inverted:** on a build carrying this
+  fix, the paywall must be **VISIBLE**, an airplane-mode purchase must **FAIL**, and an online purchase
+  must appear **in Play's subscription list**. Until that runs, billing remains unproven — which has been
+  true of every build this app has ever shipped.
+
