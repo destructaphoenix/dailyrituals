@@ -83,3 +83,50 @@ describe('easEnvironmentPreflight', () => {
     expect(res.reason).toMatch(/production/);
   });
 });
+
+// IMP-086 — the third machine. easEnvironmentPreflight guards `eas build` via
+// eas.json; nothing guarded `eas update`. An update evaluates app.config.js on
+// whatever machine runs it, so without --environment the key resolves to '' and
+// the published manifest OVERWRITES the key the installed build embedded. The
+// IMP-085 OTA (group d5f03a47) shipped that way and turned billing off on vc15.
+describe('otaEnvironmentPreflight', () => {
+  const { otaEnvironmentPreflight, WORKFLOW_FILE } = require('../../scripts/check-billing-config.js');
+  const fs = require('fs');
+  const path = require('path');
+
+  test('fails on the command that actually shipped the empty key', () => {
+    const res = otaEnvironmentPreflight({
+      workflow: '          eas update --branch production --message "$MSG" --non-interactive',
+    });
+    expect(res.ok).toBe(false);
+    expect(res.reason).toMatch(/--environment production/);
+  });
+
+  test('passes once the flag is present', () => {
+    expect(otaEnvironmentPreflight({
+      workflow: '          eas update --branch production --environment production --message "$MSG"',
+    }).ok).toBe(true);
+  });
+
+  test('fails when no eas update command is found — renamed, not absolved', () => {
+    expect(otaEnvironmentPreflight({ workflow: 'name: Release\n' }).ok).toBe(false);
+  });
+
+  test('a commented-out example cannot satisfy or break the check', () => {
+    expect(otaEnvironmentPreflight({
+      workflow: '      # eas update --branch production\n      eas update --branch production --environment production',
+    }).ok).toBe(true);
+    expect(otaEnvironmentPreflight({ workflow: '      # eas update --branch production\n' }).ok).toBe(false);
+  });
+
+  test('every eas update line must carry it, not just the first', () => {
+    expect(otaEnvironmentPreflight({
+      workflow: 'eas update --branch production --environment production\neas update --branch preview',
+    }).ok).toBe(false);
+  });
+
+  test('the real workflow on disk passes', () => {
+    const workflow = fs.readFileSync(path.resolve(__dirname, '..', '..', WORKFLOW_FILE), 'utf8');
+    expect(otaEnvironmentPreflight({ workflow }).ok).toBe(true);
+  });
+});

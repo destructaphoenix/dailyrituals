@@ -255,7 +255,7 @@ Guardrails: a commit tagged `ota` that touched native files is auto-rejected by 
 ### Ship lane — which fix ships how (decide per task)
 | What changed | Lane | Command | Play review? |
 | --- | --- | --- | --- |
-| JS / UI / copy / logic / JS assets only | **OTA** | `eas update --branch production --message "…"` | ❌ **never** — OTA does not touch Play at all (minutes) |
+| JS / UI / copy / logic / JS assets only | **OTA** | `eas update --branch production --environment production --message "…"` | ❌ **never** — OTA does not touch Play at all (minutes) |
 | Native dep, permission, SDK/target, icon/splash, `app.config` native field, version bump | **Full build** | bump `android.versionCode` → `eas build -p android` → auto-submit to `internal` | 🟡 normally skipped on `internal`; ✅ required when promoted to production |
 
 - OTA only reaches builds **≥ versionCode 5**. The v4 build in review can't receive it — so the **first full build we push for improvements (versionCode 5) is what turns the OTA lane on** for everything after.
@@ -291,6 +291,16 @@ review any release. Treat "no review" as "usually none, and far faster", not as 
 - **Native change → bump `version`** (`npm run bump:native`) so OTA is scoped to compatible builds; **pure-JS fix keeps the same `version`** (`versionCode` still bumps every upload). This is the manual replacement for the lost fingerprint auto-guard.
 - **First OTA-capable build = versionCode 5 / version 1.0.0** (v4 predates `expo-updates`). v5 is the OTA baseline.
 - Channels = branches: production builds listen on channel `production`; `eas update --branch production` serves them.
+- **`--environment production` is mandatory on every `eas update`** (IMP-086, 2026-09-06). `eas update`
+  evaluates `app.config.js` on **whatever machine runs it** — your laptop or the CI runner — and an
+  `eas.json` profile `environment` binds the **build** lane only. Without the flag `process.env
+  .RC_ANDROID_KEY` is undefined, the manifest publishes `extra.rcAndroidKey: ""`, and that update
+  **overwrites the key the installed build embedded** — billing goes off on every device that takes it.
+  The IMP-085 update (group `d5f03a47`) did exactly that to vc15. Read it back before trusting an OTA:
+  `curl -sS -H 'expo-platform: android' -H 'expo-runtime-version: <ver>' -H 'expo-channel-name: production'
+  -H 'expo-protocol-version: 1' -H 'accept: multipart/mixed' https://u.expo.dev/<projectId> | grep -o
+  'rcAndroidKey":"[^"]*"'` — it must not be empty. `scripts/check-billing-config.js` guards the workflow
+  copy of the command; **it cannot guard what you type by hand.**
 
 _(Older manual `eas` lane reference is in [build-log.md](build-log.md) → "Update workflow".)_
 
@@ -411,7 +421,7 @@ chat that executes it.
   - [ ] 3. `npm test` green (must stay ≥ prior count)
 - **Commit:** `<type>: <message>`
 - **Acceptance:** <how to confirm it works at runtime>
-- **Ship after merge:** OTA `eas update --branch production` | hold for next full build
+- **Ship after merge:** OTA `eas update --branch production --environment production` | hold for next full build
 ```
 
 

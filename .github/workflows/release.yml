@@ -71,10 +71,25 @@ jobs:
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
+      # IMP-086: the OTA lane strips RC_ANDROID_KEY without --environment. See
+      # otaEnvironmentPreflight in scripts/check-billing-config.js — this step is
+      # what fails CI if the flag is ever dropped from the command below.
+      - name: Billing preflight
+        env:
+          RC_ANDROID_KEY: ${{ secrets.RC_ANDROID_KEY }}
+        run: node scripts/check-billing-config.js
+      # --environment production is LOAD-BEARING, not decoration. `eas update`
+      # evaluates app.config.js on THIS runner, so without it process.env
+      # .RC_ANDROID_KEY is undefined, extra.rcAndroidKey publishes as '', and the
+      # update overwrites the key that the installed build embedded — turning
+      # billing off on every device that takes the OTA. That is exactly how the
+      # 2026-09-06 IMP-085 update (group d5f03a47) shipped: manifest read back
+      # with rcAndroidKey:"". eas.json's profile `environment` binds the BUILD
+      # lane only; it does nothing for updates.
       - name: Publish OTA
         run: |
           MSG=$(git log -1 --pretty=%s)
-          eas update --branch production --message "$MSG" --non-interactive
+          eas update --branch production --environment production --message "$MSG" --non-interactive
 
   build:
     needs: classify

@@ -125,3 +125,45 @@ describe('src/billing/index.js does not probe with require.resolve', () => {
     expect(source).toMatch(/require\('react-native-purchases'\)/);
   });
 });
+
+// IMP-086 — the screen the IMP-084 audit did not read.
+//
+// Onboarding mounts the trial teaser and the full Paywall, and it gated all
+// three on the bare PLUS_ENABLED flag. In a build that cannot transact its
+// createPurchaseService falls back to simService, which returns
+// {kind:'success'} after 1500ms, grants Plus free, and persists it — the vc14
+// giveaway, still reachable on first run. jest renders with __DEV__ true, so
+// the gate is legitimately true here and only a source assertion can see this.
+describe('Onboarding.js wires the gate, not the flag', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const source = fs.readFileSync(
+    path.join(__dirname, '..', '..', 'src', 'screens', 'Onboarding.js'), 'utf8');
+
+  test('no mount is gated on the bare PLUS_ENABLED flag', () => {
+    expect(source).not.toMatch(/\{\s*PLUS_ENABLED\s*&&/);
+    expect(source).not.toMatch(/\{\s*PLUS_ENABLED\s*\?/);
+    expect(source).not.toMatch(/=\{\s*PLUS_ENABLED\s*\}/);
+  });
+
+  test('PLUS_ENABLED survives only as the input to OB_PAYWALL_LIVE', () => {
+    const uses = source.split('\n').filter(
+      (l) => /\bPLUS_ENABLED\b/.test(l) && !l.trim().startsWith('//')
+    );
+    expect(uses).toEqual([
+      "import { PLUS_ENABLED } from '../billing/config';",
+      '  plusEnabled: PLUS_ENABLED,',
+    ]);
+  });
+
+  test('the gate is the same expression RitualsApp uses', () => {
+    expect(source).toMatch(/const OB_PAYWALL_LIVE = paywallLive\(\{/);
+    expect(source).toMatch(/billingConfigured: isBillingConfigured\(OB_PLATFORM\)/);
+    expect(source).toMatch(/dev: __DEV__/);
+  });
+
+  test('all three onboarding paid mounts read the gate', () => {
+    const gated = source.split('\n').filter((l) => /OB_PAYWALL_LIVE/.test(l) && /&&|\?/.test(l));
+    expect(gated).toHaveLength(3);
+  });
+});

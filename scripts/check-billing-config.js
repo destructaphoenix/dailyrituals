@@ -26,6 +26,7 @@ const PLAY_KEY_PREFIX = 'goog_';
 const EAS_FILE = 'eas.json';
 const BUILD_PROFILE = 'production';
 const BUILD_ENVIRONMENT = 'production';
+const WORKFLOW_FILE = path.join('.github', 'workflows', 'release.yml');
 
 // Reads the flag out of the config source. Regex rather than import because the
 // module pulls in expo-constants, which has no meaning in a bare node process.
@@ -96,18 +97,63 @@ function easEnvironmentPreflight({ easJson }) {
   return { ok: true, reason: `eas.json binds build.${BUILD_PROFILE} to the "${BUILD_ENVIRONMENT}" environment.` };
 }
 
+// IMP-086 — the third machine. Pure decision, exported for tests.
+//
+// easEnvironmentPreflight above guards the BUILD lane, and it worked: vc15's log
+// confirms EAS injected RC_ANDROID_KEY. But an eas.json profile `environment`
+// binds nothing for `eas update`, which evaluates app.config.js on whatever
+// machine runs it. Without an explicit --environment flag that machine has no
+// RC_ANDROID_KEY, extra.rcAndroidKey publishes as '', and the update OVERWRITES
+// the key the installed build embedded — billing goes off on every device that
+// takes it. The 2026-09-06 IMP-085 update shipped exactly that: group
+// d5f03a47, manifest read back with rcAndroidKey:"". The published update is
+// unreadable from here, so what this asserts is the command that produces it.
+function otaEnvironmentPreflight({ workflow }) {
+  const lines = String(workflow || '')
+    .split('\n')
+    .filter((l) => /\beas\s+update\b/.test(l) && !l.trim().startsWith('#'));
+  if (lines.length === 0) {
+    return {
+      ok: false,
+      reason:
+        `No "eas update" command found in ${WORKFLOW_FILE}. The OTA lane is what ships pure-JS ` +
+        'fixes; refusing to guess that it is gone rather than renamed.',
+    };
+  }
+  const naked = lines.filter((l) => !new RegExp(`--environment\\s+${BUILD_ENVIRONMENT}\\b`).test(l));
+  if (naked.length > 0) {
+    return {
+      ok: false,
+      reason:
+        `${WORKFLOW_FILE} runs "eas update" without --environment ${BUILD_ENVIRONMENT}:\n` +
+        naked.map((l) => `  ${l.trim()}`).join('\n') + '\n' +
+        'app.config.js is evaluated on the runner, so RC_ANDROID_KEY resolves to \'\' and the ' +
+        'published manifest carries extra.rcAndroidKey "". That update then OVERWRITES the key ' +
+        'embedded in the installed build and turns billing OFF on every device that takes it — ' +
+        'which is how the IMP-085 update (group d5f03a47) shipped on 2026-09-06.',
+    };
+  }
+  return { ok: true, reason: `${WORKFLOW_FILE} publishes OTAs with --environment ${BUILD_ENVIRONMENT}.` };
+}
+
 function main() {
   const file = path.resolve(__dirname, '..', CONFIG_FILE);
   const plusEnabled = parsePlusEnabled(fs.readFileSync(file, 'utf8'));
   const easJson = JSON.parse(fs.readFileSync(path.resolve(__dirname, '..', EAS_FILE), 'utf8'));
+  const workflow = fs.readFileSync(path.resolve(__dirname, '..', WORKFLOW_FILE), 'utf8');
 
-  // Both must pass: the runner check and the binding check guard different
-  // machines, and vc14 proved the first one alone is not enough.
+  // All three must pass: they guard three different machines — the CI runner,
+  // EAS's build servers, and whatever evaluates app.config.js for an update.
+  // vc14 proved the first alone is not enough; the IMP-085 OTA proved the first
+  // two are not either.
   const results = [
     billingPreflight({ plusEnabled, androidKey: process.env.RC_ANDROID_KEY }),
     plusEnabled
       ? easEnvironmentPreflight({ easJson })
       : { ok: true, reason: 'PLUS_ENABLED is false — no purchase surface ships. Nothing to bind.' },
+    plusEnabled
+      ? otaEnvironmentPreflight({ workflow })
+      : { ok: true, reason: 'PLUS_ENABLED is false — no purchase surface ships. Nothing to strip.' },
   ];
 
   const failed = results.filter((r) => !r.ok);
@@ -127,8 +173,10 @@ module.exports = {
   parsePlusEnabled,
   billingPreflight,
   easEnvironmentPreflight,
+  otaEnvironmentPreflight,
   CONFIG_FILE,
   EAS_FILE,
+  WORKFLOW_FILE,
   PLAY_KEY_PREFIX,
   BUILD_PROFILE,
   BUILD_ENVIRONMENT,

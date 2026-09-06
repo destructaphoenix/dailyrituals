@@ -15,7 +15,7 @@ import { Pencil, Check, Chevron, Sun } from '../icons';
 import { BigSun, BigMoon } from '../art';
 import { PLUS_PERKS } from '../data';
 import Paywall from './Paywall';
-import { createPurchaseService } from '../billing';
+import { createPurchaseService, isBillingConfigured, paywallLive } from '../billing';
 import { PLUS_ENABLED } from '../billing/config';
 
 const INTRO = [
@@ -30,6 +30,19 @@ const TIMES = ['8:30 PM', '10:00 PM', '11:30 PM', 'Next morning'];
 const PERKS = PLUS_PERKS.slice(0, 3);
 
 const OB_PLATFORM = Platform.OS === 'android' ? 'android' : 'ios';
+
+// IMP-086: onboarding is a paid surface too, and IMP-084's gate never reached it.
+// These three mounts read the bare PLUS_ENABLED flag — INTENT — so the trial
+// teaser and the full Paywall opened in a build that cannot transact, where
+// createPurchaseService falls back to simService: a fake successful purchase
+// that grants Plus free and persists. That is the vc14 giveaway surviving in the
+// one screen the IMP-084 audit did not read. Same expression as RitualsApp's
+// PAYWALL_LIVE, and it must stay the same expression.
+const OB_PAYWALL_LIVE = paywallLive({
+  plusEnabled: PLUS_ENABLED,
+  billingConfigured: isBillingConfigured(OB_PLATFORM),
+  dev: __DEV__,
+});
 
 // ── Entry: provides a Day-mode theme + safe area, runs the step machine ──────
 // onDone(plus) — `plus` is true when the user subscribed during onboarding.
@@ -48,10 +61,10 @@ export default function Onboarding({ settings, setSettings, onDone }) {
     <ThemeContext.Provider value={theme}>
       <View style={{ flex: 1, backgroundColor: theme.colors.cream, paddingTop: insets.top }}>
         {step === 'intro' && <IntroSwipe onDone={() => setStep('personalize')} onSkip={() => setStep('personalize')} insets={insets} />}
-        {step === 'personalize' && <Personalize settings={settings} setSettings={setSettings} onDone={PLUS_ENABLED ? () => setStep('premium') : () => onDone(false)} onBack={() => setStep('intro')} insets={insets} />}
-        {PLUS_ENABLED && step === 'premium' && <Premium onOpenPaywall={() => setPayOpen(true)} onSkip={() => onDone(false)} onBack={() => setStep('personalize')} insets={insets} />}
+        {step === 'personalize' && <Personalize settings={settings} setSettings={setSettings} onDone={OB_PAYWALL_LIVE ? () => setStep('premium') : () => onDone(false)} onBack={() => setStep('intro')} insets={insets} />}
+        {OB_PAYWALL_LIVE && step === 'premium' && <Premium onOpenPaywall={() => setPayOpen(true)} onSkip={() => onDone(false)} onBack={() => setStep('personalize')} insets={insets} />}
 
-        {PLUS_ENABLED && payOpen && (
+        {OB_PAYWALL_LIVE && payOpen && (
           <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 20, backgroundColor: theme.colors.cream }}>
             <Paywall insets={insets} platform={OB_PLATFORM} service={service}
               onClose={() => setPayOpen(false)}
