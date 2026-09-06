@@ -13,7 +13,7 @@
 import { renderHook, act, waitFor } from '@testing-library/react-native';
 import { AppState } from 'react-native';
 import {
-  stuckCopy, PENDING_GRACE_MS, graceSpent, usePurchaseFlow,
+  stuckCopy, PENDING_GRACE_MS, graceSpent, resultCopy, usePurchaseFlow,
 } from '../../src/screens/PlusFlow';
 
 describe('stuckCopy', () => {
@@ -239,5 +239,45 @@ describe('the escape survives a backgrounded app — IMP-091', () => {
       spy.mockRestore();
       jest.useRealTimers();
     }
+  });
+});
+
+// ── IMP-092 — the restore card must not talk about a purchase ────────────────
+describe('resultCopy — IMP-092', () => {
+  test('a failed RESTORE says we could not check, not that a purchase failed', () => {
+    const { title, body } = resultCopy('failed', 'restore');
+    expect(title).toBe("We couldn't check.");
+    expect(body).toMatch(/nothing has changed/i);
+    expect(body).not.toMatch(/charged|purchase/i);
+  });
+
+  test('a failed BUY keeps the purchase copy — it is the one that was charged-adjacent', () => {
+    const { title, body } = resultCopy('failed', 'buy');
+    expect(title).toBe("That didn't go through.");
+    expect(body).toMatch(/weren't charged/i);
+  });
+
+  test('a failed restore never claims the account has no subscription', () => {
+    const { title, body } = resultCopy('failed', 'restore');
+    expect(`${title} ${body}`).not.toMatch(/couldn't find|no subscription|nothing to restore/i);
+  });
+
+  test('every other kind is untouched by the mode', () => {
+    ['success', 'owned', 'restored', 'network', 'restore-empty'].forEach((kind) => {
+      expect(resultCopy(kind, 'restore')).toEqual(resultCopy(kind, 'buy'));
+    });
+  });
+
+  test('an unknown kind still falls back to the failed card', () => {
+    expect(resultCopy('nonsense', 'buy').title).toBe("That didn't go through.");
+  });
+
+  test('the result phase carries the mode the overlay needs', async () => {
+    const svc = { buy: jest.fn(), restore: jest.fn(async () => ({ kind: 'failed' })) };
+    const { result } = renderHook(() => usePurchaseFlow({ service: svc, onComplete: jest.fn() }));
+    act(() => { result.current.restore(); });
+    await waitFor(() => expect(result.current.flow).toMatchObject({
+      phase: 'result', kind: 'failed', mode: 'restore',
+    }));
   });
 });

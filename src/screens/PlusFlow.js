@@ -100,6 +100,21 @@ const RESULT_META = {
   'restore-empty': { tone: 'bad', title: 'Nothing to restore.', body: "We couldn't find a subscription on this account. If you believe this is a mistake, contact support.", primary: 'Try again', secondary: 'Close', dismissTo: 'paywall' },
 };
 
+// Pure — IMP-092. `failed` is the only card whose copy is purchase-shaped, and
+// restore() can now legitimately return it: an unrecognised error is no longer
+// relabelled "Nothing to restore." A restore never charges anyone, so "you
+// weren't charged" is both irrelevant and quietly alarming on that path — and
+// the card must say what actually happened, which is that we could not check.
+export function resultCopy(kind, mode) {
+  const meta = RESULT_META[kind] || RESULT_META.failed;
+  if (kind !== 'failed' || mode !== 'restore') return meta;
+  return {
+    ...meta,
+    title: "We couldn't check.",
+    body: 'Something stopped us reaching the store. Nothing has changed — try again in a moment.',
+  };
+}
+
 function ResultIcon({ kind, c }) {
   if (kind === 'network') return <NoSignal size={30} color={c.accentDeep} />;
   if (kind === 'failed' || kind === 'restore-empty') return <Alert size={30} color={c.accentDeep} />;
@@ -180,7 +195,7 @@ export function PurchaseOverlay({ flow, stuck, platform, onRetry, onDismiss, onC
     );
   }
 
-  const meta = RESULT_META[flow.kind] || RESULT_META.failed;
+  const meta = resultCopy(flow.kind, flow.mode);
   const good = meta.tone === 'good';
   return (
     <View style={scrim}>
@@ -254,7 +269,9 @@ export function usePurchaseFlow({ service, platform, onComplete, onAbandon, grac
     setStuck(false);
     lastEntitlement.current = res.entitlement || null;
     if (res.kind === 'cancel') { setFlow(null); return; }
-    setFlow({ phase: 'result', kind: res.kind });
+    // `mode` rides along into the result phase — resultCopy needs to know a
+    // `failed` card came from a restore, not a purchase (IMP-092).
+    setFlow({ phase: 'result', kind: res.kind, mode });
   };
 
   // Leaving a stuck flow asserts nothing about the purchase, so the app has to

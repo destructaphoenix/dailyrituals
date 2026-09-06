@@ -136,3 +136,49 @@ describe('getPrices carries the trial — IMP-090', () => {
     expect(await createRevenueCatService().getPrices()).toEqual({});
   });
 });
+
+// ── IMP-092 — "Nothing to restore" is also what a failed check says ──────────
+// WALK-19, 2026-09-06. Every error this did not recognise became `restore-empty`
+// — the one kind that makes a positive claim about the user's account. The
+// person most likely to tap Restore is a real subscriber on a new phone, and
+// "We couldn't find a subscription on this account" points them at support.
+describe('restore does not relabel a failed check — IMP-092', () => {
+  const svc = () => createRevenueCatService();
+  const info = (ent) => ({ entitlements: { active: ent ? { plus: ent } : {} } });
+
+  test('an unrecognised error is `failed` — we could not check', async () => {
+    Purchases.restorePurchases.mockRejectedValue({ code: 'STORE_PROBLEM_ERROR' });
+    expect(await svc().restore()).toEqual({ kind: 'failed' });
+  });
+
+  test('an error with no code at all is still `failed`', async () => {
+    Purchases.restorePurchases.mockRejectedValue(new Error('boom'));
+    expect(await svc().restore()).toEqual({ kind: 'failed' });
+  });
+
+  test('only a SUCCESSFUL call that finds nothing says restore-empty', async () => {
+    Purchases.restorePurchases.mockResolvedValue(info(null));
+    expect(await svc().restore()).toEqual({ kind: 'restore-empty' });
+  });
+
+  test('the network and owned branches are unchanged', async () => {
+    Purchases.restorePurchases.mockRejectedValue({ code: 'NETWORK_ERROR' });
+    expect((await svc().restore()).kind).toBe('network');
+    Purchases.restorePurchases.mockRejectedValue({ code: 'PRODUCT_ALREADY_PURCHASED_ERROR' });
+    expect((await svc().restore()).kind).toBe('restored');
+  });
+
+  test('a real entitlement still restores', async () => {
+    Purchases.restorePurchases.mockResolvedValue(info({
+      productIdentifier: 'plus_annual:annual', expirationDate: '2027-03-03T00:00:00.000Z',
+    }));
+    const res = await svc().restore();
+    expect(res.kind).toBe('restored');
+    expect(res.entitlement.plan).toBe('annual');
+  });
+
+  test('a cancelled restore is not reported as an empty account either', async () => {
+    Purchases.restorePurchases.mockRejectedValue({ userCancelled: true });
+    expect((await svc().restore()).kind).not.toBe('restore-empty');
+  });
+});

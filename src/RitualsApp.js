@@ -345,8 +345,15 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
       setPlus(true);
       if (res.entitlement) { setLiveEntitlement(res.entitlement); setActivePlan(res.entitlement.plan); setSubCanceled(res.entitlement.willRenew === false); }
       showToast('Your subscription is active');
-    } else {
+    } else if (res.kind === 'restore-empty') {
       showToast('Nothing to restore');
+    } else {
+      // IMP-092, second call site. restore() no longer relabels an unrecognised
+      // error as `restore-empty`, but this toast still collapsed everything that
+      // was not a success into "Nothing to restore" — the same sentence meaning
+      // both "we checked" and "we could not check", on the surface a subscriber
+      // on a new phone is most likely to use.
+      showToast("Couldn't reach the store");
     }
   };
 

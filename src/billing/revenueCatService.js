@@ -120,12 +120,24 @@ export function createRevenueCatService() {
     },
     async restore() {
       try {
+        // ⚠️ KNOWN LIMIT (IMP-092, recorded on WALK-19): in airplane mode this
+        // call RESOLVES rather than rejecting — RevenueCat answers from its own
+        // local cache — so `restore-empty` is reachable offline for a genuine
+        // subscriber whose cache is cold. That is SDK behaviour, not ours, and
+        // the catch below cannot see it. Fixing it needs a reachability signal.
         const customerInfo = await Purchases.restorePurchases();
         const entitlement = toEntitlement(customerInfo);
         return entitlement ? { kind: 'restored', entitlement } : { kind: 'restore-empty' };
       } catch (e) {
+        // IMP-092 — WALK-19, 2026-09-06. This used to end `: 'restore-empty'`,
+        // so EVERY unrecognised error became the one kind that makes a positive
+        // claim about the account: "We couldn't find a subscription on this
+        // account." meant both "we checked, you have nothing" and "we could not
+        // check". The person most likely to tap Restore is a real subscriber on
+        // a new phone. `failed` says we could not check, which is the truth, and
+        // is the exact rule getEntitlement() states twenty lines below (IMP-043).
         const kind = mapPurchaseError(e);
-        return { kind: kind === 'owned' ? 'restored' : kind === 'network' ? 'network' : 'restore-empty' };
+        return { kind: kind === 'owned' ? 'restored' : kind === 'network' ? 'network' : 'failed' };
       }
     },
     // Deliberately does NOT swallow the error (IMP-043): a failed call must be
