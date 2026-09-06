@@ -6,7 +6,7 @@
 // paywall faked purchases and granted Plus free. All eight combinations are
 // pinned because the gate is one boolean expression and the wrong one ships a
 // giveaway to a store track.
-import { paywallLive } from '../../src/billing';
+import { paywallLive, billingModuleOk } from '../../src/billing';
 
 describe('paywallLive', () => {
   test('live when Plus is on and billing is configured', () => {
@@ -68,5 +68,60 @@ describe('RitualsApp.js wires the gate, not the flag', () => {
     expect(source).toMatch(/const PAYWALL_LIVE = paywallLive\(\{/);
     expect(source).toMatch(/billingConfigured: isBillingConfigured\(PLATFORM\)/);
     expect(source).toMatch(/dev: __DEV__/);
+  });
+});
+
+// IMP-085 — the probe that has always said no.
+//
+// index.js asked `require.resolve('react-native-purchases')`. Metro's runtime
+// polyfill never assigns `resolve` and its transformer never rewrites it, so
+// that call threw in EVERY bundle, the catch swallowed it, and
+// isBillingConfigured() returned false in every build ever shipped. Under jest
+// `require` is node's, where require.resolve works — which is exactly why 915
+// green tests could not see it. The replacement asks the module what it IS.
+describe('billingModuleOk', () => {
+  test('true for a module exposing RevenueCat\'s configure entry point', () => {
+    expect(billingModuleOk({ configure: () => {} })).toBe(true);
+  });
+
+  test('false for an empty module — resolved, but nothing linked', () => {
+    expect(billingModuleOk({})).toBe(false);
+  });
+
+  test('false when configure is present but not callable', () => {
+    expect(billingModuleOk({ configure: 'yes' })).toBe(false);
+  });
+
+  test('false for null and undefined — the Expo Go / unlinked case', () => {
+    expect(billingModuleOk(null)).toBe(false);
+    expect(billingModuleOk(undefined)).toBe(false);
+  });
+
+  test('returns a boolean, not a truthy value', () => {
+    expect(billingModuleOk({ configure: () => {}, extra: 1 })).toBe(true);
+  });
+});
+
+// The one string that is the whole defect. Nothing else in the suite can catch
+// its return value, because node's require.resolve succeeds here.
+describe('src/billing/index.js does not probe with require.resolve', () => {
+  test('no CODE line calls require.resolve — the comment naming it is allowed', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const source = fs.readFileSync(
+      path.join(__dirname, '..', '..', 'src', 'billing', 'index.js'), 'utf8');
+    const code = source
+      .split('\n')
+      .filter((l) => !l.trim().startsWith('//'))
+      .join('\n');
+    expect(code).not.toMatch(/require\s*\.\s*resolve/);
+  });
+
+  test('it probes with a plain static require, which Metro collects', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const source = fs.readFileSync(
+      path.join(__dirname, '..', '..', 'src', 'billing', 'index.js'), 'utf8');
+    expect(source).toMatch(/require\('react-native-purchases'\)/);
   });
 });

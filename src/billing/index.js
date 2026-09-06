@@ -1,13 +1,29 @@
 import { createSimService } from './simService';
 import { hasKeyFor } from './config';
 
-let _rcModuleOk = false;
-try {
-  require.resolve('react-native-purchases');
-  _rcModuleOk = true;
-} catch (e) {
-  _rcModuleOk = false;
+// IMP-085 — ask the module what it IS, not whether a path resolves.
+//
+// This probe used to be `require.resolve('react-native-purchases')`. Metro does
+// not implement it: metro-runtime's require polyfill assigns `resolveWeak` and
+// never `resolve`, and metro's collectDependencies rewrites `resolveWeak` and
+// `require.context` but not `require.resolve`. So it threw in EVERY bundle, the
+// catch below swallowed it, and isBillingConfigured() returned false in every
+// build this app ever shipped — every release ran simService. Under jest
+// `require` is node's, where require.resolve works, so the suite could not see
+// it. A plain static require IS collected by Metro, and the shape of what comes
+// back is what proves the native module actually linked.
+export function billingModuleOk(mod) {
+  return Boolean(mod) && typeof mod.configure === 'function';
 }
+
+let _rcModule = null;
+try {
+  const m = require('react-native-purchases');
+  _rcModule = (m && m.default) || m;
+} catch (e) {
+  _rcModule = null; // Expo Go, web, or no native module linked.
+}
+const _rcModuleOk = billingModuleOk(_rcModule);
 
 export function isBillingConfigured(platform) {
   return _rcModuleOk && hasKeyFor(platform);

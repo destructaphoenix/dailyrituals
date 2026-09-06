@@ -109,7 +109,9 @@ export default function YouScreen({
 
       {/* Plus + Shop */}
       <View style={{ paddingHorizontal: 20, gap: 12 }}>
-        {plusEnabled && <PlusBanner plus={plus} onOpenPaywall={onOpenPaywall} onManage={onOpenManage} renewLabel={renewLabel} compact />}
+        {/* IMP-085: `|| plus` — a subscriber keeps the banner, and with it the
+            route to Manage, even when the app cannot sell. */}
+        {(plusEnabled || plus) && <PlusBanner plus={plus} onOpenPaywall={onOpenPaywall} onManage={onOpenManage} renewLabel={renewLabel} compact />}
         {plusEnabled && onOpenPlusPerks && (
           <Card>
             <Row icon={<Sun size={20} color={c.accentDeep} />} label="What's in Plus" onPress={onOpenPlusPerks} />

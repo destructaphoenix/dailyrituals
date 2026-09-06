@@ -72,7 +72,8 @@ export default function Shop({
         showsVerticalScrollIndicator={false}
       >
         {/* Plus upsell / status */}
-        {plusEnabled && (
+        {/* IMP-085: `|| plus` — see YouScreen. */}
+        {(plusEnabled || plus) && (
           <View style={{ marginTop: 4 }}>
             <PlusBanner plus={plus} onOpenPaywall={onOpenPaywall} onManage={onManage} renewLabel={renewLabel} />
           </View>

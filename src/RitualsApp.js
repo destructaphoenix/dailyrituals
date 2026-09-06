@@ -206,6 +206,16 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   const manageOpts = () => ({ productId: liveEntitlement && liveEntitlement.productId });
   const openLink = (k) => { openExternal(k, PLATFORM, manageOpts()); };
 
+  // IMP-085: a subscriber must never lose the route to cancel. PAYWALL_LIVE says
+  // whether the app can SELL; `plus` says whether they already hold it. When they
+  // hold Plus but billing cannot transact, the in-app sheet would render a plan,
+  // a price and a renewal the app cannot back — so send them to Play's own
+  // subscription screen instead, which is the one place the truth lives.
+  const openManage = () => {
+    if (PAYWALL_LIVE) { setManageOpen(true); return; }
+    openExternal('manage', PLATFORM, manageOpts());
+  };
+
   // While there is no cash ember purchase to route to, say so instead of
   // opening the shop. This is gated on EMBER_PACKS_ENABLED, not PLUS_ENABLED:
   // the packs show prices but are wired to nothing, so they must stay hidden
@@ -720,7 +730,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             embers={embers} plus={plus} onOpenShop={() => setShopOpen(true)}
             plusEnabled={PAYWALL_LIVE} renewLabel={renewLabel}
             onOpenPaywall={PAYWALL_LIVE ? () => setPaywall(true) : () => {}}
-            onOpenManage={PAYWALL_LIVE ? () => setManageOpen(true) : () => {}}
+            onOpenManage={plus ? openManage : () => {}}
             onRestorePurchases={() => doRestore()}
             onOpenAchievements={() => setShowAch(true)}
             onResetData={onResetData}
@@ -901,7 +911,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
               onOpenPaywall={PAYWALL_LIVE ? () => setPaywall(true) : () => {}}
               onGetEmbers={getEmbers}
               embersForCash={EMBER_PACKS_ENABLED}
-              onManage={PAYWALL_LIVE ? () => setManageOpen(true) : () => {}}
+              onManage={plus ? openManage : () => {}}
             />
             {toast && <Toast key={toast.key} message={toast.msg} bottom={insets.bottom} />}
           </ThemeContext.Provider>
@@ -921,7 +931,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
           </ThemeContext.Provider>
         </Modal>
 
-        <Modal visible={PAYWALL_LIVE && manageOpen} animationType="slide" presentationStyle="overFullScreen" onRequestClose={() => setManageOpen(false)}>
+        <Modal visible={manageOpen} animationType="slide" presentationStyle="overFullScreen" onRequestClose={() => setManageOpen(false)}>
           <ThemeContext.Provider value={theme}>
             <ManageSubscription
               insets={insets} platform={PLATFORM} plan={livePlan} canceled={subCanceled}
