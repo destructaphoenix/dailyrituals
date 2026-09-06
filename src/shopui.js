@@ -71,10 +71,14 @@ export function PlusBanner({ plus, onOpenPaywall, onManage, compact, renewLabel 
             <T d w={800} color={c.plusLight} style={{ fontSize: 11.5, letterSpacing: 0.6 }}>DAILY RITUALS PLUS</T>
           </View>
           <T d w={800} color={c.plusWhite} style={{ fontSize: 18, lineHeight: 21 }}>Every palette, sky &amp; candle.</T>
-          <T w={600} color={c.plusMuted} style={{ fontSize: 12.5, marginTop: 4 }}>Plus your graveyard kept forever. 7 days free.</T>
+          {/* IMP-090: "7 days free" / "Try free" promised a trial on a surface
+              that fetches no offer at all — the same claim the paywall CTA was
+              making, in two words. This banner only OPENS the paywall; the offer
+              is disclosed there, where the live data actually is. */}
+          <T w={600} color={c.plusMuted} style={{ fontSize: 12.5, marginTop: 4 }}>Plus your graveyard kept forever.</T>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-          <T d w={800} color={c.onAccent} style={{ fontSize: 13.5 }}>Try free</T>
+          <T d w={800} color={c.onAccent} style={{ fontSize: 13.5 }}>See Plus</T>
           <Chevron dir="right" size={16} color={c.onAccent} />
         </View>
       </LinearGradient>

@@ -1,7 +1,7 @@
 // __tests__/billing/prices.test.js — the paywall must never show a price the
 // store won't charge. These lock the merge of live RevenueCat offerings over
 // the design constants, and the refusal to assert an unverified saving.
-import { mergePrices, savePercent, ANNUAL_SUB_LIVE } from '../../src/billing/prices';
+import { mergePrices, savePercent, ANNUAL_SUB_LIVE, ctaLabel } from '../../src/billing/prices';
 
 const FALLBACK = {
   monthly: { id: 'monthly', label: 'Monthly', price: '$4.99', per: 'per month', sub: 'Billed monthly' },
@@ -31,9 +31,15 @@ describe('savePercent', () => {
 });
 
 describe('mergePrices', () => {
+  // IMP-090: every entry now carries trialDays on the way out. Null, not
+  // absent — the constants have never described an offer, so with no live
+  // offering there is nothing for them to assert.
+  const noTrial = (entry) => ({ ...entry, trialDays: null });
+
   test('returns the fallback constants unchanged when no live prices exist', () => {
-    expect(mergePrices(FALLBACK, null)).toEqual(FALLBACK);
-    expect(mergePrices(FALLBACK, {})).toEqual(FALLBACK);
+    const expected = { monthly: noTrial(FALLBACK.monthly), annual: noTrial(FALLBACK.annual) };
+    expect(mergePrices(FALLBACK, null)).toEqual(expected);
+    expect(mergePrices(FALLBACK, {})).toEqual(expected);
   });
 
   test('does not mutate the fallback it was given', () => {
@@ -60,7 +66,7 @@ describe('mergePrices', () => {
 
   test('a plan with no live price keeps its fallback entry', () => {
     const out = mergePrices(FALLBACK, { monthly: { priceString: '₹399.00', price: 399 } });
-    expect(out.annual).toEqual(FALLBACK.annual);
+    expect(out.annual).toEqual(noTrial(FALLBACK.annual));
   });
 
   test('drops the hardcoded per-month sub line once the annual price is live', () => {
@@ -94,6 +100,85 @@ describe('mergePrices', () => {
 
   test('ignores a live entry that carries no priceString', () => {
     const out = mergePrices(FALLBACK, { annual: { price: 2499 } });
-    expect(out.annual).toEqual(FALLBACK.annual);
+    expect(out.annual).toEqual(noTrial(FALLBACK.annual));
+  });
+});
+
+// ── IMP-090 — WALK-19 step 3, 2026-09-06 ─────────────────────────────────────
+// Our button read "Start 7-day free trial"; Play's own sheet, opened from it on
+// the license-tester account, said charging today with the INR amount. The owner
+// had subscribed on that Google account before and a Play trial is once per
+// account, ever — so Play was right and the button was asserting an offer the
+// app had never fetched.
+describe('mergePrices carries the trial through — IMP-090', () => {
+  test('a live free phase survives onto the plan entry', () => {
+    const out = mergePrices(FALLBACK, {
+      annual: { priceString: '₹2,499.00', price: 2499, trialDays: 7 },
+      monthly: { priceString: '₹399.00', price: 399, trialDays: 7 },
+    });
+    expect(out.annual.trialDays).toBe(7);
+    expect(out.monthly.trialDays).toBe(7);
+  });
+
+  test('an offer with no free phase is null, not the constants guessing', () => {
+    const out = mergePrices(FALLBACK, { annual: { priceString: '₹2,499.00', price: 2499 } });
+    expect(out.annual.trialDays).toBeNull();
+  });
+
+  test('a nonsense trialDays is null rather than propagated', () => {
+    const out = mergePrices(FALLBACK, {
+      monthly: { priceString: '₹399.00', price: 399, trialDays: 'seven' },
+    });
+    expect(out.monthly.trialDays).toBeNull();
+  });
+
+  test('zero free days is not a trial', () => {
+    const out = mergePrices(FALLBACK, {
+      monthly: { priceString: '₹399.00', price: 399, trialDays: 0 },
+    });
+    expect(out.monthly.trialDays).toBeNull();
+  });
+
+  test('the live annual rebuild does not drop the trial', () => {
+    // out.annual is destructured and reassembled to strip the savings badge —
+    // easy place for a new field to fall out silently.
+    const out = mergePrices(FALLBACK, {
+      annual: { priceString: '₹2,499.00', price: 2499, trialDays: 14 },
+      monthly: { priceString: '₹399.00', price: 399, trialDays: 14 },
+    });
+    expect(out.annual.save).toBe('Save 48%');
+    expect(out.annual.trialDays).toBe(14);
+  });
+});
+
+describe('ctaLabel — IMP-090', () => {
+  test('no known trial means the button promises nothing', () => {
+    expect(ctaLabel({ trialDays: null })).toBe('Subscribe');
+    expect(ctaLabel({})).toBe('Subscribe');
+    expect(ctaLabel()).toBe('Subscribe');
+  });
+
+  test('a live trial changes the label', () => {
+    expect(ctaLabel({ trialDays: 7 })).toBe('Try free, then subscribe');
+    expect(ctaLabel({ trialDays: 14 })).toBe('Try free, then subscribe');
+  });
+
+  // The whole point of the spec: the day count is the part we cannot promise,
+  // because Play decides eligibility at purchase time and only tells us then.
+  test('it NEVER interpolates the day count into the button', () => {
+    [1, 3, 7, 14, 30].forEach((d) => {
+      expect(ctaLabel({ trialDays: d })).not.toMatch(/\d/);
+    });
+  });
+
+  test('it never names a period at all', () => {
+    expect(ctaLabel({ trialDays: 7 })).not.toMatch(/day|week|month/i);
+  });
+
+  test('junk is treated as "we do not know", not as a trial', () => {
+    expect(ctaLabel({ trialDays: 'seven' })).toBe('Subscribe');
+    expect(ctaLabel({ trialDays: 0 })).toBe('Subscribe');
+    expect(ctaLabel({ trialDays: -7 })).toBe('Subscribe');
+    expect(ctaLabel({ trialDays: NaN })).toBe('Subscribe');
   });
 });

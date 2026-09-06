@@ -269,7 +269,7 @@ function Premium({ onOpenPaywall, onSkip, onBack, insets }) {
         </View>
         <T d w={800} color={t.colors.ink} style={{ fontSize: 30, lineHeight: 33, marginTop: 16 }}>For the devoted grave-keeper.</T>
         <T w={600} color={t.colors.muted} style={{ fontSize: 15.5, lineHeight: 23, marginTop: 9 }}>
-          Everything in Daily Rituals is free. Plus just gives your days a little more room to rest — start with 7 days free.
+          Everything in Daily Rituals is free. Plus just gives your days a little more room to rest.
         </T>
         <View style={{ gap: 15, marginTop: 24 }}>
           {PERKS.map((p, k) => (
@@ -283,7 +283,9 @@ function Premium({ onOpenPaywall, onSkip, onBack, insets }) {
         </View>
       </ScrollView>
       <View style={{ paddingHorizontal: 24, paddingTop: 8, paddingBottom: 16 + insets.bottom, gap: 10 }}>
-        <PrimaryButton label="See Plus & start free trial" onPress={onOpenPaywall} />
+        {/* IMP-090: both this label and the line above promised a trial from a
+            teaser that fetches no offer. The paywall discloses the real one. */}
+        <PrimaryButton label="See Plus" onPress={onOpenPaywall} />
         <Pressable onPress={onSkip} style={({ pressed }) => ({ paddingVertical: 14, alignItems: 'center', opacity: pressed ? 0.6 : 1 })}>
           <T d w={700} color={t.colors.accentDeep} style={{ fontSize: 16 }}>Maybe later</T>
         </Pressable>

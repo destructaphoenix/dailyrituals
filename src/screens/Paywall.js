@@ -1,6 +1,7 @@
 // screens/Paywall.js — the single Plus purchase surface, mirrored from Paywall
-// in rituals-shop.jsx. Annual/Monthly toggle (annual 50% off), 7-day trial,
-// restore, designed purchase states, and a store-compliant legal footer.
+// in rituals-shop.jsx. Annual/Monthly toggle (annual 50% off), the store's own
+// trial offer if it has one, restore, designed purchase states, and a
+// store-compliant legal footer.
 // Reached from locked cosmetics, the You banner, onboarding, and Export.
 
 import React, { useState } from 'react';
@@ -11,6 +12,7 @@ import { Close, Check, Sun, Restore } from '../icons';
 import { BigSun } from '../art';
 import { PLUS_PERKS } from '../data';
 import { useLivePrices } from '../billing/useLivePrices';
+import { ctaLabel } from '../billing/prices';
 import { LegalFooter, usePurchaseFlow } from './PlusFlow';
 
 export default function Paywall({ insets, platform = 'ios', service, alreadyPlus, onClose, onSubscribe, onLink, onAbandon }) {
@@ -119,7 +121,11 @@ export default function Paywall({ insets, platform = 'ios', service, alreadyPlus
       <View
         onLayout={(e) => setFooterH(e.nativeEvent.layout.height)}
         style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 26, paddingTop: 14, paddingBottom: 14 + insets.bottom, borderTopWidth: 1, borderTopColor: c.border, backgroundColor: c.surface }}>
-        <PrimaryButton label="Start 7-day free trial" onPress={() => flow.buy(plan)} />
+        {/* IMP-090 — this was the literal "Start 7-day free trial" while Play's
+            own sheet said charging today (WALK-19 step 3). The label is now
+            derived from the live offer, and ctaLabel never names the day count
+            because eligibility is Play's to decide, not ours to promise. */}
+        <PrimaryButton label={ctaLabel(prices[plan])} onPress={() => flow.buy(plan)} />
         <LegalFooter platform={platform} plan={plan} prices={prices}
           onLink={(k) => (k === 'restore' ? flow.restore() : onLink && onLink(k))} />
       </View>

@@ -27,16 +27,27 @@ export function savePercent(monthlyPrice, annualPrice) {
   return pct >= 1 && pct < 100 ? pct : null;
 }
 
-// fallback: the PLUS_PRICES shape. live: { annual?: { priceString, price }, … }
-// from PurchaseService.getPrices(). Returns a new object; never mutates either.
+// The number of free days the live offer carries, or null when we do not know.
+// Null is the only honest default: the design constants have never described an
+// offer, so there is nothing here for them to assert. Same rule as the savings
+// badge above — a claim we cannot compute from live data is dropped, not guessed.
+function liveTrialDays(entry) {
+  const n = entry && Number(entry.trialDays);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+// fallback: the PLUS_PRICES shape. live: { annual?: { priceString, price,
+// trialDays }, … } from PurchaseService.getPrices(). Returns a new object;
+// never mutates either. Every entry carries `trialDays` on the way out, null
+// when unknown — ctaLabel below is the only thing allowed to read it.
 export function mergePrices(fallback, live) {
   const l = live || {};
   const out = {};
   Object.keys(fallback).forEach((key) => {
     const entry = l[key];
     out[key] = entry && entry.priceString
-      ? { ...fallback[key], price: entry.priceString }
-      : { ...fallback[key] };
+      ? { ...fallback[key], price: entry.priceString, trialDays: liveTrialDays(entry) }
+      : { ...fallback[key], trialDays: null };
   });
 
   // Only a live annual price invalidates the annual sub-line + savings badge.
@@ -48,4 +59,22 @@ export function mergePrices(fallback, live) {
     ? { ...rest, sub: ANNUAL_SUB_LIVE }
     : { ...rest, sub: ANNUAL_SUB_LIVE, save: `Save ${pct}%` };
   return out;
+}
+
+// ── The CTA (IMP-090) ────────────────────────────────────────────────────────
+//
+// WALK-19 step 3, 2026-09-06: the button said "Start 7-day free trial" and
+// Play's own sheet said charging today, because the owner had subscribed on
+// that Google account before and a Play trial is once per account, ever.
+//
+// So this deliberately does NOT print the day count, even when we have one.
+// `trialDays` describes the OFFER; only Play knows whether THIS buyer is still
+// eligible, and it does not tell us until the sheet is already open. A button
+// that names a number is making a promise on Play's behalf that Play may
+// refuse — which is exactly the bug. "Try free, then subscribe" is true for an
+// eligible buyer and not a lie to an ineligible one; the day count lives in the
+// disclosure copy, worded as a description of the offer.
+export function ctaLabel({ trialDays } = {}) {
+  const n = Number(trialDays);
+  return Number.isFinite(n) && n > 0 ? 'Try free, then subscribe' : 'Subscribe';
 }

@@ -56,6 +56,17 @@ export function LegalFooter({ platform, plan, prices = PLUS_PRICES, onLink }) {
   const c = useTheme().colors;
   const w = storeWords(platform);
   const p = prices[plan] || prices.annual;
+  // IMP-090. This read "Your 7-day free trial converts to …" unconditionally —
+  // the binding price disclosure promising a trial the app had never fetched and
+  // Play had already burned for this account. The clause now appears only when
+  // the live offer carries one, and it describes the OFFER ("for new
+  // subscribers") rather than promising this buyer, because only Play knows.
+  const trialDays = Number(p.trialDays);
+  const hasTrial = Number.isFinite(trialDays) && trialDays > 0;
+  const trialClause = hasTrial
+    ? `${trialDays} days free for new subscribers — ${w.storeShort} confirms at purchase whether it applies to you. Then `
+    : '';
+  const chargeClause = hasTrial ? ', charged to your ' : '. Payment is charged to your ';
   const link = (k, label) => (
     <Pressable onPress={() => onLink && onLink(k)} hitSlop={6}>
       <T w={800} color={c.accentDeep} style={{ fontSize: 12, textDecorationLine: 'underline' }}>{label}</T>
@@ -64,9 +75,9 @@ export function LegalFooter({ platform, plan, prices = PLUS_PRICES, onLink }) {
   return (
     <View style={{ marginTop: 11 }}>
       <T w={600} color={c.muted} style={{ fontSize: 11, lineHeight: 16.5, textAlign: 'center' }}>
-        Your 7-day free trial converts to <T w={800} color={c.ink} style={{ fontSize: 11 }}>{p.price}</T> {p.per}. Payment
-        is charged to your {w.account} at confirmation. It renews automatically unless cancelled at least 24 hours before
-        the period ends — manage or cancel anytime in {w.store} settings.
+        {trialClause}<T w={800} color={c.ink} style={{ fontSize: 11 }}>{p.price}</T> {p.per}{chargeClause}{w.account} at
+        confirmation. It renews automatically unless cancelled at least 24 hours before the period ends — manage or
+        cancel anytime in {w.store} settings.
       </T>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 9 }}>
         {link('terms', 'Terms of Service')}

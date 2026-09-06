@@ -21,6 +21,75 @@ export function toEntitlement(customerInfo) {
   };
 }
 
+// ── The offer's free phase (IMP-090) ─────────────────────────────────────────
+//
+// WALK-19 step 3, 2026-09-06: our button read "Start 7-day free trial" while
+// Google's own sheet said charging today. The app had never fetched anything
+// that could contradict the literal — getPrices() read priceString and price
+// and dropped the rest of the package.
+//
+// What comes back here describes THE OFFER, not this buyer. Play decides trial
+// eligibility at purchase time (once per Google account, ever) and Android has
+// no equivalent of iOS's eligibility check, so a returning subscriber sees a
+// trial in the offer and gets charged. `null` therefore means "we do not know",
+// never "there is no trial" — ctaLabel() is what turns that into copy, and it
+// refuses to name a trial in either case.
+
+const ISO_UNIT_DAYS = { Y: 365, M: 30, W: 7, D: 1 };
+const LEGACY_UNIT_DAYS = { YEAR: 365, MONTH: 30, WEEK: 7, DAY: 1 };
+
+// "P7D" / "P1W" / "P1M" → days. Months and years are nominal (30 / 365): this
+// figure is never rendered as a promise, only used to decide whether an offer
+// exists at all.
+function iso8601Days(iso) {
+  if (typeof iso !== 'string') return null;
+  const m = /^P(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)W)?(?:(\d+)D)?$/.exec(iso.trim());
+  if (!m) return null;
+  const days = (Number(m[1] || 0) * ISO_UNIT_DAYS.Y) + (Number(m[2] || 0) * ISO_UNIT_DAYS.M)
+    + (Number(m[3] || 0) * ISO_UNIT_DAYS.W) + (Number(m[4] || 0) * ISO_UNIT_DAYS.D);
+  return days > 0 ? days : null;
+}
+
+// The shape has moved across SDK majors (introPrice → defaultOption →
+// subscriptionOptions) and this is the exact place a rename would throw on a
+// device and nowhere else, so every hop is guarded.
+function freePhaseDays(product) {
+  const options = [product.defaultOption]
+    .concat(Array.isArray(product.subscriptionOptions) ? product.subscriptionOptions : [])
+    .filter(Boolean);
+  let phase = null;
+  options.forEach((opt) => {
+    if (phase) return;
+    if (opt.freePhase) { phase = opt.freePhase; return; }
+    const phases = Array.isArray(opt.pricingPhases) ? opt.pricingPhases : [];
+    phase = phases.find((ph) => ph && ph.price && Number(ph.price.amountMicros) === 0) || null;
+  });
+  if (phase) {
+    const period = phase.billingPeriod;
+    return iso8601Days(period && typeof period === 'object' ? period.iso8601 : period);
+  }
+  // Legacy / iOS shape: a zero-priced introductory period.
+  const intro = product.introPrice;
+  if (intro && Number(intro.price) === 0) {
+    const per = LEGACY_UNIT_DAYS[String(intro.periodUnit || '').toUpperCase()];
+    const n = Number(intro.periodNumberOfUnits);
+    if (per && Number.isFinite(n) && n > 0) return per * n;
+    return iso8601Days(intro.period);
+  }
+  return null;
+}
+
+// Exported for test: this is pure over a product shape, and the SDK itself is
+// unloadable in jest (react-native-purchases pulls an untransformable ESM dep).
+export function trialDaysFromProduct(product) {
+  if (!product) return null;
+  try {
+    return freePhaseDays(product);
+  } catch (e) {
+    return null;
+  }
+}
+
 async function findPackage(plan) {
   const offerings = await Purchases.getOfferings();
   const current = offerings && offerings.current;
@@ -74,17 +143,22 @@ export function createRevenueCatService() {
         // Both forms matter: priceString is the store's localized display text
         // (never format it ourselves), price is the numeric used to compute the
         // real annual saving. See src/billing/prices.js.
+        // IMP-090 adds trialDays — the offer's free phase, or null when there
+        // is none / the SDK shape moved. See trialDaysFromProduct above for why
+        // null is not the same claim as "no trial".
         const out = {};
         if (current.annual) {
           out.annual = {
             priceString: current.annual.product.priceString,
             price: current.annual.product.price,
+            trialDays: trialDaysFromProduct(current.annual.product),
           };
         }
         if (current.monthly) {
           out.monthly = {
             priceString: current.monthly.product.priceString,
             price: current.monthly.product.price,
+            trialDays: trialDaysFromProduct(current.monthly.product),
           };
         }
         return out;

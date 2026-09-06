@@ -39,10 +39,64 @@ describe('Paywall — IMP-068', () => {
     expect(view.getByText(PLUS_PERKS[PLUS_PERKS.length - 1])).toBeTruthy();
   });
 
-  test('the annual price and the trial CTA both render', () => {
+  test('the annual price and the CTA both render', () => {
     const view = renderPaywall();
     expect(view.getAllByText(PLUS_PRICES.annual.price).length).toBeGreaterThan(0);
-    expect(view.getByText('Start 7-day free trial')).toBeTruthy();
+    // IMP-090: with no live offer (service={null}) there is no trial to name.
+    expect(view.getByText('Subscribe')).toBeTruthy();
+  });
+});
+
+// ── IMP-090 — WALK-19 step 3, 2026-09-06 ─────────────────────────────────────
+// The button read "Start 7-day free trial" as a string literal while Google's
+// own purchase sheet, opened from it, said charging today with the INR amount.
+// A Play trial is once per Google account, ever, and the app fetched no offer
+// data at all — so it could not have been right, only lucky.
+describe('Paywall — the CTA never promises a trial it cannot see', () => {
+  const svc = (live) => ({
+    getPrices: async () => live,
+    buy: async () => ({ kind: 'cancel' }),
+    restore: async () => ({ kind: 'restore-empty' }),
+  });
+
+  test('no live offering: the button asks for a subscription, nothing more', () => {
+    const view = renderPaywall();
+    expect(view.getByText('Subscribe')).toBeTruthy();
+    expect(view.queryByText(/free trial/i)).toBeNull();
+    expect(view.queryByText(/7.day/i)).toBeNull();
+  });
+
+  test('no live offering: the legal disclosure drops the trial clause too', () => {
+    // This text is the binding price disclosure. It used to open "Your 7-day
+    // free trial converts to …" whatever the store actually offered.
+    const view = renderPaywall();
+    expect(view.queryByText(/Your 7-day free trial converts/i)).toBeNull();
+    expect(view.getByText(/Payment is charged to your/i)).toBeTruthy();
+    expect(view.getByText(/renews automatically/i)).toBeTruthy();
+  });
+
+  test('a live trial changes the button without naming the day count', async () => {
+    const view = renderPaywall({
+      service: svc({ annual: { priceString: '₹2,499.00', price: 2499, trialDays: 7 } }),
+    });
+    const cta = await view.findByText('Try free, then subscribe');
+    expect(cta).toBeTruthy();
+    expect(view.queryByText(/Start 7-day free trial/)).toBeNull();
+  });
+
+  test('a live trial IS described in the disclosure, as the offer not a promise', async () => {
+    const view = renderPaywall({
+      service: svc({ annual: { priceString: '₹2,499.00', price: 2499, trialDays: 7 } }),
+    });
+    expect(await view.findByText(/7 days free for new subscribers/i)).toBeTruthy();
+  });
+
+  test('a live offering with no free phase keeps the plain CTA', async () => {
+    const view = renderPaywall({
+      service: svc({ annual: { priceString: '₹2,499.00', price: 2499 } }),
+    });
+    await view.findAllByText('₹2,499.00'); // plan card + legal disclosure
+    expect(view.getByText('Subscribe')).toBeTruthy();
   });
 });
 
@@ -87,5 +141,34 @@ describe('Paywall — IMP-080 (supersedes IMP-074)', () => {
     expect(view.getByText(PLUS_PERKS[PLUS_PERKS.length - 1])).toBeTruthy();
     expect(view.getAllByText(PLUS_PRICES.annual.price).length).toBeGreaterThan(0);
     expect(footerStyle(view).position).toBe('absolute');
+  });
+});
+
+// ── IMP-090, step 5 — the same promise, made in two words elsewhere ──────────
+// The owner reported the button reading "Try free" during WALK-19; that is the
+// shopui banner that OPENS the paywall, not the paywall's own CTA. Neither it
+// nor the onboarding teaser fetches an offer, so neither may name one.
+describe('surfaces that only open the paywall promise nothing', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const read = (...p) => fs.readFileSync(path.join(__dirname, '..', '..', 'src', ...p), 'utf8')
+    .split('\n').filter((l) => !l.trim().startsWith('//') && !l.trim().startsWith('{/*') && !l.trim().startsWith('*/')).join('\n');
+
+  test('the Shop / You Plus banner no longer says "Try free" or "7 days free"', () => {
+    const src = read('shopui.js');
+    expect(src).not.toMatch(/Try free/);
+    expect(src).not.toMatch(/7 days free/);
+  });
+
+  test('the onboarding Premium teaser makes no trial claim', () => {
+    const src = read('screens', 'Onboarding.js');
+    expect(src).not.toMatch(/start free trial/i);
+    expect(src).not.toMatch(/7 days free/);
+  });
+
+  test('the only place a trial may be named is the paywall, from live data', () => {
+    const src = read('screens', 'Paywall.js');
+    expect(src).not.toMatch(/7-day free trial/);
+    expect(src).toMatch(/ctaLabel\(prices\[plan\]\)/);
   });
 });
