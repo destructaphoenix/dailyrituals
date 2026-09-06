@@ -4774,3 +4774,273 @@ emulator, this row is where to look first.
   purchases, and the next build regresses to the simulation unless this commit is in it. Acceptance is
   **WALK-19 step 0(c)**: airplane mode, attempt a purchase, and it must FAIL.
 
+
+
+---
+
+## PROGRESS.md archive — trimmed 2026-09-06
+
+PROGRESS.md was 557 lines against its own ≤250-line hard rule. These blocks were moved here whole,
+not summarised, on the owner's instruction. Nothing below is live — PROGRESS.md carries what is live.
+Every fact still in force was rewritten forward into the trimmed file; this is the long form.
+
+
+### The vc12 / vc13 ship confirmations and the OTA-lane reopening (verbatim)
+
+**✅ v1.0.6 / vc12 SHIPPED to `internal` on 2026-08-16.** Confirmed from the submit output, not inferred:
+`Release track: internal`, `Version code: 12`, `✔ Submitted your app to Google Play Store!` (GH run
+`31951685300`; EAS build `f621adac-8357-48b2-832e-afa89649fe34`, submission
+`2416e8bb-182d-44c9-b2e0-18f52912801b`). **This carries ~40 IMP tasks that had reached no track since the
+vc11 build on 2026-08-02**, and is **the first minified (R8) build of this app ever** — IMP-044 rides it
+**unwalked**, which is exactly what WALK-12 exists for.
+
+**✅ v1.0.7 / vc13 SHIPPED to `internal` on 2026-09-05 — it replaced vc12 on that track.** Confirmed
+from `eas submit:list`, not inferred: `Track: internal`, `Release Status: completed`, `Version code 13`,
+EAS build `11dce1c2-3ba5-4654-9ea3-b3723e1ee457`, submission `bcb6c944-f3eb-4ec1-8f96-cb0da21c39f0`,
+built from commit `bbd5f45` on `feat/design-push`. Runtime `1.0.7`, fingerprint `e6dc620c…`. **This is
+the first New Architecture build to reach any track**, and the artifact every remaining device walk runs
+against. vc12 is history; its `internal` → `production` promotion is off for good.
+
+**The promotion still open is a vc13 one** — the manual `internal` → `production` with the full ~7d
+review, and it should not be taken until the device walks clear. The other three tracks are unchanged and
+still on older code.
+
+**✅ API-36 compliance (deadline 2026-08-31) is met ACCOUNT-WIDE — blocker CLOSED 2026-08-13.** Every
+active release on every track is `targetSdkVersion 36`. Banner-reading procedure kept in the playbook.
+
+**Builds auto-submit to `internal`** (`eas.json` → `submit.production.android.track`, set 2026-08-08 in
+`a299af7`; CI already does it). Reaching the public stays manual: promote `internal` → `production` in Play
+Console, which *does* get the full review.
+
+> ✅ **AND IT REOPENED THE SAME DAY — the condition was met. vc14 reached `internal` at 19:09 on
+> 2026-09-05**, so `runtimeVersion` `1.0.8` now matches a shipped build and the OTA lane is **open onto
+> `internal`**. IMP-077's `bump:native` had shut it that morning — the identical trap IMP-076 sprang on
+> 2026-08-17, one spec later — and **a `bump:native` always closes the OTA lane until the new versionCode
+> actually ships.** The rule is unchanged for next time; this instance is closed. **IMP-082 and IMP-083
+> are pure JS and they DID ride this lane — the first OTA ever published on it, 2026-09-06**, update
+> group `ac5c4189-736c-44f0-96ae-6ceea4fe4712`. They shipped **before** WALK-19 proved them, on the owner's
+> instruction; the walk is still owed. ⚠️ It reaches `internal` installs only —
+> `production` is still on 1.0.3 / vc9, whose runtime an `eas update` from this tree does not match.
+
+**✅ THE OTA LANE REOPENED on 2026-09-05 — but only onto `internal`.** It was shut from 2026-08-17,
+when IMP-076's `bump:native` moved the repo to `1.0.7` / vc13 and left `runtimeVersion` (= `appVersion`)
+matching no shipped build. **vc13 shipping to `internal` is the exact condition that reopens it.** An
+`eas update --channel production` now lands on runtime `1.0.7`, which is **vc13 installs and nothing
+else** — not `alpha`'s orphaned vc11, not the public on vc9, both of which are on older runtimes.
+
+**What that means in practice:** a JS-only fix found in the device walks can now go out as an OTA to the
+internal testers, *but* **anything native still needs a build**, and **WALK-12 must be re-walked if any
+build is re-cut.** Reaching the public is still the manual `internal` → `production` promotion. **Do not
+OTA a fix and then treat WALK-12's R8 pass as still valid** — R8 runs at build time, so an OTA does not
+change what was minified, but it does mean the code on the device is no longer the code that was walked.
+
+**⚠️ OTA has no Play track.** `eas update` publishes to Expo's CDN — no Google, no review. Gated only by
+**channel** (`production`) + **matching `runtimeVersion`**. An installed build receives an OTA regardless of
+which track it came from. (Once a `bump:native` lands, the OTA lane is closed for that release until the
+build ships.)
+
+
+### Claude Design — the full 2026-08-17 setup notes (verbatim)
+
+## 🎨 Claude Design is set up — how to use it (IMP-078, 2026-08-17)
+
+**Project: `Daily Rituals Design System`** · id `7bf44d09-f93a-42d2-a8b6-d412d671cf60` · type
+`PROJECT_TYPE_DESIGN_SYSTEM`, writable. **13 cards**: Tokens (color, type, shape, elevation) · Frozen
+(the rays) · Components (card, buttons, progress, chips, nav, plus) · Screens (baseline-day,
+baseline-night).
+
+> **Trimmed 2026-08-17 (owner).** The signature is **`RayFan` + `NightRays` only**. `BigSun`/`BigMoon`
+> were demoted out of Frozen (they still ship in Onboarding/Celebration/Paywall, but a design may replace
+> them); `NightSky` and the `DARK_THEME` revert flag were deleted from the app outright; the two Motion
+> cards were deleted because they documented a `src/motion.js` that IMP-077 had not built yet. **Do not
+> re-add any of it to the design system** — a card that describes something the app doesn't have is how
+> the design system gets corrupted.
+>
+> ⚠️ **The Motion exception has now flipped: `src/motion.js` EXISTS as of IMP-077, 2026-09-05.** The two
+> Motion cards may be re-added, but **written from the file, not from the old deleted cards** — the real
+> exports are `DUR` (`tap: 120, enter: 320, settle: 480, celebrate: 900`), `EASE`, `riseIn`, `popIn`,
+> `fadeOut`, `stagger`, `usePressScale`, `useCountUp`, `ScreenFade`. **The Frozen rule is unchanged and
+> IMP-077 did not touch it**: `RayFan` + `NightRays` are still the signature, still on `Animated`, still
+> not ported. So are `Celebration.js` and `Toast.js` — coexistence is the design.
+
+**To make a design request, open the Design System pane in Claude Design and ask for ONE screen.**
+"Redesign the app" produces mush. The four rules that make output portable:
+
+1. **One screen per request.** "Redesign the app" produces mush. **The live request is `Insights`**
+   (owner, 2026-09-05) — it is one of only two screens with a baseline that is also user-visible today.
+   ⚠️ **Check the screen has a baseline before you ask for it**: only `day-01…07`/`night-01…07` exist. For
+   one that does not, **paste its source into the request** rather than describing it.
+2. **Insist the spec comes back in token names** — `c.accentSoft`, `t.radius.card`. Not hex, not "gentle
+   fade". The cards are built so it never sees a raw hex. ⚠️ **Do NOT ask for `motion.js` primitives**
+   (`riseIn`, `DUR.enter`) — IMP-077 has not built that file and its two Motion cards were deleted from the
+   project. Asking for them returns a spec against an API that does not exist and cannot be ported.
+3. **The sun and rays are frozen.** The Frozen card says so in the project. If a returned design redraws
+   them, reject it — that design cannot ship.
+4. **It is a *design* request, not an enablement.** `PLUS_ENABLED` stays `false`; `PLUS_PERKS` copy and
+   everything under `src/billing/` are untouched by design work.
+
+**Porting the result is a normal build task**: a new `IMP-xxx` scoped by Opus, then a build chat. Claude
+Design does not emit React Native — it returns HTML/CSS previews plus a spec.
+
+**To regenerate the cards after a theme change:** `node scripts/gen-design-system.js`, then re-push. The
+token/component/frozen cards are generated from `src/theme.js`, `src/data.js` and `src/art.js`, so they
+cannot drift — but they do not update themselves.
+
+**Both themes are covered** — `baseline-day` and `baseline-night` (night captured 2026-08-17 after the
+owner switched the app to dark by hand). **The app's mode is its own setting, not the OS's** (`App.js:40`,
+header toggle), so `cmd uimode night` does nothing: to re-shoot night, set the app to dark **first**, then
+run `npm run shots`. `scripts/gen-design-system.js` picks up whichever `day-*`/`night-*` PNGs are present,
+and **`scripts/check-baseline-dark.py` gates the night copy** (mean luma < 90) so a day frame can never
+again be filed as night — that exact mistake happened once.
+
+**One known gap, deliberate and not blocking:**
+- **No auto-sync.** Pointing the Design System pane's own GitHub connection at `design-system/` would
+  re-sync on every `theme.js` change, but that **requires publishing the branch**, which the no-push
+  instruction forbids. Owner's call, later.
+
+---
+
+
+### The vc13 build artifacts A/B table (verbatim)
+
+## 🔨 The vc13 builds — what exists, and where (2026-09-05)
+
+> ⚠️ **The tree has moved past both of these. IMP-077 bumped it to v1.0.8 / vc14 on 2026-09-05** —
+> `react-native-reanimated` and `react-native-worklets` are native deps, so **neither artifact below
+> contains IMP-077's code and no OTA can add it.** What that means per walk row:
+> **WALK-18 needs a NEW build cut from `feat/design-push` at vc14** — nothing here will do.
+> **WALK-07 and WALK-03 step 4 are fine on B**, the local debug APK: IMP-080 and IMP-081 are pure JS, so
+> rebuilding the debug APK from the current branch picks them up without a native rebuild story.
+> **WALK-12 (R8) still needs A specifically** — R8 must be walked on the build you intend to ship, and
+> that is still the vc13 on `internal`.
+
+**There are TWO vc13 artifacts and they are not interchangeable.** Picking the wrong one is the easiest
+way to waste a device sitting, because the release build has **no dev harness**.
+
+| | **A · Play `internal` (release)** | **B · local debug APK** |
+| --- | --- | --- |
+| **What** | AAB → Play-generated APKs, **R8 minified** | `android/app/build/outputs/apk/debug/app-debug.apk` (~172 MB, all ABIs, unminified) |
+| **Stamps** | v1.0.7 / vc13 | v1.0.7 / vc13 |
+| **Get it** | Play Store → internal testing (owner's account) | `adb install -r <path>` |
+| **Built from** | commit `bbd5f45`, EAS `11dce1c2-…`, submission `bcb6c944-…` | `expo prebuild` → `./gradlew assembleDebug` |
+| **Dev harness (T1/T2/T3)** | ❌ **absent** — `__DEV__` false, no Metro | ✅ present |
+| **Covers** | **WALK-12**, WALK-17, WALK-08, WALK-16's hardware residue, WALK-03 steps 1-3+5 | WALK-13, WALK-03 step 4, anything needing T1/T2/T3 |
+
+**⚠️ They cannot coexist, and swapping wipes data.** Same `applicationId`, different signing keys (Play
+vs the debug keystore), so `adb install -r` across them fails `INSTALL_FAILED_UPDATE_INCOMPATIBLE` and you
+must uninstall first. **Export a backup before swapping** — and note that doing so is itself WALK-03
+step 1, so sequence the sitting to get that for free.
+
+**Suggested order for one device sitting:** install **B** first and take WALK-13 + WALK-03 step 4 (the two
+harness-dependent items), export a backup, then uninstall, install **A** from Play and take WALK-17,
+WALK-08, WALK-03's remaining steps and WALK-16's residue — with **WALK-12 last**, on **A**, because R8
+must be walked on the exact build you intend to ship.
+
+**⚠️ For B only: `npx expo prebuild` first, or a local build is a lie.** Gradle's inputs are the untracked
+`android/` directory, so bumping `version`/`versionCode` in `app.config.js` alone never invalidates its
+cache. A local build on 2026-09-05 finished in 13s on `assembleDebug UP-TO-DATE` and installed an APK
+still reporting **v1.0.5 / vc11**, twelve versions stale, with no warning of any kind. Prebuild also
+regenerates the launcher icon from `assets/adaptive-icon.png` (the new adaptive icon is confirmed in both
+artifacts). **Verified safe:** prebuild does *not* undo IMP-076 — `newArchEnabled=true` and
+`android.enableMinifyInReleaseBuilds=true` both survive it.
+
+**Metro, for B on hardware:** `adb reverse tcp:8081 tcp:8081` then `npx expo start --dev-client`. Miss the
+`adb reverse` and the phone cannot reach Metro; the blank screen that follows looks exactly like a
+WALK-16 step-1 cold-start failure and is not one. **A needs none of this** — it is self-contained.
+
+---
+
+
+### Session note — 2026-09-06, IMP-082 + IMP-083 (verbatim, kept in full)
+
+_2026-09-06 (Opus — **IMP-082 and IMP-083 both landed; the build queue is empty again**; branch-only,
+committed, NOT pushed) — **a build session. Two specs closed, no walk run.** Both came from the owner
+putting a **real license-tester subscription** through the app, not from reading code, and both are the
+same class as the cut PDF perk and the decoupled ember packs: **the paid surface asserting something the
+app cannot back.**_
+
+**IMP-082 — the member surfaces stop inventing a renewal date.** `RENEW_DATE = '12 Jun 2026'` is
+prototype mock data and it was the **runtime fallback in five places, starting in the pure layer**:
+`formatRenewDate` handed it back on both the missing *and* the unparseable branch, so even the "live"
+path fabricated. Now it returns **`null`**, and every surface drops the claim rather than substituting:
+`PlusBanner` gained a `renewLabel` prop and renders the bare word **`Member`** without one (`YouScreen`
+and `Shop` thread it), `ManageSubscription` shows `Ends soon · access until then` or the bare plan label
+and both billing footnotes lose their "until …" clause, and `CancelSheet` ends at *"…so you can cancel."*.
+`RENEW_DATE` **was not deleted** — it stays in `data.js` for the dev panel and fixtures, now carrying a
+comment that says so and names the bug shape (`renewLabel || RENEW_DATE`). Neither `format.js` nor
+`RitualsApp.js` imports it any more. Commit `0e73c76`, pure JS, no bump.
+
+**IMP-083 — Cancel goes to the subscription, not to a list.** `config.js` carried a bare
+`play.google.com/store/account/subscriptions`, so a subscriber mid-cancel got the account-wide list to
+hunt through. New pure `manageUrl({ platform, productId, packageName })` builds
+`?sku=&package=`; `openExternal` gained an optional third `opts` argument (existing two-arg calls
+untouched); `PACKAGE_NAME` comes from `Constants.expoConfig?.android?.package`, not a hardcode;
+`toEntitlement` and `simService`'s `ent()` both carry `productId` now, and one `manageOpts()` helper feeds
+`openLink`, `doCancel` and `doResume` so all three routes match. **Missing product id or package name
+degrades to today's generic URL** — a broken link is worse than a list. Commit `1f4f037`, pure JS, no bump.
+
+**Two traps found while testing, both recorded in `build-log.md`:** `Constants.expoConfig` is **undefined
+under jest**, so `PACKAGE_NAME` is `''` in the suite — the spec's decision to make `packageName` a
+*parameter* is the only reason `manageUrl` is testable at all. And `react-native-purchases` pulls in ESM
+`transformIgnorePatterns` does not cover, which is why `revenueCatService` had no test until now;
+`__tests__/billing/revenueCatService.test.js` opens with a `jest.mock` of it. **Do not remove that mock.**
+
+**Proof: 902 passed / 89 suites** (up from 875/85 — four new files:
+`__tests__/ui/PlusBanner.test.js`, `__tests__/screens/ManageSubscription.test.js`,
+`__tests__/billing/links.test.js`, `__tests__/billing/revenueCatService.test.js`), both zone suites green,
+`npx expo export --platform android` clean at each commit.
+
+⚠️ **What the green suite does NOT mean.** The suite runs `simService`, which fabricates every purchase
+result — **jest is structurally blind to billing.** Neither fix is verified against a real subscription.
+The suffix strip in particular (`plus_annual:annual` → `plus_annual`) rests only on what the RevenueCat
+dashboard shows; if WALK-19 step 10 lands on a "not found" page, that is the first suspect.
+
+**✅ SHIPPED THE SAME DAY, by OTA, on the owner's instruction — the first update ever published on this
+lane.** `eas update --channel production --platform android`, update group
+`ac5c4189-736c-44f0-96ae-6ceea4fe4712` (Android update `01a0737f-bba2-70e6-ae80-4beda488dfc1`), runtime **1.0.8**, from
+commit `8abf11f`. **The branch was NOT pushed** — the never-push rule still stands; an OTA goes to Expo's
+CDN, not GitHub. Three things this does and does not mean, all of them load-bearing:
+**(1) It reaches vc14 `internal` installs only.** `alpha` (vc12), `beta` and `production` (vc9) are on
+older runtimes and received nothing — the public still has none of this.
+**(2) ~~The owner's own phone may not get it~~ — WRONG, corrected 2026-09-06.** The owner is on
+**`internal` at vc14**, so it does reach them. This was asserted from the stale `alpha` row in the track
+table (now fixed) and it wasted a round. The general rule still holds for *other* testers: Play serves the
+highest-priority track an account qualifies for, so a closed-testing-only account stays on vc12 and
+receives no 1.0.8 OTA at all.
+**(3) It applies on the SECOND launch.** `expo-updates` runs on defaults here — check on load, download in
+background, swap in next launch — so testers must open, fully close, and reopen. "Nothing changed" is
+almost certainly this.
+⚠️ **Shipped ahead of its proof.** WALK-19 has not run; both fixes are now in front of real testers
+unverified. **Shipping is not proof, and the walk is still owed** — a new **step 0** was added to WALK-19
+covering the track and OTA checks above, because a walk run on a device that never took the update would
+record a result against the wrong build.
+
+**🔴 LATER THE SAME SESSION — the ship exposed something much worse, and it invalidates part of the
+above.** Chasing "I can't cancel, and I still see 12 Jun 2026", the owner ran the decisive test:
+**they subscribed in AIRPLANE MODE and it succeeded.** vc14 is running `simService`. Three corrections
+follow, and each one had been asserted confidently and wrongly earlier in this same session:
+- **`12 Jun 2026` was never a valid tell.** I offered it as the clean check for "did the OTA apply".
+  It is not: `simService`'s `FALLBACK_RENEW_ISO` formats through IMP-082's *new* code to exactly that
+  string. The test I gave could not distinguish a stale bundle from a fake purchase.
+- **IMP-083's stated cause was wrong.** The owner could not find their subscription in Play because
+  **there was no subscription** — not because the link lacked `?sku=`. The fix is still right and still
+  shipped; it was not what was blocking them.
+- **The billing preflight has never guarded anything.** It reads `process.env` on the **CI runner**;
+  the value that decides sim-vs-real is resolved by **EAS Build** on its own servers. `RC_ANDROID_KEY`
+  exists on EAS and the build shipped the sim anyway — because no `eas.json` profile binds an
+  `environment`. ⚠️ Adding `env:` to the workflow build step does **nothing**; cloud builds never see the
+  runner's environment.
+Scoped as **[IMP-084](docs/specs-open.md)** — three layers, the third being the one that would have
+prevented this: **the app must hide a paywall it cannot transact through**, the same "never assert what
+you cannot back" rule already applied to the PDF perk, the ember packs and IMP-082's dates.
+
+**NEXT: 🔴 [IMP-084](docs/specs-open.md) is the top of the queue and it is a BUILD, not an OTA.**
+~~this is a walk lane, and the build queue is genuinely empty~~ — that was true for about an hour.
+**[WALK-19](docs/walk-open.md) is the gate on v1.1** and now carries the acceptance for both of these
+(steps 5 and 10); it needs a **device**, a **license tester** and the vc14 `internal` build. Also ready:
+**WALK-11**, **WALK-07 (Paywall half)** and **WALK-03 step 4** on a debug build of this branch; **WALK-18**
+needs a mid-range device; **WALK-12 (R8) LAST**. **Neither fix has shipped** — no `Release-Lane:` trailer,
+per the branch rule; the OTA lane is open onto `internal` only._
+
+---
+
