@@ -3142,6 +3142,63 @@ pitch. One screen per request. `PLUS_ENABLED` stays `false`; it is a design requ
 
 ## Session notes (archived from PROGRESS.md)
 
+_2026-09-06, later (Opus — **IMP-084 landed AND shipped on both lanes; v1.0.9 / vc15 is on `internal`**;
+branch-only, NOT pushed) — **a build session that became a ship session on the owner's instruction.**_
+
+**IMP-084 — a paywall that cannot charge is no longer shown.** All three layers landed as the spec wrote
+them; nothing was redesigned. Commit `da77a7d`.
+- **A — the key reaches the build.** No `eas.json` profile declared an `environment`, so `RC_ANDROID_KEY`
+  sat on EAS and was never injected. All three profiles now bind one; `channel`/`distribution`/`submit`
+  untouched.
+- **B — the preflight verifies the lever, not the runner.** New pure `easEnvironmentPreflight({ easJson })`
+  beside the unchanged `billingPreflight`; `main()` runs both and prints every failure. **Run against the
+  pre-fix `eas.json` it reproduced the vc14 diagnosis exactly** — `declares environment undefined, expected
+  "production"`. The header's "hard build failure instead of a shipped one" claim is replaced by an account
+  of what the script cannot see.
+- **C — the app hides a paywall it cannot back.** `paywallLive({ plusEnabled, billingConfigured, dev })`
+  in `src/billing/index.js`; `RitualsApp.js` derives `PAYWALL_LIVE` after `PLATFORM` and threads it through
+  **all 16** former `PLUS_ENABLED` uses — props, four `Modal visible=` gates, `restoreAccess`.
+
+**One deviation from the spec, a tightening.** The required source assertion, first written as
+`/plusEnabled\s*[=:]\s*PLUS_ENABLED/`, matched the gate's own legitimate `plusEnabled: PLUS_ENABLED,`
+line. It is now the JSX-prop form the spec names, plus a second test pinning the surviving `PLUS_ENABLED`
+lines in that file to exactly two (the import, the gate input). Stricter than one regex: any new bare use
+fails the suite.
+
+**Proof: 915 passed / 90 suites** (from 902/89 — new `__tests__/billing/paywallLive.test.js`, four cases
+appended to `__tests__/scripts/checkBillingConfig.test.js`), both zone suites green, `npx expo export
+--platform android` clean.
+
+**✅ SHIPPED ON BOTH LANES, in that order, on the owner's instruction ("I need this in internal asap").**
+The order was forced and matters: **the OTA had to go first**, because the `bump:native` that the build
+needs moves `runtimeVersion` to 1.0.9 and closes the 1.0.8 lane behind it.
+1. **OTA — layer C only**, `eas update --channel production --platform android`, update group
+   `90aa2074-6625-4072-8d35-71244a525b2d` (Android update `01a07618-8aed-7143-b09b-ff58c1b5d1ca`), runtime
+   **1.0.8**, from commit `2834dd9`. The publish log shows `env: export RC_ANDROID_KEY`, so **that update
+   carries the key in its manifest** — on vc14 `hasKeyFor` returns true, billing goes real, and
+   `PAYWALL_LIVE` keeps the surface visible instead of hiding it.
+2. **BUILD — layers A + B**, `npm run bump:native` → **v1.0.9 / vc15** (`980cdad`), preflight green on both
+   checks with the key loaded (`exit=0`), then `eas build --platform android --profile production
+   --auto-submit`. **Confirmed from `eas submit:list`, not inferred:** `Status: finished`, `Release Status:
+   completed`, `Version code 15`, build `e97db74d-e53d-4290-af3d-80b2e8163737`, submission
+   `a43f49c1-f1fd-4964-bc85-ae05b1357e5c`, runtime `1.0.9`, fingerprint `1a1cb4bd…`. **vc15 replaced vc14
+   on `internal`.**
+
+**✅ Layer A is proven, and the proof is a log line to check on every future build:** `Environment
+variables with visibility "Plain text" and "Sensitive" loaded from the "production" environment on EAS:
+RC_ANDROID_KEY`. **Its absence is the vc14 defect.**
+
+> ⚠️ **CORRECTED 2026-09-06 (IMP-086).** This note inferred from a publish log line
+> (`env: export RC_ANDROID_KEY`) that the 1.0.8 OTA "carries the key in its manifest".
+> **A publish log line is not evidence — the manifest read is.** The next update on this
+> lane (IMP-085, group `d5f03a47`, runtime 1.0.9) was published the same way and its
+> manifest read back **`rcAndroidKey:""`**, wiping the key on every device that took it.
+> The 1.0.8 group `90aa2074` was never measured, so its key status is **unknown**, not
+> proven. `eas update` needs an explicit **`--environment production`**; a local `.env`
+> does not save it. See IMP-086 and the release invariant in `playbook.md`.
+
+---
+
 _2026-09-05 (Opus — WALK-03 / WALK-17 / WALK-08 emulator pass, WALK-16 + WALK-17 closed, IMP-081 scoped;
 **branch-only, committed, NOT pushed**) — **a walk session; no app code was touched and the record is the
 deliverable.**
@@ -5179,4 +5236,171 @@ per the branch rule; the OTA lane is open onto `internal` only._
   fix, the paywall must be **VISIBLE**, an airplane-mode purchase must **FAIL**, and an online purchase
   must appear **in Play's subscription list**. Until that runs, billing remains unproven — which has been
   true of every build this app has ever shipped.
+
+
+
+---
+
+## The 2026-09-06 billing incident — full narrative (archived from PROGRESS.md)
+
+Kept verbatim because it is the worked example for four separate traps: a build that ships a purchase
+simulation, a probe that cannot work under Metro, an OTA lane that deletes the key it should carry, and
+a "clear data to reproduce" habit that guarantees you test the wrong bundle. Closed 2026-09-06.
+
+> ## 🔴 STOP — THE OTA LANE PUBLISHES AN **EMPTY** RevenueCat KEY. IMP-085 SHIPPED IT.
+>
+> **Found 2026-09-06 from the owner's device report** (clear data → onboarding offers a 7-day trial →
+> the You tab has **no** subscribe *and* no manage entry, either way). Read back from the **live**
+> production manifest, runtime `1.0.9`, group `d5f03a47` — this is measured, not derived:
+>
+> ```
+> rcAndroidKey":""      rcIosKey":""      createdAt 2026-09-06T10:46:33Z
+> ```
+>
+> **`eas update` evaluates `app.config.js` on whatever machine runs it**, and an `eas.json` profile
+> `environment` binds the **BUILD lane only**. Without `--environment production` the runner has no
+> `RC_ANDROID_KEY`, `extra.rcAndroidKey` publishes as `''`, **and the update OVERWRITES the key the
+> installed build embedded.** So the two halves have never been in the same place:
+>
+> | | probe | key | result |
+> | --- | --- | --- | --- |
+> | vc15 **embedded** | ❌ `require.resolve` | ✅ present | billing off |
+> | production **OTA** `d5f03a47` | ✅ fixed | ❌ **wiped** | billing off |
+>
+> **IMP-085 fixed the probe and, in the same update, deleted the key the probe now correctly checks.**
+> ⚠️ **The commit message `9df451d` — "real billing is live for the first time" — is WRONG. It never was.**
+> IMP-084 layer A is still real and still proven (EAS injects the key at **build**); nothing guarded the
+> **update**. ⚠️ **This branch never reaches CI**, so every OTA here was published **by hand** with the
+> same naked command — `docs/playbook.md` documented it that way too.
+>
+> ✅ **[IMP-086](docs/build-log.md) fixes both, commit `c50e7e7`** — `--environment production` on the
+> workflow command, `otaEnvironmentPreflight` failing CI on any `eas update` line missing it, the
+> playbook's copy corrected, **and onboarding brought under the gate** (see below). `npm test` **936**
+> green (was 915), `npx expo export` clean.
+>
+> ## ✅ THE PAID SURFACE IS BACK ON THE DEVICE — 2026-09-06
+>
+> ✅ **IMP-086 (`c50e7e7`) and IMP-087 (`74084e5`) are both published** and the owner confirms the Plus
+> option is now **visible in the You tab** on their phone. The manifest reads back **non-empty**.
+>
+> 🧠 **The behaviour that caused three rounds of confusion, written down so nobody re-derives it.** The
+> owner cleared data, onboarded, skipped the trial offer, saw an **empty You tab** — then backgrounded the
+> app a couple of times and the Plus option **appeared**. Nothing raced and nothing is flaky. That is the
+> OTA lane doing exactly what it documents:
+>
+> 1. **Clearing app data deletes the downloaded update**, so the next launch runs the **embedded vc15** —
+>    which predates IMP-085/086/087: its onboarding offer is gated on bare `PLUS_ENABLED` (**the offer
+>    shows**) and its You tab on a `PAYWALL_LIVE` that the dead `require.resolve` probe forces false
+>    (**empty tab**). The exact symptom, from the bundle nobody thought they were testing.
+> 2. That launch **downloads** the new update in the background.
+> 3. The next **cold** start swaps it in — and backgrounding hard enough for Android to restart the
+>    process is what did it.
+>
+> ⚠️ **So "clear data to reproduce" is the one gesture that guarantees you are testing the OLD bundle.**
+> The trial offer appearing at all is now a **reliable tell**: under IMP-086 an offer means the gate is
+> live, and an offer followed by an empty You tab is impossible — it can only be a pre-`c50e7e7` bundle.
+>
+> ## ✅ MONEY IS REAL — WALK-19 step 0(c) AND step 2 PASSED on a device, 2026-09-06
+>
+> **Owner-run, on hardware, and this is the evidence the whole 10b track was waiting for:**
+> - **Prices render in INR** — the live Play offering is reaching the app. `useLivePrices` silently keeps
+>   the `PLUS_PRICES` constants (`$4.99` / `$29.99`) when the store is unreachable, so **localized prices
+>   are the proof** and dollar amounts would have been the fallback.
+> - **An airplane-mode purchase does NOT complete.** `simService` completes regardless of network — that
+>   asymmetry is exactly how the vc14 giveaway was caught, and it now answers the other way.
+>
+> ✅ **The purchase simulation is off the device. `PAYWALL_LIVE` is true, the key ships, the probe works,
+> and Play is transacting.** The 2026-09-06 incident chain (IMP-084 → 085 → 086 → 087) is CLOSED.
+>
+> 🔴 **The same walk found a trap, fixed as [IMP-088](docs/build-log.md), commit `c494721`.** The purchase
+> hung on **"Confirming with Play Store…" forever** — `usePurchaseFlow` awaited the service with no bound
+> and the pending card had **no dismiss control at all** while saying *"Don't close the app"*. RevenueCat's
+> `getOfferings`/`purchasePackage` can both hang with no network, so nothing rejected and **force-quit was
+> the only exit.** ⚠️ **The fix is deliberately NOT a timeout-to-failure**, and do not "simplify" it into
+> one: a real purchase legitimately takes minutes (Play sheet, adding a card, a bank running 3DS/OTP —
+> the norm on the INR flows this app now serves), so declaring failure mid-charge is **worse than the
+> hang**. Instead the card offers a way *out* after `PENDING_GRACE_MS`, says nothing about the outcome,
+> and abandoning **reconciles with the store** through the IMP-043 failure-tolerant pair. 965 green.
+> ✅ **SHIPPED by OTA 2026-09-06** — group `82bc2b16-6fe2-42b2-8198-800632d09d2a`, android update
+> `01a07759-1f94-7c48-a807-f8b1466fa4b7`, runtime 1.0.9, from `5801036`. **Manifest verified: the key
+> reads back `goog_…`, not `""`** — the IMP-086 discipline, applied.
+>
+> 🚦 **What is still owed before `internal` → `production`:** the rest of WALK-19 — a full license-tester
+> purchase (steps 1–7), entitlement surviving a reinstall, the perks actually delivered, and steps 5 + 10
+> (IMP-082's renewal date, IMP-083's Cancel deep link). ⚠️ **Real charges are possible on `internal`:**
+> confirm every account on that tester list is a **Play license tester** first. ⚠️ Note for that walk:
+> **RevenueCat has no sandbox for Google Play** — license-tester purchases use the same production key,
+> products and offering, and RC tags them sandbox. ✅ **RC's Google Play service account credential IS
+> configured** (owner-confirmed 2026-09-06, done long ago; it is *not* this repo's
+> `play-service-account.json`, which is EAS's for submitting builds). **Settled — do not re-raise.**
+>
+> ⚠️ **The owner's Plus is still a leftover FAKE entitlement** from a `simService` purchase, persisted
+> locally — which is why the skins stayed unlocked while the paid surface vanished. **There is almost
+> certainly no Play subscription to cancel and no real charge has occurred.** Confirm in Play.
+>
+> ⚠️ **Second defect, same report: onboarding was NEVER under IMP-084's gate.** Its three paid mounts read
+> the bare `PLUS_ENABLED` flag, so the trial teaser and the **full Paywall** opened in a build that cannot
+> transact — where `createPurchaseService` falls back to `simService`: a fake `success` after 1500ms that
+> **grants Plus free and persists it**. That is the vc14 giveaway, still reachable on first run, and it is
+> what the owner was offered. Fixed in `c50e7e7` (`OB_PAYWALL_LIVE`). ⚠️ **IMP-084's audit read
+> `RitualsApp.js` only** — and so did its source assertion. Both now cover `Onboarding.js`.
+>
+> **jest is blind to all of this by construction**: it renders with `__DEV__` true, so the gate is
+> legitimately live there, and no test can read a published manifest. 936 green tests cannot see it. Every
+> guard added for it is a **source assertion**, and each was proven to fail on the real defect first.
+>
+> ## ✅ THE PURCHASE SIMULATION IS OFF THE TRACK — v1.0.9 / vc15 shipped 2026-09-06
+>
+> **The incident:** the owner subscribed in **AIRPLANE MODE and it succeeded** (2026-09-06, proven on a
+> device). Real Play Billing cannot complete a purchase with no network; `simService` can, and grants Plus
+> **free**. vc14 had shipped with no RevenueCat key and fell back to it.
+> ✅ **[IMP-084](docs/build-log.md) fixed all three layers, commit `da77a7d`, and BOTH lanes shipped:**
+> - **OTA (layer C), runtime 1.0.8** — update group `90aa2074-6625-4072-8d35-71244a525b2d`, from `2834dd9`.
+> - **BUILD (layers A + B), v1.0.9 / vc15 → `internal`** — confirmed from `eas submit:list`, not inferred:
+>   `Status: finished`, `Release Status: completed`, `Version code 15`, build
+>   `e97db74d-e53d-4290-af3d-80b2e8163737`, submission `a43f49c1-f1fd-4964-bc85-ae05b1357e5c`, from commit
+>   `980cdad`, runtime `1.0.9`, fingerprint `1a1cb4bd…`. **vc15 replaces vc14 on the track.**
+>
+> ✅ **Layer A is PROVEN, and this is the line to check on every future build.** The vc15 log reads
+> **`Environment variables with visibility "Plain text" and "Sensitive" loaded from the "production"
+> environment on EAS: RC_ANDROID_KEY`** — EAS Build injecting the key it silently omitted for vc14.
+> **Its absence is the defect.** Root cause, evidenced, do not re-derive: the key always existed on EAS;
+> **no `eas.json` profile declared an `environment`** (now all three do). The old preflight passed
+> throughout because it reads the **CI runner's** env, not the machine that decides. ⚠️ Adding `env:` to
+> the workflow's build step does **nothing** — cloud builds evaluate `app.config.js` on EAS's servers.
+>
+> ⚠️ **What is still NOT proven — this is unwalked, not verified.** No purchase has been put through vc15.
+> **WALK-19 step 0(c) is the acceptance: airplane mode, attempt a purchase, and it must FAIL.** jest is
+> structurally blind here (the suite runs `simService` and renders with `__DEV__` true), which is why layer
+> C needed a source assertion rather than a render test. Two residues from the incident, both still true:
+> - **Every "purchase" on vc14 was fake** — nothing reached Google, so there was **nothing to cancel**.
+>   That, not a missing `?sku=`, is why the owner could not find their subscription. **IMP-083 was scoped
+>   against a symptom whose stated cause was wrong** (its fix is still correct, and still shipped).
+> - **`12 Jun 2026` does NOT prove an OTA failed to apply.** `simService`'s fake `renewISO` formats
+>   through IMP-082's *new* code to exactly that string. Verified by hand 2026-09-06.
+>
+> ⚠️ **Real charges are now possible on `internal`** — vc15 transacts for real. **Confirm every account on
+> that tester list is a license tester** before anyone touches a real card. **Do not promote to
+> `production`** until the walks clear.
+>
+> **Plus is ON** (`PLUS_ENABLED = true`, commit `7d2e515`, owner's call 2026-09-05) — but "on" means the
+> flag, not a build that can take money. Playbook 10b.2/10b.4 closed; **10b.3 is NOT** (see the 🔴 above);
+> 10b.5 in flight. Three fixes were needed to get here and all are one defect class — *the paid surface
+> asserting something the app cannot back*: the dead PDF perk **cut** from `PLUS_PERKS`, the cash ember
+> packs **decoupled** from the Plus flag (a priced surface giving its goods away — the first vc14 build was
+> cancelled mid-flight over it, `6590834`), and IMP-082's invented renewal dates.
+>
+> | If this chat is… | Take |
+> | --- | --- |
+> | a **build task** | ✅ **The queue is EMPTY** — IMP-088 (`c494721`) was the last row and **everything is shipped**. The only work left is **WALK-19**, a walk chat, not a build. **Nothing should be invented to fill it**; new work comes from a 🔴 walk finding, the owner, or a design doc. |
+> | a **runtime walk** | **The lane with the work in it.** 🚦 **[WALK-19](docs/walk-open.md) — "money actually changes hands" — gates the v1.1 promotion and is BLOCKED**: it needs a build carrying `da77a7d`, a **device** and a **license tester**. vc14 fakes purchases, so a run against it records a result about the simulation. ✅ **Ready now on a debug build of this branch (all pure-JS):** **WALK-07** (Paywall half — IMP-080), **WALK-03 step 4** (`neverBackedUp` — IMP-081; run at default **and** max font scale, where the third line gets tested) and **WALK-11** (the Plus perk surfaces mount on their own now, so the old "needs T1" reason is gone). ⚠️ **WALK-18 needs a NEW build** — IMP-077's native deps put the tree on v1.0.8/vc14, which no vc13 artifact carries — **and a mid-range device**, because an emulator renders dropped frames as smooth. **WALK-08 is PARTIAL** (cap confirmed; eight of nine screens, rotation and `longName` unrun). **WALK-12 (R8) is LAST** and needs the Play `internal` build, which has no dev harness. **WALK-16/17 CLOSED ✅ on emulator evidence; WALK-13 DROPPED** (owner, 2026-09-05: record emulator results as done, not smoke). ⚠️ **Gap no closed row covers:** real doze, OEM battery managers, delivery to a real share target, Google's own backup schedule. |
+> | a **design request** | See "Claude Design" below. The live request is **Insights**. |
+
+**The whole design push lives on `feat/design-push`, which is NEVER pushed, NEVER given a `Release-Lane:`
+trailer, and NEVER merged to `main`** without a separate owner decision. Nine specs are code-complete and
+branch-only: IMP-076 ✅ IMP-078 ✅ (2026-08-17), IMP-080 ✅ IMP-081 ✅ IMP-077 ✅ (2026-09-05), IMP-082 ✅
+IMP-083 ✅ IMP-084 ✅ (2026-09-06). **The free-app improvement track is CLOSED** (owner, 2026-08-16):
+`IMP-001`–`IMP-075` are done bar the deferred `IMP-022` and the reserved `IMP-057`; **do not open new
+free-track rows.** **`IMP-057` is reserved, not missing** — do not reuse the number. **IMP-044 claims no
+queue slot** — it rides the next build and needs only WALK-12.
 
