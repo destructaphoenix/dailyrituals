@@ -54,12 +54,17 @@ describe('RitualsApp.js wires the gate, not the flag', () => {
     expect(source).not.toMatch(/\{\s*PLUS_ENABLED\s*\?/);
   });
 
-  test('PLUS_ENABLED survives only as the input to PAYWALL_LIVE', () => {
+  test('PLUS_ENABLED survives only as an input to the two derived gates', () => {
+    // IMP-087 added the second `plusEnabled: PLUS_ENABLED` — billingDiagnostic
+    // needs the INTENT flag to know a build meant to sell and could not. Pinned
+    // exactly rather than loosened to a count: the whole value of this assertion
+    // is that a new bare use has to be justified here before it can ship.
     const uses = source.split('\n').filter(
       (l) => /\bPLUS_ENABLED\b/.test(l) && !l.trim().startsWith('//')
     );
     expect(uses).toEqual([
       "import { PLUS_ENABLED, EMBER_PACKS_ENABLED } from './billing/config';",
+      '  plusEnabled: PLUS_ENABLED,',
       '  plusEnabled: PLUS_ENABLED,',
     ]);
   });
@@ -165,5 +170,36 @@ describe('Onboarding.js wires the gate, not the flag', () => {
   test('all three onboarding paid mounts read the gate', () => {
     const gated = source.split('\n').filter((l) => /OB_PAYWALL_LIVE/.test(l) && /&&|\?/.test(l));
     expect(gated).toHaveLength(3);
+  });
+});
+
+// IMP-087 — the gate must stop failing silently. Three defects, one empty tab.
+describe('the You tab reports a dead gate instead of hiding', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const you = fs.readFileSync(
+    path.join(__dirname, '..', '..', 'src', 'screens', 'YouScreen.js'), 'utf8');
+  const app = fs.readFileSync(
+    path.join(__dirname, '..', '..', 'src', 'RitualsApp.js'), 'utf8');
+
+  test('YouScreen renders the diagnostic where the paid surface would be', () => {
+    expect(you).toMatch(/\{billingDiagnostic && !plus && \(/);
+    expect(you).toMatch(/label="Plus is unavailable"/);
+  });
+
+  test('the row is NOT gated on plusEnabled — that is the gate it reports on', () => {
+    // Gating the report on the thing being reported is how this stays invisible.
+    expect(you).not.toMatch(/plusEnabled && billingDiagnostic/);
+    expect(you).not.toMatch(/billingDiagnostic && plusEnabled/);
+  });
+
+  test('RitualsApp derives it from the split facts, not from PAYWALL_LIVE', () => {
+    expect(app).toMatch(/const BILLING_DIAGNOSTIC = billingDiagnostic\(\{/);
+    expect(app).toMatch(/\.\.\.billingStatus\(PLATFORM\)/);
+    expect(app).toMatch(/billingDiagnostic=\{BILLING_DIAGNOSTIC\}/);
+  });
+
+  test('the running bundle is read defensively — it must not crash the screen', () => {
+    expect(app).toMatch(/try \{ _updates = require\('expo-updates'\); \} catch/);
   });
 });

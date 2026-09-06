@@ -25,6 +25,7 @@ export default function YouScreen({
   lastBackupAt, onExportData, onImportData, onExplainAutoBackup, onOpenDev,
   pendingRestore, onReopenPendingRestore, onDiscardPendingRestore,
   reminderValue, onOpenReminder, onOpenPlusPerks,
+  billingDiagnostic = null, onExplainBillingDiagnostic,
   trashCount = 0, onOpenTrash,
   customMoodsCount = 0, onOpenMoodManager,
   promptPackName, onOpenPromptPacks,
@@ -112,6 +113,16 @@ export default function YouScreen({
         {/* IMP-085: `|| plus` — a subscriber keeps the banner, and with it the
             route to Manage, even when the app cannot sell. */}
         {(plusEnabled || plus) && <PlusBanner plus={plus} onOpenPaywall={onOpenPaywall} onManage={onOpenManage} renewLabel={renewLabel} compact />}
+        {/* IMP-087: the gate hid the paid surface and said nothing, so vc14's
+            giveaway, vc15's dead probe and the IMP-085 OTA's empty key all looked
+            like one empty tab. This is the only thing that stands where the
+            surface would be — and it names the cause and the running bundle. */}
+        {billingDiagnostic && !plus && (
+          <Card>
+            <Row icon={<AlertIcon size={20} color={c.accentDeep} />} label="Plus is unavailable"
+              value={billingDiagnostic.reason} onPress={onExplainBillingDiagnostic} />
+          </Card>
+        )}
         {plusEnabled && onOpenPlusPerks && (
           <Card>
             <Row icon={<Sun size={20} color={c.accentDeep} />} label="What's in Plus" onPress={onOpenPlusPerks} />

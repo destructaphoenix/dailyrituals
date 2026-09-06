@@ -39,7 +39,8 @@ import { ManageSubscription } from './screens/PlusFlow';
 import GetEmbers from './screens/GetEmbers';
 import Toast from './screens/Toast';
 import { openExternal } from './billing/links';
-import { createPurchaseService, isBillingConfigured, paywallLive } from './billing';
+import { createPurchaseService, isBillingConfigured, paywallLive, billingStatus } from './billing';
+import { billingDiagnostic, describeUpdate } from './billing/diagnostic';
 import { PLUS_ENABLED, EMBER_PACKS_ENABLED } from './billing/config';
 import { formatRenewDate } from './billing/format';
 import { checkEntitlement, nextPlusState, useLaunchEntitlementCheck } from './billing/entitlementSync';
@@ -97,6 +98,22 @@ const PAYWALL_LIVE = paywallLive({
   billingConfigured: isBillingConfigured(PLATFORM),
   dev: __DEV__,
 });
+
+// IMP-087: when the gate is false in a build that MEANT to sell, say so. Silence
+// is what made vc14, vc15 and the IMP-085 OTA indistinguishable on screen — three
+// different causes, one empty You tab, one round trip to a device each. Null in
+// every healthy case, so this adds nothing to a build that works.
+const BILLING_DIAGNOSTIC = billingDiagnostic({
+  plusEnabled: PLUS_ENABLED,
+  ...billingStatus(PLATFORM),
+  dev: __DEV__,
+});
+// Read defensively: expo-updates is a native module, and a diagnostic that can
+// crash the screen it is diagnosing is worse than no diagnostic.
+let _updates = null;
+try { _updates = require('expo-updates'); } catch (e) { _updates = null; }
+const RUNNING_BUNDLE = describeUpdate(_updates);
+
 export default function RitualsApp({ mode = 'day', settings, setSettings, onToggleMode, initialPlus = false, initialState = {}, onResetData, onReplaceAllData, restoredFromMs = null, onDismissRestoreNotice, pendingRestore = null, onConsumePendingRestore, restoreOfferAnswered = false, onAnswerRestoreOffer, onReopenRestoreOffer }) {
   const theme = useMemo(() => makeTheme(mode, settings), [mode, settings]);
   const c = theme.colors;
@@ -211,6 +228,21 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   // hold Plus but billing cannot transact, the in-app sheet would render a plan,
   // a price and a renewal the app cannot back — so send them to Play's own
   // subscription screen instead, which is the one place the truth lives.
+  // IMP-087: the whole point is that it names the cause AND the bundle. Half of
+  // every past round trip was "is the fix even on the phone?" — an OTA applies on
+  // the SECOND launch, so a correct fix and an unapplied one look the same.
+  const explainBillingDiagnostic = () => {
+    if (!BILLING_DIAGNOSTIC) return;
+    Alert.alert(
+      'Plus is unavailable',
+      BILLING_DIAGNOSTIC.reason +
+      '\n\nNothing is wrong with your account and you have not been charged. ' +
+      'This is a problem with the app build, not with you.\n\n' +
+      `Running: ${RUNNING_BUNDLE}\nCode: ${BILLING_DIAGNOSTIC.code}`,
+      [{ text: 'OK', style: 'cancel' }]
+    );
+  };
+
   const openManage = () => {
     if (PAYWALL_LIVE) { setManageOpen(true); return; }
     openExternal('manage', PLATFORM, manageOpts());
@@ -731,6 +763,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             plusEnabled={PAYWALL_LIVE} renewLabel={renewLabel}
             onOpenPaywall={PAYWALL_LIVE ? () => setPaywall(true) : () => {}}
             onOpenManage={plus ? openManage : () => {}}
+            billingDiagnostic={BILLING_DIAGNOSTIC} onExplainBillingDiagnostic={explainBillingDiagnostic}
             onRestorePurchases={() => doRestore()}
             onOpenAchievements={() => setShowAch(true)}
             onResetData={onResetData}

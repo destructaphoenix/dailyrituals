@@ -29,6 +29,13 @@ export function isBillingConfigured(platform) {
   return _rcModuleOk && hasKeyFor(platform);
 }
 
+// IMP-087: isBillingConfigured collapses two independent facts into one boolean,
+// and on a device that boolean is all anyone could see. Each fact has failed on
+// its own and for a different reason, so the diagnostic needs them apart.
+export function billingStatus(platform) {
+  return { moduleOk: _rcModuleOk, keyPresent: hasKeyFor(platform) };
+}
+
 // IMP-084 — the gate that decides whether the paid surface is shown at all.
 // `plusEnabled` is intent (config.js); `billingConfigured` is capability. A store
 // build with intent but no capability falls back to simService, which fakes
