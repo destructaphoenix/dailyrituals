@@ -87,13 +87,38 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 > The trial offer appearing at all is now a **reliable tell**: under IMP-086 an offer means the gate is
 > live, and an offer followed by an empty You tab is impossible — it can only be a pre-`c50e7e7` bundle.
 >
-> 🚦 **What is proven and what is NOT.** Proven: the key ships, the probe works, the surface renders.
-> **NOT proven: that money can actually change hands.** `useLivePrices` merges the store's real prices
-> over the `PLUS_PRICES` design constants and **silently keeps the constants when the store is
-> unreachable**, so a paywall reading exactly **`$4.99` / `$29.99`** is the *fallback*, not Play. **Real
-> billing shows localized Play prices in the owner's own currency.** That check, plus **WALK-19 step 0(c)
-> — airplane mode, the purchase must FAIL** — is the acceptance. ⚠️ **Real charges are possible now:
-> confirm every account on the `internal` tester list is a license tester first.**
+> ## ✅ MONEY IS REAL — WALK-19 step 0(c) AND step 2 PASSED on a device, 2026-09-06
+>
+> **Owner-run, on hardware, and this is the evidence the whole 10b track was waiting for:**
+> - **Prices render in INR** — the live Play offering is reaching the app. `useLivePrices` silently keeps
+>   the `PLUS_PRICES` constants (`$4.99` / `$29.99`) when the store is unreachable, so **localized prices
+>   are the proof** and dollar amounts would have been the fallback.
+> - **An airplane-mode purchase does NOT complete.** `simService` completes regardless of network — that
+>   asymmetry is exactly how the vc14 giveaway was caught, and it now answers the other way.
+>
+> ✅ **The purchase simulation is off the device. `PAYWALL_LIVE` is true, the key ships, the probe works,
+> and Play is transacting.** The 2026-09-06 incident chain (IMP-084 → 085 → 086 → 087) is CLOSED.
+>
+> 🔴 **The same walk found a trap, fixed as [IMP-088](docs/build-log.md), commit `c494721`.** The purchase
+> hung on **"Confirming with Play Store…" forever** — `usePurchaseFlow` awaited the service with no bound
+> and the pending card had **no dismiss control at all** while saying *"Don't close the app"*. RevenueCat's
+> `getOfferings`/`purchasePackage` can both hang with no network, so nothing rejected and **force-quit was
+> the only exit.** ⚠️ **The fix is deliberately NOT a timeout-to-failure**, and do not "simplify" it into
+> one: a real purchase legitimately takes minutes (Play sheet, adding a card, a bank running 3DS/OTP —
+> the norm on the INR flows this app now serves), so declaring failure mid-charge is **worse than the
+> hang**. Instead the card offers a way *out* after `PENDING_GRACE_MS`, says nothing about the outcome,
+> and abandoning **reconciles with the store** through the IMP-043 failure-tolerant pair. 965 green.
+> 🚦 **NOT SHIPPED — needs an OTA.**
+>
+> 🚦 **What is still owed before `internal` → `production`:** the rest of WALK-19 — a full license-tester
+> purchase (steps 1–7), entitlement surviving a reinstall, the perks actually delivered, and steps 5 + 10
+> (IMP-082's renewal date, IMP-083's Cancel deep link). ⚠️ **Real charges are possible on `internal`:**
+> confirm every account on that tester list is a **Play license tester** first. ⚠️ Note for that walk:
+> **RevenueCat has no sandbox for Google Play** — license-tester purchases use the same production key,
+> products and offering, and RC tags them sandbox. The item most likely still missing is the **Google
+> Play service account credential uploaded to RevenueCat** (distinct from this repo's
+> `play-service-account.json`, which is EAS's for submitting builds) — without it RC cannot validate the
+> purchase token. Nothing in this repo has ever verified it; RC shows a banner if absent.
 >
 > ⚠️ **The owner's Plus is still a leftover FAKE entitlement** from a `simService` purchase, persisted
 > locally — which is why the skins stayed unlocked while the paid surface vanished. **There is almost
@@ -153,7 +178,7 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 >
 > | If this chat is… | Take |
 > | --- | --- |
-> | a **build task** | ✅ **The queue is EMPTY** — IMP-087 (`74084e5`) was the last row and **both it and IMP-086 are shipped**. The work left is a **walk**, not a build (see the 🚦 above). **Nothing should be invented to fill it**; new work comes from a 🔴 walk finding, the owner, or a design doc. |
+> | a **build task** | ✅ **The queue is EMPTY** — IMP-088 (`c494721`) was the last row. IMP-086/087 are shipped; **IMP-088 is not** (see the 🚦 above). **Nothing should be invented to fill it**; new work comes from a 🔴 walk finding, the owner, or a design doc. |
 > | a **runtime walk** | **The lane with the work in it.** 🚦 **[WALK-19](docs/walk-open.md) — "money actually changes hands" — gates the v1.1 promotion and is BLOCKED**: it needs a build carrying `da77a7d`, a **device** and a **license tester**. vc14 fakes purchases, so a run against it records a result about the simulation. ✅ **Ready now on a debug build of this branch (all pure-JS):** **WALK-07** (Paywall half — IMP-080), **WALK-03 step 4** (`neverBackedUp` — IMP-081; run at default **and** max font scale, where the third line gets tested) and **WALK-11** (the Plus perk surfaces mount on their own now, so the old "needs T1" reason is gone). ⚠️ **WALK-18 needs a NEW build** — IMP-077's native deps put the tree on v1.0.8/vc14, which no vc13 artifact carries — **and a mid-range device**, because an emulator renders dropped frames as smooth. **WALK-08 is PARTIAL** (cap confirmed; eight of nine screens, rotation and `longName` unrun). **WALK-12 (R8) is LAST** and needs the Play `internal` build, which has no dev harness. **WALK-16/17 CLOSED ✅ on emulator evidence; WALK-13 DROPPED** (owner, 2026-09-05: record emulator results as done, not smoke). ⚠️ **Gap no closed row covers:** real doze, OEM battery managers, delivery to a real share target, Google's own backup schedule. |
 > | a **design request** | See "Claude Design" below. The live request is **Insights**. |
 
@@ -241,6 +266,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | **085** | **The SDK probe that has always said no** | **OTA** | ✅ code-complete 2026-09-06 · commit `2672bf2` · **branch-only, never pushed** · `require.resolve` is not implemented by Metro, so `isBillingConfigured()` returned **false in every build ever shipped** — every release ran `simService`. Now a static `require` + pure `billingModuleOk(mod)` (`typeof mod.configure === 'function'`), with a source assertion banning `require.resolve` from code lines · **and a subscriber keeps the cancel route**: Manage gates on `plus`, `PlusBanner` renders on `plusEnabled || plus` in YouScreen **and** Shop (the render gate, not the handler, was what hid it), falling back to Play's own subscription screen · pure JS · ✅ **SHIPPED by OTA 2026-09-06** (group `d5f03a47-…`, runtime 1.0.9) · ⚠️ **UNWALKED — WALK-19 step 0(c) inverted: the paywall must be VISIBLE and an airplane-mode purchase must FAIL** |
 | **086** | **The OTA lane publishes an empty RevenueCat key** | **OTA** | ✅ code-complete 2026-09-06 · commit `c50e7e7` · **branch-only, never pushed** · `eas update` evaluates `app.config.js` on the machine that runs it and an `eas.json` profile `environment` binds the **build** lane only, so every OTA ever published here shipped `extra.rcAndroidKey: ""` — **overwriting the key the installed build embedded**. Measured from the live `1.0.9` manifest (group `d5f03a47`), not derived. Now `--environment production` on the workflow command + in the playbook, a third pure check `otaEnvironmentPreflight` failing CI on any naked `eas update` line, **and onboarding's three paid mounts moved off bare `PLUS_ENABLED` onto `OB_PAYWALL_LIVE`** (the `simService` free-Plus giveaway was still reachable on first run) · 936 green (was 915) · ✅ **SHIPPED by OTA 2026-09-06** (group `62a8f8cf-9853-47e8-b013-907544e85f0c`, runtime 1.0.9) — manifest verified non-empty, surface confirmed on the owner's device |
 | **087** | **The paid surface says why it is missing** | **OTA** | ✅ code-complete 2026-09-06 · commit `74084e5` · **branch-only, never pushed** · vc14, vc15 and the IMP-085 OTA all rendered as **one empty You tab** from three different causes, each costing a device round trip · new `billingStatus()` splits the two facts `isBillingConfigured()` collapses, pure `billingDiagnostic()` names whichever is false, and a **"Plus is unavailable"** row stands where the paid surface would be — **null in every healthy build** (live / Plus off / dev) so it cannot become noise · also reports the running bundle via pure `describeUpdate(expo-updates)`, required in a try/catch · IMP-084's `PLUS_ENABLED` pin **updated, not loosened** · 952 green (was 936) · ✅ **SHIPPED by OTA 2026-09-06** · ⚠️ **it should now render NOTHING** — if the "Plus is unavailable" row ever appears, read the bundle id it prints before doing anything else |
+| **088** | **The purchase overlay stops being a trap** | **OTA** | ✅ code-complete 2026-09-06 · commit `c494721` · **branch-only, never pushed** · from the 🔴 WALK-19 step 0(c) finding on hardware · `usePurchaseFlow` awaited the service **unbounded** and the pending card had **no dismiss control** while saying *"Don't close the app"* — a hung RevenueCat call left force-quit as the only exit · ⚠️ **NOT a timeout-to-failure, and must never become one** — a real purchase takes minutes on INR/3DS flows, so declaring failure mid-charge is worse than hanging · new `PENDING_GRACE_MS` + pure `stuckCopy()` (pinned to never claim failure and to protect the user who WAS charged), an escape button, and `onAbandon` → `checkEntitlement`/`nextPlusState` reconcile in **both** RitualsApp and Onboarding · 965 green (was 952) · 🚦 **NOT SHIPPED — needs an OTA** |
 | — | **Plus is ON** (`PLUS_ENABLED = true`) | Build | ⚠️ **the FLAG is on; the BUILD cannot take money — see 🔴 IMP-084 (2026-09-06).** `PLUS_ENABLED = true` shipped, but vc14 has no RevenueCat key and runs `simService`, so **10b.3 is NOT closed** and the "all real" claim below covers the perks, not the payments · ✅ 2026-09-05 · commit `7d2e515` · **branch-only, never pushed** · ~~playbook 10b.2/10b.3/10b.4 all closed~~; 10b.5 in flight. The dead PDF perk was **cut** from `PLUS_PERKS` rather than built — five perks remain, all real. **Everything about billing is still unproven at runtime: WALK-19** |
 | — | Cash ember packs decoupled from the Plus flag | Build | ✅ 2026-09-05 · commit `6590834` · **caught mid-build and the build was cancelled.** Flipping `PLUS_ENABLED` armed the Shop's "Gather Embers" section + the GetEmbers sheet, which show `$1.99/$4.99/$9.99` against a **bare counter increment** — a priced surface giving its goods away. New `EMBER_PACKS_ENABLED` (false) gates it; `Shop` takes `embersForCash` defaulting to **false**. 875 tests |
 

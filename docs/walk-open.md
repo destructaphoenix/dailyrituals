@@ -120,7 +120,7 @@ locked. It is the row that reopens the moment Plus becomes the active work.
 | WALK-16 | 🚦 | [The New Architecture cold start](#walk-16--the-new-architecture-cold-start) | IMP-076 | **device** (native runtime) | 👤 | ✅ **2026-09-05 — closed on emulator evidence at owner's instruction.** All 7 steps exercised across two agent-run sittings (1-3 New Arch live: Bridgeless + Fabric + TurboModule; 4-7 storage / notification scheduling / export-share-reimport / Auto Backup via T5 with the quarantine offering not imposing). **Owner's call 2026-09-05: emulator results are recorded as done, not smoke.** ⚠️ **Named gap — never exercised anywhere:** real doze, OEM battery managers, delivery to a real share target, Google's own backup schedule. **Unblocks IMP-077.** |
 | WALK-17 | 🚦 | [Edge-to-edge, re-audited under New Arch](#walk-17--edge-to-edge-re-audited-under-new-arch) | IMP-076, IMP-027 regression | **device** | 👤 (visual) | ✅ **2026-09-05 — emulator, agent-run.** All four tabs clean under status bar + gesture bar in **both** day and night; bottom nav and write-FAB correct in **both** gesture and 3-button nav; onboarding + setup also clean. Sheets checked: trash, achievements, shop — the last two at night **and** max font. ⚠️ **Not opened: write flow, reading sheet, mood manager.** |
 | WALK-18 | 🎨 | [The app moves](#walk-18--the-app-moves) | IMP-077 | **device** (mid-range, real frame pacing) | 👤 (visual) | ⬜ — **branch-only. UNBLOCKED 2026-09-05: WALK-16 closed and IMP-077 landed.** ✅ **The build now exists: v1.0.8 / vc14 shipped to Play `internal` 2026-09-05 19:09** (EAS `87f81b24…`, submission `4b7cf3a2…`, from commit `6590834`). IMP-077 added `react-native-reanimated` + `react-native-worklets` (native deps), so **neither vc13 artifact carries this code** — install vc14 from Play, not an older APK. **An emulator cannot settle this row** — it renders dropped frames as smooth, which is the thing being judged. The jest suite is blind here too: the Reanimated mock no-ops every hook |
-| WALK-19 | ⛔ | [Money actually changes hands](#walk-19--money-actually-changes-hands) | 🔴 **BLOCKED ON [IMP-084](specs-open.md) — vc14 runs `simService` and cannot take money. Proven 2026-09-06: a purchase in AIRPLANE MODE succeeded. Do not run this row against vc14; any result recorded against it is void.** · **Phase 10b.5**, IMP-028, **IMP-082 + IMP-083** (steps 5 and 10 are their acceptance — ⚠️ **both landed after vc14 and need an OTA published first**), `7d2e515`, `6590834` | **device** (real Play Billing + a license tester) | 👤 | ⬜ — **NEW 2026-09-05, and it is the gate on v1.1.** `PLUS_ENABLED` is true and v1.0.8 / vc14 is cut to Play `internal`; **every claim the paid surface makes is still unproven at runtime.** jest is structurally blind here — `simService` fakes every purchase result, so a green suite says nothing about Play Billing. **Nothing gets promoted `internal` → `production` until this passes.** |
+| WALK-19 | 🚦 | [Money actually changes hands](#walk-19--money-actually-changes-hands) | **Phase 10b.5**, IMP-028, IMP-082 + IMP-083 (steps 5 and 10), IMP-084/085/086/087, **IMP-088** | **device** (real Play Billing + a license tester) | 👤 | 🟡 **PARTIAL — UNBLOCKED and the hard half is DONE.** ✅ **Step 0(c) PASSED 2026-09-06 on hardware: an airplane-mode purchase does NOT complete** — `simService` completes regardless of network, so this is the proof the simulation is off the device. ✅ **Step 2 PASSED: prices render in INR**, i.e. the live offering reaches the app (`$4.99`/`$29.99` would have been the `PLUS_PRICES` fallback). 🔴 **Step 0(c) also found the pending-overlay trap → [IMP-088](specs-open.md) `c494721`, which needs an OTA before the rest of this row is run.** ⬜ **Still owed:** steps 1 and 3–10 — a full **license-tester** purchase, entitlement surviving a reinstall, perks delivered, plus step 5 (IMP-082 renewal date) and step 10 (IMP-083 Cancel deep link). **Nothing gets promoted `internal` → `production` until those pass.** |
 
 ---
 
@@ -590,9 +590,31 @@ that entitlement survives a reinstall, that the perks are delivered. `npm test` 
 suite runs `simService`, which fabricates every purchase result, so **a green suite is not evidence
 about billing.**
 
-**Set up first:** the tester's Google account must be on the Play Console **license tester** list, and
-installing from the `internal` track. A license tester walks the *full* purchase flow and is not
-charged — that is the whole point; do not test with a real card until step 8.
+**Set up first.** ⚠️ **RevenueCat has NO sandbox for Google Play** — unlike Apple's StoreKit there is no
+test key and no test environment. License-tester purchases run through the *same* production key,
+products, `plus` entitlement and `current` offering; RevenueCat merely tags them sandbox (dashboard
+toggle) so they stay out of the revenue charts. Five things must be true:
+
+1. Play Console → **Setup → License testing** — the tester's Google account added. **Account-level, not
+   per-app**, and it takes time to propagate.
+2. That same account is on the **internal** testing tester list *and* has opened the opt-in link.
+3. The app is **installed from Play**, not sideloaded — Play Billing checks install source + signature,
+   so a sideloaded build fails purchases no matter what the tester list says.
+4. ⚠️ **The Google Play service account credential is uploaded to RevenueCat** (RC → the Play Store app →
+   Service Account Credentials), with *View financial data* + *Manage orders and subscriptions* granted in
+   Play. **This is NOT [`play-service-account.json`](../play-service-account.json) in this repo** — that
+   one is EAS's, for submitting builds. Without RC's own copy it cannot validate the purchase token, so
+   entitlements will not grant or refresh. **Nothing here has ever verified this happened**; RC shows a
+   banner on the app config page if it is missing. **Check this first — it is the likeliest gap.**
+5. Products attached to `plus` + `current` — playbook 10b.3, owner-confirmed 2026-09-05.
+
+A license tester walks the *full* flow and is **not charged**; do not test with a real card until step 8.
+Two behaviours that otherwise read as bugs: the payment method shows **"Test card, always approves"**, and
+**renewals are compressed** — annual ≈ 30 min, monthly ≈ 5 min, renewing ~6 times then stopping. **The
+7-day trial compresses too**, so a short trial is not a misconfiguration.
+
+⚠️ **Steps 0(c) and 2 are already PASSED (2026-09-06) and need no tester setup at all** — airplane mode
+and a price check settle "is this real billing?" on their own. Start from step 1.
 
 - [ ] 0. **Three preconditions. If (c) fails, STOP — the entire row is void.**
       **(c) THE BUILD MUST BE ABLE TO TAKE MONEY — check this FIRST.** Turn on **airplane mode** and
