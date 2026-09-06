@@ -880,9 +880,28 @@ network and nothing could be charged at all.
 was always a way out.** The card's *"Don't close the app"* was telling the user not to do the one thing
 that worked. Not re-litigated; recorded, and IMP-093 acts on it.
 
-**Not run:** the aeroplane-mode **Restore** check (IMP-092's second half) — the sitting stopped at 4c.
-Steps 4b, 4d–4f and 5–10 remain owed. **No purchase was attempted, real or test. Nothing is promoted
-`internal` → `production`.**
+**The aeroplane-mode Restore check (IMP-092's second half) ⬜ INCONCLUSIVE — the fix was never reached.**
+In aeroplane mode Restore answered **"Nothing to restore."**, not *"We couldn't check."* That is the
+**known limit recorded in IMP-092 step 3 firing exactly as predicted**, not a regression:
+`Purchases.restorePurchases()` **resolved** from RevenueCat's local cache rather than rejecting, so the
+call took the *success* path and IMP-092's `catch` branch — the whole of the fix — was never executed.
+⚠️ **Note the sequence made this near-certain**: step 4a had just run a successful online restore, which
+leaves RevenueCat holding a fresh "no subscription" answer to serve offline.
+
+⚠️ **This may be unprovable on any device with network history.** Reaching the `catch` needs a **cold**
+cache with no network, and the SDK warms its cache at launch whenever there is a connection. The nearest
+honest route is **step 9** (uninstall → reinstall → let the OTA apply → aeroplane mode **before** any
+online restore), and even that is not guaranteed. **Record it as unproven; do not clear app data to chase
+it — that deletes the OTA.**
+
+**Worth keeping, because it reframes IMP-092.** If the cached reply is the dominant real-world behaviour,
+then the *relabelling* IMP-092 fixed is the rarer half of the problem and **the cache limit is the larger
+one**. It is narrower than it first looked, though: a real subscriber's cache on a new phone warms with
+**their** entitlement, so the dangerous sentence needs a cache warmed with "no entitlement" — a wrong
+account, or a check that ran before the purchase propagated.
+
+**Not run:** steps 4b, 4d–4f and 5–10.
+**No purchase was attempted, real or test. Nothing is promoted `internal` → `production`.**
 
 ### What is still owed after this
 
