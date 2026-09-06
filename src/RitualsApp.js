@@ -180,6 +180,8 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   const [shopOpen, setShopOpen] = useState(false);
   const [getEmbersOpen, setGetEmbersOpen] = useState(false);
   const [paywall, setPaywall] = useState(false);
+  // IMP-093 — Paywall fills this in; the Modal's onRequestClose reads it.
+  const paywallCloseGuard = React.useRef(null);
   const [activePalette, setActivePalette] = useState(initialState.activePalette ?? 'goldenhour');
   const [ownedPalettes, setOwnedPalettes] = useState(initialState.ownedPalettes ?? ['goldenhour']);
   const [activeSky, setActiveSky] = useState(initialState.activeSky ?? 'classic');
@@ -984,9 +986,22 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
           </ThemeContext.Provider>
         </Modal>
 
-        <Modal visible={PAYWALL_LIVE && paywall} animationType="slide" presentationStyle="overFullScreen" onRequestClose={() => setPaywall(false)}>
+        {/* IMP-093: onRequestClose is Android's back press, and it used to
+            unmount Paywall outright — killing usePurchaseFlow mid-purchase, so
+            the app walked away from a transaction it had started without ever
+            asking the store. Found on WALK-19 2026-09-07: Play's no-connection
+            page offers only Back. Closing stays the right behaviour (refusing
+            would re-create IMP-088's trap for the first 20 seconds, when no
+            exit exists); it just has to reconcile on the way out. */}
+        <Modal visible={PAYWALL_LIVE && paywall} animationType="slide" presentationStyle="overFullScreen"
+          onRequestClose={() => {
+            const guard = paywallCloseGuard.current;
+            if (guard && guard.pending) guard.abandon();
+            setPaywall(false);
+          }}>
           <ThemeContext.Provider value={theme}>
             <Paywall insets={insets} platform={PLATFORM} service={service} alreadyPlus={plus}
+              closeGuard={paywallCloseGuard}
               onClose={() => setPaywall(false)} onSubscribe={subscribe} onLink={openLink}
               onAbandon={reconcileAfterAbandon} />
           </ThemeContext.Provider>

@@ -140,6 +140,23 @@ export const PENDING_GRACE_MS = 20000;
 
 // Pure — what a stuck phase is allowed to say. Note it claims nothing about
 // whether the purchase worked, because at this point nothing knows.
+// Pure — IMP-093. What the pending card may say BEFORE the escape arms.
+//
+// This was the literal "Don't close the app." WALK-19's 2026-09-07 re-run
+// established that backing out is not only possible but SAFE: Android's back
+// closes the paywall, and `dismiss()` below now reconciles with the store on
+// the way out. So the old line was talking the user out of the one exit that
+// worked — and it is why IMP-088 was written up as "force-quit is the only way
+// out", which was never true.
+//
+// Like stuckCopy, it asserts NOTHING about the outcome.
+export function pendingCopy(mode, platform) {
+  const w = storeWords(platform);
+  return mode === 'restore'
+    ? 'This can take a moment. Going back is safe — nothing is being charged.'
+    : `This can take a minute. Going back is safe — we'll check with ${w.storeShort} either way.`;
+}
+
 export function stuckCopy(mode, platform) {
   const w = storeWords(platform);
   return mode === 'restore'
@@ -188,7 +205,7 @@ export function PurchaseOverlay({ flow, stuck, platform, onRetry, onDismiss, onC
               </View>
             </>
           ) : (
-            <T w={600} color={c.muted} style={{ fontSize: 13, marginTop: 4 }}>Don't close the app.</T>
+            <T w={600} color={c.muted} style={{ fontSize: 13, lineHeight: 18, marginTop: 6, textAlign: 'center' }}>{pendingCopy(flow.mode, platform)}</T>
           )}
         </View>
       </View>
@@ -278,13 +295,18 @@ export function usePurchaseFlow({ service, platform, onComplete, onAbandon, grac
   // go and ask. Failure-tolerant by construction (checkEntitlement/nextPlusState,
   // IMP-043): an unreachable store changes nothing rather than downgrading.
   const dismiss = () => {
-    const wasStuck = stuck;
+    // IMP-093: this used to gate the reconcile on `stuck`, which was right when
+    // the 20-second escape was the only way to reach it. WALK-19 2026-09-07
+    // found another: Android's back closes the whole paywall, and a back press
+    // at 3 seconds abandons a real purchase just as much as one at 30. What
+    // matters is that a flow was IN FLIGHT, not how long the user waited.
+    const wasPending = !!flow && flow.phase === 'pending';
     const mode = lastModeRef.current;
     clearTimer();
     startedAt.current = 0;
     setStuck(false);
     setFlow(null);
-    if (wasStuck && onAbandon) onAbandon(mode);
+    if (wasPending && onAbandon) onAbandon(mode);
   };
 
   const buy = (plan) => { lastPlanRef.current = plan; return run('buy', () => service.buy(plan)); };
@@ -312,7 +334,10 @@ export function usePurchaseFlow({ service, platform, onComplete, onAbandon, grac
       onComplete={() => { clearTimer(); startedAt.current = 0; setFlow(null); onComplete(lastEntitlement.current); }}
     />
   );
-  return { flow, stuck, buy, restore, overlay, reset: () => { clearTimer(); startedAt.current = 0; setStuck(false); setFlow(null); } };
+  // `pending` and `dismiss` are what a caller that owns the Modal needs to
+  // handle Android's back without walking away from a purchase (IMP-093).
+  const pending = !!flow && flow.phase === 'pending';
+  return { flow, stuck, pending, buy, restore, dismiss, overlay, reset: () => { clearTimer(); startedAt.current = 0; setStuck(false); setFlow(null); } };
 }
 
 // ── Manage / cancel subscription ──────────────────────────────────────────────

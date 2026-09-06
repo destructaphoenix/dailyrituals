@@ -13,7 +13,7 @@
 import { renderHook, act, waitFor } from '@testing-library/react-native';
 import { AppState } from 'react-native';
 import {
-  stuckCopy, PENDING_GRACE_MS, graceSpent, resultCopy, usePurchaseFlow,
+  stuckCopy, pendingCopy, PENDING_GRACE_MS, graceSpent, resultCopy, usePurchaseFlow,
 } from '../../src/screens/PlusFlow';
 
 describe('stuckCopy', () => {
@@ -65,10 +65,11 @@ describe('the pending phase has an exit', () => {
     expect(src).toMatch(/<GhostButton label=\{escape\.action\} onPress=\{onDismiss\} \/>/);
   });
 
-  test('"Don\'t close the app" is shown only BEFORE the flow is stuck', () => {
+  test('the not-yet-stuck sub-line is shown only BEFORE the flow is stuck', () => {
     // Leaving that line up next to a Close button is the contradiction that
-    // made the original trap feel deliberate.
-    const i = src.indexOf("Don't close the app");
+    // made the original trap feel deliberate. IMP-093 replaced the literal
+    // "Don't close the app." with pendingCopy(); the structure is unchanged.
+    const i = src.indexOf('pendingCopy(flow.mode, platform)');
     const j = src.indexOf('escape ? (');
     expect(i).toBeGreaterThan(j); // it lives in the else branch
   });
@@ -77,8 +78,10 @@ describe('the pending phase has an exit', () => {
     expect(src).toMatch(/if \(timer\.current\) clearTimeout\(timer\.current\);/);
   });
 
-  test('abandoning fires onAbandon only when it was actually stuck', () => {
-    expect(src).toMatch(/if \(wasStuck && onAbandon\) onAbandon\(mode\);/);
+  test('abandoning fires onAbandon whenever a flow was in flight (IMP-093)', () => {
+    // Was `wasStuck`. A back press at 3 seconds abandons a real purchase just
+    // as much as one at 30 — what matters is that something was pending.
+    expect(src).toMatch(/if \(wasPending && onAbandon\) onAbandon\(mode\);/);
   });
 });
 
@@ -279,5 +282,126 @@ describe('resultCopy — IMP-092', () => {
     await waitFor(() => expect(result.current.flow).toMatchObject({
       phase: 'result', kind: 'failed', mode: 'restore',
     }));
+  });
+});
+
+// ── IMP-093 — the paywall must not vanish mid-purchase ───────────────────────
+// WALK-19 step 4c re-run, 2026-09-07. Play's no-connection page carries no
+// dismiss control but Back, and Back closed the WHOLE paywall — unmounting
+// usePurchaseFlow and discarding a purchase in flight without asking the store.
+// Closing stays correct; refusing to close would re-create IMP-088's trap for
+// the first 20 seconds, when no exit exists at all.
+describe('backing out of a pending flow reconciles — IMP-093', () => {
+  const hanging = () => ({
+    buy: jest.fn(() => new Promise(() => {})),
+    restore: jest.fn(() => new Promise(() => {})),
+  });
+
+  test('dismissing a pending purchase asks the store, even before the escape arms', async () => {
+    const onAbandon = jest.fn();
+    const { result } = renderHook(() => usePurchaseFlow({
+      service: hanging(), onComplete: jest.fn(), onAbandon,
+    }));
+    act(() => { result.current.buy('annual'); });
+    expect(result.current.stuck).toBe(false); // nowhere near the grace period
+    act(() => { result.current.dismiss(); });
+    expect(onAbandon).toHaveBeenCalledWith('buy');
+  });
+
+  test('it reports the mode, so the reconcile knows what was abandoned', () => {
+    const onAbandon = jest.fn();
+    const { result } = renderHook(() => usePurchaseFlow({
+      service: hanging(), onComplete: jest.fn(), onAbandon,
+    }));
+    act(() => { result.current.restore(); });
+    act(() => { result.current.dismiss(); });
+    expect(onAbandon).toHaveBeenCalledWith('restore');
+  });
+
+  test('dismissing when nothing is in flight asks nothing', () => {
+    const onAbandon = jest.fn();
+    const { result } = renderHook(() => usePurchaseFlow({
+      service: hanging(), onComplete: jest.fn(), onAbandon,
+    }));
+    act(() => { result.current.dismiss(); });
+    expect(onAbandon).not.toHaveBeenCalled();
+  });
+
+  test('dismissing a SETTLED result asks nothing — it is already known', async () => {
+    const onAbandon = jest.fn();
+    const svc = { buy: jest.fn(async () => ({ kind: 'failed' })), restore: jest.fn() };
+    const { result } = renderHook(() => usePurchaseFlow({
+      service: svc, onComplete: jest.fn(), onAbandon,
+    }));
+    act(() => { result.current.buy('annual'); });
+    await waitFor(() => expect(result.current.flow).toMatchObject({ phase: 'result' }));
+    act(() => { result.current.dismiss(); });
+    expect(onAbandon).not.toHaveBeenCalled();
+  });
+
+  test('the hook exposes what a Modal owner needs to close honestly', () => {
+    const { result } = renderHook(() => usePurchaseFlow({
+      service: hanging(), onComplete: jest.fn(),
+    }));
+    expect(result.current.pending).toBe(false);
+    act(() => { result.current.buy('annual'); });
+    expect(result.current.pending).toBe(true);
+    expect(typeof result.current.dismiss).toBe('function');
+  });
+});
+
+describe('pendingCopy — IMP-093', () => {
+  test('it no longer tells the user not to close the app', () => {
+    ['buy', 'restore'].forEach((mode) => {
+      expect(pendingCopy(mode, 'android')).not.toMatch(/don't close|do not close|keep the app open/i);
+    });
+  });
+
+  test('it says going back is safe, because after IMP-093 it is', () => {
+    expect(pendingCopy('buy', 'android')).toMatch(/going back is safe/i);
+    expect(pendingCopy('restore', 'android')).toMatch(/going back is safe/i);
+  });
+
+  test('a pending purchase still asserts NO outcome — IMP-088 inherited', () => {
+    const line = pendingCopy('buy', 'android');
+    expect(line).not.toMatch(/failed|success|complete|charged you|didn't work/i);
+  });
+
+  test('it names the right store per platform', () => {
+    expect(pendingCopy('buy', 'android')).toMatch(/Play/);
+    expect(pendingCopy('buy', 'ios')).toMatch(/App Store/);
+  });
+
+  test('a restore may say nothing is being charged — nothing is', () => {
+    expect(pendingCopy('restore', 'android')).toMatch(/nothing is being charged/i);
+  });
+});
+
+describe('the Modal that owns the paywall closes honestly — IMP-093', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const app = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'RitualsApp.js'), 'utf8');
+  const pay = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'screens', 'Paywall.js'), 'utf8');
+
+  test('Paywall hands its caller the pending state and the reconciling dismiss', () => {
+    expect(pay).toMatch(/closeGuard\.current = \{ pending: flow\.pending, abandon: flow\.dismiss \};/);
+  });
+
+  test('it clears the guard on unmount — a stale flow must not be abandonable', () => {
+    expect(pay).toMatch(/return \(\) => \{ closeGuard\.current = null; \};/);
+  });
+
+  test('back on the paywall Modal reconciles before it closes', () => {
+    expect(app).toMatch(/if \(guard && guard\.pending\) guard\.abandon\(\);/);
+    expect(app).toMatch(/closeGuard=\{paywallCloseGuard\}/);
+  });
+
+  test('back still CLOSES — refusing would rebuild the IMP-088 trap', () => {
+    // The first 20 seconds have no other exit, so a no-op here would be the
+    // original defect wearing a fix's clothes.
+    const i = app.indexOf('if (guard && guard.pending) guard.abandon();');
+    const j = app.indexOf('setPaywall(false);', i);
+    expect(i).toBeGreaterThan(-1);
+    expect(j).toBeGreaterThan(i);
   });
 });

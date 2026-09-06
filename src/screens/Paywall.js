@@ -4,7 +4,7 @@
 // store-compliant legal footer.
 // Reached from locked cosmetics, the You banner, onboarding, and Export.
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, ScrollView, Pressable, useWindowDimensions } from 'react-native';
 import { useTheme } from '../theme';
 import { T, PrimaryButton } from '../ui';
@@ -15,7 +15,7 @@ import { useLivePrices } from '../billing/useLivePrices';
 import { ctaLabel } from '../billing/prices';
 import { LegalFooter, usePurchaseFlow } from './PlusFlow';
 
-export default function Paywall({ insets, platform = 'ios', service, alreadyPlus, onClose, onSubscribe, onLink, onAbandon }) {
+export default function Paywall({ insets, platform = 'ios', service, alreadyPlus, onClose, onSubscribe, onLink, onAbandon, closeGuard }) {
   const t = useTheme();
   const c = t.colors;
   // Android's Modal is a Dialog whose window size isn't known on the first measure
@@ -46,6 +46,19 @@ export default function Paywall({ insets, platform = 'ios', service, alreadyPlus
     // the store. Passed through rather than handled here — only the app owns
     // `plus`, and only it can apply the answer.
     onAbandon,
+  });
+
+  // IMP-093 — the Modal that wraps this screen belongs to the caller, so only
+  // the caller sees Android's back press. WALK-19 2026-09-07: Play's
+  // no-connection page can only be dismissed with Back, and Back closed the
+  // whole paywall, discarding a purchase in flight without ever asking the
+  // store what happened. This hands the caller the two things it needs to
+  // close honestly. Kept in an effect so the caller always reads a committed
+  // render, and cleared on unmount so a stale flow can never be abandoned.
+  useEffect(() => {
+    if (!closeGuard) return undefined;
+    closeGuard.current = { pending: flow.pending, abandon: flow.dismiss };
+    return () => { closeGuard.current = null; };
   });
 
   return (
