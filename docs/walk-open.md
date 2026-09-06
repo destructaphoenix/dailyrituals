@@ -600,12 +600,10 @@ toggle) so they stay out of the revenue charts. Five things must be true:
 2. That same account is on the **internal** testing tester list *and* has opened the opt-in link.
 3. The app is **installed from Play**, not sideloaded — Play Billing checks install source + signature,
    so a sideloaded build fails purchases no matter what the tester list says.
-4. ⚠️ **The Google Play service account credential is uploaded to RevenueCat** (RC → the Play Store app →
-   Service Account Credentials), with *View financial data* + *Manage orders and subscriptions* granted in
-   Play. **This is NOT [`play-service-account.json`](../play-service-account.json) in this repo** — that
-   one is EAS's, for submitting builds. Without RC's own copy it cannot validate the purchase token, so
-   entitlements will not grant or refresh. **Nothing here has ever verified this happened**; RC shows a
-   banner on the app config page if it is missing. **Check this first — it is the likeliest gap.**
+4. ✅ **The Google Play service account credential IS uploaded to RevenueCat** — owner-confirmed
+   2026-09-06, configured long ago. Recorded here because it is invisible from this repo and was briefly
+   suspected: it is **not** [`play-service-account.json`](../play-service-account.json), which is EAS's
+   for submitting builds. RC needs its own copy to validate purchase tokens. **Settled — do not re-raise.**
 5. Products attached to `plus` + `current` — playbook 10b.3, owner-confirmed 2026-09-05.
 
 A license tester walks the *full* flow and is **not charged**; do not test with a real card until step 8.
@@ -616,28 +614,31 @@ Two behaviours that otherwise read as bugs: the payment method shows **"Test car
 ⚠️ **Steps 0(c) and 2 are already PASSED (2026-09-06) and need no tester setup at all** — airplane mode
 and a price check settle "is this real billing?" on their own. Start from step 1.
 
-- [ ] 0. **Three preconditions. If (c) fails, STOP — the entire row is void.**
-      **(c) THE BUILD MUST BE ABLE TO TAKE MONEY — check this FIRST.** Turn on **airplane mode** and
-      attempt to buy Plus. **It must FAIL.** If the purchase *succeeds* with no network, the app is
-      running `simService`: every purchase is fake, nothing reaches Google, Plus is granted free, and
-      **every other step in this row is measuring a simulation.** That is exactly what vc14 does — found
-      2026-09-06, fixed by **[IMP-084](specs-open.md)**, which needs a **new build**. This check costs
-      thirty seconds and it is the reason this row exists; do it before anything else.
-      Then the two delivery traps, each of which has already cost a debugging round:
+- [x] 0. **Three preconditions.**
+      ✅ **(c) THE BUILD CAN TAKE MONEY — PASSED 2026-09-06 on hardware.** Airplane mode, attempt to buy:
+      **it did not complete.** `simService` completes regardless of network, so this is the proof the
+      simulation is off the device. (History, do not re-derive: vc14 *did* complete a purchase in airplane
+      mode — that is what started the IMP-084 → 088 chain.)
       **(a) Track.** Play serves the **highest-priority track the account qualifies for**
       (internal > closed > open > production), so an account on closed testing only keeps getting vc12 and
-      sees none of this. ✅ **The owner's own phone is on `internal` at vc14** (confirmed 2026-09-06) —
-      the older note putting it on `alpha` is stale and has now misled twice. Verify any *other* tester with
-      `adb shell dumpsys package app.dailyrituals.mobile | grep versionName` — it must read **1.0.8**.
-      **(b) The OTA.** IMP-082 and IMP-083 are **not in the vc14 binary**; they arrived as update group
-      `ac5c4189-736c-44f0-96ae-6ceea4fe4712` (runtime 1.0.8, published 2026-09-06). `expo-updates` here uses the
-      defaults — **check on launch, download in the background, apply on the NEXT launch** — so a fresh
-      install or a first open shows the OLD code. **Open the app, fully close it, open it again** before
-      walking steps 5 and 10. "I opened it and nothing changed" is this, not a failed publish.
+      sees none of this. The owner's phone is on `internal`. Verify any *other* tester with
+      `adb shell dumpsys package app.dailyrituals.mobile | grep versionName` — it must read **1.0.9**.
+      **(b) The OTA — and this one has now cost FOUR rounds, so read it.** Steps 5 and 10 (IMP-082/083),
+      the whole IMP-084→088 chain and the pending-overlay fix all arrived as **OTAs**, not in the vc15
+      binary. `expo-updates` uses the defaults — **check on launch, download in background, apply on the
+      NEXT launch**. ⚠️ **Clearing app data DELETES the downloaded update**, so the gesture normally used
+      to "test cleanly" sends the next launch back to the **embedded vc15**, which predates every fix.
+      **To get current JS on the phone: open, wait ~15s, fully kill from recents, open again — and do NOT
+      clear data in between.** "I opened it and nothing changed" has been this every single time.
 
-- [ ] 1. **Install vc14 from Play internal** on the license-tester account. Confirm the version is
-      **1.0.8 / vc14** (You tab → app version). An older artifact proves nothing about this code.
-- [ ] 2. **Open the paywall. Are the prices REAL?** They must be the live Play prices for the tester's
+- [ ] 1. **Install vc15 from Play internal** on the license-tester account — **1.0.9 / vc15**, confirmed
+      with the `adb` line in 0(a) (a release build shows no version string in-app; IMP-022 is deferred).
+      Then apply the OTA per 0(b) before walking any step. ⚠️ If the You tab ever shows a **"Plus is
+      unavailable"** row, stop and read the bundle id it prints — that is IMP-087 telling you the gate is
+      dead and which fact is false, and any result recorded past it is void.
+- [x] 2. ✅ **PASSED 2026-09-06 — prices render in INR**, i.e. the live Play offering reaches the app.
+      Kept below because a *regression* here is silent and this is how you would catch it.
+      **Are the prices REAL?** They must be the live Play prices for the tester's
       country, **not** the `PLUS_PRICES` fallback constants (`$4.99` monthly / `$29.99` annual /
       "Save 50%"). ⚠️ **Seeing exactly those three strings is a FAIL, not a pass** — it means the
       offering returned nothing and the app quietly fell back. This is the runtime half of playbook
@@ -653,6 +654,12 @@ and a price check settle "is this real billing?" on their own. Start from step 1
       (**owned**), airplane-mode mid-purchase (**network**), Restore with an entitlement
       (**restored**) and on a clean account (**restore-empty**). Each must show the right overlay and
       leave the app in the right state — no silent no-ops.
+      ⚠️ **The `network` case is also [IMP-088](build-log.md)'s acceptance.** It used to hang on
+      *"Confirming with Play Store…"* **forever** with no way out — found on this walk 2026-09-06. Now:
+      after ~20s the card must offer a **Close** button, and the copy must **not** claim the purchase
+      failed (it says *if you were charged, your Plus will appear on its own*). Closing it must reconcile
+      with the store, not guess. **A card that still says "Don't close the app" with no button after 20s
+      means the device did not take the IMP-088 OTA** — see 0(b), not a failed fix.
 - [ ] 5. **The renewal date — this is now IMP-082's acceptance.** After the successful purchase, check
       the date on the **You** tab banner, the **Shop** banner and **Manage**. It must be the tester's
       **real** next-renewal date from RevenueCat. Two distinct failures, and they mean different things:

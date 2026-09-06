@@ -115,10 +115,9 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 > (IMP-082's renewal date, IMP-083's Cancel deep link). ⚠️ **Real charges are possible on `internal`:**
 > confirm every account on that tester list is a **Play license tester** first. ⚠️ Note for that walk:
 > **RevenueCat has no sandbox for Google Play** — license-tester purchases use the same production key,
-> products and offering, and RC tags them sandbox. The item most likely still missing is the **Google
-> Play service account credential uploaded to RevenueCat** (distinct from this repo's
-> `play-service-account.json`, which is EAS's for submitting builds) — without it RC cannot validate the
-> purchase token. Nothing in this repo has ever verified it; RC shows a banner if absent.
+> products and offering, and RC tags them sandbox. ✅ **RC's Google Play service account credential IS
+> configured** (owner-confirmed 2026-09-06, done long ago; it is *not* this repo's
+> `play-service-account.json`, which is EAS's for submitting builds). **Settled — do not re-raise.**
 >
 > ⚠️ **The owner's Plus is still a leftover FAKE entitlement** from a `simService` purchase, persisted
 > locally — which is why the skins stayed unlocked while the paid surface vanished. **There is almost
