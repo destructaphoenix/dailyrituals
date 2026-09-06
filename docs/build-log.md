@@ -4769,10 +4769,23 @@ emulator, this row is where to look first.
   `npx expo export --platform android` clean. Commit `da77a7d`, **not pushed**, no `Release-Lane:`
   trailer.
 
-  ⚠️ **Code-complete is not shipped, and this one is worth more than usual.** Layer A only takes
-  effect **in a build** — every device on vc14 that has not taken the 2026-09-06 OTA is still faking
-  purchases, and the next build regresses to the simulation unless this commit is in it. Acceptance is
-  **WALK-19 step 0(c)**: airplane mode, attempt a purchase, and it must FAIL.
+  ✅ **SHIPPED THE SAME DAY ON BOTH LANES** (owner: "I need this in internal asap"). Order was forced —
+  the OTA first, because the build's `bump:native` closes the 1.0.8 lane behind it. **(1) OTA, layer C
+  only:** update group `90aa2074-6625-4072-8d35-71244a525b2d`, runtime 1.0.8, from `2834dd9`; its publish
+  log shows `env: export RC_ANDROID_KEY`, so the update carries the key and vc14 switches to real billing
+  as it applies. **(2) BUILD, layers A + B:** `npm run bump:native` → **v1.0.9 / vc15** (`980cdad`),
+  preflight green on both checks (`exit=0`), `eas build --auto-submit`. Confirmed from `eas submit:list`:
+  `Status: finished`, `Release Status: completed`, `Version code 15`, build
+  `e97db74d-e53d-4290-af3d-80b2e8163737`, submission `a43f49c1-f1fd-4964-bc85-ae05b1357e5c`, runtime
+  `1.0.9`, fingerprint `1a1cb4bd…`. **vc15 replaced vc14 on `internal`.**
+
+  ✅ **Layer A is proven by a log line, and it is the check for every future build:** `Environment
+  variables with visibility "Plain text" and "Sensitive" loaded from the "production" environment on EAS:
+  RC_ANDROID_KEY`. **Its absence is the vc14 defect.**
+
+  ⚠️ **Still unwalked.** Acceptance is **WALK-19 step 0(c)**: airplane mode, attempt a purchase, and it
+  must FAIL. Real charges are now possible on `internal` — confirm every tester is a license tester. vc14
+  installs are orphaned at runtime 1.0.8 and take no further OTA.
 
 
 
