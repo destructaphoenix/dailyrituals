@@ -120,7 +120,7 @@ locked. It is the row that reopens the moment Plus becomes the active work.
 | WALK-16 | 🚦 | [The New Architecture cold start](#walk-16--the-new-architecture-cold-start) | IMP-076 | **device** (native runtime) | 👤 | ✅ **2026-09-05 — closed on emulator evidence at owner's instruction.** All 7 steps exercised across two agent-run sittings (1-3 New Arch live: Bridgeless + Fabric + TurboModule; 4-7 storage / notification scheduling / export-share-reimport / Auto Backup via T5 with the quarantine offering not imposing). **Owner's call 2026-09-05: emulator results are recorded as done, not smoke.** ⚠️ **Named gap — never exercised anywhere:** real doze, OEM battery managers, delivery to a real share target, Google's own backup schedule. **Unblocks IMP-077.** |
 | WALK-17 | 🚦 | [Edge-to-edge, re-audited under New Arch](#walk-17--edge-to-edge-re-audited-under-new-arch) | IMP-076, IMP-027 regression | **device** | 👤 (visual) | ✅ **2026-09-05 — emulator, agent-run.** All four tabs clean under status bar + gesture bar in **both** day and night; bottom nav and write-FAB correct in **both** gesture and 3-button nav; onboarding + setup also clean. Sheets checked: trash, achievements, shop — the last two at night **and** max font. ⚠️ **Not opened: write flow, reading sheet, mood manager.** |
 | WALK-18 | 🎨 | [The app moves](#walk-18--the-app-moves) | IMP-077 | **device** (mid-range, real frame pacing) | 👤 (visual) | ⬜ — **branch-only. UNBLOCKED 2026-09-05: WALK-16 closed and IMP-077 landed.** ✅ **The build now exists: v1.0.8 / vc14 shipped to Play `internal` 2026-09-05 19:09** (EAS `87f81b24…`, submission `4b7cf3a2…`, from commit `6590834`). IMP-077 added `react-native-reanimated` + `react-native-worklets` (native deps), so **neither vc13 artifact carries this code** — install vc14 from Play, not an older APK. **An emulator cannot settle this row** — it renders dropped frames as smooth, which is the thing being judged. The jest suite is blind here too: the Reanimated mock no-ops every hook |
-| WALK-19 | 🚦 | [Money actually changes hands](#walk-19--money-actually-changes-hands) | **Phase 10b.5**, IMP-028, IMP-082 + IMP-083 (steps 5 and 10), IMP-084/085/086/087, **IMP-088** | **device** (real Play Billing + a license tester) | 👤 | 🟡 **PARTIAL — UNBLOCKED and the hard half is DONE.** ✅ **Step 0(c) PASSED 2026-09-06 on hardware: an airplane-mode purchase does NOT complete** — `simService` completes regardless of network, so this is the proof the simulation is off the device. ✅ **Step 2 PASSED: prices render in INR**, i.e. the live offering reaches the app (`$4.99`/`$29.99` would have been the `PLUS_PRICES` fallback). 🔴 **Step 0(c) also found the pending-overlay trap → [IMP-088](specs-open.md) `c494721`, which needs an OTA before the rest of this row is run.** ⬜ **Still owed:** steps 1 and 3–10 — a full **license-tester** purchase, entitlement surviving a reinstall, perks delivered, plus step 5 (IMP-082 renewal date) and step 10 (IMP-083 Cancel deep link). **Nothing gets promoted `internal` → `production` until those pass.** |
+| WALK-19 | 🚦 | [Money actually changes hands](#walk-19--money-actually-changes-hands) | **Phase 10b.5**, IMP-028, IMP-082 + IMP-083 (steps 5 and 10), IMP-084/085/086/087, **IMP-088** | **device** (real Play Billing + a license tester) | 👤 | ❌ **2026-09-06 — steps 1–4 run on hardware, THREE defects, sitting stopped before any purchase (owner's call, and the right one).** ✅ Steps 0(c), 1 and 2 pass — vc15 + OTAs confirmed, prices in INR, an airplane-mode purchase does not complete. 🔴 **Step 4a/4c: "Try again" on a RESTORE card opened Play's purchase sheet** → **IMP-089, FIXED this session** (968 green), needs an OTA then a re-run. 🔴 **Step 3: Play's sheet says "charging today" + the INR amount, not 7 days free** — our CTA is a hardcoded literal and the app fetches no offer data at all → **IMP-090**. Owner has subbed/unsubbed on this account, so the trial is burned and **Play is right**. 🔴 **Step 4c: IMP-088's escape NEVER appeared** — 22s, 32s, past 60s, no Close button, copy unchanged → **IMP-091** (prime suspect: JS timers throttled while Play's sheet holds the foreground; cause NOT yet separated from "the device lacked the OTA"). 🔴 **Bonus, found off-script: an airplane-mode Restore says "Nothing to restore" INSTANTLY** — `restore()` relabels every unrecognised error as `restore-empty` → **IMP-092**. ⬜ **Still owed:** steps 3–10 in full. **Nothing is promoted `internal` → `production`.** |
 
 ---
 
@@ -631,7 +631,7 @@ and a price check settle "is this real billing?" on their own. Start from step 1
       **To get current JS on the phone: open, wait ~15s, fully kill from recents, open again — and do NOT
       clear data in between.** "I opened it and nothing changed" has been this every single time.
 
-- [ ] 1. **Install vc15 from Play internal** on the license-tester account — **1.0.9 / vc15**, confirmed
+- [x] 1. ✅ **PASSED 2026-09-06.** **Install vc15 from Play internal** on the license-tester account — **1.0.9 / vc15**, confirmed
       with the `adb` line in 0(a) (a release build shows no version string in-app; IMP-022 is deferred).
       Then apply the OTA per 0(b) before walking any step. ⚠️ If the You tab ever shows a **"Plus is
       unavailable"** row, stop and read the bundle id it prints — that is IMP-087 telling you the gate is
@@ -694,6 +694,59 @@ and a price check settle "is this real billing?" on their own. Start from step 1
       the RevenueCat dashboard shows, and nothing has verified that against a real Play id. Record the
       exact URL Play opened. **Same OTA requirement as step 5** — IMP-083 is not in the vc14 binary
       either, so it is only present if the device took the 2026-09-06 update.
+
+**Result — ❌ 2026-09-06 (hardware, owner-run; v1.0.9 / vc15 from Play `internal`, license tester, OTAs
+applied and confirmed).** The sitting ran steps 1 through 4 and **stopped before any purchase was
+attempted** — the owner's call, and the correct one: the first defect below can charge someone who asked
+to restore. **Three defects found, plus a fourth off-script.**
+
+**Pre-flight all clean.** Version confirmed **1.0.9**; the OTA applied (open → wait → kill → open, no data
+clear); **no "Plus is unavailable" row**, so IMP-087's gate is alive and every result below is against a
+healthy build. The published manifest was read back the same day — `rcAndroidKey` non-empty, newest group
+`82bc2b16` (IMP-088), runtime 1.0.9. ⚠️ **One point of confusion worth recording:** the owner reported the
+button reading **"Try free"**, which is the `shopui.js` banner that *opens* the paywall, not the paywall's
+own CTA. Not a defect — but see IMP-090, it makes the same promise.
+
+**Step 1 ✅.** Installed from Play on the license-tester account, 1.0.9 confirmed.
+
+**Step 2 ✅ (re-confirmed).** Prices render in INR — the live offering reaches the app.
+
+**Step 3 ❌ → IMP-090.** Our button promises `Start 7-day free trial`; **Google's own purchase sheet said
+charging today** with the INR amount and no free period. Payment method correctly showed *"Test card,
+always approves"*, so the license tester is configured. **The owner has subscribed and unsubscribed on
+this Google account before** — a Play trial is once per account, ever, so **Play is almost certainly
+right and the product config is probably fine**. The defect is ours: the claim is a string literal
+([`Paywall.js:122`](../src/screens/Paywall.js#L122)) and `getPrices()` fetches only `priceString` and
+`price`, so the app has never had offer data to be right about.
+
+**Step 4a ❌ → IMP-089, FIXED this session.** With no subscription, Restore correctly showed *"Nothing to
+restore."* — and its **"Try again" opened Play's purchase sheet**. `onRetry` called `buy()` unconditionally,
+ignoring the mode the hook already tracked. The same bug fired from the `network` card in 4c. **This is the
+one that stopped the sitting**: it puts a subscriber tapping "I already paid" one tap from a charge. Fixed
+at the owner's explicit instruction rather than merely scoped — spec in [`build-log.md`](build-log.md),
+968 green, **needs an OTA before the re-run**.
+
+**Step 4c ❌ → IMP-091. IMP-088's acceptance FAILED.** Airplane mode, tap buy: *"Confirming with Play
+Store…"* / *"Don't close the app."* Google's sheet raised its own no-connection error on top while the app
+kept confirming behind it. **At 22s, 32s and past 60s the Close button never appeared and the copy never
+changed.** Wiring was re-read and is correct — `Paywall.js` renders `flow.overlay`, which passes `stuck` —
+so this is not a missing prop. ⚠️ **The cause is NOT yet established** and the spec's first step is a
+measurement: either Android throttled the `setTimeout` while Play's sheet held the foreground, or the
+device was not running the IMP-088 bundle. **Do not record this as "the fix does not work" until that is
+separated.**
+
+**Off-script ❌ → IMP-092.** Attempting to reach a stuck state via Restore instead (no Play sheet, app stays
+foreground) revealed something else: **in airplane mode, Restore answers "Nothing to restore." instantly** —
+and the owner's observation is the important half, *it has always been instant*. `restore()` relabels every
+unrecognised error as `restore-empty`, so the sentence *"We couldn't find a subscription on this account"*
+also means *"we could not check."* The person most likely to see it is a real subscriber on a new phone.
+**It also invalidated the diagnostic** — the restore path never hangs, so it cannot be used to test IMP-091.
+
+**Not attempted, deliberately:** steps 4b (cancel), 4d–4f, and steps 5–10. No purchase was made, real or
+test. **Nothing is promoted `internal` → `production`.**
+
+**Re-run order when the three specs land:** OTA first (all three are pure JS), confirm the bundle per step
+0(b), then **step 3 → step 4a → step 4c** before going near 4d.
 
 **Recording it.** Same rule as every row: ✅/❌ + date in the index, a paragraph here. **A failure is
 the deliverable** — scope it as a new `IMP-xxx` in `PROGRESS.md`, do not fix it mid-walk. **Do not

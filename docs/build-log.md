@@ -3099,6 +3099,47 @@ pitch. One screen per request. `PLUS_ENABLED` stays `false`; it is a design requ
 
 ---
 
+## IMP-089 — "Try again" on a restore must never buy (2026-09-06)
+
+**Lane: OTA** (pure JS). **From:** WALK-19 steps 4a + 4c on hardware, 2026-09-06. ✅ **Code-complete**,
+968 green (was 965), `npx expo export --platform android` clean.
+
+⚠️ **Fixed inside the walk chat at the owner's explicit instruction** ("FIX IT"), which is a deliberate
+departure from the standing rule that a walk only *scopes* its findings. Recorded here so the exception
+is visible rather than silent; the other three findings from the same sitting were scoped, not fixed.
+
+**What was observed on hardware.** With no subscription, Restore correctly showed **"Nothing to restore."**
+— and its **"Try again"** button opened **Google Play's purchase sheet**. The same thing happened from the
+`network` card when the restore was attempted in airplane mode.
+
+**The defect.** [`PlusFlow.js`](../src/screens/PlusFlow.js)'s `usePurchaseFlow` built its overlay with:
+
+```js
+onRetry={() => { clearTimer(); setStuck(false); setFlow(null); buy(lastPlanRef.current); }}
+```
+
+`onRetry` called `buy()` **unconditionally**, so every result card's primary button was a purchase button
+regardless of what the user had actually asked for. The hook already tracked the mode — `lastModeRef` is
+set on every `run()` and `dismiss()` consults it correctly two lines above — retry simply never read it.
+
+**Why it was the most serious of the four.** Restore is the *free* gesture: it is what a subscriber taps to
+say "I already paid for this." Routing its retry into Play's purchase sheet put a paying customer one tap
+from a second charge, on the card that had just (possibly wrongly — see IMP-092) told them they had nothing.
+
+**The fix.** Retry branches on `lastModeRef.current`: `'restore'` repeats the restore, anything else buys
+the last-selected plan. Six lines, no new state, no change to any result copy.
+
+**Tests** — `__tests__/billing/purchaseFlow.test.js`, +3 (965 → 968). Both restore result kinds are pinned
+via `test.each(['restore-empty', 'network'])`: retry calls `service.restore` a second time and
+`service.buy` **not at all**. A third test pins the other direction — retrying a failed *buy* still buys,
+with the same plan — so the fix cannot regress into "restore everything". All three fail against the old
+line.
+
+⚠️ **Jest proves the branch, not the flow.** The suite runs `simService`, which fabricates every purchase
+result; the device-level acceptance is **WALK-19 step 4a and 4c**, re-run on hardware.
+
+---
+
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
 
 > Moved out of PROGRESS.md on 2026-07-31 to keep the live cursor lean once a second spec (IMP-032) opened. These are **not** finished work. If the owner revives one, lift the block back into PROGRESS.md as the ACTIVE TRACK.
@@ -3141,6 +3182,60 @@ pitch. One screen per request. `PLUS_ENABLED` stays `false`; it is a design requ
 ---
 
 ## Session notes (archived from PROGRESS.md)
+
+
+_2026-09-06, third session (Opus — **IMP-085: the real root cause, found from the owner's device report**;
+branch-only, committed, **NOT shipped**) — **the session where the previous two diagnoses turned out to be
+incomplete.**_
+
+**The report that broke it open:** after vc15, **Manage Subscription was gone from the app entirely** while
+**Plus was still applied and the skins still unlocked** — the signature of `PAYWALL_LIVE === false` plus a
+stale local `plus` flag. It meant `isBillingConfigured()` was still false on a build that provably received
+the key.
+
+**The cause, verified in the toolchain source.** `src/billing/index.js` probed with
+`require.resolve('react-native-purchases')`. **Metro does not implement it:**
+`metro-runtime/src/polyfills/require.js` assigns `importDefault`, `importAll`, `context`, **`resolveWeak`**,
+`unpackModuleId`, `packModuleId` — **never `resolve`**; and `metro/src/ModuleGraph/worker/collectDependencies.js`
+rewrites `resolveWeak` and `require.context` but **not** `require.resolve`. It threw in every bundle, the
+catch swallowed it, and **`isBillingConfigured()` returned false in every build this app has ever shipped.**
+**Every release ran `simService`, vc15 included.** The SDK was bundled and would have worked —
+`revenueCatService.js` statically imports it — only the probe was broken.
+
+**What that rewrites.** IMP-084 layer A is **correct and its proof stands** (EAS really does inject the key
+now), but nothing read it. "vc14 had no key" was a real bug and **not the primary cause**. And **no real
+purchase has ever been possible in this app** — so there is almost certainly no Play subscription against
+the owner's account and no charge has occurred. Their Plus is a **fake entitlement** written by
+`simService` and persisted locally.
+
+**IMP-085 (`2672bf2`), both halves.** (a) A plain static `require` — which Metro *does* collect — feeding a
+pure `billingModuleOk(mod)` (`typeof mod.configure === 'function'`), with a source assertion banning
+`require.resolve` from any code line. (b) **A subscriber must never lose the route to cancel:** Manage gates
+on `plus`, not on saleability, and falls back to Play's own subscription screen when billing cannot
+transact. ⚠️ **The spec's Step 4 was insufficient, and this is the part worth remembering** — changing the
+handlers did nothing, because `PlusBanner` *is* the Manage route and was rendered behind `{plusEnabled && …}`
+in **both `YouScreen.js` and `Shop.js`**. The render gate, not the handler, was what hid it.
+
+**Proof: 926 passed / 91 suites** (from 915/90), both zone suites green, `npx expo export --platform
+android` clean. **The two render-gate tests were verified to FAIL against the pre-fix gate** — reverted by
+hand, re-run, one red, restored — because a test that passes either way would have been worthless here.
+**Last command: `npx expo export --platform android` → `Exported: dist`.**
+
+**⚠️ The standing lesson, three incidents deep: jest is structurally blind to billing and always has been.**
+Under jest `require` is **node's**, where `require.resolve` works — which is exactly why 915 green tests
+could not see a defect present in every shipped build. The suite also runs `simService` and renders with
+`__DEV__` true. **A green suite is not evidence about billing. It never was.**
+
+**NEXT.** ✅ **IMP-085 SHIPPED by OTA on the owner's instruction** — update group
+`d5f03a47-48be-4539-9a8c-fc9b5be46f69`, runtime **1.0.9**, from `6d4dd72`, reaching vc15 `internal`
+installs on their second launch. ⚠️ **Real billing is now live for the first time in this app's history** —
+confirm the tester list. ⚠️ **Shipped ahead of its proof, a third time.** **[WALK-19](docs/walk-open.md) is what is actually owed** —
+three consecutive billing fixes have landed without a single runtime check, and each found the previous
+diagnosis incomplete. **Step 0(c), inverted, is the acceptance: the paywall must be VISIBLE, an
+airplane-mode purchase must FAIL, and an online purchase must appear in Play's subscription list.**_
+
+---
+
 
 _2026-09-06, later (Opus — **IMP-084 landed AND shipped on both lanes; v1.0.9 / vc15 is on `internal`**;
 branch-only, NOT pushed) — **a build session that became a ship session on the owner's instruction.**_
