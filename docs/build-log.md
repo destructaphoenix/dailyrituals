@@ -3310,7 +3310,7 @@ subscription (must still say "Nothing to restore") and once in airplane mode (mu
 ## IMP-093 — the paywall must not vanish mid-purchase (2026-09-07)
 
 **Lane: OTA** (pure JS). **From:** WALK-19 step 4c re-run, 2026-09-07. ✅ **Code-complete**, commit
-`061b1ff`, **1031 green** (was 1017), `npx expo export --platform android` clean.
+`061b1ff`, **1031 green** (was 1017), `npx expo export --platform android` clean. ✅ **SHIPPED by OTA 2026-09-07** (group `964e4fc2-709c-48b1-bba1-25c603722b1c`, runtime 1.0.9, manifest read back: `rcAndroidKey` non-empty and the serving update id matches the publish).
 
 **What was observed on hardware.** Aeroplane mode, tap Subscribe. Our pending card appears, then Google's
 no-connection page covers it — **and that page carries no X and no dismiss control, only Back.** Pressing

@@ -25,7 +25,9 @@
 ## The queue is EMPTY (2026-09-07)
 
 **Nothing here is open.** **IMP-093** landed the same day it was written (commit `061b1ff`, 1031 green)
-and is archived in [`build-log.md`](build-log.md), alongside IMP-090/091/092 from earlier that day.
+and is archived in [`build-log.md`](build-log.md), alongside IMP-090/091/092 from earlier that day. It
+**shipped by OTA the same evening** — group `964e4fc2-709c-48b1-bba1-25c603722b1c`, runtime 1.0.9,
+manifest verified.
 
 ⚠️ **What is owed is a WALK, not a build.** Everything on this branch's billing surface is now
 code-complete and four of the five fixes are proven or half-proven on hardware — but **IMP-091 has never
