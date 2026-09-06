@@ -85,8 +85,8 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 >
 > | If this chat is… | Take |
 > | --- | --- |
-> | a **build task** | 🚦 **Take [IMP-090](docs/specs-open.md)** — then 091, then 092. All three came out of the WALK-19 sitting, all are pure JS on the **OTA lane**, and they touch different files so the order is a convenience, not a dependency. ⚠️ **IMP-091's step 0 is a measurement, not code** — read it before you start. **IMP-089 is already code-complete** (`onRetry` ignored the mode) and is waiting on the same OTA. |
-> | a **runtime walk** | ⏸ **WALK-19 is BLOCKED on an OTA, not on a device.** It ran 2026-09-06 and produced IMP-089/090/091/092; re-running step 3, 4a or 4c against a phone that lacks those fixes proves nothing. **Land them, publish ONE OTA (`--environment production`, then read the manifest back), confirm the bundle per WALK-19 step 0(b), then re-run 3 → 4a → 4c.** ✅ **Ready NOW on a debug build of this branch, no OTA needed:** **WALK-07** (Paywall half — IMP-080), **WALK-03 step 4** (`neverBackedUp` — IMP-081; default **and** max font) and **WALK-11** (the Plus perk surfaces mount on their own). ⚠️ **WALK-18 needs a mid-range device.** **WALK-08 is PARTIAL.** **WALK-12 (R8) is LAST** and must be re-walked on the exact build you ship. **WALK-16/17 CLOSED ✅ on emulator evidence; WALK-13 DROPPED.** ⚠️ **Gap no closed row covers:** real doze, OEM battery managers, delivery to a real share target, Google's own backup schedule. |
+> | a **build task** | ⛔ **There isn't one. [`docs/specs-open.md`](docs/specs-open.md) is EMPTY** — IMP-090/091/092 landed 2026-09-07 and all four fixes shipped in one OTA. **Do not open a new billing IMP row until WALK-19 has re-run**; three of the four were written from that walk and the fourth carries an unrun measurement. If you were sent here for a build task, say so and take the walk instead. |
+> | a **runtime walk** | 🚦 **Take [WALK-19](docs/walk-open.md) — it is UNBLOCKED and it is the whole job.** All four fixes shipped by OTA 2026-09-07 (group `424b5a88-c993-44d7-91d6-db586ad22c32`, manifest verified). **Confirm the bundle first** — the Plus banner's button now reads **"See Plus"**, not "Try free"; if it still says "Try free" the phone has not taken the update. Then **step 3 → 4a → 4c**, in that order. The section is written for someone holding the phone, in plain English — follow it as written. ✅ **Ready NOW on a debug build of this branch, no OTA needed:** **WALK-07** (Paywall half — IMP-080), **WALK-03 step 4** (`neverBackedUp` — IMP-081; default **and** max font) and **WALK-11** (the Plus perk surfaces mount on their own). ⚠️ **WALK-18 needs a mid-range device.** **WALK-08 is PARTIAL.** **WALK-12 (R8) is LAST** and must be re-walked on the exact build you ship. **WALK-16/17 CLOSED ✅ on emulator evidence; WALK-13 DROPPED.** ⚠️ **Gap no closed row covers:** real doze, OEM battery managers, delivery to a real share target, Google's own backup schedule. |
 > | a **design request** | See "Claude Design" below. The live request is **Insights**. |
 
 **The whole design push lives on `feat/design-push`, which is NEVER pushed, NEVER given a `Release-Lane:`
@@ -175,10 +175,10 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | **086** | **The OTA lane publishes an empty RevenueCat key** | **OTA** | ✅ code-complete 2026-09-06 · commit `c50e7e7` · **branch-only, never pushed** · `eas update` evaluates `app.config.js` on the machine that runs it and an `eas.json` profile `environment` binds the **build** lane only, so every OTA ever published here shipped `extra.rcAndroidKey: ""` — **overwriting the key the installed build embedded**. Measured from the live `1.0.9` manifest (group `d5f03a47`), not derived. Now `--environment production` on the workflow command + in the playbook, a third pure check `otaEnvironmentPreflight` failing CI on any naked `eas update` line, **and onboarding's three paid mounts moved off bare `PLUS_ENABLED` onto `OB_PAYWALL_LIVE`** (the `simService` free-Plus giveaway was still reachable on first run) · 936 green (was 915) · ✅ **SHIPPED by OTA 2026-09-06** (group `62a8f8cf-9853-47e8-b013-907544e85f0c`, runtime 1.0.9) — manifest verified non-empty, surface confirmed on the owner's device |
 | **087** | **The paid surface says why it is missing** | **OTA** | ✅ code-complete 2026-09-06 · commit `74084e5` · **branch-only, never pushed** · vc14, vc15 and the IMP-085 OTA all rendered as **one empty You tab** from three different causes, each costing a device round trip · new `billingStatus()` splits the two facts `isBillingConfigured()` collapses, pure `billingDiagnostic()` names whichever is false, and a **"Plus is unavailable"** row stands where the paid surface would be — **null in every healthy build** (live / Plus off / dev) so it cannot become noise · also reports the running bundle via pure `describeUpdate(expo-updates)`, required in a try/catch · IMP-084's `PLUS_ENABLED` pin **updated, not loosened** · 952 green (was 936) · ✅ **SHIPPED by OTA 2026-09-06** · ⚠️ **it should now render NOTHING** — if the "Plus is unavailable" row ever appears, read the bundle id it prints before doing anything else |
 | **088** | **The purchase overlay stops being a trap** | **OTA** | ✅ code-complete 2026-09-06 · commit `c494721` · **branch-only, never pushed** · from the 🔴 WALK-19 step 0(c) finding on hardware · `usePurchaseFlow` awaited the service **unbounded** and the pending card had **no dismiss control** while saying *"Don't close the app"* — a hung RevenueCat call left force-quit as the only exit · ⚠️ **NOT a timeout-to-failure, and must never become one** — a real purchase takes minutes on INR/3DS flows, so declaring failure mid-charge is worse than hanging · new `PENDING_GRACE_MS` + pure `stuckCopy()` (pinned to never claim failure and to protect the user who WAS charged), an escape button, and `onAbandon` → `checkEntitlement`/`nextPlusState` reconcile in **both** RitualsApp and Onboarding · 965 green (was 952) · ✅ **SHIPPED by OTA 2026-09-06** (group `82bc2b16`, manifest key verified non-empty) |
-| **089** | **"Try again" on a restore must never buy** | **OTA** | ✅ code-complete 2026-09-06 · **branch-only, never pushed** · from the 🔴 WALK-19 step 4a/4c finding on hardware · `usePurchaseFlow`'s `onRetry` called `buy()` **unconditionally**, so "Try again" on the **restore-empty** and **network** cards opened Play's purchase sheet — a subscriber tapping "I already paid" was one tap from a charge · the mode was already tracked (`lastModeRef`, which `dismiss()` reads correctly two lines above); retry just never consulted it · 968 green (was 965) · ⚠️ **fixed inside the walk chat at the owner's explicit instruction**, a deliberate departure from "a walk only scopes" · ⬜ **NOT yet shipped — needs an OTA**, then WALK-19 steps 4a + 4c |
-| **090** | **The paywall stops promising a trial it cannot see** | **OTA** | ⬜ **OPEN** · from the 🔴 WALK-19 step 3 finding · our CTA is the literal `Start 7-day free trial` while **Play's sheet said "charging today" + the INR amount** · `getPrices()` fetches only `priceString`/`price`, so the app has **never had offer data** · ⚠️ the owner has subbed/unsubbed on this account and a Play trial is **once per account ever**, so Play is right and the product config is probably fine · **the CTA must never name a trial it cannot confirm the buyer gets** — Android has no eligibility check, so reading the offer and printing the days reproduces the same bug · spec in [`docs/specs-open.md`](docs/specs-open.md) |
-| **091** | **The pending escape never appeared on hardware** | **OTA** | ⬜ **OPEN — this is IMP-088's acceptance FAILING** · from the 🔴 WALK-19 step 4c finding · airplane-mode purchase hung past **60s** with no Close button and unchanged copy · wiring re-read and **correct** (`Paywall.js` renders `flow.overlay`, which passes `stuck`) — not a missing prop · ⚠️ **cause NOT established: step 0 of the spec is a MEASUREMENT.** Prime suspect is Android throttling the `setTimeout` while Play's sheet (a separate activity) holds the foreground; the alternative is that the device never ran the IMP-088 bundle · fix, if the former: arm off **elapsed time + AppState resume**, never off a timer alone · **IMP-088's never-assert-an-outcome rule is inherited verbatim** |
-| **092** | **"Nothing to restore" is also what a failed check says** | **OTA** | ⬜ **OPEN** · found off-script during WALK-19 while trying to test IMP-091 · **an airplane-mode Restore answers "Nothing to restore." instantly** — and it always has · `revenueCatService.restore()` relabels every unrecognised error as `restore-empty`, so one sentence means both *"we checked, you have nothing"* and *"we could not check"* · **the exact inverse of the IMP-043 rule `getEntitlement()` states four lines below it** · the person most likely to see it is a real subscriber on a new phone · ⚠️ it also **invalidated the IMP-091 diagnostic** — the restore path never hangs |
+| **089** | **"Try again" on a restore must never buy** | **OTA** | ✅ code-complete 2026-09-06 · **branch-only, never pushed** · from the 🔴 WALK-19 step 4a/4c finding on hardware · `usePurchaseFlow`'s `onRetry` called `buy()` **unconditionally**, so "Try again" on the **restore-empty** and **network** cards opened Play's purchase sheet — a subscriber tapping "I already paid" was one tap from a charge · the mode was already tracked (`lastModeRef`, which `dismiss()` reads correctly two lines above); retry just never consulted it · 968 green (was 965) · ⚠️ **fixed inside the walk chat at the owner's explicit instruction**, a deliberate departure from "a walk only scopes" · ✅ **SHIPPED by OTA 2026-09-07** (group `424b5a88-c993-44d7-91d6-db586ad22c32`, runtime 1.0.9, manifest read back with a non-empty `rcAndroidKey`) · ⬜ **UNPROVEN — WALK-19 steps 4a + 4c re-run is the acceptance** |
+| **090** | **The paywall stops promising a trial it cannot see** | **OTA** | ⬜ **OPEN** · from the 🔴 WALK-19 step 3 finding · our CTA is the literal `Start 7-day free trial` while **Play's sheet said "charging today" + the INR amount** · `getPrices()` fetches only `priceString`/`price`, so the app has **never had offer data** · ⚠️ the owner has subbed/unsubbed on this account and a Play trial is **once per account ever**, so Play is right and the product config is probably fine · **the CTA must never name a trial it cannot confirm the buyer gets** — Android has no eligibility check, so reading the offer and printing the days reproduces the same bug · ✅ code-complete 2026-09-07 · commit `f38ca24` · **branch-only, never pushed** · `getPrices()` gained `trialDays` (guarded across three SDK shapes, any miss → `null`), `mergePrices` carries it, new pure `ctaLabel()` → `Subscribe` / `Try free, then subscribe` and **never the day count** · the legal footer's *"Your 7-day free trial converts to…"* now appears only when the live offer has one, worded as the offer not a promise · same sweep on `shopui.js`'s **"Try free"** banner and the onboarding teaser · 1017 green across the three (was 968) · ✅ **SHIPPED by OTA 2026-09-07** (group `424b5a88-c993-44d7-91d6-db586ad22c32`, runtime 1.0.9, manifest read back with a non-empty `rcAndroidKey`) · ⬜ **UNPROVEN — WALK-19 step 3 is the acceptance** |
+| **091** | **The pending escape never appeared on hardware** | **OTA** | ⬜ **OPEN — this is IMP-088's acceptance FAILING** · from the 🔴 WALK-19 step 4c finding · airplane-mode purchase hung past **60s** with no Close button and unchanged copy · wiring re-read and **correct** (`Paywall.js` renders `flow.overlay`, which passes `stuck`) — not a missing prop · ⚠️ **cause NOT established: step 0 of the spec is a MEASUREMENT.** Prime suspect is Android throttling the `setTimeout` while Play's sheet (a separate activity) holds the foreground; the alternative is that the device never ran the IMP-088 bundle · fix, if the former: arm off **elapsed time + AppState resume**, never off a timer alone · **IMP-088's never-assert-an-outcome rule is inherited verbatim** · ✅ code-complete 2026-09-07 · commit `cba53b1` · **branch-only, never pushed** · `run()` stamps `startedAt`, an `AppState` → `active` transition arms the escape off **elapsed wall-clock time** when the grace period is already spent, timer kept for the foreground case, unsubscribed on unmount · new pure `graceSpent()` · ✅ **SHIPPED by OTA 2026-09-07** (group `424b5a88-c993-44d7-91d6-db586ad22c32`, runtime 1.0.9, manifest read back with a non-empty `rcAndroidKey`) · ⚠️ **the spec's step 0 MEASUREMENT was NOT run — no device in the session that landed it.** The fix is correct under (a) and harmless under (b); **the re-run separates them** · ⬜ **UNPROVEN — WALK-19 step 4c is the acceptance** |
+| **092** | **"Nothing to restore" is also what a failed check says** | **OTA** | ⬜ **OPEN** · found off-script during WALK-19 while trying to test IMP-091 · **an airplane-mode Restore answers "Nothing to restore." instantly** — and it always has · `revenueCatService.restore()` relabels every unrecognised error as `restore-empty`, so one sentence means both *"we checked, you have nothing"* and *"we could not check"* · **the exact inverse of the IMP-043 rule `getEntitlement()` states four lines below it** · the person most likely to see it is a real subscriber on a new phone · ⚠️ it also **invalidated the IMP-091 diagnostic** — the restore path never hangs · ✅ code-complete 2026-09-07 · commit `de5cd34` · **branch-only, never pushed** · an unrecognised error now returns `failed`; only a *successful* empty call returns `restore-empty` · new pure `resultCopy()` gives the `failed` card a restore variant (*"We couldn't check."*) and the result phase carries `mode` · **plus a second call site the spec did not name**: the You tab's `doRestore` toasted "Nothing to restore" for every non-success kind · ✅ **SHIPPED by OTA 2026-09-07** (group `424b5a88-c993-44d7-91d6-db586ad22c32`, runtime 1.0.9, manifest read back with a non-empty `rcAndroidKey`) · ⚠️ **known limit, recorded not fixed:** `restorePurchases()` resolves from RevenueCat's local cache offline, so `restore-empty` stays reachable offline for a subscriber with a cold cache · ⬜ **UNPROVEN — WALK-19 step 4, restore-empty case, run twice (online AND aeroplane mode)** |
 | — | **Plus is ON** (`PLUS_ENABLED = true`) | Build | ⚠️ **the FLAG is on; the BUILD cannot take money — see 🔴 IMP-084 (2026-09-06).** `PLUS_ENABLED = true` shipped, but vc14 has no RevenueCat key and runs `simService`, so **10b.3 is NOT closed** and the "all real" claim below covers the perks, not the payments · ✅ 2026-09-05 · commit `7d2e515` · **branch-only, never pushed** · ~~playbook 10b.2/10b.3/10b.4 all closed~~; 10b.5 in flight. The dead PDF perk was **cut** from `PLUS_PERKS` rather than built — five perks remain, all real. **Everything about billing is still unproven at runtime: WALK-19** |
 | — | Cash ember packs decoupled from the Plus flag | Build | ✅ 2026-09-05 · commit `6590834` · **caught mid-build and the build was cancelled.** Flipping `PLUS_ENABLED` armed the Shop's "Gather Embers" section + the GetEmbers sheet, which show `$1.99/$4.99/$9.99` against a **bare counter increment** — a priced surface giving its goods away. New `EMBER_PACKS_ENABLED` (false) gates it; `Shop` takes `embersForCash` defaulting to **false**. 875 tests |
 
@@ -332,6 +332,50 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
+_2026-09-07 (Opus — **the three WALK-19 specs landed and all four fixes shipped in ONE OTA. The build
+queue is now empty and the walk is the only thing owed.**) — branch-only, NOT pushed._
+
+**What finished.** **IMP-090** (`f38ca24`), **IMP-091** (`cba53b1`), **IMP-092** (`de5cd34`) — three
+commits, one per spec, each verified green on its own intermediate tree before the next was built.
+**1017 passed, 93 suites** (was 968/93). `npx expo export --platform android` clean. All three specs moved
+to [`docs/build-log.md`](docs/build-log.md); [`docs/specs-open.md`](docs/specs-open.md) is **empty**.
+
+**Shipped.** One OTA carrying all four (IMP-089 rode along), 2026-09-07 — `eas update --branch production
+--environment production`, run in a Terminal window. **Update group
+`424b5a88-c993-44d7-91d6-db586ad22c32`**, runtime 1.0.9, from commit `de5cd34`. ✅ **Manifest read back
+immediately**: `rcAndroidKey` non-empty, 32 chars, `goog_…`, and the manifest's update id matches the one
+just published. The IMP-086 trap is clear.
+
+**Three things worth carrying that are not in the specs:**
+
+1. ⚠️ **IMP-091's step 0 was a MEASUREMENT and it was NOT run** — it needs the device and none was
+   attached. What is on record is the walk's own pre-flight (1.0.9, OTA applied, manifest newest group
+   `82bc2b16` = IMP-088), which points at *"Android throttled the timer behind Play's sheet"* but does not
+   settle it against *"the phone never had the IMP-088 bundle."* The fix is correct under the first and
+   harmless under the second. **The re-run separates them. Do not let "IMP-088 does not work" enter the
+   record until it has.**
+2. **Two fixes went one call site beyond their spec, deliberately and both stated in their commits.**
+   IMP-090's legal footer opened *"Your 7-day free trial converts to…"* — the binding price disclosure,
+   and the most load-bearing of the four trial claims. IMP-092's `RitualsApp.doRestore` (the **You tab's**
+   Restore row) toasted *"Nothing to restore"* for every non-success kind, so fixing `restore()` alone
+   would have left that exact sentence intact on the surface a subscriber on a new phone is likeliest to
+   use. Neither was a redesign; both were the same defect at a second address.
+3. ⚠️ **A known limit IMP-092 does not close, recorded in source and on the walk row.** An offline
+   `restorePurchases()` **resolves from RevenueCat's local cache** rather than failing, so `restore-empty`
+   is still reachable offline for a genuine subscriber whose cache is cold. The `catch` cannot see it.
+   Closing it needs a reachability signal the app does not have.
+
+**How to confirm the phone took it, with no cable.** The Plus banner's button in the Shop / You tab used
+to read **"Try free"**; it now reads **"See Plus"**. That string did not exist before this OTA, so it is a
+reliable marker on a release build with no dev harness. Open → wait ~15s → **fully swipe away** → open
+again, and **never clear data**.
+
+**The exact next step.** **Re-run WALK-19 on the phone: step 3 → step 4a → step 4c**, then the extra
+aeroplane-mode Restore check, then 4d onward. [`docs/walk-open.md`](docs/walk-open.md) → **"WALK-19
+RE-RUN"** is written for whoever is holding the phone, in plain English, and is the only thing owed.
+**Nothing is promoted `internal` → `production` until that row is ✅.**
+
+
 
 _2026-09-06, night (Opus — **WALK-19 finally ran on hardware. Three defects in four steps, and the sitting
 stopped before any money moved.**) — **the first session on this branch whose deliverable is mostly
@@ -375,79 +419,8 @@ OTA carrying them plus IMP-089** — ⚠️ **`eas update --environment producti
 then re-run **WALK-19 step 3 → 4a → 4c** before going anywhere near a purchase. **Nothing is promoted
 `internal` → `production`.**
 
+> ⏭ **DONE — superseded by the 2026-09-07 note above.** All three landed and all four shipped in one OTA
+> (group `424b5a88-c993-44d7-91d6-db586ad22c32`). Read the newer note for what is owed now; this
+> paragraph is kept only as the record of what the sitting handed over.
 
-_2026-09-06, evening (Opus — **the billing incident chain closed end to end: IMP-086, IMP-087, IMP-088,
-all shipped by OTA**; branch-only, NOT pushed) — **a debugging session that became four ship events.**_
 
-**What the owner reported:** after clearing data, onboarding offered a 7-day trial, and the You tab had
-**no** route to subscribe *or* manage — either way. Two defects, both found, both fixed, plus a third
-found by the walk they unblocked.
-
-**IMP-086 — the OTA lane was DELETING the RevenueCat key** (`c50e7e7`). Measured, not derived: the live
-production manifest for runtime 1.0.9 read back **`rcAndroidKey:""`**. `eas update` evaluates
-`app.config.js` on whatever machine runs it, and an `eas.json` profile `environment` binds the **build**
-lane only — so a naked publish resolves the key to `''` and **overwrites the key the installed build
-embedded**. vc15 had the key with a broken probe; the IMP-085 OTA had the fixed probe with no key.
-`isBillingConfigured()` was false either way and **no build has ever had both halves**. ⚠️ `9df451d`'s
-"real billing is live for the first time" was wrong and is corrected in the record. Fix: `--environment
-production` on the workflow command **and** in the playbook (this branch never reaches CI, so every OTA
-here is published by hand), plus a third pure check `otaEnvironmentPreflight` that fails CI on any naked
-`eas update` line. Also: **onboarding had never been brought under IMP-084's gate** — its three paid
-mounts read bare `PLUS_ENABLED`, so the full Paywall opened in a build that cannot transact, where
-`simService` fake-grants Plus free and persists it. The vc14 giveaway, still reachable on first run.
-
-**IMP-087 — the gate stops failing silently** (`74084e5`). Three defects had produced one identical
-screen. `billingStatus()` splits the two facts `isBillingConfigured()` collapses, and the You tab renders
-a **"Plus is unavailable"** row naming which is false — and the **running bundle**, via
-`describeUpdate(expo-updates)`. Null in every healthy build.
-
-**IMP-088 — the purchase overlay was a trap** (`c494721`), found by WALK-19 step 0(c) on hardware.
-`usePurchaseFlow` awaited the service **unbounded** and the pending card had **no dismiss control** while
-saying *"Don't close the app"* — a hung RevenueCat call left force-quit as the only exit. ⚠️ **The fix is
-deliberately NOT a timeout-to-failure and must never become one:** a real purchase takes minutes on
-INR/3DS flows, so declaring failure mid-charge is worse than hanging. It offers a way *out* after
-`PENDING_GRACE_MS`, claims nothing, and reconciles via the IMP-043 failure-tolerant pair.
-
-**🧠 The lesson that cost four rounds, now written into WALK-19 step 0(b): clearing app data DELETES the
-downloaded update.** The gesture used to "reproduce cleanly" sends the next launch back to the embedded
-vc15, which predates every fix — so the owner kept testing the one bundle nobody meant to test. An OTA
-applies on the **second** launch. To test one: open, wait, fully kill, open again, **never clearing data**.
-
-**✅ WALK-19 steps 0(c) and 2 PASSED on a device.** Prices render in **INR** (the live offering reaches
-the app; `$4.99`/`$29.99` would have been the `PLUS_PRICES` fallback) and an **airplane-mode purchase does
-not complete** (`simService` completes regardless of network). **The simulation is off the device and Play
-is transacting for real.**
-
-**Proof: 915 → 965 passed / 93 suites**, both zone suites green, `npx expo export --platform android`
-clean. Every new guard is a **source assertion** — jest renders with `__DEV__` true and cannot read a
-manifest — and each was **proven to fail on the real defect before being committed**.
-
-**✅ Shipped by OTA, all verified by reading the manifest back, never by trusting "Published!":**
-IMP-086 group `62a8f8cf`, IMP-087, and **IMP-088 group `82bc2b16-6fe2-42b2-8198-800632d09d2a`** (android
-update `01a07759-1f94-7c48-a807-f8b1466fa4b7`, runtime 1.0.9, from `5801036`) — **key reads `goog_…`.**
-
-**Also settled:** RevenueCat has **no sandbox for Google Play** (license testers use the same production
-key/products/offering; RC tags them sandbox), and **RC's own Play service account credential IS
-configured** — owner-confirmed, done long ago. Do not suspect it again.
-
-**➡️ Exact next step: WALK-19, in a walk chat, on a device.** Steps 0(c) and 2 are done — **start at
-step 1**. Get current JS on the phone first (0(b)). Step 4 walks all seven purchase states and doubles as
-IMP-088's acceptance; step 8 is the only one involving real money. **Nothing is promoted `internal` →
-`production` until the row is green.**
-
-⚠️ **Shipped ahead of its proof, again.** Nothing about vc15's billing has been walked — **WALK-19 step
-0(c) is the acceptance: airplane mode, attempt a purchase, and it must FAIL.** jest cannot see any of it.
-**Real charges are now possible on `internal`** — confirm every tester is a license tester. **Do not
-promote to `production`** until the walks clear. vc14 installs are now orphaned: runtime 1.0.9 means they
-take no further OTA, so anyone still on vc14 who never took the 2026-09-06 update keeps a fake paywall
-until they update to vc15.
-
-**One workflow trap, cost a restart:** `npx eas-cli@latest` stops at an `Ok to proceed? (y)` install prompt
-and hangs any tee'd or non-interactive run. **This machine has a global `eas` (21.8.0) — call it directly.**
-
-**NEXT: this is a WALK lane now and the build queue is empty.** 🚦 **[WALK-19](docs/walk-open.md) is
-UNBLOCKED for the first time** — it needs vc15 on the owner's phone (Play → internal), a license tester,
-and it gates the `internal` → `production` promotion. Its **step 0(c)** is IMP-084's acceptance. Also ready
-on a debug build of this branch: **WALK-07 (Paywall half)**, **WALK-03 step 4**, **WALK-11**. **WALK-18**
-is now runnable too — vc15 carries Reanimated — but needs a **mid-range device**. **WALK-12 (R8) LAST**,
-and it must be re-walked on **vc15**, not vc13._

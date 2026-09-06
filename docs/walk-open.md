@@ -120,7 +120,7 @@ locked. It is the row that reopens the moment Plus becomes the active work.
 | WALK-16 | 🚦 | [The New Architecture cold start](#walk-16--the-new-architecture-cold-start) | IMP-076 | **device** (native runtime) | 👤 | ✅ **2026-09-05 — closed on emulator evidence at owner's instruction.** All 7 steps exercised across two agent-run sittings (1-3 New Arch live: Bridgeless + Fabric + TurboModule; 4-7 storage / notification scheduling / export-share-reimport / Auto Backup via T5 with the quarantine offering not imposing). **Owner's call 2026-09-05: emulator results are recorded as done, not smoke.** ⚠️ **Named gap — never exercised anywhere:** real doze, OEM battery managers, delivery to a real share target, Google's own backup schedule. **Unblocks IMP-077.** |
 | WALK-17 | 🚦 | [Edge-to-edge, re-audited under New Arch](#walk-17--edge-to-edge-re-audited-under-new-arch) | IMP-076, IMP-027 regression | **device** | 👤 (visual) | ✅ **2026-09-05 — emulator, agent-run.** All four tabs clean under status bar + gesture bar in **both** day and night; bottom nav and write-FAB correct in **both** gesture and 3-button nav; onboarding + setup also clean. Sheets checked: trash, achievements, shop — the last two at night **and** max font. ⚠️ **Not opened: write flow, reading sheet, mood manager.** |
 | WALK-18 | 🎨 | [The app moves](#walk-18--the-app-moves) | IMP-077 | **device** (mid-range, real frame pacing) | 👤 (visual) | ⬜ — **branch-only. UNBLOCKED 2026-09-05: WALK-16 closed and IMP-077 landed.** ✅ **The build now exists: v1.0.8 / vc14 shipped to Play `internal` 2026-09-05 19:09** (EAS `87f81b24…`, submission `4b7cf3a2…`, from commit `6590834`). IMP-077 added `react-native-reanimated` + `react-native-worklets` (native deps), so **neither vc13 artifact carries this code** — install vc14 from Play, not an older APK. **An emulator cannot settle this row** — it renders dropped frames as smooth, which is the thing being judged. The jest suite is blind here too: the Reanimated mock no-ops every hook |
-| WALK-19 | 🚦 | [Money actually changes hands](#walk-19--money-actually-changes-hands) | **Phase 10b.5**, IMP-028, IMP-082 + IMP-083 (steps 5 and 10), IMP-084/085/086/087, **IMP-088** | **device** (real Play Billing + a license tester) | 👤 | ❌ **2026-09-06 — steps 1–4 run on hardware, THREE defects, sitting stopped before any purchase (owner's call, and the right one).** ✅ Steps 0(c), 1 and 2 pass — vc15 + OTAs confirmed, prices in INR, an airplane-mode purchase does not complete. 🔴 **Step 4a/4c: "Try again" on a RESTORE card opened Play's purchase sheet** → **IMP-089, FIXED this session** (968 green), needs an OTA then a re-run. 🔴 **Step 3: Play's sheet says "charging today" + the INR amount, not 7 days free** — our CTA is a hardcoded literal and the app fetches no offer data at all → **IMP-090**. Owner has subbed/unsubbed on this account, so the trial is burned and **Play is right**. 🔴 **Step 4c: IMP-088's escape NEVER appeared** — 22s, 32s, past 60s, no Close button, copy unchanged → **IMP-091** (prime suspect: JS timers throttled while Play's sheet holds the foreground; cause NOT yet separated from "the device lacked the OTA"). 🔴 **Bonus, found off-script: an airplane-mode Restore says "Nothing to restore" INSTANTLY** — `restore()` relabels every unrecognised error as `restore-empty` → **IMP-092**. ⬜ **Still owed:** steps 3–10 in full. **Nothing is promoted `internal` → `production`.** |
+| WALK-19 | 🚦 | [Money actually changes hands](#walk-19--money-actually-changes-hands) | **Phase 10b.5**, IMP-028, IMP-082 + IMP-083 (steps 5 and 10), IMP-084/085/086/087, **IMP-088** | **device** (real Play Billing + a license tester) | 👤 | ❌ **2026-09-06 — steps 1–4 run on hardware, THREE defects, sitting stopped before any purchase (owner's call, and the right one).** ✅ Steps 0(c), 1 and 2 pass — vc15 + OTAs confirmed, prices in INR, an airplane-mode purchase does not complete. 🔴 **Step 4a/4c: "Try again" on a RESTORE card opened Play's purchase sheet** → **IMP-089, FIXED this session** (968 green), needs an OTA then a re-run. 🔴 **Step 3: Play's sheet says "charging today" + the INR amount, not 7 days free** — our CTA is a hardcoded literal and the app fetches no offer data at all → **IMP-090**. Owner has subbed/unsubbed on this account, so the trial is burned and **Play is right**. 🔴 **Step 4c: IMP-088's escape NEVER appeared** — 22s, 32s, past 60s, no Close button, copy unchanged → **IMP-091** (prime suspect: JS timers throttled while Play's sheet holds the foreground; cause NOT yet separated from "the device lacked the OTA"). 🔴 **Bonus, found off-script: an airplane-mode Restore says "Nothing to restore" INSTANTLY** — `restore()` relabels every unrecognised error as `restore-empty` → **IMP-092**. ✅ **ALL FOUR FIXES ARE NOW SHIPPED BY OTA — 2026-09-07, update group `424b5a88-c993-44d7-91d6-db586ad22c32`, runtime 1.0.9, manifest read back with a non-empty `rcAndroidKey`.** ⬜ **READY TO RE-RUN NOW: step 3 → 4a → 4c, in that order, then 4d onward.** Steps 5–10 still owed in full. **Nothing is promoted `internal` → `production`.** |
 
 ---
 
@@ -745,8 +745,105 @@ also means *"we could not check."* The person most likely to see it is a real su
 **Not attempted, deliberately:** steps 4b (cancel), 4d–4f, and steps 5–10. No purchase was made, real or
 test. **Nothing is promoted `internal` → `production`.**
 
-**Re-run order when the three specs land:** OTA first (all three are pure JS), confirm the bundle per step
-0(b), then **step 3 → step 4a → step 4c** before going near 4d.
+---
+
+## ⬜ WALK-19 RE-RUN — 2026-09-07, the fixes are on the phone
+
+**All four fixes shipped in one OTA on 2026-09-07.** Update group
+`424b5a88-c993-44d7-91d6-db586ad22c32`, runtime 1.0.9, published from commit `de5cd34`. The manifest was
+read back straight after publishing: `rcAndroidKey` is **non-empty** (32 chars, `goog_…`), so billing
+stays ON — this is the IMP-086 trap and it is clear.
+
+**Nothing below needs a cable or a computer.** It is all on the phone.
+
+### First — get the new version onto the phone, and check that it arrived
+
+The app does not update the instant you open it. It downloads in the background and starts using the new
+version **the next time you open it**. So:
+
+1. Open Daily Rituals. **Leave it open for about 15 seconds** — that is the download.
+2. **Fully close it** — swipe it away from the recent-apps list. Not just Home; actually swipe it away.
+3. Open it again. **This** launch is the new version.
+
+⚠️ **Do NOT use "Clear data" or "Clear storage" at any point.** That deletes the downloaded update and
+sends the app back to the version that came with the install, which is older than every fix. Every single
+time this walk has gone wrong, this was why.
+
+**How to tell it actually worked, without a cable.** Open the Shop (or the You tab) and look at the gold
+Plus banner. The button on its right used to say **"Try free"**. It now says **"See Plus"**. If you still
+see "Try free", the new version is not running yet — repeat the three steps above.
+
+### Step 3 — does the trial claim match Play?
+
+1. Tap the Plus banner to open the paywall.
+2. **Look at the big button at the bottom.** It used to say *"Start 7-day free trial"*. It should now say
+   either **"Subscribe"** or **"Try free, then subscribe"** — never the old wording, and **never a number
+   of days.**
+3. Tap it, and let Google's purchase sheet open.
+4. **Compare the two.** Google's sheet is the truth. If Google says you are being charged today, our
+   button must not have promised you a free trial. If Google offers you free days, "Try free, then
+   subscribe" is fine.
+5. **Back out of Google's sheet.** Do not buy anything yet.
+
+**This passes if our button and Google's sheet do not contradict each other.** Also read the small print
+under the button: it should no longer open with *"Your 7-day free trial converts to…"* unless Play is
+actually offering a trial, and even then it says *"for new subscribers"* rather than promising you.
+
+### Step 4a — Restore, with no subscription
+
+1. On the paywall, tap **Restore** (top right).
+2. You should get a card saying **"Nothing to restore."**
+3. **Tap "Try again" on that card.**
+4. **What must NOT happen: Google's purchase sheet must not open.** That was the dangerous one — it put
+   someone saying "I already paid" one tap from being charged. It should just search again and come back
+   with the same answer.
+
+### Step 4c — the purchase that cannot finish
+
+1. Turn on **aeroplane mode**.
+2. Open the paywall and tap the big button to buy.
+3. You will get *"Confirming with Play Store…"* and *"Don't close the app."* Google may put its own
+   no-connection error on top of that — dismiss Google's error so you can see our card.
+4. **Wait, and watch our card.** Within about 20 seconds of you getting back to our app, a **Close**
+   button must appear and the wording must change. Last time it never appeared at all, even after a
+   minute.
+5. **Read the new wording before you tap anything.** It must **not** say the purchase failed. It should
+   say something like *"if you were charged, your Plus will appear on its own — closing this won't cancel
+   anything."* That is deliberate: a real card payment can take minutes, and telling you it failed while a
+   bank is still processing would be worse than the wait.
+6. Tap **Close**. Turn aeroplane mode off.
+
+⚠️ **If the Close button still never appears**, that is a real result and worth writing down exactly —
+but say so plainly rather than concluding the fix does not work. The measurement that would have told us
+*why* the first time (whether the old fix was even running on the phone) was never taken. See the
+IMP-091 note below.
+
+### And one more, while aeroplane mode is on — the Restore fix
+
+1. With **aeroplane mode ON**, open the paywall and tap **Restore**.
+2. Last time this answered **"Nothing to restore." instantly**, which was a lie — it could not check.
+3. It should now say **"We couldn't check."** instead.
+4. Turn aeroplane mode off, and tap **Restore** again on an account with no subscription. It should say
+   **"Nothing to restore."** — that sentence is still correct when we genuinely did check.
+
+**Both halves matter.** Online-with-nothing must still say "Nothing to restore"; offline must not.
+
+⚠️ **A known hole that this does NOT close, and it is not a bug in the fix.** RevenueCat sometimes answers
+from its own saved copy of your account instead of failing, so an offline Restore can still say "Nothing
+to restore" if that saved copy is empty. If you see that, it is the limit recorded in IMP-092 step 3, not
+a regression. Write down which of the two you got.
+
+### What is still owed after this
+
+Steps **4b** (cancel), **4d–4f**, and steps **5–10** — none of them has ever run. Step 8 is the only one
+involving real money. **Nothing is promoted `internal` → `production` until this row is ✅.**
+
+⚠️ **IMP-091 carries an unrun measurement.** Its spec's step 0 was meant to separate *"Android froze our
+timer while Google's sheet was open"* from *"the phone never had the previous fix"*, and it needs the
+device — it was not run. The walk's own pre-flight recorded 1.0.9, the update applied, and the right
+bundle in the manifest, which points at the first, but does not settle it. The fix is right if it was the
+first and harmless if it was the second. **This re-run is what separates them.**
+
 
 **Recording it.** Same rule as every row: ✅/❌ + date in the index, a paragraph here. **A failure is
 the deliverable** — scope it as a new `IMP-xxx` in `PROGRESS.md`, do not fix it mid-walk. **Do not
