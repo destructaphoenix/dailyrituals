@@ -3350,6 +3350,53 @@ subscription (must still say "Nothing to restore") and once in airplane mode (mu
 
 ## Session notes (archived from PROGRESS.md)
 
+_2026-09-06, night (Opus — **WALK-19 finally ran on hardware. Three defects in four steps, and the sitting
+stopped before any money moved.**) — **the first session on this branch whose deliverable is mostly
+findings, not code.**_
+
+**What ran.** WALK-19 steps 1–4 on v1.0.9 / vc15 from Play `internal`, license-tester account, OTAs applied
+and confirmed. Pre-flight clean: version 1.0.9, no "Plus is unavailable" row (IMP-087's gate alive), the
+published manifest read back with a non-empty `rcAndroidKey` and group `82bc2b16` newest. **Steps 1 and 2
+pass.** Steps 3 and 4 produced three defects and a fourth off-script. **Full paragraph →
+[`docs/walk-open.md`](docs/walk-open.md) → WALK-19; do not re-derive it here.**
+
+**IMP-089, fixed (`onRetry` ignored the mode).** "Try again" on a **restore** card opened Play's **purchase**
+sheet — on both `restore-empty` and `network`. The hook already tracked `lastModeRef` and `dismiss()` read it
+correctly; retry never did. Six-line branch, +3 tests pinning both directions (a retried restore must not
+buy; a retried buy must still buy the same plan), **968 green, export clean**. ⚠️ **Fixed in the walk chat at
+the owner's explicit instruction** — a deliberate exception to "a walk only scopes its findings", recorded in
+`build-log.md` so it is visible rather than silent. **NOT shipped: it needs an OTA.**
+
+**IMP-090, 091, 092 scoped, not fixed** — specs in [`docs/specs-open.md`](docs/specs-open.md).
+
+**The two things worth carrying forward that are not in any spec:**
+
+1. ⚠️ **IMP-091's cause is NOT established, and the spec's first step is a measurement, not a code change.**
+   The escape may have failed because Android throttled the timer behind Play's sheet, **or** because the
+   device was not running the IMP-088 bundle. These need opposite responses and the difference is invisible
+   from the app. Separate them with `adb logcat | grep -i "expo-updates\|EXUpdates"` or the IMP-087
+   diagnostic's bundle id **before writing a line of fix.** Do not let "IMP-088 doesn't work" enter the
+   record until it is proven.
+2. ⚠️ **The obvious diagnostic for a hung purchase does not exist.** Restore looked like the way to reach a
+   stuck state without Play's sheet — it is not: it never hangs, it answers instantly from RevenueCat's
+   local cache (which is IMP-092). **Any future attempt to test the pending overlay must involve a real
+   purchase attempt**, which means the timer question cannot be settled cheaply.
+
+**Also settled, do not re-raise:** the trial is **burned on the owner's Google account** (subbed + unsubbed
+before). Play saying "charging today" is Play being correct; the product config is not the suspect. And
+**"Try free"** is the `shopui.js` banner that opens the paywall, not the paywall's CTA — it confused the
+sitting once and IMP-090 covers it.
+
+**The exact next step.** Land **IMP-090, 091, 092** (all pure JS / OTA lane, all independent), **publish one
+OTA carrying them plus IMP-089** — ⚠️ **`eas update --environment production`, then read the manifest back** —
+then re-run **WALK-19 step 3 → 4a → 4c** before going anywhere near a purchase. **Nothing is promoted
+`internal` → `production`.**
+
+> ⏭ **DONE — superseded by the 2026-09-07 note above.** All three landed and all four shipped in one OTA
+> (group `424b5a88-c993-44d7-91d6-db586ad22c32`). Read the newer note for what is owed now; this
+> paragraph is kept only as the record of what the sitting handed over.
+
+
 _2026-09-06, evening (Opus — **the billing incident chain closed end to end: IMP-086, IMP-087, IMP-088,
 all shipped by OTA**; branch-only, NOT pushed) — **a debugging session that became four ship events.**_
 

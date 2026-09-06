@@ -22,24 +22,75 @@
 
 ---
 
-## The queue is EMPTY (2026-09-07)
+## The queue — one row, from the WALK-19 re-run on 2026-09-07
 
-**Nothing here is open.** The last three rows — **IMP-090**, **IMP-091** and **IMP-092**, all from the
-WALK-19 hardware sitting of 2026-09-06 — landed on 2026-09-07 (commits `f38ca24`, `cba53b1`, `de5cd34`;
-1017 green, was 968) and are archived in [`build-log.md`](build-log.md). IMP-089 was already
-code-complete. **All four shipped in one OTA on 2026-09-07** — update group
-`424b5a88-c993-44d7-91d6-db586ad22c32`, runtime 1.0.9, manifest read back with a non-empty `rcAndroidKey`.
+**IMP-090, IMP-091 and IMP-092 all landed** (commits `f38ca24`, `cba53b1`, `de5cd34`; 1017 green) and
+shipped with IMP-089 in one OTA — group `424b5a88-c993-44d7-91d6-db586ad22c32`, runtime 1.0.9. The re-run
+of WALK-19 that afternoon **proved IMP-090 and IMP-089 on hardware**, closed **IMP-092's online half**,
+and could not observe **IMP-091** at all — because of the row below, which it found.
 
-⚠️ **None of them is PROVEN.** All four close on **WALK-19**, not on jest — and the `simService` the suite
-runs fabricates every one of those outcomes, so **a green suite is not evidence about any of them.** The
-next task on this repo is a **runtime walk, not a build**: [`walk-open.md`](walk-open.md) → WALK-19,
-step 3 → 4a → 4c. **Do not open a new IMP row against billing until that walk has run** — three of the
-four fixes were themselves written from a walk, and the fourth (IMP-091) carries an unrun measurement.
+⚠️ **This is not urgent and the spec says so.** Nothing here loses money or strands a subscriber; the cost
+is a delay and a confusing minute. It is written now because it is the reason a 🚦 walk row cannot close.
 
-**One thing IMP-091 owes the record.** Its spec's step 0 was a measurement separating *"the timer is
-throttled behind Play's sheet"* from *"the device never had the IMP-088 OTA"*, and **it was not run** — it
-needs the device. The fix is correct under the first and harmless under the second, and the re-run
-separates them. **Do not let "IMP-088 does not work" enter the record until it has.**
+---
+
+## IMP-093 — the paywall must not vanish mid-purchase
+
+**Lane: OTA** (pure JS). **From:** WALK-19 step 4c re-run, 2026-09-07.
+
+**What was observed on hardware.** Aeroplane mode, tap Subscribe. Our pending card appears, then **Google's
+no-connection page covers it — and that page carries no X and no dismiss control, only Back.** Pressing
+Back dismisses Google's page **and closes the entire paywall**, returning to the app. Waiting **30 seconds
+without touching anything** does not help: Play's error page **does not self-dismiss**.
+
+**What that breaks.** The `Modal` wrapping `Paywall` closes on `onRequestClose`, which unmounts the screen
+and with it `usePurchaseFlow`. The pending flow is discarded silently: the unmount cleanup sets
+`alive.current = false`, and **`onAbandon` never fires** — it is called only from `dismiss()`. So the app
+walks away from a purchase it started **without asking the store what happened.**
+
+**How much it actually costs — measured, not assumed.** `useLaunchEntitlementCheck`
+([`entitlementSync.js:33`](../src/billing/entitlementSync.js#L33)) runs on every launch where `plus` is
+false, asks the store and grants Plus if an entitlement exists. So the bad version — charged, backed out,
+never noticed — **does not happen.** The user gets their Plus on the next launch. **This is a delay and a
+moment of confusion, not a lost payment.** Scope it accordingly and do not gold-plate it.
+
+**The second cost, which is why it is written at all.** It makes **IMP-091 unobservable**: the escape's
+container is destroyed before the Close button can be seen, so WALK-19 step 4c cannot close either way.
+
+⚠️ **The obvious fix is the wrong one.** Making Back a no-op while a flow is pending would keep the card
+alive to be looked at — and would **re-create the exact IMP-088 trap** for the first 20 seconds, during
+which no exit exists at all. **Do not do that.** Back is a *good* exit; the defect is that it exits
+*without reconciling*, and that we tell the user not to use it.
+
+**Steps.**
+1. Both real mount sites — [`RitualsApp.js:980`](../src/RitualsApp.js#L980) and
+   [`Onboarding.js:70`](../src/screens/Onboarding.js#L70) — must route `onRequestClose` through the flow
+   rather than straight to `setPaywall(false)`. `usePurchaseFlow` already returns `flow`; expose what the
+   call site needs (the pending state and `dismiss`) and, **when a flow is pending, call `dismiss()` so
+   `onAbandon` fires and the app reconciles with the store** exactly as the overlay's own Close does.
+   Closing the paywall afterwards is fine and expected — the point is that it reconciles on the way out.
+   The dev-panel mount ([`LaunchSection.js:72`](../src/dev/panel/LaunchSection.js#L72)) may stay as-is.
+2. `dismiss()` currently fires `onAbandon` **only when `stuck` was true** (`if (wasStuck && onAbandon)`).
+   That guard was right when the only way to reach it was the 20-second escape. It is wrong now: a Back
+   press at 3 seconds abandons a real purchase just as much as one at 30. **Reconcile whenever a flow was
+   pending**, not only when it was stuck. ⚠️ Keep `onAbandon` failure-tolerant — it already goes through
+   `checkEntitlement`/`nextPlusState` (IMP-043), so an unreachable store changes nothing rather than
+   downgrading. That property must survive.
+3. **The copy is the other half of the defect.** The pending card says *"Don't close the app."* Back
+   closes it, that is safe, and after step 2 it reconciles — so the line is actively false and it is
+   talking the user out of the one thing that works. Replace it with something true that still discourages
+   *force-quitting* (which is what genuinely loses the reconciliation): keep it pure and testable in the
+   shape `stuckCopy()` already uses. **It must still never assert an outcome** — IMP-088's rule is
+   inherited verbatim and does not relax here.
+
+**Acceptance.** Jest closes the reconciliation branch and the copy. **The device half is NOT "step 4c now
+shows a Close button"** — after this fix Back still closes the paywall, deliberately, so IMP-091's escape
+stays unobservable on the Play-error path and that is the correct outcome, not a regression. The device
+half is: **back out of a pending purchase and confirm the app asks the store on the way out.**
+
+⚠️ **Record honestly in the walk row:** IMP-091 may never be provable via the Play no-connection route.
+Its value is the case where our card holds the foreground on its own, and the copy fix in step 3 is
+arguably the larger share of what IMP-088 was really for.
 
 ### Numbers that must not be reused
 
