@@ -95,7 +95,33 @@ function ResultIcon({ kind, c }) {
   return <Check size={30} color={c.onAccent} />;
 }
 
-export function PurchaseOverlay({ flow, platform, onRetry, onDismiss, onComplete }) {
+// IMP-088 — the pending overlay stops being a trap.
+//
+// Proven on a device 2026-09-06 (WALK-19 step 0c, airplane mode): the purchase
+// hung on "Confirming with Play Store…" forever. `run()` below awaits the
+// service with no bound, and this card renders NO dismiss control while saying
+// "Don't close the app" — so a promise that never settles leaves force-quit as
+// the only way out. RevenueCat's getOfferings/purchasePackage can both hang
+// with no network; nothing may ever reject.
+//
+// A timeout that declares FAILURE would be worse than the hang. A real purchase
+// legitimately takes minutes — the Play sheet is up, a card is being added, a
+// bank is running 3DS/OTP (very much the norm on the INR flows this app now
+// serves). Telling someone their purchase failed while Play is mid-charge is the
+// one outcome worse than a spinner. So this never asserts an outcome: after the
+// grace period it offers a way OUT, and the caller reconciles with the store.
+export const PENDING_GRACE_MS = 20000;
+
+// Pure — what a stuck phase is allowed to say. Note it claims nothing about
+// whether the purchase worked, because at this point nothing knows.
+export function stuckCopy(mode, platform) {
+  const w = storeWords(platform);
+  return mode === 'restore'
+    ? { line: `${w.storeShort} isn't answering. You can close this and try again — nothing has changed.`, action: 'Close' }
+    : { line: `${w.storeShort} hasn't answered yet. If you were charged, your Plus will appear on its own — closing this won't cancel anything.`, action: 'Close' };
+}
+
+export function PurchaseOverlay({ flow, stuck, platform, onRetry, onDismiss, onComplete }) {
   const t = useTheme();
   const c = t.colors;
   if (!flow) return null;
@@ -106,12 +132,22 @@ export function PurchaseOverlay({ flow, platform, onRetry, onDismiss, onComplete
 
   if (flow.phase === 'pending') {
     const label = flow.mode === 'restore' ? 'Looking for past purchases…' : `Confirming with ${w.storeShort}…`;
+    const escape = stuck ? stuckCopy(flow.mode, platform) : null;
     return (
       <View style={scrim}>
         <View style={card}>
           <ActivityIndicator size="large" color={c.accentDeep} />
-          <T d w={700} color={c.ink} style={{ fontSize: 17, marginTop: 18 }}>{label}</T>
-          <T w={600} color={c.muted} style={{ fontSize: 13, marginTop: 4 }}>Don't close the app.</T>
+          <T d w={700} color={c.ink} style={{ fontSize: 17, marginTop: 18, textAlign: 'center' }}>{label}</T>
+          {escape ? (
+            <>
+              <T w={600} color={c.muted} style={{ fontSize: 13.5, lineHeight: 19, marginTop: 8, textAlign: 'center' }}>{escape.line}</T>
+              <View style={{ width: '100%', marginTop: 18 }}>
+                <GhostButton label={escape.action} onPress={onDismiss} />
+              </View>
+            </>
+          ) : (
+            <T w={600} color={c.muted} style={{ fontSize: 13, marginTop: 4 }}>Don't close the app.</T>
+          )}
         </View>
       </View>
     );
@@ -139,25 +175,53 @@ export function PurchaseOverlay({ flow, platform, onRetry, onDismiss, onComplete
 // Shared store state machine. Drives its pending→result overlay off an injected
 // async PurchaseService (sim in Expo Go, RevenueCat in dev/prod builds). The
 // service owns timing/outcomes; this hook owns transient UI state.
-export function usePurchaseFlow({ service, platform, onComplete }) {
+export function usePurchaseFlow({ service, platform, onComplete, onAbandon, graceMs = PENDING_GRACE_MS }) {
   const [flow, setFlow] = useState(null);
+  // IMP-088: the service call is unbounded, so this is what bounds the UI. It
+  // does NOT settle the flow — it only unlocks a way out. See stuckCopy above.
+  const [stuck, setStuck] = useState(false);
+  const timer = useRef(null);
   const alive = useRef(true);
-  useEffect(() => () => { alive.current = false; }, []);
+  useEffect(() => () => {
+    alive.current = false;
+    if (timer.current) clearTimeout(timer.current);
+  }, []);
   const lastEntitlement = useRef(null);
   const lastPlanRef = useRef('annual');
+  const lastModeRef = useRef('buy');
+
+  const clearTimer = () => { if (timer.current) { clearTimeout(timer.current); timer.current = null; } };
 
   const run = async (mode, fn) => {
+    lastModeRef.current = mode;
     setFlow({ phase: 'pending', mode });
+    setStuck(false);
+    clearTimer();
+    timer.current = setTimeout(() => { if (alive.current) setStuck(true); }, graceMs);
     let res;
     try {
       res = await fn();
     } catch (e) {
       res = { kind: 'failed' };
     }
+    clearTimer();
     if (!alive.current) return;
+    setStuck(false);
     lastEntitlement.current = res.entitlement || null;
     if (res.kind === 'cancel') { setFlow(null); return; }
     setFlow({ phase: 'result', kind: res.kind });
+  };
+
+  // Leaving a stuck flow asserts nothing about the purchase, so the app has to
+  // go and ask. Failure-tolerant by construction (checkEntitlement/nextPlusState,
+  // IMP-043): an unreachable store changes nothing rather than downgrading.
+  const dismiss = () => {
+    const wasStuck = stuck;
+    const mode = lastModeRef.current;
+    clearTimer();
+    setStuck(false);
+    setFlow(null);
+    if (wasStuck && onAbandon) onAbandon(mode);
   };
 
   const buy = (plan) => { lastPlanRef.current = plan; return run('buy', () => service.buy(plan)); };
@@ -166,13 +230,14 @@ export function usePurchaseFlow({ service, platform, onComplete }) {
   const overlay = (
     <PurchaseOverlay
       flow={flow}
+      stuck={stuck}
       platform={platform}
-      onRetry={() => { setFlow(null); buy(lastPlanRef.current); }}
-      onDismiss={() => setFlow(null)}
-      onComplete={() => { setFlow(null); onComplete(lastEntitlement.current); }}
+      onRetry={() => { clearTimer(); setStuck(false); setFlow(null); buy(lastPlanRef.current); }}
+      onDismiss={dismiss}
+      onComplete={() => { clearTimer(); setFlow(null); onComplete(lastEntitlement.current); }}
     />
   );
-  return { flow, buy, restore, overlay, reset: () => setFlow(null) };
+  return { flow, stuck, buy, restore, overlay, reset: () => { clearTimer(); setStuck(false); setFlow(null); } };
 }
 
 // ── Manage / cancel subscription ──────────────────────────────────────────────

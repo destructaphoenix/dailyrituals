@@ -13,7 +13,7 @@ import { PLUS_PERKS } from '../data';
 import { useLivePrices } from '../billing/useLivePrices';
 import { LegalFooter, usePurchaseFlow } from './PlusFlow';
 
-export default function Paywall({ insets, platform = 'ios', service, alreadyPlus, onClose, onSubscribe, onLink }) {
+export default function Paywall({ insets, platform = 'ios', service, alreadyPlus, onClose, onSubscribe, onLink, onAbandon }) {
   const t = useTheme();
   const c = t.colors;
   // Android's Modal is a Dialog whose window size isn't known on the first measure
@@ -40,6 +40,10 @@ export default function Paywall({ insets, platform = 'ios', service, alreadyPlus
     service,
     platform,
     onComplete: (entitlement) => onSubscribe(plan, entitlement),
+    // IMP-088: abandoning a stuck flow says nothing about the purchase, so ask
+    // the store. Passed through rather than handled here — only the app owns
+    // `plus`, and only it can apply the answer.
+    onAbandon,
   });
 
   return (

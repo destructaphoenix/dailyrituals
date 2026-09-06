@@ -16,6 +16,7 @@ import { BigSun, BigMoon } from '../art';
 import { PLUS_PERKS } from '../data';
 import Paywall from './Paywall';
 import { createPurchaseService, isBillingConfigured, paywallLive } from '../billing';
+import { checkEntitlement } from '../billing/entitlementSync';
 import { PLUS_ENABLED } from '../billing/config';
 
 const INTRO = [
@@ -69,6 +70,13 @@ export default function Onboarding({ settings, setSettings, onDone }) {
             <Paywall insets={insets} platform={OB_PLATFORM} service={service}
               onClose={() => setPayOpen(false)}
               onSubscribe={() => { setPayOpen(false); onDone(true); }}
+              // IMP-088: a stuck purchase here has to reconcile too, or someone
+              // who WAS charged during onboarding lands in the app as a free
+              // user. Verified answers only — offline changes nothing.
+              onAbandon={async () => {
+                const result = await checkEntitlement(service);
+                if (result.verified && result.entitlement) { setPayOpen(false); onDone(true); }
+              }}
               onLink={() => {}} />
           </View>
         )}

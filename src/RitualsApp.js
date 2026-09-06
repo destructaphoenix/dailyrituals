@@ -319,6 +319,26 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     }
   };
 
+  // IMP-088: the device walk hung on "Confirming with Play Store…" forever —
+  // RevenueCat's call never settled, and the pending overlay had no way out. It
+  // now offers one after PENDING_GRACE_MS, and leaving it asserts NOTHING about
+  // the purchase, so this goes and asks the store instead of guessing. Uses the
+  // IMP-043 pair, so an unreachable store changes nothing rather than
+  // downgrading a real subscriber who simply has no signal.
+  const reconcileAfterAbandon = async () => {
+    const result = await checkEntitlement(service);
+    if (result.entitlement) {
+      setLiveEntitlement(result.entitlement);
+      setActivePlan(result.entitlement.plan);
+      setSubCanceled(result.entitlement.willRenew === false);
+    }
+    const next = nextPlusState(plus, result);
+    if (next !== plus) {
+      setPlus(next);
+      if (next) { setPaywall(false); showToast('Your subscription is active'); }
+    }
+  };
+
   const doRestore = async () => {
     const res = await service.restore();
     if (res.kind === 'restored') {
@@ -960,7 +980,8 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
         <Modal visible={PAYWALL_LIVE && paywall} animationType="slide" presentationStyle="overFullScreen" onRequestClose={() => setPaywall(false)}>
           <ThemeContext.Provider value={theme}>
             <Paywall insets={insets} platform={PLATFORM} service={service} alreadyPlus={plus}
-              onClose={() => setPaywall(false)} onSubscribe={subscribe} onLink={openLink} />
+              onClose={() => setPaywall(false)} onSubscribe={subscribe} onLink={openLink}
+              onAbandon={reconcileAfterAbandon} />
           </ThemeContext.Provider>
         </Modal>
 
