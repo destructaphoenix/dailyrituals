@@ -32,9 +32,29 @@
 runtime proof is a separate WALK row for a separate chat, so a missing walk is *not* an unfinished spec.
 Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`](docs/playbook.md).
 
-> ## 🧭 WHAT TO TAKE RIGHT NOW — read this before the tables below (2026-09-05)
+> ## 🧭 WHAT TO TAKE RIGHT NOW — read this before the tables below (2026-09-06)
+>
+> ## 🔴 STOP — vc14 ON `internal` SHIPS THE PURCHASE SIMULATION (found 2026-09-06, PROVEN)
+>
+> **The owner subscribed in AIRPLANE MODE and it succeeded.** Real Play Billing cannot complete a
+> purchase with no network; `simService` can, and grants Plus **free**. So **every claim below that Plus
+> is live is wrong**, and this is the top of the queue: **[IMP-084](docs/specs-open.md)**.
+> What follows from it, all confirmed:
+> - **Every "purchase" on vc14 was fake** — nothing reached Google, so nothing is in Play's subscription
+>   list and there is **nothing to cancel**. That, not a missing `?sku=`, is why the owner could not find
+>   their subscription. **IMP-083 was scoped against a symptom whose stated cause was wrong** (its fix is
+>   still correct, and still shipped — it just was not what blocked cancellation).
+> - **`12 Jun 2026` does NOT prove an OTA failed to apply.** `simService`'s fake `renewISO` formats
+>   through IMP-082's *new* code to exactly that string. Verified by hand 2026-09-06.
+> - **WALK-19 is VOID on vc14** and cannot be run until IMP-084 ships in a new build.
+> - **Root cause, evidenced:** `RC_ANDROID_KEY` exists on EAS in the `production` environment and the
+>   build shipped the sim anyway — because **no `eas.json` profile declares an `environment`**. The
+>   preflight passed green throughout because it reads the **CI runner's** env, not the machine that
+>   decides. ⚠️ Adding `env:` to the workflow's build step does **nothing** — cloud builds evaluate
+>   `app.config.js` on EAS's servers. Full account in [IMP-084](docs/specs-open.md).
 >
 > **PLUS IS ON, AND THAT CHANGED THE SHAPE OF EVERYTHING BELOW (2026-09-05, owner's call).**
+> ⚠️ **Read the 🔴 above first — "on" meant the flag, not a build that can take money.**
 > `PLUS_ENABLED = true` (commit `7d2e515`) and **v1.0.8 / vc14 is cut to Play `internal`** carrying it.
 > Playbook **10b.2 / 10b.3 / 10b.4 are closed**; 10b.5 is in flight. Two things had to be fixed to get
 > there, and both are the same defect class — *the paid surface asserting something the app cannot back*:
@@ -57,7 +77,7 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 > | --- | --- |
 > | a **runtime walk** | **Still the lane with the most work in it, and it now has a 🚦 at the front.** **[WALK-19](docs/walk-open.md) — "money actually changes hands" — is NEW and gates the v1.1 promotion:** Plus is live and *nothing* about billing is proven (live prices, the trial, every purchase state, entitlement after reinstall, perk delivery). jest is **structurally blind** to all of it, because the suite runs `simService`. Needs a **device**, a **license tester** and the **vc14 `internal` build**. **[WALK-11](docs/walk-open.md) also REOPENED** — the Plus perk surfaces mount on their own now, so the old "unmountable, needs T1" reason is gone; that one is emulator-friendly. Then the pre-existing rows: ✅ **READY NOW on a debug build of `feat/design-push` (both pure-JS):** **WALK-07** (the Paywall half only — IMP-080 landed) and **WALK-03 step 4** (`neverBackedUp` only — IMP-081 landed; run it at default **and** max font scale, since max is where the third line gets tested). ⚠️ **WALK-18 is unblocked but needs a NEW build** — IMP-077's native deps put the tree on **v1.0.8 / vc14**, which no vc13 artifact carries; it also needs a **mid-range device**, because an emulator renders dropped frames as smooth. **WALK-08 is PARTIAL** — cap confirmed, eight of nine screens plus rotation and `longName` unrun. **WALK-12 (R8) is LAST** and needs the Play `internal` build (A), which has no dev harness. **WALK-16 and WALK-17 are CLOSED ✅ on emulator evidence; WALK-13 is DROPPED** (owner's instruction, 2026-09-05: record emulator results as done, not smoke). ⚠️ **Named gap that no closed row covers:** real doze, OEM battery managers, delivery to a real share target, Google's own backup schedule. |
 > | a **design request** | The Claude Design project is **live** — see "Claude Design is set up" below. |
-> | a **build task** | **Nothing. The queue is empty** — ~~IMP-082 first, then IMP-083~~; both landed 2026-09-06, and their proof is WALK-19, not another build. See [`docs/specs-open.md`](docs/specs-open.md), which now explains where the next spec comes from instead of holding one. Do not take a walk row as a build task, and do not scope a spec yourself. |
+> | a **build task** | 🔴 **[IMP-084](docs/specs-open.md) — the release build stops shipping the purchase simulation.** It is the only spec in the queue and it **blocks WALK-19**. ~~The queue is empty~~ (it was, for about an hour on 2026-09-06). ⚠️ **BUILD lane, not OTA** — the `eas.json` binding only takes effect in a build. |
 >
 > **The whole design push lives on `feat/design-push`, which is NEVER pushed, NEVER given a
 > `Release-Lane:` trailer, and NEVER merged to `main`** without a separate owner decision.
@@ -105,7 +125,7 @@ the `alpha` row, which had been wrong since 2026-08-13. Authoritative; do not re
 | `beta` (open testing) | **1.0.3 / vc9** | 36 ✅ | was vc8/API 35 — promoted, compliance gap closed |
 | `alpha` (closed testing) | **1.0.6 / vc12** | 36 ✅ | ⚠️ **corrected 2026-09-05 from the Play Developer API — this row said 1.0.5 / vc11 and was wrong.** ✅ **NO LONGER THE OWNER'S TRACK — corrected 2026-09-06, owner-confirmed: their phone is on `internal` at 1.0.8 / vc14.** ⚠️ **This row said otherwise and it caused a second round of confusion on 2026-09-06** — do not re-derive the owner's device from this row again. The 2026-09-05 history it records is still true and still the lesson: vc14 shipped to `internal`, the owner installed, saw no Plus, and the cause was that Play serves the **highest-priority track the account qualifies for** (internal > closed > open > production) and their account was then on the alpha list but not the internal one, so vc12 won. **A build on `internal` is invisible to a device that is only a closed tester** — true in general, no longer true of this device |
 | _(superseded)_ | ~~1.0.7 / vc13~~ | 36 ✅ | shipped to `internal` 2026-09-05 and **replaced by vc14 the same day**. No longer on any track. Kept here only because WALK-12 and the two local artifacts still reference it |
-| `internal` | **1.0.8 / vc14** | 36 ✅ | ✅ **SHIPPED 2026-09-05, 19:09 — it replaced vc13 on this track.** Confirmed from `eas submit:list`, not inferred: `Track: internal`, `Status: finished`, `Release Status: completed`, `App Version 1.0.8`, `Version code 14`. EAS build `87f81b24-cd34-4d42-95d8-6fea4ea76c79`, submission `4b7cf3a2-d946-4f49-8182-74afb9f870b9`, from commit `6590834` on `feat/design-push`. **The first build with `PLUS_ENABLED = true`** and the first carrying reanimated/worklets. ⚠️ **A first vc14 build (`aa89e355…`) was CANCELLED mid-flight** — it carried the armed ember-pack surface; its submission `8074b63c…` reads `canceled`, so it never reached Play. Unblocks WALK-18, WALK-19, WALK-11; reopened the OTA lane |
+| `internal` | **1.0.8 / vc14** | 36 ✅ | 🔴 **THIS BUILD FAKES PURCHASES — found 2026-09-06.** It shipped with no RevenueCat key and fell back to `simService`: the paywall grants Plus **free** and no purchase reaches Google. **Do not promote it, and do not walk billing on it.** Fix = **[IMP-084](docs/specs-open.md)**, which needs a new versionCode. ⚠️ The 2026-09-06 OTA may have flipped it to *real* billing at runtime (it carries a valid key in its manifest) — desirable but unintended and unwalked; a device that never takes the update still fakes purchases. · ✅ **SHIPPED 2026-09-05, 19:09 — it replaced vc13 on this track.** Confirmed from `eas submit:list`, not inferred: `Track: internal`, `Status: finished`, `Release Status: completed`, `App Version 1.0.8`, `Version code 14`. EAS build `87f81b24-cd34-4d42-95d8-6fea4ea76c79`, submission `4b7cf3a2-d946-4f49-8182-74afb9f870b9`, from commit `6590834` on `feat/design-push`. **The first build with `PLUS_ENABLED = true`** and the first carrying reanimated/worklets. ⚠️ **A first vc14 build (`aa89e355…`) was CANCELLED mid-flight** — it carried the armed ember-pack surface; its submission `8074b63c…` reads `canceled`, so it never reached Play. Unblocks WALK-18, WALK-19, WALK-11; reopened the OTA lane |
 
 **✅ v1.0.6 / vc12 SHIPPED to `internal` on 2026-08-16.** Confirmed from the submit output, not inferred:
 `Release track: internal`, `Version code: 12`, `✔ Submitted your app to Google Play Store!` (GH run
@@ -190,7 +210,8 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 081 | The never-backed-up warning says the whole sentence | Build | ✅ code-complete 2026-09-05 · **branch-only, never pushed** · from the WALK-03 step 4 finding · `BackupNudge` goes `numberOfLines` 2 → 3 with the row top-aligned; **the clamp stays** (it is what keeps a long string from pushing "General" off the card) and **the copy was not shortened** · pure JS, no bump · walk = step 4 of WALK-03, **ready to re-run at default AND max font scale** |
 | 082 | The member surfaces stop inventing a renewal date | Build | ✅ code-complete 2026-09-06 · **branch-only, never pushed** · `formatRenewDate` returns **`null`** instead of the `12 Jun 2026` mock on both the missing and the unparseable branch; `PlusBanner` gained a `renewLabel` prop and says the bare word **`Member`** without one; Manage and Cancel drop their "until …" clauses. `RENEW_DATE` **stays in `data.js`** for the dev panel + fixtures, now commented as never-a-fallback · pure JS, no bump · ✅ **SHIPPED BY OTA 2026-09-06** (update group `ac5c4189-736c-44f0-96ae-6ceea4fe4712`) — reaches **vc14 `internal` installs only** · walk = **step 5 of WALK-19**, needs a device + license tester |
 | 083 | Cancel goes to the subscription, not to a list | Build | ✅ code-complete 2026-09-06 · **branch-only, never pushed** · new pure `manageUrl({platform, productId, packageName})` in `links.js` builds `?sku=&package=`; `openExternal` takes an optional third `opts`; `PACKAGE_NAME` reads `expoConfig.android.package`; `toEntitlement` + `simService` now carry `productId`. Missing either value **degrades to today's generic URL**, never a 404 · pure JS, no bump · ✅ **SHIPPED BY OTA 2026-09-06** (same update group) · ⚠️ **the `plus_annual:annual` → `plus_annual` strip is unproven against a real Play id** · walk = **step 10 of WALK-19** |
-| — | **Plus is ON** (`PLUS_ENABLED = true`) | Build | ✅ 2026-09-05 · commit `7d2e515` · **branch-only, never pushed** · playbook **10b.2/10b.3/10b.4 all closed**; 10b.5 in flight. The dead PDF perk was **cut** from `PLUS_PERKS` rather than built — five perks remain, all real. **Everything about billing is still unproven at runtime: WALK-19** |
+| **084** | **The release build stops shipping the purchase simulation** | **Build** | 🔴 ⬜ **OPEN — top of the queue, blocks WALK-19.** Proven on a device 2026-09-06: subscribing in **airplane mode succeeds**, so vc14 is running `simService` and giving Plus away. Three layers, all required: bind `environment` in `eas.json` (the key never reached EAS Build), make the preflight check that binding instead of the CI runner's env, and make the app **hide** a paywall it cannot transact through. **Lane: BUILD** — needs a new versionCode. Spec in [`docs/specs-open.md`](docs/specs-open.md) |
+| — | **Plus is ON** (`PLUS_ENABLED = true`) | Build | ⚠️ **the FLAG is on; the BUILD cannot take money — see 🔴 IMP-084 (2026-09-06).** `PLUS_ENABLED = true` shipped, but vc14 has no RevenueCat key and runs `simService`, so **10b.3 is NOT closed** and the "all real" claim below covers the perks, not the payments · ✅ 2026-09-05 · commit `7d2e515` · **branch-only, never pushed** · ~~playbook 10b.2/10b.3/10b.4 all closed~~; 10b.5 in flight. The dead PDF perk was **cut** from `PLUS_PERKS` rather than built — five perks remain, all real. **Everything about billing is still unproven at runtime: WALK-19** |
 | — | Cash ember packs decoupled from the Plus flag | Build | ✅ 2026-09-05 · commit `6590834` · **caught mid-build and the build was cancelled.** Flipping `PLUS_ENABLED` armed the Shop's "Gather Embers" section + the GetEmbers sheet, which show `$1.99/$4.99/$9.99` against a **bare counter increment** — a priced surface giving its goods away. New `EMBER_PACKS_ENABLED` (false) gates it; `Shop` takes `embersForCash` defaulting to **false**. 875 tests |
 
 ---
@@ -305,6 +326,22 @@ WALK-16 step-1 cold-start failure and is not one. **A needs none of this** — i
 > Only what is **live**. Resolved findings and closed walk debts are in
 > [`docs/build-log.md`](docs/build-log.md) → "Resolved findings"; monetization strategy, the subscription
 > track and Phase 10b are in [`docs/playbook.md`](docs/playbook.md) → "Monetization strategy".
+
+### 🔴 LIVE BLOCKER — vc14 fakes purchases (2026-09-06)
+
+- **The build on `internal` cannot take money.** No RevenueCat key reached it, so it runs `simService`:
+  the paywall fakes success and grants Plus free. **Proven on a device — a purchase in airplane mode
+  succeeded.** Fix is **[IMP-084](docs/specs-open.md)** and it needs a **new versionCode**; the
+  `eas.json` binding cannot be OTA'd. **Do not promote vc14, and do not walk billing on it.**
+- **⚠️ Owner decision, live now: the 2026-09-06 OTA may have quietly turned real billing ON.** Update
+  group `ac5c4189-736c-44f0-96ae-6ceea4fe4712` was published from a machine holding a valid `goog_` key,
+  and `Constants.expoConfig` reads the running update's manifest — so as it applies, `hasKeyFor` starts
+  returning true and the app switches to real RevenueCat. **That stops the giveaway, which is good, but it
+  was not intended and the path is unwalked.** Two consequences to decide on:
+  **(a)** real charges become possible on `internal` — **confirm every account on that tester list is a
+  license tester** before anyone touches a real card; **(b)** rolling the OTA back
+  (`.github/workflows/rollback-ota.yml`) would *restore* the free-Plus giveaway, so rollback is the worse
+  option and should not be the reflex. Recommendation on record: **keep the OTA, ship IMP-084, then walk.**
 
 ### ▶️ Owner decisions still open
 
@@ -488,7 +525,27 @@ unverified. **Shipping is not proof, and the walk is still owed** — a new **st
 covering the track and OTA checks above, because a walk run on a device that never took the update would
 record a result against the wrong build.
 
-**NEXT: this is a walk lane, and the build queue is genuinely empty — do not scope a spec to fill it.**
+**🔴 LATER THE SAME SESSION — the ship exposed something much worse, and it invalidates part of the
+above.** Chasing "I can't cancel, and I still see 12 Jun 2026", the owner ran the decisive test:
+**they subscribed in AIRPLANE MODE and it succeeded.** vc14 is running `simService`. Three corrections
+follow, and each one had been asserted confidently and wrongly earlier in this same session:
+- **`12 Jun 2026` was never a valid tell.** I offered it as the clean check for "did the OTA apply".
+  It is not: `simService`'s `FALLBACK_RENEW_ISO` formats through IMP-082's *new* code to exactly that
+  string. The test I gave could not distinguish a stale bundle from a fake purchase.
+- **IMP-083's stated cause was wrong.** The owner could not find their subscription in Play because
+  **there was no subscription** — not because the link lacked `?sku=`. The fix is still right and still
+  shipped; it was not what was blocking them.
+- **The billing preflight has never guarded anything.** It reads `process.env` on the **CI runner**;
+  the value that decides sim-vs-real is resolved by **EAS Build** on its own servers. `RC_ANDROID_KEY`
+  exists on EAS and the build shipped the sim anyway — because no `eas.json` profile binds an
+  `environment`. ⚠️ Adding `env:` to the workflow build step does **nothing**; cloud builds never see the
+  runner's environment.
+Scoped as **[IMP-084](docs/specs-open.md)** — three layers, the third being the one that would have
+prevented this: **the app must hide a paywall it cannot transact through**, the same "never assert what
+you cannot back" rule already applied to the PDF perk, the ember packs and IMP-082's dates.
+
+**NEXT: 🔴 [IMP-084](docs/specs-open.md) is the top of the queue and it is a BUILD, not an OTA.**
+~~this is a walk lane, and the build queue is genuinely empty~~ — that was true for about an hour.
 **[WALK-19](docs/walk-open.md) is the gate on v1.1** and now carries the acceptance for both of these
 (steps 5 and 10); it needs a **device**, a **license tester** and the vc14 `internal` build. Also ready:
 **WALK-11**, **WALK-07 (Paywall half)** and **WALK-03 step 4** on a debug build of this branch; **WALK-18**

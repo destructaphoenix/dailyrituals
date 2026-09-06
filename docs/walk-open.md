@@ -120,7 +120,7 @@ locked. It is the row that reopens the moment Plus becomes the active work.
 | WALK-16 | 🚦 | [The New Architecture cold start](#walk-16--the-new-architecture-cold-start) | IMP-076 | **device** (native runtime) | 👤 | ✅ **2026-09-05 — closed on emulator evidence at owner's instruction.** All 7 steps exercised across two agent-run sittings (1-3 New Arch live: Bridgeless + Fabric + TurboModule; 4-7 storage / notification scheduling / export-share-reimport / Auto Backup via T5 with the quarantine offering not imposing). **Owner's call 2026-09-05: emulator results are recorded as done, not smoke.** ⚠️ **Named gap — never exercised anywhere:** real doze, OEM battery managers, delivery to a real share target, Google's own backup schedule. **Unblocks IMP-077.** |
 | WALK-17 | 🚦 | [Edge-to-edge, re-audited under New Arch](#walk-17--edge-to-edge-re-audited-under-new-arch) | IMP-076, IMP-027 regression | **device** | 👤 (visual) | ✅ **2026-09-05 — emulator, agent-run.** All four tabs clean under status bar + gesture bar in **both** day and night; bottom nav and write-FAB correct in **both** gesture and 3-button nav; onboarding + setup also clean. Sheets checked: trash, achievements, shop — the last two at night **and** max font. ⚠️ **Not opened: write flow, reading sheet, mood manager.** |
 | WALK-18 | 🎨 | [The app moves](#walk-18--the-app-moves) | IMP-077 | **device** (mid-range, real frame pacing) | 👤 (visual) | ⬜ — **branch-only. UNBLOCKED 2026-09-05: WALK-16 closed and IMP-077 landed.** ✅ **The build now exists: v1.0.8 / vc14 shipped to Play `internal` 2026-09-05 19:09** (EAS `87f81b24…`, submission `4b7cf3a2…`, from commit `6590834`). IMP-077 added `react-native-reanimated` + `react-native-worklets` (native deps), so **neither vc13 artifact carries this code** — install vc14 from Play, not an older APK. **An emulator cannot settle this row** — it renders dropped frames as smooth, which is the thing being judged. The jest suite is blind here too: the Reanimated mock no-ops every hook |
-| WALK-19 | 🚦 | [Money actually changes hands](#walk-19--money-actually-changes-hands) | **Phase 10b.5**, IMP-028, **IMP-082 + IMP-083** (steps 5 and 10 are their acceptance — ⚠️ **both landed after vc14 and need an OTA published first**), `7d2e515`, `6590834` | **device** (real Play Billing + a license tester) | 👤 | ⬜ — **NEW 2026-09-05, and it is the gate on v1.1.** `PLUS_ENABLED` is true and v1.0.8 / vc14 is cut to Play `internal`; **every claim the paid surface makes is still unproven at runtime.** jest is structurally blind here — `simService` fakes every purchase result, so a green suite says nothing about Play Billing. **Nothing gets promoted `internal` → `production` until this passes.** |
+| WALK-19 | ⛔ | [Money actually changes hands](#walk-19--money-actually-changes-hands) | 🔴 **BLOCKED ON [IMP-084](specs-open.md) — vc14 runs `simService` and cannot take money. Proven 2026-09-06: a purchase in AIRPLANE MODE succeeded. Do not run this row against vc14; any result recorded against it is void.** · **Phase 10b.5**, IMP-028, **IMP-082 + IMP-083** (steps 5 and 10 are their acceptance — ⚠️ **both landed after vc14 and need an OTA published first**), `7d2e515`, `6590834` | **device** (real Play Billing + a license tester) | 👤 | ⬜ — **NEW 2026-09-05, and it is the gate on v1.1.** `PLUS_ENABLED` is true and v1.0.8 / vc14 is cut to Play `internal`; **every claim the paid surface makes is still unproven at runtime.** jest is structurally blind here — `simService` fakes every purchase result, so a green suite says nothing about Play Billing. **Nothing gets promoted `internal` → `production` until this passes.** |
 
 ---
 
@@ -594,8 +594,14 @@ about billing.**
 installing from the `internal` track. A license tester walks the *full* purchase flow and is not
 charged — that is the whole point; do not test with a real card until step 8.
 
-- [ ] 0. **Confirm the device is on the right track AND took the OTA — steps 5 and 10 are void without
-      this.** Two separate traps, and each has already cost a debugging round:
+- [ ] 0. **Three preconditions. If (c) fails, STOP — the entire row is void.**
+      **(c) THE BUILD MUST BE ABLE TO TAKE MONEY — check this FIRST.** Turn on **airplane mode** and
+      attempt to buy Plus. **It must FAIL.** If the purchase *succeeds* with no network, the app is
+      running `simService`: every purchase is fake, nothing reaches Google, Plus is granted free, and
+      **every other step in this row is measuring a simulation.** That is exactly what vc14 does — found
+      2026-09-06, fixed by **[IMP-084](specs-open.md)**, which needs a **new build**. This check costs
+      thirty seconds and it is the reason this row exists; do it before anything else.
+      Then the two delivery traps, each of which has already cost a debugging round:
       **(a) Track.** Play serves the **highest-priority track the account qualifies for**
       (internal > closed > open > production), so an account on closed testing only keeps getting vc12 and
       sees none of this. ✅ **The owner's own phone is on `internal` at vc14** (confirmed 2026-09-06) —
