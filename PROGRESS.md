@@ -352,34 +352,6 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 the proof, the exact next step._
 
 
-_2026-09-06 (Opus — **IMP-082 and IMP-083 landed, shipped by OTA, and the ship then exposed the vc14
-giveaway**; branch-only, NOT pushed). **Full note archived verbatim in `docs/build-log.md`.**_
-
-**IMP-082 — the member surfaces stop inventing a renewal date** (`0e73c76`). `RENEW_DATE = '12 Jun 2026'`
-is prototype mock data and it was the runtime fallback in **five** places, starting in the pure layer:
-`formatRenewDate` returned it on both the missing *and* the unparseable branch, so even the "live" path
-fabricated. It now returns **`null`** and every surface drops the claim rather than substituting —
-`PlusBanner` renders the bare word `Member`, the billing footnotes and `CancelSheet` lose their "until …"
-clauses. `RENEW_DATE` **stays in `data.js`** for the dev panel and fixtures, commented as never-a-fallback.
-
-**IMP-083 — Cancel goes to the subscription, not to a list** (`1f4f037`). New pure
-`manageUrl({ platform, productId, packageName })` builds `?sku=&package=`; `PACKAGE_NAME` comes from
-`Constants.expoConfig`, not a hardcode. **Missing either value degrades to the generic URL** — a broken
-link is worse than a list. ⚠️ **The `plus_annual:annual` → `plus_annual` strip is still unproven against a
-real Play id** (WALK-19 step 10); if that lands on "not found", it is the first suspect.
-
-**Two traps worth keeping.** `Constants.expoConfig` is **undefined under jest**, which is the only reason
-`manageUrl` had to take `packageName` as a *parameter* to be testable. And `react-native-purchases` pulls
-in ESM that `transformIgnorePatterns` does not cover — `__tests__/billing/revenueCatService.test.js` opens
-with a `jest.mock` of it. **Do not remove that mock.**
-
-**Both SHIPPED by OTA the same day** on the owner's instruction — the first update ever published on this
-lane — update group `ac5c4189-736c-44f0-96ae-6ceea4fe4712`, runtime 1.0.8, from commit `8abf11f`. **Shipped
-ahead of their proof; WALK-19 is still owed.** ⚠️ Then the owner subscribed in airplane mode and it
-succeeded — which is where IMP-084 came from, and which retired three things I had asserted confidently
-and wrongly that day: `12 Jun 2026` was never a valid "did the OTA apply" tell, IMP-083's stated cause was
-wrong (there was no subscription to find), and the billing preflight had never guarded anything.
-
 _2026-09-06, later (Opus — **IMP-084 landed AND shipped on both lanes; v1.0.9 / vc15 is on `internal`**;
 branch-only, NOT pushed) — **a build session that became a ship session on the owner's instruction.**_
 
@@ -442,3 +414,54 @@ and it gates the `internal` → `production` promotion. Its **step 0(c)** is IMP
 on a debug build of this branch: **WALK-07 (Paywall half)**, **WALK-03 step 4**, **WALK-11**. **WALK-18**
 is now runnable too — vc15 carries Reanimated — but needs a **mid-range device**. **WALK-12 (R8) LAST**,
 and it must be re-walked on **vc15**, not vc13._
+
+---
+
+_2026-09-06, third session (Opus — **IMP-085: the real root cause, found from the owner's device report**;
+branch-only, committed, **NOT shipped**) — **the session where the previous two diagnoses turned out to be
+incomplete.**_
+
+**The report that broke it open:** after vc15, **Manage Subscription was gone from the app entirely** while
+**Plus was still applied and the skins still unlocked** — the signature of `PAYWALL_LIVE === false` plus a
+stale local `plus` flag. It meant `isBillingConfigured()` was still false on a build that provably received
+the key.
+
+**The cause, verified in the toolchain source.** `src/billing/index.js` probed with
+`require.resolve('react-native-purchases')`. **Metro does not implement it:**
+`metro-runtime/src/polyfills/require.js` assigns `importDefault`, `importAll`, `context`, **`resolveWeak`**,
+`unpackModuleId`, `packModuleId` — **never `resolve`**; and `metro/src/ModuleGraph/worker/collectDependencies.js`
+rewrites `resolveWeak` and `require.context` but **not** `require.resolve`. It threw in every bundle, the
+catch swallowed it, and **`isBillingConfigured()` returned false in every build this app has ever shipped.**
+**Every release ran `simService`, vc15 included.** The SDK was bundled and would have worked —
+`revenueCatService.js` statically imports it — only the probe was broken.
+
+**What that rewrites.** IMP-084 layer A is **correct and its proof stands** (EAS really does inject the key
+now), but nothing read it. "vc14 had no key" was a real bug and **not the primary cause**. And **no real
+purchase has ever been possible in this app** — so there is almost certainly no Play subscription against
+the owner's account and no charge has occurred. Their Plus is a **fake entitlement** written by
+`simService` and persisted locally.
+
+**IMP-085 (`2672bf2`), both halves.** (a) A plain static `require` — which Metro *does* collect — feeding a
+pure `billingModuleOk(mod)` (`typeof mod.configure === 'function'`), with a source assertion banning
+`require.resolve` from any code line. (b) **A subscriber must never lose the route to cancel:** Manage gates
+on `plus`, not on saleability, and falls back to Play's own subscription screen when billing cannot
+transact. ⚠️ **The spec's Step 4 was insufficient, and this is the part worth remembering** — changing the
+handlers did nothing, because `PlusBanner` *is* the Manage route and was rendered behind `{plusEnabled && …}`
+in **both `YouScreen.js` and `Shop.js`**. The render gate, not the handler, was what hid it.
+
+**Proof: 926 passed / 91 suites** (from 915/90), both zone suites green, `npx expo export --platform
+android` clean. **The two render-gate tests were verified to FAIL against the pre-fix gate** — reverted by
+hand, re-run, one red, restored — because a test that passes either way would have been worthless here.
+**Last command: `npx expo export --platform android` → `Exported: dist`.**
+
+**⚠️ The standing lesson, three incidents deep: jest is structurally blind to billing and always has been.**
+Under jest `require` is **node's**, where `require.resolve` works — which is exactly why 915 green tests
+could not see a defect present in every shipped build. The suite also runs `simService` and renders with
+`__DEV__` true. **A green suite is not evidence about billing. It never was.**
+
+**NEXT — and this one should not be a ship-first.** IMP-085 is **not shipped**: pure JS, OTA-able onto vc15
+(runtime 1.0.9), no build needed. ⚠️ **Publishing it turns real billing ON for the first time in this app's
+history**, so confirm the tester list first. **[WALK-19](docs/walk-open.md) is what is actually owed** —
+three consecutive billing fixes have landed without a single runtime check, and each found the previous
+diagnosis incomplete. **Step 0(c), inverted, is the acceptance: the paywall must be VISIBLE, an
+airplane-mode purchase must FAIL, and an online purchase must appear in Play's subscription list.**_
