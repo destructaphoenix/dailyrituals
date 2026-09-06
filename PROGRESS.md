@@ -39,8 +39,16 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 > **The owner subscribed in AIRPLANE MODE and it succeeded** (2026-09-06, proven on a device). Real Play
 > Billing cannot complete a purchase with no network; `simService` can, and grants Plus **free**.
 > ✅ **[IMP-084](docs/build-log.md) fixed all three layers the same day, commit `da77a7d`.**
-> 🔴 **But it is BUILD-lane and no build carries it.** Until one ships: **do not promote vc14**, and
-> **do not walk billing on it** — a device that skipped the 2026-09-06 OTA still fakes purchases.
+> ✅ **Layer C SHIPPED BY OTA 2026-09-06** — update group `90aa2074-6625-4072-8d35-71244a525b2d`,
+> Android update `01a07618-8aed-7143-b09b-ff58c1b5d1ca`, runtime **1.0.8**, from commit `2834dd9`. The
+> publish log confirms `env: export RC_ANDROID_KEY`, so **this update carries the key in its manifest**:
+> on vc14 `hasKeyFor` returns true, billing goes **real**, and `PAYWALL_LIVE` keeps the surface visible
+> rather than hiding it. **Testers must open, fully close, and reopen** — it applies on the second launch.
+> 🔴 **Layers A and B still need a build.** ⚠️ **Do not promote vc14** and **do not walk billing on it**:
+> a device that never takes an OTA still fakes purchases, and only the `eas.json` binding stops the *next*
+> build regressing to the simulation. **v1.0.9 / vc15 is cut and building** (`980cdad`) — the bump closed
+> the OTA lane behind it, which is expected: `runtimeVersion` 1.0.9 matches no shipped build until vc15
+> lands on `internal`.
 > What follows from the finding, all confirmed:
 > - **Every "purchase" on vc14 was fake** — nothing reached Google, so there is **nothing to cancel**.
 >   That, not a missing `?sku=`, is why the owner could not find their subscription. **IMP-083 was scoped
