@@ -7,7 +7,7 @@
 //   4. A store-compliant legal footer (Terms · Privacy + auto-renew disclosure).
 
 import React, { useState, useRef, useEffect } from 'react';
-import { View, ScrollView, Pressable, ActivityIndicator, useWindowDimensions } from 'react-native';
+import { View, ScrollView, Pressable, ActivityIndicator, AppState, useWindowDimensions } from 'react-native';
 import { useTheme } from '../theme';
 import { T, PrimaryButton } from '../ui';
 import { Close, Check, Sun, Chevron, Alert, NoSignal, Restore, Shield, Receipt, Ban, Info } from '../icons';
@@ -132,6 +132,22 @@ export function stuckCopy(mode, platform) {
     : { line: `${w.storeShort} hasn't answered yet. If you were charged, your Plus will appear on its own — closing this won't cancel anything.`, action: 'Close' };
 }
 
+// IMP-091 — WALK-19 step 4c, 2026-09-06, on hardware: airplane mode, tap buy,
+// and at 22s, 32s and past 60s the Close button IMP-088 shipped never appeared.
+// The wiring was correct; the only thing that arms the escape was a setTimeout,
+// and Google Play's purchase sheet is a SEPARATE Android activity — our app is
+// backgrounded for the entire grace period, and Android throttles background JS
+// timers. A timer that does not run cannot arm anything.
+//
+// Elapsed wall-clock time is the fact that survives being paused. Pure so the
+// rule is pinnable in jest, which can see none of the rest of this: it has no
+// Play sheet and no Android activity lifecycle.
+//
+// `startedAt` of 0 means no flow is pending — nothing to arm.
+export function graceSpent(startedAt, now, graceMs) {
+  return !!startedAt && (now - startedAt) >= graceMs;
+}
+
 export function PurchaseOverlay({ flow, stuck, platform, onRetry, onDismiss, onComplete }) {
   const t = useTheme();
   const c = t.colors;
@@ -193,10 +209,26 @@ export function usePurchaseFlow({ service, platform, onComplete, onAbandon, grac
   const [stuck, setStuck] = useState(false);
   const timer = useRef(null);
   const alive = useRef(true);
+  // IMP-091: when the pending flow began, or 0 when none is pending. The timer
+  // above stays — it is correct whenever the app holds the foreground for the
+  // whole grace period, which is the restore path. This is what covers the buy
+  // path, where Play's sheet takes the foreground away. See graceSpent().
+  const startedAt = useRef(0);
   useEffect(() => () => {
     alive.current = false;
     if (timer.current) clearTimeout(timer.current);
   }, []);
+  // Coming back to the foreground is the first moment JS is guaranteed to run
+  // again after Play's sheet closes, so it is where the elapsed time is read.
+  // (If the user returns BEFORE the grace period is up, the paused timer resumes
+  // and fires the normal way — deliberately not re-armed here.)
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state !== 'active' || !alive.current) return;
+      if (graceSpent(startedAt.current, Date.now(), graceMs)) setStuck(true);
+    });
+    return () => { if (sub && typeof sub.remove === 'function') sub.remove(); };
+  }, [graceMs]);
   const lastEntitlement = useRef(null);
   const lastPlanRef = useRef('annual');
   const lastModeRef = useRef('buy');
@@ -208,6 +240,7 @@ export function usePurchaseFlow({ service, platform, onComplete, onAbandon, grac
     setFlow({ phase: 'pending', mode });
     setStuck(false);
     clearTimer();
+    startedAt.current = Date.now();
     timer.current = setTimeout(() => { if (alive.current) setStuck(true); }, graceMs);
     let res;
     try {
@@ -216,6 +249,7 @@ export function usePurchaseFlow({ service, platform, onComplete, onAbandon, grac
       res = { kind: 'failed' };
     }
     clearTimer();
+    startedAt.current = 0;
     if (!alive.current) return;
     setStuck(false);
     lastEntitlement.current = res.entitlement || null;
@@ -230,6 +264,7 @@ export function usePurchaseFlow({ service, platform, onComplete, onAbandon, grac
     const wasStuck = stuck;
     const mode = lastModeRef.current;
     clearTimer();
+    startedAt.current = 0;
     setStuck(false);
     setFlow(null);
     if (wasStuck && onAbandon) onAbandon(mode);
@@ -250,16 +285,17 @@ export function usePurchaseFlow({ service, platform, onComplete, onAbandon, grac
       // tracked for dismiss(); retry simply never consulted it.
       onRetry={() => {
         clearTimer();
+        startedAt.current = 0;
         setStuck(false);
         setFlow(null);
         if (lastModeRef.current === 'restore') restore();
         else buy(lastPlanRef.current);
       }}
       onDismiss={dismiss}
-      onComplete={() => { clearTimer(); setFlow(null); onComplete(lastEntitlement.current); }}
+      onComplete={() => { clearTimer(); startedAt.current = 0; setFlow(null); onComplete(lastEntitlement.current); }}
     />
   );
-  return { flow, stuck, buy, restore, overlay, reset: () => { clearTimer(); setStuck(false); setFlow(null); } };
+  return { flow, stuck, buy, restore, overlay, reset: () => { clearTimer(); startedAt.current = 0; setStuck(false); setFlow(null); } };
 }
 
 // ── Manage / cancel subscription ──────────────────────────────────────────────

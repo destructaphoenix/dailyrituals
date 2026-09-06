@@ -10,7 +10,11 @@
 // (Play sheet, adding a card, a bank running 3DS/OTP — the norm on the INR flows
 // this app now serves), so a timeout that says "failed" would tell someone who was
 // charged that nothing happened. These pin that the copy stays honest.
-import { stuckCopy, PENDING_GRACE_MS } from '../../src/screens/PlusFlow';
+import { renderHook, act, waitFor } from '@testing-library/react-native';
+import { AppState } from 'react-native';
+import {
+  stuckCopy, PENDING_GRACE_MS, graceSpent, usePurchaseFlow,
+} from '../../src/screens/PlusFlow';
 
 describe('stuckCopy', () => {
   test('a stuck purchase never claims the purchase failed', () => {
@@ -101,5 +105,139 @@ describe('abandoning reconciles instead of guessing', () => {
     // nextPlusState's rule, restated at the one call site that cannot use it:
     // an unreachable store must never be read as "no entitlement".
     expect(onb).not.toMatch(/if \(result\.entitlement\) \{ setPayOpen/);
+  });
+});
+
+// ── IMP-091 — the escape never appeared on hardware ──────────────────────────
+// WALK-19 step 4c, 2026-09-06: airplane mode, tap buy, and at 22s, 32s and past
+// 60s the Close button IMP-088 shipped never showed. The wiring was correct. The
+// only thing arming it was a setTimeout, and Play's purchase sheet is a separate
+// Android activity — our app is backgrounded for the whole grace period and
+// Android throttles background JS timers.
+//
+// ⚠️ Jest cannot see the thing that caused this: it has no Play sheet and no
+// Android activity lifecycle. What it CAN pin is that arming no longer depends
+// on a timer having run.
+describe('graceSpent — IMP-091', () => {
+  test('the grace period is measured in elapsed time, not in timer callbacks', () => {
+    const t0 = 1_000_000;
+    expect(graceSpent(t0, t0 + PENDING_GRACE_MS, PENDING_GRACE_MS)).toBe(true);
+    expect(graceSpent(t0, t0 + PENDING_GRACE_MS + 40_000, PENDING_GRACE_MS)).toBe(true);
+  });
+
+  test('it does not arm early — a user reading the Play sheet must not see it', () => {
+    const t0 = 1_000_000;
+    expect(graceSpent(t0, t0 + PENDING_GRACE_MS - 1, PENDING_GRACE_MS)).toBe(false);
+    expect(graceSpent(t0, t0, PENDING_GRACE_MS)).toBe(false);
+  });
+
+  test('no pending flow arms nothing, however long the app was away', () => {
+    expect(graceSpent(0, 9_999_999, PENDING_GRACE_MS)).toBe(false);
+  });
+});
+
+describe('the escape survives a backgrounded app — IMP-091', () => {
+  const service = () => ({
+    // Never settles: this is the airplane-mode hang, exactly as observed.
+    buy: jest.fn(() => new Promise(() => {})),
+    restore: jest.fn(() => new Promise(() => {})),
+  });
+
+  function mountWithAppState(svc) {
+    let handler = null;
+    const spy = jest.spyOn(AppState, 'addEventListener').mockImplementation((evt, fn) => {
+      if (evt === 'change') handler = fn;
+      return { remove: jest.fn() };
+    });
+    const hook = renderHook(() => usePurchaseFlow({ service: svc, onComplete: jest.fn() }));
+    return { hook, fire: (state) => act(() => { handler(state); }), spy };
+  }
+
+  test('returning to the foreground after the grace period arms the escape', async () => {
+    jest.useFakeTimers();
+    const svc = service();
+    const { hook, fire, spy } = mountWithAppState(svc);
+    try {
+      act(() => { hook.result.current.buy('annual'); });
+      expect(hook.result.current.stuck).toBe(false);
+
+      // The app is backgrounded behind Play's sheet: no timer runs at all.
+      // Only wall-clock time passes.
+      const realNow = Date.now;
+      Date.now = () => realNow() + PENDING_GRACE_MS + 5_000;
+      fire('active');
+      Date.now = realNow;
+
+      await waitFor(() => expect(hook.result.current.stuck).toBe(true));
+    } finally {
+      spy.mockRestore();
+      jest.useRealTimers();
+    }
+  });
+
+  test('coming back BEFORE the grace period is up does not arm it', async () => {
+    jest.useFakeTimers();
+    const svc = service();
+    const { hook, fire, spy } = mountWithAppState(svc);
+    try {
+      act(() => { hook.result.current.buy('annual'); });
+      fire('active');
+      expect(hook.result.current.stuck).toBe(false);
+    } finally {
+      spy.mockRestore();
+      jest.useRealTimers();
+    }
+  });
+
+  test('a settled flow is never re-armed by a later foreground', async () => {
+    jest.useFakeTimers();
+    const svc = { buy: jest.fn(async () => ({ kind: 'failed' })), restore: jest.fn() };
+    const { hook, fire, spy } = mountWithAppState(svc);
+    try {
+      act(() => { hook.result.current.buy('annual'); });
+      await waitFor(() => expect(hook.result.current.flow).toMatchObject({ phase: 'result' }));
+
+      const realNow = Date.now;
+      Date.now = () => realNow() + 600_000;
+      fire('active');
+      Date.now = realNow;
+
+      expect(hook.result.current.stuck).toBe(false);
+    } finally {
+      spy.mockRestore();
+      jest.useRealTimers();
+    }
+  });
+
+  test('the subscription is torn down on unmount', () => {
+    const remove = jest.fn();
+    const spy = jest.spyOn(AppState, 'addEventListener').mockReturnValue({ remove });
+    try {
+      const { unmount } = renderHook(() => usePurchaseFlow({ service: service(), onComplete: jest.fn() }));
+      unmount();
+      expect(remove).toHaveBeenCalled();
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  // IMP-088's rule, inherited verbatim: this unlocks a way out, it never
+  // asserts an outcome. A real INR/3DS charge takes minutes.
+  test('arming the escape still settles nothing', async () => {
+    jest.useFakeTimers();
+    const svc = service();
+    const { hook, fire, spy } = mountWithAppState(svc);
+    try {
+      act(() => { hook.result.current.buy('annual'); });
+      const realNow = Date.now;
+      Date.now = () => realNow() + PENDING_GRACE_MS + 1_000;
+      fire('active');
+      Date.now = realNow;
+      await waitFor(() => expect(hook.result.current.stuck).toBe(true));
+      expect(hook.result.current.flow).toMatchObject({ phase: 'pending' });
+    } finally {
+      spy.mockRestore();
+      jest.useRealTimers();
+    }
   });
 });
