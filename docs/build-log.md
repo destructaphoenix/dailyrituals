@@ -5169,6 +5169,11 @@ per the branch rule; the OTA lane is open onto `internal` only._
   clean. **The two render-gate tests were verified to FAIL against the pre-fix gate** — reverted by hand,
   re-run, one red, restored — because a test that passes either way would have been worthless here.
 
+  ✅ **SHIPPED by OTA 2026-09-06** on the owner's instruction — update group
+  `d5f03a47-48be-4539-9a8c-fc9b5be46f69`, Android update `01a07653-b737-72ed-80ff-13cb39d1e913`, runtime
+  **1.0.9**, from commit `6d4dd72`; publish log confirms `env: export RC_ANDROID_KEY`. Reaches vc15
+  `internal` installs, second launch. ⚠️ **The first time real billing has ever been live in this app.**
+
   ⚠️ **Acceptance is RUNTIME and it has NOT run.** No test can close this: under jest `require` is node's,
   and the suite runs `simService` regardless. **WALK-19 step 0(c), inverted:** on a build carrying this
   fix, the paywall must be **VISIBLE**, an airplane-mode purchase must **FAIL**, and an online purchase
