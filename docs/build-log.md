@@ -3376,6 +3376,262 @@ the way out.
 
 ---
 
+---
+
+## The 2026-09-07 walk-sitting fixes (IMP-094 – IMP-097)
+
+All four were scoped from the same emulator walk sitting and built the same day, in the order the queue
+named. **1059 green / 95 suites** at the end of the run (was 1031 / 93). ⚠️ **All four are OTA-lane and
+NONE is shipped** — no `eas update` has been published for them, so a phone on the current OTA does not
+have them. ⚠️ **Three of the four are accepted on a screen, not by the suite** — see each spec's last
+paragraph.
+
+
+## IMP-094 — the Annual Recap must not call a month "quietest" when the journal did not exist yet
+
+**Lane: OTA** (pure JS). **From:** WALK-11, 2026-09-07 (emulator, agent-run). **Priority: this one is
+user-facing and hits the common case.**
+
+✅ **Code-complete**, commit `085876a`, **1035 green** (was 1031), export clean. **NOT shipped** — no OTA published.
+
+**What landed.** `extremesByMonth(buckets, firstIdx, lastIdx)`. `peak` still scans all twelve (an empty
+month can never displace it — that needs a strictly larger count); `quiet` scans only the covered window,
+keeping earliest-on-ties inside it. The call site derives the two indices from `sortedKeys`, which
+`buildRecap` had already computed — nothing is re-sorted, and the `< 10 entries → null` shape is untouched.
+
+**Tests** (+4, and one existing test corrected). The 6-Jun journal asserts quietest is June and **not**
+January; a stop-in-March journal takes its quietest from Jan–Mar; a single-month journal is both busiest
+and quietest without crashing; a full Jan–Dec journal is unchanged, which is what proves the no-op.
+⚠️ **The existing tie test had to change and the change is the fix, not a regression**: a Jan–Apr journal
+used to assert `quietestMonth === 'May'` — an empty month. It now asserts March, and the reason is written
+into the test. All four new tests were verified to FAIL against the old `extremesByMonth`; the full-year
+one passes both ways, by design.
+
+**Nothing runtime is owed.** This is pure logic and the tests are the acceptance.
+
+**What was observed.** A journal whose first entry is **6 Jun 2025** opened its 2025 recap. The card read
+**BUSIEST MONTH July · QUIETEST MONTH January**. January 2025 contains zero entries — the journal did not
+exist. The recap presents it as the user's quietest month, as though they had been quiet in it.
+
+**Cause, confirmed in source.** [`annualRecap.js:42-49`](../src/recap/annualRecap.js#L42-L49):
+
+```js
+function extremesByMonth(buckets) {
+  let peak = 0, quiet = 0;
+  buckets.forEach((b, i) => {
+    if (b.total > buckets[peak].total) peak = i;
+    if (b.total < buckets[quiet].total) quiet = i;
+  });
+```
+
+`buckets` is all twelve months. Empty months are included, and the strict `<` with a Jan→Dec scan keeps
+the **earliest** month on ties. So whenever a journal starts later in the year, every month before the
+first entry is a 0 and **January always wins.** This is not an edge case: it is **every user's first
+annual recap**, which is the first time anyone sees this feature.
+
+**Why the busiest side is fine.** `peak` is only ever displaced by a strictly larger count, so empty
+months can never win it. Only `quiet` is wrong. Do not touch `peak`.
+
+**The decision (do not re-litigate).** The quietest month is chosen **only from months that fall at or
+after the month of the year's first entry, and at or before the month of its last entry.** Rationale:
+"quietest" is a claim about the user's writing, and a month they had not started (or had already stopped
+before) is not a quiet month — it is an absent one. This matches how the heatmap already treats
+pre-first-entry days, which are deliberately rendered as absent rather than as zero-activity
+([`InsightsScreen.js:229`](../src/screens/InsightsScreen.js#L229)).
+
+**Steps.**
+1. In [`annualRecap.js`](../src/recap/annualRecap.js), change `extremesByMonth(buckets)` to
+   `extremesByMonth(buckets, firstIdx, lastIdx)` where the two indices are the 0-based month numbers of
+   the year's first and last entry. Compute `peak` over **all** buckets exactly as now. Compute `quiet`
+   over **`buckets.slice(firstIdx, lastIdx + 1)`** only, keeping the existing earliest-on-ties rule
+   within that window.
+2. At the call site (`annualRecap.js:95`), derive `firstIdx`/`lastIdx` from the already-sorted
+   `yearEntries` rather than re-sorting. If `yearEntries` is empty, return the existing empty/`null`
+   shape unchanged — **do not** introduce a new one.
+3. If `firstIdx === lastIdx` (a single active month), that month is both busiest and quietest. Keep it;
+   it is truthful and the card already tolerates equal values.
+
+**Tests** — extend the existing annual-recap suite; behavioural, not snapshot.
+- A journal starting 6 Jun with entries every day to 31 Dec: quietest is **June** (partial) — **assert it
+  is NOT January**. Verify this test FAILS against the current code before keeping it.
+- A journal spanning a full Jan–Dec: behaviour is unchanged from today.
+- A journal that stops in March: quietest comes from Jan–Mar, never from the empty Apr–Dec tail.
+- A single-month journal: busiest === quietest === that month, no crash.
+- Busiest month is unchanged in every case above.
+
+**Commit:** `fix(recap): quietest month ignores months the journal did not cover (IMP-094)`
+
+---
+
+## IMP-095 — DeeperInsights "Moods by season" must survive max font
+
+**Lane: OTA** (pure JS). **From:** WALK-08, 2026-09-07 (emulator, agent-run). **This is the only thing
+keeping WALK-08 open.**
+
+✅ **Code-complete**, commit `3030bca`, **1041 green** (was 1035), export clean. **NOT shipped** — no OTA published.
+
+**What landed.** `src/ui/textScale.js` gained two exports rather than a second source of truth:
+`bodyScale(fontScale)` — the OS scale clamped to `MAX_FONT_SCALE`, i.e. what `T` actually renders at — and
+`STACK_FONT_SCALE = 1.3`. `DeeperInsights` reads `useWindowDimensions().fontScale` (never
+`PixelRatio.getFontScale()`) and above the threshold renders each month as a stacked block: the month label
+with **no** fixed width, the mood line with `numberOfLines={2}`. Below it, the side-by-side row is
+byte-identical to before. `moodByMonth`, the slice of 3, the separator and every copy string are untouched.
+
+⚠️ **The You screen has no scale threshold to reuse** — its `Row` stacks off an estimated content width
+(`src/ui/rowFit.js`), which a joined mood list has no equivalent of. The spec anticipated this and named
+`>= 1.3` as the fallback; that is what shipped, and `STACK_FONT_SCALE` is now where the number lives.
+
+**Tests** — new `__tests__/screens/DeeperInsights.test.js`, +6. Source: the stacked branch carries no
+hardcoded `width`. Behavioural: at 1.0 the row renders with today's exact props (`width: 84`,
+`numberOfLines={1}`, `flex: 1`) — the no-op; at 2.0 the label loses its width and the mood line allows two
+lines; 1.29 vs 1.3 pins the boundary; three long mood names still render **three** moods at both scales.
+Four of the six were verified to FAIL against the old screen.
+
+⚠️ **Jest renders a tree, not pixels — it cannot see the mid-word "Septemb/er" wrap.** That is said in a
+comment at the top of the test file. **WALK-08 must be re-run at max font; only that closes it.**
+
+**What was observed.** At OS `font_scale` 2.0 (app body cap 1.5), the "Moods by season" card breaks in two
+ways at once: month names wrap **mid-word** — "Septemb/er", "Novemb/er", "Decemb/er" — and the **third
+mood in every row is ellipsised away**, so rows read "🪨 Heavy · 🪶 Light · 🙏 .." At default font all
+twelve months fit one line each and all three moods render.
+
+**Cause, confirmed in source.** [`DeeperInsights.js:103-105`](../src/screens/DeeperInsights.js#L103):
+
+```js
+<T w={700} color={c.ink} style={{ width: 84, fontSize: 13 }}>{m.month}</T>
+<T w={600} color={c.muted} numberOfLines={1} style={{ flex: 1, fontSize: 13 }}>
+```
+
+`width: 84` is a hardcoded dp box that cannot grow when the text inside scales to 1.5×, so long month
+names wrap inside it. `numberOfLines={1}` on the value column then clips the third mood.
+
+**This is the same family as IMP-067**, which fixed exactly this class twice (a hardcoded
+`numberOfLines={1}` in `Row.js`, and Mood Mix using `minWidth` where it needed a real width). Treat that
+spec as the precedent for how this codebase solves it.
+
+**The decision (do not re-litigate).** Rows **stack** at large font rather than fighting for one line —
+the same answer the You screen already uses and which WALK-08 has repeatedly confirmed reads well.
+
+**Steps.**
+1. Read the effective body scale the app already computes ([`src/ui/textScale.js`](../src/ui/textScale.js))
+   — do **not** call `PixelRatio.getFontScale()` directly here, and do not add a new source of truth.
+2. Above a threshold (use the same one the You screen's stacking uses; if there is none, `>= 1.3`), render
+   each month as a **stacked** block: month name on its own line, moods beneath it. Below the threshold,
+   keep today's exact side-by-side row — this must be a no-op at default font.
+3. In the stacked form the month label takes **no fixed width** (drop `width: 84`), and the mood line
+   **raises `numberOfLines` to 2**. In the side-by-side form leave both as they are.
+4. Do not change `moodByMonth`, the slice of 3, the separator string, or any copy.
+
+**Tests.**
+- Source assertion: the month label has no hardcoded `width` in the stacked branch. Verify it fails first.
+- Behavioural at a stubbed large scale: the stacked branch renders, and the mood line allows 2 lines.
+- Behavioural at scale 1.0: the side-by-side row renders with today's props — proving the no-op.
+- A month whose three mood names are all long still renders **three** moods, not two.
+- ⚠️ **Jest renders a tree, not pixels, and cannot see the mid-word wrap.** Say so in a comment in the
+  test file. **Closing WALK-08 needs the emulator re-run, not a green suite.**
+
+**Commit:** `fix(insights): Moods by season stacks instead of clipping at large font (IMP-095)`
+
+---
+
+## IMP-096 — the Paywall's "SAVE 50%" badge overlaps the selected checkmark at max font
+
+**Lane: OTA** (pure JS). **From:** WALK-07, 2026-09-07 (emulator, agent-run). **Cosmetic — does not block
+a purchase.** Scoped so it is not lost, not because it is urgent.
+
+✅ **Code-complete**, commit `1e12cf7`, **1045 green** (was 1041), export clean. **NOT shipped** — no OTA published.
+
+**The mechanism, now that the code has been read.** Both are absolutely positioned against the card's
+top-right corner. The badge sat at `top: -10` and its **box grows downward as the text inside it scales**
+(a `T` at 10.5dp with 4dp padding, uncapped to `MAX_FONT_SCALE` 1.5); the tick sat at a fixed `top: 14`.
+At max font the badge's bottom edge crossed 14 and, both being the same orange, the two read as one shape.
+
+**What landed — reserve the height, do not chase the scale.** Three constants, none derived from a font
+scale: `SAVE_BADGE_TOP = -10`, `SAVE_BADGE_MAX_H = 28`, `PLAN_TICK_TOP = -10 + 28 + 4 = 22`. The badge's
+text is capped with `maxFontSizeMultiplier={CHROME_FONT_SCALE}` — **reuse, not a new pattern**:
+`textScale.js` defines that cap for exactly this kind of pill, and it is what bounds the badge's height so
+a constant reserve is honest. The tick starts below that bound on **both** plan cards. Badge copy, the
+discount logic and plan selection are untouched.
+
+**Tests** — +4 in `__tests__/screens/Paywall.test.js`. The tick's `top` clears the badge's maximum bottom
+on both cards; both placements are plain numbers and the file contains no `fontScale *` and no
+`PixelRatio`; the badge carries the chrome cap; the copy and both prices still render. Two were verified
+to FAIL against the old placement.
+
+⚠️ **Jest cannot see the overlap.** The acceptance is the **WALK-07 Paywall re-run at OS `font_scale` 2.0,
+both nav modes** — that is stated in the test file, not only here.
+
+**What was observed.** At OS `font_scale` 2.0, the "SAVE 50%" badge on the Annual plan card sits low
+enough to cover the top of that card's selected-state checkmark. Both are the same orange, so they read as
+one shape rather than a badge and a tick. At default font the two are cleanly separated — confirmed by
+cropping the same region from both screenshots. Present in **both** nav modes; the plan stays selectable.
+
+**Steps.**
+1. In [`Paywall.js`](../src/screens/Paywall.js), find the Annual card's badge and its selected-state
+   checkmark. The badge is positioned against the card's top edge while the checkmark's position follows
+   content that grows with font scale, so they converge.
+2. Give the badge and the checkmark a layout relationship that does not depend on font scale — either
+   reserve the badge's height in the card's top padding so the checkmark starts below it, or move the
+   checkmark to an edge the badge never occupies. **Either is acceptable; pick one and do not add a
+   scale-dependent offset**, which is the bug this file already has twice elsewhere.
+3. Do not change the badge copy, the discount logic, or the plan-selection behaviour.
+
+**Tests.** A source assertion that the badge's vertical placement is not derived from a font-scaled value.
+⚠️ **State plainly in the test file that Jest cannot see this overlap** — the acceptance is the WALK-07
+Paywall re-run at max font, both nav modes.
+
+**Commit:** `fix(paywall): the savings badge stops colliding with the selected tick at large font (IMP-096)`
+
+---
+
+## IMP-097 — dev-harness rot: two labels that now lie
+
+**Lane: OTA** (pure JS, **dev-only surfaces — nothing user-facing**). **From:** WALK-11 and WALK-08,
+2026-09-07. Lowest priority of the four; it costs a future walker time, not a user anything.
+
+✅ **Code-complete**, commit `7bced9f`, **1059 green** (was 1045), export clean. **NOT shipped** — no OTA published.
+
+**What landed.** `LaunchSection`'s heading is now **"Plus (dev-local mount — bypasses the app's own entry
+points)"** and its file header no longer asserts a value for `PLUS_ENABLED` — both are true whichever way
+the flag goes, which is the point. The stepper fix went into **`Stepper` in `controls.js`**, not into the
+one call site: the label takes `flex: 1` and wraps, the control group takes `flexShrink: 0` and keeps its
+intrinsic width, so the value and the `+` stay on screen at max font. Every stepper in the panel inherits
+it. `Toggle` has the same row shape but was **not** observed failing and was left alone.
+
+**Tests** — new `__tests__/dev/panelLabels.test.js`, +14 (one per dev source, plus a guard that the file
+list is non-empty). It walks every `.js` under `src/dev` and asserts none pairs `PLUS_ENABLED` with a
+claimed value, and that none says "app ships free". It was verified to FAIL on `LaunchSection.js` before
+the label changed. **No behavioural test** — the suite deliberately does not grow a dependency on the
+harness's wording beyond that one guard. `SENTINEL`-marked dev files only; no shipped screen was touched.
+
+**What was observed.**
+1. [`LaunchSection.js`](../src/dev/panel/LaunchSection.js) renders the section heading **"Plus (dev-local —
+   app ships free, PLUS_ENABLED stays false)"**, and its file header comment repeats the claim. Both have
+   been false since `7d2e515` (2026-09-05), when `PLUS_ENABLED` became `true`
+   ([`config.js:57`](../src/billing/config.js#L57)). A walker reading the panel is told the opposite of
+   what the build does.
+2. `DevPanel`'s **"Last backup (days ago, -1 = never)"** stepper pushes its value and its `+` control
+   **off the right edge** at max font, so the knob cannot be read or incremented during exactly the walks
+   that need max font.
+
+**Steps.**
+1. In `LaunchSection.js`, change the heading to **"Plus (dev-local mount — bypasses the app's own
+   entry points)"**, which is what the local `Modal` actually does and stays true whichever way the flag
+   goes. Update the file-header comment to match: it must no longer assert a value for `PLUS_ENABLED`.
+2. Let the stepper's label wrap instead of forcing the control off-screen — give the label a flexible
+   width and the control a fixed one, so the control is always reachable. Match whatever the other
+   steppers in `controls.js` already do if they handle this correctly; **prefer reusing that over a new
+   pattern.**
+3. Touch no shipped screen. `SENTINEL`-marked dev files only.
+
+**Tests.** A source assertion that no dev-panel string asserts `PLUS_ENABLED` is false. No behavioural
+test — these are dev-only surfaces and the suite should not grow a dependency on the harness's wording
+beyond that one guard.
+
+**Commit:** `chore(dev): the harness stops claiming Plus is off (IMP-097)`
+
+---
+
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
 
 > Moved out of PROGRESS.md on 2026-07-31 to keep the live cursor lean once a second spec (IMP-032) opened. These are **not** finished work. If the owner revives one, lift the block back into PROGRESS.md as the ACTIVE TRACK.
@@ -3418,6 +3674,69 @@ the way out.
 ---
 
 ## Session notes (archived from PROGRESS.md)
+
+_2026-09-07, evening (Opus — **the emulator walk queue is CLEARED. Three walks closed, one nearly, four
+defects scoped.**) — branch-only, NOT pushed._
+
+**What finished.** The owner asked for every open walk except the money one. Four were emulator-walkable
+and all four were run in a single sitting on a fresh local debug build (prebuild refreshed first — the
+`android/` dir predated IMP-077's native deps).
+
+- **WALK-03 ✅ CLOSED.** Step 4 re-run after IMP-081. `neverBackedUp` reads in full over two lines at
+  default font and **three at max** — the third line IMP-081 added is genuinely exercised, so the pass is
+  not vacuous. `staleBackup` re-checked at max font too.
+- **WALK-07 ✅ CLOSED.** The Paywall half passes in **all four** nav/font combinations after IMP-080.
+  The 2026-08-16 first-open footer overlap is gone.
+- **WALK-11 ✅ CLOSED**, items 1–5, **both Plus states**. The strongest single result: "On this day"
+  opens the Reading sheet, **ticks the revisit rite**, dismisses for today only and **came back the next
+  day** after a clock advance; and the recap card's dismissal **persists across relaunch** while On this
+  day's does not — two different lifetimes, both correct. Item 6 was **not run and is recorded as
+  obsolete**, not as a pass: `PLUS_ENABLED` is permanently `true`, so the free-build path it checks no
+  longer ships.
+- **WALK-08 🟠 nearly closed.** Everything unrun is now walked at max font. Two of its listed items turned
+  out to be **unwalkable** and should be struck rather than carried: `TipCard` was deleted by IMP-075, and
+  landscape rotation is impossible — the app is portrait-locked in `app.config.js` **and** the manifest
+  (verified: the device rotated, the app window stayed `port`).
+
+**The proof.** 1031 tests / 93 suites green, tree clean, `.env` and `src/dev/scenarios.js` restored (a
+throwaway T3 scenario was added and reverted). Emulator settings all put back. ⚠️ **These are emulator
+results**; WALK-03 and WALK-08 are `device`-target rows and the real-share-target and real-font-metrics
+gaps stay open, which is recorded in each row rather than glossed.
+
+**⚠️ A trap that cost time and is now written into T1b.** A populated `RC_ANDROID_KEY` in `.env` makes the
+debug build talk to real RevenueCat; an emulator with no Play Billing answers `BILLING_UNAVAILABLE`, so
+**no offerings, no prices, no plan selector** — a paywall layout walk would have passed against an empty
+screen. The key must be commented out and Metro restarted for these walks.
+
+**What the walks found — four new specs, none fixed (a walk records, it does not repair).**
+**IMP-094 is the one that matters**: the Annual Recap names a **zero-entry month as "quietest"** whenever
+the journal started later in the year — i.e. **every user's first recap**. Cause confirmed in source, not
+guessed. Then IMP-095 (DeeperInsights breaks at max font, same family as IMP-067, **blocks WALK-08**),
+IMP-096 (cosmetic paywall badge overlap), IMP-097 (dev-panel labels that now lie).
+
+**The exact next step.** The build queue is no longer empty: **IMP-094 → 095 → 096 → 097**, all OTA-lane
+pure JS, specs in `docs/specs-open.md`. **The three remaining walks all need a phone** — WALK-19 (money),
+WALK-18 (frame pacing; an emulator renders stutter as smooth), and WALK-12 (R8, which must be walked
+**last**, on the exact build being shipped, because any fix above invalidates an earlier R8 pass).
+
+_2026-09-07, afternoon (Opus — **WALK-19 re-ran on hardware: two fixes proven, one half-proven, one
+unobservable — and the reason it is unobservable is a new defect.**) — branch-only, NOT pushed._
+
+**What ran.** WALK-19 steps 3, 4a and 4c on v1.0.9 / vc15 from Play `internal`, license tester, against the
+2026-09-07 OTA — **bundle confirmed with no cable** (the Plus banner read **"See Plus"**, a string that did
+not exist before that OTA). **Full paragraph → [`docs/walk-open.md`](docs/walk-open.md) → WALK-19 → RESULT;
+do not re-derive it here.** ✅ **IMP-090 proven** — and "Subscribe" means the live offering exposes **no free
+phase at all**, so the old hardcoded *"Start 7-day free trial"* was never backed by anything the app could
+reach. ✅ **IMP-089 proven**, which also closes **IMP-092's online half**. ⬜ **IMP-091 not observed** —
+Play's no-connection page has no dismiss control but Back, and Back closed the whole paywall. **Do not let
+"IMP-088 does not work" enter the record; it still has not been tested.** 🆕 **IMP-093 scoped here.**
+
+**Two gaps on step 3 that cannot be closed on this device**, recorded rather than papered over: the
+**trial-eligible CTA branch** (needs an account that has not burned its trial — this one has, forever) and
+the **onboarding paywall mount** (needs a data clear, which deletes the OTA). ⚠️ **This sitting corrected the
+IMP-088 record**, written as *"force-quit was the only way out."* **Back was always a way out** — the card's
+*"Don't close the app"* was talking the user out of the one thing that worked; that is step 3 of IMP-093.
+
 
 _2026-09-07 (Opus — **the three WALK-19 specs landed and all four fixes shipped in ONE OTA. The build
 queue is now empty and the walk is the only thing owed.**) — branch-only, NOT pushed._
