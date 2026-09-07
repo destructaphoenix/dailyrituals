@@ -271,6 +271,23 @@ Full narrative in [`build-log.md`](build-log.md) → "The 2026-09-06 billing inc
    **SECOND** launch. To test one: **open, wait ~15s, fully kill, open again — never clearing data in
    between.** "Nothing changed" has been this every single time.
 
+### The OTA lane — what it reaches
+
+_Moved from `PROGRESS.md` 2026-09-08 under its size rule. Permanent mechanics, not a live cursor._
+
+**Ship mechanics.** Builds **auto-submit to `internal`** (`eas.json` → `submit.production.android.track`).
+Reaching the public is the **manual `internal` → `production` promotion** in Play Console, which gets the
+full ~7d review — and it should not be taken until the device walks clear. **✅ API-36 compliance is met
+account-wide**; every active release on every track is `targetSdkVersion 36`.
+
+**⚠️ The OTA lane.** `eas update` publishes to Expo's CDN — **no Play track, no Google, no review** — gated
+only by **channel** (`production`) + a **matching `runtimeVersion`** (= `appVersion`). It is **`1.0.9`,
+which means vc15 installs and nothing else** (`alpha` on vc12 and `beta`/`production` on vc9 receive
+nothing). An installed build takes an OTA regardless of which track it came from, and **it applies on the
+SECOND launch**. **Anything native needs a build**, and **a `bump:native` closes the lane until that
+versionCode actually ships** — the trap IMP-076 and IMP-077 both sprang. **Do not OTA a fix and then treat
+WALK-12's R8 pass as valid:** R8 runs at build time, so the code on the device is no longer what was walked.
+
 ### Ship lane — which fix ships how (decide per task)
 | What changed | Lane | Command | Play review? |
 | --- | --- | --- | --- |

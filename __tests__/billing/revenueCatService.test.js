@@ -17,10 +17,11 @@ import Purchases from 'react-native-purchases';
 import {
   toEntitlement, trialDaysFromProduct, createRevenueCatService,
 } from '../../src/billing/revenueCatService';
+import { ENTITLEMENT_ID } from '../../src/billing/config';
 
 beforeEach(() => { jest.clearAllMocks(); });
 
-const customerInfo = (ent) => ({ entitlements: { active: { plus: ent } } });
+const customerInfo = (ent) => ({ entitlements: { active: { [ENTITLEMENT_ID]: ent } } });
 
 describe('toEntitlement — IMP-083', () => {
   test('keeps the raw RevenueCat product identifier, suffix and all', () => {
@@ -39,6 +40,56 @@ describe('toEntitlement — IMP-083', () => {
   test('no active entitlement is still null overall', () => {
     expect(toEntitlement({ entitlements: { active: {} } })).toBeNull();
     expect(toEntitlement(null)).toBeNull();
+  });
+});
+
+// ── IMP-099 — the entitlement the store grants is the one we must read ───────
+// 2026-09-08, on the owner's device with a Play licence: Play confirmed the
+// subscription and the app said "That didn't go through." `purchasePackage`
+// RESOLVED — nothing threw — but the dashboard identifier is
+// 'Daily Rituals Plus' and the constant said 'plus', so the lookup missed and
+// buy() read a resolved purchase as a failure. Every test here was written
+// against the shape that actually shipped, not the shape we assumed.
+describe('entitlement identity — IMP-099', () => {
+  const ent = { productIdentifier: 'plus_annual:annual', expirationDate: '2027-03-03T00:00:00.000Z' };
+
+  test('the constant IS the RevenueCat dashboard identifier', () => {
+    // Pinned deliberately. RevenueCat cannot rename an entitlement identifier,
+    // so "tidying" this back to a slug re-opens the outage in production while
+    // every test still passes.
+    expect(ENTITLEMENT_ID).toBe('Daily Rituals Plus');
+  });
+
+  test('a sole active entitlement grants Plus whatever it is called', () => {
+    // The exact outage shape: the store says yes, under a name we did not expect.
+    const e = toEntitlement({ entitlements: { active: { 'Some Other Name': ent } } });
+    expect(e).not.toBeNull();
+    expect(e.active).toBe(true);
+    expect(e.productId).toBe('plus_annual:annual');
+  });
+
+  test('the named entitlement wins when several are active', () => {
+    const e = toEntitlement({ entitlements: { active: {
+      other: { productIdentifier: 'something_else:monthly' },
+      [ENTITLEMENT_ID]: ent,
+    } } });
+    expect(e.productId).toBe('plus_annual:annual');
+  });
+
+  test('two unrecognised entitlements are ambiguous, so it declines to guess', () => {
+    expect(toEntitlement({ entitlements: { active: {
+      one: { productIdentifier: 'a' }, two: { productIdentifier: 'b' },
+    } } })).toBeNull();
+  });
+
+  test('buy() reads a resolved purchase as success, not failure', async () => {
+    Purchases.getOfferings.mockResolvedValue({ current: { annual: { identifier: 'annual' }, availablePackages: [] } });
+    Purchases.purchasePackage.mockResolvedValue({
+      customerInfo: { entitlements: { active: { 'Daily Rituals Plus': ent } } },
+    });
+    const res = await createRevenueCatService().buy('annual');
+    expect(res.kind).toBe('success');
+    expect(res.entitlement.productId).toBe('plus_annual:annual');
   });
 });
 
@@ -144,7 +195,7 @@ describe('getPrices carries the trial — IMP-090', () => {
 // "We couldn't find a subscription on this account" points them at support.
 describe('restore does not relabel a failed check — IMP-092', () => {
   const svc = () => createRevenueCatService();
-  const info = (ent) => ({ entitlements: { active: ent ? { plus: ent } : {} } });
+  const info = (ent) => ({ entitlements: { active: ent ? { [ENTITLEMENT_ID]: ent } : {} } });
 
   test('an unrecognised error is `failed` — we could not check', async () => {
     Purchases.restorePurchases.mockRejectedValue({ code: 'STORE_PROBLEM_ERROR' });

@@ -6,8 +6,18 @@ import { mapPurchaseError } from './mapError';
 // Exported for test: IMP-083 depends on `productId` surviving onto the object,
 // and a refactor that quietly drops it silently restores the account-wide list.
 export function toEntitlement(customerInfo) {
-  const ent = customerInfo && customerInfo.entitlements
-    && customerInfo.entitlements.active && customerInfo.entitlements.active[ENTITLEMENT_ID];
+  const active = customerInfo && customerInfo.entitlements && customerInfo.entitlements.active;
+  if (!active) return null;
+  // IMP-099. The named lookup is the assertion; the sole-entitlement fallback is
+  // the safety net under it. This app sells exactly ONE thing, so "is this
+  // person a member?" is fully answered by the store reporting an active
+  // entitlement at all — reading its name is an optimisation, not the question.
+  // Requiring a hand-kept source constant to match a dashboard string is what
+  // charged the owner and then told them the purchase failed, and a single
+  // active entitlement carries no ambiguity to resolve. Two or more would, so
+  // the fallback declines to guess there and the named lookup stands alone.
+  const names = Object.keys(active);
+  const ent = active[ENTITLEMENT_ID] || (names.length === 1 ? active[names[0]] : null);
   if (!ent) return null;
   return {
     active: true,

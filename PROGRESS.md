@@ -36,8 +36,8 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 >
 > | If this chat is… | Take |
 > | --- | --- |
-> | a **build task** | **The backlog is empty** — `docs/specs-open.md` has no open `IMP-xxx` row. IMP-098 (Top moods bar alignment) landed 2026-09-08, `edcea0b`. Do not open a new row from reasoning alone; wait for an owner-filed issue or a failed walk. |
-> | a **runtime walk** | 🚦 **The only queue with anything in it — [`docs/walk-open.md`](docs/walk-open.md), and its index says what is left.** WALK-19 needs a purchase attempt. **WALK-07 and WALK-08 are now waiting on a BUILD, not a spec** — IMP-096 and IMP-095 landed 2026-09-07 but are **unshipped**, so those two rows must be re-run at max font on a build that actually carries the fixes. **Do not re-derive WALK-19 — read its RESULT block; steps 3 and 4a are proven.** |
+> | a **build task** | **The backlog is empty** — `docs/specs-open.md` has no open `IMP-xxx` row. Last in: **IMP-099** (the entitlement identifier, 2026-09-08). Do not open a new row from reasoning alone; wait for an owner-filed issue or a failed walk. **One row is written but unscoped:** the `failed` card's *"you weren't charged"* claim + the missing reconcile on a resolved purchase — see the latest session note; it needs an owner call, not a chat's initiative. |
+> | a **runtime walk** | 🚦 **The only queue with anything in it — [`docs/walk-open.md`](docs/walk-open.md), and its index says what is left.** ⚠️ **Every open row waits on the same thing: an OTA carrying IMP-094…099. None has been published.** WALK-19 now owes **IMP-099's proof, and it needs no second purchase** — the owner already holds an active subscription, so relaunch or Restore settles it. WALK-07/WALK-08 re-run at max font. **Do not re-derive WALK-19 — read its RESULT block; steps 3 and 4a are proven.** |
 > | a **design request** | See "Claude Design" below. The live request is **Insights**. |
 >
 > **The billing surface, honestly.** Five fixes are code-complete and all are shipped by OTA. **IMP-089 and
@@ -66,10 +66,11 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 > ⚠️ **Real charges are possible on `internal`** — confirm every account on that tester list is a Play
 > **license tester**.
 
-**The whole design push lives on `feat/design-push`, which is NEVER pushed, NEVER given a `Release-Lane:`
-trailer, and NEVER merged to `main`** without a separate owner decision. ⚠️ **That is why every OTA on this
-lane is published BY HAND** — CI only runs on `main`, so `release.yml`'s guards never fire here, and
-`--environment production` is on you. **The free-app improvement track is CLOSED** (owner, 2026-08-16):
+**✅ The branch is merged. `feat/design-push` fast-forwarded onto `main` and was pushed by the owner on
+2026-09-08 (`cb3d60e`), ending the no-push rule and the hand-publishing that went with it.** ⚠️ **Ship
+through CI now** — `release.yml` runs on `main`, so the test gate, the OTA native-file backstop, the billing
+preflight and `--environment production` are all handled by the workflow. **Do not `eas update` by hand.**
+A `Release-Lane: ota` trailer on the pushed commit is the whole ceremony. **The free-app improvement track is CLOSED** (owner, 2026-08-16):
 `IMP-001`–`IMP-075` are done bar the deferred `IMP-022` and the reserved `IMP-057`; **do not open new
 free-track rows.** **`IMP-057` is reserved, not missing** — do not reuse the number, and **`IMP-079` is
 burnt** (used for a path written and deleted the same session). **IMP-044 claims no queue slot** — it rides
@@ -92,18 +93,10 @@ promoted: it shipped with no RevenueCat key, fell back to `simService` and grant
 was invisible to CI, to jest and to a green preflight, and was caught only by a human subscribing in
 airplane mode. Both builds' full detail is in [`docs/build-log.md`](docs/build-log.md).
 
-**Ship mechanics.** Builds **auto-submit to `internal`** (`eas.json` → `submit.production.android.track`).
-Reaching the public is the **manual `internal` → `production` promotion** in Play Console, which gets the
-full ~7d review — and it should not be taken until the device walks clear. **✅ API-36 compliance is met
-account-wide**; every active release on every track is `targetSdkVersion 36`.
-
-**⚠️ The OTA lane.** `eas update` publishes to Expo's CDN — **no Play track, no Google, no review** — gated
-only by **channel** (`production`) + a **matching `runtimeVersion`** (= `appVersion`). It is **`1.0.9`,
-which means vc15 installs and nothing else** (`alpha` on vc12 and `beta`/`production` on vc9 receive
-nothing). An installed build takes an OTA regardless of which track it came from, and **it applies on the
-SECOND launch**. **Anything native needs a build**, and **a `bump:native` closes the lane until that
-versionCode actually ships** — the trap IMP-076 and IMP-077 both sprang. **Do not OTA a fix and then treat
-WALK-12's R8 pass as valid:** R8 runs at build time, so the code on the device is no longer what was walked.
+**Ship mechanics + the OTA lane's rules** (tracks, `runtimeVersion` gating, the second-launch rule, what a
+`bump:native` closes, and why an OTA invalidates WALK-12's R8 pass) moved to
+[`docs/playbook.md`](docs/playbook.md) → "The OTA lane — what it reaches" on 2026-09-08. They are permanent
+mechanics, not a live cursor. **✅ API-36 compliance is met account-wide.**
 
 **Current stack:** Expo SDK **54** · RN **0.81.5** · React **19.1.0** · **New Architecture** ·
 **Reanimated 4.1.1 + worklets 0.5.1** · `targetSdkVersion` **36**, `minSdk` **24** ·
@@ -123,9 +116,10 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | ID | Title | Lane | Status |
 | --- | --- | --- | --- |
 | 001–075 | **Every free-track task.** Search, custody + 30-day trash, multi-moods, Annual Recap, deeper insights, heatmaps, local `dayKey`, prompt packs, a11y labels, the IMP-063…075 polish run, R8, dev harness, backup/restore, reminders. | mixed | ✅ **all done except the two rows below** — full detail per task in [`docs/build-log.md`](docs/build-log.md); git is the record. Do not re-derive from this table. |
-| 076–093 | **The design-push + billing run.** New Architecture (076), motion vocabulary (077), design system (078), Paywall footer (080), backup warning (081), renewal date (082), cancel deep-link (083), the release build's simulation (084), the SDK probe (085), the OTA lane's empty key (086), the paid surface's reason (087), the purchase-overlay trap (088), restore-must-not-buy (089), the trial it cannot see (090), the pending escape (091), "nothing to restore" (092), the vanishing paywall (093). | mixed | ✅ **all code-complete, all shipped by OTA where the lane allowed, all archived** — specs in [`docs/build-log.md`](docs/build-log.md). ⚠️ **branch-only, never pushed.** ⚠️ **Code-complete is not proven** — 089/090 are proven on hardware, 092 is half proven, **091 has never been observed**; see WALK-19 |
+| 076–093 | **The design-push + billing run.** New Architecture (076), motion vocabulary (077), design system (078), Paywall footer (080), backup warning (081), renewal date (082), cancel deep-link (083), the release build's simulation (084), the SDK probe (085), the OTA lane's empty key (086), the paid surface's reason (087), the purchase-overlay trap (088), restore-must-not-buy (089), the trial it cannot see (090), the pending escape (091), "nothing to restore" (092), the vanishing paywall (093). | mixed | ✅ **all code-complete, all shipped by OTA where the lane allowed, all archived** — specs in [`docs/build-log.md`](docs/build-log.md). ✅ **on `main` since 2026-09-08.** ⚠️ **Code-complete is not proven** — 089/090 are proven on hardware, 092 is half proven, **091 has never been observed**; see WALK-19 |
 | 094–097 | **The 2026-09-07 walk-sitting fixes.** The Annual Recap's phantom "quietest" month (094), DeeperInsights at max font (095), the Paywall badge over the selected tick (096), the dev harness's two lying labels (097). | OTA | ✅ **all four code-complete, archived** in [`docs/build-log.md`](docs/build-log.md) — `085876a`, `3030bca`, `1e12cf7`, `7bced9f`, **1059 green / 95 suites** (was 1031 / 93), export clean. ⚠️ **NOT shipped — no OTA published for any of them.** ⚠️ **095 and 096 are accepted on a screen, not by the suite**: WALK-08 at max font and WALK-07 at `font_scale` 2.0 in both nav modes. 094 is pure logic and owes nothing runtime |
 | 098 | **The Annual Recap's Top moods bars start in one place.** `minWidth: 84` sizes the label column to its content, so equal counts draw unequal bars. | OTA | ✅ **code-complete, archived** in [`docs/build-log.md`](docs/build-log.md) — `edcea0b`, **1063 green / 96 suites** (was 1059 / 95), export clean. ⚠️ **NOT shipped — no OTA published.** Pure reuse of IMP-067's `moodLabelWidth`. Accepted by the suite, **owed no walk** |
+| 099 | **The entitlement the store grants is the one the app must read.** `ENTITLEMENT_ID` was `'plus'`; the RevenueCat identifier is `Daily Rituals Plus`, so a **successful** purchase mapped to `null` and `buy()` reported `failed`. | OTA | ✅ **code-complete, archived** in [`docs/build-log.md`](docs/build-log.md) — **1068 green / 96 suites** (was 1063/96), export clean, +5 tests **proven red on the shipped tree first**. ⚠️ **NOT shipped.** ⚠️ **The suite pins the string; only a device can confirm RevenueCat sends it** — WALK-19 owes that, and Restore/relaunch proves it without a second purchase |
 | 022 | Save as PDF + About sheet (the two dead You-tab buttons) | Build | ⏸ **deferred (owner)** — spec in build-log → "Deferred specs"; **perk #6 gate** |
 | 044 | R8 on release builds (dev client was shipping to the public) | Build | 🟢 **code-complete, UNWALKED.** R8 must be walked on the build you actually ship, so it rides **vc15 or later**; walk = WALK-12, on hardware, last in the sitting |
 | 057 | Historical `dayKey` migration | Build | 🔒 **reserved, not missing** — cannot be written until real device numbers come back from the dev panel's "Data health" reporter. See below |
@@ -138,8 +132,9 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 **Project `Daily Rituals Design System`** · id `7bf44d09-f93a-42d2-a8b6-d412d671cf60` · writable ·
 **13 cards** (Tokens · Frozen · Components · Screens day+night). Regenerate after a theme change with
 `node scripts/gen-design-system.js`, then re-push — the cards are generated from `theme.js`/`data.js`/
-`art.js` so they cannot drift, but they do not update themselves. **No auto-sync**: pointing the pane's
-GitHub connection at `design-system/` would need the branch published, which the no-push rule forbids.
+`art.js` so they cannot drift, but they do not update themselves. **No auto-sync** — but the reason expired: it needed the branch
+published, and `main` now carries `design-system/`. Wiring the pane's GitHub connection to it is an owner
+call, not a chat's.
 
 **Ask for ONE screen per request** — "redesign the app" produces mush. **The live request is
 Insights** (owner, 2026-09-05). ⚠️ **The four standing rules — baseline-first, specs in token names, the
@@ -200,6 +195,42 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
+_2026-09-08, later (Opus — **the first completed purchase in the app's life was reported as a failure. The
+entitlement identifier never matched the dashboard, and no test could have seen it.**) — on `main`, merged
+and pushed by the owner._
+
+**What the owner hit.** A Play licence-tester purchase: Play confirmed the subscription, the app said
+**"That didn't go through … you weren't charged."** Both from the same successful transaction.
+
+**What finished.** **IMP-099**, built and archived to [`docs/build-log.md`](docs/build-log.md).
+`Purchases.purchasePackage()` **resolved** — nothing failed — but `toEntitlement` read
+`entitlements.active['plus']` while the RevenueCat identifier is **`Daily Rituals Plus`**, so the lookup
+missed, the mapper returned `null`, and `buy()` read a resolved purchase as `{ kind: 'failed' }`. Fixed in
+three parts: the constant now carries the real identifier; `toEntitlement` gains a **sole-entitlement
+fallback** (one active entitlement grants Plus whatever it is called — this app sells exactly one thing;
+two or more stay ambiguous and it declines to guess); and both fixtures key off `ENTITLEMENT_ID` instead of
+a literal `plus`, which is the reason 1063 green tests never noticed. **RevenueCat cannot rename an
+entitlement identifier** (owner confirmed), so the code moved, not the dashboard.
+
+**The proof.** +5 tests, **run red against the shipped tree first** — 3 failed, and the decisive one
+reproduced the owner's bug exactly: `buy()` returned `"failed"` on a resolved purchase. **1068 passed, 96
+suites** (was 1063/96), `expo export` clean. ⚠️ **The suite proves the mapper, not the dashboard** — nothing
+in this repo can verify `'Daily Rituals Plus'` is what RevenueCat actually sends. **WALK-19 owes that.**
+
+**The exact next step.** 🚦 **Ship it.** `main` now carries IMP-094…099, all OTA-lane, **none published**.
+One `Release-Lane: ota` push covers all six — an OTA ships the whole bundle, not a diff — and CI now owns
+`--environment production`, which it did not while this work sat on `feat/design-push`. Then, on the second
+launch: **kill and reopen** (the launch check at [`RitualsApp.js:385`](src/RitualsApp.js#L385)) or tap
+**Restore** — the owner already holds an active subscription from the failed attempt, so proving this needs
+no second purchase. That also unblocks **WALK-07** and **WALK-08**, which have been waiting on a build that
+carries 095/096.
+
+**Left open on purpose, and it is a real defect.** The `failed` card still claims *"you weren't charged"* on
+a path that cannot know it, and `run()` still reaches the result phase with **no store reconcile** —
+IMP-093's reconcile fires only for a flow abandoned while *pending*. Its primary button is "Try again",
+which walks an already-subscribed buyer back into Play. IMP-099 removes the **trigger**; the lie is still
+there behind it. **Needs its own row — owner call.**
+
 _2026-09-08 (Sonnet — **IMP-098 built the day after it was scoped: the Annual Recap's Top moods bars now
 share one label width, reusing IMP-067's `moodLabelWidth`.**) — branch-only, NOT pushed._
 
@@ -216,33 +247,3 @@ return) instead of `minWidth: 84, flexShrink: 1` — no new constant, no shared 
 defect ("Moods that travel together") and remains deliberately unscoped — an owner call, not a bug fix.
 Otherwise unchanged: IMP-094…098 are all committed and **unshipped** (OTA lane, no `eas update` published),
 and **WALK-07/WALK-08 still need a build that carries 095/096** before they can be re-run.
-
-_2026-09-07, later night (Opus — **an owner screenshot of the Annual Recap reopened the queue: IMP-098
-scoped, and it is IMP-067's defect on a screen IMP-067 never touched.**) — branch-only, NOT pushed._
-
-**What finished.** Nothing was built. The owner sent a screenshot of the shipped Annual Recap and called the
-Top moods card misaligned; it is, and the cause is now scoped as **IMP-098** in
-[`docs/specs-open.md`](docs/specs-open.md). Grateful, Heavy and Hopeful all read **14** and draw three
-different bars because [`AnnualRecap.js:86`](src/screens/AnnualRecap.js#L86) gives the label column
-`minWidth: 84, flexShrink: 1` — a floor, not a width — so the column sizes to its **content**, every row's
-bar track starts at a different x, and with all three rows at `moodMax` the fills are each 100% of a
-different track. **This is IMP-067 finding (c) verbatim.** That spec fixed it in `InsightsScreen.js` and
-left the answer in a pure module (`moodLabelWidth`, `src/insights/moodMixLayout.js`); its scope named
-Insights only, so the Annual Recap's copy of the row (IMP-046, older) was never revisited. IMP-098 is
-therefore a **reuse, not a design** — no new constant, no shared component, no re-litigation.
-
-**The proof, and its limit.** None yet — this is a scoping session, not a build. The spec's acceptance is a
-new `__tests__/screens/AnnualRecap.test.js` and it names the assertion that must be **seen to fail first**:
-at `fontScale` 1 every Top-moods label column has the same `width`, 96. ⚠️ Unlike IMP-095/096 this defect
-**is** visible to jest — it is a style prop, not a glyph measurement — so **no WALK row is owed** and none
-was added.
-
-**What was checked and deliberately left alone.** The rest of the screenshot: the hero, the 2×2 totals grid
-and "The year, marked" all align, and the header's 18dp gutter against the content's 20dp is the house
-pattern on nine other screens, not a slip. ⚠️ **[`DeeperInsights.js:139`](src/screens/DeeperInsights.js#L139)
-carries the same `minWidth` defect ("Moods that travel together", `minWidth: 120`) and is out of IMP-098 on
-purpose** — a pairing label is two mood names joined, so a fixed column trades a readable label for a
-comparable bar. That is an owner call, and the file also still owes WALK-08 from IMP-095. **It needs its own
-row once the owner decides.**
-
-**The exact next step.** *(Superseded by the note above — IMP-098 has since landed.)*

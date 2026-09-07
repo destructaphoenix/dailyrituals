@@ -3669,6 +3669,61 @@ up from `view.getByText(mood)`, not one — confirmed by inspecting the rendered
 
 ---
 
+## IMP-099 — the entitlement the store grants is the one the app must read (2026-09-08)
+
+**Found by the owner on hardware, with a Play licence tester account.** Play confirmed the subscription;
+the app answered **"That didn't go through. Something interrupted the purchase and you weren't charged."**
+Both statements came from the same successful transaction. This is the **first completed purchase in the
+app's life** — every prior walk exercised cancels, hangs and errors (WALK-19: *"the money never moved"*),
+so the success path had never once executed against the real store.
+
+**Cause.** `Purchases.purchasePackage()` **resolved** — nothing threw, because nothing failed. But
+[`toEntitlement`](../src/billing/revenueCatService.js) read `customerInfo.entitlements.active['plus']`
+while the RevenueCat dashboard's entitlement **identifier** is `Daily Rituals Plus`. The lookup missed, the
+mapper returned `null`, and `buy()` collapsed "resolved, but I could not find the entitlement" into
+`{ kind: 'failed' }` — the one card that asserts *you weren't charged* against the one path where the buyer
+provably was.
+
+**Why the suite was green the whole time.** The fixtures built their CustomerInfo with a **literal** `plus`
+key (`revenueCatService.test.js:23`, `:147`), so the test agreed with the constant and neither had ever
+agreed with RevenueCat. A hand-kept source constant mirroring a dashboard string is not something jest can
+check — this is the "jest cannot see billing" rule again, in a new place.
+
+**Why the fix is in the code and not the dashboard.** RevenueCat does not allow renaming an entitlement
+identifier once it exists (owner confirmed, 2026-09-08). The dashboard is therefore fixed and the constant
+moves. A new entitlement + re-attached product was rejected as the riskier trade: it churns a live billing
+configuration whose *purchase* half demonstrably works.
+
+**What was built.**
+1. `ENTITLEMENT_ID` → `'Daily Rituals Plus'`, with the identifier-not-description trap recorded at the
+   constant ([`config.js`](../src/billing/config.js)).
+2. `toEntitlement` gains a **sole-entitlement fallback**: the named lookup stands, and when it misses and
+   there is **exactly one** active entitlement, that one grants Plus. This app sells exactly one thing, so
+   "is this person a member?" is fully answered by the store reporting *any* active entitlement — reading
+   its name is an optimisation, not the question. **Two or more active entitlements are ambiguous, so the
+   fallback declines to guess there** and the named lookup stands alone. This is what stops the whole class
+   of defect, not just today's instance.
+3. Both test fixtures now key off `ENTITLEMENT_ID` instead of a literal, so the constant is **exercised**
+   rather than mirrored.
+
+**The proof.** New `describe('entitlement identity — IMP-099')` (+5), **run red against the shipped tree
+first**: 3 failed, and the decisive one reproduced the owner's bug exactly — `buy()` returned `"failed"` on
+a resolved purchase. **1068 passed, 96 suites** (was 1063/96), `expo export` clean.
+
+**The limit, and it is the whole point.** ⚠️ **jest proves the mapper, not the dashboard.** The suite now
+pins `ENTITLEMENT_ID` to `'Daily Rituals Plus'`, but nothing in this repo can verify that string is what
+RevenueCat actually sends — only a real purchase or a real `getCustomerInfo()` on the owner's device can.
+**Runtime proof is owed: WALK-19.** The owner already holds an active subscription from the failed attempt,
+so the cheap proof is not a second purchase — it is kill-and-reopen (the launch check at
+`RitualsApp.js:385`) or **Restore**, on a build carrying this fix.
+
+**Left open on purpose.** The `failed` card still says *"you weren't charged"* on a path that cannot know
+that, and `run()` still reaches the result phase with **no store reconcile** — IMP-093's reconcile fires
+only for a flow abandoned while *pending*, so a resolved-but-empty purchase never asks the store again, and
+the card's primary button is "Try again", which walks an already-subscribed buyer back into Play. That is a
+**separate row**, not this one: this fix removes the trigger, that one removes the lie. Not scoped yet —
+owner decision on whether it is worth a round now that the trigger is gone.
+
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
 
 > Moved out of PROGRESS.md on 2026-07-31 to keep the live cursor lean once a second spec (IMP-032) opened. These are **not** finished work. If the owner revives one, lift the block back into PROGRESS.md as the ACTIVE TRACK.
@@ -3711,6 +3766,37 @@ up from `view.getByText(mood)`, not one — confirmed by inspecting the rendered
 ---
 
 ## Session notes (archived from PROGRESS.md)
+
+_2026-09-07, later night (Opus — **an owner screenshot of the Annual Recap reopened the queue: IMP-098
+scoped, and it is IMP-067's defect on a screen IMP-067 never touched.**) — branch-only, NOT pushed._
+
+**What finished.** Nothing was built. The owner sent a screenshot of the shipped Annual Recap and called the
+Top moods card misaligned; it is, and the cause is now scoped as **IMP-098** in
+[`docs/specs-open.md`](docs/specs-open.md). Grateful, Heavy and Hopeful all read **14** and draw three
+different bars because [`AnnualRecap.js:86`](src/screens/AnnualRecap.js#L86) gives the label column
+`minWidth: 84, flexShrink: 1` — a floor, not a width — so the column sizes to its **content**, every row's
+bar track starts at a different x, and with all three rows at `moodMax` the fills are each 100% of a
+different track. **This is IMP-067 finding (c) verbatim.** That spec fixed it in `InsightsScreen.js` and
+left the answer in a pure module (`moodLabelWidth`, `src/insights/moodMixLayout.js`); its scope named
+Insights only, so the Annual Recap's copy of the row (IMP-046, older) was never revisited. IMP-098 is
+therefore a **reuse, not a design** — no new constant, no shared component, no re-litigation.
+
+**The proof, and its limit.** None yet — this is a scoping session, not a build. The spec's acceptance is a
+new `__tests__/screens/AnnualRecap.test.js` and it names the assertion that must be **seen to fail first**:
+at `fontScale` 1 every Top-moods label column has the same `width`, 96. ⚠️ Unlike IMP-095/096 this defect
+**is** visible to jest — it is a style prop, not a glyph measurement — so **no WALK row is owed** and none
+was added.
+
+**What was checked and deliberately left alone.** The rest of the screenshot: the hero, the 2×2 totals grid
+and "The year, marked" all align, and the header's 18dp gutter against the content's 20dp is the house
+pattern on nine other screens, not a slip. ⚠️ **[`DeeperInsights.js:139`](src/screens/DeeperInsights.js#L139)
+carries the same `minWidth` defect ("Moods that travel together", `minWidth: 120`) and is out of IMP-098 on
+purpose** — a pairing label is two mood names joined, so a fixed column trades a readable label for a
+comparable bar. That is an owner call, and the file also still owes WALK-08 from IMP-095. **It needs its own
+row once the owner decides.**
+
+**The exact next step.** *(Superseded by the note above — IMP-098 has since landed.)*
+
 
 _2026-09-07, night (Opus — **the whole walk-sitting queue built in one sitting: IMP-094, 095, 096 and 097
 all landed the day they were scoped. The build queue is empty; three of the four are unproven until someone

@@ -8,9 +8,21 @@ import Constants from 'expo-constants';
 
 const extra = (Constants.expoConfig && Constants.expoConfig.extra) || {};
 
-// The RevenueCat "entitlement" that grants Plus. Create this in the RevenueCat
-// dashboard and keep this string in sync with it.
-export const ENTITLEMENT_ID = 'plus';
+// The RevenueCat "entitlement" that grants Plus. This string must be the
+// dashboard's entitlement IDENTIFIER, character for character — not its
+// description, and not the offering or product id.
+//
+// IMP-099, 2026-09-08. This read 'plus' while the dashboard identifier is
+// 'Daily Rituals Plus', so the FIRST completed purchase in the app's life came
+// back with `entitlements.active` keyed under a name `toEntitlement` never
+// looked up. Play charged, its sheet said subscribed, and the app answered
+// "That didn't go through." RevenueCat does not allow renaming an entitlement
+// identifier once it exists, so the code moves and the dashboard does not.
+//
+// jest could not have caught it: the fixtures built their CustomerInfo with a
+// literal `plus` key, so the test agreed with this constant and neither agreed
+// with RevenueCat. They key off this export now, for exactly that reason.
+export const ENTITLEMENT_ID = 'Daily Rituals Plus';
 
 // Publishable RevenueCat API keys, per platform.
 export const RC_KEYS = {
