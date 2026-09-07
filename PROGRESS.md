@@ -32,11 +32,11 @@
 runtime proof is a separate WALK row for a separate chat, so a missing walk is *not* an unfinished spec.
 Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`](docs/playbook.md).
 
-> ## 🧭 WHAT TO TAKE RIGHT NOW (2026-09-07)
+> ## 🧭 WHAT TO TAKE RIGHT NOW (2026-09-08)
 >
 > | If this chat is… | Take |
 > | --- | --- |
-> | a **build task** | ⬜ **IMP-098** — the Annual Recap's Top moods bars start at three different x, so three moods all reading **14** draw three different bars ([spec](docs/specs-open.md#imp-098--the-annual-recaps-top-moods-bars-start-in-one-place)). It is **IMP-067 finding (c) on the screen IMP-067 did not touch** — reuse `moodLabelWidth`, design nothing. ⚠️ **`DeeperInsights.js:139` has the same defect and is out of scope on purpose** — the spec says why. ⚠️ IMP-094/095/096/097 are built but **not shipped**: all OTA-lane, no `eas update` published. ⚠️ **Do not open a new billing row from reasoning alone**: every row since IMP-084 came out of a device sitting. |
+> | a **build task** | **The backlog is empty** — `docs/specs-open.md` has no open `IMP-xxx` row. IMP-098 (Top moods bar alignment) landed 2026-09-08, `edcea0b`. Do not open a new row from reasoning alone; wait for an owner-filed issue or a failed walk. |
 > | a **runtime walk** | 🚦 **The only queue with anything in it — [`docs/walk-open.md`](docs/walk-open.md), and its index says what is left.** WALK-19 needs a purchase attempt. **WALK-07 and WALK-08 are now waiting on a BUILD, not a spec** — IMP-096 and IMP-095 landed 2026-09-07 but are **unshipped**, so those two rows must be re-run at max font on a build that actually carries the fixes. **Do not re-derive WALK-19 — read its RESULT block; steps 3 and 4a are proven.** |
 > | a **design request** | See "Claude Design" below. The live request is **Insights**. |
 >
@@ -107,7 +107,7 @@ WALK-12's R8 pass as valid:** R8 runs at build time, so the code on the device i
 
 **Current stack:** Expo SDK **54** · RN **0.81.5** · React **19.1.0** · **New Architecture** ·
 **Reanimated 4.1.1 + worklets 0.5.1** · `targetSdkVersion` **36**, `minSdk` **24** ·
-`npm test` → **1031 passed, 93 suites** (verified 2026-09-07) + **3 zone tests × 2 pinned zones**.
+`npm test` → **1063 passed, 96 suites** (verified 2026-09-08) + **3 zone tests × 2 pinned zones**.
 ⚠️ **Run `npm test`, not bare `npx jest`**, or the zone half is skipped. Version-checking a phone, the
 track-reading script and the rest of the stack notes are in [`docs/playbook.md`](docs/playbook.md).
 
@@ -125,7 +125,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 001–075 | **Every free-track task.** Search, custody + 30-day trash, multi-moods, Annual Recap, deeper insights, heatmaps, local `dayKey`, prompt packs, a11y labels, the IMP-063…075 polish run, R8, dev harness, backup/restore, reminders. | mixed | ✅ **all done except the two rows below** — full detail per task in [`docs/build-log.md`](docs/build-log.md); git is the record. Do not re-derive from this table. |
 | 076–093 | **The design-push + billing run.** New Architecture (076), motion vocabulary (077), design system (078), Paywall footer (080), backup warning (081), renewal date (082), cancel deep-link (083), the release build's simulation (084), the SDK probe (085), the OTA lane's empty key (086), the paid surface's reason (087), the purchase-overlay trap (088), restore-must-not-buy (089), the trial it cannot see (090), the pending escape (091), "nothing to restore" (092), the vanishing paywall (093). | mixed | ✅ **all code-complete, all shipped by OTA where the lane allowed, all archived** — specs in [`docs/build-log.md`](docs/build-log.md). ⚠️ **branch-only, never pushed.** ⚠️ **Code-complete is not proven** — 089/090 are proven on hardware, 092 is half proven, **091 has never been observed**; see WALK-19 |
 | 094–097 | **The 2026-09-07 walk-sitting fixes.** The Annual Recap's phantom "quietest" month (094), DeeperInsights at max font (095), the Paywall badge over the selected tick (096), the dev harness's two lying labels (097). | OTA | ✅ **all four code-complete, archived** in [`docs/build-log.md`](docs/build-log.md) — `085876a`, `3030bca`, `1e12cf7`, `7bced9f`, **1059 green / 95 suites** (was 1031 / 93), export clean. ⚠️ **NOT shipped — no OTA published for any of them.** ⚠️ **095 and 096 are accepted on a screen, not by the suite**: WALK-08 at max font and WALK-07 at `font_scale` 2.0 in both nav modes. 094 is pure logic and owes nothing runtime |
-| 098 | **The Annual Recap's Top moods bars start in one place.** `minWidth: 84` sizes the label column to its content, so equal counts draw unequal bars. | OTA | ⬜ **open — take this first.** Owner-filed from a screenshot, 2026-09-07. Pure reuse of IMP-067's `moodLabelWidth`; **no new design**. Accepted by the suite, **owes no walk** |
+| 098 | **The Annual Recap's Top moods bars start in one place.** `minWidth: 84` sizes the label column to its content, so equal counts draw unequal bars. | OTA | ✅ **code-complete, archived** in [`docs/build-log.md`](docs/build-log.md) — `edcea0b`, **1063 green / 96 suites** (was 1059 / 95), export clean. ⚠️ **NOT shipped — no OTA published.** Pure reuse of IMP-067's `moodLabelWidth`. Accepted by the suite, **owed no walk** |
 | 022 | Save as PDF + About sheet (the two dead You-tab buttons) | Build | ⏸ **deferred (owner)** — spec in build-log → "Deferred specs"; **perk #6 gate** |
 | 044 | R8 on release builds (dev client was shipping to the public) | Build | 🟢 **code-complete, UNWALKED.** R8 must be walked on the build you actually ship, so it rides **vc15 or later**; walk = WALK-12, on hardware, last in the sitting |
 | 057 | Historical `dayKey` migration | Build | 🔒 **reserved, not missing** — cannot be written until real device numbers come back from the dev panel's "Data health" reporter. See below |
@@ -200,6 +200,23 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
+_2026-09-08 (Sonnet — **IMP-098 built the day after it was scoped: the Annual Recap's Top moods bars now
+share one label width, reusing IMP-067's `moodLabelWidth`.**) — branch-only, NOT pushed._
+
+**What finished.** [`AnnualRecap.js`](src/screens/AnnualRecap.js) now reuses `moodLabelWidth` from
+`../insights/moodMixLayout`: the Top-moods label column is `width: labelW` (computed above the early
+return) instead of `minWidth: 84, flexShrink: 1` — no new constant, no shared component. New
+`__tests__/screens/AnnualRecap.test.js` (+4), verified red against the pre-fix tree first (3/4 failed).
+**1063 passed, 96 suites** (was 1059/95), export clean. Committed `edcea0b`. Spec archived to
+[`docs/build-log.md`](docs/build-log.md); [`docs/specs-open.md`](docs/specs-open.md) is empty again.
+⚠️ **Gotcha for next time:** `T` wraps its own `Text` (host `Text` → composite `T`), so the label column's
+`View` is **three** `.parent` hops above `view.getByText(mood)`, not one as the spec's example implied.
+
+**The exact next step.** No build queue left. **DeeperInsights.js:139** carries the identical `minWidth`
+defect ("Moods that travel together") and remains deliberately unscoped — an owner call, not a bug fix.
+Otherwise unchanged: IMP-094…098 are all committed and **unshipped** (OTA lane, no `eas update` published),
+and **WALK-07/WALK-08 still need a build that carries 095/096** before they can be re-run.
+
 _2026-09-07, later night (Opus — **an owner screenshot of the Annual Recap reopened the queue: IMP-098
 scoped, and it is IMP-067's defect on a screen IMP-067 never touched.**) — branch-only, NOT pushed._
 
@@ -228,44 +245,4 @@ purpose** — a pairing label is two mood names joined, so a fixed column trades
 comparable bar. That is an owner call, and the file also still owes WALK-08 from IMP-095. **It needs its own
 row once the owner decides.**
 
-**The exact next step.** A build chat takes **IMP-098** — the only ⬜ row, and the whole spec. Everything
-else is unchanged: IMP-094…097 are committed and **unshipped** (OTA lane, no `eas update` published), and
-**WALK-07 and WALK-08 still need a build that carries their fixes.** IMP-098 is OTA-lane too, so the
-cheapest order is to build it, then ship 094–098 in one update and walk 07/08 against that.
-
-_2026-09-07, night (Opus — **the whole walk-sitting queue built in one sitting: IMP-094, 095, 096 and 097
-all landed the day they were scoped. The build queue is empty; three of the four are unproven until someone
-looks at a screen.**) — branch-only, NOT pushed._
-
-**What finished.** All four open specs, in the queue's order, one commit each with the exact message its
-spec named: **IMP-094** (`085876a`) the Annual Recap's phantom "quietest" month, **IMP-095** (`3030bca`)
-DeeperInsights stacking at large font, **IMP-096** (`1e12cf7`) the savings badge off the selected tick,
-**IMP-097** (`7bced9f`) the harness's two lying labels. **1059 passed, 95 suites** (was 1031 / 93), export
-clean. All four specs moved to [`docs/build-log.md`](docs/build-log.md);
-[`docs/specs-open.md`](docs/specs-open.md) is **empty again**.
-
-**The proof, and its shape.** Every new guard was run against the **pre-fix** tree and seen to fail — 4/4
-on IMP-094, 4/6 on IMP-095 (the other two are the no-op guards, which must pass both ways), 2/4 on
-IMP-096, the dev-label guard on IMP-097. That matters more than the count: three of these four defects are
-**invisible to jest**, so green without a prior red would have proven nothing.
-
-**Three things worth carrying.**
-
-1. ⚠️ **NOTHING IS SHIPPED.** All four are OTA-lane and **no `eas update` was published** — no phone has
-   any of this. Publishing is an owner decision and needs `--environment production`
-   ([`docs/playbook.md`](docs/playbook.md) → "Two OTA traps").
-2. ⚠️ **IMP-095 and IMP-096 are NOT proven and cannot be by the suite.** Jest cannot see a mid-word
-   "Septemb/er" wrap or two orange shapes merging. **WALK-08 (max font) and WALK-07 (`font_scale` 2.0,
-   both nav modes) must be re-run on a build carrying the fixes** — both walk rows now say so. IMP-094 is
-   the exception: pure logic, tests are the acceptance.
-3. ⚠️ **IMP-094 required changing an existing test, and the change IS the fix.** The old tie test asserted
-   `quietestMonth === 'May'` for a January–April journal — an empty month, the exact defect. It now
-   asserts March, with the reason in the test so it does not read as a loosened assertion. The two
-   build-side decisions the specs delegated (IMP-095's `>= 1.3` fallback, now `STACK_FONT_SCALE` beside
-   `bodyScale()` in `src/ui/textScale.js`; IMP-096 reserving the badge's height and capping it with the
-   existing `CHROME_FONT_SCALE`) are written up in the archived specs.
-
-**The exact next step.** **Both queues are now gated on a phone, not on a chat.** Either publish an OTA
-carrying 094–097 and re-run **WALK-08** and **WALK-07** at max font, or leave them committed and unshipped
-until the WALK-19 purchase sitting happens, then ship once. **WALK-12 (R8) stays last** — it must be walked
-on the exact build that ships, so any OTA or re-cut above invalidates an earlier R8 pass.
+**The exact next step.** *(Superseded by the note above — IMP-098 has since landed.)*

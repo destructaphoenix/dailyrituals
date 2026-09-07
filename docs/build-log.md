@@ -3632,6 +3632,43 @@ beyond that one guard.
 
 ---
 
+## IMP-098 — the Annual Recap's Top moods bars start in one place (2026-09-08)
+
+**Lane: OTA** (pure JS, no native surface). **From:** the owner, 2026-09-07, on a screenshot of the shipped
+Annual Recap. **This is IMP-067 finding (c), verbatim, on the screen IMP-067 did not touch.**
+
+✅ **Code-complete**, commit `edcea0b`, **1063 green, 96 suites** (was 1059/95), export clean. **NOT
+shipped** — no OTA published; joins IMP-094…097 unshipped on this branch. **Owes no walk** — unlike
+IMP-095/096 this defect is a style prop, not a glyph measurement, so jest sees it directly.
+
+**What was observed.** In Top moods, Grateful, Heavy and Hopeful all read **14** and drew three different
+bar lengths — Grateful, the longest name, got the shortest bar. [`AnnualRecap.js:86`](../src/screens/AnnualRecap.js#L86)
+gave the label column `minWidth: 84, flexShrink: 1`, a floor not a width, so the column sized to its
+content and every row's bar track started at a different x.
+
+**What landed.** Reused `moodLabelWidth(fontScale)` from [`src/insights/moodMixLayout.js`](../src/insights/moodMixLayout.js) —
+the exact fix IMP-067 already wrote for the identical row in `InsightsScreen`'s Mood Mix. No new constant,
+no shared component, no design. `AnnualRecap` now imports `useWindowDimensions` and `moodLabelWidth`,
+computes `labelW` above the `if (!recap) return null` early return, and the label column is
+`width: labelW` instead of `minWidth: 84, flexShrink: 1`. Nothing else in the row changed.
+
+**Left alone on purpose.** [`DeeperInsights.js:139`](../src/screens/DeeperInsights.js#L139) ("Moods that
+travel together", `minWidth: 120`) carries the same defect and was **deliberately not touched** — a pairing
+label is two mood names joined, so a fixed column trades a readable label for a comparable bar, which is an
+owner call this spec didn't make. It still owes WALK-08 from IMP-095.
+
+**Tests** — new `__tests__/screens/AnnualRecap.test.js`, +4. Mocks `useWindowDimensions` the same way
+`DeeperInsights.test.js` does. Verified to fail against the pre-fix tree first (3/4 red — the width, cap
+and source-assertion tests; the no-op counts/opacity guard correctly passed both ways). Asserts: at
+`fontScale` 1 every label column is `width: 96`; at 1.5 and 2.0 every column is capped at `144`; the source
+contains no `minWidth: 84`; the three counts still render `14` and the opacity ramp (`1 - i * 0.1`) is
+untouched. `T` wraps its own `Text` (host `Text` → composite `T`), so the label `View` is **three** levels
+up from `view.getByText(mood)`, not one — confirmed by inspecting the rendered tree.
+
+**Commit:** `fix(recap): Top moods bars start in one place (IMP-098)`
+
+---
+
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
 
 > Moved out of PROGRESS.md on 2026-07-31 to keep the live cursor lean once a second spec (IMP-032) opened. These are **not** finished work. If the owner revives one, lift the block back into PROGRESS.md as the ACTIVE TRACK.
@@ -3674,6 +3711,45 @@ beyond that one guard.
 ---
 
 ## Session notes (archived from PROGRESS.md)
+
+_2026-09-07, night (Opus — **the whole walk-sitting queue built in one sitting: IMP-094, 095, 096 and 097
+all landed the day they were scoped. The build queue is empty; three of the four are unproven until someone
+looks at a screen.**) — branch-only, NOT pushed._
+
+**What finished.** All four open specs, in the queue's order, one commit each with the exact message its
+spec named: **IMP-094** (`085876a`) the Annual Recap's phantom "quietest" month, **IMP-095** (`3030bca`)
+DeeperInsights stacking at large font, **IMP-096** (`1e12cf7`) the savings badge off the selected tick,
+**IMP-097** (`7bced9f`) the harness's two lying labels. **1059 passed, 95 suites** (was 1031 / 93), export
+clean. All four specs moved to [`docs/build-log.md`](docs/build-log.md);
+[`docs/specs-open.md`](docs/specs-open.md) is **empty again**.
+
+**The proof, and its shape.** Every new guard was run against the **pre-fix** tree and seen to fail — 4/4
+on IMP-094, 4/6 on IMP-095 (the other two are the no-op guards, which must pass both ways), 2/4 on
+IMP-096, the dev-label guard on IMP-097. That matters more than the count: three of these four defects are
+**invisible to jest**, so green without a prior red would have proven nothing.
+
+**Three things worth carrying.**
+
+1. ⚠️ **NOTHING IS SHIPPED.** All four are OTA-lane and **no `eas update` was published** — no phone has
+   any of this. Publishing is an owner decision and needs `--environment production`
+   ([`docs/playbook.md`](docs/playbook.md) → "Two OTA traps").
+2. ⚠️ **IMP-095 and IMP-096 are NOT proven and cannot be by the suite.** Jest cannot see a mid-word
+   "Septemb/er" wrap or two orange shapes merging. **WALK-08 (max font) and WALK-07 (`font_scale` 2.0,
+   both nav modes) must be re-run on a build carrying the fixes** — both walk rows now say so. IMP-094 is
+   the exception: pure logic, tests are the acceptance.
+3. ⚠️ **IMP-094 required changing an existing test, and the change IS the fix.** The old tie test asserted
+   `quietestMonth === 'May'` for a January–April journal — an empty month, the exact defect. It now
+   asserts March, with the reason in the test so it does not read as a loosened assertion. The two
+   build-side decisions the specs delegated (IMP-095's `>= 1.3` fallback, now `STACK_FONT_SCALE` beside
+   `bodyScale()` in `src/ui/textScale.js`; IMP-096 reserving the badge's height and capping it with the
+   existing `CHROME_FONT_SCALE`) are written up in the archived specs.
+
+**The exact next step.** **Both queues are now gated on a phone, not on a chat.** Either publish an OTA
+carrying 094–097 and re-run **WALK-08** and **WALK-07** at max font, or leave them committed and unshipped
+until the WALK-19 purchase sitting happens, then ship once. **WALK-12 (R8) stays last** — it must be walked
+on the exact build that ships, so any OTA or re-cut above invalidates an earlier R8 pass.
+
+---
 
 _2026-09-07, late (Opus — **IMP-093 written and landed the same day the walk found it. The build queue is
 empty again and everything now waits on an OTA plus a phone.**) — branch-only, NOT pushed._
