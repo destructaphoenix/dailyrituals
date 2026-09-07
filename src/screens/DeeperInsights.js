@@ -3,18 +3,25 @@
 // mood arrays. Presentational: reuses InsightsScreen's existing bar shapes.
 
 import React from 'react';
-import { View, Pressable, Text } from 'react-native';
+import { View, Pressable, Text, useWindowDimensions } from 'react-native';
 import { useTheme } from '../theme';
 import { T, Card } from '../ui';
 import { Sun } from '../icons';
 import { moodEmoji } from '../data';
 import { moodByWeekday, moodByMonth, moodPairings, hasEnoughFor } from '../insights/deeper';
+import { bodyScale, STACK_FONT_SCALE } from '../ui/textScale';
 
 const NOT_ENOUGH = 'Not enough days yet — this fills in as you write.';
 
 export default function DeeperInsights({ entries = [], onOpenPaywall, locked = false, customMoodEmoji = {} }) {
   const t = useTheme();
   const c = t.colors;
+  const { fontScale } = useWindowDimensions();
+  // IMP-095: at large font the month name wrapped mid-word inside its 84dp box
+  // and the third mood was ellipsised away. Above the threshold the row stacks
+  // — the same answer the You screen's rows reach — and below it nothing here
+  // changes at all.
+  const stackMonths = bodyScale(fontScale) >= STACK_FONT_SCALE;
 
   if (locked) {
     return (
@@ -98,14 +105,22 @@ export default function DeeperInsights({ entries = [], onOpenPaywall, locked = f
             <T w={600} color={c.muted} style={{ fontSize: 14, marginTop: 16 }}>{NOT_ENOUGH}</T>
           ) : (
             <View style={{ gap: 10, marginTop: 14 }}>
-              {months.map((m) => (
-                <View key={m.month} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                  <T w={700} color={c.ink} style={{ width: 84, fontSize: 13 }}>{m.month}</T>
-                  <T w={600} color={c.muted} numberOfLines={1} style={{ flex: 1, fontSize: 13 }}>
-                    {m.moods.slice(0, 3).map((x) => `${moodEmoji(x.m, customMoodEmoji)} ${x.m}`).join('  ·  ')}
-                  </T>
-                </View>
-              ))}
+              {months.map((m) => {
+                const line = m.moods.slice(0, 3).map((x) => `${moodEmoji(x.m, customMoodEmoji)} ${x.m}`).join('  ·  ');
+                return stackMonths ? (
+                  // stacked: the month name owns its own line, so it needs no
+                  // fixed width to wrap inside, and the moods get a second line
+                  <View key={m.month} style={{ gap: 2 }}>
+                    <T w={700} color={c.ink} style={{ fontSize: 13 }}>{m.month}</T>
+                    <T w={600} color={c.muted} numberOfLines={2} style={{ fontSize: 13 }}>{line}</T>
+                  </View>
+                ) : (
+                  <View key={m.month} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <T w={700} color={c.ink} style={{ width: 84, fontSize: 13 }}>{m.month}</T>
+                    <T w={600} color={c.muted} numberOfLines={1} style={{ flex: 1, fontSize: 13 }}>{line}</T>
+                  </View>
+                );
+              })}
             </View>
           )}
         </Card>
