@@ -5,11 +5,12 @@
 // IMP-021 deliberately deferred to "roadmap piece C". This is that piece.
 
 import React from 'react';
-import { View, ScrollView, Pressable, Text } from 'react-native';
+import { View, ScrollView, Pressable, Text, useWindowDimensions } from 'react-native';
 import { useTheme } from '../theme';
 import { T, Card } from '../ui';
 import { Chevron, Sun } from '../icons';
 import { moodEmoji } from '../data';
+import { moodLabelWidth } from '../insights/moodMixLayout';
 
 const MONTHS_ABBR = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -29,6 +30,8 @@ export default function AnnualRecap({ recap, onClose, insets, customMoodEmoji = 
   const t = useTheme();
   const c = t.colors;
   const fmt = (n) => n.toLocaleString();
+  const { fontScale } = useWindowDimensions();
+  const labelW = moodLabelWidth(fontScale);
 
   if (!recap) return null;
 
@@ -83,7 +86,7 @@ export default function AnnualRecap({ recap, onClose, insets, customMoodEmoji = 
             <View style={{ gap: 13 }}>
               {recap.topMoods.map((x, i) => (
                 <View key={x.m} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                  <View style={{ minWidth: 84, flexShrink: 1, flexDirection: 'row', alignItems: 'center', gap: 7 }}>
+                  <View style={{ width: labelW, flexDirection: 'row', alignItems: 'center', gap: 7 }}>
                     <Text style={{ fontSize: 15 }}>{moodEmoji(x.m, customMoodEmoji)}</Text>
                     <T w={700} color={c.ink} numberOfLines={1} style={{ fontSize: 13.5, flexShrink: 1 }}>{x.m}</T>
                   </View>
