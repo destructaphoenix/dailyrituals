@@ -44,7 +44,12 @@ jobs:
       - uses: actions/setup-node@v4
         if: steps.detect.outputs.lane != ''
         with:
-          node-version: 20
+          # Node 24, not 20: eas-cli 23.2.0 pulls @oclif/plugin-autocomplete@3.3.0,
+          # which declares engines.node >=22, so `eas-version: latest` cannot
+          # install on 20 at all (2026-09-08 — the IMP-099 OTA died here). Node 20
+          # is also deprecated on GitHub runners. Keep this >=22 for as long as
+          # eas-version is `latest`, which by definition moves under us.
+          node-version: 24
           cache: npm
 
       - name: Install deps
@@ -64,7 +69,12 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # Node 24, not 20: eas-cli 23.2.0 pulls @oclif/plugin-autocomplete@3.3.0,
+          # which declares engines.node >=22, so `eas-version: latest` cannot
+          # install on 20 at all (2026-09-08 — the IMP-099 OTA died here). Node 20
+          # is also deprecated on GitHub runners. Keep this >=22 for as long as
+          # eas-version is `latest`, which by definition moves under us.
+          node-version: 24
           cache: npm
       - run: npm ci
       - uses: expo/expo-github-action@v8
@@ -100,7 +110,12 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # Node 24, not 20: eas-cli 23.2.0 pulls @oclif/plugin-autocomplete@3.3.0,
+          # which declares engines.node >=22, so `eas-version: latest` cannot
+          # install on 20 at all (2026-09-08 — the IMP-099 OTA died here). Node 20
+          # is also deprecated on GitHub runners. Keep this >=22 for as long as
+          # eas-version is `latest`, which by definition moves under us.
+          node-version: 24
           cache: npm
       - run: npm ci
       - uses: expo/expo-github-action@v8
