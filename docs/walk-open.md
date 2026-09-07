@@ -57,24 +57,54 @@ harness** (`__DEV__` false, no Metro), so **T1, T2 and T3 do not exist on it**:
 | Needs the **local debug APK** (harness) | Runs on the **Play `internal`** build |
 | --- | --- |
 | **WALK-13** (T2 → Notify, to fire a reminder minutes out) | **WALK-12** — and it *must* be this build |
-| **WALK-03 step 4** (`staleBackup` / `neverBackedUp` scenarios) | **WALK-19**, WALK-03 steps 1-3 + 5 |
+| ~~WALK-03 step 4~~ — **closed 2026-09-07**, nothing owed | **WALK-19** (the only row still needing this build) |
 
 **They cannot coexist** — same `applicationId`, different signing keys, so swapping means uninstall, which
 wipes data. **Export a backup first**; that export *is* WALK-03 step 1, so sequence the sitting to get it free.
 
 ### What is actually left
 
+**After the 2026-09-07 emulator sitting, only three rows have live work — and two of them need a phone.**
+
 - **WALK-19** — the only 🚦 with live work in it. Steps 3 and 4a are **proven, do not re-run them**. Owed:
   **4c** (blocked on IMP-093 reaching the phone), the **aeroplane-mode Restore check** (IMP-092's second
   half — one tap, unrun), and steps **4b, 4d–4f, 5–10** in full, which need a real purchase attempt.
-- **WALK-07 (Paywall half only)** and **WALK-03 step 4 (`neverBackedUp`, at default *and* max font)** —
-  both unblocked since IMP-080/081 landed 2026-09-05, both pure JS, both ready on a debug build of this branch.
-- **WALK-11** — reopened; `PLUS_ENABLED = true` so the perk surfaces mount on their own, no T1 dance.
-- **WALK-08 — partial.** Eight of its nine named screens, the `longName` scenario and rotation are unrun.
 - **WALK-18** — needs a **mid-range device**; an emulator renders dropped frames as smooth, which is the
   thing being judged, and the jest Reanimated mock no-ops every hook.
 - **WALK-12 (R8) — last, and it cannot move.** R8 runs at build time, so it must be walked on the exact
   build you intend to ship: any fix an earlier walk turns up invalidates an R8 pass taken before it.
+- **WALK-08 — one item only.** Everything else in it is now walked; it stays open purely for the
+  DeeperInsights max-font defect below. Two of its listed items turned out to be unwalkable and should
+  be struck (`TipCard` deleted by IMP-075; landscape rotation impossible — the app is portrait-locked).
+
+**Closed on 2026-09-07 (emulator, agent-run):** WALK-03 ✅, WALK-07 ✅, WALK-11 ✅. All three were
+"ready to re-run" rows whose fixes had landed and never been looked at.
+
+### 🔴 Four defects came out of the 2026-09-07 sitting — all need scoping as `IMP-xxx`
+
+None were fixed: a walk records, it does not repair.
+
+1. **Annual Recap names a zero-entry month as "quietest."** The 2025 recap of a journal whose first entry
+   is 6 Jun reports **QUIETEST MONTH = January** — a month that predates the journal. Cause confirmed in
+   source: [`annualRecap.js:42-49`](../src/recap/annualRecap.js#L42-L49) `extremesByMonth` scans all twelve
+   buckets including empty ones and keeps the earliest on ties while scanning Jan→Dec. **This hits every
+   user's first annual recap**, which is the most common case this feature has. Busiest month is correct;
+   only the quietest side is wrong. Fix direction: restrict the search to months at/after the first entry,
+   consistent with how the heatmap already treats pre-first-entry days
+   ([`InsightsScreen.js:229`](../src/screens/InsightsScreen.js#L229)).
+2. **DeeperInsights "Moods by season" breaks at max font.** Month names wrap mid-word — "Septemb/er",
+   "Novemb/er", "Decemb/er" — and the third mood in every row is ellipsised away. Cause confirmed in
+   source: [`DeeperInsights.js:103`](../src/screens/DeeperInsights.js#L103) hardcodes `width: 84` on the
+   month label so the box cannot grow with the text, and line 104 puts `numberOfLines={1}` on the mood
+   list. **Same family as IMP-067** (hardcoded `numberOfLines`, `minWidth` instead of `width`) — a fixed
+   dimension that ignores font scale. Fine at default font.
+3. **Paywall "SAVE 50%" badge overlaps the selected checkmark at max font.** Clean at default font; at 2.0
+   the badge covers the top of the Annual card's checkmark and, both being orange, they read as one blob.
+   Cosmetic — the plan stays selectable.
+4. **Dev-panel rot (not shipped, but misleading):** `LaunchSection` still renders the heading
+   "PLUS (DEV-LOCAL — APP SHIPS FREE, PLUS_ENABLED STAYS FALSE)" and T1 in this file still says
+   `PLUS_ENABLED = false`. It has been `true` since `7d2e515`. Also `DevPanel`'s "Last backup" stepper
+   pushes its value and `+` control off-screen at max font.
 
 **Closed, and not to be re-derived:** WALK-16 ✅ and WALK-17 ✅ (2026-09-05, **on emulator evidence at the
 owner's instruction** — the `device`-≠-`emulator` rule was knowingly set aside for those two). WALK-09 ✅,
@@ -94,16 +124,16 @@ delivery to a real share target, and Google's own backup schedule have never bee
 | WALK-05 | 🚦 | [Edit a past day, delete, trash allowance](build-log.md#walk-05--custody-of-your-words) | IMP-036, IMP-048 | emulator | 👤 | ✅ **2026-08-15** — full pass; the outstanding `applyCompletion` half confirmed no double-counting; detail in `build-log.md` → "Walk log" |
 | WALK-04 | 🎨 | [Search + the write flow's moods](build-log.md#walk-04--search--moods) | IMP-035, IMP-037, **IMP-053** | emulator | 👤 | ✅ **2026-08-16** — full pass on the third re-run (after IMP-069/070/071 landed); two more defects found and fixed live as IMP-072; detail in `build-log.md` → "Walk log" |
 | WALK-13 | 🚦 | [The reminder you can answer](#walk-13--the-reminder-you-can-answer) | IMP-054, **+ the duplicate-fire fix** | **device** (OEM behaviour + real doze) | 👤 | ⏸ **DROPPED from this pass — owner's instruction, 2026-09-05.** Not run, not failed. IMP-054 and `b773352` remain unproven on any running app. The row stays here because the debt is real; it reopens whenever the owner wants it. |
-| WALK-03 | 🚦 | [JSON export → share → restore round trip](#walk-03--json-export-round-trip) | IMP-020, IMP-043 | **device** (share-sheet targets) | 👤 | ❌ **2026-09-05 (emulator, agent-run) — steps 1, 2, 3 and 5 all pass; step 4 fails on one of its two cases.** Export → share sheet → well-formed envelope ✅; the IMP-033 two-systems toast ✅; reset → restore → everything returns ✅; truncated file → clean *"That file isn't readable as a backup."*, no crash ✅. **`staleBackup` card ✅ but `neverBackedUp` truncated mid-word** — **✅ IMP-081 LANDED 2026-09-05** (archived to `build-log.md`): `numberOfLines` 2 → 3, row top-aligned. **READY TO RE-RUN: step 4 only, `neverBackedUp` scenario, at default AND max font scale** — max font is where the third line actually gets tested, and default alone would pass vacuously. Pure JS, so a debug build of the branch carries it. Delivery to a real share target stays unexercised. |
+| WALK-03 | 🚦 | [JSON export → share → restore round trip](build-log.md#walk-03--json-export-round-trip) | IMP-020, IMP-043 | **device** (share-sheet targets) | 👤 | ✅ **2026-09-07 — CLOSED (emulator, agent-run).** Step 4 re-run after IMP-081 and it holds at **both** font scales: `neverBackedUp` reads in full over two lines at default and over **three** at max font — the third line IMP-081 added is genuinely exercised, not vacuous. `staleBackup` re-checked at max font too (shared component) and is complete. Steps 1, 2, 3 and 5 already passed 2026-09-05. ⚠️ **Named gap, and an emulator cannot close it:** delivery to a real share *target* stays unexercised. Detail in `build-log.md` → "Walk log" |
 | WALK-12 | 🚦 | [The R8 release-variant pass](#walk-12--the-r8-release-variant-pass) | IMP-044 | **device** | 👤 | ⬜ — **the last 🚦, and it cannot move: R8 must be walked on the exact build you intend to ship.** ✅ **That build now exists: v1.0.7 / vc13 on Play `internal`** (2026-09-05) — install it from Play and walk this row **last**, after every other row has cleared, because any re-cut build invalidates a pass taken before it. Failure is silent |
 | WALK-06 | 🎨 | [Streak insurance — candles spend themselves](build-log.md#walk-06--streak-insurance) | IMP-039, IMP-063, IMP-064 | emulator | 👤 | ✅ **2026-08-16** — full pass, re-run after IMP-063 + IMP-064 landed; detail in `build-log.md` → "Walk log" |
-| WALK-07 | 🎨 | [Modal screens actually scroll](#walk-07--modal-scroll) | IMP-042 | emulator | 👤 (visual, two nav modes) | ❌ **2026-08-16 (whole-walk re-run, reopened again)** — the five other screens + both IMP-067 spot-checks all pass, both nav modes, max font. **Paywall still fails after IMP-074** — footer overlaps the plan selector + disclaimer from first open, both fix-halves confirmed present in code. **✅ IMP-080 LANDED 2026-09-05** (archived to `build-log.md`) — the footer left the flex column for `position: absolute, bottom: 0` and the root took an exact `height: winH`. **READY TO RE-RUN: the Paywall half only.** Pure JS, so a debug build of `feat/design-push` carries it. ⚠️ **Jest cannot close this row** — it renders a tree, not pixels, and cannot see an overlap; the added regression test says so in a comment. Needs T1 |
-| WALK-08 | 🎨 | [Font scale + layout on the nine new screens](#walk-08--font-scale) | IMP-030 regression | **device** (real font metrics) | 👤 | 🟠 **PARTIAL — 2026-09-05 (emulator, agent-run).** Cap confirmed biting: OS `font_scale` 2.0 clamps to `MAX_FONT_SCALE` 1.5 body / `CHROME_FONT_SCALE` 1.2 chrome, and **the app must be restarted for a scale change to take** (RN reads it at startup — a live change moves system UI only, which reads exactly like a passing cap and is not one). Clean at max font: Home, Insights, Reflections + `ArchiveFilters`, You (rows auto-stack), achievements + shop sheets. ⚠️ **Still unrun: `TrashSheet`, `DeeperInsights`, `AnnualRecap`, `AnnualRecapCard`, `PlusPerks` (needs T1), `TipCard`, `RestoreOffer`, `OnThisDayCard`; the `longName` scenario; landscape rotation.** |
+| WALK-07 | 🎨 | [Modal screens actually scroll](build-log.md#walk-07--modal-scroll) | IMP-042 | emulator | 👤 (visual, two nav modes) | ✅ **2026-09-07 — CLOSED (emulator, agent-run).** The Paywall half re-run after IMP-080 and it **passes in all four combinations**: default+gesture (first open AND after selecting a plan), max+gesture, max+3-button, default+3-button. Footer sits below its divider, the plan selector and the IMP-043 line are fully visible, content scrolls to the plan selector and clears both footer and nav bar. The 2026-08-16 first-open overlap is gone. The other five screens passed 2026-08-16. 🔴 **One NEW max-font-only defect found: the "SAVE 50%" badge on the Annual card overlaps the top of the selected-state checkmark** (clean at default font). Cosmetic, does not block purchase — needs an `IMP-xxx` |
+| WALK-08 | 🎨 | [Font scale + layout on the nine new screens](#walk-08--font-scale) | IMP-030 regression | **device** (real font metrics) | 👤 | 🟠 **PARTIAL → nearly closed, 2026-09-07 (emulator, agent-run).** Everything previously unrun has now been walked at OS `font_scale` 2.0, **except two items that turned out to be unwalkable.** Harness Inspect confirms the cap bites: **font scale 2, caps 1.5 body / 1.2 chrome.** **Clean at max font:** `TrashSheet` (empty *and* with a real deleted day — date, preview, Restore/Delete forever side by side), `AnnualRecap`, `AnnualRecapCard`, `PlusPerks`, `RestoreOffer`, `OnThisDayCard`, plus the `longName` (40-char) scenario across Home (greeting wraps to 3 lines) and You (wraps 2 lines then ellipsises in the profile header — bounded, not a collapse). 🔴 **`DeeperInsights` FAILS at max font** — see the new defect below. ⏭ **`TipCard` cannot be walked — it no longer exists** (IMP-075 deleted the tip cards, `11fa421`; `grep -rc TipCard src/` is empty). ⏭ **Landscape rotation cannot be walked — the app is hard-locked to portrait** (`app.config.js:6` `orientation: portrait` **and** `AndroidManifest.xml:20` `screenOrientation="portrait"`); the device rotated and the app window stayed `port`. **Both items should be struck from this row, not carried as debt.** This row stays open only for the DeeperInsights fix |
 | WALK-09 | 🎨 | [Lifetime heatmap's four states + the XP line](build-log.md#walk-09--lifetime-heatmap--closed-2026-09-05-emulator-owner-run) | IMP-045, **IMP-073** | emulator | 👤 (visual) | ✅ **2026-09-05** — full pass on the re-run after IMP-073; all three 2026-08-16 defects fixed, re-confirmed at max font. **`not yet started` was not exercised** (fixture has no pre-first-entry days) and the walk was closed with that gap recorded; detail in `build-log.md` → "Walk log" |
 | WALK-10 | 🎨 | [Tips, explainers, empty states](build-log.md#walk-10--teach-the-app) | IMP-041 | emulator | 👤 | ✅ **2026-08-16** — full pass, all 4 steps; owner decided live to drop the tip cards anyway, reserved as **IMP-075**; detail in `build-log.md` → "Walk log" |
 | WALK-14 | ⏭ | [TalkBack can write an entry](build-log.md#-walk-14--talkback-can-write-an-entry--dropped-2026-08-16-owners-call-section-moved-here-2026-08-17) | IMP-059 | **device** | 👤 | ⏭ — **dropped 2026-08-16** per owner; section archived to `build-log.md` → "Walk log". Reopen trigger: an accessibility complaint, or institutional Plus buyers |
 | WALK-15 | ✅ | [Store screenshots regenerate](build-log.md#walk-15--store-screenshots-regenerate--closed-2026-08-16-emulator-agent-run-owners-call) | IMP-061 | emulator | 🤖 mostly | ✅ **2026-08-16 — closed at owner's call.** `npm run shots` green end to end, seven Play-legal assets committed; steps 1–3 + 7 passed, **4–6 accepted unrun**; detail in `build-log.md` → "Walk log" |
-| WALK-11 | 🎨 | [The Plus surfaces](#walk-11--the-plus-surfaces) | IMP-038, 046, 047, 043 | emulator | 👤 | ⬜ — **REOPENED 2026-09-05. The reason it was skipped is gone:** `PLUS_ENABLED = true` (commit `7d2e515`), so these surfaces now mount on their own and **no T1 revert dance is needed.** Walkable on a debug build of `feat/design-push`. Covers the four *perks* (On this day, Annual Recap, Deeper insights, restores); the *purchase* half is **WALK-19**, which is a different row on a different build |
+| WALK-11 | 🎨 | [The Plus surfaces](build-log.md#walk-11--the-plus-surfaces) | IMP-038, 046, 047, 043 | emulator | 👤 | ✅ **2026-09-07 — CLOSED (emulator, agent-run), items 1-5, both Plus states.** **1 On this day:** real year-match card, tapping opens the Reading sheet **and ticks the revisit rite**, dismiss suppresses for today only and it **returned the next day** after a clock advance. **2 Deeper Insights:** below threshold all three cards say "Not enough days yet"; above threshold weekday + season draw real charts. **3 Annual Recap:** 10-entry journal offers nothing ("After your first year"); 460-entry journal lists 2025, the running year is not offered; the December Home card appears and its dismissal **persists across relaunch** while On this day does not — the two lifetimes are correctly different. **4 Paywall:** sim prices resolve, IMP-043 line present. **5 Restore purchases:** present when `!plus`, gone and replaced by "Member / Manage" when `plus`. **Item 6 NOT RUN — obsolete by configuration:** `PLUS_ENABLED` has been permanently `true` since `7d2e515`, so the free-build path it checks no longer ships. 🔴 **NEW defect: Annual Recap names a zero-entry month as "quietest"** — see below |
 | WALK-16 | 🚦 | [The New Architecture cold start](build-log.md#walk-16) | IMP-076 | **device** (native runtime) | 👤 | ✅ **2026-09-05 — closed on emulator evidence at owner's instruction.** All 7 steps exercised across two agent-run sittings (1-3 New Arch live: Bridgeless + Fabric + TurboModule; 4-7 storage / notification scheduling / export-share-reimport / Auto Backup via T5 with the quarantine offering not imposing). **Owner's call 2026-09-05: emulator results are recorded as done, not smoke.** ⚠️ **Named gap — never exercised anywhere:** real doze, OEM battery managers, delivery to a real share target, Google's own backup schedule. **Unblocks IMP-077.** |
 | WALK-17 | 🚦 | [Edge-to-edge, re-audited under New Arch](build-log.md#walk-17) | IMP-076, IMP-027 regression | **device** | 👤 (visual) | ✅ **2026-09-05 — emulator, agent-run.** All four tabs clean under status bar + gesture bar in **both** day and night; bottom nav and write-FAB correct in **both** gesture and 3-button nav; onboarding + setup also clean. Sheets checked: trash, achievements, shop — the last two at night **and** max font. ⚠️ **Not opened: write flow, reading sheet, mood manager.** |
 | WALK-18 | 🎨 | [The app moves](#walk-18--the-app-moves) | IMP-077 | **device** (mid-range, real frame pacing) | 👤 (visual) | ⬜ — **branch-only. UNBLOCKED 2026-09-05: WALK-16 closed and IMP-077 landed.** ✅ **The build now exists: v1.0.8 / vc14 shipped to Play `internal` 2026-09-05 19:09** (EAS `87f81b24…`, submission `4b7cf3a2…`, from commit `6590834`). IMP-077 added `react-native-reanimated` + `react-native-worklets` (native deps), so **neither vc13 artifact carries this code** — install vc14 from Play, not an older APK. **An emulator cannot settle this row** — it renders dropped frames as smooth, which is the thing being judged. The jest suite is blind here too: the Reanimated mock no-ops every hook |
@@ -113,11 +143,19 @@ delivery to a real share target, and Google's own backup schedule have never bee
 
 ## Techniques — read once, several walks need these
 
-**T1 · Plus surfaces are invisible by default.** `PLUS_ENABLED = false`
-([`src/billing/config.js:39`](../src/billing/config.js#L39)) makes IMP-038/046/047, the "What's in Plus"
-sheet and trash-restore **unmountable** — not locked, absent. Flip it to `true` for the walk and
-**revert before committing anything**. With no `RC_ANDROID_KEY` locally you get the simulation purchase
-service, which is what you want.
+**T1 · ~~Plus surfaces are invisible by default~~ — NO LONGER TRUE, and there is no flip to do.**
+`PLUS_ENABLED` has been **`true`** since 2026-09-05 (`7d2e515`,
+[`src/billing/config.js:57`](../src/billing/config.js#L57)), so IMP-038/046/047, the "What's in Plus"
+sheet and trash-restore all **mount on their own**. Any walk step that says "flip T1 and revert after" is
+stale — do nothing. *(`LaunchSection.js` still prints the old "PLUS_ENABLED STAYS FALSE" heading in the
+dev panel; that is cosmetic rot, scoped 2026-09-07.)*
+
+**T1b · The store you get locally, and the trap in it.** With **no** `RC_ANDROID_KEY` you get the
+simulation purchase service — fake prices that render, which is what paywall walks want. **But a
+populated `.env` defeats this:** if `RC_ANDROID_KEY` is set, the app talks to the real RevenueCat, and an
+emulator without Play Billing answers `BILLING_UNAVAILABLE` — **no offerings, so no prices and no plan
+selector**, which makes any paywall layout check pass vacuously. If you need the sim service, comment the
+key out of `.env` and **restart Metro** (the value is baked at bundle time), then put it back afterwards.
 
 **T2 · The dev harness.** You tab → **long-press the "v1.0" version row**
 ([`YouScreen.js:284`](../src/screens/YouScreen.js#L284)). Sections: State (knobs + scenario presets),
@@ -145,158 +183,61 @@ harness** (`__DEV__` false) and no Metro.
 
 ---
 
-## WALK-03 — JSON export round trip
-
-**Covers:** IMP-020, plus IMP-043's backup-health copy. **Target: device** (real share-sheet targets).
-**🚦 Gates the release build** — this is the user's only way to get their words out of the app.
-
-1. You → **"Back up my journal"** → the share sheet appears → save the file out.
-2. The success toast says plainly that this export and the Google Auto Backup are **separate systems** and
-   neither refreshes the other (the IMP-033 copy fix).
-3. Reset all data → **"Restore from a backup"** → pick that file → everything returns.
-4. Harness → `staleBackup` (42d) and `neverBackedUp` scenarios → the "Your journal is safe" card shows the
-   right warning line for each.
-5. Restore a deliberately corrupt file (truncate the JSON in a text editor) → a clean *"That backup file
-   looks damaged"* message, **not** a crash. *(Note: this is the surface IMP-049 hardens — expect the
-   envelope-level rejection to work today and shape-level damage to slip through until IMP-049 lands.)*
-
-**Result — ❌ 2026-09-05 (emulator, agent-run; v1.0.7 / vc13 debug APK, `sdk_gphone16k_arm64`, API 36).**
-Four of the five steps pass and one fails on half its cases. **Step 1:** `Back up my journal` wrote
-`daily-rituals-2026-09-05.json` and opened the real Android share sheet (Quick Share / Drive / Gmail
-resolved); the envelope pulled off the device is well-formed — `format: daily-rituals-backup`,
-`appVersion: 1.0.7`, `counts: {entries: 5, days: 5}`, payload a stringified state. **Step 2:** the toast
-reads *"Backup ready — save it somewhere off this phone. This doesn't update your Google backup."* — the
-IMP-033 copy, saying plainly that the two systems are separate; the row flipped to "Backed up today" and
-the health nudge cleared. **Step 3:** `Reset all data` → onboarding → skip → restore `dr-good.json` → the
-confirm read *"This backup has 5 entries. It will replace what's on this phone now (0 entries)."* and the
-data came back exactly (5-day streak, Lv 3 Contemplative, rites 20/30, 5 entries / 32 words). **Step 5:**
-a file truncated to 1200 bytes was rejected with *"That file isn't readable as a backup."* — a toast, not
-a crash, exactly the envelope-level rejection this walk predicted would work today.
-
-**Step 4 is the failure, and only on one of its two cases.** `staleBackup` (42d) is correct: the row reads
-"Backed up 42 days ago — back up again soon" and the warning reads in full, over two lines. `neverBackedUp`
-truncates mid-word — *"…there's nothing to bring ba…"* — **at default font scale**, and worse at max
-(*"there's nothing t…"*). Cause found in the file, not guessed:
-[`BackupNudge`](../src/screens/YouScreen.js#L316) clamps at `numberOfLines={2}` and the `never` string is
-97 chars against `stale`'s 62. **Scoped 2026-09-05 as [`IMP-081`](specs-open.md).** Re-run **step 4 only**
-once it lands, at both font scales.
-
-**Unexercised, and an emulator cannot settle it:** delivery to a real share *target*. The sheet resolves
-targets and hands off; nothing on this machine receives the file.
-
-
----
-
-## WALK-07 — modal scroll
-
-**Covers:** IMP-042, and the four follow-up viewport-cap commits (`306a0bc`, `d9b7bc0`) that treated it as
-an Android modal-measure race rather than the original static theory.
-
-Each of **Achievements · Shop · Reading sheet · Get Embers · Manage Subscription** must scroll to its last
-card, with the last card clearing the system nav bar. Check with **gesture nav and 3-button nav** (different
-inset heights) and again at max font size, which is where the overflow is worst. Paywall was deliberately
-left alone — confirm its fixed footer still sits correctly.
-
-**Result — ❌ 2026-08-15.** Achievements, Shop, Reading sheet and Get Embers all passed in both nav modes,
-at normal and max (2.0x) OS font scale. Manage Subscription also passed — its content is short enough it never
-needed to scroll to the nav bar. The font-scale cap itself is confirmed working (`PixelRatio.getFontScale()`
-read `2.0` against the `1.5`/`1.2` caps, nothing broken on the four passed screens). One real defect and two
-bonus defects surfaced, written up in full (with file:line) in `PROGRESS.md` → Open items → "WALK-07 finding":
-(a) Paywall's fixed footer overlaps its own content (plan amount + last perk bullets) even at normal font
-size — the `ScrollView` above the footer is never given `flex: 1`, so it doesn't yield space to the footer;
-(b) Annual Recap's teaser description on the You tab truncates at max font because `Row.js` hardcodes
-`numberOfLines={1}`; (c) Mood Mix bars in Insights misalign depending on mood-name length, at any font size —
-the label column uses `minWidth` instead of a fixed `width`. (a) blocks the Paywall half of this walk from
-being called a pass; (b) and (c) were found incidentally and don't block the passed screens. Each needs a new
-`IMP-xxx` — Opus's lane to scope, not this walk's. **T1 (`PLUS_ENABLED`) was reverted to `false` after this
-walk — confirmed in `src/billing/config.js:39` before anything else touches this file.**
-
-**Re-run — ❌ 2026-08-16 (Paywall only; T1 flipped for the session).** (b) and (c) landed as IMP-067 —
-not yet re-checked this session. (a)'s fix, IMP-068 (`style={{ flex: 1 }}` on the `ScrollView`), turned out
-incomplete: on first opening Paywall the footer is missing entirely (not just overlapping) — Android's modal
-`Dialog` doesn't know its window size on the first measure pass, so `flex: 1` alone bounds nothing, same trap
-`Shop.js:23-29` already documents. Selecting a plan triggers the correcting layout pass, and the footer
-reappears **still overlapping** the price and perks, same as before IMP-068. Full root-cause writeup and the
-fix `Shop.js` already uses (`maxHeight: winH` via `useWindowDimensions`) in `build-log.md` → "WALK-07
-finding" (reopened). **Scoped 2026-08-16 as `IMP-074`** (`docs/specs-open.md`) — it keeps IMP-068's
-`flex: 1` and adds `maxHeight: winH` as the second half; both are needed. **Walk paused here at the owner's
-call** — the other five screens' nav-mode/font-scale checks and the IMP-067 spot-check were not re-run this
-session, so the re-run after IMP-074 is a **whole-walk** re-run, not a Paywall-only one.
-
-**Re-run — 🟡 2026-08-16 (whole walk, later the same day; T1 flipped for the session, reverted after).**
-Achievements, Shop, Reading sheet, Get Embers and Manage Subscription all passed again — both nav modes
-(gesture and 3-button), and at max (2.0x) OS font scale, no regressions. Both IMP-067 spot-checks also passed:
-the Annual Recap teaser on You wraps instead of truncating at max font, and Mood Mix bars in Insights stay
-aligned regardless of label length. **Paywall still fails — IMP-074 did not fix it.** On first open, normal
-font size, gesture nav: the fixed footer overlaps the plan-selector row (annual/monthly) and the "Your journal
-lives on your device" line from the very first frame the owner saw — not the delayed-then-correcting layout
-pass IMP-074's writeup described, wrong immediately instead. Confirmed in code that both IMP-074 fix-halves
-are present and unchanged — `maxHeight: winH` on the root `View` ([`Paywall.js:40`](../src/screens/Paywall.js#L40))
-and `flex: 1` on the inner `ScrollView` ([`Paywall.js:56`](../src/screens/Paywall.js#L56)) — so this is the
-fix not holding, not an unshipped fix. The plan selector stays tappable underneath the overlap, so a purchase
-can still be started; this is a layout defect, not a blocked flow. The owner raised an alternative design
-live: don't render the footer at all until a plan is picked, then let the page grow to fit it, rather than
-reserving space for it up front — a real option for the next spec to weigh, not decided here. **Re-opened as
-a WALK-07 finding below — needs Opus to scope a new `IMP-xxx`.** T1 reverted to `false` after this session,
-confirmed in [`src/billing/config.js:39`](../src/billing/config.js#L39).
-
----
-
 ## WALK-08 — font scale
 
-**Covers:** IMP-030 regression across the nine screens that did not exist when it was walked:
-`ArchiveFilters`, `TrashSheet`, `DeeperInsights`, `AnnualRecap`, `AnnualRecapCard`, `PlusPerks`, `TipCard`,
-`RestoreOffer`, `OnThisDayCard`.
+**Covers:** IMP-030 regression across the screens that did not exist when it was walked.
 
 Emulator → Settings → Display → **font size max + display size largest**. No row may collapse to a
-one-character-per-line column; rows auto-stack. Also run the harness `longName` scenario (40 chars) across
-Home / You / Recap, and rotate each new sheet to landscape. Harness → Inspect shows
-`PixelRatio.getFontScale()` next to `MAX_FONT_SCALE` / `CHROME_FONT_SCALE` — confirm the cap is biting.
-
-**Result — 🟠 PARTIAL, 2026-09-05 (emulator, agent-run).** The cap is real and biting: with OS `font_scale`
-at 2.0, app text renders at `MAX_FONT_SCALE` 1.5 and chrome at `CHROME_FONT_SCALE` 1.2
-([`src/ui/textScale.js`](../src/ui/textScale.js)) — tab labels stay small while body text grows.
+one-character-per-line column; rows auto-stack. Harness → Inspect shows `PixelRatio.getFontScale()` next
+to `MAX_FONT_SCALE` / `CHROME_FONT_SCALE` — confirm the cap is biting.
 
 **One trap worth more than the result.** React Native reads the font scale **at startup**. Changing
 `font_scale` under a running app moves the system UI immediately and the app not at all — which looks
-exactly like a correctly-clamping cap and is not. The app must be force-stopped and relaunched (and for
-build B, re-attached to Metro) before any measurement here means anything. The first pass of this walk was
-read wrong for precisely that reason before the relaunch corrected it.
+exactly like a correctly-clamping cap and is not. The app must be force-stopped and relaunched before any
+measurement here means anything.
 
-**Clean at max font:** Home (hero, rites, "No candles…" wrapping to two lines), Insights, Reflections
-including `ArchiveFilters` (mood chips scroll horizontally as designed, From/To stay side by side), You —
-where rows auto-stack rather than collide ("Writing prompts / Everyday", "About Daily Rituals / v1.0").
-Achievements and shop sheets also clean at max font. No row anywhere collapsed to one character per line.
+**Result — 🟠 2026-09-05 (emulator, agent-run), extended 2026-09-07 (emulator, agent-run).**
 
-⚠️ **Still unrun and this row stays open for them:** `TrashSheet`, `DeeperInsights`, `AnnualRecap`,
-`AnnualRecapCard`, `PlusPerks` (needs T1), `TipCard`, `RestoreOffer`, `OnThisDayCard`; the harness
-`longName` (40-char) scenario across Home / You / Recap; landscape rotation of each new sheet; and the
-harness Inspect readout of `PixelRatio.getFontScale()` against the two caps.
+**2026-09-05 pass:** cap confirmed biting; clean at max font on Home, Insights, Reflections +
+`ArchiveFilters`, You, achievements and shop sheets.
 
+**2026-09-07 — everything that was still unrun has now been walked, and two items turned out to be
+unwalkable.** Harness → Inspect reads **Font scale 2**, **Font scale cap (body / chrome) 1.5 / 1.2**,
+window 427×952, insets `{top:52, bottom:48}` — the cap is biting, measured rather than inferred.
 
----
+**Clean at max font (2.0), 3-button nav:**
+- `TrashSheet` — both states. Empty: title, 30-day explainer and the Plus line all wrap, nothing clipped.
+  **Populated with a really-deleted day** (deleted via the Reading sheet so the state was genuine, not
+  faked): date, preview text and the **Restore / Delete forever** buttons sit side by side without
+  collision.
+- `AnnualRecap` — title wraps to two lines, the four stats stack 2×2, mood bars stay aligned, and the
+  page scrolls until the last card clears the nav bar.
+- `AnnualRecapCard` and `OnThisDayCard` on Home — date column and text side by side, no truncation.
+- `PlusPerks` — all five perk bullets wrap, icons stay aligned to the first line.
+- `RestoreOffer` — copy wraps to four lines, both buttons full width inside the card.
+- `longName` (40 chars): **Home** grows the greeting to three lines rather than clipping; **You** wraps to
+  two lines then ellipsises inside the profile header — bounded, not a collapse. **Recap** does not render
+  the name, so the long-name case does not reach it; the long *entry* text it also sets pushed the recap
+  to 26,063 words and the layout held.
 
-## WALK-11 — the Plus surfaces
+🔴 **`DeeperInsights` FAILS at max font.** "Moods by season" wraps month names mid-word — "Septemb/er",
+"Novemb/er", "Decemb/er" — and ellipsises the third mood out of every row. Cause found in the file, not
+guessed: [`DeeperInsights.js:103`](../src/screens/DeeperInsights.js#L103) hardcodes `width: 84` on the
+month label so it cannot grow with the text, and line 104 puts `numberOfLines={1}` + `flex: 1` on the mood
+list. Correct at default font. **Same family as IMP-067.** Needs an `IMP-xxx`; this row stays open for it
+and nothing else.
 
-**Covers:** IMP-038, IMP-046, IMP-047, IMP-043. **Needs T1 and T3.** Run each item **twice** — once with
-`plus: true`, once `false` — the locked teaser is as shippable as the real thing.
+⏭ **Two listed items cannot be walked and should be struck from the row:**
+- **`TipCard` no longer exists.** IMP-075 ("the tip cards go away", `11fa421`) deleted them;
+  `grep -rc TipCard src/` returns nothing. Carrying it as unrun debt overstates what is owed.
+- **Landscape rotation is impossible by design.** The app is portrait-locked in *two* places —
+  `app.config.js:6` `orientation: 'portrait'` and `AndroidManifest.xml:20`
+  `android:screenOrientation="portrait"`. Setting `user_rotation 1` rotated the device and the app window
+  stayed `port` (`mDisplayRotation=ROTATION_0`, config `port`). There is no rotation to check.
 
-**⏭ Skip this for the current release.** `PLUS_ENABLED = false` makes every surface here *unmountable*, not
-locked — none of it can reach a user in the build being cut. Walking it means flipping T1, which must be
-reverted before committing, so a mistake here ships a paywall the app cannot honour. Do it when Phase 10b
-opens, not before.
-
-1. **On this day** — a real year-match card above "Today's reflection"; tapping a row opens the Reading
-   sheet **and ticks the revisit rite**; dismiss suppresses it for today only and it returns tomorrow.
-2. **Deeper Insights** — below the thresholds (14 entries / 3 months / 5 multi-mood entries) it must say
-   **"Not enough days yet"**, not draw a chart from three points. Check both sides of each threshold.
-3. **Annual Recap** — You → "Your years" lists offerable years; a year with <10 entries is **not** offered.
-   Set the clock to December to check the Home card and its `recapSeen` dismissal.
-4. **Paywall** — prices resolve from the sim service; the IMP-043 line *"Your journal lives on your device.
-   Plus adds memory, not storage."* is present.
-5. **Restore purchases** row appears in You when `plusEnabled && !plus`, and disappears once plus.
-6. Flip `PLUS_ENABLED` back to `false` → confirm **Gather Embers** and its modal are gone and the ember
-   pill toast fires instead (IMP-034).
+⚠️ **Still true and not closed by this sitting:** the target says `device` for *real font metrics*. These
+results are emulator results. Nothing here depended on physical DPI, but a device pass would be strictly
+stronger.
 
 ---
 

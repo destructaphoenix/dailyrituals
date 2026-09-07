@@ -36,7 +36,7 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 >
 > | If this chat is… | Take |
 > | --- | --- |
-> | a **build task** | ⛔ **There isn't one — [`docs/specs-open.md`](docs/specs-open.md) is EMPTY.** IMP-093 landed and shipped on 2026-09-07. ⚠️ **Do not open a new billing row from reasoning alone**: every row since IMP-084 came out of a device sitting, and the two most recent (IMP-092's cache limit, IMP-093) were found by someone holding the phone, not by reading the code. |
+> | a **build task** | ✅ **Four, written 2026-09-07 from the emulator walk sitting — [`docs/specs-open.md`](docs/specs-open.md). Take them in this order: IMP-094 (user-facing recap bug), IMP-095 (unblocks WALK-08), IMP-096, IMP-097.** All four are OTA-lane pure JS. IMP-093 landed and shipped on 2026-09-07. ⚠️ **Do not open a new billing row from reasoning alone**: every row since IMP-084 came out of a device sitting, and the two most recent (IMP-092's cache limit, IMP-093) were found by someone holding the phone, not by reading the code. |
 > | a **runtime walk** | 🚦 **The only queue with anything in it — [`docs/walk-open.md`](docs/walk-open.md), and its index says what is left.** In one line: WALK-19 needs a purchase attempt, and **WALK-07 / WALK-03 step 4 / WALK-11 are ready now** on a debug build of this branch. **Do not re-derive WALK-19 — read its RESULT block; steps 3 and 4a are proven.** |
 > | a **design request** | See "Claude Design" below. The live request is **Insights**. |
 >
@@ -124,6 +124,10 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | --- | --- | --- | --- |
 | 001–075 | **Every free-track task.** Search, custody + 30-day trash, multi-moods, Annual Recap, deeper insights, heatmaps, local `dayKey`, prompt packs, a11y labels, the IMP-063…075 polish run, R8, dev harness, backup/restore, reminders. | mixed | ✅ **all done except the two rows below** — full detail per task in [`docs/build-log.md`](docs/build-log.md); git is the record. Do not re-derive from this table. |
 | 076–093 | **The design-push + billing run.** New Architecture (076), motion vocabulary (077), design system (078), Paywall footer (080), backup warning (081), renewal date (082), cancel deep-link (083), the release build's simulation (084), the SDK probe (085), the OTA lane's empty key (086), the paid surface's reason (087), the purchase-overlay trap (088), restore-must-not-buy (089), the trial it cannot see (090), the pending escape (091), "nothing to restore" (092), the vanishing paywall (093). | mixed | ✅ **all code-complete, all shipped by OTA where the lane allowed, all archived** — specs in [`docs/build-log.md`](docs/build-log.md). ⚠️ **branch-only, never pushed.** ⚠️ **Code-complete is not proven** — 089/090 are proven on hardware, 092 is half proven, **091 has never been observed**; see WALK-19 |
+| 094 | **Annual Recap calls a month "quietest" that predates the journal** | OTA | 🔵 **open, spec written 2026-09-07** — from WALK-11. `extremesByMonth` scans empty months, so January wins for any journal that started later in the year: **every user's first recap**. Busiest side is correct |
+| 095 | DeeperInsights "Moods by season" breaks at max font | OTA | 🔵 **open, spec written 2026-09-07** — from WALK-08. Hardcoded `width: 84` + `numberOfLines={1}`; same family as IMP-067. **This is the only thing keeping WALK-08 open** |
+| 096 | Paywall "SAVE 50%" badge overlaps the selected tick at max font | OTA | 🔵 **open, spec written 2026-09-07** — from WALK-07. Cosmetic, purchase unaffected; clean at default font |
+| 097 | Dev-harness rot — two labels that now lie | OTA | 🔵 **open, spec written 2026-09-07** — dev-only. Panel still says `PLUS_ENABLED stays false`; the backup stepper runs off-screen at max font |
 | 022 | Save as PDF + About sheet (the two dead You-tab buttons) | Build | ⏸ **deferred (owner)** — spec in build-log → "Deferred specs"; **perk #6 gate** |
 | 044 | R8 on release builds (dev client was shipping to the public) | Build | 🟢 **code-complete, UNWALKED.** R8 must be walked on the build you actually ship, so it rides **vc15 or later**; walk = WALK-12, on hardware, last in the sitting |
 | 057 | Historical `dayKey` migration | Build | 🔒 **reserved, not missing** — cannot be written until real device numbers come back from the dev panel's "Data health" reporter. See below |
@@ -197,6 +201,50 @@ migrated**, leaving two things:
 _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
+
+_2026-09-07, evening (Opus — **the emulator walk queue is CLEARED. Three walks closed, one nearly, four
+defects scoped.**) — branch-only, NOT pushed._
+
+**What finished.** The owner asked for every open walk except the money one. Four were emulator-walkable
+and all four were run in a single sitting on a fresh local debug build (prebuild refreshed first — the
+`android/` dir predated IMP-077's native deps).
+
+- **WALK-03 ✅ CLOSED.** Step 4 re-run after IMP-081. `neverBackedUp` reads in full over two lines at
+  default font and **three at max** — the third line IMP-081 added is genuinely exercised, so the pass is
+  not vacuous. `staleBackup` re-checked at max font too.
+- **WALK-07 ✅ CLOSED.** The Paywall half passes in **all four** nav/font combinations after IMP-080.
+  The 2026-08-16 first-open footer overlap is gone.
+- **WALK-11 ✅ CLOSED**, items 1–5, **both Plus states**. The strongest single result: "On this day"
+  opens the Reading sheet, **ticks the revisit rite**, dismisses for today only and **came back the next
+  day** after a clock advance; and the recap card's dismissal **persists across relaunch** while On this
+  day's does not — two different lifetimes, both correct. Item 6 was **not run and is recorded as
+  obsolete**, not as a pass: `PLUS_ENABLED` is permanently `true`, so the free-build path it checks no
+  longer ships.
+- **WALK-08 🟠 nearly closed.** Everything unrun is now walked at max font. Two of its listed items turned
+  out to be **unwalkable** and should be struck rather than carried: `TipCard` was deleted by IMP-075, and
+  landscape rotation is impossible — the app is portrait-locked in `app.config.js` **and** the manifest
+  (verified: the device rotated, the app window stayed `port`).
+
+**The proof.** 1031 tests / 93 suites green, tree clean, `.env` and `src/dev/scenarios.js` restored (a
+throwaway T3 scenario was added and reverted). Emulator settings all put back. ⚠️ **These are emulator
+results**; WALK-03 and WALK-08 are `device`-target rows and the real-share-target and real-font-metrics
+gaps stay open, which is recorded in each row rather than glossed.
+
+**⚠️ A trap that cost time and is now written into T1b.** A populated `RC_ANDROID_KEY` in `.env` makes the
+debug build talk to real RevenueCat; an emulator with no Play Billing answers `BILLING_UNAVAILABLE`, so
+**no offerings, no prices, no plan selector** — a paywall layout walk would have passed against an empty
+screen. The key must be commented out and Metro restarted for these walks.
+
+**What the walks found — four new specs, none fixed (a walk records, it does not repair).**
+**IMP-094 is the one that matters**: the Annual Recap names a **zero-entry month as "quietest"** whenever
+the journal started later in the year — i.e. **every user's first recap**. Cause confirmed in source, not
+guessed. Then IMP-095 (DeeperInsights breaks at max font, same family as IMP-067, **blocks WALK-08**),
+IMP-096 (cosmetic paywall badge overlap), IMP-097 (dev-panel labels that now lie).
+
+**The exact next step.** The build queue is no longer empty: **IMP-094 → 095 → 096 → 097**, all OTA-lane
+pure JS, specs in `docs/specs-open.md`. **The three remaining walks all need a phone** — WALK-19 (money),
+WALK-18 (frame pacing; an emulator renders stutter as smooth), and WALK-12 (R8, which must be walked
+**last**, on the exact build being shipped, because any fix above invalidates an earlier R8 pass).
 
 _2026-09-07, late (Opus — **IMP-093 written and landed the same day the walk found it. The build queue is
 empty again and everything now waits on an OTA plus a phone.**) — branch-only, NOT pushed._

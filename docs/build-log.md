@@ -4889,6 +4889,131 @@ Owner: *"When I press 'Backup my journal' it gives me the option to send or shar
 
 ## Walk log (passed walks, moved out of docs/walk-open.md)
 
+## WALK-03 — JSON export round trip
+
+**Covers:** IMP-020, plus IMP-043's backup-health copy. **Target: device** (real share-sheet targets).
+**🚦 Gates the release build** — this is the user's only way to get their words out of the app.
+
+1. You → **"Back up my journal"** → the share sheet appears → save the file out.
+2. The success toast says plainly that this export and the Google Auto Backup are **separate systems** and
+   neither refreshes the other (the IMP-033 copy fix).
+3. Reset all data → **"Restore from a backup"** → pick that file → everything returns.
+4. Harness → `staleBackup` (42d) and `neverBackedUp` scenarios → the "Your journal is safe" card shows the
+   right warning line for each.
+5. Restore a deliberately corrupt file (truncate the JSON in a text editor) → a clean *"That backup file
+   looks damaged"* message, **not** a crash. *(Note: this is the surface IMP-049 hardens — expect the
+   envelope-level rejection to work today and shape-level damage to slip through until IMP-049 lands.)*
+
+**Result — ❌ 2026-09-05 (emulator, agent-run; v1.0.7 / vc13 debug APK, `sdk_gphone16k_arm64`, API 36).**
+Four of the five steps pass and one fails on half its cases. **Step 1:** `Back up my journal` wrote
+`daily-rituals-2026-09-05.json` and opened the real Android share sheet (Quick Share / Drive / Gmail
+resolved); the envelope pulled off the device is well-formed — `format: daily-rituals-backup`,
+`appVersion: 1.0.7`, `counts: {entries: 5, days: 5}`, payload a stringified state. **Step 2:** the toast
+reads *"Backup ready — save it somewhere off this phone. This doesn't update your Google backup."* — the
+IMP-033 copy, saying plainly that the two systems are separate; the row flipped to "Backed up today" and
+the health nudge cleared. **Step 3:** `Reset all data` → onboarding → skip → restore `dr-good.json` → the
+confirm read *"This backup has 5 entries. It will replace what's on this phone now (0 entries)."* and the
+data came back exactly (5-day streak, Lv 3 Contemplative, rites 20/30, 5 entries / 32 words). **Step 5:**
+a file truncated to 1200 bytes was rejected with *"That file isn't readable as a backup."* — a toast, not
+a crash, exactly the envelope-level rejection this walk predicted would work today.
+
+**Step 4 is the failure, and only on one of its two cases.** `staleBackup` (42d) is correct: the row reads
+"Backed up 42 days ago — back up again soon" and the warning reads in full, over two lines. `neverBackedUp`
+truncates mid-word — *"…there's nothing to bring ba…"* — **at default font scale**, and worse at max
+(*"there's nothing t…"*). Cause found in the file, not guessed:
+[`BackupNudge`](../src/screens/YouScreen.js#L316) clamps at `numberOfLines={2}` and the `never` string is
+97 chars against `stale`'s 62. **Scoped 2026-09-05 as [`IMP-081`](specs-open.md).** Re-run **step 4 only**
+once it lands, at both font scales.
+
+**Unexercised, and an emulator cannot settle it:** delivery to a real share *target*. The sheet resolves
+targets and hands off; nothing on this machine receives the file.
+
+
+---
+
+
+## WALK-07 — modal scroll
+
+**Covers:** IMP-042, and the four follow-up viewport-cap commits (`306a0bc`, `d9b7bc0`) that treated it as
+an Android modal-measure race rather than the original static theory.
+
+Each of **Achievements · Shop · Reading sheet · Get Embers · Manage Subscription** must scroll to its last
+card, with the last card clearing the system nav bar. Check with **gesture nav and 3-button nav** (different
+inset heights) and again at max font size, which is where the overflow is worst. Paywall was deliberately
+left alone — confirm its fixed footer still sits correctly.
+
+**Result — ❌ 2026-08-15.** Achievements, Shop, Reading sheet and Get Embers all passed in both nav modes,
+at normal and max (2.0x) OS font scale. Manage Subscription also passed — its content is short enough it never
+needed to scroll to the nav bar. The font-scale cap itself is confirmed working (`PixelRatio.getFontScale()`
+read `2.0` against the `1.5`/`1.2` caps, nothing broken on the four passed screens). One real defect and two
+bonus defects surfaced, written up in full (with file:line) in `PROGRESS.md` → Open items → "WALK-07 finding":
+(a) Paywall's fixed footer overlaps its own content (plan amount + last perk bullets) even at normal font
+size — the `ScrollView` above the footer is never given `flex: 1`, so it doesn't yield space to the footer;
+(b) Annual Recap's teaser description on the You tab truncates at max font because `Row.js` hardcodes
+`numberOfLines={1}`; (c) Mood Mix bars in Insights misalign depending on mood-name length, at any font size —
+the label column uses `minWidth` instead of a fixed `width`. (a) blocks the Paywall half of this walk from
+being called a pass; (b) and (c) were found incidentally and don't block the passed screens. Each needs a new
+`IMP-xxx` — Opus's lane to scope, not this walk's. **T1 (`PLUS_ENABLED`) was reverted to `false` after this
+walk — confirmed in `src/billing/config.js:39` before anything else touches this file.**
+
+**Re-run — ❌ 2026-08-16 (Paywall only; T1 flipped for the session).** (b) and (c) landed as IMP-067 —
+not yet re-checked this session. (a)'s fix, IMP-068 (`style={{ flex: 1 }}` on the `ScrollView`), turned out
+incomplete: on first opening Paywall the footer is missing entirely (not just overlapping) — Android's modal
+`Dialog` doesn't know its window size on the first measure pass, so `flex: 1` alone bounds nothing, same trap
+`Shop.js:23-29` already documents. Selecting a plan triggers the correcting layout pass, and the footer
+reappears **still overlapping** the price and perks, same as before IMP-068. Full root-cause writeup and the
+fix `Shop.js` already uses (`maxHeight: winH` via `useWindowDimensions`) in `build-log.md` → "WALK-07
+finding" (reopened). **Scoped 2026-08-16 as `IMP-074`** (`docs/specs-open.md`) — it keeps IMP-068's
+`flex: 1` and adds `maxHeight: winH` as the second half; both are needed. **Walk paused here at the owner's
+call** — the other five screens' nav-mode/font-scale checks and the IMP-067 spot-check were not re-run this
+session, so the re-run after IMP-074 is a **whole-walk** re-run, not a Paywall-only one.
+
+**Re-run — 🟡 2026-08-16 (whole walk, later the same day; T1 flipped for the session, reverted after).**
+Achievements, Shop, Reading sheet, Get Embers and Manage Subscription all passed again — both nav modes
+(gesture and 3-button), and at max (2.0x) OS font scale, no regressions. Both IMP-067 spot-checks also passed:
+the Annual Recap teaser on You wraps instead of truncating at max font, and Mood Mix bars in Insights stay
+aligned regardless of label length. **Paywall still fails — IMP-074 did not fix it.** On first open, normal
+font size, gesture nav: the fixed footer overlaps the plan-selector row (annual/monthly) and the "Your journal
+lives on your device" line from the very first frame the owner saw — not the delayed-then-correcting layout
+pass IMP-074's writeup described, wrong immediately instead. Confirmed in code that both IMP-074 fix-halves
+are present and unchanged — `maxHeight: winH` on the root `View` ([`Paywall.js:40`](../src/screens/Paywall.js#L40))
+and `flex: 1` on the inner `ScrollView` ([`Paywall.js:56`](../src/screens/Paywall.js#L56)) — so this is the
+fix not holding, not an unshipped fix. The plan selector stays tappable underneath the overlap, so a purchase
+can still be started; this is a layout defect, not a blocked flow. The owner raised an alternative design
+live: don't render the footer at all until a plan is picked, then let the page grow to fit it, rather than
+reserving space for it up front — a real option for the next spec to weigh, not decided here. **Re-opened as
+a WALK-07 finding below — needs Opus to scope a new `IMP-xxx`.** T1 reverted to `false` after this session,
+confirmed in [`src/billing/config.js:39`](../src/billing/config.js#L39).
+
+---
+
+
+## WALK-11 — the Plus surfaces
+
+**Covers:** IMP-038, IMP-046, IMP-047, IMP-043. **Needs T1 and T3.** Run each item **twice** — once with
+`plus: true`, once `false` — the locked teaser is as shippable as the real thing.
+
+**⏭ Skip this for the current release.** `PLUS_ENABLED = false` makes every surface here *unmountable*, not
+locked — none of it can reach a user in the build being cut. Walking it means flipping T1, which must be
+reverted before committing, so a mistake here ships a paywall the app cannot honour. Do it when Phase 10b
+opens, not before.
+
+1. **On this day** — a real year-match card above "Today's reflection"; tapping a row opens the Reading
+   sheet **and ticks the revisit rite**; dismiss suppresses it for today only and it returns tomorrow.
+2. **Deeper Insights** — below the thresholds (14 entries / 3 months / 5 multi-mood entries) it must say
+   **"Not enough days yet"**, not draw a chart from three points. Check both sides of each threshold.
+3. **Annual Recap** — You → "Your years" lists offerable years; a year with <10 entries is **not** offered.
+   Set the clock to December to check the Home card and its `recapSeen` dismissal.
+4. **Paywall** — prices resolve from the sim service; the IMP-043 line *"Your journal lives on your device.
+   Plus adds memory, not storage."* is present.
+5. **Restore purchases** row appears in You when `plusEnabled && !plus`, and disappears once plus.
+6. Flip `PLUS_ENABLED` back to `false` → confirm **Gather Embers** and its modal are gone and the ember
+   pill toast fires instead (IMP-034).
+
+---
+
+
+
 ### WALK-09 — lifetime heatmap — ✅ CLOSED 2026-09-05 (emulator, owner-run)
 
 **Covers:** IMP-045, IMP-063's `frozen` state, and **IMP-073's layout pass**. Use the `brokenStreak` scenario.
