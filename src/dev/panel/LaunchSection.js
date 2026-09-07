@@ -2,8 +2,10 @@
 // DEV-ONLY. Direct-open buttons for overlays otherwise reachable only via a
 // real trigger (a genuine streak milestone, a live purchase, an actual
 // uninstall/restore cycle). Paywall + Manage subscription render in a LOCAL
-// modal here — a dev-local bypass of RitualsApp's PLUS_ENABLED-gated modal,
-// never a flip of PLUS_ENABLED itself (the app still ships free).
+// modal here — a dev-local mount that bypasses the app's own entry points to
+// these screens. It asserts nothing about the value of PLUS_ENABLED and never
+// flips it (IMP-097: the old wording claimed the flag was false, which stopped
+// being true at 7d2e515).
 import React, { useState } from 'react';
 import { View, Pressable, Modal } from 'react-native';
 import { useTheme } from '../../theme';
@@ -65,7 +67,7 @@ export default function LaunchSection({
       <Stepper label="Restored days ago" value={restoreDaysAgo} onChange={setRestoreDaysAgo} />
       <LaunchRow label="Restore notice" onPress={() => onOpenRestoreNotice(restoreDaysAgo)} />
 
-      <SectionLabel>Plus (dev-local — app ships free, PLUS_ENABLED stays false)</SectionLabel>
+      <SectionLabel>Plus (dev-local mount — bypasses the app's own entry points)</SectionLabel>
       <LaunchRow label="Paywall" onPress={() => setDevPaywall(true)} />
       <LaunchRow label="Manage subscription" onPress={() => setDevManage(true)} />
 

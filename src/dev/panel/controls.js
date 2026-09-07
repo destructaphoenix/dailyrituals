@@ -11,12 +11,16 @@ import { SENTINEL } from '../sentinel';
 
 export const DEV_ID = `${SENTINEL}/panel/controls`;
 
+// IMP-097: the label takes the slack and WRAPS; the control keeps its intrinsic
+// width and never shrinks. Before this, "Last backup (days ago, -1 = never)"
+// sized itself to one long line at max font and pushed the value and the `+`
+// clean off the right edge — during exactly the walks that need max font.
 export function Stepper({ label, value, onChange, step = 1, min = 0 }) {
   const c = useTheme().colors;
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8 }}>
-      <T w={700} color={c.ink} style={{ fontSize: 15 }}>{label}</T>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, paddingVertical: 8 }}>
+      <T w={700} color={c.ink} style={{ flex: 1, fontSize: 15 }}>{label}</T>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, flexShrink: 0 }}>
         <Pressable onPress={() => onChange(Math.max(min, value - step))} hitSlop={10}>
           <T w={800} color={c.accentDeep} style={{ fontSize: 22 }}>−</T>
         </Pressable>
