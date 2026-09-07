@@ -172,3 +172,61 @@ describe('surfaces that only open the paywall promise nothing', () => {
     expect(src).toMatch(/ctaLabel\(prices\[plan\]\)/);
   });
 });
+
+// IMP-096 — the "SAVE 50%" badge overlapping the Annual card's selected tick at
+// max font. ⚠️ Jest renders a TREE, not pixels: it cannot see the overlap, and
+// nothing below proves the two shapes are visually separated. The acceptance is
+// the WALK-07 Paywall re-run at OS font_scale 2.0 in BOTH nav modes. What is
+// assertable is the structural property that let them converge — a vertical
+// placement that moves with the font scale — and that it is gone.
+describe('Paywall — IMP-096: the savings badge and the selected tick', () => {
+  const PAYWALL_SRC = fs.readFileSync(path.join(__dirname, '../../src/screens/Paywall.js'), 'utf8');
+
+  // The badge is the only absolutely-positioned view with a pill radius sitting
+  // above the card's top edge; the tick is the only 20x20 absolute circle.
+  const absolutes = (view) => view.UNSAFE_root.findAll((node) => {
+    if (typeof node.type !== 'string') return false;
+    const flat = StyleSheet.flatten(node.props && node.props.style) || {};
+    return flat.position === 'absolute';
+  }).map((n) => StyleSheet.flatten(n.props.style));
+
+  const badgeStyle = (view) => {
+    const found = absolutes(view).filter((s) => s.borderRadius === 999 && s.top < 0);
+    expect(found.length).toBe(1); // annual only — monthly has no `save`
+    return found[0];
+  };
+  const tickStyles = (view) => absolutes(view).filter((s) => s.width === 20 && s.height === 20);
+
+  test('the tick starts below the badge\'s reserved height, at every scale', () => {
+    const view = renderPaywall();
+    const badge = badgeStyle(view);
+    const ticks = tickStyles(view);
+    expect(ticks.length).toBe(2); // one per plan card
+
+    // The badge grows downward from its own `top` as its text scales, so the
+    // tick has to clear the badge's MAXIMUM height, not its height right now.
+    const badgeMaxBottom = badge.top + 28;
+    ticks.forEach((tick) => expect(tick.top).toBeGreaterThanOrEqual(badgeMaxBottom));
+  });
+
+  test('neither placement is derived from a font-scaled value', () => {
+    const view = renderPaywall();
+    expect(typeof badgeStyle(view).top).toBe('number');
+    tickStyles(view).forEach((tick) => expect(typeof tick.top).toBe('number'));
+    // The whole file: no offset may be multiplied by a font scale.
+    expect(PAYWALL_SRC).not.toMatch(/fontScale\s*\*/);
+    expect(PAYWALL_SRC).not.toMatch(/PixelRatio/);
+  });
+
+  test('the badge is capped as chrome, which is what bounds its height', () => {
+    expect(PAYWALL_SRC).toMatch(/maxFontSizeMultiplier=\{CHROME_FONT_SCALE\}/);
+  });
+
+  test('the badge copy and the plan selection are untouched', () => {
+    const view = renderPaywall();
+    expect(view.getByText(PLUS_PRICES.annual.save.toUpperCase())).toBeTruthy();
+    // both prices also appear in the legal disclosure, hence getAllByText
+    expect(view.getAllByText(PLUS_PRICES.annual.price).length).toBeGreaterThan(0);
+    expect(view.getAllByText(PLUS_PRICES.monthly.price).length).toBeGreaterThan(0);
+  });
+});

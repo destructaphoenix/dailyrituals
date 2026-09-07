@@ -9,11 +9,25 @@ import { View, ScrollView, Pressable, useWindowDimensions } from 'react-native';
 import { useTheme } from '../theme';
 import { T, PrimaryButton } from '../ui';
 import { Close, Check, Sun, Restore } from '../icons';
+import { CHROME_FONT_SCALE } from '../ui/textScale';
 import { BigSun } from '../art';
 import { PLUS_PERKS } from '../data';
 import { useLivePrices } from '../billing/useLivePrices';
 import { ctaLabel } from '../billing/prices';
 import { LegalFooter, usePurchaseFlow } from './PlusFlow';
+
+// IMP-096 — the "SAVE 50%" badge and the selected-state tick are both absolutely
+// positioned against a plan card's top-right corner. The badge's box grows with
+// the text inside it, so at max font it reached down over the tick; both are
+// c.accentDeep/c.accent orange, so they read as one shape instead of a badge and
+// a tick. Two constants keep them apart at EVERY font scale: the badge is capped
+// at CHROME_FONT_SCALE — the cap textScale.js already defines for pills and
+// badges — which bounds its height, and the tick simply starts below that bound.
+// ⚠️ Neither offset may be derived from the font scale. A scale-dependent offset
+// is the bug this file has already had twice (IMP-067, IMP-095).
+const SAVE_BADGE_TOP = -10;
+const SAVE_BADGE_MAX_H = 28; // 8dp of padding + one 10.5dp line capped at 1.2x
+const PLAN_TICK_TOP = SAVE_BADGE_TOP + SAVE_BADGE_MAX_H + 4; // 22 — clears the badge
 
 export default function Paywall({ insets, platform = 'ios', service, alreadyPlus, onClose, onSubscribe, onLink, onAbandon, closeGuard }) {
   const t = useTheme();
@@ -113,11 +127,11 @@ export default function Paywall({ insets, platform = 'ios', service, alreadyPlus
               <Pressable key={k} onPress={() => setPlan(k)}
                 style={({ pressed }) => [{ flex: 1, paddingHorizontal: 14, paddingTop: 16, paddingBottom: 14, borderRadius: t.radius.card, backgroundColor: c.surface, borderWidth: 2, borderColor: sel ? c.accent : c.border, transform: [{ scale: pressed ? 0.99 : 1 }] }, sel && !t.dark ? t.shadow(12, c.accentDeep, 0.5) : null]}>
                 {pl.save && (
-                  <View style={[{ position: 'absolute', top: -10, right: 12, backgroundColor: c.accentDeep, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 999 }, t.shadow(6, c.accentDeep, 0.9)]}>
-                    <T d w={800} color={c.onAccent} style={{ fontSize: 10.5, letterSpacing: 0.3 }}>{pl.save.toUpperCase()}</T>
+                  <View style={[{ position: 'absolute', top: SAVE_BADGE_TOP, right: 12, backgroundColor: c.accentDeep, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 999 }, t.shadow(6, c.accentDeep, 0.9)]}>
+                    <T d w={800} color={c.onAccent} maxFontSizeMultiplier={CHROME_FONT_SCALE} style={{ fontSize: 10.5, letterSpacing: 0.3 }}>{pl.save.toUpperCase()}</T>
                   </View>
                 )}
-                <View style={{ position: 'absolute', top: 14, right: 14, width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: sel ? c.accent : c.border, backgroundColor: sel ? c.accent : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+                <View style={{ position: 'absolute', top: PLAN_TICK_TOP, right: 14, width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: sel ? c.accent : c.border, backgroundColor: sel ? c.accent : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
                   {sel && <Check size={12} color={c.onAccent} />}
                 </View>
                 <T d w={700} color={c.muted} style={{ fontSize: 13 }}>{pl.label}</T>
