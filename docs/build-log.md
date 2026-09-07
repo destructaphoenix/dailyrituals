@@ -3675,6 +3675,40 @@ beyond that one guard.
 
 ## Session notes (archived from PROGRESS.md)
 
+_2026-09-07, late (Opus — **IMP-093 written and landed the same day the walk found it. The build queue is
+empty again and everything now waits on an OTA plus a phone.**) — branch-only, NOT pushed._
+
+**What finished.** **IMP-093** (`061b1ff`) — the paywall no longer walks away from a purchase it started.
+`dismiss()` reconciles whenever a flow was **in flight**, not only when the 20-second escape had armed;
+`usePurchaseFlow` exposes `pending`/`dismiss`; `Paywall` publishes them to whoever owns its Modal through
+a `closeGuard` ref cleared on unmount; `RitualsApp`'s `onRequestClose` reconciles **then closes**.
+**1031 passed, 93 suites** (was 1017). Export clean. Archived to
+[`docs/build-log.md`](docs/build-log.md); [`docs/specs-open.md`](docs/specs-open.md) is empty again.
+
+**Three things worth carrying:**
+
+1. ⚠️ **The fix deliberately does NOT keep the card on screen.** Back still closes the paywall. Refusing
+   to close would have re-created IMP-088's trap for the first 20 seconds, when no exit exists — so
+   **IMP-091 stays unobservable on the Play-error path, and that is the correct outcome, not a
+   regression.** The device acceptance for IMP-093 is *"back out of a pending purchase and confirm the app
+   asks the store"*, **not** *"step 4c now shows a Close button"*. Do not re-open 4c expecting one.
+2. ⚠️ **Scope correction, recorded rather than quietly dropped.** The spec named two mount sites; only
+   `RitualsApp` wraps `Paywall` in a `Modal`. Onboarding's mount is an absolutely-positioned `View` with
+   no `onRequestClose` to route, so a back press there is unhandled — **a separate pre-existing gap,
+   neither fixed nor introduced here.**
+3. ✅ **The two behavioural guards were verified to FAIL against the old `wasStuck` gate before being kept**
+   — worth doing here specifically, because jest runs `simService` and fabricates every purchase outcome.
+
+**The exact next step.** ✅ **IMP-093 shipped by OTA 2026-09-07** — group
+`964e4fc2-709c-48b1-bba1-25c603722b1c`, runtime 1.0.9, manifest read back (key non-empty, serving id
+matches the publish). WALK-19's remaining steps need a **purchase attempt** (4b, 4d–4f, 5–10), so
+the next billing sitting is the one where money moves. ✅ **Not blocked on any of that: WALK-07, WALK-03
+step 4 and WALK-11**, which need the **local debug APK** — it cannot coexist with the Play build, so
+**export a backup first (that export is WALK-03 step 1).** **Nothing is promoted `internal` →
+`production`.**
+
+---
+
 _2026-09-07, evening (Opus — **the emulator walk queue is CLEARED. Three walks closed, one nearly, four
 defects scoped.**) — branch-only, NOT pushed._
 
