@@ -195,11 +195,11 @@ Completed detail moved out of [PROGRESS.md](../PROGRESS.md) to keep that file sm
 ### IMP-008 — Real zero-state finish (level + calendar + week strip + entry dates)   ·   Lane: OTA   ·   Status: ✅ (code done; owner runtime walk + ship pending)
 - **Goal:** A new/low-activity user sees an honest profile: level reflects real XP (not a fake "Lv 3 · Contemplative"), the Archive calendar shows the user's *real* entries (empty for a fresh user, not the seeded demo grid), and journal entries are stamped with the real date (not "31 May / Saturday").
 - **Why / context (owner report 2026-06-07):** Even after IMP-004's zero-state, the app still shows level 3, a pre-filled calendar, and 31-May dates. Investigated — three independent HARDCODED leftovers, all confirmed in code:
-  1. **Level:** [`src/RitualsApp.js:38-39`](src/RitualsApp.js#L38-L39) `const LEVEL = 3; const LEVEL_NAME = 'Contemplative';` — passed to HomeScreen/YouScreen as `level`/`levelName`. NEVER derived from XP; there is **no level model anywhere** in the codebase. So it shows Lv 3 at any XP.
-  2. **Calendar:** [`src/data.js:127-136`](src/data.js#L127-L136) `HEAT` is a hardcoded 35-cell fake mood/skull array; ArchiveScreen's `<Heat />` ([`src/screens/ArchiveScreen.js:32,65`](src/screens/ArchiveScreen.js#L65)) renders that constant, NOT `entries`. Same fake calendar for everyone.
-  3. **Entry dates:** [`src/RitualsApp.js:210`](src/RitualsApp.js#L210) new entries built with `day:'31', mon:'May', wd:'Saturday'`; only `dayKey` is real. (This is the IMP-007 deferred follow-up.)
-- **DESIGN RESOLVED (2026-06-07):** brainstormed → spec [`docs/superpowers/specs/2026-06-07-imp-008-real-zero-state-finish-design.md`](docs/superpowers/specs/2026-06-07-imp-008-real-zero-state-finish-design.md), planned → [`docs/superpowers/plans/2026-06-07-imp-008-real-zero-state-finish.md`](docs/superpowers/plans/2026-06-07-imp-008-real-zero-state-finish.md), implemented (8 TDD tasks). Owner decisions: (1) **XP-threshold levels** — uncapped XP, `levelFromXp(xp)` → `{level,name,into,toNext}`, names Waking→Keeper of Days (Lv1–7); bar is within-level (`into/toNext`, "Max" at top). (2) Calendar = **35-cell grid from real entries, neutral empties (no skulls)**. (3) **Week strip folded in** (owner chose to include it — same neutral treatment, last-7-days from entries). (4) Entry dates derived via `entryDateParts()` in `src/time/clock.js`. No migration needed (IMP-004 already empties entries).
-- **Sequencing:** This is the **inaugural ship through the new release pipeline** (owner decision 2026-06-07) — see [`docs/superpowers/specs/2026-06-07-streamlined-release-pipeline-design.md`](docs/superpowers/specs/2026-06-07-streamlined-release-pipeline-design.md). Build the pipeline first; then brainstorm IMP-008's design; then implement + ship it as the first `Release-Lane: ota`.
+  1. **Level:** [`src/RitualsApp.js:38-39`](../src/RitualsApp.js#L38-L39) `const LEVEL = 3; const LEVEL_NAME = 'Contemplative';` — passed to HomeScreen/YouScreen as `level`/`levelName`. NEVER derived from XP; there is **no level model anywhere** in the codebase. So it shows Lv 3 at any XP.
+  2. **Calendar:** [`src/data.js:127-136`](../src/data.js#L127-L136) `HEAT` is a hardcoded 35-cell fake mood/skull array; ArchiveScreen's `<Heat />` ([`src/screens/ArchiveScreen.js:32,65`](../src/screens/ArchiveScreen.js#L65)) renders that constant, NOT `entries`. Same fake calendar for everyone.
+  3. **Entry dates:** [`src/RitualsApp.js:210`](../src/RitualsApp.js#L210) new entries built with `day:'31', mon:'May', wd:'Saturday'`; only `dayKey` is real. (This is the IMP-007 deferred follow-up.)
+- **DESIGN RESOLVED (2026-06-07):** brainstormed → spec `docs/superpowers/specs/2026-06-07-imp-008-real-zero-state-finish-design.md` _(deleted 2026-09-07 — in git history)_, planned → `docs/superpowers/plans/2026-06-07-imp-008-real-zero-state-finish.md` _(deleted 2026-09-07 — in git history)_, implemented (8 TDD tasks). Owner decisions: (1) **XP-threshold levels** — uncapped XP, `levelFromXp(xp)` → `{level,name,into,toNext}`, names Waking→Keeper of Days (Lv1–7); bar is within-level (`into/toNext`, "Max" at top). (2) Calendar = **35-cell grid from real entries, neutral empties (no skulls)**. (3) **Week strip folded in** (owner chose to include it — same neutral treatment, last-7-days from entries). (4) Entry dates derived via `entryDateParts()` in `src/time/clock.js`. No migration needed (IMP-004 already empties entries).
+- **Sequencing:** This is the **inaugural ship through the new release pipeline** (owner decision 2026-06-07) — see `docs/superpowers/specs/2026-06-07-streamlined-release-pipeline-design.md` _(deleted 2026-09-07 — in git history)_. Build the pipeline first; then brainstorm IMP-008's design; then implement + ship it as the first `Release-Lane: ota`.
 - **Ship after merge:** OTA-eligible (all JS in `src/`). Reaches testers on v5+ only.
 
 
@@ -227,7 +227,7 @@ _Full inline specs moved here once code-complete (one-line status stays in the P
 
 ### IMP-009 — Insights tab from real entries (kill hardcoded data)   ·   Lane: OTA   ·   Status: ✅ (code; runtime walk + ship pending)
 - **Goal:** The Insights tab shows the user's **real** numbers — stats, mood mix, and weekly rhythm derived from their actual entries + streak — instead of the baked-in sample numbers. A user with no entries sees a clean empty state, not fake charts.
-- **Why / context:** `src/screens/InsightsScreen.js` is fully hardcoded — top comment even says "Numbers are illustrative sample data." `STATS` (current streak 4, longest 21, days kept 47, this month 12), `MOOD_MIX`, and `RHYTHM` are module constants ([lines 11–31](src/screens/InsightsScreen.js#L11-L31)), and the component only receives `copy` — no real data is passed in. The subtitle "Saturdays win" is hardcoded too. Owner also just added a **delete/reset-data control on the You page**, which makes the empty state reachable in normal use — so it must look right at zero.
+- **Why / context:** `src/screens/InsightsScreen.js` is fully hardcoded — top comment even says "Numbers are illustrative sample data." `STATS` (current streak 4, longest 21, days kept 47, this month 12), `MOOD_MIX`, and `RHYTHM` are module constants ([lines 11–31](../src/screens/InsightsScreen.js#L11-L31)), and the component only receives `copy` — no real data is passed in. The subtitle "Saturdays win" is hardcoded too. Owner also just added a **delete/reset-data control on the You page**, which makes the empty state reachable in normal use — so it must look right at zero.
 - **Data available (post IMP-007/008):** each entry carries `dayKey` ('YYYY-MM-DD'), `mood` (a label from `MOODS` in `src/data.js`, or absent if the user skipped mood), plus real date parts. `streak` (current) is a RitualsApp atom. `moodEmoji(label)` maps mood→emoji.
 - **Files touched:** `src/insights/derive.js` (new) + `__tests__/insights/derive.test.js` (new), `src/screens/InsightsScreen.js`, `src/RitualsApp.js`.
 - **Approach (decided by Opus — do not re-litigate):**
@@ -257,10 +257,10 @@ _Full inline specs moved here once code-complete (one-line status stays in the P
 ### IMP-012 — Achievements + Home "Keepsakes" start fresh (kill hardcoded progress)   ·   Lane: OTA   ·   Status: ✅ (code; runtime walk + ship pending)
 - **Goal:** The Achievements screen and the Home "Keepsakes" medal strip show the user's **real** progress derived from their entries + streak. A brand-new / reset user sees every achievement at 0/​goal and every medal unlit — no fabricated "47/100 days", "Streak Society 4/30", or pre-earned First Light/Seven Suns/Honest Heart.
 - **Why / context:** Both surfaces read baked-in sample numbers from `src/data.js`:
-  - `ACHIEVEMENTS` ([data.js:75-84](src/data.js#L75-L84)) has hardcoded `cur` values (firstlight 1, seven 7, honest 12, moonlit 3, society 4, keeper 47). `Achievements.js` renders `a.cur / a.goal`, the "X of N earned" count, and the "Earned" badge straight from these — so a fresh user sees 3 earned and partial progress on the rest.
-  - `BADGES` ([data.js:56-64](src/data.js#L56-L64)) has hardcoded `earned: true/false`. `HomeScreen.js` ([HomeScreen.js:139-149](src/screens/HomeScreen.js#L139-L149)) lights medals from `b.earned`, so First Light / Seven Suns / Honest Heart show lit on day one.
-  - `RitualsApp.js` ([RitualsApp.js:241](src/RitualsApp.js#L241)) computes the You-tab `badgesEarned` keepsakes count from `ACHIEVEMENTS.filter(b => b.cur >= b.goal).length` — also fake. This is the same family of zero-state bugs as IMP-008/009; the new "Reset all data" control (Task 9.6) makes the empty state reachable in normal use, so it must read right at zero.
-- **Data available:** `deriveInsights(entries, currentStreak, now)` (from IMP-009, [src/insights/derive.js](src/insights/derive.js)) already yields `stats.longestStreak`, `stats.daysKept`, and `moodMix` (sum of `n` = entries with a mood logged = "feelings named"). Reuse it — do not re-derive streak/day math.
+  - `ACHIEVEMENTS` ([data.js:75-84](../src/data.js#L75-L84)) has hardcoded `cur` values (firstlight 1, seven 7, honest 12, moonlit 3, society 4, keeper 47). `Achievements.js` renders `a.cur / a.goal`, the "X of N earned" count, and the "Earned" badge straight from these — so a fresh user sees 3 earned and partial progress on the rest.
+  - `BADGES` ([data.js:56-64](../src/data.js#L56-L64)) has hardcoded `earned: true/false`. `HomeScreen.js` ([HomeScreen.js:139-149](../src/screens/HomeScreen.js#L139-L149)) lights medals from `b.earned`, so First Light / Seven Suns / Honest Heart show lit on day one.
+  - `RitualsApp.js` ([RitualsApp.js:241](../src/RitualsApp.js#L241)) computes the You-tab `badgesEarned` keepsakes count from `ACHIEVEMENTS.filter(b => b.cur >= b.goal).length` — also fake. This is the same family of zero-state bugs as IMP-008/009; the new "Reset all data" control (Task 9.6) makes the empty state reachable in normal use, so it must read right at zero.
+- **Data available:** `deriveInsights(entries, currentStreak, now)` (from IMP-009, [src/insights/derive.js](../src/insights/derive.js)) already yields `stats.longestStreak`, `stats.daysKept`, and `moodMix` (sum of `n` = entries with a mood logged = "feelings named"). Reuse it — do not re-derive streak/day math.
 - **Files touched:** `src/profile/achievements.js` (new) + `__tests__/profile/achievements.test.js` (new), `src/screens/Achievements.js`, `src/screens/HomeScreen.js`, `src/RitualsApp.js`, `src/data.js`.
 - **Approach (decided by Opus — do not re-litigate):**
   - Create a pure helper `src/profile/achievements.js` exporting `ACHIEVEMENT_DEFS` (static metadata: `{ id, label, desc, icon, goal, stat }` where `stat ∈ 'daysKept' | 'longestStreak' | 'moodsLogged'`) and `deriveAchievements(entries, currentStreak, now = new Date())`. It calls `deriveInsights(...)` once, computes `moodsLogged = sum(moodMix.n)`, then maps `ACHIEVEMENT_DEFS` → `{ ...def, cur: Math.min(statValue, goal), done: statValue >= goal }`. Keep the SAME six achievements + their current ids/labels/descs/icons/goals — only the source of `cur` changes (lift the metadata out of `data.js`'s `ACHIEVEMENTS` into `ACHIEVEMENT_DEFS`). **Stat mapping:** firstlight→daysKept, seven→longestStreak, honest→moodsLogged, moonlit→daysKept, society→longestStreak, keeper→daysKept.
@@ -309,14 +309,14 @@ _Full inline specs moved here once code-complete (one-line status stays in the P
 
 ### IMP-013 — "Tend an old grave" rite must start at 0 (new user / after reset) + get a real completion trigger   ·   Lane: OTA   ·   Status: ✅ (shipped OTA 2026-06-13; runtime walk pending)
 - **Goal:** For a brand-new user, and after "Reset app data", **all three** of Today's rites read 0/1 — including "Tend an old grave". Nothing is pre-marked done. AND the revisit rite becomes genuinely completable (by revisiting a past entry) so the "all rites kept → daily keepsake" reward stays earnable.
-- **Why / context:** Owner-filed bug (2026-06-13): on a fresh install / after data reset, the **"Tend an old grave"** rite in **Today's rites** (Home tab) is already shown completed. Root cause is a hardcode: [`src/data.js:61`](src/data.js#L61) seeds the `revisit` quest with `cur: 1` (the comment literally says *"revisit starts done"*). Since `quests` defaults to `DAILY_QUESTS` for new users ([`src/RitualsApp.js:61`](src/RitualsApp.js#L61)) and reset-all-data clears persisted state → falls back to the same `DAILY_QUESTS`, a user who has tended *nothing* sees the rite as kept. Owner's rule: **when data is reset or for a new user, everything must be 0.**
-- **⚠️ Trap — do NOT just set `cur: 0` and stop.** `revisit` has **no completion trigger anywhere**: [`src/home/completeEntry.js:32-36`](src/home/completeEntry.js#L32-L36) only advances `write` and `feel`. It was hardcoded done purely to make the rites card look complete. So zeroing it alone makes the rite **permanently uncompletable**, and since "All rites kept" needs all three ([`src/gamify.js:66-67`](src/gamify.js#L66-L67)), that **regresses the daily keepsake to unearnable**. The fix must zero it *and* wire a real trigger.
+- **Why / context:** Owner-filed bug (2026-06-13): on a fresh install / after data reset, the **"Tend an old grave"** rite in **Today's rites** (Home tab) is already shown completed. Root cause is a hardcode: [`src/data.js:61`](../src/data.js#L61) seeds the `revisit` quest with `cur: 1` (the comment literally says *"revisit starts done"*). Since `quests` defaults to `DAILY_QUESTS` for new users ([`src/RitualsApp.js:61`](../src/RitualsApp.js#L61)) and reset-all-data clears persisted state → falls back to the same `DAILY_QUESTS`, a user who has tended *nothing* sees the rite as kept. Owner's rule: **when data is reset or for a new user, everything must be 0.**
+- **⚠️ Trap — do NOT just set `cur: 0` and stop.** `revisit` has **no completion trigger anywhere**: [`src/home/completeEntry.js:32-36`](../src/home/completeEntry.js#L32-L36) only advances `write` and `feel`. It was hardcoded done purely to make the rites card look complete. So zeroing it alone makes the rite **permanently uncompletable**, and since "All rites kept" needs all three ([`src/gamify.js:66-67`](../src/gamify.js#L66-L67)), that **regresses the daily keepsake to unearnable**. The fix must zero it *and* wire a real trigger.
 - **Files likely touched:** `src/data.js` (the hardcode + comment), a new pure helper `src/home/markRevisited.js`, `src/RitualsApp.js` (wire the trigger at the `setReading(e)` call site), `__tests__/home/markRevisited.test.js` (new), and a tiny zero-state guard test for `DAILY_QUESTS`.
 - **Approach (decided by Opus — do not re-litigate):**
-  1. **Zero the seed.** In [`src/data.js`](src/data.js#L57-L61), change the `revisit` quest `cur: 1 → cur: 0` and fix the now-wrong comment (*"revisit starts done"* → "all rites start undone; revisit is kept by revisiting a past entry"). This alone fixes the reported new-user / reset symptom, because daily-reset ([`src/RitualsApp.js:197`](src/RitualsApp.js#L197)) and reset-all-data both land everything on `cur: 0`.
+  1. **Zero the seed.** In [`src/data.js`](../src/data.js#L57-L61), change the `revisit` quest `cur: 1 → cur: 0` and fix the now-wrong comment (*"revisit starts done"* → "all rites start undone; revisit is kept by revisiting a past entry"). This alone fixes the reported new-user / reset symptom, because daily-reset ([`src/RitualsApp.js:197`](../src/RitualsApp.js#L197)) and reset-all-data both land everything on `cur: 0`.
   2. **Give `revisit` a real trigger (a pure, tested helper).** "Tend an old grave" = open/read a **past** entry from Reflections. Add `src/home/markRevisited.js`:
      - `markRevisited(quests, entry, today)` → returns a **new** quests array (immutable spread; never mutate). It sets the `revisit` quest's `cur` to its `goal` **only when** `entry.dayKey !== today` (a genuinely older entry) **and** it isn't already at goal. Today's-own entry, missing `dayKey`, or already-kept → return `quests` unchanged. Leave `write`/`feel` untouched.
-  3. **Wire it.** In [`src/RitualsApp.js`](src/RitualsApp.js), grep for every `setReading(` call site (currently the `onOpen={(e) => setReading(e)}` passed to `ArchiveScreen`, line ~240). At that site also do `setQuests((qs) => markRevisited(qs, e, todayKey()))`. `todayKey` is already imported and used in this file.
+  3. **Wire it.** In [`src/RitualsApp.js`](../src/RitualsApp.js), grep for every `setReading(` call site (currently the `onOpen={(e) => setReading(e)}` passed to `ArchiveScreen`, line ~240). At that site also do `setQuests((qs) => markRevisited(qs, e, todayKey()))`. `todayKey` is already imported and used in this file.
 - **Expected (correct, not a bug):** A day-1 user with no past entries can't complete "Tend an old grave" yet (there's no old grave to tend) — thematically correct. It becomes kept the moment they open any entry from a prior day; daily reset re-arms it each day. The daily keepsake now legitimately requires write + feel + revisit.
 - **TDD (write tests FIRST — RED → GREEN):**
   - `__tests__/home/markRevisited.test.js`: (a) opening a past entry (`dayKey` ≠ today) sets `revisit.cur === goal`; (b) opening today's entry (`dayKey` === today) leaves quests **unchanged**; (c) entry with no `dayKey` → unchanged; (d) idempotent — already-kept revisit stays kept, same reference contents; (e) `write`/`feel` never altered; (f) immutability — returns a new array, input not mutated.
@@ -334,7 +334,7 @@ _Full inline specs moved here once code-complete (one-line status stays in the P
 
 ### IMP-014 — Missed days show a skull 💀, not a blank cell (Today week strip + Reflections heatmap)   ·   Lane: OTA   ·   Status: ✅ (shipped OTA 2026-06-13; runtime walk pending)
 - **Goal:** A day the user *missed* (a past day with no entry, on/after the day they started using the app) renders a **💀 skull** instead of a neutral blank — in **both** the Today-screen week strip and the Reflections heatmap. Days the user could not have kept (before their first-ever entry, or in the future) stay neutral blanks — never skulls.
-- **Why / context:** Owner-filed (2026-06-13): a missed day currently shows as an empty cell on the Today screen and Reflections (and anywhere the day grid appears); owner wants a skull there. This was discussed before — note [`src/home/calendar.js:4`](src/home/calendar.js#L4) explicitly says *"No-entry days are neutral empties — never skulls."* **This task reverses that decision, but only for genuinely-missed days** — the original concern (don't demoralize users with skulls for days before they installed, or for the future) is preserved by anchoring "missed" to the first activity date.
+- **Why / context:** Owner-filed (2026-06-13): a missed day currently shows as an empty cell on the Today screen and Reflections (and anywhere the day grid appears); owner wants a skull there. This was discussed before — note [`src/home/calendar.js:4`](../src/home/calendar.js#L4) explicitly says *"No-entry days are neutral empties — never skulls."* **This task reverses that decision, but only for genuinely-missed days** — the original concern (don't demoralize users with skulls for days before they installed, or for the future) is preserved by anchoring "missed" to the first activity date.
 - **What "missed" means (precise — decide here, don't re-litigate):** For a day cell with key `dayKey` and the set of entry dayKeys, with `firstKey` = the earliest entry's dayKey:
   - `today` → today (unchanged).
   - `dayKey > today` → `future` (unchanged neutral).
@@ -360,7 +360,7 @@ _Full inline specs moved here once code-complete (one-line status stays in the P
 
 ### IMP-015 — "What should we call you?" is mandatory (can't skip past Personalize blank)   ·   Lane: OTA   ·   Status: ✅ (shipped OTA 2026-06-13; runtime walk pending)
 - **Goal:** During onboarding (new user, or after Reset app data), the user **cannot leave the Personalize step without entering a name**. The "Looks good" button is disabled until a non-blank name is typed; a blank/whitespace-only name is rejected.
-- **Why / context:** Owner-filed (2026-06-13): the name question must be answered. Today [`src/screens/Onboarding.js:221`](src/screens/Onboarding.js#L221) lets "Looks good" proceed with an empty name (`name` defaults to `''`, no validation), so users land in the app nameless — which is why the You tab can show an empty identity. There is **no "Skip" on Personalize** (the only Skip is on the intro carousel, which is fine — that just skips the welcome slides, not the name). So the fix is purely: gate the "Looks good" CTA.
+- **Why / context:** Owner-filed (2026-06-13): the name question must be answered. Today [`src/screens/Onboarding.js:221`](../src/screens/Onboarding.js#L221) lets "Looks good" proceed with an empty name (`name` defaults to `''`, no validation), so users land in the app nameless — which is why the You tab can show an empty identity. There is **no "Skip" on Personalize** (the only Skip is on the intro carousel, which is fine — that just skips the welcome slides, not the name). So the fix is purely: gate the "Looks good" CTA.
 - **Files likely touched:** `src/screens/Onboarding.js` (the `Personalize` component), optionally a tiny pure validator `src/profile/name.js`, `__tests__/profile/name.test.js` (new, optional).
 - **Approach (decided by Opus — do not re-litigate):**
   - In `Personalize`, compute `const nameOk = name.trim().length > 0;` and pass `disabled={!nameOk}` to the "Looks good" `PrimaryButton` (the component already supports `disabled` — see its use in `WriteFlow`). Keep the existing `setSettings((s) => ({ ...s, name: name.trim() }))` on press.
@@ -378,7 +378,7 @@ _Full inline specs moved here once code-complete (one-line status stays in the P
 
 ### IMP-016 — Ember/amber flame icon must be proportional + centered in the header   ·   Lane: OTA   ·   Status: ✅ (shipped OTA 2026-06-13; runtime walk pending)
 - **Goal:** The amber **Ember** flame (the embers-balance pill, top-right of the Today header) looks correctly sized and vertically centered — not tiny and floating high in its slot.
-- **Why / context:** Owner-filed (2026-06-13): the flame icon top-right is "not proportional… small and looks misaligned when small." Root cause: in [`src/icons.js:309-321`](src/icons.js#L309-L321) the `Ember` glyph path only occupies roughly **x ∈ [7.3, 16.7], y ∈ [2.3, 15.4]** of its `viewBox="0 0 24 24"` — i.e. the flame fills only ~40% of the canvas and sits **top-biased**. So at the rendered `size={17}` in `EmberPill` ([`src/shopui.js:29`](src/shopui.js#L29)) the actual flame draws ~7px tall and high up, reading as tiny and misaligned next to the `15px` number text.
+- **Why / context:** Owner-filed (2026-06-13): the flame icon top-right is "not proportional… small and looks misaligned when small." Root cause: in [`src/icons.js:309-321`](../src/icons.js#L309-L321) the `Ember` glyph path only occupies roughly **x ∈ [7.3, 16.7], y ∈ [2.3, 15.4]** of its `viewBox="0 0 24 24"` — i.e. the flame fills only ~40% of the canvas and sits **top-biased**. So at the rendered `size={17}` in `EmberPill` ([`src/shopui.js:29`](../src/shopui.js#L29)) the actual flame draws ~7px tall and high up, reading as tiny and misaligned next to the `15px` number text.
 - **Files likely touched:** `src/icons.js` (the `Ember` component's `viewBox` only), possibly `src/shopui.js` (a small `size` bump if still needed after the viewBox fix). **No path-data changes** (keep the flame shape + gradient identical).
 - **Approach (decided by Opus — do not re-litigate):**
   - **Tighten the `viewBox` to the glyph's bounding box, kept square to avoid distortion** (the `Svg` is rendered square: `width=height=size`). Glyph center ≈ `(12, 8.85)`, max extent ≈ 13.1 (height). Use a square viewBox of side ≈ 14.5 centered on the glyph: **`viewBox="4.75 1.6 14.5 14.5"`** (start here; nudge if needed). This makes the flame fill ~90% of the rendered box and centers it. The gradient id `ember${size}` is unaffected.
@@ -395,7 +395,7 @@ _Full inline specs moved here once code-complete (one-line status stays in the P
 
 ### IMP-017 — Greeting: Good morning / afternoon / evening by the user's local time   ·   Lane: OTA   ·   Status: ✅ (shipped OTA 2026-06-13; runtime walk pending)
 - **Goal:** The Today-screen greeting reads **"Good morning"**, **"Good afternoon"**, or **"Good evening"** depending on the device's local hour.
-- **Why / context:** Owner-filed (2026-06-13): wants all three greetings, by the user's time. Today [`src/time/clock.js:5-7`](src/time/clock.js#L5-L7) `greetingFor()` only returns morning (`<12`) or evening (`>=12`) — **"afternoon" is missing entirely**. (The greeting is already wired to device time and rendered in `HomeScreen` line 21/35.)
+- **Why / context:** Owner-filed (2026-06-13): wants all three greetings, by the user's time. Today [`src/time/clock.js:5-7`](../src/time/clock.js#L5-L7) `greetingFor()` only returns morning (`<12`) or evening (`>=12`) — **"afternoon" is missing entirely**. (The greeting is already wired to device time and rendered in `HomeScreen` line 21/35.)
 - **Files likely touched:** `src/time/clock.js` (`greetingFor`), `__tests__/time/clock.test.js` (extend).
 - **Approach (decided by Opus — do not re-litigate):** make `greetingFor(date = new Date())` return by local hour `h = date.getHours()`: `h < 12` → "Good morning"; `12 ≤ h < 17` → "Good afternoon"; `h ≥ 17` → "Good evening". (Boundaries: noon flips to afternoon, 5:00 PM flips to evening — standard, simple.) Pure function; no other change.
 - **TDD (write tests FIRST — RED → GREEN), extend `__tests__/time/clock.test.js`:** assert greeting at representative hours by passing a fixed `date` — e.g. 06:00 → morning, 12:00 → afternoon, 16:59 → afternoon, 17:00 → evening, 21:00 → evening, 00:00 → morning. (Construct dates so `getHours()` is deterministic regardless of TZ — e.g. `new Date(2026,0,1,6,0,0)`.)
@@ -409,7 +409,7 @@ _Full inline specs moved here once code-complete (one-line status stays in the P
 
 ### IMP-018 — Today's reflection is editable (today only), pre-filled, with a reset toggle   ·   Lane: OTA   ·   Status: ✅ (shipped OTA 2026-06-13; runtime walk pending)
 - **Goal:** A reflection written **today** can be edited **the same day only**. Choosing to edit opens the write flow **pre-filled** with the existing answers (did / wished / mood) — not blank — with an explicit **"Start fresh"** control to clear it if they want to rewrite from scratch. Entries from previous days are **not** editable.
-- **Why / context:** Owner-filed (2026-06-13). The same-day *replace* logic already exists ([`src/home/completeEntry.js:14-27`](src/home/completeEntry.js#L14-L27): when `prev.done`, a new write replaces today's entry with no extra reward), but the entry point — the write FAB — always opens `WriteFlow` **blank**, so "editing" silently wipes what you wrote. And there's no edit affordance from a reflection at all. We need: (a) prefill, (b) a reset control, (c) an Edit button on **today's** entry only.
+- **Why / context:** Owner-filed (2026-06-13). The same-day *replace* logic already exists ([`src/home/completeEntry.js:14-27`](../src/home/completeEntry.js#L14-L27): when `prev.done`, a new write replaces today's entry with no extra reward), but the entry point — the write FAB — always opens `WriteFlow` **blank**, so "editing" silently wipes what you wrote. And there's no edit affordance from a reflection at all. We need: (a) prefill, (b) a reset control, (c) an Edit button on **today's** entry only.
 - **Files likely touched:** `src/screens/WriteFlow.js` (accept an `initial` entry; seed state; add "Start fresh"), `src/RitualsApp.js` (pass today's entry into `WriteFlow`; add an `onEdit` path from `ReadingSheet`), `src/screens/ReadingSheet.js` (show "Edit" only for today's entry), a tiny pure helper `src/home/todaysEntry.js` (find today's entry / is-editable), `__tests__/home/todaysEntry.test.js` (new).
 - **Approach (decided by Opus — do not re-litigate):**
   1. **Pure helper `src/home/todaysEntry.js`:** `findTodaysEntry(entries, today)` → the entry whose `dayKey === today` (or `null`); `isEditableToday(entry, today)` → `!!entry && entry.dayKey === today`. Immutable/no side effects.
@@ -431,7 +431,7 @@ _Full inline specs moved here once code-complete (one-line status stays in the P
 
 ### IMP-019 — Premium dark-mode redesign: "Embers in the Dark" (true-black AMOLED, behind a revert flag)   ·   Lane: OTA   ·   Status: ✅ (shipped OTA 2026-06-13; Round 4 NightRays hero owner-approved + promoted)
 - **Goal:** Replace the current flat, basic dark mode with a premium **true-black (AMOLED)** dark theme that looks great on OLED flagships (Galaxy Ultra / iPhone): an inky `#000000` canvas, **near-black elevated cards** for depth, amber-only accents, and a new **ember-glow hero** (a warm amber bloom + a few drifting sparks behind the streak number). **No brown anywhere. No moon.** **Hard requirement: fully revertible** to the exact existing dark design via a single flag, in case the redesign flops.
-- **Why / context:** Owner feedback (2026-06-13): the current dark mode is a genuine downgrade — the cheese-hole `NightSky` moon ([`src/art.js:43`](src/art.js#L43)) "feels like a kid's drawing", drop shadows don't render on black so cards look flat, and `accentSoft: '#2a2113'` is muddy. **Owner decisions this session (do not re-litigate):** (a) keep it **true black / AMOLED-friendly** — pure `#000` (pixels off on OLED = battery + inky premium look); the warm off-black/brown direction sketched earlier is **reversed** (no brown); (b) **drop the moon hero entirely**; (c) the night hero = **ember glow + rising sparks** (on-brand: the Embers currency, candles, "laying the day to rest"), which blooms beautifully on pure black. Full redesign (Direction A), built directly, behind a revert flag. (Planning-only discussion; specs below, no code written this session.)
+- **Why / context:** Owner feedback (2026-06-13): the current dark mode is a genuine downgrade — the cheese-hole `NightSky` moon ([`src/art.js:43`](../src/art.js#L43)) "feels like a kid's drawing", drop shadows don't render on black so cards look flat, and `accentSoft: '#2a2113'` is muddy. **Owner decisions this session (do not re-litigate):** (a) keep it **true black / AMOLED-friendly** — pure `#000` (pixels off on OLED = battery + inky premium look); the warm off-black/brown direction sketched earlier is **reversed** (no brown); (b) **drop the moon hero entirely**; (c) the night hero = **ember glow + rising sparks** (on-brand: the Embers currency, candles, "laying the day to rest"), which blooms beautifully on pure black. Full redesign (Direction A), built directly, behind a revert flag. (Planning-only discussion; specs below, no code written this session.)
 - **Hard constraints (do not violate):**
   - **Revertibility:** keep the **existing** `night` palette **and** `NightSky` art fully intact and selectable. The new theme ships behind a flag; a flop = flip one constant + OTA. **Never delete or mutate** the current night tokens/art.
   - **True-black / AMOLED:** the canvas stays pure `#000000`. **Do NOT add a global gradient/backdrop that lightens the canvas** — that defeats AMOLED. Depth comes from elevated cards + the hero glow, never from lifting the background.
@@ -497,8 +497,8 @@ _Full inline specs moved here once code-complete (one-line status stays in the P
 First piece of the four-part "legacy" roadmap (D → A+B → C). Lets users keep their journal safe & portable **with no account** — a user-held JSON export (off-device via the OS share sheet) + restore-by-replace with an automatic on-device recovery copy, plus an honest in-app surface for Android Auto Backup.
 
 - **Full spec (the real source of truth):**
-  - Design (why): [`docs/superpowers/specs/2026-06-14-backup-restore-design.md`](superpowers/specs/2026-06-14-backup-restore-design.md)
-  - Plan (how — 8 tasks, exact code + commits): [`docs/superpowers/plans/2026-06-14-backup-restore.md`](superpowers/plans/2026-06-14-backup-restore.md)
+  - Design (why): `docs/superpowers/specs/2026-06-14-backup-restore-design.md` _(deleted 2026-09-07 — in git history)_
+  - Plan (how — 8 tasks, exact code + commits): `docs/superpowers/plans/2026-06-14-backup-restore.md` _(deleted 2026-09-07 — in git history)_
 - **Architecture:** reuse `serialize`/`deserialize` (validation + forward-migration carry over). New **pure** core under `src/backup/` (`backup.js` envelope build+validating-parse — the single validation boundary; `lastBackupLabel.js` subtitle; `importFlow.js` recovery-before-replace guarantee) — all unit-tested. One **thin native wrapper** `src/backup/io.js` over `expo-file-system`/`expo-sharing`/`expo-document-picker` (no logic, not unit-tested). Wiring: `doExport`/`doImport`/`explainAutoBackup` in `RitualsApp.js`; `handleReplaceAllData` + remount `key` in `App.js`; new "Your journal is safe" section in `YouScreen.js`.
 - **Tasks shipped (commit per task):** 1 persist `lastBackupAt` (675e520) · 2 backup core (parse/build) · 3 `lastBackupLabel` · 4 `importFlow` (651eaf2) · 5 `io.js` + jest mocks + deps (579563f) · 6 wire handlers + replace-all remount (4dbf887) · 7 You-tab section + relabel PDF stub → "Save as PDF" (ac8d342) · 8 bump:build → versionCode 6 (08e3d2e).
 - **Key constraints honored:** import REPLACES (writes recovery envelope first — never replaces if the recovery write throws); the word "Export" appears nowhere on the You tab (backup = "Back up"/"Restore", PDF stub relabeled "Save as PDF", behavior unchanged); Auto Backup native `allowBackup` was already in `app.config.js` (IMP-006) — Task 6/7 only *surface* it via an honest explainer + deep-link (no faked live ON/OFF status). Backup file is plaintext journal content (encryption deferred — see design §6).
@@ -513,8 +513,8 @@ First piece of the four-part "legacy" roadmap (D → A+B → C). Lets users keep
 Second piece of the "legacy" roadmap (A+B). Evolved the **Insights tab** into "Your record" (big **days remembered** number + totals + adaptive consistency heatmap) above the existing "Your patterns" (mood + rhythm). Home hero untouched.
 
 - **Full spec (the real source of truth):**
-  - Design (why): [`docs/superpowers/specs/2026-06-14-lifetime-progress-design.md`](superpowers/specs/2026-06-14-lifetime-progress-design.md)
-  - Plan (how — 5 tasks, exact code + commits): [`docs/superpowers/plans/2026-06-14-lifetime-progress.md`](superpowers/plans/2026-06-14-lifetime-progress.md)
+  - Design (why): `docs/superpowers/specs/2026-06-14-lifetime-progress-design.md` _(deleted 2026-09-07 — in git history)_
+  - Plan (how — 5 tasks, exact code + commits): `docs/superpowers/plans/2026-06-14-lifetime-progress.md` _(deleted 2026-09-07 — in git history)_
 - **Architecture:** Two new pure modules — `src/insights/dateKeys.js` (shared `longestConsecutiveRun`/`dayKeyToUtcMs`/`DAY_MS`, extracted from `derive.js`); `src/insights/lifetime.js` (`deriveLifetime` — days remembered, total entries, total words, current/longest streak, level/levelName/xp, adaptive `activeSpan` label). `buildLifetimeHeatmap` appended to `src/home/calendar.js` (reuses its private helpers; Monday-first week rows, adaptive span from first entry to today). `InsightsScreen.js` restructured: new "Your record" section + `LifetimeHeat` component; "Your patterns" heading above untouched mood mix + rhythm; old 2×2 stat tiles (Days kept / This month) removed. `xp` piped from `RitualsApp.js`.
 - **Key constraints honored:** Home hero NOT changed; hero label is exactly "days remembered"; heatmap is adaptive (new user sees one near-empty week; fills in over time); "Days kept" and "This month" tiles removed.
 - **Tasks + commits:** T1 extract dateKeys (b347dd3) · T2 deriveLifetime (ae664c7) · T3 buildLifetimeHeatmap (dfe2ff0) · T4 InsightsScreen + RitualsApp wire (a0d5446) · T5 PROGRESS.md + build-log archive.
@@ -530,7 +530,7 @@ Owner-filed: keep the app fully **offline** but make the greeting + some text va
 - **Greeting headline** — rotating time-neutral multilingual hello (Hello / Hej / Konnichiwa / Ni Hao / …); **stateless date-seeded** pick (the local day is the seed, hashed so consecutive days look unrelated; repeats are harmless). The English time-of-day greeting ("Good morning") is demoted to the subtitle beside the date. Header restructured to **Layout A** (utility row with `EmberPill` + mode toggle on top, full-width greeting below) — fixes the long-hello-vs-cluster crowding the owner flagged.
 - **Daily reflection prompt** — shown in the "today's ritual" write card (only when `!done`; auto-hides at "Today is at rest."). Persisted **no-repeat deck** (shuffle-bag): every prompt shown once before any repeat; advances exactly one per app-open day (gaps don't skip); reshuffles on exhaustion; reinitializes on pool-size change / corruption.
 
-- **Full spec/plan:** [`docs/superpowers/specs/2026-06-14-dynamic-daily-text-design.md`](superpowers/specs/2026-06-14-dynamic-daily-text-design.md) · [`docs/superpowers/plans/2026-06-14-dynamic-daily-text.md`](superpowers/plans/2026-06-14-dynamic-daily-text.md)
+- **Full spec/plan:** `docs/superpowers/specs/2026-06-14-dynamic-daily-text-design.md` _(deleted 2026-09-07 — in git history)_ · `docs/superpowers/plans/2026-06-14-dynamic-daily-text.md` _(deleted 2026-09-07 — in git history)_
 - **Architecture:** new pure modules — `src/time/dailyPick.js` (`dayNumber`, `mulberry32` PRNG, `pickForDay`); `src/content/greetings.js` (`HELLOS` ×16); `src/content/prompts.js` (`PROMPTS` ×60 ≈ 2-month recycle); `src/content/deck.js` (`shuffle` + pure `selectPrompt`, which returns the **same deck reference** when unchanged so React effects don't churn). `promptDeck` added to `PERSISTED_KEYS` — **no schema migration** (filled by `mergeWithDefaults`; deck self-initializes). `RitualsApp.js` holds `promptDeck`, computes today's prompt via `selectPrompt` (`useMemo` + a persist effect), passes `dailyPrompt` to Home. `HomeScreen.js` header → Layout A + write-card prompt (kicker "Today's reflection").
 - **Theme:** every new view reads `useTheme()` tokens — works across day / classic night / nightV2 AMOLED and respects accent customization; no hardcoded colors.
 - **Tasks + commits:** T1 dailyPick (f7ae548) · T2 greetings (e654a92) · T3 prompts (4aeb600) · T4 deck (6e41139) · T5 persist promptDeck (1b3b095) · T6 header Layout A (b9ea1b8) · T7 write-card prompt + RitualsApp wire (5f686f8). Spec committed earlier on main (6af3215).
@@ -2644,7 +2644,7 @@ now describes removed behaviour.
 
 **Branch-only, never pushed** (`feat/design-push`, no upstream, no `Release-Lane` trailer, not merged to
 `main`) — owner instruction covering IMP-076/077/078. Scoped from
-[`docs/superpowers/specs/2026-08-16-motion-and-design-system-design.md`](superpowers/specs/2026-08-16-motion-and-design-system-design.md) §2.
+`docs/superpowers/specs/2026-08-16-motion-and-design-system-design.md` _(deleted 2026-09-07 — in git history)_ §2.
 
 **Why now.** IMP-027's `newArchEnabled: false` hold was never a rejection — it deferred the migration only
 because it was *coupled* to the 2026-08-31 API-36 deadline. **That deadline was met on 2026-07-30** by
@@ -2783,7 +2783,7 @@ max font scale — max font is where 3 lines actually gets tested. A different c
 
 **Branch-only, never pushed** (`feat/design-push`, no `Release-Lane` trailer) — owner instruction covering
 IMP-076/077/078. Scoped from
-[`docs/superpowers/specs/2026-08-16-motion-and-design-system-design.md`](superpowers/specs/2026-08-16-motion-and-design-system-design.md) §1.
+`docs/superpowers/specs/2026-08-16-motion-and-design-system-design.md` _(deleted 2026-09-07 — in git history)_ §1.
 **Its 🚦 WALK-16 gate was satisfied first** — WALK-16 closed 2026-09-05 on emulator evidence at the owner's
 instruction, confirming Bridgeless + Fabric + TurboModule live. Reanimated 4 is New-Architecture-only, so
 on an unproven IMP-076 this spec could not have been verified at all.
@@ -2843,7 +2843,7 @@ An emulator cannot settle it.
 ### IMP-078 — a design system Claude Design can work from   ·   Lane: Dev-only   ·   Status: ✅ code-complete (2026-08-17)
 
 **Branch-only, never pushed** (`feat/design-push`). No app code changed. Scoped from
-[the motion/design-system design doc](superpowers/specs/2026-08-16-motion-and-design-system-design.md) §5–§7.
+the motion/design-system design doc _(deleted 2026-09-07 — in git history)_ §5–§7.
 
 **Landed.** `scripts/gen-design-system.js` (new) plus a committed `design-system/` of **15 preview cards**
 and 19 PNGs, all pushed live to a new Claude Design project.
@@ -3425,7 +3425,7 @@ queue is now empty and the walk is the only thing owed.**) — branch-only, NOT 
 **What finished.** **IMP-090** (`f38ca24`), **IMP-091** (`cba53b1`), **IMP-092** (`de5cd34`) — three
 commits, one per spec, each verified green on its own intermediate tree before the next was built.
 **1017 passed, 93 suites** (was 968/93). `npx expo export --platform android` clean. All three specs moved
-to [`docs/build-log.md`](docs/build-log.md); [`docs/specs-open.md`](docs/specs-open.md) is **empty**.
+to [`docs/build-log.md`](build-log.md); [`docs/specs-open.md`](specs-open.md) is **empty**.
 
 **Shipped.** One OTA carrying all four (IMP-089 rode along), 2026-09-07 — `eas update --branch production
 --environment production`, run in a Terminal window. **Update group
@@ -3458,7 +3458,7 @@ reliable marker on a release build with no dev harness. Open → wait ~15s → *
 again, and **never clear data**.
 
 **The exact next step.** **Re-run WALK-19 on the phone: step 3 → step 4a → step 4c**, then the extra
-aeroplane-mode Restore check, then 4d onward. [`docs/walk-open.md`](docs/walk-open.md) → **"WALK-19
+aeroplane-mode Restore check, then 4d onward. [`docs/walk-open.md`](walk-open.md) → **"WALK-19
 RE-RUN"** is written for whoever is holding the phone, in plain English, and is the only thing owed.
 **Nothing is promoted `internal` → `production` until that row is ✅.**
 
@@ -3473,7 +3473,7 @@ findings, not code.**_
 and confirmed. Pre-flight clean: version 1.0.9, no "Plus is unavailable" row (IMP-087's gate alive), the
 published manifest read back with a non-empty `rcAndroidKey` and group `82bc2b16` newest. **Steps 1 and 2
 pass.** Steps 3 and 4 produced three defects and a fourth off-script. **Full paragraph →
-[`docs/walk-open.md`](docs/walk-open.md) → WALK-19; do not re-derive it here.**
+[`docs/walk-open.md`](walk-open.md) → WALK-19; do not re-derive it here.**
 
 **IMP-089, fixed (`onRetry` ignored the mode).** "Try again" on a **restore** card opened Play's **purchase**
 sheet — on both `restore-empty` and `network`. The hook already tracked `lastModeRef` and `dismiss()` read it
@@ -3482,7 +3482,7 @@ buy; a retried buy must still buy the same plan), **968 green, export clean**. �
 the owner's explicit instruction** — a deliberate exception to "a walk only scopes its findings", recorded in
 `build-log.md` so it is visible rather than silent. **NOT shipped: it needs an OTA.**
 
-**IMP-090, 091, 092 scoped, not fixed** — specs in [`docs/specs-open.md`](docs/specs-open.md).
+**IMP-090, 091, 092 scoped, not fixed** — specs in [`docs/specs-open.md`](specs-open.md).
 
 **The two things worth carrying forward that are not in any spec:**
 
@@ -3581,7 +3581,7 @@ until they update to vc15.
 **One workflow trap, cost a restart:** `npx eas-cli@latest` stops at an `Ok to proceed? (y)` install prompt
 and hangs any tee'd or non-interactive run. **This machine has a global `eas` (21.8.0) — call it directly.**
 
-**NEXT: this is a WALK lane now and the build queue is empty.** 🚦 **[WALK-19](docs/walk-open.md) is
+**NEXT: this is a WALK lane now and the build queue is empty.** 🚦 **[WALK-19](walk-open.md) is
 UNBLOCKED for the first time** — it needs vc15 on the owner's phone (Play → internal), a license tester,
 and it gates the `internal` → `production` promotion. Its **step 0(c)** is IMP-084's acceptance. Also ready
 on a debug build of this branch: **WALK-07 (Paywall half)**, **WALK-03 step 4**, **WALK-11**. **WALK-18**
@@ -3635,7 +3635,7 @@ could not see a defect present in every shipped build. The suite also runs `simS
 **NEXT.** ✅ **IMP-085 SHIPPED by OTA on the owner's instruction** — update group
 `d5f03a47-48be-4539-9a8c-fc9b5be46f69`, runtime **1.0.9**, from `6d4dd72`, reaching vc15 `internal`
 installs on their second launch. ⚠️ **Real billing is now live for the first time in this app's history** —
-confirm the tester list. ⚠️ **Shipped ahead of its proof, a third time.** **[WALK-19](docs/walk-open.md) is what is actually owed** —
+confirm the tester list. ⚠️ **Shipped ahead of its proof, a third time.** **[WALK-19](walk-open.md) is what is actually owed** —
 three consecutive billing fixes have landed without a single runtime check, and each found the previous
 diagnosis incomplete. **Step 0(c), inverted, is the acceptance: the paywall must be VISIBLE, an
 airplane-mode purchase must FAIL, and an online purchase must appear in Play's subscription list.**_
@@ -3719,8 +3719,8 @@ and opens the real share sheet; the toast carries the IMP-033 two-systems copy; 
 state exactly; a truncated file is rejected with *"That file isn't readable as a backup."* and no crash.
 **Step 4 fails on `neverBackedUp`:** the warning truncates mid-word — *"there's nothing to bring ba…"* —
 **at default font scale**, worse at max. Cause read out of the file, not guessed:
-[`BackupNudge`](src/screens/YouScreen.js#L322) clamps at `numberOfLines={2}` and the `never` string is
-97 chars against `stale`'s 62. **Scoped as [`IMP-081`](docs/specs-open.md).**
+[`BackupNudge`](../src/screens/YouScreen.js#L322) clamps at `numberOfLines={2}` and the `never` string is
+97 chars against `stale`'s 62. **Scoped as [`IMP-081`](specs-open.md).**
 
 **WALK-08 — 🟠 partial, and the trap in it is worth more than the result.** React Native reads the font
 scale **at startup**. Changing `font_scale` under a running app moves system UI and not the app, which
@@ -3744,7 +3744,7 @@ was a walk, and the deliverable is the record.
 **Run on the live AVD** (`sdk_gphone16k_arm64` — Android 16 / API 36, 16 KB pages) against the installed
 v1.0.7 / vc13 debug APK. **Step 4 (storage round trip), step 5 (notification scheduling), step 6 (export →
 share sheet → re-import) and step 7 (Auto Backup via T5) all pass.** No redbox, no ANR, no `FATAL` at any
-point. Details and the exact evidence per step are in [`docs/walk-open.md`](docs/walk-open.md) → WALK-16.
+point. Details and the exact evidence per step are in [`docs/walk-open.md`](walk-open.md) → WALK-16.
 
 **The one result worth reading in full is step 7.** A genuine `bmgr` backup → uninstall → reinstall →
 restore did **not** put the restored journal straight into the app. It landed in
@@ -3806,7 +3806,7 @@ path, what it stamps, and the `expo prebuild` trap that made an earlier local bu
 vc11. ~~Nothing vc13 has reached a Play track.~~ **← superseded the same day: vc13 shipped to `internal`
 on 2026-09-05. See the newest note below.**
 
-**[`IMP-080`](docs/specs-open.md) closes the last scoping debt — takeable now, no gate, no device.** The
+**[`IMP-080`](specs-open.md) closes the last scoping debt — takeable now, no gate, no device.** The
 🔴 WALK-07 Paywall regression: IMP-068's `flex: 1` and IMP-074's `maxHeight: winH` are both still present
 and correct, so a third patch to the same flex column is the wrong bet. The footer leaves the column for
 `position: absolute` + `onLayout`-measured padding; the root takes an exact `height: winH`. Owner kept the
@@ -3844,7 +3844,7 @@ capture that one screenshot by hand then; it does not need a spec or a walk. `do
 
 **One real finding worth keeping:** the night pass never needed the owner's hand. The IMP-078 failure was
 `adb shell cmd uimode night yes`, an **OS-level** command the app ignores — but the dev panel's own **Mode**
-segmented control ([`StateSection.js:102`](src/dev/panel/StateSection.js#L102)) feeds `mode` through
+segmented control ([`StateSection.js:102`](../src/dev/panel/StateSection.js#L102)) feeds `mode` through
 `buildState` → `App.js:97` and genuinely repaints the app. Any future in-app capture can drive night
 itself.
 
@@ -3888,7 +3888,7 @@ exactly what step 9 demands of a spec touching no app code. `npm run shots` also
 store assets. **Steady state noted, deliberately not done:** pointing the Design System pane's own GitHub
 connection at `design-system/` needs the branch published, so it waits on the owner.
 **NEXT: the queue is empty for a build chat.** IMP-077 is the only open spec and is **blocked on WALK-16**.
-The useful next moves are **[WALK-16](docs/walk-open.md) on a device**, or the owner's **first design request
+The useful next moves are **[WALK-16](walk-open.md) on a device**, or the owner's **first design request
 — `PlusPerks`** (one screen per request; `PLUS_ENABLED` stays `false`)._
 
 _2026-08-17 (IMP-076 — the app moves to the New Architecture; **branch-only, committed, NOT pushed**) —
@@ -3923,7 +3923,7 @@ app code changed. `npm run bump:native` → **v1.0.7 / vc13**, which **shuts the
 Java 25**, which AGP rejects. Build with **JDK 17** (`/opt/homebrew/opt/openjdk@17/...`). The
 `~/.gradle/init.d` kapt fix was **not** needed and that directory does not exist; the issue did not
 resurface. `PLUS_ENABLED` untouched (`false`); WALK-11 not reopened.
-**NEXT: [WALK-16](docs/walk-open.md) on a device — the only evidence that exists for this spec.** Then
+**NEXT: [WALK-16](walk-open.md) on a device — the only evidence that exists for this spec.** Then
 WALK-17 (edge-to-edge, re-audited: IMP-027's pass was on Legacy Arch and does not carry over). **IMP-077 is
 gated on WALK-16 passing.** **IMP-078 needs no gate and can be taken now**, including in parallel._
 
@@ -3931,7 +3931,7 @@ _2026-08-17 (planning only — no code changed; **branch-only, never pushed**) �
 IMP-076/077/078 + WALK-16/17/18, on `feat/design-push`.** Owner's ask: the app has too little motion outside
 the sun, and the Plus surfaces need designing — via **Claude Design**, with two hard constraints (**the sun
 and rays in `src/art.js` are frozen**, and **no backend rewiring**). Design doc:
-[`docs/superpowers/specs/2026-08-16-motion-and-design-system-design.md`](docs/superpowers/specs/2026-08-16-motion-and-design-system-design.md).
+`docs/superpowers/specs/2026-08-16-motion-and-design-system-design.md` _(deleted 2026-09-07 — in git history)_.
 **The finding that set the shape: IMP-027's Legacy-Architecture hold had already expired.** Its stated reason
 was the Aug-31 API-36 deadline — **met 2026-07-30** by v1.0.3 / vc9 in production — so the hold outlived its
 reason by three weeks, and SDK 55 removes Legacy Arch outright. **A first draft of the design doc targeting
@@ -4154,7 +4154,7 @@ command: `git commit` → `f632688`. Archived IMP-065's spec into `docs/build-lo
 `docs/specs-open.md`'s index (queue is now IMP-066…068, three specs), ticked its `PROGRESS.md` row, and
 moved the IMP-063 session note down to `docs/build-log.md` (2-note budget). Did not touch WALK-04 — full
 re-run is a separate chat, per the spec's own closing line. NEXT: a build chat takes **IMP-066** (first ⬜,
-[spec](docs/specs-open.md#imp-066--the-mood-step-stops-fighting-you)). A walk chat can still take **WALK-02**
+[spec](specs-open.md#imp-066--the-mood-step-stops-fighting-you)). A walk chat can still take **WALK-02**
 or **WALK-15**, unaffected by this chat's work._
 
 _2026-08-15 (IMP-066, the mood step stops fighting you) — **code-complete, committed `bf32690`, not shipped;
@@ -4170,7 +4170,7 @@ LAST command: `git commit` → `bf32690`. Archived IMP-066's spec into `docs/bui
 from `docs/specs-open.md`'s index (queue is now IMP-067…068, two specs), ticked its `PROGRESS.md` row,
 closed out the WALK-04 finding note (both (d) and (e) now landed), and moved the IMP-064 session note down
 to `docs/build-log.md` (2-note budget). Did not touch WALK-04 — separate chat. NEXT: a build chat takes
-**IMP-067** (first ⬜, [spec](docs/specs-open.md#imp-067--a-stacked-row-wraps-mood-mix-bars-start-in-one-place)).
+**IMP-067** (first ⬜, [spec](specs-open.md#imp-067--a-stacked-row-wraps-mood-mix-bars-start-in-one-place)).
 A walk chat can still take **WALK-02** or **WALK-15**, unaffected by this chat's work._
 
 _2026-08-15 (IMP-064, count your candles, and say plainly what one did) — **code-complete, committed
@@ -4187,7 +4187,7 @@ the new expected strings, no new cases there. **Proof:** `npm test` → **792 pa
 IMP-064's spec into `docs/build-log.md`, dropped its row from `docs/specs-open.md`'s index (queue is now
 IMP-065…068, four specs), ticked its `PROGRESS.md` row, and moved the IMP-062 session note down to
 `docs/build-log.md` (2-note budget). Did not touch WALK-06 — full re-run is a separate chat, per the spec's
-own closing line. NEXT: a build chat takes **IMP-065** (first ⬜, [spec](docs/specs-open.md#imp-065--clear-the-search-the-moods-you-picked-come-to-the-front)).
+own closing line. NEXT: a build chat takes **IMP-065** (first ⬜, [spec](specs-open.md#imp-065--clear-the-search-the-moods-you-picked-come-to-the-front)).
 A walk chat can still take **WALK-02** or **WALK-15**, unaffected by this chat's work._
 
 _2026-08-15 (IMP-063, a saved day looks saved) — **code-complete, committed `b7eb4c3`, not shipped; OTA
@@ -4206,7 +4206,7 @@ and `ArchiveHeat.test.js` (+2) — no new suite files. **Proof:** `npm test` →
 IMP-063's spec into `docs/build-log.md`, dropped its row from `docs/specs-open.md`'s index (queue is now
 IMP-064…068, five specs), ticked its `PROGRESS.md` row, and moved the IMP-061 session note down to
 `docs/build-log.md` (2-note budget). Did not touch WALK-06 — full re-run is a separate chat, per the spec's
-own closing line. NEXT: a build chat takes **IMP-064** (first ⬜, [spec](docs/specs-open.md#imp-064--count-your-candles-and-say-plainly-what-one-did)).
+own closing line. NEXT: a build chat takes **IMP-064** (first ⬜, [spec](specs-open.md#imp-064--count-your-candles-and-say-plainly-what-one-did)).
 A walk chat can still take **WALK-02** or **WALK-15**, unaffected by this chat's work._
 
 _2026-08-14 (IMP-062, the restore offer outlives the launch that made it) — **code-complete, committed
@@ -4460,7 +4460,7 @@ its spec in `docs/specs-open.md`._
 
 _2026-08-09 (IMP-049, settings survive a corrupt restore) — **code-complete, committed, not shipped.** Closed the fragility WALK-01's first attempt surfaced: `readBackup` validated only the backup envelope, never the *shape* of `settings` inside it, and `mergeWithDefaults`'s shallow spread let a wrong-typed key (proven: `settings.accent` as a string) replace its default outright — `makeTheme` then indexed the string by character, `processColor` returned `null`, and every `LinearGradient` threw a native NPE, recoverable only via Reset all data. RED-first: `__tests__/persistence/sanitizeSettings.test.js` (18 cases, all of the spec's required cases plus one it didn't anticipate) against new pure `src/persistence/sanitizeSettings.js` — shape comparison (`Array.isArray`→`'array'`, `null`→`'null'`, else `typeof`) replaces a key whose shape differs from its default; `accent` gets its own 3-hex-string check (a partial repair would produce a mismatched palette, so a bad value is replaced wholesale); `reminder` recurses one level. **Found and fixed one case the spec missed while writing the tests:** `recapSeen`'s default is `null` but a real dismissal (IMP-046) stores a *year* (a number) — pure shape-vs-default comparison would have silently reset every dismissal back to `null` on the next hydration, a real regression. Gave it the same kind of per-key exception the spec already grants `accent`/`reminder` (kept if `null` or a number). Wired at **both** hydration points in `App.js` (line 87 cold-start, line 122 restore/replace) — both required, since fixing only the restore path leaves an already-poisoned install unrecoverable. Regression test proves the actual failure closes: feeds the poisoned `{accent: '#C9884A'}` through `mergeWithDefaults`→`makeTheme` for both `'day'`/`'night'` and asserts every colour token is valid — first proving the assertion **fails** without `sanitizeSettings` in the chain (unsanitized run produced problems), then that it passes with it. `npm test` → **577 passed, 58 suites** (559 + 18 new); `npx expo export --platform android` clean. `docs/specs-open.md` reset to empty (IMP-049 was the only open spec). **NEXT:** no IMP task is queued. Resume **WALK-01 step 3** in `docs/walk-open.md` — Reset all data first, since the emulator may still hold settings poisoned by WALK-01's aborted first attempt; this fix prevents *future* poisoning, it does not retroactively repair state already written to AsyncStorage. Alternatively pick up the subscription-track build window (IMP-022 Part A, the PDF perk) or the `internal`→production promotion decision._
 
-_2026-08-09 (emulator walk of the post-vc11 batch + IMP-048) — **first hands-on walk of everything built since vc11.** Produced the emulator test plan for IMP-033–047 and surfaced the three structural blockers that hide half of it: (1) `PLUS_ENABLED = false` makes IMP-038/046/047, the "What's in Plus" sheet and trash-restore literally unmountable, so walking them needs a **temporary, uncommitted** flip of [`src/billing/config.js:39`](src/billing/config.js#L39); (2) the Annual Recap **Home** card is 1 Dec – 31 Jan only (the You-tab "Your years" section is the year-round route); (3) the dev harness's Entries stepper is `step: 1`, so a year of history for "On this day"/the recap needs a throwaway `scenarios.js` row at `entryCount: 460`, not tapping. Two emulator techniques worth keeping: **IMP-033's quarantine is triggerable without any Google backup** — set the emulator clock back ~5 days, let one autosave stamp a past `lastSavedAt`, relaunch, and `installedAt > lastSavedAt` fires the real quarantine path; and **IMP-044's R8 is walkable locally** — `android/app/build.gradle` signs `release` with the debug keystore, so `npx expo run:android --variant release` builds the first-ever minified build with no keystore setup (`android/` is now re-prebuilt at vc11 and carries both R8 flags + the `expo-notifications` keep rule). **IMP-048 came out of the walk and is code-complete + walked** (see backlog row / build-log): trash restore was Plus-only with no disclosure and its blocked-toast rendered behind the modal; it is now free 3×, stated on the page before it is spent, locked honestly afterwards even while Plus is unbuyable (owner decision — full rationale in the spec). `npm test` → **559 passed, 57 suites** (545 + 14 new); `npx expo export --platform android` clean. **The walk queue now has a home: [`docs/walk-open.md`](docs/walk-open.md)** — WALK-01…12, each with preconditions, steps, expected results and where to record the outcome, plus six reusable techniques (T1–T6: the PLUS_ENABLED flip, the harness, deep history, the clock trick, bmgr local transport, the release variant). It is to testing what `specs-open.md` is to building, and it is why this chat's context need not be carried forward. **WALK-01 (the v2→v3 mood migration) is IN PROGRESS and is the resume point** — the restore fires and every derived value renders correctly; steps 3–9 (the mood chips themselves, the relaunch-persists-as-v3 proof) are undone. Its fixture generator was promoted out of the session scratchpad to [`scripts/gen-v2-fixture.js`](scripts/gen-v2-fixture.js) (output git-ignored — regenerate it, its dayKeys are relative to the run date). **WALK-01's first attempt aborted on a tester error, not an app defect:** the fixture wrote `settings.accent` as a string where the app expects the `[accent, deep, soft]` array; `mergeWithDefaults` is a shallow spread so it replaced the default outright, `makeTheme` indexed the string by character (`accent: '#'`, `accentDeep: 'C'`, `accentSoft: '9'`), `processColor` returned null, and every `LinearGradient` threw `null cannot be cast to non-null type kotlin.Double`. The fixture is fixed and now type-checked against `DEFAULT_SETTINGS`; **the app fragility it exposed is scoped as IMP-049**, now the one open spec. **⚠️ The emulator may still hold those poisoned settings — they persist to AsyncStorage and survive relaunches, so Reset all data before resuming WALK-01.** NEXT: either build **IMP-049** (spec complete, no design questions left) or resume **WALK-01 step 3**._
+_2026-08-09 (emulator walk of the post-vc11 batch + IMP-048) — **first hands-on walk of everything built since vc11.** Produced the emulator test plan for IMP-033–047 and surfaced the three structural blockers that hide half of it: (1) `PLUS_ENABLED = false` makes IMP-038/046/047, the "What's in Plus" sheet and trash-restore literally unmountable, so walking them needs a **temporary, uncommitted** flip of [`src/billing/config.js:39`](../src/billing/config.js#L39); (2) the Annual Recap **Home** card is 1 Dec – 31 Jan only (the You-tab "Your years" section is the year-round route); (3) the dev harness's Entries stepper is `step: 1`, so a year of history for "On this day"/the recap needs a throwaway `scenarios.js` row at `entryCount: 460`, not tapping. Two emulator techniques worth keeping: **IMP-033's quarantine is triggerable without any Google backup** — set the emulator clock back ~5 days, let one autosave stamp a past `lastSavedAt`, relaunch, and `installedAt > lastSavedAt` fires the real quarantine path; and **IMP-044's R8 is walkable locally** — `android/app/build.gradle` signs `release` with the debug keystore, so `npx expo run:android --variant release` builds the first-ever minified build with no keystore setup (`android/` is now re-prebuilt at vc11 and carries both R8 flags + the `expo-notifications` keep rule). **IMP-048 came out of the walk and is code-complete + walked** (see backlog row / build-log): trash restore was Plus-only with no disclosure and its blocked-toast rendered behind the modal; it is now free 3×, stated on the page before it is spent, locked honestly afterwards even while Plus is unbuyable (owner decision — full rationale in the spec). `npm test` → **559 passed, 57 suites** (545 + 14 new); `npx expo export --platform android` clean. **The walk queue now has a home: [`docs/walk-open.md`](walk-open.md)** — WALK-01…12, each with preconditions, steps, expected results and where to record the outcome, plus six reusable techniques (T1–T6: the PLUS_ENABLED flip, the harness, deep history, the clock trick, bmgr local transport, the release variant). It is to testing what `specs-open.md` is to building, and it is why this chat's context need not be carried forward. **WALK-01 (the v2→v3 mood migration) is IN PROGRESS and is the resume point** — the restore fires and every derived value renders correctly; steps 3–9 (the mood chips themselves, the relaunch-persists-as-v3 proof) are undone. Its fixture generator was promoted out of the session scratchpad to [`scripts/gen-v2-fixture.js`](../scripts/gen-v2-fixture.js) (output git-ignored — regenerate it, its dayKeys are relative to the run date). **WALK-01's first attempt aborted on a tester error, not an app defect:** the fixture wrote `settings.accent` as a string where the app expects the `[accent, deep, soft]` array; `mergeWithDefaults` is a shallow spread so it replaced the default outright, `makeTheme` indexed the string by character (`accent: '#'`, `accentDeep: 'C'`, `accentSoft: '9'`), `processColor` returned null, and every `LinearGradient` threw `null cannot be cast to non-null type kotlin.Double`. The fixture is fixed and now type-checked against `DEFAULT_SETTINGS`; **the app fragility it exposed is scoped as IMP-049**, now the one open spec. **⚠️ The emulator may still hold those poisoned settings — they persist to AsyncStorage and survive relaunches, so Reset all data before resuming WALK-01.** NEXT: either build **IMP-049** (spec complete, no design questions left) or resume **WALK-01 step 3**._
 
 _2026-08-09 (IMP-045, finish Lifetime Progress — the IMP-021 shortfall) — **code-complete, committed, not shipped.** Closed the last open item in the backlog. RED-first: `__tests__/insights/heatCells.test.js` (13 new cases) against new pure `src/insights/heatCells.js` — `cellState(cell)` → `'done'|'missed'|'empty'|'future'` (precedence `future` > `missed` > `empty` > `done`; a `done+today` cell still reads `done`); `monthLabelsForRows(rows)` → one short month name per row on the row where the month changes, `''` otherwise, row 0 always attempted, malformed/missing `dayKey` rows return `''` rather than throwing. `InsightsScreen.js`'s `LifetimeHeat` now consumes `cellState` for four-way cell styling instead of the old binary `has` check — `done` filled `c.accent` (2px `c.accentDeep` border if `today`), `missed` = `c.accentSoft` fill + 1px `c.border` border ("visibly a day, visibly empty" — matches IMP-014's meaning without the unreadable-at-this-size skull glyph), `empty` = transparent + dashed 1px `c.border`, `future` = fully transparent — plus a month-label gutter down the left and a three-item legend ("kept · missed · not yet started") beneath, both sharing the same `heatCellStyle` swatch function so they can't drift from the grid. `buildLifetimeHeatmap` (`src/home/calendar.js`) untouched, per spec — its cell shape already carried everything needed. The level context line gained the previously-computed-but-never-rendered `xpEarned`: `` `Lv {level} · {levelName}{activeSpan} · {fmt(xpEarned)} XP` ``, reusing the screen's existing `fmt` formatter and leaving `numberOfLines`/font-scale behaviour (IMP-030) untouched. `npm test` → **559 passed, 57 suites** (532 + 13 new); `npx expo export --platform android` clean. Full spec archived to `docs/build-log.md`; IMP-021's backlog row flipped to ✅ (shortfall closed); IMP-045's row set to code-complete; `docs/specs-open.md` reset to empty (IMP-045 was the last open spec — no `IMP-xxx` task remains queued); removed the stale IMP-021 "not properly completed" block and its "Next step" pointer from Open items, folded into the closed device-walk-debts line instead. NEXT: **the backlog is fully code-complete for the first time this project.** No IMP task is queued. Two things remain outstanding, neither blocking: (1) **re-walk IMP-021/045 and IMP-046 on a real device** — both are OTA, un-walked since this fix and since the recap shipped; (2) pick up the **subscription-track build window** (playbook 10b step B9: revive IMP-022 Part A, the PDF perk #6, the last unreal `PLUS_PERKS` line) or make the **`internal` → production promotion** decision — both are the owner's call on sequencing, not a technical blocker._
 
@@ -4480,7 +4480,7 @@ _2026-08-08 (IMP-041, teach the app) — **code-complete, committed, not shipped
 
 _2026-08-08 (IMP-039, streak-freeze candles made real) — **code-complete, committed, not shipped.** Full TDD. Owner-decided option (a): candles now function as automatic streak insurance instead of doing nothing. `currentStreak(keys, todayKey, { frozenDays })` (`src/insights/dateKeys.js`) treats a frozen (candle-covered) day exactly like a real journaled day for both the anchor check and the backward run-count, without ever writing a fake `entries` row — no back-filling. New pure `src/home/streakFreeze.js` → `applyAutoFreeze(entries, frozenDays, freezes, todayKey)` spends one candle per missed day, chronologically, looking only at the gap after the most recent entry (older gaps are already broken and irrelevant); if a gap outruns the candles owned, only the affordable prefix gets frozen and the rest still breaks the streak — a candle can be burned without saving a long absence, same as real streak-freeze products. Wired into `RitualsApp.js` via a new mount-only effect (same shape as the existing daily-reset effect) so the freeze is spent — and the streak protected — the moment the app is next opened, not only when the user writes; `frozenDays` is now a persisted key, threaded through the derived `streak`, `applyCompletion`'s `celebrate.streak`, the autosave effect and `currentSlice()` (backups carry it). Fixed the two false Shop claims this task was audited for: "Light one on a missed day and your streak holds" and "Plus gives you 3 free each month" (a one-time grant, never recurred) → one line describing the real mechanic. `PLUS_PERKS` #2 reworded to match, which also resolves 2 of 5 (not 1 of 5) perks now being real in the still-open subscription-track blocker. **First commit accidentally carried a `Release-Lane: ota` trailer** — caught before anything else happened, corrected via `git commit --amend` (unpushed, safe); owner said "go" on implementation only, not ship. `npm test` → **406 passed, 47 suites** (385 + 21 new); `npx expo export --platform android` clean. Full spec archived to `docs/build-log.md`; backlog row set to code-complete; updated both perk-tracking tables under Open items. NEXT: **IMP-041** (teach the app) is next in the "before anyone can pay" group, per the ACTIVE TRACK order. IMP-033/-035/-036/-037/-038 remain open; alpha → production promotion still untaken._
 
-_2026-08-08 (Opus — spec-tightening pass + release-track change) — **no app code touched; docs + config only.** Two commits: `cc44f9d` (specs) and `a299af7` (track). `npm test` baseline **unchanged at 406 passed, 47 suites** — nothing under `src/` was modified, so it was not re-run. **1 — Open specs moved out of PROGRESS.md into the new [`docs/specs-open.md`](docs/specs-open.md).** This file dropped 233 lines and now carries only the backlog table, Open items and the 2 newest notes; every open backlog row links to its spec heading. **Sonnet must open exactly ONE heading in that file** — the one its row links to — because reading the other eight is the context burn this split exists to stop. `DEVGUIDE.md` + `docs/playbook.md` updated to match (golden loop, archive rule, and an honest size target: PROGRESS.md ≤ ~250 lines, replacing a ≤120 that had not been met in months). **2 — IMP-041 rescoped** from four scope bullets to a full spec. The "three screens users land on" are now the literal `tab` values **`today` / `archive` / `you`** (`insights` excluded deliberately — it is self-describing and IMP-045 fixes what is unclear on it). **Anchored coach marks are ruled OUT**; it is dismissible tip cards in the `BackupNudge` shape, because overlay measurement survives neither font-scale nor rotation. Every explainer string is written verbatim in the spec with the numbers verified against code (XP 50, rites +10, embers 15, candles 120/300/450). Bundled truth fix folded in: `gamify.js` claims embers are earned by finishing the rites — they are earned by **writing the day**; the rites award XP only. **3 — Three new specs.** **IMP-045** closes **both** Lifetime Progress shortfalls (owner chose "fix both", so the old "which shortfall?" blocker is gone; the stale *"then Opus scopes it as IMP-033"* pointer is deleted — it was always wrong, IMP-033 is the restore-quarantine task). **IMP-046** = Annual Recap (perk #4; absorbs IMP-021's deferred milestone timeline). **IMP-047** = the deeper-insights analysis layer (perk #5). IMP-035/036/037/038 normalised to the same shape (numbered Steps + Tests + exact commit message + ship lane). **Three traps found while verifying the specs against the tree — all now encoded in them:** (a) `applyCompletion` only takes its no-reward branch when `prev.done` is true, so editing a **past** day while today is unwritten would have awarded 50 XP + 15 embers **and prepended a duplicate row** — IMP-036 routes past-day edits through `applyEdit` instead; (b) `PLUS_PERKS` ([`data.js:144`](src/data.js#L144)) has **5** entries and does **not** match the 6-line proposed perk table, so "perk #3" and "perk #4" meant different rows in each — IMP-038 and IMP-046 now name the exact array slot to change; (c) `String.normalize` is not guaranteed across this app's Hermes range, so IMP-035 specs diacritic folding defensively (try/catch → identity) with a test. **4 — Play track changed: builds now auto-submit to `internal`, not `alpha`** (`eas.json` → `submit.production.android.track`). Internal serves the owner only, publishes in minutes and normally skips the full review. `alpha` freezes at vc11 — **safe**, because vc11 is API 36 and cannot re-trigger the compliance banner the way `beta`/vc8 and the old `internal`/vc5 do. **Bonus: the next build overwrites `internal`'s ancient vc5/API-35, fixing half the banner automatically**; only `beta` still needs vc9 promoted onto it. Public release unchanged and still manual (promote `internal` → `production` by hand). **OTA is unaffected — `eas update` has no Play track at all**, being gated only by channel + `runtimeVersion`. Last command: `git commit` → `a299af7`; working tree clean. **NEXT: IMP-041.** Open [`docs/specs-open.md`](docs/specs-open.md) → "IMP-041 — teach the app" and run its Steps 1–9 in order, starting with the RED test `__tests__/content/tips.test.js`. **Do not read the other specs in that file.** IMP-033/-035/-036/-037/-038/-045/-046/-047 remain open; `internal` → production promotion still untaken._
+_2026-08-08 (Opus — spec-tightening pass + release-track change) — **no app code touched; docs + config only.** Two commits: `cc44f9d` (specs) and `a299af7` (track). `npm test` baseline **unchanged at 406 passed, 47 suites** — nothing under `src/` was modified, so it was not re-run. **1 — Open specs moved out of PROGRESS.md into the new [`docs/specs-open.md`](specs-open.md).** This file dropped 233 lines and now carries only the backlog table, Open items and the 2 newest notes; every open backlog row links to its spec heading. **Sonnet must open exactly ONE heading in that file** — the one its row links to — because reading the other eight is the context burn this split exists to stop. `DEVGUIDE.md` + `docs/playbook.md` updated to match (golden loop, archive rule, and an honest size target: PROGRESS.md ≤ ~250 lines, replacing a ≤120 that had not been met in months). **2 — IMP-041 rescoped** from four scope bullets to a full spec. The "three screens users land on" are now the literal `tab` values **`today` / `archive` / `you`** (`insights` excluded deliberately — it is self-describing and IMP-045 fixes what is unclear on it). **Anchored coach marks are ruled OUT**; it is dismissible tip cards in the `BackupNudge` shape, because overlay measurement survives neither font-scale nor rotation. Every explainer string is written verbatim in the spec with the numbers verified against code (XP 50, rites +10, embers 15, candles 120/300/450). Bundled truth fix folded in: `gamify.js` claims embers are earned by finishing the rites — they are earned by **writing the day**; the rites award XP only. **3 — Three new specs.** **IMP-045** closes **both** Lifetime Progress shortfalls (owner chose "fix both", so the old "which shortfall?" blocker is gone; the stale *"then Opus scopes it as IMP-033"* pointer is deleted — it was always wrong, IMP-033 is the restore-quarantine task). **IMP-046** = Annual Recap (perk #4; absorbs IMP-021's deferred milestone timeline). **IMP-047** = the deeper-insights analysis layer (perk #5). IMP-035/036/037/038 normalised to the same shape (numbered Steps + Tests + exact commit message + ship lane). **Three traps found while verifying the specs against the tree — all now encoded in them:** (a) `applyCompletion` only takes its no-reward branch when `prev.done` is true, so editing a **past** day while today is unwritten would have awarded 50 XP + 15 embers **and prepended a duplicate row** — IMP-036 routes past-day edits through `applyEdit` instead; (b) `PLUS_PERKS` ([`data.js:144`](../src/data.js#L144)) has **5** entries and does **not** match the 6-line proposed perk table, so "perk #3" and "perk #4" meant different rows in each — IMP-038 and IMP-046 now name the exact array slot to change; (c) `String.normalize` is not guaranteed across this app's Hermes range, so IMP-035 specs diacritic folding defensively (try/catch → identity) with a test. **4 — Play track changed: builds now auto-submit to `internal`, not `alpha`** (`eas.json` → `submit.production.android.track`). Internal serves the owner only, publishes in minutes and normally skips the full review. `alpha` freezes at vc11 — **safe**, because vc11 is API 36 and cannot re-trigger the compliance banner the way `beta`/vc8 and the old `internal`/vc5 do. **Bonus: the next build overwrites `internal`'s ancient vc5/API-35, fixing half the banner automatically**; only `beta` still needs vc9 promoted onto it. Public release unchanged and still manual (promote `internal` → `production` by hand). **OTA is unaffected — `eas update` has no Play track at all**, being gated only by channel + `runtimeVersion`. Last command: `git commit` → `a299af7`; working tree clean. **NEXT: IMP-041.** Open [`docs/specs-open.md`](specs-open.md) → "IMP-041 — teach the app" and run its Steps 1–9 in order, starting with the RED test `__tests__/content/tips.test.js`. **Do not read the other specs in that file.** IMP-033/-035/-036/-037/-038/-045/-046/-047 remain open; `internal` → production promotion still untaken._
 
 _2026-08-08 (IMP-043, recoverability pass) — **code-complete, committed, not shipped.** Full TDD, pure/hook tests only (no AppState mocking). **1+1b, the real fix:** `src/billing/revenueCatService.js`'s `getEntitlement()` used to `.catch(() => null)`, which made "network failed" and "you have no subscription" indistinguishable — meaning a forged `"plus": true` in an exported/restored JSON could never be corrected, since a failed check and a successful-empty check looked identical to the old `if (!ent) return`. Removed the catch so failure propagates; new `src/billing/entitlementSync.js` is the only caller, wrapping it as `checkEntitlement()` → `{verified, entitlement}` and `nextPlusState(plus, result)` (pure: unverified never changes plus; verified-empty downgrades — the missing branch; verified-found upgrades). `useLaunchEntitlementCheck` fixes the lost-phone bug itself — mount-only, ref-guarded, fires exactly once and only when `plus` starts `false`, so a returning subscriber on a fresh/quarantined install gets silently re-verified instead of waiting to find Restore Purchases behind the paywall. Confirmed by construction (not a special case) that the sim service can never hit the downgrade branch: `createSimService`'s `alreadyPlus` snapshots `plus` when the memoized `service` is built, so while `plus` is true its `getEntitlement()` always resolves truthy. **New "Restore purchases" row** in `YouScreen.js`'s Plus/Shop section, shown only `plusEnabled && !plus`, wired to the existing `doRestore()`. **2:** new `src/backup/backupHealth.js` (`'never'|'stale'|'ok'`, 30-day boundary inclusive) drives a warning line in the "Your journal is safe" card, plus a stateless milestone nudge at `entriesCount === 100 || 365` (exact-match, not `>=`, so it needs no dismiss flag — same derived-not-stored pattern as IMP-021/024). **3:** one line added to `Paywall.js` — "Your journal lives on your device. Plus adds memory, not storage." **4:** no code — re-read the tree first and found `doGetHelp()`'s existing "Get help" row (falls back to a support-URL toast when billing isn't configured) already satisfies the "goodwill channel" ask; building a full About-sheet support surface would mean reviving the still-deliberately-deferred **IMP-022**, so left alone; Play promo codes need zero code and are just a note for whenever the owner wants that lever. **One collision caught by `expo export`, not npm test:** `YouScreen.js` already imports RN's own `Alert` (for `Alert.alert`); the new `Alert` icon from `src/icons.js` had to be aliased `AlertIcon` — a real SyntaxError that Jest's per-file module graph didn't catch but Metro's did, worth remembering for the next icon import into a screen that also uses RN's `Alert`. `npm test` → **385 passed, 46 suites** (369 + 16 new); `npx expo export --platform android` clean. Full spec archived to `docs/build-log.md`; backlog row set to code-complete; also resolved the matching entry under Open items → "HARD BLOCKER before PLUS_ENABLED — a returning subscriber…". NEXT: **IMP-039** (streak-freeze candles do nothing) is next in the "before anyone can pay" group — owner already decided option (a), make them real. IMP-033/-035/-036/-037/-038/-041 remain open; alpha → production promotion still untaken._
 
@@ -4570,7 +4570,7 @@ _2026-06-07 — IMP-007 complete (code; the 🔴 critical streak bug). TDD'd a n
 
 _2026-06-07 — IMP-006 code part done (Steps 1 + 4); status 🟡 — device/Play verification pending owner. Added `allowBackup: true` to the `android` block in `app.config.js` with an explanatory comment (functionally identical to Expo's current default — the value is the explicitness so it can't silently regress + the verification below). No custom backup rules (nothing sensitive on-device; the RevenueCat key ships in the binary/env, not user data). `npm test` — 42/42 green (8 suites, unchanged; no JS logic touched). Last command: `git commit -m "build(android): enable Android Auto Backup explicitly (new-device restore, no login)"` — succeeded (commit `c3ab5d5`). **Completed up to Step 1 + Step 4. Remaining = owner manual actions (need an emulator/device + Play Console; not codeable in a chat):** Step 2 — device verification on a Google-account/emulator with backup ON: create data → `adb shell bmgr enabled` then `adb shell bmgr backupnow app.dailyrituals.mobile` → `adb uninstall app.dailyrituals.mobile` → reinstall same build → launch → confirm journal/streak/settings restored with no login; Step 3 — Play data-safety form: confirm it honestly reflects that Auto Backup goes to the user's OWN Google Drive (not collected/transferred to developer). **Ship:** this is a manifest/native change → NOT OTA-eligible; it rides the **v5 full build** (bump `android.versionCode` 4→5 at build time → `eas build -p android`, signed with `M7r91j0b83`). IMP-006 flips to ✅ once Steps 2–3 are walked on a device. **Next: after IMP-006's device verification, the IMP backlog is empty — fall through to the phase ladder (Phase 10b monetization is the next big rock, or whatever new improvement the owner files).**_
 
-_2026-06-07 — Release pipeline BUILT + merged to main (the "remove my dependency" automation). Designed via brainstorming → spec [`docs/superpowers/specs/2026-06-07-streamlined-release-pipeline-design.md`](docs/superpowers/specs/2026-06-07-streamlined-release-pipeline-design.md), planned → [`docs/superpowers/plans/2026-06-07-streamlined-release-pipeline.md`](docs/superpowers/plans/2026-06-07-streamlined-release-pipeline.md), executed subagent-driven (per-task spec+quality review + final holistic review). **What shipped (Tasks 1–7, all on main, fast-forward merge, 10 commits e520b4d…a534638):** `scripts/bumpVersionCore.js` (pure, TDD, 6 tests) + `scripts/bump-version.js` CLI wired to `npm run bump:build` / `bump:native`; `app.config.js` legal-URL fallbacks made non-empty (OTA-safety — CI has no .env, would've blanked Terms/Privacy); `eas.json` submit `track: alpha`; `.github/workflows/release.yml` (trailer-triggered `Release-Lane: ota|build` → classify + OTA native-backstop + `npm test` gate → `production` environment approval → `eas update` or `eas build --auto-submit`); `.github/workflows/rollback-ota.yml`; the **🤖 Release rules** section in this file + DEVGUIDE pointer. `npm test` 59/59 green. **NOT pushed** (owner pushes manually). The whole approach + the appVersion-vs-fingerprint rationale is in memory [[daily-rituals-release-pipeline]] / [[daily-rituals-runtime-version-policy]]. **OWNER TO-DO before anything ships (plan Task 8):** (1) create an Expo access token at expo.dev; (2) add GitHub repo secrets `EXPO_TOKEN` + `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`; (3) create a GitHub Environment named `production` with the owner as Required Reviewer. Then push `main` so the workflows go live. **NEXT after setup:** plan Task 9 shakedown (trivial `Release-Lane: ota` commit to watch the chain), then **IMP-008** (the real zero-state fix: derive level from XP, calendar from real entries, real entry dates — DESIGN PENDING, brainstorm first) ships as the inaugural feature OTA._
+_2026-06-07 — Release pipeline BUILT + merged to main (the "remove my dependency" automation). Designed via brainstorming → spec `docs/superpowers/specs/2026-06-07-streamlined-release-pipeline-design.md` _(deleted 2026-09-07 — in git history)_, planned → `docs/superpowers/plans/2026-06-07-streamlined-release-pipeline.md` _(deleted 2026-09-07 — in git history)_, executed subagent-driven (per-task spec+quality review + final holistic review). **What shipped (Tasks 1–7, all on main, fast-forward merge, 10 commits e520b4d…a534638):** `scripts/bumpVersionCore.js` (pure, TDD, 6 tests) + `scripts/bump-version.js` CLI wired to `npm run bump:build` / `bump:native`; `app.config.js` legal-URL fallbacks made non-empty (OTA-safety — CI has no .env, would've blanked Terms/Privacy); `eas.json` submit `track: alpha`; `.github/workflows/release.yml` (trailer-triggered `Release-Lane: ota|build` → classify + OTA native-backstop + `npm test` gate → `production` environment approval → `eas update` or `eas build --auto-submit`); `.github/workflows/rollback-ota.yml`; the **🤖 Release rules** section in this file + DEVGUIDE pointer. `npm test` 59/59 green. **NOT pushed** (owner pushes manually). The whole approach + the appVersion-vs-fingerprint rationale is in memory [[daily-rituals-release-pipeline]] / [[daily-rituals-runtime-version-policy]]. **OWNER TO-DO before anything ships (plan Task 8):** (1) create an Expo access token at expo.dev; (2) add GitHub repo secrets `EXPO_TOKEN` + `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`; (3) create a GitHub Environment named `production` with the owner as Required Reviewer. Then push `main` so the workflows go live. **NEXT after setup:** plan Task 9 shakedown (trivial `Release-Lane: ota` commit to watch the chain), then **IMP-008** (the real zero-state fix: derive level from XP, calendar from real entries, real entry dates — DESIGN PENDING, brainstorm first) ships as the inaugural feature OTA._
 
 _2026-06-07 — PIPELINE IS LIVE ✅. Owner completed Task 8 (Expo token + GitHub secrets `EXPO_TOKEN`/`GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` + `production` environment with owner as required reviewer). `main` pushed to GitHub for the first time (repo was empty; now tracking `origin/main`). Task 9 shakedown PASSED: pushed a trivial `Release-Lane: ota` commit (`f81140d`, an invisible comment in `RitualsApp.js`) → `classify` ✅ (lane detected, backstop ok, tests green) → owner approved the `production` gate → `ota` job ✅ ran `eas update`, update confirmed in the Expo dashboard. The `build` job was correctly SKIPPED (its `if: lane=='build'` was false for an ota push) — confirms lane gating works. Pipeline proven end-to-end for the OTA lane; the build lane will get its first real run on the next `Release-Lane: build` push. The shakedown comment in `RitualsApp.js` is harmless and will be removed when IMP-008 edits that file. Rollback OTA workflow exists but is untested (optional). **NEXT: IMP-008 — brainstorm the level model first (no XP→level mapping exists), then build (TDD) + ship as the first real feature OTA via `Release-Lane: ota`.**_
 
@@ -4643,7 +4643,7 @@ command: `git commit` → `b2ff8c4`. Archived the spec into `docs/build-log.md`,
 finding note, corrected the stack line, and moved the IMP-068 note down to `docs/build-log.md`. **Not to
 lose: the duplicate-key fix is a candidate root cause for (h), not confirmed** — the "chosen" line is what
 turns that into evidence for the next WALK-04 run. NEXT: a build chat takes **IMP-070** (first ⬜,
-[spec](docs/specs-open.md#imp-070--one-emoji-and-the-block-says-what-it-makes)). A walk chat can still take
+[spec](specs-open.md#imp-070--one-emoji-and-the-block-says-what-it-makes)). A walk chat can still take
 **WALK-07**, **WALK-06** or **WALK-15**._
 
 _2026-08-16 (IMP-070, one emoji, and the block says what it makes) — **code-complete, committed `8b7a976`,
@@ -4658,7 +4658,7 @@ assertions repointed, `MoodManager.test.js` +1). **Proof:** `npm test` → **848
 spec, ticked its row, updated the WALK-04 finding + ACTIVE TRACK callout, corrected the stack line in both
 `PROGRESS.md` and `docs/specs-open.md`, moved the 2026-08-15 Opus scoping note down to `docs/build-log.md`.
 NEXT: a build chat takes **IMP-071** (first ⬜,
-[spec](docs/specs-open.md#imp-071--the-filter-row-stops-jumping-under-your-thumb)) — last spec in the queue;
+[spec](specs-open.md#imp-071--the-filter-row-stops-jumping-under-your-thumb)) — last spec in the queue;
 **it reverses landed behavior (finding g), not a defect fix — don't re-litigate the scroll-back-to-x0
 decision.** A walk chat can still take **WALK-07**, **WALK-06** or **WALK-15**._
 
@@ -4745,7 +4745,7 @@ _2026-07-29 — RevenueCat SDK bump (BUILD lane; SHIPPED — build 8). Google Pl
 
 _2026-07-30 (launch) — **🚀 v1.0.3 / versionCode 9 submitted to PRODUCTION review** (owner) + a docs reconciliation pass. This is the free public launch: `PLUS_ENABLED = false`, so the build carries no payment surface at all. Three facts changed by it and now reflected everywhere: **(1) IMP-027 is SHIPPED, not code-complete** — the native build on `compileSdkVersion 36` demonstrably worked, so the `~/.gradle/init.d` kapt tmpdir fix held on SDK 54's newer Kotlin/kapt without a rewrite, and **API-36 compliance is met a month ahead of the 2026-08-31 deadline**; build 8 is superseded and no longer waiting on anything. **(2) The BillDesk deadlock is unblocking** — this upload is what mints the public Play Store URL BillDesk PA-CB verification wants; hand it `https://play.google.com/store/apps/details?id=app.dailyrituals.mobile` (worth trying before review completes). **(3) IMP-022's conditional version-bump rule is now RESOLVED to "must bump"** — it was written as "ride versionCode 9 if it hasn't shipped"; 9 has shipped, so IMP-022 runs `npm run bump:native`. Open items were restructured from a flat list into **In flight / Owner device verification / Phase 10b / Parked**, because the accumulated per-IMP device-verification items (IMP-006, 020, 021, 027) are one runtime walk on the live build, not four separate blockers — the edge-to-edge audit is the one that matters most. IMP-028's full detail archived to build-log per the size budget. No code changed this session; `npm test` still **286 passed, 36 suites**. Also this session: **the BillDesk application was submitted** (2026-07-30) now that the production push supplied the Play Store URL it wanted — recorded as submitted-not-yet-verified, since products cannot be activated until the payments profile is actually approved. The owner then walked the production build: **edge-to-edge ✅, manual backup/restore ✅, and Android Auto Backup ✅** — uninstall→reinstall auto-restored with no login, closing IMP-006, IMP-020 and IMP-027. The restored data was stale ("older data before today"), which is the **documented Auto Backup contract** (≤once/24h, idle+charging+Wi-Fi), **not a defect** — but it surfaced that the restore is **silent**, now scoped as **IMP-029**. NEXT: IMP-022 then IMP-029, shipped in one BUILD._
 
-_2026-07-30 (billing) — **IMP-028: billing correctness pass** (OTA lane; no ship trailer). Owner asked to enable + real-transaction-test payments before the public push, so the whole billing seam was audited. The seam itself is sound (`Purchases.configure()` correctly called + gated in `App.js`; metro purchases stub is web-only). **Three real defects found and fixed:** the paywall rendered **hardcoded USD** while Google charges the local Play price and `getPrices()` was dead code (now live-driven via new `src/billing/prices.js` + `useLivePrices.js`); an **EAS cloud build would have silently shipped the purchase simulation**, faking successful purchases and granting Plus free (now a hard `scripts/check-billing-config.js` preflight in `release.yml`); and `CancelSheet` showed a hardcoded renew date. The **"7-day free trial" claim was deliberately left hardcoded** — the correct fix reads the trial period off a live offering, which cannot exist until Play products do. `npm test` → **286 passed, 36 suites** (+24, zero product-logic changes); `expo export` clean. **Headline finding was not code:** BillDesk wants the live Play Store URL, which deadlocked "hold the launch until payments work". Full detail in [`docs/build-log.md`](docs/build-log.md) → IMP-028._
+_2026-07-30 (billing) — **IMP-028: billing correctness pass** (OTA lane; no ship trailer). Owner asked to enable + real-transaction-test payments before the public push, so the whole billing seam was audited. The seam itself is sound (`Purchases.configure()` correctly called + gated in `App.js`; metro purchases stub is web-only). **Three real defects found and fixed:** the paywall rendered **hardcoded USD** while Google charges the local Play price and `getPrices()` was dead code (now live-driven via new `src/billing/prices.js` + `useLivePrices.js`); an **EAS cloud build would have silently shipped the purchase simulation**, faking successful purchases and granting Plus free (now a hard `scripts/check-billing-config.js` preflight in `release.yml`); and `CancelSheet` showed a hardcoded renew date. The **"7-day free trial" claim was deliberately left hardcoded** — the correct fix reads the trial period off a live offering, which cannot exist until Play products do. `npm test` → **286 passed, 36 suites** (+24, zero product-logic changes); `expo export` clean. **Headline finding was not code:** BillDesk wants the live Play Store URL, which deadlocked "hold the launch until payments work". Full detail in [`docs/build-log.md`](build-log.md) → IMP-028._
 
 
 ---
@@ -4838,10 +4838,10 @@ rather than patch its wrap) is the design that landed. Full writeup archived wit
 
 The owner's words: *"the app is restored automatically (with no option given to me, it was done without permission — definitely need to change this)."* The complaint is legitimate, but only half of it is fixable:
 
-- **Not fixable — the restore itself.** Android Auto Backup restore happens **at install time, inside the OS**, before the app's first line of JS runs. There is no API to prompt before it, intercept it, or defer it. `BackupAgent.onRestoreFinished()` fires *after* the data has already landed. The only OS-level lever is `allowBackup: false` in [`app.config.js:49`](app.config.js#L49), which deletes the whole "new phone, my journal came back" feature IMP-006 was built for. **Do not propose an "ask before restoring" flow — it cannot be built.**
+- **Not fixable — the restore itself.** Android Auto Backup restore happens **at install time, inside the OS**, before the app's first line of JS runs. There is no API to prompt before it, intercept it, or defer it. `BackupAgent.onRestoreFinished()` fires *after* the data has already landed. The only OS-level lever is `allowBackup: false` in [`app.config.js:49`](../app.config.js#L49), which deletes the whole "new phone, my journal came back" feature IMP-006 was built for. **Do not propose an "ask before restoring" flow — it cannot be built.**
 - **Fixable — what happens next.** [`RestoreNotice.js`](../src/screens/RestoreNotice.js) offers exactly two actions: **Got it** (accept) and **Restore from a file** (replace from JSON). There is **no way to reject the restored data**. A user handed a stale restore who wants to start clean has to find You tab → Reset all data on their own, and the notice never mentions it.
 
-**✅ RESOLVED — scoped as [IMP-033](docs/specs-open.md#imp-033--the-restore-is-offered-not-imposed), an open task.** The owner rejected a mere "Start fresh" button in favour of a stronger design: **quarantine** the OS-restored payload, run the app as a genuine first install (onboarding and all), then **offer** the backup with fair warnings once onboarding is done. Full spec in [`docs/specs-open.md`](docs/specs-open.md).
+**✅ RESOLVED — scoped as [IMP-033](specs-open.md#imp-033--the-restore-is-offered-not-imposed), an open task.** The owner rejected a mere "Start fresh" button in favour of a stronger design: **quarantine** the OS-restored payload, run the app as a genuine first install (onboarding and all), then **offer** the backup with fair warnings once onboarding is done. Full spec in [`docs/specs-open.md`](specs-open.md).
 
 ### 🟠 Duplicate-reminder fix landed outside the backlog (2026-08-13, `b773352`) — ✅ RESOLVED, IMP-054 landed on it correctly
 
@@ -4881,9 +4881,9 @@ Owner: *"When I press 'Backup my journal' it gives me the option to send or shar
   - ✅ **IMP-030 — PASSED on a real device.** The ~4% anchor-1 margin (235 vs 245dp) held on real font metrics; no need to lower the `0.48` glyph ratio.
   - ✅ **IMP-031 — PASSED on a real device**, including the backgrounded case (the one the emulator could not settle, since without `setNotificationHandler` a foregrounded reminder shows nothing on Android).
   - ✅ **IMP-032 — harness walked on a real device.** Sections, knobs, Apply/confirm and the Inspector all exercised.
-  - ✅ **IMP-021 — walked 2026-08-02, owner called it "not properly completed"; both shortfalls closed by [IMP-045](docs/build-log.md), code-complete 2026-08-09.** Full detail archived in `docs/build-log.md`. **Not yet re-walked on device** — the fix is OTA and testers will see it on the next `eas update`.
+  - ✅ **IMP-021 — walked 2026-08-02, owner called it "not properly completed"; both shortfalls closed by [IMP-045](build-log.md), code-complete 2026-08-09.** Full detail archived in `docs/build-log.md`. **Not yet re-walked on device** — the fix is OTA and testers will see it on the next `eas update`.
 
-  - ✅ **IMP-029 — PASSED on a real device.** The owner ran a true uninstall → reinstall cycle; Auto Backup restored silently at install time and the app fired the "Welcome back." notice naming the backup's date. The restored data was **stale (2 entries vs the 5 that were live)** — which is the feature working, not failing: that staleness is exactly the hazard the notice exists to announce. Two follow-on findings came out of the walk (see below). Procedure kept in [`docs/build-log.md`](docs/build-log.md) → IMP-029 → "Device-walk procedure" for future regressions.
+  - ✅ **IMP-029 — PASSED on a real device.** The owner ran a true uninstall → reinstall cycle; Auto Backup restored silently at install time and the app fired the "Welcome back." notice naming the backup's date. The restored data was **stale (2 entries vs the 5 that were live)** — which is the feature working, not failing: that staleness is exactly the hazard the notice exists to announce. Two follow-on findings came out of the walk (see below). Procedure kept in [`docs/build-log.md`](build-log.md) → IMP-029 → "Device-walk procedure" for future regressions.
 
 ---
 
@@ -5349,6 +5349,153 @@ emulator, this row is where to look first.
 
 ---
 
+### ✅ WALK-16 + WALK-17 — closed 2026-09-05 (emulator evidence, owner's instruction)
+
+_Sections moved out of `docs/walk-open.md` 2026-09-07, per that file's own rule: a passed walk leaves only its
+index row behind. Both were closed on emulator evidence at the owner's 2026-09-05 instruction — real doze, OEM
+battery managers, a real share target and Google's own backup schedule remain unexercised anywhere._
+
+#### WALK-16 — the New Architecture cold start
+
+**Covers:** IMP-076 · **Target:** **device** · **Runner:** 👤 · **Gate:** 🚦 — **this walk gates IMP-077.**
+
+**Read this first.** IMP-076 flips `newArchEnabled` to `true` in `app.config.js` and
+`android/gradle.properties`. It changes **no app code** — which means **`npm test` cannot see it at all.**
+A fully green suite is compatible with an app that redboxes on launch. This walk is the only evidence
+that exists.
+
+**Build from `feat/design-push`. Do not push the branch to run this.**
+
+**Why every step below is a native surface.** The audit in the design doc cleared
+`react-native-svg`, `async-storage` and `safe-area-context` on paper (`codegenConfig` + New Arch
+sourcesets) and every `expo-*` module by virtue of SDK 54 defaulting to New Arch. Paper is not a device.
+Each step exercises one of those cleared claims.
+
+1. **Cold start.** Force-stop, launch. No redbox, no ANR. **If this fails, stop — steps 2-7 are moot.**
+2. **SVG everywhere** (`react-native-svg`) — the Home hero renders **the sun and its rays**, every tab
+   icon draws, the heatmaps paint. This is the highest-traffic native view in the app.
+3. **Safe-area insets** (`safe-area-context`) — status bar and bottom nav are not clipped or overlapped
+   on Home, and the bottom nav sits above the gesture bar.
+4. **Storage round trip** (`async-storage`) — write an entry, force-stop, relaunch, the entry is still
+   there. This is the whole app's persistence layer.
+5. **Notifications** (`expo-notifications`) — set a reminder, confirm it fires. OEM battery managers are
+   a known confound (see "Out of scope"); what is being tested here is that the module *initialises and
+   schedules* under New Arch, not the OS's delivery discipline.
+6. **File I/O + share** (`expo-file-system`, `expo-sharing`, `expo-document-picker`) — export a backup,
+   share it, re-import it.
+7. **Android Auto Backup** — uninstall → reinstall → data returns without login. This is IMP-006's
+   contract and it runs through the native backup agent.
+
+**On failure — this is the deliverable, do not fix it here.** Record exactly what was observed, then:
+both `newArchEnabled` flags back to `false`, rebuild, confirm the failure clears. **IMP-077 then falls
+back to bare `Animated`** — Reanimated 4 is New Arch-only, but the design work (IMP-078) is *not* blocked
+either way, and the motion contract was deliberately written to survive this outcome. Scope the failure
+as a new `IMP-xxx` for Opus.
+
+**🟡 Emulator smoke run — 2026-09-05. NOT A PASS; this row stays ⬜.** A `device` row run on an emulator
+is not a pass (see the header rule), and steps 5-7 are exactly the ones an emulator cannot settle. But
+IMP-076 had *no* runtime evidence at all, and this closes part of that gap. Run on `feat/design-push`
+with a **v1.0.7 / vc13** debug APK (`expo prebuild` first, so the install genuinely stamps vc13 — an
+earlier local build silently reported vc11 off a stale gradle cache).
+
+**New Architecture is confirmed live at runtime, not merely configured.** logcat on cold start carries
+`jni_lib_merge: Preparing to register libfabricjni_so`, the same for `libturbomodulejsijni_so`, and
+`BridgelessReact: ReactHost{0}.startSurface(surfaceId = 0)`. Bridgeless is New-Arch-only. IMP-076's
+evidence was previously limited to codegen `.so` files being *present* in the APK; this is the runtime
+entering New Arch and rendering. **Step 1 (cold start, no redbox, no ANR), step 2 (SVG — the sun and rays
+draw, every tab icon draws) and step 3 (safe-area — status bar clear, bottom nav above the gesture bar)
+all pass here.** `prebuild` was verified not to have undone IMP-076: `newArchEnabled=true` and
+`android.enableMinifyInReleaseBuilds=true` both survived.
+
+One log line was chased and is benign: `ReactNativeJS: W Error: undefined` is preceded by
+`URL: <host>:8081` and is dev-client connection logging, not an app error.
+
+**🟡 Emulator smoke, part two — 2026-09-05, agent-run. Steps 4-7 now exercised; the row still stays ⬜.**
+Same vc13 debug APK, same AVD (`sdk_gphone16k_arm64`, **Android 16 / API 36, 16 KB pages**). What an
+emulator genuinely cannot settle is now a much shorter list than "steps 4-7" — it is three specific
+things, all named under "Out of scope": **real doze + OEM battery managers, real share-sheet targets, and
+Google's own backup schedule.** Everything else in steps 4-7 ran green.
+
+- **Step 4 — storage round trip: PASS.** Wrote an entry through the real write flow (three steps, mood
+  picker, `Bury the day`), confirmed `+50 XP / 1 day streak / +15 Embers`, then `am force-stop` and a cold
+  relaunch. Home came back with streak 1, 50/100 XP, 15 Embers, "Today is at rest.", rites 20/30. The
+  record in `RKStorage` survived intact: `{dayKey: 2026-09-05, did: "WALK16probe", wished: "step4probe",
+  moods: ["Grateful"]}`. New Arch markers reproduced independently on this second cold start.
+- **Step 5 — notifications, the half that is not doze: PASS.** Toggling `Daily reminder` on drove the
+  Android 13+ `POST_NOTIFICATIONS` prompt, granted clean, and `dumpsys alarm` then showed **7 real
+  `RTC_WAKEUP` alarms, one per day at 20:30**, first at 2026-09-06. The module initialises and schedules
+  under New Arch — which is exactly what this step was written to prove. **Worth noting, not a defect:**
+  today's 20:30 was *skipped* even though it had not yet passed, consistent with the entry already being
+  written. Delivery discipline stays WALK-13's job on hardware.
+- **Step 6 — file I/O + share: PASS on both ends, share target unexercised.** `Back up my journal` wrote
+  `daily-rituals-2026-09-05.json` and opened the real Android share sheet (Quick Share / Drive / Gmail
+  resolved as targets). The envelope is well-formed — `format: daily-rituals-backup`, `appVersion: 1.0.7`,
+  `counts: {entries: 1, days: 1}`, payload a stringified state carrying the entry. Re-import through
+  `Restore from a backup` launched `expo-document-picker` (`OPEN_DOCUMENT`, `application/json`), read the
+  file back, and the confirm read **"This backup has 1 entry"** before replacing. State after import was
+  byte-equivalent. Only the delivery to a real share *target* remains out of scope.
+- **Step 7 — Android Auto Backup, via T5: PASS.** `bmgr` local transport → `backupnow` (Success,
+  8.2 MB) → `adb uninstall` → reinstall → `bmgr restore 1`. **The restore quarantine behaved exactly as
+  IMP-033/IMP-029/IMP-062 specify, and this is the part worth reading twice:** the restored state did not
+  go live. It landed in `dailyrituals:v1:pendingRestore` with `dailyrituals:v1:state` cleared, the app
+  showed onboarding, and only after onboarding did the **"We found your journal."** sheet offer it —
+  correctly itemising *15 Embers, 1 palette and 2 skies* and dated 5 Sep 2026. `Load my journal` →
+  a confirm reading **"This backup has 1 entry"** → data fully returned (1 entry, 50 XP, 15 Embers, both
+  skies) and `pendingRestore` was cleared. The recovery copy the dialog promises was written for real:
+  `files/daily-rituals-recovery-2026-09-05T09-42-22-485Z.json`. **Offered, not imposed — confirmed on a
+  genuine backup-transport restore, not a T4 clock fake.**
+
+No redbox, no ANR and no `FATAL`/`AndroidRuntime: E` at any point across all four steps.
+
+**Expect one specific stumble, at install rather than runtime:**
+`scripts/patch-permissions.js` may exit non-zero and fail `npm install` if New Arch moves the permissions
+path. That is designed behaviour, not a walk failure — IMP-076 step 2 says what to do.
+
+---
+
+#### WALK-17 — edge-to-edge, re-audited under New Arch
+
+**Covers:** IMP-076, IMP-027 regression · **Target:** **device** · **Runner:** 👤 (visual) · **Gate:** 🚦
+
+**Why this is not folded into WALK-16.** Android 16 *forces* edge-to-edge, and the New Architecture
+changes the layout and insets path. IMP-027's edge-to-edge audit passed on 2026-07-30 **on Legacy
+Architecture** — that pass says nothing about this build. It is a separate row because it is a separate
+judgement call, made with different eyes.
+
+Runnable in the same sitting as WALK-16, after it passes.
+
+1. Every top-level tab — Home, Archive, Insights, You — draws under the status bar and the gesture bar
+   without clipped content or double padding.
+2. The bottom nav and its centre write-FAB sit correctly above the gesture bar, in **both** three-button
+   and gesture navigation modes.
+3. Open each modal sheet (write flow, reading sheet, trash, mood manager, achievements, shop) and
+   confirm none is clipped at either end.
+4. Both themes — day and night. The night-v2 canvas is pure black, so an inset error that hides in day
+   mode is invisible until it is not.
+
+**On failure:** record it, scope as a new `IMP-xxx`. Do not fix mid-walk.
+
+**Result — ✅ 2026-09-05 (emulator, agent-run).** Recorded as a pass at the owner's instruction that
+emulator results close these rows; the header's `device`-≠-`emulator` rule is knowingly set aside here.
+**Step 1:** Today, Insights, Reflections and You all draw under the status bar and gesture bar with no
+clipped content and no double padding; You scrolls to `Reset all data` sitting clear of the nav. Onboarding
+and the setup screen are clean at both ends too. **Step 2:** the bottom nav and the centre write-FAB sit
+correctly above the gesture bar in gesture nav, and above the system bar in three-button nav — switched
+live with `cmd overlay`, no relayout damage either way. **Step 3:** trash sheet clean in day; achievements
+(Keepsakes) and shop clean in night **at max font**, headers clear of the status bar, content scrolling
+under nothing. **Step 4:** both themes walked. Night-v2 is a true pure black and no inset error hid in it —
+the sun and rays, heatmaps and tab icons all repaint in the night palette, and the sky pill switches to the
+moon.
+
+⚠️ **Three sheets were not opened: write flow, reading sheet, mood manager.** The three that were opened
+were consistent, but that is inference, not observation.
+
+**Out of scope, noted not scoped:** the Dev Harness draws its own header under the status bar, and at max
+font its "Last backup" stepper value clips off the right edge. `__DEV__`-only, absent from the release
+build — not a release defect.
+
+---
+
 ## PROGRESS.md archive — trimmed 2026-09-06
 
 PROGRESS.md was 557 lines against its own ≤250-line hard rule. These blocks were moved here whole,
@@ -5412,6 +5559,186 @@ build ships.)
 
 
 ### Claude Design — the full 2026-08-17 setup notes (verbatim)
+
+## PROGRESS.md archive — trimmed 2026-09-07
+
+_PROGRESS.md had drifted to 429 lines against its own ≤250 hard rule, and several sections had gone
+factually stale (a "LIVE BLOCKER" closed by vc15, an artifact table still describing vc13, a walk
+finding duplicated in `walk-open.md`, a duplicated sentence in the 🧭 block). They are kept verbatim
+below. **This is history: where any of it contradicts the current PROGRESS.md, PROGRESS.md wins.**_
+
+### The 🧭 "WHAT TO TAKE RIGHT NOW" block as it stood 2026-09-06
+
+
+> ## 🧭 WHAT TO TAKE RIGHT NOW (2026-09-06)
+>
+> ## ✅ BILLING IS REAL — AND WALK-19 HAS NOW RUN, WITH THREE DEFECTS — 2026-09-06 (night)
+>
+> **`PAYWALL_LIVE` is true on the owner's device, prices render in INR from the live Play offering, and an
+> airplane-mode purchase does not complete.** The simulation is off the device and Play is transacting.
+> **Full narrative → [`docs/build-log.md`](build-log.md) → "The 2026-09-06 billing incident".** Do not
+> re-derive any of it; the four fixes are IMP-084 → IMP-088 and all are shipped.
+>
+> **The seven things worth carrying forward, and nothing else:**
+>
+> 1. ⚠️ **Every `eas update` needs `--environment production`.** It evaluates `app.config.js` on whatever
+>    machine runs it, and an `eas.json` profile `environment` binds the **build** lane only. Without the
+>    flag the manifest publishes `rcAndroidKey:""` and **overwrites the key the installed build embedded**
+>    — billing goes off on every device that takes it. A local `.env` does **not** save you.
+>    **A publish log line is not evidence — read the manifest back**, every time:
+>    `curl -sS -H 'expo-platform: android' -H 'expo-runtime-version: 1.0.9' -H 'expo-channel-name: production'`
+>    `-H 'expo-protocol-version: 1' -H 'accept: multipart/mixed' https://u.expo.dev/1a0f9b15-cb1a-4cec-9577-3cd66e9f1d36 | grep -o 'rcAndroidKey":"[^"]*"'`
+>    `scripts/check-billing-config.js` guards the workflow copy; **it cannot guard what you type by hand.**
+> 2. ⚠️ **Clearing app data DELETES the downloaded update** — this cost four rounds. The gesture used to
+>    "reproduce cleanly" sends the next launch back to the **embedded** bundle, which predates every OTA
+>    fix. An OTA applies on the **SECOND** launch. To test one: **open, wait ~15s, fully kill, open again —
+>    never clearing data in between.** "Nothing changed" has been this every single time.
+> 3. ⚠️ **jest cannot see any of this.** It renders with `__DEV__` true and cannot read a published
+>    manifest, so every guard here is a **source assertion** — and each was proven to fail on the real
+>    defect before it shipped. A green suite is not evidence about billing.
+> 4. ⚠️ **IMP-088's escape is NOT a timeout-to-failure and must never be "simplified" into one.** A real
+>    purchase takes minutes on INR/3DS flows; declaring failure mid-charge is worse than hanging.
+> 5. ⚠️ **IMP-091's cause is NOT established and its first step is a MEASUREMENT.** IMP-088's escape never
+>    appeared on the device — but that is equally consistent with the phone not running the IMP-088 bundle.
+>    Settle it with `adb logcat | grep -i "expo-updates\|EXUpdates"` or the IMP-087 diagnostic's bundle id
+>    **before writing a fix**, and do not let "IMP-088 doesn't work" enter the record until it is proven.
+> 6. ⚠️ **A hung purchase cannot be reproduced cheaply.** Restore was the obvious no-money diagnostic and it
+>    does not work: it never hangs, it answers instantly from RevenueCat's local cache (that is IMP-092).
+>    Testing the pending overlay requires a real purchase attempt.
+> 7. ✅ **Settled, do not re-raise: the free trial is BURNED on the owner's Google account** (subbed and
+>    unsubbed before; Play grants one per account ever). Play's sheet saying "charging today" is Play being
+>    **correct** — the product config is not the suspect, our hardcoded CTA is (IMP-090).
+>
+> 🚦 **WALK-19 RAN ON HARDWARE 2026-09-06 (night) and found THREE defects in four steps.** Steps 1 and 2
+> pass; the sitting **stopped before any purchase**, which was the right call — IMP-089 could charge someone
+> who tapped Restore. **Full paragraph → [`docs/walk-open.md`](walk-open.md) → WALK-19. Do not
+> re-derive it.** IMP-089 is **fixed but unshipped**; **IMP-090, 091, 092 are the build queue.** Nothing is
+> promoted `internal` → `production`.
+>
+> ⚠️ **Real charges are possible on `internal`** — confirm every account on that tester list is a Play
+> **license tester**. ✅ RevenueCat has **no sandbox for Google Play**, and **RC's own Play service account
+> credential is configured** (owner-confirmed, long ago) — **settled, do not re-raise.**
+>
+
+>
+> | If this chat is… | Take |
+> | --- | --- |
+> | a **build task** | ⛔ **There isn't one — [`docs/specs-open.md`](specs-open.md) is EMPTY.** IMP-093 landed 2026-09-07, the same day it was written. ⚠️ **Do not open a new billing row from reasoning alone**: every row since IMP-084 came out of a device sitting, and the two most recent (IMP-092's cache limit, IMP-093) were both found by someone holding the phone, not by reading the code. |
+> | a **runtime walk** | 🚦 **This is the only queue with anything in it.** ✅ **IMP-093 shipped by OTA 2026-09-07** (group `964e4fc2-…`), so the phone can be brought current with open → wait ~15s → swipe away → open. **WALK-19 re-ran 2026-09-07: step 3 ✅, step 4a ✅, step 4c ⬜ inconclusive → IMP-093.** Read its RESULT block before touching it again; **do not re-derive it and do not re-run 3 or 4a**, they are proven. What is left on that row needs either IMP-093 landed (4c) or a purchase attempt (4b, 4d–4f, 5–10). ⚠️ **The aeroplane-mode Restore check — IMP-092's second half — is one tap and is UNRUN.** ✅ **Ready NOW on a debug build of this branch:** **WALK-07** (Paywall half — IMP-080), **WALK-03 step 4** (`neverBackedUp` — IMP-081; default **and** max font) and **WALK-11**. ⚠️ **Those need the local debug APK, which cannot coexist with the Play build** — same `applicationId`, different signing key, so swapping means uninstall and a data wipe. **Export a backup first; that export is WALK-03 step 1, so sequence the sitting to get it free.** ✅ **Ready NOW on a debug build of this branch, no OTA needed:** **WALK-07** (Paywall half — IMP-080), **WALK-03 step 4** (`neverBackedUp` — IMP-081; default **and** max font) and **WALK-11** (the Plus perk surfaces mount on their own). ⚠️ **WALK-18 needs a mid-range device.** **WALK-08 is PARTIAL.** **WALK-12 (R8) is LAST** and must be re-walked on the exact build you ship. **WALK-16/17 CLOSED ✅ on emulator evidence; WALK-13 DROPPED.** ⚠️ **Gap no closed row covers:** real doze, OEM battery managers, delivery to a real share target, Google's own backup schedule. |
+> | a **design request** | See "Claude Design" below. The live request is **Insights**. |
+
+**The whole design push lives on `feat/design-push`, which is NEVER pushed, NEVER given a `Release-Lane:`
+trailer, and NEVER merged to `main`** without a separate owner decision. ⚠️ **That is why every OTA on this
+lane is published BY HAND** — CI only runs on `main`, so `release.yml`'s guards never fire here, and
+`--environment production` is on you. Thirteen specs are code-complete and branch-only: IMP-076 ✅ IMP-078 ✅
+(2026-08-17), IMP-080 ✅ IMP-081 ✅ IMP-077 ✅ (2026-09-05), IMP-082 ✅ IMP-083 ✅ IMP-084 ✅ IMP-085 ✅
+IMP-086 ✅ IMP-087 ✅ IMP-088 ✅ (2026-09-06). **The free-app improvement track is CLOSED** (owner,
+2026-08-16): `IMP-001`–`IMP-075` are done bar the deferred `IMP-022` and the reserved `IMP-057`; **do not
+open new free-track rows.** **`IMP-057` is reserved, not missing** — do not reuse the number. **IMP-044
+claims no queue slot** — it rides the next build and needs only WALK-12.
+
+### "Build artifacts a walk can run against" — the vc13/vc14 artifact table
+
+## 🔨 Build artifacts a walk can run against
+
+**⚠️ The tree is at v1.0.8 / vc14 and BOTH artifacts below are vc13** — they predate IMP-077's native deps,
+so **no OTA can add Reanimated to them.** **WALK-18 needs a new build.** Pure-JS walks (WALK-07,
+WALK-03 step 4, WALK-11) are fine on **B**, rebuilt from this branch.
+
+| | **A · Play `internal` (release)** | **B · local debug APK** |
+| --- | --- | --- |
+| **What** | AAB → Play-generated APKs, **R8 minified**, no dev harness | `android/app/build/outputs/apk/debug/app-debug.apk` (~172 MB, all ABIs, unminified) |
+| **Get it** | Play Store → internal testing (owner's account) — **now serves vc14, not vc13** | `adb install -r <path>` |
+| **Built from** | vc13: commit `bbd5f45`, EAS `11dce1c2-…`, submission `bcb6c944-…` | `expo prebuild` → `./gradlew assembleDebug` |
+
+**WALK-12 (R8) must be walked on the build you intend to ship** — that is now a vc15, not either of these.
+⚠️ `android/` is gitignored, so `expo prebuild` staleness is a live trap for local gradle builds.
+
+
+### 🔴 LIVE BLOCKER — vc14 on `internal` fakes purchases (closed by vc15, 2026-09-06)
+
+### 🔴 LIVE BLOCKER — vc14 on `internal` fakes purchases (2026-09-06)
+
+**Full account is the 🔴 callout at the top of this file — not repeated here.** In one line: no RevenueCat
+key reached the build, so it runs `simService`, fakes success and grants Plus free (proven on a device, in
+airplane mode). ✅ Fixed by **IMP-084**, commit `da77a7d`. 🔴 **Still live because the fix is BUILD-lane and
+no build carries it** — `eas.json` cannot be OTA'd. **Do not promote vc14. Do not walk billing on it.**
+The OTA consequence is an owner decision — see below.
+
+
+### The WALK-07 Paywall-footer finding (fixed by IMP-080; the row lives in walk-open.md)
+
+### 🟢 WALK-07 finding — Paywall footer overlap: FIXED in code, still unwalked
+
+Found on the 2026-08-16 whole-walk re-run (the other five screens and both IMP-067 spot-checks passed).
+**✅ Fixed by IMP-080, 2026-09-05, commit `22c9c06`** — the footer left the flex column for
+`position: absolute` and the root took an exact `height: winH`. Owner chose the pinned CTA over folding
+the footer into the scroll content, because this is the screen that takes money; the alternative floated
+during the walk (hide the footer until a plan is picked) **does not work** — `plan` initialises to
+`'annual'`, so a plan is always picked. **This entry stays open only until the Paywall half of WALK-07
+re-runs green:** jest renders a tree, not pixels, so no test can close it. Full writeup —
+`docs/walk-open.md` → WALK-07 → "Re-run — 🟡 2026-08-16"; spec in `docs/build-log.md`.
+
+
+### Session note — 2026-09-07 afternoon (WALK-19 re-run), in full
+
+_2026-09-07, afternoon (Opus — **WALK-19 re-ran on hardware. Two fixes proven, one half-proven, one
+unobservable — and the reason it is unobservable is a new defect.**) — branch-only, NOT pushed._
+
+**What ran.** WALK-19 steps 3, 4a and 4c on v1.0.9 / vc15 from Play `internal`, license tester, against
+the 2026-09-07 OTA (group `424b5a88-c993-44d7-91d6-db586ad22c32`). **Bundle confirmed with no cable** —
+the Plus banner button read **"See Plus"**, the string that did not exist before this OTA. **Full
+paragraph → [`docs/walk-open.md`](walk-open.md) → WALK-19 → RESULT; do not re-derive it here.**
+
+**✅ IMP-090 proven (step 3).** Our button read **"Subscribe"**, Google's sheet read **"Starting today"** —
+they agree, and no trial is promised to an account that cannot have one. ⚠️ **Worth keeping:** "Subscribe"
+means the live offering exposes **no free phase at all**, so the old hardcoded *"Start 7-day free trial"*
+was never backed by anything the app could reach — wrong in principle, not merely wrong for this buyer.
+
+**✅ IMP-089 proven (step 4a).** "Nothing to restore." → "Try again" **repeated the restore**; Play's
+purchase sheet did not open. That is the one that stopped the previous sitting. It also closes **IMP-092's
+online half** — a genuine check that finds nothing must still say "Nothing to restore", and it does.
+
+**⬜ IMP-091 NOT observed (step 4c) — inconclusive, not failed, and the distinction is the point.** Play's
+no-connection page **has no dismiss control but Back**, and Back closes the **entire paywall**, unmounting
+the overlay before the Close button can be seen. **Waiting 30 seconds does not help — Play's page does not
+self-dismiss.** So the escape may be working perfectly and be unobservable on this path. **Do not let
+"IMP-088 does not work" enter the record; it still has not been tested.**
+
+**🆕 IMP-093 scoped, not fixed** — the paywall unmounts mid-purchase and **`onAbandon` never fires**, so
+the app walks away from a purchase it started without asking the store.
+
+**Three things worth carrying that are not obvious from the row:**
+
+1. ✅ **Checked, not assumed: IMP-093 does not lose money.** `useLaunchEntitlementCheck`
+   ([`entitlementSync.js:33`](../src/billing/entitlementSync.js#L33)) runs on every launch where `plus` is
+   false and grants Plus if the store has an entitlement. The cost is a delay and a confusing minute, not
+   a stranded subscriber. **Scope IMP-093 accordingly — it is open because it blocks a 🚦 walk row, not
+   because it is dangerous.**
+2. ⚠️ **The intuitive fix for IMP-093 is wrong and the spec says so.** Making Back a no-op while a flow is
+   pending would keep the card alive to be looked at — and re-create the exact IMP-088 trap for the first
+   20 seconds, when no exit exists. Back is a *good* exit; the defect is that it exits without
+   reconciling, and that the card tells the user not to use it.
+3. ⚠️ **This corrects the IMP-088 record.** That was written as *"force-quit was the only way out."*
+   **Back was always a way out.** The card's *"Don't close the app"* was talking the user out of the one
+   thing that worked — which is arguably the larger share of what IMP-088 was really for, and is now step
+   3 of IMP-093.
+
+**Two gaps on step 3 that cannot be closed on this device**, recorded rather than papered over: the
+**trial-eligible CTA branch** (needs an account that has not burned its trial — this one has, forever) and
+the **onboarding paywall mount** (needs a data clear, which deletes the OTA).
+
+**The exact next step.** ✅ **DONE — IMP-093 landed the same day** (commit `061b1ff`, 1031 green); see the
+note above it. Either publish the OTA and re-walk, or take a walk sitting. ⚠️ **WALK-19's aeroplane-mode Restore check ran and was
+INCONCLUSIVE** — the cached reply meant IMP-092's `catch` never executed; see the row. **WALK-07, WALK-03
+step 4 and WALK-11 are all ready** but need the
+**local debug APK**, which cannot coexist with the Play build — swapping means uninstall and a data wipe,
+so **export a backup first (that export is WALK-03 step 1).** **Nothing is promoted `internal` →
+`production`.**
+
+
+
+---
 
 ## 🎨 Claude Design is set up — how to use it (IMP-078, 2026-08-17)
 
@@ -5601,13 +5928,13 @@ follow, and each one had been asserted confidently and wrongly earlier in this s
   exists on EAS and the build shipped the sim anyway — because no `eas.json` profile binds an
   `environment`. ⚠️ Adding `env:` to the workflow build step does **nothing**; cloud builds never see the
   runner's environment.
-Scoped as **[IMP-084](docs/specs-open.md)** — three layers, the third being the one that would have
+Scoped as **[IMP-084](specs-open.md)** — three layers, the third being the one that would have
 prevented this: **the app must hide a paywall it cannot transact through**, the same "never assert what
 you cannot back" rule already applied to the PDF perk, the ember packs and IMP-082's dates.
 
-**NEXT: 🔴 [IMP-084](docs/specs-open.md) is the top of the queue and it is a BUILD, not an OTA.**
+**NEXT: 🔴 [IMP-084](specs-open.md) is the top of the queue and it is a BUILD, not an OTA.**
 ~~this is a walk lane, and the build queue is genuinely empty~~ — that was true for about an hour.
-**[WALK-19](docs/walk-open.md) is the gate on v1.1** and now carries the acceptance for both of these
+**[WALK-19](walk-open.md) is the gate on v1.1** and now carries the acceptance for both of these
 (steps 5 and 10); it needs a **device**, a **license tester** and the vc14 `internal` build. Also ready:
 **WALK-11**, **WALK-07 (Paywall half)** and **WALK-03 step 4** on a debug build of this branch; **WALK-18**
 needs a mid-range device; **WALK-12 (R8) LAST**. **Neither fix has shipped** — no `Release-Lane:` trailer,
@@ -5774,7 +6101,7 @@ a "clear data to reproduce" habit that guarantees you test the wrong bundle. Clo
 > **update**. ⚠️ **This branch never reaches CI**, so every OTA here was published **by hand** with the
 > same naked command — `docs/playbook.md` documented it that way too.
 >
-> ✅ **[IMP-086](docs/build-log.md) fixes both, commit `c50e7e7`** — `--environment production` on the
+> ✅ **[IMP-086](build-log.md) fixes both, commit `c50e7e7`** — `--environment production` on the
 > workflow command, `otaEnvironmentPreflight` failing CI on any `eas update` line missing it, the
 > playbook's copy corrected, **and onboarding brought under the gate** (see below). `npm test` **936**
 > green (was 915), `npx expo export` clean.
@@ -5813,7 +6140,7 @@ a "clear data to reproduce" habit that guarantees you test the wrong bundle. Clo
 > ✅ **The purchase simulation is off the device. `PAYWALL_LIVE` is true, the key ships, the probe works,
 > and Play is transacting.** The 2026-09-06 incident chain (IMP-084 → 085 → 086 → 087) is CLOSED.
 >
-> 🔴 **The same walk found a trap, fixed as [IMP-088](docs/build-log.md), commit `c494721`.** The purchase
+> 🔴 **The same walk found a trap, fixed as [IMP-088](build-log.md), commit `c494721`.** The purchase
 > hung on **"Confirming with Play Store…" forever** — `usePurchaseFlow` awaited the service with no bound
 > and the pending card had **no dismiss control at all** while saying *"Don't close the app"*. RevenueCat's
 > `getOfferings`/`purchasePackage` can both hang with no network, so nothing rejected and **force-quit was
@@ -5855,7 +6182,7 @@ a "clear data to reproduce" habit that guarantees you test the wrong bundle. Clo
 > **The incident:** the owner subscribed in **AIRPLANE MODE and it succeeded** (2026-09-06, proven on a
 > device). Real Play Billing cannot complete a purchase with no network; `simService` can, and grants Plus
 > **free**. vc14 had shipped with no RevenueCat key and fell back to it.
-> ✅ **[IMP-084](docs/build-log.md) fixed all three layers, commit `da77a7d`, and BOTH lanes shipped:**
+> ✅ **[IMP-084](build-log.md) fixed all three layers, commit `da77a7d`, and BOTH lanes shipped:**
 > - **OTA (layer C), runtime 1.0.8** — update group `90aa2074-6625-4072-8d35-71244a525b2d`, from `2834dd9`.
 > - **BUILD (layers A + B), v1.0.9 / vc15 → `internal`** — confirmed from `eas submit:list`, not inferred:
 >   `Status: finished`, `Release Status: completed`, `Version code 15`, build
@@ -5894,7 +6221,7 @@ a "clear data to reproduce" habit that guarantees you test the wrong bundle. Clo
 > | If this chat is… | Take |
 > | --- | --- |
 > | a **build task** | ✅ **The queue is EMPTY** — IMP-088 (`c494721`) was the last row and **everything is shipped**. The only work left is **WALK-19**, a walk chat, not a build. **Nothing should be invented to fill it**; new work comes from a 🔴 walk finding, the owner, or a design doc. |
-> | a **runtime walk** | **The lane with the work in it.** 🚦 **[WALK-19](docs/walk-open.md) — "money actually changes hands" — gates the v1.1 promotion and is BLOCKED**: it needs a build carrying `da77a7d`, a **device** and a **license tester**. vc14 fakes purchases, so a run against it records a result about the simulation. ✅ **Ready now on a debug build of this branch (all pure-JS):** **WALK-07** (Paywall half — IMP-080), **WALK-03 step 4** (`neverBackedUp` — IMP-081; run at default **and** max font scale, where the third line gets tested) and **WALK-11** (the Plus perk surfaces mount on their own now, so the old "needs T1" reason is gone). ⚠️ **WALK-18 needs a NEW build** — IMP-077's native deps put the tree on v1.0.8/vc14, which no vc13 artifact carries — **and a mid-range device**, because an emulator renders dropped frames as smooth. **WALK-08 is PARTIAL** (cap confirmed; eight of nine screens, rotation and `longName` unrun). **WALK-12 (R8) is LAST** and needs the Play `internal` build, which has no dev harness. **WALK-16/17 CLOSED ✅ on emulator evidence; WALK-13 DROPPED** (owner, 2026-09-05: record emulator results as done, not smoke). ⚠️ **Gap no closed row covers:** real doze, OEM battery managers, delivery to a real share target, Google's own backup schedule. |
+> | a **runtime walk** | **The lane with the work in it.** 🚦 **[WALK-19](walk-open.md) — "money actually changes hands" — gates the v1.1 promotion and is BLOCKED**: it needs a build carrying `da77a7d`, a **device** and a **license tester**. vc14 fakes purchases, so a run against it records a result about the simulation. ✅ **Ready now on a debug build of this branch (all pure-JS):** **WALK-07** (Paywall half — IMP-080), **WALK-03 step 4** (`neverBackedUp` — IMP-081; run at default **and** max font scale, where the third line gets tested) and **WALK-11** (the Plus perk surfaces mount on their own now, so the old "needs T1" reason is gone). ⚠️ **WALK-18 needs a NEW build** — IMP-077's native deps put the tree on v1.0.8/vc14, which no vc13 artifact carries — **and a mid-range device**, because an emulator renders dropped frames as smooth. **WALK-08 is PARTIAL** (cap confirmed; eight of nine screens, rotation and `longName` unrun). **WALK-12 (R8) is LAST** and needs the Play `internal` build, which has no dev harness. **WALK-16/17 CLOSED ✅ on emulator evidence; WALK-13 DROPPED** (owner, 2026-09-05: record emulator results as done, not smoke). ⚠️ **Gap no closed row covers:** real doze, OEM battery managers, delivery to a real share target, Google's own backup schedule. |
 > | a **design request** | See "Claude Design" below. The live request is **Insights**. |
 
 **The whole design push lives on `feat/design-push`, which is NEVER pushed, NEVER given a `Release-Lane:`

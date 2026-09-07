@@ -4,10 +4,10 @@ This project is built by **Opus** (planning) and executed by **Sonnet** across m
 
 - **Read first, every time:** [`PROGRESS.md`](PROGRESS.md) (where we are — always; it's a lean live cursor). The ACTIVE TRACK is the **IMP backlog**; each open row links to its full spec in [`docs/specs-open.md`](docs/specs-open.md).
 - **Then read exactly ONE spec:** open [`docs/specs-open.md`](docs/specs-open.md) at the heading your backlog row links to, and **no other heading in that file**. Every other spec there is for a different chat; reading them is wasted context. Finished specs are archived in `docs/build-log.md`.
-- **Open only when you need it:** [`docs/playbook.md`](docs/playbook.md) = stable reference (release + signing rules, config, architecture, parked phases 8/10b/11, locked decisions, IMP template). The [phase plan](docs/superpowers/plans/2026-06-03-daily-rituals-expo-billing.md) = full per-step code, **only for a phase-ladder phase (8/10b/11)**.
+- **Open only when you need it:** [`docs/playbook.md`](docs/playbook.md) = stable reference (release + signing rules, config, architecture, locked decisions, IMP template) **and the full per-step record for the parked phase ladder 8 / 10b / 11** — the separate `docs/superpowers/` plans were deleted 2026-09-07 once every phase they covered had shipped.
 - **Update last, every time:** `PROGRESS.md` (tick the row, set status, write the "Last session note") **and move the finished spec from `docs/specs-open.md` into `docs/build-log.md`**.
 
-If you remember nothing else: **`PROGRESS.md` is the memory between chats — keep it small.** The plan + playbook never change; `PROGRESS.md` is the moving cursor and `docs/specs-open.md` is the work queue.
+If you remember nothing else: **`PROGRESS.md` is the memory between chats — keep it small.** The playbook barely changes; `PROGRESS.md` is the moving cursor and `docs/specs-open.md` is the work queue.
 
 **The four files, by how often you read them:** `PROGRESS.md` (every chat — live cursor) → `docs/specs-open.md` (every chat — but one heading only) → `docs/playbook.md` (when shipping or doing phase work — stable reference) → `docs/build-log.md` (rarely — append-only archive).
 

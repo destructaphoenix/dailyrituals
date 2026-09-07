@@ -32,73 +32,60 @@
 
 ## Index — take them in this order
 
-**The order encodes what gates the release** (re-sorted 2026-08-14; re-tracked 2026-09-05). Everything
-committed since the vc11 build on 2026-08-02 is still unpublished, and reaching the public needs a
-**build**, not an OTA — a build that carries IMP-044's R8. So the rows are grouped by *what a failure
-would cost*:
+**The order encodes what gates the release.** Rows are grouped by *what a failure would cost*:
 
 | Gate | Meaning |
 | --- | --- |
-| 🚦 | **Blocks the build.** Data loss, silent stripping, or a core loop that has never run outside jest. |
+| 🚦 | **Blocks the release.** Data loss, silent stripping, or a core loop that has never run outside jest. |
 | 🎨 | **Follows the release.** A failure here is ugly, not destructive — ship, then walk, then OTA the fix. |
 | 📦 | **Independent of the app release.** Listing assets; no build required, upload any time. |
 | ⏭ | **Not needed for this release.** Covered code is unreachable in the shipped build. |
 
-**Taking a walk is unchanged: take the first ⬜ row.** Passed walks live in `build-log.md` → "Walk log";
-only live rows are described here.
+**Take the first ⬜ row.** Passed walks live in `build-log.md` → "Walk log"; only live rows are described here.
 
-**ONE track now — the vc13 build, and it is SHIPPED (2026-09-05).**
+### The build these rows run against — v1.0.9 / vc15 + its OTAs
 
-**vc12 is no longer the release candidate.** The owner's call: **vc13 is the future.** The
-`internal` → `production` promotion of v1.0.6 / vc12 is **off**, and with it the reason those walks
-were split across two builds. Every remaining ⬜ row now runs against **one build of
-`feat/design-push`** — v1.0.7 / vc13, New Architecture.
+**`internal` carries v1.0.9 / vc15** (shipped 2026-09-06), and **the billing fixes live in the OTAs, not the
+binary** — vc15's embedded bundle still has IMP-085's broken probe. A device that has not taken the updates,
+or has just had its data cleared, is back to a dead paywall. **To bring a phone current: open, wait ~15s,
+fully kill, open again** — an OTA applies on the *second* launch. vc13 and vc14 are history and take no
+further OTA; **vc14 must never be promoted — it faked purchases.**
 
-✅ **That build now exists on Play `internal`** (submitted 2026-09-05 from commit `bbd5f45`; EAS build
-`11dce1c2-…`, submission `bcb6c944-…`). **The device sitting is no longer blocked on cutting a build.**
-
-⚠️ **But read this before installing anything.** There are **two** vc13 artifacts and they are not
-interchangeable — the Play one is a **release** build with **no dev harness** (`__DEV__` false, no Metro),
-so **T1, T2 and T3 do not exist on it**. That splits the remaining rows:
+⚠️ **Two artifacts, and they are not interchangeable.** The Play build is a **release** build with **no dev
+harness** (`__DEV__` false, no Metro), so **T1, T2 and T3 do not exist on it**:
 
 | Needs the **local debug APK** (harness) | Runs on the **Play `internal`** build |
 | --- | --- |
 | **WALK-13** (T2 → Notify, to fire a reminder minutes out) | **WALK-12** — and it *must* be this build |
-| **WALK-03 step 4** (`staleBackup` / `neverBackedUp` scenarios) | **WALK-17**, **WALK-08**, WALK-03 steps 1-3 + 5, WALK-16's hardware residue |
+| **WALK-03 step 4** (`staleBackup` / `neverBackedUp` scenarios) | **WALK-19**, WALK-03 steps 1-3 + 5 |
 
 **They cannot coexist** — same `applicationId`, different signing keys, so swapping means uninstall, which
-wipes data. **Export a backup first**; that export *is* WALK-03 step 1, so sequence the sitting to get it
-for free. Full artifact table in [`PROGRESS.md`](../PROGRESS.md) → "The vc13 builds".
+wipes data. **Export a backup first**; that export *is* WALK-03 step 1, so sequence the sitting to get it free.
 
-**⚠️ The owner set the emulator bar on 2026-09-05, and it changes how these rows close.** The instruction
-was explicit: **run what the emulator can run and record it as done, not as smoke.** So **WALK-16 and
-WALK-17 are closed ✅ on emulator evidence**, and the `device`-≠-`emulator` rule in the header above is
-knowingly set aside for those two rows. What that buys is real — **IMP-077 is unblocked**. What it costs
-is named in each row and does not go away by being closed: nothing here has met real doze, an OEM battery
-manager, a real share target, or Google's own backup schedule. **WALK-13 was dropped from the pass at the
-same instruction** — neither run nor failed, and IMP-054 plus `b773352` remain unproven on any running app.
+### What is actually left
 
-**What is actually left.**
-- **WALK-03 step 4 (`neverBackedUp` only)** — waiting on `IMP-081`. Steps 1, 2, 3 and 5 passed.
-- **WALK-07 (Paywall only)** — waiting on `IMP-080`. Every other screen in it passed.
-- **WALK-08 — partial.** The font cap is confirmed biting; eight of its nine named screens, plus rotation
-  and the `longName` scenario, are still unrun.
-- **WALK-12 (R8) — last, and the one row that cannot move.** R8 must be walked on the exact build you
-  intend to ship, so any fix an earlier walk turns up invalidates an R8 pass taken before it. It needs the
-  Play `internal` build (A), which has no dev harness.
-- **WALK-18** — needs IMP-077 landed first, so it is a later sitting by construction.
+- **WALK-19** — the only 🚦 with live work in it. Steps 3 and 4a are **proven, do not re-run them**. Owed:
+  **4c** (blocked on IMP-093 reaching the phone), the **aeroplane-mode Restore check** (IMP-092's second
+  half — one tap, unrun), and steps **4b, 4d–4f, 5–10** in full, which need a real purchase attempt.
+- **WALK-07 (Paywall half only)** and **WALK-03 step 4 (`neverBackedUp`, at default *and* max font)** —
+  both unblocked since IMP-080/081 landed 2026-09-05, both pure JS, both ready on a debug build of this branch.
+- **WALK-11** — reopened; `PLUS_ENABLED = true` so the perk surfaces mount on their own, no T1 dance.
+- **WALK-08 — partial.** Eight of its nine named screens, the `longName` scenario and rotation are unrun.
+- **WALK-18** — needs a **mid-range device**; an emulator renders dropped frames as smooth, which is the
+  thing being judged, and the jest Reanimated mock no-ops every hook.
+- **WALK-12 (R8) — last, and it cannot move.** R8 runs at build time, so it must be walked on the exact
+  build you intend to ship: any fix an earlier walk turns up invalidates an R8 pass taken before it.
 
-**Both blocking specs are takeable right now and neither needs a device** — `IMP-080` and `IMP-081` touch
-different files, so they can go in either order or in parallel.
+**Closed, and not to be re-derived:** WALK-16 ✅ and WALK-17 ✅ (2026-09-05, **on emulator evidence at the
+owner's instruction** — the `device`-≠-`emulator` rule was knowingly set aside for those two). WALK-09 ✅,
+WALK-15 ✅ at owner's call. **WALK-13 was dropped** at the same instruction — not run, not failed, so IMP-054
+and `b773352` remain unproven on any running app; the row reopens whenever the owner wants it.
 
-**WALK-09 is closed (✅ 2026-09-05)** — it cleared Insights before the Claude Design request lands on that
-screen.
+⚠️ **The gap no closed row covers, and it does not go away by being named:** real doze, OEM battery managers,
+delivery to a real share target, and Google's own backup schedule have never been exercised anywhere.
 
-**Everything here still runs on `feat/design-push` — a branch that is never pushed to GitHub** (owner
-instruction, 2026-08-17).
-
-**`PLUS_ENABLED = false`, so WALK-11 stays ⏭** — those surfaces are *unmountable*, not
-locked. It is the row that reopens the moment Plus becomes the active work.
+**Everything here runs on `feat/design-push` — a branch that is never pushed to GitHub** (owner instruction,
+2026-08-17). **Nothing is promoted `internal` → `production`.**
 
 | # | Gate | Walk | Covers | Target | Runner | Status |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -117,8 +104,8 @@ locked. It is the row that reopens the moment Plus becomes the active work.
 | WALK-14 | ⏭ | [TalkBack can write an entry](build-log.md#-walk-14--talkback-can-write-an-entry--dropped-2026-08-16-owners-call-section-moved-here-2026-08-17) | IMP-059 | **device** | 👤 | ⏭ — **dropped 2026-08-16** per owner; section archived to `build-log.md` → "Walk log". Reopen trigger: an accessibility complaint, or institutional Plus buyers |
 | WALK-15 | ✅ | [Store screenshots regenerate](build-log.md#walk-15--store-screenshots-regenerate--closed-2026-08-16-emulator-agent-run-owners-call) | IMP-061 | emulator | 🤖 mostly | ✅ **2026-08-16 — closed at owner's call.** `npm run shots` green end to end, seven Play-legal assets committed; steps 1–3 + 7 passed, **4–6 accepted unrun**; detail in `build-log.md` → "Walk log" |
 | WALK-11 | 🎨 | [The Plus surfaces](#walk-11--the-plus-surfaces) | IMP-038, 046, 047, 043 | emulator | 👤 | ⬜ — **REOPENED 2026-09-05. The reason it was skipped is gone:** `PLUS_ENABLED = true` (commit `7d2e515`), so these surfaces now mount on their own and **no T1 revert dance is needed.** Walkable on a debug build of `feat/design-push`. Covers the four *perks* (On this day, Annual Recap, Deeper insights, restores); the *purchase* half is **WALK-19**, which is a different row on a different build |
-| WALK-16 | 🚦 | [The New Architecture cold start](#walk-16--the-new-architecture-cold-start) | IMP-076 | **device** (native runtime) | 👤 | ✅ **2026-09-05 — closed on emulator evidence at owner's instruction.** All 7 steps exercised across two agent-run sittings (1-3 New Arch live: Bridgeless + Fabric + TurboModule; 4-7 storage / notification scheduling / export-share-reimport / Auto Backup via T5 with the quarantine offering not imposing). **Owner's call 2026-09-05: emulator results are recorded as done, not smoke.** ⚠️ **Named gap — never exercised anywhere:** real doze, OEM battery managers, delivery to a real share target, Google's own backup schedule. **Unblocks IMP-077.** |
-| WALK-17 | 🚦 | [Edge-to-edge, re-audited under New Arch](#walk-17--edge-to-edge-re-audited-under-new-arch) | IMP-076, IMP-027 regression | **device** | 👤 (visual) | ✅ **2026-09-05 — emulator, agent-run.** All four tabs clean under status bar + gesture bar in **both** day and night; bottom nav and write-FAB correct in **both** gesture and 3-button nav; onboarding + setup also clean. Sheets checked: trash, achievements, shop — the last two at night **and** max font. ⚠️ **Not opened: write flow, reading sheet, mood manager.** |
+| WALK-16 | 🚦 | [The New Architecture cold start](build-log.md#walk-16) | IMP-076 | **device** (native runtime) | 👤 | ✅ **2026-09-05 — closed on emulator evidence at owner's instruction.** All 7 steps exercised across two agent-run sittings (1-3 New Arch live: Bridgeless + Fabric + TurboModule; 4-7 storage / notification scheduling / export-share-reimport / Auto Backup via T5 with the quarantine offering not imposing). **Owner's call 2026-09-05: emulator results are recorded as done, not smoke.** ⚠️ **Named gap — never exercised anywhere:** real doze, OEM battery managers, delivery to a real share target, Google's own backup schedule. **Unblocks IMP-077.** |
+| WALK-17 | 🚦 | [Edge-to-edge, re-audited under New Arch](build-log.md#walk-17) | IMP-076, IMP-027 regression | **device** | 👤 (visual) | ✅ **2026-09-05 — emulator, agent-run.** All four tabs clean under status bar + gesture bar in **both** day and night; bottom nav and write-FAB correct in **both** gesture and 3-button nav; onboarding + setup also clean. Sheets checked: trash, achievements, shop — the last two at night **and** max font. ⚠️ **Not opened: write flow, reading sheet, mood manager.** |
 | WALK-18 | 🎨 | [The app moves](#walk-18--the-app-moves) | IMP-077 | **device** (mid-range, real frame pacing) | 👤 (visual) | ⬜ — **branch-only. UNBLOCKED 2026-09-05: WALK-16 closed and IMP-077 landed.** ✅ **The build now exists: v1.0.8 / vc14 shipped to Play `internal` 2026-09-05 19:09** (EAS `87f81b24…`, submission `4b7cf3a2…`, from commit `6590834`). IMP-077 added `react-native-reanimated` + `react-native-worklets` (native deps), so **neither vc13 artifact carries this code** — install vc14 from Play, not an older APK. **An emulator cannot settle this row** — it renders dropped frames as smooth, which is the thing being judged. The jest suite is blind here too: the Reanimated mock no-ops every hook |
 | WALK-19 | 🚦 | [Money actually changes hands](#walk-19--money-actually-changes-hands) | **Phase 10b.5**, IMP-028, IMP-082 + IMP-083 (steps 5 and 10), IMP-084/085/086/087, **IMP-088** | **device** (real Play Billing + a license tester) | 👤 | ❌ **2026-09-06 — steps 1–4 run on hardware, THREE defects, sitting stopped before any purchase (owner's call, and the right one).** ✅ Steps 0(c), 1 and 2 pass — vc15 + OTAs confirmed, prices in INR, an airplane-mode purchase does not complete. 🔴 **Step 4a/4c: "Try again" on a RESTORE card opened Play's purchase sheet** → **IMP-089, FIXED this session** (968 green), needs an OTA then a re-run. 🔴 **Step 3: Play's sheet says "charging today" + the INR amount, not 7 days free** — our CTA is a hardcoded literal and the app fetches no offer data at all → **IMP-090**. Owner has subbed/unsubbed on this account, so the trial is burned and **Play is right**. 🔴 **Step 4c: IMP-088's escape NEVER appeared** — 22s, 32s, past 60s, no Close button, copy unchanged → **IMP-091** (prime suspect: JS timers throttled while Play's sheet holds the foreground; cause NOT yet separated from "the device lacked the OTA"). 🔴 **Bonus, found off-script: an airplane-mode Restore says "Nothing to restore" INSTANTLY** — `restore()` relabels every unrecognised error as `restore-empty` → **IMP-092**. ✅ **ALL FOUR FIXES SHIPPED BY OTA 2026-09-07** (group `424b5a88-c993-44d7-91d6-db586ad22c32`, runtime 1.0.9, manifest verified). 🟠 **RE-RUN 2026-09-07 (hardware, owner-run): step 3 ✅ PASSES, step 4a ✅ PASSES, step 4c ⬜ INCONCLUSIVE — and the reason is a NEW defect, [IMP-093](specs-open.md).** Play's no-connection page offers only **Back**, and Back closes the **whole paywall**, discarding the pending flow before IMP-091's Close button can be seen. Waiting 30s changes nothing — Play's page does not self-dismiss. **IMP-091 remains unproven and may be unprovable on this path.** IMP-092's online half passed inside 4a; its aeroplane-mode half is unrun. Steps 4b, 4d–4f and 5–10 still owed in full. **Nothing is promoted `internal` → `production`.** |
 
@@ -380,148 +367,6 @@ no Metro, and `PLUS_ENABLED` must be back to `false` before you build.
 
 **If something is stripped:** add the specific keep rule. **Do not disable minify wholesale.** Full revert
 is both flags in `app.config.js` to `false`.
-
----
-
-## WALK-16 — the New Architecture cold start
-
-**Covers:** IMP-076 · **Target:** **device** · **Runner:** 👤 · **Gate:** 🚦 — **this walk gates IMP-077.**
-
-**Read this first.** IMP-076 flips `newArchEnabled` to `true` in `app.config.js` and
-`android/gradle.properties`. It changes **no app code** — which means **`npm test` cannot see it at all.**
-A fully green suite is compatible with an app that redboxes on launch. This walk is the only evidence
-that exists.
-
-**Build from `feat/design-push`. Do not push the branch to run this.**
-
-**Why every step below is a native surface.** The audit in the design doc cleared
-`react-native-svg`, `async-storage` and `safe-area-context` on paper (`codegenConfig` + New Arch
-sourcesets) and every `expo-*` module by virtue of SDK 54 defaulting to New Arch. Paper is not a device.
-Each step exercises one of those cleared claims.
-
-1. **Cold start.** Force-stop, launch. No redbox, no ANR. **If this fails, stop — steps 2-7 are moot.**
-2. **SVG everywhere** (`react-native-svg`) — the Home hero renders **the sun and its rays**, every tab
-   icon draws, the heatmaps paint. This is the highest-traffic native view in the app.
-3. **Safe-area insets** (`safe-area-context`) — status bar and bottom nav are not clipped or overlapped
-   on Home, and the bottom nav sits above the gesture bar.
-4. **Storage round trip** (`async-storage`) — write an entry, force-stop, relaunch, the entry is still
-   there. This is the whole app's persistence layer.
-5. **Notifications** (`expo-notifications`) — set a reminder, confirm it fires. OEM battery managers are
-   a known confound (see "Out of scope"); what is being tested here is that the module *initialises and
-   schedules* under New Arch, not the OS's delivery discipline.
-6. **File I/O + share** (`expo-file-system`, `expo-sharing`, `expo-document-picker`) — export a backup,
-   share it, re-import it.
-7. **Android Auto Backup** — uninstall → reinstall → data returns without login. This is IMP-006's
-   contract and it runs through the native backup agent.
-
-**On failure — this is the deliverable, do not fix it here.** Record exactly what was observed, then:
-both `newArchEnabled` flags back to `false`, rebuild, confirm the failure clears. **IMP-077 then falls
-back to bare `Animated`** — Reanimated 4 is New Arch-only, but the design work (IMP-078) is *not* blocked
-either way, and the motion contract was deliberately written to survive this outcome. Scope the failure
-as a new `IMP-xxx` for Opus.
-
-**🟡 Emulator smoke run — 2026-09-05. NOT A PASS; this row stays ⬜.** A `device` row run on an emulator
-is not a pass (see the header rule), and steps 5-7 are exactly the ones an emulator cannot settle. But
-IMP-076 had *no* runtime evidence at all, and this closes part of that gap. Run on `feat/design-push`
-with a **v1.0.7 / vc13** debug APK (`expo prebuild` first, so the install genuinely stamps vc13 — an
-earlier local build silently reported vc11 off a stale gradle cache).
-
-**New Architecture is confirmed live at runtime, not merely configured.** logcat on cold start carries
-`jni_lib_merge: Preparing to register libfabricjni_so`, the same for `libturbomodulejsijni_so`, and
-`BridgelessReact: ReactHost{0}.startSurface(surfaceId = 0)`. Bridgeless is New-Arch-only. IMP-076's
-evidence was previously limited to codegen `.so` files being *present* in the APK; this is the runtime
-entering New Arch and rendering. **Step 1 (cold start, no redbox, no ANR), step 2 (SVG — the sun and rays
-draw, every tab icon draws) and step 3 (safe-area — status bar clear, bottom nav above the gesture bar)
-all pass here.** `prebuild` was verified not to have undone IMP-076: `newArchEnabled=true` and
-`android.enableMinifyInReleaseBuilds=true` both survived.
-
-One log line was chased and is benign: `ReactNativeJS: W Error: undefined` is preceded by
-`URL: <host>:8081` and is dev-client connection logging, not an app error.
-
-**🟡 Emulator smoke, part two — 2026-09-05, agent-run. Steps 4-7 now exercised; the row still stays ⬜.**
-Same vc13 debug APK, same AVD (`sdk_gphone16k_arm64`, **Android 16 / API 36, 16 KB pages**). What an
-emulator genuinely cannot settle is now a much shorter list than "steps 4-7" — it is three specific
-things, all named under "Out of scope": **real doze + OEM battery managers, real share-sheet targets, and
-Google's own backup schedule.** Everything else in steps 4-7 ran green.
-
-- **Step 4 — storage round trip: PASS.** Wrote an entry through the real write flow (three steps, mood
-  picker, `Bury the day`), confirmed `+50 XP / 1 day streak / +15 Embers`, then `am force-stop` and a cold
-  relaunch. Home came back with streak 1, 50/100 XP, 15 Embers, "Today is at rest.", rites 20/30. The
-  record in `RKStorage` survived intact: `{dayKey: 2026-09-05, did: "WALK16probe", wished: "step4probe",
-  moods: ["Grateful"]}`. New Arch markers reproduced independently on this second cold start.
-- **Step 5 — notifications, the half that is not doze: PASS.** Toggling `Daily reminder` on drove the
-  Android 13+ `POST_NOTIFICATIONS` prompt, granted clean, and `dumpsys alarm` then showed **7 real
-  `RTC_WAKEUP` alarms, one per day at 20:30**, first at 2026-09-06. The module initialises and schedules
-  under New Arch — which is exactly what this step was written to prove. **Worth noting, not a defect:**
-  today's 20:30 was *skipped* even though it had not yet passed, consistent with the entry already being
-  written. Delivery discipline stays WALK-13's job on hardware.
-- **Step 6 — file I/O + share: PASS on both ends, share target unexercised.** `Back up my journal` wrote
-  `daily-rituals-2026-09-05.json` and opened the real Android share sheet (Quick Share / Drive / Gmail
-  resolved as targets). The envelope is well-formed — `format: daily-rituals-backup`, `appVersion: 1.0.7`,
-  `counts: {entries: 1, days: 1}`, payload a stringified state carrying the entry. Re-import through
-  `Restore from a backup` launched `expo-document-picker` (`OPEN_DOCUMENT`, `application/json`), read the
-  file back, and the confirm read **"This backup has 1 entry"** before replacing. State after import was
-  byte-equivalent. Only the delivery to a real share *target* remains out of scope.
-- **Step 7 — Android Auto Backup, via T5: PASS.** `bmgr` local transport → `backupnow` (Success,
-  8.2 MB) → `adb uninstall` → reinstall → `bmgr restore 1`. **The restore quarantine behaved exactly as
-  IMP-033/IMP-029/IMP-062 specify, and this is the part worth reading twice:** the restored state did not
-  go live. It landed in `dailyrituals:v1:pendingRestore` with `dailyrituals:v1:state` cleared, the app
-  showed onboarding, and only after onboarding did the **"We found your journal."** sheet offer it —
-  correctly itemising *15 Embers, 1 palette and 2 skies* and dated 5 Sep 2026. `Load my journal` →
-  a confirm reading **"This backup has 1 entry"** → data fully returned (1 entry, 50 XP, 15 Embers, both
-  skies) and `pendingRestore` was cleared. The recovery copy the dialog promises was written for real:
-  `files/daily-rituals-recovery-2026-09-05T09-42-22-485Z.json`. **Offered, not imposed — confirmed on a
-  genuine backup-transport restore, not a T4 clock fake.**
-
-No redbox, no ANR and no `FATAL`/`AndroidRuntime: E` at any point across all four steps.
-
-**Expect one specific stumble, at install rather than runtime:**
-`scripts/patch-permissions.js` may exit non-zero and fail `npm install` if New Arch moves the permissions
-path. That is designed behaviour, not a walk failure — IMP-076 step 2 says what to do.
-
----
-
-## WALK-17 — edge-to-edge, re-audited under New Arch
-
-**Covers:** IMP-076, IMP-027 regression · **Target:** **device** · **Runner:** 👤 (visual) · **Gate:** 🚦
-
-**Why this is not folded into WALK-16.** Android 16 *forces* edge-to-edge, and the New Architecture
-changes the layout and insets path. IMP-027's edge-to-edge audit passed on 2026-07-30 **on Legacy
-Architecture** — that pass says nothing about this build. It is a separate row because it is a separate
-judgement call, made with different eyes.
-
-Runnable in the same sitting as WALK-16, after it passes.
-
-1. Every top-level tab — Home, Archive, Insights, You — draws under the status bar and the gesture bar
-   without clipped content or double padding.
-2. The bottom nav and its centre write-FAB sit correctly above the gesture bar, in **both** three-button
-   and gesture navigation modes.
-3. Open each modal sheet (write flow, reading sheet, trash, mood manager, achievements, shop) and
-   confirm none is clipped at either end.
-4. Both themes — day and night. The night-v2 canvas is pure black, so an inset error that hides in day
-   mode is invisible until it is not.
-
-**On failure:** record it, scope as a new `IMP-xxx`. Do not fix mid-walk.
-
-**Result — ✅ 2026-09-05 (emulator, agent-run).** Recorded as a pass at the owner's instruction that
-emulator results close these rows; the header's `device`-≠-`emulator` rule is knowingly set aside here.
-**Step 1:** Today, Insights, Reflections and You all draw under the status bar and gesture bar with no
-clipped content and no double padding; You scrolls to `Reset all data` sitting clear of the nav. Onboarding
-and the setup screen are clean at both ends too. **Step 2:** the bottom nav and the centre write-FAB sit
-correctly above the gesture bar in gesture nav, and above the system bar in three-button nav — switched
-live with `cmd overlay`, no relayout damage either way. **Step 3:** trash sheet clean in day; achievements
-(Keepsakes) and shop clean in night **at max font**, headers clear of the status bar, content scrolling
-under nothing. **Step 4:** both themes walked. Night-v2 is a true pure black and no inset error hid in it —
-the sun and rays, heatmaps and tab icons all repaint in the night palette, and the sky pill switches to the
-moon.
-
-⚠️ **Three sheets were not opened: write flow, reading sheet, mood manager.** The three that were opened
-were consistent, but that is inference, not observation.
-
-**Out of scope, noted not scoped:** the Dev Harness draws its own header under the status bar, and at max
-font its "Last backup" stepper value clips off the right edge. `__DEV__`-only, absent from the release
-build — not a release defect.
-
 
 ---
 

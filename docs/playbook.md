@@ -4,7 +4,8 @@
 > shipping a change, touching the phase ladder (8 / 10b / 11), or checking signing / config / architecture.
 > The live cursor is [`PROGRESS.md`](../PROGRESS.md); finished specs + old notes are in [`build-log.md`](build-log.md);
 > how to drive a Sonnet chat is [`DEVGUIDE.md`](../DEVGUIDE.md).
-> Full step-by-step build plan (per-task code): [`docs/superpowers/plans/2026-06-03-daily-rituals-expo-billing.md`](superpowers/plans/2026-06-03-daily-rituals-expo-billing.md).
+> **The phase ladder below is now the only per-step record for 8 / 10b / 11** — the 2026-06 `docs/superpowers/`
+> plans were deleted 2026-09-07 (all delivered work; git holds them if a step is ever needed verbatim).
 
 ---
 
@@ -250,7 +251,25 @@ Shipping is automated (GitHub Actions + one-tap owner approval). **Agents NEVER 
 5. **No trailer = nothing ships** — safe for work-in-progress pushes.
 6. **Reaching the public is a separate, manual act.** `internal` serves the owner only. Promote **internal → production** by hand in Play Console when a build is ready; that promotion *does* get the full review.
 
-Guardrails: a commit tagged `ota` that touched native files is auto-rejected by CI's backstop (re-tag as `build`). OTA reaches testers on **v5+** only. Rollback: owner runs the **Rollback OTA** workflow (Actions tab). Owner one-time setup (tokens/secrets/approval environment) is in the pipeline plan, [`docs/superpowers/plans/2026-06-07-streamlined-release-pipeline.md`](superpowers/plans/2026-06-07-streamlined-release-pipeline.md), Task 8.
+Guardrails: a commit tagged `ota` that touched native files is auto-rejected by CI's backstop (re-tag as `build`). OTA reaches testers on **v5+** only. Rollback: owner runs the **Rollback OTA** workflow (Actions tab). Owner one-time setup was a three-step job, done long ago and recorded here now that the pipeline plan is deleted: an Expo access token, the repo secrets `EXPO_TOKEN` + `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`, and a GitHub Environment named `production` with the owner as Required Reviewer.
+
+### ⚠️ Two OTA traps that cost four rounds on 2026-09-06
+
+_Moved here from `PROGRESS.md` 2026-09-07 — they are permanent release mechanics, not a live cursor item.
+Full narrative in [`build-log.md`](build-log.md) → "The 2026-09-06 billing incident"._
+
+1. **Every `eas update` needs `--environment production`.** It evaluates `app.config.js` on whatever machine
+   runs it, and an `eas.json` profile `environment` binds the **build** lane only. Without the flag the
+   manifest publishes `rcAndroidKey:""` and **overwrites the key the installed build embedded** — billing
+   goes off on every device that takes it. A local `.env` does **not** save you. **A publish log line is not
+   evidence — read the manifest back**, every time:
+   `curl -sS -H 'expo-platform: android' -H 'expo-runtime-version: 1.0.9' -H 'expo-channel-name: production'`
+   `-H 'expo-protocol-version: 1' -H 'accept: multipart/mixed' https://u.expo.dev/1a0f9b15-cb1a-4cec-9577-3cd66e9f1d36 | grep -o 'rcAndroidKey":"[^"]*"'`
+   `scripts/check-billing-config.js` guards the workflow copy; **it cannot guard what you type by hand.**
+2. **Clearing app data DELETES the downloaded update.** The gesture used to "reproduce cleanly" sends the
+   next launch back to the **embedded** bundle, which predates every OTA fix. An OTA applies on the
+   **SECOND** launch. To test one: **open, wait ~15s, fully kill, open again — never clearing data in
+   between.** "Nothing changed" has been this every single time.
 
 ### Ship lane — which fix ships how (decide per task)
 | What changed | Lane | Command | Play review? |
@@ -328,16 +347,103 @@ Production `.aab` **must** be signed with the local **`dailyrituals-release.keys
 
 ---
 
+## 🔎 Checking what a phone / a track actually has
+
+_Moved from `PROGRESS.md` 2026-09-07._
+
+> ⚠️ **There is no user-visible version string in a release build.** `APP_VERSION` goes only to the
+> `__DEV__`-only dev panel ([`RitualsApp.js:966`](../src/RitualsApp.js#L966)), and the About sheet that would
+> show it is IMP-022 (deferred). **To check what a phone actually has: Android Settings → Apps → Daily
+> Rituals → App details**, or `adb shell dumpsys package app.dailyrituals.mobile | grep versionName`. Do
+> this **first** whenever a shipped change appears to be missing — on 2026-09-05 it was the whole answer.
+>
+> **To re-read the live tracks** (read-only; opens an edit and deletes it, never commits): a ~35-line script
+> using `play-service-account.json` + the `androidpublisher` v3 `edits/{id}/tracks` endpoint. Not committed —
+> `googleapis` is not a dependency and the JWT is 15 lines of `node:crypto`.
+
+## 🧱 Current stack — the full note
+
+_Moved from `PROGRESS.md` 2026-09-07; the live cursor keeps a four-line version._
+
+**Current stack:** Expo SDK **54** · RN **0.81.5** · React **19.1.0** · **New Architecture**
+(`newArchEnabled: true` since IMP-076 — walked ✅) · **Reanimated 4.1.1 + worklets 0.5.1** (IMP-077 —
+New-Arch-only, which is why WALK-16 gated it; **`babel.config.js` is deliberately untouched**,
+`babel-preset-expo` auto-injects the worklets plugin) · `targetSdkVersion` **36**, `minSdk` **24** ·
+`npm test` → **1031 passed, 93 suites** (verified 2026-09-07), plus **3 zone tests × 2 pinned zones**.
+**`npm test` = `test:suite` + `test:zone`** (`__tests__/zone/`, run at UTC+14 and UTC−11 via
+`jest.zone.config.js`). **Run `npm test`, not bare `npx jest`**, or the zone half is skipped. Test-date
+rules and the rest of the detail are in [`docs/playbook.md`](playbook.md).
+
+## 🎨 Claude Design — standing rules
+
+_Moved from `PROGRESS.md` 2026-09-07. The **live request** stays in `PROGRESS.md`; these rules do not change._
+
+**Ask for ONE screen per request** — "redesign the app" produces mush. The live request is **Insights**
+(owner, 2026-09-05). Four rules:
+1. **Check the screen has a baseline first** — only `day-01…07`/`night-01…07` exist. For one that does
+   not, **paste its source** into the request rather than describing it.
+2. **Insist the spec comes back in token names** (`c.accentSoft`, `t.radius.card`) — not hex, not "gentle
+   fade".
+3. **The sun and rays are frozen.** `RayFan` + `NightRays` are the signature. If a returned design redraws
+   them, reject it — it cannot ship. `BigSun`/`BigMoon` were demoted out of Frozen (still shipping in
+   Onboarding/Celebration/Paywall, but a design may replace them); `NightSky` and the `DARK_THEME` revert
+   flag were **deleted from the app**. **Do not re-add any of it** — a card describing something the app
+   does not have is how the design system gets corrupted.
+4. **It is a design request, not an enablement.** Everything under `src/billing/` is untouched by design
+   work. ⚠️ *(Corrected 2026-09-06: this rule used to read "`PLUS_ENABLED` stays `false`". It has been
+   `true` since 2026-09-05 — the rule is hands-off, not off.)*
+
+⚠️ **Motion cards may now be re-added** — `src/motion.js` EXISTS as of IMP-077 — but **written from the
+file, not from the old deleted cards**: `DUR` (`tap:120, enter:320, settle:480, celebrate:900`), `EASE`,
+`riseIn`, `popIn`, `fadeOut`, `stagger`, `usePressScale`, `useCountUp`, `ScreenFade`. The Frozen rule is
+unchanged: `RayFan`, `NightRays`, `Celebration.js` and `Toast.js` stay on `Animated` — coexistence is the
+design.
+
+**The app's mode is its own setting, not the OS's** (`App.js:40`, header toggle) — `cmd uimode night` does
+nothing. To re-shoot night, set the app to dark **first**, then `npm run shots`;
+`scripts/check-baseline-dark.py` gates the night copy (mean luma < 90) so a day frame cannot be filed as
+night again. **Porting a returned design is a normal build task** — a new `IMP-xxx` scoped by Opus. Claude
+Design does not emit React Native; it returns HTML/CSS previews plus a spec.
+
+---
+
+---
+
+## 📏 Standing rule — how new tests build dates
+
+_Moved here from `PROGRESS.md` 2026-09-07: it is a permanent rule, not a live cursor item. Came out of the
+2026-08-16 timezone fix (CI caught 4/866 failing on the UTC runner; the tests were wrong, `dayKeyOf` was
+correct throughout — full account in [`build-log.md`](build-log.md) → "Resolved findings")._
+
+**Build dates with the local constructor `new Date(y, m, d, h)`** — never `Date.UTC(...)`, an ISO `Z`
+string, or a bare date-only string (which parses as UTC). `dayKeyOf` and `recapYears` read **local**
+calendar fields, so a UTC-built fixture means a different calendar day in a different zone. If a test
+genuinely needs a specific zone it belongs in `__tests__/zone/`, run pinned by `npm run test:zone`.
+
+---
+
 ## Phase ladder — Part II (8 / 10b / 11) — PARKED
 
 > **Parked until the owner explicitly resumes.** The live track is the IMP backlog in [`PROGRESS.md`](../PROGRESS.md).
-> Decisions to confirm per phase live in the plan's **PART II** section. Do not start a phase until its decisions are answered.
 > Phases 0–7 + 9 are ✅ done (detailed checklists in [build-log.md](build-log.md)).
+> **This is the full record for the parked phases** — the per-step detail worth keeping was folded in here on
+> 2026-09-07 when the 2026-06 plans were deleted. Do not start a phase until its entry decisions (below) are answered.
 
 ### Phase 8 — Runtime verification closeout (no new code)
-- [ ] 8.1 Walk all 5 purchase outcomes in Expo Go (success/cancel/failed/network/owned), revert `theme.js`
-- [ ] 8.2 Walk both restore outcomes (found/empty); confirm sim fallback never crashes
-- [ ] 8.3 Tick the deferred Phase 3 + Phase 4 boxes (in build-log) with evidence; commit PROGRESS.md
+
+⚠️ **Largely superseded — read this before starting it.** Phase 8 walks the *simulated* purchase path in
+Expo Go, which is what existed in 2026-06. Real Play Billing now transacts on the device (`PLUS_ENABLED`
+is `true`), and the surface that actually needs proving is **WALK-19** in [`walk-open.md`](walk-open.md).
+Phase 8 retains value only as a cheap no-money smoke test of `simService`.
+
+- [ ] 8.1 In Expo Go (no `.env` ⇒ `isBillingConfigured` false ⇒ sim path), set `DEFAULT_SETTINGS.storePurchase`
+  in `src/theme.js`, reload, open the Paywall, tap the CTA, and confirm each overlay:
+  `success` → "Confirming…" then **"You're in."** · `cancel` → silent dismiss, **no** result card ·
+  `failed` → **"Something went wrong."** · `network` → **"No connection."** · `owned` → **"You already have Plus."**
+- [ ] 8.2 Same for `DEFAULT_SETTINGS.storeRestore`: `found` → **"Plus restored."** · `empty` → **"Nothing to restore."**
+  Then confirm a cold Expo Go open never red-screens (the lazy require-guard in `src/billing/index.js` must hold).
+- [ ] 8.3 **Revert `theme.js`** to its committed defaults (`storePurchase: 'success'`, `storeRestore: 'empty'`)
+  and confirm `git diff src/theme.js` is empty. Tick the deferred Phase 3 + Phase 4 boxes (in build-log) with evidence.
 
 ### Phase 10a — Free public release (Plus hidden, no payments)
 - [x] 10a.1 Gate the Plus surface behind `PLUS_ENABLED = false` (hide paywall/manage/upsell + skip onboarding premium) — CODE
@@ -360,12 +466,22 @@ Production `.aab` **must** be signed with the local **`dailyrituals-release.keys
 - [ ] 10b.5 ⏳ **IN FLIGHT.** `PLUS_ENABLED = true` flipped 2026-09-05 (commit `7d2e515`), v1.0.8 / vc14 cut to Play `internal` from `feat/design-push`. **What remains is all runtime and none of it is done:** internal-track verify a real purchase in **all** states via a Play **license tester** (full flow, no charge), then one real transaction, refunded, then promote → v1.1. That verification is **WALK-19** in [`walk-open.md`](walk-open.md). ⚠️ **Do not promote to production on the strength of a green build** — a paid surface that jest cannot see is not proven.
 
 ### Phase 11 — iOS parity — ⛔ blocked (needs Mac or EAS macOS + Apple Developer Program)
-- [ ] 11.1 Apple Developer + App Store Connect app record + bundle id
-- [ ] 11.2 StoreKit subscription group (annual + monthly)
-- [ ] 11.3 RevenueCat iOS key (`RC_IOS_KEY`); attach iOS products to `plus` / `current`
-- [ ] 11.4 iOS config in `app.config.js` (bundleIdentifier, buildNumber, infoPlist)
-- [ ] 11.5 `eas build -p ios` (or Mac); StoreKit-sandbox walk of all states
-- [ ] 11.6 TestFlight + App Privacy + submit for review
+> **Entry decisions, all three still open:** build path (local Mac + Xcode vs `eas build -p ios`, which needs an
+> Apple Developer account on the EAS project) · Apple Developer Program enrollment ($99/yr) · the final
+> `ios.bundleIdentifier` (may differ from the Android `package`, but is **permanent once used**).
+> An iOS build inherits whatever `PLUS_ENABLED` is at build time, so shipping iOS free first is available.
+
+- [ ] 11.1 Apple Developer enrollment; App ID / bundle id; App Store Connect app record
+- [ ] 11.2 StoreKit **auto-renewable subscription group** (annual + monthly) matching RevenueCat's `current`
+  offering; fill localizations + the review screenshot
+- [ ] 11.3 RevenueCat iOS (App Store) key → `RC_IOS_KEY`; attach the iOS products to the **same** entitlement
+  `plus` and offering `current` — no app code changes, `createPurchaseService` already keys off platform
+- [ ] 11.4 iOS config in `app.config.js`: `ios.bundleIdentifier`, `ios.buildNumber` (EAS auto-increment),
+  `ios.infoPlist.ITSAppUsesNonExemptEncryption = false`, any required usage strings
+- [ ] 11.5 `eas build -p ios --profile preview` (or `npx expo run:ios` on a Mac); walk every purchase/restore
+  state with a **StoreKit sandbox** Apple ID
+- [ ] 11.6 `eas submit -p ios` → TestFlight; complete **App Privacy**; review notes with a demo account and
+  restore instructions; submit for review
 
 ### Per-phase entry decisions (resolved / still open)
 - **Phase 9:** persistence engine ✅ confirmed AsyncStorage (2026-06-04). "Reset app data" control (9.6) — built.
@@ -481,7 +597,7 @@ The owner asked this after the purchase-recovery audit: *"I am questioning if I 
 
 **Note the shape:** one cosmetic perk, one retention perk, four memory perks. That is the thesis — *free helps you write today, Plus gives you your years back* — expressed as a purchasable list. Keep it at six; a longer list converts worse.
 
-**PRICING TIERS (decided 2026-08-04) — three products, not four. No family plan** (a journal shares nothing, and a family tier would force accounts and reverse the local-only decision; full reasoning in [`docs/playbook.md`](docs/playbook.md)).
+**PRICING TIERS (decided 2026-08-04) — three products, not four. No family plan** (a journal shares nothing, and a family tier would force accounts and reverse the local-only decision; full reasoning in [`docs/playbook.md`](playbook.md)).
 
 | Product | Play type | Why |
 | --- | --- | --- |
@@ -522,14 +638,14 @@ Also worth doing and nearly free: **"gift a year" via Play promo codes** — no 
 
   **Four of five now real (#1, #2, #3, #5 — #2 fixed by IMP-039, #3 fixed by IMP-038, #5 fixed by IMP-047).** This is the same defect class as IMP-031's "8:30 PM" reminder and IMP-022's PDF button, but on the surface that takes money — so it is a Play policy exposure, not just a broken promise. **Nothing may charge for this list until it is true.** **#4** needs IMP-022 revived — the only remaining gap.
 
-- **🧭 Product thesis lives in [`docs/playbook.md`](docs/playbook.md) → "Why anyone would pay" (2026-08-03).** Short form: value in a journal **accumulates**, so the paying moment is month 2–3, not signup; the app today is **all continuity (streaks/embers/reminder) and no retrieval** — **no search anywhere**, editing is today-only, no delete — which makes the archive **write-only** and blocks any "revisit your past" sale. Free forever = custody of their own words (write/read/**search**/edit/delete/history/raw export); paid = the app's work *on* those words (recap, resurfacing, insight, keepsakes, cosmetics). **Search is the highest-value non-design task in the codebase** and should be scoped as its own IMP.
+- **🧭 Product thesis lives in [`docs/playbook.md`](playbook.md) → "Why anyone would pay" (2026-08-03).** Short form: value in a journal **accumulates**, so the paying moment is month 2–3, not signup; the app today is **all continuity (streaks/embers/reminder) and no retrieval** — **no search anywhere**, editing is today-only, no delete — which makes the archive **write-only** and blocks any "revisit your past" sale. Free forever = custody of their own words (write/read/**search**/edit/delete/history/raw export); paid = the app's work *on* those words (recap, resurfacing, insight, keepsakes, cosmetics). **Search is the highest-value non-design task in the codebase** and should be scoped as its own IMP.
 - **🧭 Product note — the perk list IS the Plus roadmap.** The owner asked (2026-08-03) what more Plus should contain beyond themes. The audit answers it: **build #2, #4 and #5 properly and Plus is already a real subscription** — and the honest through-line for this app is **memory**, not cosmetics. Free helps you *write today*; Plus helps you *revisit and keep* what you wrote. That framing is exactly the existing "legacy" roadmap (D → A+B → **C, Annual Recap / Time Capsule**, still unbuilt) and the memorial-garden theme. Strongest candidates, cheapest first: **"On this day"** resurfacing (entries are local and `dayKey`-indexed, so this is near-free to build, it is the single most-loved feature in comparable journals, and IMP-013's "Tend an old grave" rite already gestures at it) · **Annual Recap** (roadmap C, the emotional payoff of a year, folds in the deferred milestone timeline) · **keepsake PDF** (perk #4, the legacy artifact — revives IMP-022) · **themed prompt packs** (grief / gratitude / transitions — IMP-023's deck architecture already supports this; new pools are pure data) · **biometric app lock** (`expo-local-authentication`, local-only, top-requested for private journals, high conversion for low build). **Recommended free/paid line: never gate a user's own writing** — reading, writing, raw export, full history and search stay free forever. Gate *enrichment*: recap, resurfacing, deeper analysis, keepsakes, cosmetics, convenience. ⚠️ Also revisit the **price tier** when products are created: $29.99/yr is not defensible for 3 palettes + 2 skies, and the owner's home market (India) reads ≈₹2,500 — Play's local tiers matter as much as the USD figure.
 
 - **✅ RESOLVED 2026-09-05 — and it very nearly shipped.** Was: 🔴 the ember packs display cash prices and are wired to NOTHING. **The trap was that the surface was gated on `PLUS_ENABLED` itself**, on the assumption consumables would be wired by the time Plus went live. They were not — so flipping the flag on 2026-09-05 *armed* it, and the vc14 build carrying it was cancelled mid-flight once that was spotted. **Fix (commit `6590834`): the two flags are decoupled.** A new `EMBER_PACKS_ENABLED` (false, [`src/billing/config.js`](../src/billing/config.js)) gates the cash ember surface; `Shop` takes `embersForCash`, defaulting to **false** so a caller that forgets the prop gets no priced surface; the dev panel routes through `openGetEmbers` so it cannot bypass the gate. `Shop.test.js` pins the invariant — enabling Plus alone never surfaces a pack. **Embers stay free-only (one per day kept), exactly as they ship today.** Flip `EMBER_PACKS_ENABLED` only once the packs are attached to real Play consumable products. Original finding: [`data.js:132`](../src/data.js#L132) labels `EMBER_PACKS` "bought with cash" at `$1.99 / $4.99 / $9.99`, but the buy handler is [`RitualsApp.js:532`](../src/RitualsApp.js#L532) — `onBuy={(pack) => { setEmbers((e) => e + pack.amount); … }}` — a bare counter increment. **No `purchaseService`, no RevenueCat, no IAP of any kind.** Same path via [`Shop.js:170`](../src/screens/Shop.js#L170) → `getEmbers(pack)` ([`RitualsApp.js:173`](../src/RitualsApp.js#L173)). Worse, **this surface is not gated by `PLUS_ENABLED`**: the Shop's "Gather Embers" section ([`Shop.js:166`](../src/screens/Shop.js#L166)) has no `plusEnabled &&` wrapper, unlike the Plus banner at line 56 — so it renders **in the shipping free build with cash prices on it**, and tapping a "$9.99" pack grants 1,500 embers for free. Nobody is charged, so no money is at risk, but the app is **displaying a price for something that costs nothing** — the same class of misrepresentation IMP-028 fixed for the paywall. Either wire the packs to real consumable IAP products or hide the section behind `PLUS_ENABLED` (the cheap, correct move for the free release — do this one first).
 - **✅ RESOLVED as IMP-043** — a returning subscriber shown as non-Plus is now re-verified once at launch (`useLaunchEntitlementCheck`), and a definitive "no entitlement" answer from the store now actually downgrades a stale/forged local cache instead of only a failed check being ignored. "Restore purchases" is also reachable from the You tab now, outside the paywall. Full detail in `docs/build-log.md` → IMP-043.
 - **🔴 Embers, owned palettes/skies and freeze candles are LOCAL-ONLY and have no recovery path whatsoever.** They live in `PERSISTED_KEYS` ([`state.js:9–10`](../src/persistence/state.js#L9)) and **nowhere else** — no server record, no RevenueCat, nothing Google holds. If local state is wiped and not restored, paid inventory is **gone permanently**, and unlike the subscription there is no entitlement to re-query. Today this costs nothing (`PLUS_ENABLED = false` ⇒ **zero paying users exist**), but it is the reason IMP-033's decline path must never be a one-tap destruction — see the inventory warning folded into its spec.
 - **⚠️ Before flipping `PLUS_ENABLED`: create the `RC_ANDROID_KEY` EAS env var AND GitHub repo secret.** `.env` is git-ignored and never reaches EAS Build (no `.easignore`, no `env` block in `eas.json`), so a cloud build would resolve the key to `''` → `isBillingConfigured()` false → `createPurchaseService` returns the **simulation** → the paywall fakes a purchase and grants Plus free, with no crash. IMP-028 added `scripts/check-billing-config.js` as a hard preflight in the build job, but it only arms once `PLUS_ENABLED` is true. Run `eas env:create --name RC_ANDROID_KEY --scope project --environment production` and add the repo secret of the same name (`release.yml` references it; the Actions linter flags it as undefined until it exists).
-- **⚠️ The "7-day free trial" claim is hardcoded** in the paywall CTA + legal footer ([`Paywall.js`](src/screens/Paywall.js), [`PlusFlow.js`](src/screens/PlusFlow.js) `LegalFooter`). Only truthful if the Play base plan actually carries a 7-day free-trial offer. **Decide the offer when creating the products**, then either configure the trial in Play or change the copy — do not ship the claim unverified. Left hardcoded deliberately: the correct fix reads the intro/trial period off the live offering, which cannot be built or tested until real products exist. Prices themselves are already live-driven (IMP-028).
+- **⚠️ The "7-day free trial" claim is hardcoded** in the paywall CTA + legal footer ([`Paywall.js`](../src/screens/Paywall.js), [`PlusFlow.js`](../src/screens/PlusFlow.js) `LegalFooter`). Only truthful if the Play base plan actually carries a 7-day free-trial offer. **Decide the offer when creating the products**, then either configure the trial in Play or change the copy — do not ship the claim unverified. Left hardcoded deliberately: the correct fix reads the intro/trial period off the live offering, which cannot be built or tested until real products exist. Prices themselves are already live-driven (IMP-028).
 
 ---
 
