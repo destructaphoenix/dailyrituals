@@ -39,13 +39,32 @@ function topMoodsForYear(yearEntries) {
 
 // Busiest/quietest month by entry count. Ties keep the earlier month, since
 // this only updates on a STRICT improvement as it scans Jan → Dec.
-function extremesByMonth(buckets) {
-  let peak = 0, quiet = 0;
+//
+// IMP-094: `peak` scans all twelve months — an empty month can never displace
+// it, since that needs a STRICTLY larger count. `quiet` cannot: before the
+// year's first entry (and after its last) every bucket is a 0, so a Jan → Dec
+// scan handed the title to January for every journal that started later in the
+// year. "Quietest" is a claim about the user's writing, and a month they had
+// not started is absent, not quiet — the same way the heatmap renders
+// pre-first-entry days. So `quiet` is chosen only from [firstIdx, lastIdx],
+// the months the journal actually covered.
+function extremesByMonth(buckets, firstIdx, lastIdx) {
+  let peak = 0;
   buckets.forEach((b, i) => {
     if (b.total > buckets[peak].total) peak = i;
-    if (b.total < buckets[quiet].total) quiet = i;
   });
+
+  let quiet = firstIdx;
+  for (let i = firstIdx; i <= lastIdx; i += 1) {
+    if (buckets[i].total < buckets[quiet].total) quiet = i;
+  }
   return { peakMonth: buckets[peak].month, quietestMonth: buckets[quiet].month };
+}
+
+// 0-based month of a 'YYYY-MM-DD' dayKey, read the same way moodByMonth reads
+// it (local calendar — a dayKey's month is the month in its own string).
+function monthIndexOf(dayKey) {
+  return Number(dayKey.slice(5, 7)) - 1;
 }
 
 // The streak-milestone crossings (7/30/100) that fell within `year`, found
@@ -92,7 +111,11 @@ export function buildRecap(entries, year, { xp, now = new Date() } = {}) {
   const totalWords = yearEntries.reduce((sum, e) => sum + countWords(e.did) + countWords(e.wished), 0);
 
   const buckets = moodByMonth(yearEntries);
-  const { peakMonth, quietestMonth } = extremesByMonth(buckets);
+  const { peakMonth, quietestMonth } = extremesByMonth(
+    buckets,
+    monthIndexOf(sortedKeys[0]),
+    monthIndexOf(sortedKeys[sortedKeys.length - 1]),
+  );
 
   const firstEntry = sortedKeys[0];
   const milestones = [{ day: firstEntry, label: FIRST_ENTRY_LABEL }, ...milestonesInYear(entries, year)]

@@ -105,7 +105,70 @@ describe('buildRecap', () => {
     ];
     const r = buildRecap(entries, 2027, { now: at(2030, 1, 1) });
     expect(r.peakMonth).toBe('January');
-    expect(r.quietestMonth).toBe('May');
+    // Jan 3, Feb 3, Mar 2, Apr 2 — the journal covers Jan–Apr, so the tie is
+    // between March and April and the earlier one wins. Before IMP-094 this
+    // read 'May': the empty May–Dec tail was eligible and the Jan → Dec scan
+    // handed the title to the first 0 it met.
+    expect(r.quietestMonth).toBe('March');
+  });
+
+  // IMP-094 — a month the journal did not cover is absent, not quiet.
+  describe('quietestMonth ignores months outside the journal\'s span', () => {
+    // Every day from `from` to `to` inclusive, both 'YYYY-MM-DD'.
+    const everyDay = (from, to) => {
+      const out = [];
+      const end = new Date(`${to}T00:00:00Z`).getTime();
+      for (let t = new Date(`${from}T00:00:00Z`).getTime(); t <= end; t += 86400000) {
+        out.push(e(new Date(t).toISOString().slice(0, 10)));
+      }
+      return out;
+    };
+
+    test('a journal that starts 6 Jun is quietest in June, never in January', () => {
+      const r = buildRecap(everyDay('2027-06-06', '2027-12-31'), 2027, { now: at(2030, 1, 1) });
+      expect(r.quietestMonth).not.toBe('January');
+      // June is the only partial month in the span (25 of 30 days), so it is
+      // the genuine quietest.
+      expect(r.quietestMonth).toBe('June');
+      expect(r.peakMonth).toBe('July'); // 31 days, earliest of the 31-day ties
+    });
+
+    test('a full Jan–Dec journal is unchanged — the empty-month rule never fires', () => {
+      const entries = [
+        ...everyDay('2027-01-01', '2027-01-31'),
+        ...everyDay('2027-02-01', '2027-02-10'), // the real trough
+        ...everyDay('2027-03-01', '2027-03-31'),
+        ...everyDay('2027-04-01', '2027-04-30'),
+        ...everyDay('2027-05-01', '2027-05-31'),
+        ...everyDay('2027-06-01', '2027-06-30'),
+        ...everyDay('2027-07-01', '2027-07-31'),
+        ...everyDay('2027-08-01', '2027-08-31'),
+        ...everyDay('2027-09-01', '2027-09-30'),
+        ...everyDay('2027-10-01', '2027-10-31'),
+        ...everyDay('2027-11-01', '2027-11-30'),
+        ...everyDay('2027-12-01', '2027-12-31'),
+      ];
+      const r = buildRecap(entries, 2027, { now: at(2030, 1, 1) });
+      expect(r.quietestMonth).toBe('February');
+      expect(r.peakMonth).toBe('January');
+    });
+
+    test('a journal that stops in March takes its quietest from Jan–Mar, not the empty tail', () => {
+      const entries = [
+        ...everyDay('2027-01-01', '2027-01-31'),
+        ...everyDay('2027-02-01', '2027-02-28'),
+        ...everyDay('2027-03-01', '2027-03-05'), // the trough, and the last month
+      ];
+      const r = buildRecap(entries, 2027, { now: at(2030, 1, 1) });
+      expect(r.quietestMonth).toBe('March');
+      expect(r.peakMonth).toBe('January');
+    });
+
+    test('a single-month journal is both busiest and quietest, no crash', () => {
+      const r = buildRecap(everyDay('2027-09-01', '2027-09-30'), 2027, { now: at(2030, 1, 1) });
+      expect(r.quietestMonth).toBe('September');
+      expect(r.peakMonth).toBe('September');
+    });
   });
 
   test('milestones lists only milestones actually crossed in that year', () => {
