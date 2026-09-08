@@ -146,6 +146,8 @@ export function createRevenueCatService() {
         // check". The person most likely to tap Restore is a real subscriber on
         // a new phone. `failed` says we could not check, which is the truth, and
         // is the exact rule getEntitlement() states twenty lines below (IMP-043).
+        // A restore cannot be pending — there is no purchase in flight to defer,
+        // only a lookup, so `deferred` degrades to `failed` here (IMP-100).
         const kind = mapPurchaseError(e);
         return { kind: kind === 'owned' ? 'restored' : kind === 'network' ? 'network' : 'failed' };
       }

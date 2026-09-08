@@ -93,6 +93,28 @@ describe('entitlement identity — IMP-099', () => {
   });
 });
 
+// ── IMP-100 — the codes RevenueCat actually sends ────────────────────────────
+describe('buy() maps the real Android bridge codes — IMP-100', () => {
+  test('"6" (already owned) is the rescue path: owned + getCustomerInfo called', async () => {
+    Purchases.getOfferings.mockResolvedValue({ current: { annual: { identifier: 'annual' }, availablePackages: [] } });
+    Purchases.purchasePackage.mockRejectedValue({ code: '6' });
+    Purchases.getCustomerInfo.mockResolvedValue({
+      entitlements: { active: { 'Daily Rituals Plus': { productIdentifier: 'plus_annual:annual' } } },
+    });
+    const res = await createRevenueCatService().buy('annual');
+    expect(res.kind).toBe('owned');
+    expect(Purchases.getCustomerInfo).toHaveBeenCalled();
+    expect(res.entitlement.productId).toBe('plus_annual:annual');
+  });
+
+  test('"20" (payment pending) is deferred, not failed', async () => {
+    Purchases.getOfferings.mockResolvedValue({ current: { annual: { identifier: 'annual' }, availablePackages: [] } });
+    Purchases.purchasePackage.mockRejectedValue({ code: '20' });
+    const res = await createRevenueCatService().buy('annual');
+    expect(res.kind).toBe('deferred');
+  });
+});
+
 // ── IMP-090 — the offer's free phase ─────────────────────────────────────────
 // WALK-19 step 3, 2026-09-06: the CTA promised a 7-day trial and Play's sheet
 // said charging today. getPrices() had never read anything that could disagree.

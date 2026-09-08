@@ -98,6 +98,7 @@ const RESULT_META = {
   failed: { tone: 'bad', title: "That didn't go through.", body: "Something interrupted the purchase and you weren't charged. You can try again.", primary: 'Try again', secondary: 'Not now', dismissTo: 'paywall' },
   network: { tone: 'bad', title: 'No connection.', body: "We couldn't reach the store. Check your connection, then give it another try.", primary: 'Try again', secondary: 'Not now', dismissTo: 'paywall' },
   'restore-empty': { tone: 'bad', title: 'Nothing to restore.', body: "We couldn't find a subscription on this account. If you believe this is a mistake, contact support.", primary: 'Try again', secondary: 'Close', dismissTo: 'paywall' },
+  deferred: { tone: 'good', title: 'Payment still processing.', body: "Google Play hasn't finished confirming your payment. Plus unlocks by itself the moment it clears — there is nothing to buy again.", primary: 'OK', dismissTo: 'paywall' },
 };
 
 // Pure — IMP-092. `failed` is the only card whose copy is purchase-shaped, and
@@ -118,6 +119,7 @@ export function resultCopy(kind, mode) {
 function ResultIcon({ kind, c }) {
   if (kind === 'network') return <NoSignal size={30} color={c.accentDeep} />;
   if (kind === 'failed' || kind === 'restore-empty') return <Alert size={30} color={c.accentDeep} />;
+  if (kind === 'deferred') return <Info size={30} color={c.onAccent} />;
   return <Check size={30} color={c.onAccent} />;
 }
 
