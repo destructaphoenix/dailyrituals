@@ -73,9 +73,10 @@ wipes data. **Export a backup first**; that export *is* WALK-03 step 1, so seque
   running a bundle without IMP-100/101, neither of which was ever pushed or OTA'd
   ([IMP-103](specs-open.md#imp-103)). [IMP-104](specs-open.md#imp-104) (default palette/sky items render
   as ember-locked) is real, scoped and ready to build. Owed: **step 4e re-run** (after the IMP-100/101
-  OTA), **step 10** (blocked until IMP-105 is fixed and re-walked) and **step 8** (the one real-money
-  purchase, deliberately held for last). 🚦 **Record the running bundle before every step from now on
-  — see the pre-flight note in the RE-RUN block.**
+  OTA), **step 9 re-run under the new ordering rule**, **step 10** and **step 8** (the one real-money
+  purchase, deliberately held for last). 🚦 **Two new pre-flight rules before this row is touched
+  again: record the running bundle, and run buy→reinstall→restore as one tight block — a license-tester
+  subscription only lives ~30 min (monthly) / ~3 hrs (annual). Both are in the RE-RUN block.**
   ✅ **IMP-099 — PROVEN ON HARDWARE 2026-09-08 (owner-run).** On 2026-09-08 a Play licence purchase
   **succeeded** and the app said "That didn't go through": `ENTITLEMENT_ID` was `'plus'` while the
   RevenueCat identifier is `Daily Rituals Plus`, so a real entitlement mapped to `null` and `buy()` read a
@@ -774,14 +775,21 @@ the row is ready to build.** ⚠️ **Do not tap those three cards on a device y
 `embers < 'owned'` is a NaN compare, so the affordability guard passes and the balance becomes `NaN`,
 which persists as `null` and reads back as **0**. One tap wipes the ember balance.
 
-**Step 9 (reinstall + Restore) ❌ FAILS, CRITICAL → [IMP-105](specs-open.md#imp-105).** Uninstalled,
-reinstalled from Play, tapped Restore on an account with an active, just-purchased subscription:
-**"Nothing to restore."** This is the exact scenario WALK-19 exists to prove works. **This blocks
-`internal` → `production` promotion outright** — see PROGRESS.md. 🔴 **Still a real failure after the
-2026-09-08 source review — the only one of the three that survived it.** Step 4f above is the control:
-same device, same account, same bundle, minutes earlier, Restore returned "Plus Restored." Identical code
-ran both times, so the defect is not in `restore()`. IMP-105 names the two owner checks that come before
-any code.
+**Step 9 (reinstall + Restore) ❌ → [IMP-105](specs-open.md#imp-105) — and the result is now in doubt.**
+Uninstalled, reinstalled from Play, tapped Restore on an account with an active, just-purchased
+subscription: **"Nothing to restore."** Step 4f above is the control: same device, same account, same
+bundle, minutes earlier, Restore returned "Plus Restored." Identical code ran both times, so the defect is
+not in `restore()`.
+🟠 **The owner's dashboard round (2026-09-08) moved this.** Restore Behavior is "Transfer to new App
+User ID" — the permissive setting — so the transfer theory is dead; entitlement id and Play credentials are
+clean. But **RevenueCat holds no customer with an active entitlement.** Google compresses license-tester
+subscriptions (monthly renews every 5 min, yearly every 30 min, auto-cancelled after 6 renewals), giving
+a test sub ~30 minutes or ~3 hours of life. **The subscription very plausibly expired during this walk**,
+in which case "Nothing to restore" was correct and there is no defect. Unconfirmed — see IMP-105's C1–C4.
+⚠️ **The walk did not record which plan step 4d bought, nor the wall-clock time of any step.** That
+omission is why this cannot be settled today.
+⚠️ **Play Console will never show these purchases** — license-tester test purchases are not orders. Look
+on the phone instead: Play Store → Payments & subscriptions → Subscriptions.
 
 **Step 10 (cancel flow) — not run.** Blocked by step 9's failure: no restorable entitlement to cancel
 from after the reinstall.
@@ -795,6 +803,19 @@ sitting's three "defects" were the phone being behind, and nothing on screen sai
 only reachable when billing is broken and the user is not a member — [IMP-106](specs-open.md#imp-106) puts
 it on the You tab permanently. Until IMP-106 ships, get it from the OTA group id the release CI recorded,
 and **never start a walk on a device whose bundle you cannot name.**
+
+🚦 **NEW ORDERING RULE — this sitting's second structural defect.** A Google Play license-tester
+subscription is **not** long-lived: monthly renews every 5 minutes, yearly every 30, and Google
+auto-cancels after 6 renewals — so it lives roughly **30 minutes (monthly) or 3 hours (annual)** and then
+correctly disappears. The current ordering puts a full perks tour between the purchase (4d) and the
+reinstall (9), so **step 9 structurally cannot test what it exists to test.** From now on:
+
+1. **Buy → uninstall → reinstall → Restore is ONE tight block**, run immediately after the purchase.
+   Everything else moves after it, or onto a second purchase.
+2. **Record the plan bought (monthly / annual) and the wall-clock time of every step.** Neither was
+   captured on 2026-09-08 and their absence is what left IMP-105 unresolvable.
+3. **Prefer annual** for anything that must outlive several steps — ~3 hours instead of ~30 minutes.
+4. Do not go looking in Play Console Order Management; test purchases never appear there.
 
 **Recording it.** Same rule as every row: ✅/❌ + date in the index, a paragraph here. **A failure is
 the deliverable** — scope it as a new `IMP-xxx` in `PROGRESS.md`, do not fix it mid-walk. **Do not

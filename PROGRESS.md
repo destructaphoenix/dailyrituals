@@ -104,7 +104,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 102 | **+3 freezes on every completion, not once.** `subscribe()` grants them for `success`, `owned` **and** `restored`; "Change plan" reopens the paywall for a member, so the loop is reachable — and IMP-100 is about to make the `owned` half work. | OTA | 🔒 **BLOCKED on an owner answer** (joining gift vs per-period perk) — see Open items. Do not build or guess |
 | 103 | **Not a defect — the phone never had IMP-100 or IMP-101.** Step 4e ran on OTA group `d42b7ec7` (commit `768bc88`, 04:58); IMP-100 landed 12:30 and IMP-101 12:39, **neither pushed, neither carrying a `Release-Lane: ota` trailer**. `git show 768bc88:src/billing/mapError.js` is the pre-IMP-100 name matcher, and the card's literal "That didn't go through." is copy IMP-101 replaced — the wording dates the bundle. | OTA | 🟢 **SHIP + RE-WALK, no code change.** Push `main` (4 ahead), OTA IMP-100/101, re-open WALK-19 step 4e |
 | 104 | **`tier: 'owned'` means free and `Shop.js` never reads it.** `palState`/`skyState` consult only `'plus'`, so a default that isn't currently applied falls to `'buy'` and `PalTag` prints the tier string as an ember price. **Worse: the card is tappable — `embers < 'owned'` is a NaN compare, so the guard passes, `embers` becomes `NaN`, serialises to `null`, and reads back as 0. One tap on a free item wipes the balance.** | OTA | 🟢 **READY TO BUILD.** Cause found in source; the device dump the first write-up asked for is impossible (dev panel is `__DEV__`-stripped) and wouldn't change the fix |
-| 105 | 🚦 **CRITICAL — reinstall + Restore says "Nothing to restore" for an active subscription.** Found on WALK-19 re-run 2026-09-08 step 9 — WALK-19's core acceptance, failed outright. **Narrowed 2026-09-08:** not the embedded bundle (Restore is unreachable there — `PAYWALL_LIVE` is false, `YouScreen.js:134` hides the row), not `ENTITLEMENT_ID`, and **not `restore()`/`toEntitlement()` — step 4f passed minutes earlier on the same device, account and bundle.** The only variable is the reinstall, and the app configures RevenueCat with **no `appUserID` and never calls `logIn()`**, so identity is anonymous and regenerated per install. | TBD | 🔴 **BLOCKS `internal` → `production`.** Two owner checks before any code: the dashboard's Restore Behavior / transfer setting, and one more Restore tap now that time has passed |
+| 105 | 🚦 **Reinstall + Restore says "Nothing to restore."** Source review ruled out the embedded bundle, `ENTITLEMENT_ID`, and `restore()`/`toEntitlement()` (step 4f is the control — identical code passed minutes earlier). **Owner's dashboard checks 2026-09-08 killed the transfer-setting theory (it is set to "Transfer to new App User ID") and produced a better one: RevenueCat holds NO customer with an active entitlement.** Google compresses license-tester subscriptions — monthly renews every 5 min, yearly every 30 min, auto-cancelled after 6 renewals — so the test sub very plausibly **expired during the walk**, making "Nothing to restore" correct. | TBD | 🟠 **Still gates `internal` → `production` — unproven, not known broken.** Four checks (C1–C4) settle it; C1 (was it monthly or annual?) does most of the work. 🚦 **The walk protocol is defective either way — buy→reinstall→restore must be one tight block** |
 | 106 | **A healthy build cannot say which JS it is running.** `describeUpdate()` already computes it and `RUNNING_BUNDLE` is built at `RitualsApp.js:115`, but its only consumer is the broken-gate alert, which renders only when `billingDiagnostic` is non-null **and** `!plus`. This is the gap that let IMP-103 be scoped as a billing defect. | OTA | 🟢 **READY TO BUILD** — a quiet always-present Version row on the You tab |
 | 022 | Save as PDF + About sheet (the two dead You-tab buttons) | Build | ⏸ **deferred (owner)** — spec in build-log → "Deferred specs"; **perk #6 gate** |
 | 044 | R8 on release builds (dev client was shipping to the public) | Build | 🟢 **code-complete, UNWALKED.** R8 must be walked on the build you actually ship, so it rides **vc15 or later**; walk = WALK-12, on hardware, last in the sitting |
@@ -155,10 +155,23 @@ the two are indistinguishable. **Do not remove the fallback** — see WALK-19.
   what made the WALK-19 re-run's step 4e read as a new defect (IMP-103). **Every device walk from here is
   invalid until `main` is pushed and OTA'd** — the phone is two billing fixes behind whatever the specs
   say. See IMP-103.
-- **🔴 IMP-105 needs two owner checks, not a chat.** (A) RevenueCat dashboard → the project's
-  Restore Behavior / transfer setting, and whether a second anonymous App User ID appeared on 2026-09-08
-  with no entitlement. (B) One more Restore tap on the reinstalled phone now that hours have passed. **A
-  build chat may not guess a fix before one of these comes back.**
+- **🟠 IMP-105 — the dashboard round is DONE (2026-09-08) and it moved the row.** Restore Behavior is
+  "Transfer to new App User ID" (the permissive setting), entitlement id and Play credentials are clean,
+  and **RevenueCat holds no customer with an active entitlement**. Leading explanation: the license-tester
+  subscription **expired mid-walk** — Google renews test subs every 5 min (monthly) / 30 min (yearly) and
+  auto-cancels after 6 renewals, so it lives ~30 min or ~3 hours. Four checks left (C1–C4 in the spec);
+  **C1 is simply "was step 4d monthly or annual?" and the walk never recorded it.** ⚠️ Play Console will
+  never show these purchases — test purchases are not orders. **Still no code on this row.**
+- **🚦 WALK-19's ordering is defective independent of IMP-105's outcome.** Buy → uninstall →
+  reinstall → Restore must run as one tight block immediately after the purchase; a license-tester
+  subscription cannot survive the perks tour that currently sits between steps 4d and 9. Record the plan
+  bought and the wall-clock time of every step.
+- **💰 EMBERS FOR MONEY — a conversation the owner parked for its own chat (2026-09-08).** The owner
+  wants embers purchasable for cash, reasoning that without embers you cannot buy candles. **Not scoped,
+  not started.** What the next chat needs to know is in [`docs/specs-open.md`](docs/specs-open.md) →
+  "Parked: embers for money" — three findings and two unanswered questions. **Do not flip
+  `EMBER_PACKS_ENABLED` in the meantime:** the buy handler at `RitualsApp.js:985` is a bare counter
+  increment, so the flag alone ships a store that shows `$1.99` and gives the goods away (the vc14 shape).
 - **🔒 IMP-102 — are the 3 streak freezes a JOINING GIFT or a PER-PERIOD PERK?** `subscribe()` grants
   `+3` on every completion, so `restored` and `owned` re-grant them. **Joining** ⇒ gate on `plus` being
   false at grant time. **Per-period** ⇒ still must not fire on a re-recognition. **A chat may not guess

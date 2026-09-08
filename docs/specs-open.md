@@ -38,7 +38,7 @@ investigation also opened IMP-106.
 | [IMP-102](#imp-102) | Completing a purchase grants **+3 freezes every time**, not once. | 🟡 Owner decision first |
 | [IMP-103](#imp-103) | Step 4e failed on a bundle without IMP-100/101 — **neither was ever pushed or shipped**. | 🟢 **Ship + re-walk. NO code change** |
 | [IMP-104](#imp-104) | `tier: 'owned'` means free and `Shop.js` never reads it — and tapping such an item **wipes the ember balance to 0**. | 🟢 **Ready to build — cause found, no dump needed** |
-| [IMP-105](#imp-105) | 🚦 **CRITICAL — blocks release.** Reinstall + Restore says "Nothing to restore" for an active subscription. | 🔴 **Narrowed, still unexplained. Two owner checks before any code** |
+| [IMP-105](#imp-105) | 🚦 Reinstall + Restore says "Nothing to restore." **Leading explanation is now a test subscription that expired mid-walk, not a defect.** | 🟠 **Four checks (C1–C4) settle it. Still gates promotion — unproven, not known broken. The walk protocol is defective regardless** |
 | [IMP-106](#imp-106) | A healthy build cannot say which JS bundle it is running — the gap that mis-scoped IMP-103. | 🟢 **Ready to build** |
 
 ---
@@ -243,83 +243,109 @@ after tapping each of the three.
 
 ## IMP-105
 
-### 🚦 CRITICAL — reinstall + Restore says "Nothing to restore" for an active subscription
+### 🚦 Reinstall + Restore says "Nothing to restore" — the leading explanation is now test-subscription expiry, not a bug
 
-**Lane: TBD — a cause has not been established. Blocks `internal` → `production` promotion, see
-`PROGRESS.md`.** Found on the WALK-19 re-run, 2026-09-08 (hardware, owner-run), step 9 — this is WALK-19's
-core acceptance and it failed outright.
+**Lane: TBD — no cause established, and the balance of evidence has moved AWAY from a code defect.**
+Still gates `internal` → `production`, because the case remains **unproven**, not because it is known
+broken. Found on the WALK-19 re-run, 2026-09-08 (hardware, owner-run), step 9.
 
-**The finding.** With an active, just-purchased subscription: uninstalled the app, reinstalled from Play,
-tapped Restore. Result: **"Nothing to restore."** The entitlement did not come back.
+**The finding as walked.** With an active, just-purchased subscription: uninstalled the app, reinstalled
+from Play, tapped Restore. Result: **"Nothing to restore."**
 
-**Why it is the most serious row open.** A real paying subscriber who reinstalls — new phone, cleared
-device, routine reinstall — is told they have nothing while still being charged. IMP-092 already named
-this as the most dangerous shape a restore bug can take, and it has now reproduced end to end.
+### Round 1 — what reading the source ruled out (2026-09-08)
 
-**What this investigation ruled OUT.** Read these before proposing anything; each was a live hypothesis
-and each is dead.
-
-- **Not the embedded vc15 bundle.** The tempting story is "a reinstall runs vc15's built-in JS, which
-  predates IMP-099, so `toEntitlement` looked up the wrong entitlement name." It cannot be what happened:
-  vc15's embedded `src/billing/index.js` still probes with `require.resolve` (IMP-085's defect), so
-  `isBillingConfigured` is false, so `PAYWALL_LIVE` is false, so
-  [`YouScreen.js:134-140`](../src/screens/YouScreen.js#L134) **hides the "Restore purchases" row
-  entirely** and the paywall — the only other route to Restore — cannot open. **There is no Restore button
-  to tap on that bundle.** The observation therefore came from the OTA'd bundle, on the second launch or
-  later.
+- **Not the embedded vc15 bundle.** On it, IMP-085's dead `require.resolve` probe makes
+  `isBillingConfigured` false, so `PAYWALL_LIVE` is false, so
+  [`YouScreen.js:134-140`](../src/screens/YouScreen.js#L134) hides the "Restore purchases" row and the
+  paywall cannot open. **There is no Restore button to tap on that bundle.** The observation came from the
+  OTA'd bundle, second launch or later.
 - **Not `ENTITLEMENT_ID` / IMP-099.** That bundle is `d42b7ec7`, which contains IMP-099.
-- **Not `restore()`, `toEntitlement()` or `mapPurchaseError()`.** The controlled comparison is already in
-  the walk: **step 4f passed minutes earlier on the same device, the same account, the same bundle** —
-  Restore with an active entitlement returned "Plus Restored." Identical code ran both times. The only
-  variable that changed between 4f and step 9 is the reinstall.
+- **Not `restore()`, `toEntitlement()` or `mapPurchaseError()`.** Step 4f is the control: same device,
+  same account, same bundle, minutes earlier, Restore returned "Plus Restored." Identical code ran both
+  times. The only variable that changed is the reinstall.
 
-**What that leaves.** `Purchases.restorePurchases()` **resolved** — it did not throw, or `restore()` would
-have returned `failed` and shown "We couldn't check." (IMP-092's whole point). It resolved with a
-`customerInfo` carrying no active entitlement. So the question is not how we read the answer; it is why
-RevenueCat gave that answer to this install.
+### Round 2 — the owner's dashboard checks (2026-09-08). Results, and what they mean
 
-**The fact that makes a reinstall different.** [`App.js:50-55`](../App.js#L50) calls
-`Purchases.configure({ apiKey })` with **no `appUserID`**, and nothing in this app ever calls
-`Purchases.logIn()` — verified, there is no occurrence of either identifier in `src/` or `App.js`. The
-app's RevenueCat identity is therefore an **anonymous App User ID, regenerated on every fresh install**.
-Recovering an entitlement across a reinstall depends entirely on RevenueCat transferring the Play purchase
-token from the old anonymous id to the new one. That transfer is the thing that did not happen, and its
-behaviour is set in the dashboard, not in this repository.
+| Check | Result | Verdict |
+| --- | --- | --- |
+| **A1** Restore Behavior | **"Transfer to new App User ID"** | ❌ **Candidate 1 is DEAD.** The transfer policy is the permissive one. A reinstall's new anonymous App User ID *should* receive the purchase |
+| **A2** Customer record | **No customer with an active entitlement.** 3 records, all dated the day before | 🔴 **The new lead — see below** |
+| **A3** Entitlement identifier | `Daily Rituals Plus` | ✅ Clean, matches `config.js` |
+| **A4** Play credentials | Valid | ✅ Clean |
+| **A5** Play Console order | Not findable | ⬜ **Inconclusive by design, not a finding.** Google Play **license-tester purchases are test purchases and never appear in Play Console Order Management.** Do not read this as evidence of anything. The place a test subscription *is* visible is on the phone: Play Store → Payments & subscriptions → Subscriptions |
 
-**Candidates, in the order they should be checked — none confirmed.**
+### The new leading candidate: the test subscription expired mid-walk
 
-1. **The RevenueCat project's Restore Behavior / transfer setting.** If it is set to keep purchases with
-   the original App User ID rather than transfer them, a reinstall's new anonymous id gets exactly this
-   answer: a clean resolve with nothing active. **This is a dashboard fact and costs nothing to read.**
-2. **Timing.** RevenueCat may not have finished fetching Play's purchases for the brand-new install at the
-   moment Restore was tapped.
-3. **A license-tester specific behaviour** around a test purchase token surviving an uninstall.
+**A2 is the whole story, and it fits a documented Google behaviour.** Google Play compresses test
+subscriptions for license testers: **a monthly subscription renews every 5 minutes and a yearly one every
+30 minutes, and Google auto-cancels the test subscription after 6 renewals.** So a license-tester
+subscription has a total lifetime of roughly **30 minutes if monthly, ~3 hours if annual** — after which
+it is genuinely, correctly gone.
 
-**The next step is two cheap checks, and NEITHER is a code change.** Do not open an editor on this row
-until one of them comes back.
+WALK-19's re-run ran steps 4e, 4f, 5, 6 and a full step-7 perks tour between the purchase (4d) and the
+reinstall (9) — and step 9 itself includes an uninstall, a Play re-download and install, a first launch,
+a second launch for the OTA to apply, and only then the Restore tap. **That is very plausibly longer than
+the subscription was alive.**
 
-- **Check A (owner, no device needed).** In the RevenueCat dashboard: read the project's Restore Behavior
-  setting, and open the customer record behind the 2026-09-08 purchase. Did a **second** anonymous App
-  User ID appear on 2026-09-08 with no entitlement attached? If yes, candidate 1 is confirmed and the fix
-  is a dashboard setting plus a walk, not a commit.
-- **Check B (owner, on the reinstalled phone, one tap).** Tap Restore again now that hours have passed. If
-  it succeeds, candidate 2 is confirmed and the fix is a code change about *when* we accept
-  `restore-empty` — not about how we read it.
+If so: RevenueCat holding **no active customer** is not a missing record, it is an **expired** one, and
+`restorePurchases()` resolving with nothing active was **correct**. "Nothing to restore." would be the
+truth, and there is no defect in this app.
 
-**Do not guess a code fix before A and B.** In particular: do not add a retry loop, do not add a delay,
-and do not soften `restore-empty`'s copy. All three would be written against an unknown cause, and the
-last one would undo IMP-092.
+**This is the leading candidate, not a conclusion.** It is not yet confirmed, and the row stays open.
 
-**One code-shaped observation to hold until then, not to build.** `restore()` takes exactly one look
-([`revenueCatService.js:131-153`](../src/billing/revenueCatService.js#L131)). The SDK shipped here
-(`react-native-purchases` 10.5.0) also exposes `Purchases.syncPurchasesForResult()` — its own "go and ask
-the store again" call — confirmed present in `dist/purchases.d.ts`. If Check B implicates timing, that is
-the shape the fix should take. It is named here so the next chat does not have to rediscover the SDK
-surface; it is **not** authorised yet.
+### What settles it — four checks, still no code
 
-**Acceptance.** WALK-19 step 9: uninstall → reinstall from Play → Restore recovers the active entitlement
-without a second charge. Step 10 (cancel flow) stays blocked behind it — it needs a restored, active
-subscription to cancel.
+- **C1 · Which plan was bought at step 4d, monthly or annual?** ⚠️ **The walk did not record it.** This
+  one fact sets the subscription's lifetime at ~30 minutes or ~3 hours and does most of the work.
+- **C2 · Wall-clock gap between step 4d and step 9.** Owner's recollection is enough to within ten
+  minutes. Compare against C1.
+- **C3 · RevenueCat Customers, with the SANDBOX filter ON.** Play license-tester purchases are sandbox
+  transactions, and the default Customers view may exclude them — which would also explain "no active
+  customer" on its own. With sandbox included, sort by last seen, open the 2026-09-08 customer and read
+  **the entitlement's expiration date** and the event timeline for an expiration / cancellation event. An
+  expiry stamped before the Restore tap confirms this candidate outright.
+- **C4 · On the phone: Play Store → Payments & subscriptions → Subscriptions.** Is Daily Rituals Plus
+  there, and in what state? This is where a test subscription lives; Play Console is not.
+
+**Outcomes and what each means.**
+
+- **Expiry confirmed (C1+C2+C3 agree):** there is no bug. Close IMP-105 as *not reproducible — walk
+  protocol defect*, unblock the promotion, and fix the **walk**, not the app (see below). The row still
+  cannot be ticked until step 9 actually passes on a live subscription.
+- **The customer is there and active, only hidden by the sandbox filter:** the defect is real and
+  unexplained, and Check B (below) becomes the next step.
+- **The customer exists but the reinstall never created a second App User ID:** the SDK never
+  initialised on the reinstalled app. Different bug entirely — look at `Purchases.configure` in
+  [`App.js:50-55`](../App.js#L50) running before the RC key resolves.
+
+**Check B, still owed and still cheap.** Tap Restore once more on the reinstalled phone. Under the expiry
+theory it will still say "Nothing to restore" — correctly — so B alone cannot distinguish the two; run it
+for the timing signal only, after C1–C4.
+
+### 🚦 The walk protocol is defective regardless of the outcome
+
+**This is the durable fix and it is owed even if the app is innocent.** A license-tester subscription
+cannot survive a leisurely walk, so WALK-19's step ordering — purchase at 4d, reinstall at 9, an entire
+perks tour in between — **structurally cannot test what step 9 exists to test.** Amend WALK-19:
+
+1. **Buy → uninstall → reinstall → Restore must be ONE tight block**, run immediately after the purchase,
+   before anything else. Everything non-urgent (perks tour, renewal date, ember packs) moves after it, or
+   onto a second purchase.
+2. **Record the plan bought** (monthly / annual) and the **wall-clock time of every step**. Neither was
+   captured on 2026-09-08, and their absence is why this row cannot be closed today.
+3. **Prefer annual for any test that needs the subscription to outlive several steps** — ~3 hours of life
+   instead of ~30 minutes.
+4. Note in the row that Play Console Order Management will never show these purchases, so nobody burns
+   another ten minutes looking (A5).
+
+**Do not write a code fix on this row.** Not a retry loop, not a delay, not softer `restore-empty` copy —
+the last would undo IMP-092. If C1–C4 implicate timing rather than expiry, the shape to reach for is
+`Purchases.syncPurchasesForResult()`, present in `react-native-purchases` 10.5.0 and confirmed in
+`dist/purchases.d.ts`. Named so the next chat need not rediscover it; **not authorised.**
+
+**Acceptance.** WALK-19 step 9, re-run under the amended protocol above: uninstall → reinstall from Play →
+Restore recovers a **still-live** entitlement without a second charge. Step 10 (cancel flow) stays behind
+it.
 
 ---
 
@@ -368,6 +394,58 @@ confusion IMP-087's comment predicted, and the one that has now cost a spec.
 **Acceptance.** No walk of its own — it is *how* the next walk is read. WALK-19's pre-flight gains one
 step: read the Version row on the You tab and record the update id in the result block **before** running
 any step. A walk that does not record it cannot scope a defect.
+
+---
+
+### Parked: embers for money — a conversation, not yet a spec
+
+**Owner, 2026-09-08:** *"embers need to be made acquirable for money — without embers you cannot buy
+candles."* **Parked for its own chat. Nothing here is authorised to build.** This section exists so that
+chat starts from findings instead of re-deriving them. It is not an `IMP-xxx` and must not be given a
+number until the two questions at the bottom are answered.
+
+**Where it actually stands.** `EMBER_PACKS_ENABLED` is `false` ([`config.js:82`](../src/billing/config.js#L82)).
+`EMBER_PACKS` already exist in [`data.js:157-161`](../src/data.js#L157) carrying real prices
+(`$1.99` / `$4.99` / `$9.99`). But the buy handler at
+[`RitualsApp.js:985`](../src/RitualsApp.js#L985) is `onBuy={(pack) => setEmbers((e) => e + pack.amount)}`
+— a bare counter increment. No purchase service, no RevenueCat, no IAP of any kind.
+⚠️ **Flipping the flag today ships a store that displays dollar prices and hands over the goods for
+free** — the exact vc14 giveaway shape IMP-084 was opened for. The flag is the only thing preventing it.
+
+**The economy as built.** `EMBER_GAIN` is 15 per day kept. Candles cost 120 / 300 / 450 for 1 / 3 / 5;
+palettes 240–420; skies 300. One candle ≈ 8 days of writing; the $1.99 pack ≈ 16 days of earning.
+
+**Three findings the decision turns on.**
+
+1. **Selling embers is selling streak protection.** Candles auto-spend to repair a broken streak
+   ([`streakFreeze.js:14`](../src/home/streakFreeze.js#L14)). Once embers are purchasable, a user who
+   breaks a streak can buy it back with cash. For an app whose proposition is an honest record, that is
+   the one mechanic where money buying a better outcome costs something real. Mitigations exist (candles
+   must be *held before* the missed day; or cash buys cosmetics only and candles stay earned) — but the
+   choice has to be deliberate.
+2. **A shipped promise is already wrong, independent of this.** `PLUS_PERKS[1]` sells *"Streak insurance
+   — a candle spends itself when you miss a day"* as a **Plus** perk, and `Onboarding.js:31` shows it in
+   the first three. **`applyAutoFreeze` is not gated on `plus` at all** — free users already get it. Either
+   gate it or rewrite the line. This is a live mis-sell today and it decides what ember money would be
+   buying.
+3. **Consumables are a build lane and harder than the subscription was.** New Play *consumable* products
+   attached in RevenueCat; `revenueCatService.buy()` only knows subscription packages and would need
+   `purchaseStoreProduct` plus `getProducts(..., 'NON_SUBSCRIPTION')` (both confirmed present in
+   `react-native-purchases` 10.5.0). The sharp edge: **consumables are not restorable the way a
+   subscription is.** `CustomerInfo.nonSubscriptionTransactions` exists, but the app must track which
+   grants it has already applied or a reinstall double-grants / loses them. **Do not build this while
+   IMP-105 is open** — that is a reinstall-restore question on the *simple* case. The `$1.99` literals
+   must also become store-fetched, the way IMP-090 made the trial copy honest, especially on INR.
+
+**Recommendation on the table (owner has not ruled).** Ship **cosmetics-first**: cash buys embers, embers
+buy palettes and skies, candles stay earned. Captures nearly all the revenue upside, costs none of the
+streak integrity, and avoids the consumable-ledger problem entirely because cosmetics are durable state
+the app already persists.
+
+**The two questions that must be answered before any spec is written.**
+
+1. **Does cash buy candles, or only cosmetics?**
+2. **Is auto-freeze a Plus perk or free for everyone?** The code says free; the paywall says Plus.
 
 ---
 
