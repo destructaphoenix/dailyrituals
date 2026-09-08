@@ -66,9 +66,16 @@ wipes data. **Export a backup first**; that export *is* WALK-03 step 1, so seque
 
 **After the 2026-09-07 emulator sitting, only three rows have live work — and two of them need a phone.**
 
-- **WALK-19** — the only 🚦 with live work in it. Steps 3 and 4a are **proven, do not re-run them**. Owed:
-  **4c** (IMP-093 has now reached the phone — group `d42b7ec7`), the **aeroplane-mode Restore check**
-  (IMP-092's second half — one tap, unrun), and steps **4b, 4d–4f, 5–10** in full.
+- **WALK-19** — the only 🚦 with live work in it. **2026-09-08 update: steps 3, 4a, 4b, 4c, 4d, 4f, 5, 6
+  all PASS on hardware.** **[IMP-105](specs-open.md#imp-105) is CRITICAL and blocks `internal` →
+  `production` promotion outright**: a reinstall + Restore on an account with an active subscription says
+  "Nothing to restore." ⚠️ **Step 4e's failure is INVALID and owes a re-run, not a fix** — the phone was
+  running a bundle without IMP-100/101, neither of which was ever pushed or OTA'd
+  ([IMP-103](specs-open.md#imp-103)). [IMP-104](specs-open.md#imp-104) (default palette/sky items render
+  as ember-locked) is real, scoped and ready to build. Owed: **step 4e re-run** (after the IMP-100/101
+  OTA), **step 10** (blocked until IMP-105 is fixed and re-walked) and **step 8** (the one real-money
+  purchase, deliberately held for last). 🚦 **Record the running bundle before every step from now on
+  — see the pre-flight note in the RE-RUN block.**
   ✅ **IMP-099 — PROVEN ON HARDWARE 2026-09-08 (owner-run).** On 2026-09-08 a Play licence purchase
   **succeeded** and the app said "That didn't go through": `ENTITLEMENT_ID` was `'plus'` while the
   RevenueCat identifier is `Daily Rituals Plus`, so a real entitlement mapped to `null` and `buy()` read a
@@ -151,7 +158,7 @@ delivery to a real share target, and Google's own backup schedule have never bee
 | WALK-16 | 🚦 | [The New Architecture cold start](build-log.md#walk-16) | IMP-076 | **device** (native runtime) | 👤 | ✅ **2026-09-05 — closed on emulator evidence at owner's instruction.** All 7 steps exercised across two agent-run sittings (1-3 New Arch live: Bridgeless + Fabric + TurboModule; 4-7 storage / notification scheduling / export-share-reimport / Auto Backup via T5 with the quarantine offering not imposing). **Owner's call 2026-09-05: emulator results are recorded as done, not smoke.** ⚠️ **Named gap — never exercised anywhere:** real doze, OEM battery managers, delivery to a real share target, Google's own backup schedule. **Unblocks IMP-077.** |
 | WALK-17 | 🚦 | [Edge-to-edge, re-audited under New Arch](build-log.md#walk-17) | IMP-076, IMP-027 regression | **device** | 👤 (visual) | ✅ **2026-09-05 — emulator, agent-run.** All four tabs clean under status bar + gesture bar in **both** day and night; bottom nav and write-FAB correct in **both** gesture and 3-button nav; onboarding + setup also clean. Sheets checked: trash, achievements, shop — the last two at night **and** max font. ⚠️ **Not opened: write flow, reading sheet, mood manager.** |
 | WALK-18 | 🎨 | [The app moves](#walk-18--the-app-moves) | IMP-077 | **device** (mid-range, real frame pacing) | 👤 (visual) | ⬜ — **branch-only. UNBLOCKED 2026-09-05: WALK-16 closed and IMP-077 landed.** ✅ **The build now exists: v1.0.8 / vc14 shipped to Play `internal` 2026-09-05 19:09** (EAS `87f81b24…`, submission `4b7cf3a2…`, from commit `6590834`). IMP-077 added `react-native-reanimated` + `react-native-worklets` (native deps), so **neither vc13 artifact carries this code** — install vc14 from Play, not an older APK. **An emulator cannot settle this row** — it renders dropped frames as smooth, which is the thing being judged. The jest suite is blind here too: the Reanimated mock no-ops every hook |
-| WALK-19 | 🚦 | [Money actually changes hands](#walk-19--money-actually-changes-hands) | **Phase 10b.5**, IMP-028, IMP-082 + IMP-083 (steps 5 and 10), IMP-084/085/086/087, **IMP-088** | **device** (real Play Billing + a license tester) | 👤 | ❌ **2026-09-06 — steps 1–4 run on hardware, THREE defects, sitting stopped before any purchase (owner's call, and the right one).** ✅ Steps 0(c), 1 and 2 pass — vc15 + OTAs confirmed, prices in INR, an airplane-mode purchase does not complete. 🔴 **Step 4a/4c: "Try again" on a RESTORE card opened Play's purchase sheet** → **IMP-089, FIXED this session** (968 green), needs an OTA then a re-run. 🔴 **Step 3: Play's sheet says "charging today" + the INR amount, not 7 days free** — our CTA is a hardcoded literal and the app fetches no offer data at all → **IMP-090**. Owner has subbed/unsubbed on this account, so the trial is burned and **Play is right**. 🔴 **Step 4c: IMP-088's escape NEVER appeared** — 22s, 32s, past 60s, no Close button, copy unchanged → **IMP-091** (prime suspect: JS timers throttled while Play's sheet holds the foreground; cause NOT yet separated from "the device lacked the OTA"). 🔴 **Bonus, found off-script: an airplane-mode Restore says "Nothing to restore" INSTANTLY** — `restore()` relabels every unrecognised error as `restore-empty` → **IMP-092**. ✅ **ALL FOUR FIXES SHIPPED BY OTA 2026-09-07** (group `424b5a88-c993-44d7-91d6-db586ad22c32`, runtime 1.0.9, manifest verified). 🟠 **RE-RUN 2026-09-07 (hardware, owner-run): step 3 ✅ PASSES, step 4a ✅ PASSES, step 4c ⬜ INCONCLUSIVE — and the reason is a NEW defect, [IMP-093](specs-open.md).** Play's no-connection page offers only **Back**, and Back closes the **whole paywall**, discarding the pending flow before IMP-091's Close button can be seen. Waiting 30s changes nothing — Play's page does not self-dismiss. **IMP-091 remains unproven and may be unprovable on this path.** IMP-092's online half passed inside 4a; its aeroplane-mode half is unrun. Steps 4b, 4d–4f and 5–10 still owed in full. **Nothing is promoted `internal` → `production`.** |
+| WALK-19 | 🚦 | [Money actually changes hands](#walk-19--money-actually-changes-hands) | **Phase 10b.5**, IMP-028, IMP-082 + IMP-083 (steps 5 and 10), IMP-084/085/086/087, **IMP-088** | **device** (real Play Billing + a license tester) | 👤 | 🔴 **2026-09-08 (hardware, owner-run) — steps 3, 4a, 4b, 4c, 4d, 4f, 5, 6 ✅ PASS.** [IMP-105](specs-open.md#imp-105) **blocks release**: reinstall + Restore on an account with an active subscription says "Nothing to restore" — and it is the one finding that survived the same-day source review (step 4f is its control: identical code passed minutes earlier). [IMP-104](specs-open.md#imp-104): default palette/sky items render as ember-locked, cause found, ready to build — **and tapping one wipes the ember balance to 0**. ⚠️ **Step 4e is INVALID, not a failure** — the phone ran OTA `d42b7ec7`, which predates IMP-100 **and** IMP-101; neither was ever pushed or shipped ([IMP-103](specs-open.md#imp-103)), so 4e owes a re-run after that OTA. Aeroplane-mode Restore reproduces the known IMP-092 cache limit (not new). Step 10 blocked on IMP-105; step 8 (real money) deliberately held for last. Full detail in the RE-RUN section below. **Nothing is promoted `internal` → `production`.** |
 
 ---
 
@@ -721,6 +728,73 @@ device — it was not run. The walk's own pre-flight recorded 1.0.9, the update 
 bundle in the manifest, which points at the first, but does not settle it. The fix is right if it was the
 first and harmless if it was the second. **This re-run is what separates them.**
 
+### ✅❌ RESULT — 2026-09-08 (hardware, owner-run) — steps 4b, 4c retry, aeroplane Restore, 4d–4f, 5–7, 9 run
+
+**4b (cancel) ✅ PASSES.** Backed out of Google's sheet mid-purchase; app returned to normal, no stuck
+screen, no message.
+
+**4c retry ✅ PASSES — and this closes the IMP-093/IMP-091 question.** Airplane mode, tapped buy, backed
+out of Google's no-connection page: app returned to normal with no card left behind. This is the fix's
+actual, deliberate acceptance (`docs/build-log.md` IMP-093 note 1: *"the fix deliberately does NOT keep
+the card on screen… do not re-open 4c expecting one"*) — **not a bug.** IMP-091 stays correctly
+unobservable on this path, by design.
+
+**Aeroplane-mode Restore (IMP-092's second half) — still the known limit, not a regression.** Answered
+"Nothing to restore." instantly, same as before. Matches the documented cache limit (RevenueCat serves a
+locally-cached answer offline rather than failing) — record as reproduced, not new.
+
+**4d (a real test purchase) ✅ PASSES.** License-tester purchase completed, app confirmed Plus.
+
+**4e (buy again while already subscribed — IMP-100's device acceptance) ⚠️ INVALID, NOT A FAILURE — re-run owed.**
+Tapped Subscribe while already a member: Google's own sheet said the account already has the subscription,
+but the app showed **"That didn't go through"** (the `failed` card), not "You already have Plus."
+🔴 **Re-scoped 2026-09-08 by reading the shipped tree: the phone did not have IMP-100 or IMP-101.**
+This sitting ran on OTA group `d42b7ec7` (commit `768bc88`, 04:58); IMP-100 landed at 12:30 and IMP-101 at
+12:39, **neither pushed, neither carrying a `Release-Lane: ota` trailer**, so CI never published them.
+`git show 768bc88:src/billing/mapError.js` is the pre-IMP-100 name matcher, and the literal
+"That didn't go through." is copy IMP-101 replaced with "We couldn't confirm that." — **the wording itself
+dates the bundle.** Step 4e reproduced the bug IMP-100 fixes, on a build without the fix. See
+[IMP-103](specs-open.md#imp-103): ship, then re-walk. **Nothing to diagnose.**
+
+**4f (Restore with an active entitlement) ✅ PASSES.** Tapped Restore while subscribed: "Plus Restored."
+
+**Step 5 (renewal date) ✅ PASSES.** You tab, Shop banner and Manage all showed the correct, real
+renewal date. **IMP-082 is proven on hardware.**
+
+**Step 6 (ember packs absent) ✅ PASSES.** No "Gather Embers" section, no $1.99/$4.99/$9.99 anywhere.
+⚠️ **Owner note, not a defect:** embers are coming back as a real feature later — out of scope for this
+walk, raised separately with the owner.
+
+**Step 7 (Plus perks) 🟠 PARTIAL — one new defect.** The four Plus-gated perks (unlocked palettes/skies,
+missed-day candle, On this day, Deeper insights) work. **But the *default*, always-free palette/sky
+items (Golden Hour, Golden Sun, Crescent Moon) rendered as ember-locked ("buy") instead of free** →
+[IMP-104](specs-open.md#imp-104). Not a Plus-gating bug — it reproduces with Plus active — it's the
+free/default tier itself showing as paid. ✅ **Cause found in source 2026-09-08, no device dump needed —
+the row is ready to build.** ⚠️ **Do not tap those three cards on a device you care about until it ships:**
+`embers < 'owned'` is a NaN compare, so the affordability guard passes and the balance becomes `NaN`,
+which persists as `null` and reads back as **0**. One tap wipes the ember balance.
+
+**Step 9 (reinstall + Restore) ❌ FAILS, CRITICAL → [IMP-105](specs-open.md#imp-105).** Uninstalled,
+reinstalled from Play, tapped Restore on an account with an active, just-purchased subscription:
+**"Nothing to restore."** This is the exact scenario WALK-19 exists to prove works. **This blocks
+`internal` → `production` promotion outright** — see PROGRESS.md. 🔴 **Still a real failure after the
+2026-09-08 source review — the only one of the three that survived it.** Step 4f above is the control:
+same device, same account, same bundle, minutes earlier, Restore returned "Plus Restored." Identical code
+ran both times, so the defect is not in `restore()`. IMP-105 names the two owner checks that come before
+any code.
+
+**Step 10 (cancel flow) — not run.** Blocked by step 9's failure: no restorable entitlement to cancel
+from after the reinstall.
+
+**Not run:** step 8 (the one real-money purchase + refund) — owner is holding it for the very end,
+deliberately, same as the original spec's ordering.
+
+🚦 **NEW PRE-FLIGHT STEP, from this sitting's most expensive lesson.** Before running any step,
+**record which JS bundle the phone is actually running** and write it into the result block. Two of this
+sitting's three "defects" were the phone being behind, and nothing on screen said so. Today that string is
+only reachable when billing is broken and the user is not a member — [IMP-106](specs-open.md#imp-106) puts
+it on the You tab permanently. Until IMP-106 ships, get it from the OTA group id the release CI recorded,
+and **never start a walk on a device whose bundle you cannot name.**
 
 **Recording it.** Same rule as every row: ✅/❌ + date in the index, a paragraph here. **A failure is
 the deliverable** — scope it as a new `IMP-xxx` in `PROGRESS.md`, do not fix it mid-walk. **Do not
