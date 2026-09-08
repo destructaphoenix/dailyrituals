@@ -3724,6 +3724,63 @@ the card's primary button is "Try again", which walks an already-subscribed buye
 **separate row**, not this one: this fix removes the trigger, that one removes the lie. Not scoped yet —
 owner decision on whether it is worth a round now that the trigger is gone.
 
+## IMP-100 — every purchase error becomes "failed" because `e.code` is a number and we match names (2026-09-08)
+
+**Found by the owner's hard audit of the purchase surface, ordered right after IMP-099.** Same discipline
+that found IMP-099 — read what the SDK actually emits instead of what the code hoped it emits — and it
+found a defect **larger** than IMP-099.
+
+**Cause.** `react-native-purchases@10.5.0`'s Android bridge rejects with the **stringified numeric error
+code**, not its name: `RNPurchasesModule.java:708` — `promise.reject(errorContainer.getCode() + "", …)`.
+[`mapError.js`](../src/billing/mapError.js) matched names (`String(e.code).toUpperCase().includes('NETWORK')`
+etc.), so every `includes` check was comparing a digit string against a word and always missed. **Only the
+`userCancelled` boolean ever worked** — every non-cancel error on a real Android device returned `'failed'`.
+
+**What that cost, in order of harm.**
+- The **`owned` rescue path was dead.** A buyer who already owns the subscription (reinstall, new phone, a
+  cleared local flag) taps Subscribe, Play answers `PRODUCT_ALREADY_PURCHASED_ERROR` (`"6"`), and heard "you
+  weren't charged. Try again" instead of getting their entitlement handed back.
+- **`PAYMENT_PENDING_ERROR` (`"20"`) read as failure.** Deferred Play payment methods (UPI mandates, cash,
+  netbanking — normal on the INR flows this app serves) return it while the charge is **in flight**; the app
+  said "you weren't charged" and offered Try again, inviting a second purchase against a payment that may be
+  about to succeed.
+- `network` was unreachable (offline purchases landed on the generic failed card), and "Change plan" was
+  broken (`"6"` on an already-subscribed buyer).
+
+**Why the suite was green.** `mapError.test.js` fed it `{ code: 'NETWORK_ERROR' }`,
+`{ code: 'PRODUCT_ALREADY_PURCHASED' }` — names the SDK never emits. Verbatim IMP-099's failure mode, and the
+third time (IMP-085's `require.resolve`, IMP-099's entitlement key, this) a billing guard was tested against
+an imagined shape.
+
+**What was built.**
+1. A `RC_CODE` map of the numeric strings (`'1'` cancel, `'10'`/`'35'` network, `'6'`/`'7'` owned, `'20'`
+   deferred), hard-coded with the name in a comment rather than imported — `mapError.js` must stay loadable
+   in jest, and `react-native-purchases` pulls an untransformable ESM dependency. The old name-`includes`
+   chain stays as a fallback so iOS/web/simulated shapes keep working.
+2. A new `deferred` result kind: [`PlusFlow.js`](../src/screens/PlusFlow.js) `RESULT_META.deferred` — "Payment
+   still processing," `dismissTo: 'paywall'` (not `'complete'` — a pending payment is not a paid one), no
+   "Try again" wording, `Info` icon.
+3. `revenueCatService.js` `buy()` already passed unmatched kinds straight through, so `deferred` needed no
+   change there; `restore()`'s catch-all ternary already collapsed anything but `owned`/`network` to
+   `'failed'`, so a pending state degrades to `failed` on restore (a restore cannot be pending — there is no
+   purchase in flight to defer, only a lookup) with no code change, just a comment recording why.
+
+**The proof.** New `describe('the codes the SDK actually emits — IMP-100')` in `mapError.test.js` (+7), **run
+red first**: 6 of 7 failed before the fix (the `"2"` → `failed` case already passed, since old and new code
+agree there). New `describe('buy() maps the real Android bridge codes — IMP-100')` in
+`revenueCatService.test.js` (+2): `"6"` returns `{ kind: 'owned' }` **and asserts `getCustomerInfo` was
+called** (the rescue path executing, not just the label), `"20"` returns `{ kind: 'deferred' }`. **1077
+passed, 96 suites** (was 1068/96), `expo export --platform android` clean.
+
+**Walk owed.** Added to WALK-19: a Play licence tester who **already owns** the subscription taps Subscribe
+and should see "You already have Plus" with membership restored, not "That didn't go through." ⚠️ **jest
+cannot prove any of this** — `simService` returns `kind` directly and never calls `mapPurchaseError`, which is
+why the dev panel's `owned`/`network` outcomes have always looked healthy in simulation.
+
+**Left open on purpose — not this row.** The `failed` card still claims "you weren't charged" on paths that
+cannot know that, and `run()` still reaches the result phase with no store reconcile. IMP-100 removes most of
+the wrong *triggers* into `failed`; IMP-101 removes the lie itself.
+
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
 
 > Moved out of PROGRESS.md on 2026-07-31 to keep the live cursor lean once a second spec (IMP-032) opened. These are **not** finished work. If the owner revives one, lift the block back into PROGRESS.md as the ACTIVE TRACK.

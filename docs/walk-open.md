@@ -449,11 +449,18 @@ and a price check settle "is this real billing?" on their own. Start from step 1
       Play's own purchase sheet also offers **7 days free**. A mismatch is a copy fix, and a
       misrepresentation until it lands.
 - [ ] 4. **Walk every purchase state.** The service contract is
-      `success | cancel | failed | network | owned | restored | restore-empty`. At minimum: complete a
+      `success | cancel | failed | network | owned | restored | restore-empty | deferred`. At minimum: complete a
       purchase (**success**), back out of Play's sheet (**cancel**), buy again while subscribed
       (**owned**), airplane-mode mid-purchase (**network**), Restore with an entitlement
       (**restored**) and on a clean account (**restore-empty**). Each must show the right overlay and
       leave the app in the right state — no silent no-ops.
+      ⚠️ **The `owned` case is [IMP-100](build-log.md)'s acceptance, added 2026-09-08.** Before this fix
+      the SDK's real Android error code for "already purchased" (`"6"`) could never match the name-based
+      mapper, so this case has **never actually executed on a device** — every prior run of this walk
+      exercised only `success`/`cancel`/`network`. Confirm: tapping Subscribe while already a member shows
+      "You already have Plus" (not "That didn't go through … Try again") and membership is restored, not
+      re-charged. If Play offers a way to simulate `PAYMENT_PENDING_ERROR` (a UPI mandate or similar
+      deferred method), also confirm it shows "Payment still processing" (**deferred**), not `failed`.
       ⚠️ **The `network` case is also [IMP-088](build-log.md)'s acceptance.** It used to hang on
       *"Confirming with Play Store…"* **forever** with no way out — found on this walk 2026-09-06. Now:
       after ~20s the card must offer a **Close** button, and the copy must **not** claim the purchase
