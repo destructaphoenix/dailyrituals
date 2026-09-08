@@ -69,13 +69,20 @@ wipes data. **Export a backup first**; that export *is* WALK-03 step 1, so seque
 - **WALK-19** — the only 🚦 with live work in it. Steps 3 and 4a are **proven, do not re-run them**. Owed:
   **4c** (IMP-093 has now reached the phone — group `d42b7ec7`), the **aeroplane-mode Restore check**
   (IMP-092's second half — one tap, unrun), and steps **4b, 4d–4f, 5–10** in full.
-  🔴 **NEW, and it is the cheapest item in the whole queue: IMP-099's proof.** On 2026-09-08 a Play
-  licence purchase **succeeded** and the app said "That didn't go through" — `ENTITLEMENT_ID` was `'plus'`
-  while the RevenueCat identifier is `Daily Rituals Plus`, so a real entitlement mapped to `null`. Fixed
-  and shipped in group `d42b7ec7`. ⚠️ **The suite pins that string and cannot confirm it** — only the
-  device can. **This needs NO purchase:** the owner's subscription from the failed attempt is still
-  active, so a relaunch (launch check, `RitualsApp.js:385`) or one **Restore** tap settles it. Do that
-  first — it is also the fastest proof the OTA applied at all.
+  ✅ **IMP-099 — PROVEN ON HARDWARE 2026-09-08 (owner-run).** On 2026-09-08 a Play licence purchase
+  **succeeded** and the app said "That didn't go through": `ENTITLEMENT_ID` was `'plus'` while the
+  RevenueCat identifier is `Daily Rituals Plus`, so a real entitlement mapped to `null` and `buy()` read a
+  resolved purchase as a failure. Fixed, shipped in group `d42b7ec7`, and **the owner confirms Plus is
+  live on the device.** That also proves, in passing, that **the OTA applied** and that vc15 takes the
+  update — the fastest such proof there has ever been.
+  ⚠️ **What this does NOT prove, and the distinction is load-bearing.** The shipped bundle grants Plus by
+  **two** routes: the named `ENTITLEMENT_ID` lookup, and IMP-099's **sole-entitlement fallback** (one
+  active entitlement grants Plus whatever it is called). From outside the app **they are
+  indistinguishable** — a working paywall is consistent with `'Daily Rituals Plus'` being exactly right,
+  *and* with it being the dashboard's description while the fallback silently covers a still-wrong
+  constant. **So this walk did not validate the string.** Anyone "simplifying" the fallback away is
+  removing the only thing known to work. To separate them, read the entitlement's real key off a device
+  (`getCustomerInfo()` in the dev panel) — until then the fallback stays, on purpose.
 - **WALK-18** — needs a **mid-range device**; an emulator renders dropped frames as smooth, which is the
   thing being judged, and the jest Reanimated mock no-ops every hook.
 - **WALK-12 (R8) — last, and it cannot move.** R8 runs at build time, so it must be walked on the exact
