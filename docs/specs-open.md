@@ -35,7 +35,7 @@ investigation also opened IMP-106.
 | --- | --- | --- |
 | IMP-100 | Every RevenueCat purchase error becomes `failed`. `e.code` is a **number**, our mapper matches **names**. | ✅ **done — archived in `docs/build-log.md`** |
 | IMP-101 | The `failed` card claims "you weren't charged" and never asks the store. | ✅ **done — archived in `docs/build-log.md`** |
-| [IMP-102](#imp-102) | Completing a purchase grants **+3 freezes every time**, not once. | 🟡 Owner decision first |
+| [IMP-102](#imp-102) | Completing a purchase grants **+3 freezes every time**, not once. | 🟢 **UNBLOCKED — owner ruled per-period 2026-09-09. Ready to build** |
 | [IMP-103](#imp-103) | Step 4e failed on a bundle without IMP-100/101 — **neither was ever pushed or shipped**. | 🟢 **Ship + re-walk. NO code change** |
 | [IMP-104](#imp-104) | `tier: 'owned'` means free and `Shop.js` never reads it — and tapping such an item **wipes the ember balance to 0**. | 🟢 **Ready to build — cause found, no dump needed** |
 | [IMP-105](#imp-105) | 🚦 Reinstall + Restore says "Nothing to restore." **Leading explanation is now a test subscription that expired mid-walk, not a defect.** | 🟠 **Four checks (C1–C4) settle it. Still gates promotion — unproven, not known broken. The walk protocol is defective regardless** |
@@ -45,27 +45,114 @@ investigation also opened IMP-106.
 
 ## IMP-102
 
-### Completing a purchase grants +3 freezes every time — owner decision first
+### The +3 streak freezes are a PER-PERIOD perk — grant once per paid period, never on a re-recognition
 
-**Lane: OTA.** ⚠️ **DO NOT BUILD THIS YET.** It needs one owner answer, recorded in `PROGRESS.md`, before a
-chat may touch it.
+**Lane: OTA.** ✅ **UNBLOCKED — owner ruled 2026-09-09: per-period perk, not a joining gift.** The
+design below follows from that ruling; do not re-open it.
 
-**The finding.** `subscribe()` in [`RitualsApp.js:290`](../src/RitualsApp.js#L290) ends with
-`setFreezes((f) => f + 3)`. It runs on **every** completion, not on becoming a member: `success`, `owned`
-and `restored` all carry `dismissTo: 'complete'` → `onComplete` → `subscribe()`. So restoring purchases, or
-an already-owning buyer reaching the `owned` card, grants **another 3 streak freezes** each time.
+**The finding.** `subscribe()` at [`RitualsApp.js:290-298`](../src/RitualsApp.js#L290) ends with
+`setFreezes((f) => f + 3)`, and it runs on **every** completion rather than on entering a new paid period.
+`success`, `owned` and `restored` all carry `dismissTo: 'complete'` → `onComplete` → `subscribe()`, so
+restoring purchases or reaching the `owned` card grants another 3 freezes each time. `RitualsApp.js:1016`
+("Change plan" in Manage Subscription) reopens the paywall for an existing member, so the loop is
+reachable by hand — and IMP-100 makes the `owned` half work.
 
-**Why it is not obviously live today.** `owned` is unreachable until IMP-100 lands, and after a `restored`
-the paywall closes. But `RitualsApp.js:1016` ("Change plan" in Manage Subscription) reopens the paywall for
-an existing member, so the loop is reachable — **and IMP-100 is about to make the `owned` half work.**
-Fixing 100 without deciding this turns a latent leak into a live one.
+**What "per period" has to mean in an app with no server.** The grant must fire once for each paid period
+and never for a re-recognition of a period already granted. The device clock cannot be trusted and the
+local `plus` flag is a cache, so the only durable, store-authoritative marker of *which* period this is
+is the entitlement's own **`renewISO`** (RevenueCat's `expirationDate`, carried through
+[`toEntitlement`](../src/billing/revenueCatService.js#L29)). It changes on every renewal and on nothing
+else. Store the period already paid for; grant only when the live entitlement names a different one.
 
-**The owner question, and it is genuinely a design call, not a bug report.** Are the 3 freezes a
-**joining gift** (grant once, ever) or a **subscription perk** (grant per new paid period)? If joining:
-gate on the `plus` flag being false at the moment of grant. If per-period: it still must not fire on
-`restored`/`owned`, which are re-recognitions of an existing subscription, not new ones.
+That single rule covers every case without special-casing any of them:
 
-**Do not guess.** Log the answer in `PROGRESS.md` → Open items, then this spec gets its Steps written.
+| Situation | `renewISO` | Grant? |
+| --- | --- | --- |
+| First purchase | `X` vs stored `null` | ✅ grant, store `X` |
+| `restored` / `owned` in the same period | `X` vs stored `X` | ❌ correctly silent |
+| "Change plan" reopening the paywall | `X` vs stored `X` | ❌ correctly silent |
+| Relaunch, launch check, AppState refresh | `X` vs stored `X` | ❌ correctly silent |
+| Renewal | `Y` vs stored `X` | ✅ grant, store `Y` |
+| Cancel, then resubscribe later | `Z` vs stored `X` | ✅ a genuinely new paid period |
+
+**Where the grant must live — NOT in `subscribe()`.** A renewal is learned in the background, never
+through the paywall. The app learns a live entitlement in **five** places
+([`subscribe`](../src/RitualsApp.js#L290), [`reconcileAfterAbandon`](../src/RitualsApp.js#L330),
+[`doRestore`](../src/RitualsApp.js#L344), the [AppState listener](../src/RitualsApp.js#L364), and
+`useLaunchEntitlementCheck`'s `onEntitlementFound`), and every one of them ends by calling
+`setLiveEntitlement`. So the grant hangs off **`liveEntitlement` changing**, which covers all five with
+one piece of code and cannot be missed by a sixth added later.
+
+**Steps.**
+
+1. **New file `src/billing/freezeGrant.js`** — pure, so the whole rule is pinnable in jest:
+
+   ```js
+   export const PERIOD_FREEZES = 3;
+
+   // Returns null when nothing is owed, or { period, freezes } to grant and record.
+   // `'no-expiry'` is the sentinel for an entitlement with no expiration date: it
+   // grants exactly once, ever, rather than on every read.
+   export function freezeGrantFor(entitlement, lastGrantedPeriod) {
+     if (!entitlement || entitlement.active !== true) return null;
+     const period = entitlement.renewISO || 'no-expiry';
+     if (period === lastGrantedPeriod) return null;
+     return { period, freezes: PERIOD_FREEZES };
+   }
+   ```
+
+   Header comment: the owner's 2026-09-09 ruling, and why `renewISO` is the period key (store-authoritative,
+   immune to the device clock, changes on renewal and nothing else).
+
+2. **`src/persistence/state.js`** — add `'lastFreezeGrantPeriod'` to `PERSISTED_KEYS`. **No schema bump
+   and no migrator**: an absent key reads as `undefined` → `?? null`, which is exactly right for a user
+   who has never been granted. `SCHEMA_VERSION` stays `3`.
+
+3. **`src/RitualsApp.js`** —
+   - Add state beside `freezes`: `const [lastFreezeGrantPeriod, setLastFreezeGrantPeriod] = useState(initialState.lastFreezeGrantPeriod ?? null);`
+   - **Delete `setFreezes((f) => f + 3);` from `subscribe()`.** Leave the rest of `subscribe()` alone,
+     including its `'Welcome to Plus — enjoy.'` toast.
+   - Add the effect:
+
+     ```js
+     React.useEffect(() => {
+       const grant = freezeGrantFor(liveEntitlement, lastFreezeGrantPeriod);
+       if (!grant) return;
+       setFreezes((f) => f + grant.freezes);
+       // Only a RENEWAL is otherwise invisible; a first grant is already covered
+       // by subscribe()'s welcome toast.
+       if (lastFreezeGrantPeriod !== null) showToast('+3 candles — your Plus perk renewed');
+       setLastFreezeGrantPeriod(grant.period);
+     }, [liveEntitlement, lastFreezeGrantPeriod]);
+     ```
+   - Add `lastFreezeGrantPeriod` to **both** persisted-slice literals (the save effect at
+     `RitualsApp.js:521-531` **and** the export slice at `~645`) and to the save effect's dependency
+     array. ⚠️ Missing either one is the whole bug back again — an unsaved marker re-grants on every
+     launch.
+
+4. **Tests**, each proven red first:
+   - `__tests__/billing/freezeGrant.test.js` — the six rows of the table above, plus: `null` entitlement →
+     `null`; `active: false` → `null`; `renewISO: null` twice in a row grants once then never again.
+   - A persistence assertion that `lastFreezeGrantPeriod` survives `serialize` → `deserialize`.
+   - Regression: a `restored` result for the same `renewISO` does **not** change `freezes`.
+
+5. `npm test` green, **≥ 1079 passed / 96 suites**. `npx expo export --platform android` clean.
+
+6. Commit exactly:
+   `fix(plus): 3 streak candles per paid period, not per completion (IMP-102)`
+
+7. Update `PROGRESS.md` and move this spec into `docs/build-log.md`.
+
+**One accepted side effect — state it in the session note, do not try to prevent it.** An existing member
+upgrading to this build has no `lastFreezeGrantPeriod`, so the first entitlement read after the update
+grants +3 once. That is correct under the owner's ruling — they are in a paid period the app never
+recorded — and the population is the internal testers. **Do not add a back-fill or a "seed from the
+current period without granting" path; it would cheat a real subscriber out of a period they paid for.**
+
+**Acceptance.** No new walk row. WALK-19 gains one line at step 4f/5: after a Restore or a "Change plan"
+that does not start a new period, **the candle count must be unchanged.** The renewal half is not
+walkable by hand — an annual test subscription renews every 30 minutes, so it is observable on a long
+sitting but is not being made a gate.
 
 ---
 
@@ -274,7 +361,7 @@ from Play, tapped Restore. Result: **"Nothing to restore."**
 | **A4** Play credentials | Valid | ✅ Clean |
 | **A5** Play Console order | Not findable | ⬜ **Inconclusive by design, not a finding.** Google Play **license-tester purchases are test purchases and never appear in Play Console Order Management.** Do not read this as evidence of anything. The place a test subscription *is* visible is on the phone: Play Store → Payments & subscriptions → Subscriptions |
 
-### The new leading candidate: the test subscription expired mid-walk
+### The new leading candidate: the test subscription expired mid-walk — **weakened by C1**
 
 **A2 is the whole story, and it fits a documented Google behaviour.** Google Play compresses test
 subscriptions for license testers: **a monthly subscription renews every 5 minutes and a yearly one every
@@ -284,8 +371,13 @@ it is genuinely, correctly gone.
 
 WALK-19's re-run ran steps 4e, 4f, 5, 6 and a full step-7 perks tour between the purchase (4d) and the
 reinstall (9) — and step 9 itself includes an uninstall, a Play re-download and install, a first launch,
-a second launch for the OTA to apply, and only then the Restore tap. **That is very plausibly longer than
-the subscription was alive.**
+a second launch for the OTA to apply, and only then the Restore tap.
+
+⚠️ **C1 is answered and it cuts against this theory. The owner bought ANNUAL (2026-09-09).** That is the
+long-lived test subscription — roughly **three hours**, not thirty minutes. The 4d→9 gap has to have
+exceeded three hours for expiry to explain step 9, and a perks tour plus a reinstall is more plausibly
+one to two. **Expiry is no longer the comfortable answer; it is one of two live possibilities, and the
+other one is a real bug.** Do not close this row on the expiry story without C3.
 
 If so: RevenueCat holding **no active customer** is not a missing record, it is an **expired** one, and
 `restorePurchases()` resolving with nothing active was **correct**. "Nothing to restore." would be the
@@ -295,17 +387,19 @@ truth, and there is no defect in this app.
 
 ### What settles it — four checks, still no code
 
-- **C1 · Which plan was bought at step 4d, monthly or annual?** ⚠️ **The walk did not record it.** This
-  one fact sets the subscription's lifetime at ~30 minutes or ~3 hours and does most of the work.
-- **C2 · Wall-clock gap between step 4d and step 9.** Owner's recollection is enough to within ten
-  minutes. Compare against C1.
-- **C3 · RevenueCat Customers, with the SANDBOX filter ON.** Play license-tester purchases are sandbox
-  transactions, and the default Customers view may exclude them — which would also explain "no active
-  customer" on its own. With sandbox included, sort by last seen, open the 2026-09-08 customer and read
-  **the entitlement's expiration date** and the event timeline for an expiration / cancellation event. An
-  expiry stamped before the Restore tap confirms this candidate outright.
-- **C4 · On the phone: Play Store → Payments & subscriptions → Subscriptions.** Is Daily Rituals Plus
-  there, and in what state? This is where a test subscription lives; Play Console is not.
+- **C1 · Which plan was bought at step 4d?** ✅ **ANSWERED 2026-09-09: annual.** Lifetime ≈ 3 hours, not
+  30 minutes. **This weakens the expiry theory rather than confirming it** — see above.
+- **C2 · Wall-clock gap between step 4d and step 9.** Owner's recollection to within ten minutes is
+  enough. Under three hours ⇒ expiry does **not** explain step 9 and the defect is real.
+- **C3 · 🚦 THE DECIDING CHECK, and it is still available.** RevenueCat → Customers, **with the SANDBOX
+  filter ON** — Play license-tester purchases are sandbox transactions and the default view may exclude
+  them, which would explain "no active customer" all by itself. Open the 2026-09-08 customer and read
+  **the entitlement's `expiration date`** and the event timeline. ⚠️ **A lapsed subscription does not
+  delete the customer record** — RevenueCat keeps the history, so the fact that the subscription is now
+  long dead costs nothing here. Compare that expiry stamp against when Restore was tapped: **before ⇒
+  expiry, no bug. After ⇒ a real defect, and Round 3 begins.**
+- **C4 · On the phone: Play Store → Payments & subscriptions → Subscriptions.** ⬜ **Now moot** — the test
+  subscription is ~12 hours dead as of 2026-09-09, so this can no longer distinguish anything. Skip it.
 
 **Outcomes and what each means.**
 
@@ -318,9 +412,10 @@ truth, and there is no defect in this app.
   initialised on the reinstalled app. Different bug entirely — look at `Purchases.configure` in
   [`App.js:50-55`](../App.js#L50) running before the RC key resolves.
 
-**Check B, still owed and still cheap.** Tap Restore once more on the reinstalled phone. Under the expiry
-theory it will still say "Nothing to restore" — correctly — so B alone cannot distinguish the two; run it
-for the timing signal only, after C1–C4.
+**Check B is now dead too.** Tapping Restore on the phone today cannot distinguish anything: the
+subscription has genuinely lapsed, so "Nothing to restore" is the correct answer regardless of which
+theory is true. **Do not run it and do not read anything into it.** C3 is the only check left that
+carries information.
 
 ### 🚦 The walk protocol is defective regardless of the outcome
 

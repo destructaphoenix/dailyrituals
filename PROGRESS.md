@@ -36,7 +36,7 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 >
 > | If this chat is… | Take |
 > | --- | --- |
-> | a **build task** | 🟢 **Take [IMP-104](docs/specs-open.md#imp-104) first — it is fully scoped and it silently zeroes the ember balance.** Then [IMP-106](docs/specs-open.md#imp-106). 🟢 **[IMP-103](docs/specs-open.md#imp-103) is NOT a code task** — the phone never had IMP-100/101; push `main` (4 ahead) and OTA them. 🚦 **[IMP-105](docs/specs-open.md#imp-105) is CRITICAL and blocks release, but is BLOCKED on two owner checks — do not open an editor on it.** ⚠️ **IMP-102 stays BLOCKED on an owner answer** — see Open items. |
+> | a **build task** | 🟢 **Three rows are ready to build, in this order: [IMP-104](docs/specs-open.md#imp-104)** (it silently zeroes the ember balance — take it first)**, [IMP-102](docs/specs-open.md#imp-102)** (unblocked 2026-09-09, owner ruled per-period)**, [IMP-106](docs/specs-open.md#imp-106)**. All three are fully specced; none needs a decision. 🟢 **[IMP-103](docs/specs-open.md#imp-103) is NOT a code task** — the phone never had IMP-100/101; it ships with the same OTA. 🚡 **[IMP-105](docs/specs-open.md#imp-105) is waiting on ONE owner check (C3) — do not open an editor on it.** |
 > | a **runtime walk** | 🚦 **[`docs/walk-open.md`](docs/walk-open.md), and its index says what is left.** 🔴 **WALK-19 re-ran 2026-09-08: steps 3, 4a, 4b, 4c, 4d, 4f, 5, 6 all PASS.** Two new defects: IMP-105 (critical, blocks promotion) and IMP-104. **Step 10 is blocked on IMP-105 being fixed and re-walked; step 8 (real money) is deliberately held for last.** Read WALK-19's RE-RUN result block before touching it again. Also open: WALK-12, WALK-18. |
 > | a **design request** | See "Claude Design" below. The live request is **Insights**. |
 >
@@ -101,7 +101,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 099 | **The entitlement the store grants is the one the app must read.** `ENTITLEMENT_ID` was `'plus'`; the RevenueCat identifier is `Daily Rituals Plus`, so a **successful** purchase mapped to `null` and `buy()` reported `failed`. | OTA | ✅ **code-complete, archived** in [`docs/build-log.md`](docs/build-log.md) — **1068 green / 96 suites** (was 1063/96), export clean, +5 tests **proven red on the shipped tree first**. ✅ **shipped by OTA 2026-09-08, group `d42b7ec7`, manifest read back** — and ✅ **PROVEN on hardware the same day: Plus is live on the owner's device.** ⚠️ The walk proved the outcome, **not which of the two routes granted it** (named lookup vs sole-entitlement fallback) — **the fallback is not dead code, do not remove it**. ⚠️ **The suite pins the string; only a device can confirm RevenueCat sends it** — WALK-19 owes that, and Restore/relaunch proves it without a second purchase |
 | 100 | **Every purchase error becomes `failed`.** `e.code` is the stringified numeric enum (`"6"`, `"10"`, `"20"`), `mapError.js` matched names, so only `userCancelled` worked. Killed the `owned` rescue path, read `PAYMENT_PENDING` as "you weren't charged", broke Change plan. | OTA | ✅ **code-complete, archived** in `docs/build-log.md` — `3774195`. **1077 passed, 96 suites** (was 1068/96), export clean, +9 tests, 6/7 new assertions proven red first. ⚠️ **Walk owed** — WALK-19 needs an already-owns-it Subscribe tap |
 | 101 | **The `failed` card claims "you weren't charged" and never asks the store.** Asserted on a resolved purchase, a pending charge, and every unrecognised error; `run()` reaches the result phase with no reconcile, and offers "Try again". | OTA | ✅ **code-complete, archived** in `docs/build-log.md` — `f170c0a`. **1079 passed, 96 suites** (was 1077/96), export clean, +2 tests. ⚠️ **No new walk owed** — covered by WALK-19 |
-| 102 | **+3 freezes on every completion, not once.** `subscribe()` grants them for `success`, `owned` **and** `restored`; "Change plan" reopens the paywall for a member, so the loop is reachable — and IMP-100 is about to make the `owned` half work. | OTA | 🔒 **BLOCKED on an owner answer** (joining gift vs per-period perk) — see Open items. Do not build or guess |
+| 102 | **+3 freezes on every completion, not once.** `subscribe()` grants them for `success`, `owned` **and** `restored`; "Change plan" reopens the paywall for a member, so the loop is reachable. | OTA | 🟢 **UNBLOCKED — owner ruled PER-PERIOD 2026-09-09.** Spec written: key the grant on the entitlement's `renewISO`, hang it off `liveEntitlement` (not `subscribe()`), persist `lastFreezeGrantPeriod`. **Ready to build** |
 | 103 | **Not a defect — the phone never had IMP-100 or IMP-101.** Step 4e ran on OTA group `d42b7ec7` (commit `768bc88`, 04:58); IMP-100 landed 12:30 and IMP-101 12:39, **neither pushed, neither carrying a `Release-Lane: ota` trailer**. `git show 768bc88:src/billing/mapError.js` is the pre-IMP-100 name matcher, and the card's literal "That didn't go through." is copy IMP-101 replaced — the wording dates the bundle. | OTA | 🟢 **SHIP + RE-WALK, no code change.** Push `main` (4 ahead), OTA IMP-100/101, re-open WALK-19 step 4e |
 | 104 | **`tier: 'owned'` means free and `Shop.js` never reads it.** `palState`/`skyState` consult only `'plus'`, so a default that isn't currently applied falls to `'buy'` and `PalTag` prints the tier string as an ember price. **Worse: the card is tappable — `embers < 'owned'` is a NaN compare, so the guard passes, `embers` becomes `NaN`, serialises to `null`, and reads back as 0. One tap on a free item wipes the balance.** | OTA | 🟢 **READY TO BUILD.** Cause found in source; the device dump the first write-up asked for is impossible (dev panel is `__DEV__`-stripped) and wouldn't change the fix |
 | 105 | 🚦 **Reinstall + Restore says "Nothing to restore."** Source review ruled out the embedded bundle, `ENTITLEMENT_ID`, and `restore()`/`toEntitlement()` (step 4f is the control — identical code passed minutes earlier). **Owner's dashboard checks 2026-09-08 killed the transfer-setting theory (it is set to "Transfer to new App User ID") and produced a better one: RevenueCat holds NO customer with an active entitlement.** Google compresses license-tester subscriptions — monthly renews every 5 min, yearly every 30 min, auto-cancelled after 6 renewals — so the test sub very plausibly **expired during the walk**, making "Nothing to restore" correct. | TBD | 🟠 **Still gates `internal` → `production` — unproven, not known broken.** Four checks (C1–C4) settle it; C1 (was it monthly or annual?) does most of the work. 🚦 **The walk protocol is defective either way — buy→reinstall→restore must be one tight block** |
@@ -157,11 +157,14 @@ the two are indistinguishable. **Do not remove the fallback** — see WALK-19.
   say. See IMP-103.
 - **🟠 IMP-105 — the dashboard round is DONE (2026-09-08) and it moved the row.** Restore Behavior is
   "Transfer to new App User ID" (the permissive setting), entitlement id and Play credentials are clean,
-  and **RevenueCat holds no customer with an active entitlement**. Leading explanation: the license-tester
-  subscription **expired mid-walk** — Google renews test subs every 5 min (monthly) / 30 min (yearly) and
-  auto-cancels after 6 renewals, so it lives ~30 min or ~3 hours. Four checks left (C1–C4 in the spec);
-  **C1 is simply "was step 4d monthly or annual?" and the walk never recorded it.** ⚠️ Play Console will
-  never show these purchases — test purchases are not orders. **Still no code on this row.**
+  and **RevenueCat holds no customer with an active entitlement**. ⚠️ **C1 answered 2026-09-09: the
+  purchase was ANNUAL**, so the test subscription lived ~3 hours, not ~30 minutes — **that weakens the
+  expiry theory rather than confirming it.** Expiry and a real defect are now equally live. **C3 is the
+  only remaining check that carries information, and it is still available: RevenueCat → Customers with
+  the SANDBOX filter ON; a lapsed subscription does not delete the customer record.** Read the
+  entitlement's expiration stamp against when Restore was tapped — before ⇒ no bug, after ⇒ real defect.
+  ⚠️ Play Console never shows these purchases, and the on-phone check is now moot (the sub is ~12h dead).
+  **Still no code on this row.**
 - **🚦 WALK-19's ordering is defective independent of IMP-105's outcome.** Buy → uninstall →
   reinstall → Restore must run as one tight block immediately after the purchase; a license-tester
   subscription cannot survive the perks tour that currently sits between steps 4d and 9. Record the plan
@@ -172,10 +175,9 @@ the two are indistinguishable. **Do not remove the fallback** — see WALK-19.
   "Parked: embers for money" — three findings and two unanswered questions. **Do not flip
   `EMBER_PACKS_ENABLED` in the meantime:** the buy handler at `RitualsApp.js:985` is a bare counter
   increment, so the flag alone ships a store that shows `$1.99` and gives the goods away (the vc14 shape).
-- **🔒 IMP-102 — are the 3 streak freezes a JOINING GIFT or a PER-PERIOD PERK?** `subscribe()` grants
-  `+3` on every completion, so `restored` and `owned` re-grant them. **Joining** ⇒ gate on `plus` being
-  false at grant time. **Per-period** ⇒ still must not fire on a re-recognition. **A chat may not guess
-  this** — the spec is written and waits on the answer.
+- **✅ IMP-102 — ANSWERED 2026-09-09: PER-PERIOD PERK.** The 3 streak candles are a subscription perk,
+  granted once per paid period, never on a re-recognition. Spec is written in
+  [`docs/specs-open.md`](docs/specs-open.md#imp-102) and the row is ready to build.
 - **Cash embers: settled in principle (dropped 2026-08-03), not finalised.** It determines which Play
   products get created. Full argument in the playbook.
 - **Perk #6, the PDF, is still not built** (IMP-022, deferred). It was **cut** from `PLUS_PERKS` rather
@@ -209,6 +211,34 @@ migrated**, leaving two things:
 _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
+
+_2026-09-09, latest (Opus — **the WALK-19 re-run's three defects investigated and re-scoped; IMP-102
+unblocked by the owner's ruling.**) — on `main`, committed, **not shipped**._
+
+**What finished.** No source changes — this was a scoping chat. **IMP-103 reclassified**: not a defect.
+The walked phone ran OTA `d42b7ec7` (commit `768bc88`), which predates IMP-100 **and** IMP-101; neither
+was pushed and neither carried a `Release-Lane` trailer, so CI never published them. `git show
+768bc88:src/billing/mapError.js` is the old name matcher, and the card's literal "That didn't go through."
+is copy IMP-101 replaced — **the wording dates the bundle.** **IMP-104 given a cause and a full spec** —
+`Shop.js` consults only `tier === 'plus'`, so a `tier: 'owned'` default falls to `'buy'`; and the card is
+tappable, where `embers < 'owned'` is a NaN compare that passes the guard and wipes the balance to 0.
+**IMP-105 narrowed twice** — source review killed three hypotheses, the owner's dashboard round killed a
+fourth (Restore Behavior is the permissive "Transfer to new App User ID"). **IMP-102 unblocked and
+specced** — owner ruled **per-period perk** on 2026-09-09. **IMP-106 opened**: a healthy build cannot say
+which bundle it runs, which is what mis-scoped IMP-103.
+
+**The proof.** Suite unchanged and green at **1079 passed, 96 suites** — no source touched. Every claim
+above was read off the shipped tree (`git show <commit>:<path>`), the installed SDK
+(`react-native-purchases` 10.5.0 in `node_modules`), or verified arithmetic (`embers - 'owned'` → `NaN` →
+`JSON.stringify` → `null` → `?? 0` → `0`). Google's compressed test-subscription behaviour was checked
+against its documentation, not recalled.
+
+**The exact next step.** **Build [IMP-104](docs/specs-open.md#imp-104) first** — it is destroying user
+data today. Then **[IMP-102](docs/specs-open.md#imp-102)**, then **[IMP-106](docs/specs-open.md#imp-106)**.
+All three are fully specced and need no decision. **Then one OTA carries IMP-100, 101, 102, 104 and 106
+together**, and WALK-19 re-runs steps 4e/9/10 under the two new pre-flight rules (record the bundle; run
+buy→reinstall→restore as one tight block). ⚠️ **IMP-105 is waiting on a single owner check — C3, the
+RevenueCat customer record's expiration stamp with the sandbox filter on.** Do not write code for it.
 
 _2026-09-08, latest (Sonnet — **IMP-101 fixed: the `failed` card claimed "you weren't charged" and `run()`
 never asked the store before declaring failure.**) — on `main`, committed, not shipped._
