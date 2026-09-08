@@ -254,10 +254,13 @@ describe('resultCopy — IMP-092', () => {
     expect(body).not.toMatch(/charged|purchase/i);
   });
 
-  test('a failed BUY keeps the purchase copy — it is the one that was charged-adjacent', () => {
+  // IMP-101: a `failed` buy was never actually confirmed with the store, so
+  // the card can no longer assert nothing was charged.
+  test('a failed BUY no longer denies being charged', () => {
     const { title, body } = resultCopy('failed', 'buy');
-    expect(title).toBe("That didn't go through.");
-    expect(body).toMatch(/weren't charged/i);
+    expect(title).toBe("We couldn't confirm that.");
+    expect(body).not.toMatch(/weren't charged/i);
+    expect(body).toMatch(/couldn't see a subscription/i);
   });
 
   test('a failed restore never claims the account has no subscription', () => {

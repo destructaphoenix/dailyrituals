@@ -12,6 +12,7 @@ import { useTheme } from '../theme';
 import { T, PrimaryButton } from '../ui';
 import { Close, Check, Sun, Chevron, Alert, NoSignal, Restore, Shield, Receipt, Ban, Info } from '../icons';
 import { PLUS_PRICES, RENEW_DATE } from '../data';
+import { checkEntitlement } from '../billing/entitlementSync';
 import Row from '../ui/Row';
 
 // Store wording flips with platform so the disclosure is truthful on both.
@@ -101,18 +102,28 @@ const RESULT_META = {
   deferred: { tone: 'good', title: 'Payment still processing.', body: "Google Play hasn't finished confirming your payment. Plus unlocks by itself the moment it clears — there is nothing to buy again.", primary: 'OK', dismissTo: 'paywall' },
 };
 
-// Pure — IMP-092. `failed` is the only card whose copy is purchase-shaped, and
-// restore() can now legitimately return it: an unrecognised error is no longer
-// relabelled "Nothing to restore." A restore never charges anyone, so "you
-// weren't charged" is both irrelevant and quietly alarming on that path — and
-// the card must say what actually happened, which is that we could not check.
-export function resultCopy(kind, mode) {
+// Pure — IMP-092/IMP-101. `failed` is the only card whose copy is
+// purchase-shaped, and both restore() and a buy() that IMP-101 could not
+// reconcile can legitimately return it. A restore never charges anyone, so
+// "you weren't charged" is irrelevant and quietly alarming there — and a
+// buy's failure was never actually confirmed with the store, so the app has
+// no basis to claim no money moved either. Each mode gets what it can
+// honestly say it checked.
+export function resultCopy(kind, mode, platform) {
   const meta = RESULT_META[kind] || RESULT_META.failed;
-  if (kind !== 'failed' || mode !== 'restore') return meta;
+  if (kind !== 'failed') return meta;
+  if (mode === 'restore') {
+    return {
+      ...meta,
+      title: "We couldn't check.",
+      body: 'Something stopped us reaching the store. Nothing has changed — try again in a moment.',
+    };
+  }
+  const w = storeWords(platform);
   return {
     ...meta,
-    title: "We couldn't check.",
-    body: 'Something stopped us reaching the store. Nothing has changed — try again in a moment.',
+    title: "We couldn't confirm that.",
+    body: `We checked with ${w.store} and couldn't see a subscription. If you were charged it will appear shortly — check before buying again.`,
   };
 }
 
@@ -214,7 +225,7 @@ export function PurchaseOverlay({ flow, stuck, platform, onRetry, onDismiss, onC
     );
   }
 
-  const meta = resultCopy(flow.kind, flow.mode);
+  const meta = resultCopy(flow.kind, flow.mode, platform);
   const good = meta.tone === 'good';
   return (
     <View style={scrim}>
@@ -281,6 +292,14 @@ export function usePurchaseFlow({ service, platform, onComplete, onAbandon, grac
       res = await fn();
     } catch (e) {
       res = { kind: 'failed' };
+    }
+    // IMP-101: a `failed` buy has no basis for its "you weren't charged" claim
+    // until the store itself is asked. This runs BEFORE clearTimer() — order
+    // is not negotiable — so IMP-088's escape stays armed for the duration; a
+    // hanging reconcile must not re-create the trap that walk found.
+    if (mode === 'buy' && res.kind === 'failed') {
+      const reconciled = await checkEntitlement(service);
+      if (reconciled.entitlement) res = { kind: 'success', entitlement: reconciled.entitlement };
     }
     clearTimer();
     startedAt.current = 0;

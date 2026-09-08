@@ -1,12 +1,12 @@
 // __tests__/billing/purchaseFlow.test.js
 import { renderHook, act, waitFor } from '@testing-library/react-native';
-import { usePurchaseFlow } from '../../src/screens/PlusFlow';
+import { usePurchaseFlow, resultCopy } from '../../src/screens/PlusFlow';
 
-function fakeService(buyResult, restoreResult) {
+function fakeService(buyResult, restoreResult, entitlement = null) {
   return {
     buy: jest.fn(async () => buyResult),
     restore: jest.fn(async () => restoreResult),
-    getEntitlement: jest.fn(async () => null),
+    getEntitlement: jest.fn(async () => entitlement),
     getPrices: jest.fn(async () => ({})),
   };
 }
@@ -57,6 +57,29 @@ describe('usePurchaseFlow', () => {
       expect(svc.buy).not.toHaveBeenCalled();
     },
   );
+
+  // IMP-101 — a `failed` buy had no basis for "you weren't charged": run()
+  // now reconciles with the store before declaring failure.
+  test('a failed buy the store confirms ends in success, not the failed card', async () => {
+    const svc = fakeService({ kind: 'failed' }, { kind: 'restore-empty' }, { plan: 'annual' });
+    const { result } = renderHook(() => usePurchaseFlow({ service: svc, onComplete: jest.fn() }));
+
+    act(() => { result.current.buy('annual'); });
+    await waitFor(() => expect(result.current.flow).toMatchObject({ phase: 'result', kind: 'success' }));
+    expect(svc.getEntitlement).toHaveBeenCalled();
+  });
+
+  test('a failed buy the store also cannot confirm renders the new copy, not a charge denial', async () => {
+    const svc = fakeService({ kind: 'failed' }, { kind: 'restore-empty' }, null);
+    const { result } = renderHook(() => usePurchaseFlow({ service: svc, onComplete: jest.fn() }));
+
+    act(() => { result.current.buy('annual'); });
+    await waitFor(() => expect(result.current.flow).toMatchObject({ phase: 'result', kind: 'failed' }));
+
+    const { body } = resultCopy(result.current.flow.kind, result.current.flow.mode);
+    expect(body).not.toMatch(/weren't charged/i);
+    expect(body).toMatch(/couldn't see a subscription/i);
+  });
 
   test('retrying a failed buy still buys, with the same plan', async () => {
     const svc = fakeService({ kind: 'failed' }, { kind: 'restore-empty' });
