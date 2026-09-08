@@ -24,7 +24,12 @@ jobs:
       - run: npm ci
       - uses: expo/expo-github-action@v8
         with:
-          eas-version: latest
+          # PINNED, deliberately (owner, 2026-09-08). `latest` moved to eas-cli
+          # 23.2.0 whose @oclif/plugin-autocomplete wants node >=22 and broke the
+          # release on a Node 20 runner — a shipping failure caused by a machine
+          # we do not control moving under us. Bump this on purpose, never by
+          # surprise; the Node pin above must satisfy whatever version is named.
+          eas-version: 23.2.0
           token: ${{ secrets.EXPO_TOKEN }}
       - name: Roll back the production branch
         run: eas update:rollback --branch production --non-interactive

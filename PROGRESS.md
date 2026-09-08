@@ -36,7 +36,7 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 >
 > | If this chat is… | Take |
 > | --- | --- |
-> | a **build task** | **The backlog is empty** — `docs/specs-open.md` has no open `IMP-xxx` row. Last in: **IMP-099** (the entitlement identifier, 2026-09-08). Do not open a new row from reasoning alone; wait for an owner-filed issue or a failed walk. **One row is written but unscoped:** the `failed` card's *"you weren't charged"* claim + the missing reconcile on a resolved purchase — see the latest session note; it needs an owner call, not a chat's initiative. |
+> | a **build task** | 🔴 **THREE OPEN ROWS — take [IMP-100](docs/specs-open.md#imp-100) FIRST.** The owner ordered a hard audit of the Plus purchase surface after IMP-099 (2026-09-08) and it found a defect **larger** than IMP-099: every RevenueCat error becomes `failed`, because `e.code` is a **number** and `mapError.js` matches **names**. 101 and 102 are partly hidden behind it. ⚠️ **IMP-102 is BLOCKED on an owner answer** — see Open items. |
 > | a **runtime walk** | 🚦 **The only queue with anything in it — [`docs/walk-open.md`](docs/walk-open.md), and its index says what is left.** ✅ **The OTA every open row was waiting for is LIVE — group `d42b7ec7`, 2026-09-08, all of IMP-094…099. Applies on the SECOND launch; never clear app data to "reset".** ✅ **IMP-099 is PROVEN — Plus works on the owner's device.** Left: WALK-07/WALK-08 at max font, **WALK-19's steps 4b, 4d–4f, 5–10 + the aeroplane-mode Restore**, WALK-12, WALK-18. **Do not re-derive WALK-19 — read its RESULT block; steps 3 and 4a are proven.** |
 > | a **design request** | See "Claude Design" below. The live request is **Insights**. |
 >
@@ -48,20 +48,9 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 > production`, and clearing app data deleting the update — are in [`docs/playbook.md`](docs/playbook.md) →
 > "Two OTA traps"; CI owns the first one now. Narrative → [`docs/build-log.md`](docs/build-log.md).**
 >
-> 1. ⚠️ **jest cannot see any of this.** It renders with `__DEV__` true and cannot read a published manifest,
->    so every guard here is a **source assertion** — each was proven to fail on the real defect before it
->    shipped. A green suite is not evidence about billing.
-> 2. ⚠️ **IMP-088's escape is NOT a timeout-to-failure and must never be "simplified" into one.** A real
->    purchase takes minutes on INR/3DS flows; declaring failure mid-charge is worse than hanging.
-> 3. ⚠️ **A hung purchase cannot be reproduced cheaply.** Restore was the obvious no-money diagnostic and it
->    does not work: it answers instantly from RevenueCat's local cache (that is IMP-092). Testing the pending
->    overlay requires a real purchase attempt.
->
-> ✅ **Settled, do not re-raise.** The free trial is **burned on the owner's Google account** (subbed and
-> unsubbed before; Play grants one per account ever) — Play saying "charging today" is Play being *correct*.
-> RevenueCat has **no sandbox for Google Play**, and RC's own Play service-account credential is configured.
-> ⚠️ **Real charges are possible on `internal`** — confirm every account on that tester list is a Play
-> **license tester**.
+> **The five standing warnings + what is settled** (jest is blind here; IMP-088's escape is not a
+> timeout; a hung purchase cannot be reproduced cheaply; the burned trial; real charges on `internal`) →
+> [`docs/playbook.md`](docs/playbook.md) → "Billing — standing warnings". **Read before touching this surface.**
 
 **✅ The branch is merged** — `feat/design-push` fast-forwarded onto `main` 2026-09-08 (`cb3d60e`), ending
 the no-push rule. ⚠️ **Ship through CI now**: `release.yml` runs on `main`, so the test gate, the native-file
@@ -110,6 +99,9 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 076–093 | **The design-push + billing run.** New Architecture (076), motion vocabulary (077), design system (078), Paywall footer (080), backup warning (081), renewal date (082), cancel deep-link (083), the release build's simulation (084), the SDK probe (085), the OTA lane's empty key (086), the paid surface's reason (087), the purchase-overlay trap (088), restore-must-not-buy (089), the trial it cannot see (090), the pending escape (091), "nothing to restore" (092), the vanishing paywall (093). | mixed | ✅ **all code-complete, all shipped by OTA where the lane allowed, all archived** — specs in [`docs/build-log.md`](docs/build-log.md). ✅ **on `main` since 2026-09-08.** ⚠️ **Code-complete is not proven** — 089/090 are proven on hardware, 092 is half proven, **091 has never been observed**; see WALK-19 |
 | 094–098 | **The 2026-09-07 walk-sitting fixes + the Recap's bar alignment.** The Annual Recap's phantom "quietest" month (094), DeeperInsights at max font (095), the Paywall badge over the selected tick (096), the dev harness's two lying labels (097), the Top moods bars starting at three different x (098). | OTA | ✅ **all code-complete, archived** in [`docs/build-log.md`](docs/build-log.md) — `085876a`, `3030bca`, `1e12cf7`, `7bced9f`, `edcea0b`. ✅ **shipped by OTA 2026-09-08, group `d42b7ec7`, manifest read back** (`rcAndroidKey` live). ⚠️ **095 and 096 are accepted on a screen, not by the suite** — WALK-08 at max font and WALK-07 at `font_scale` 2.0 in both nav modes. 094 and 098 are logic/style and owe nothing runtime |
 | 099 | **The entitlement the store grants is the one the app must read.** `ENTITLEMENT_ID` was `'plus'`; the RevenueCat identifier is `Daily Rituals Plus`, so a **successful** purchase mapped to `null` and `buy()` reported `failed`. | OTA | ✅ **code-complete, archived** in [`docs/build-log.md`](docs/build-log.md) — **1068 green / 96 suites** (was 1063/96), export clean, +5 tests **proven red on the shipped tree first**. ✅ **shipped by OTA 2026-09-08, group `d42b7ec7`, manifest read back** — and ✅ **PROVEN on hardware the same day: Plus is live on the owner's device.** ⚠️ The walk proved the outcome, **not which of the two routes granted it** (named lookup vs sole-entitlement fallback) — **the fallback is not dead code, do not remove it**. ⚠️ **The suite pins the string; only a device can confirm RevenueCat sends it** — WALK-19 owes that, and Restore/relaunch proves it without a second purchase |
+| 100 | 🔴 **Every purchase error becomes `failed`.** `e.code` is the stringified numeric enum (`"6"`, `"10"`, `"20"`), `mapError.js` matches names, so only `userCancelled` works. Kills the `owned` rescue path, reads `PAYMENT_PENDING` as "you weren't charged", breaks Change plan. | OTA | ⬜ **OPEN — spec in [`docs/specs-open.md`](docs/specs-open.md#imp-100). Build this first.** Evidence is in `node_modules`, not inference: the Android bridge rejects with `getCode() + ""`. ⚠️ `simService` never calls the mapper, so the dev panel has always made `owned`/`network` look healthy |
+| 101 | **The `failed` card claims "you weren't charged" and never asks the store.** Asserted on a resolved purchase, a pending charge, and every unrecognised error; `run()` reaches the result phase with no reconcile, and offers "Try again". | OTA | ⬜ **OPEN** — spec in [`docs/specs-open.md`](docs/specs-open.md#imp-101). IMP-099 removed the trigger; this removes the lie. Reconcile must happen **before** `clearTimer()` so IMP-088's escape stays armed |
+| 102 | **+3 freezes on every completion, not once.** `subscribe()` grants them for `success`, `owned` **and** `restored`; "Change plan" reopens the paywall for a member, so the loop is reachable — and IMP-100 is about to make the `owned` half work. | OTA | 🔒 **BLOCKED on an owner answer** (joining gift vs per-period perk) — see Open items. Do not build or guess |
 | 022 | Save as PDF + About sheet (the two dead You-tab buttons) | Build | ⏸ **deferred (owner)** — spec in build-log → "Deferred specs"; **perk #6 gate** |
 | 044 | R8 on release builds (dev client was shipping to the public) | Build | 🟢 **code-complete, UNWALKED.** R8 must be walked on the build you actually ship, so it rides **vc15 or later**; walk = WALK-12, on hardware, last in the sitting |
 | 057 | Historical `dayKey` migration | Build | 🔒 **reserved, not missing** — cannot be written until real device numbers come back from the dev panel's "Data health" reporter. See below |
@@ -153,6 +145,10 @@ the two are indistinguishable. **Do not remove the fallback** — see WALK-19.
 - **🚦 The `internal` → `production` promotion.** **vc15 is the live `internal` build and the only
   promotion candidate.** Remaining: the device walks, then promote by hand (full review, ~7d).
   🚦 **WALK-19 gates it.** ⚠️ vc12 will not be promoted (owner, 2026-09-05) and vc14 must never be.
+- **🔒 IMP-102 — are the 3 streak freezes a JOINING GIFT or a PER-PERIOD PERK?** `subscribe()` grants
+  `+3` on every completion, so `restored` and `owned` re-grant them. **Joining** ⇒ gate on `plus` being
+  false at grant time. **Per-period** ⇒ still must not fire on a re-recognition. **A chat may not guess
+  this** — the spec is written and waits on the answer.
 - **Cash embers: settled in principle (dropped 2026-08-03), not finalised.** It determines which Play
   products get created. Full argument in the playbook.
 - **Perk #6, the PDF, is still not built** (IMP-022, deferred). It was **cut** from `PLUS_PERKS` rather
@@ -221,30 +217,30 @@ pins are now 24 (`c2f35a1`). **`eas-version: latest` will do this again** — pi
 OTA applied, and vc15 takes updates. **WALK-19's IMP-099 item is closed.** ⚠️ Recorded in `walk-open.md`:
 this proved the **outcome**, not the **string** — the fallback may be what is carrying it.
 
-**The exact next step.** The billing surface is finally working end to end, so the queue is walks and one
-owner decision: **WALK-07/WALK-08** re-run at max font on this bundle, **WALK-19's remaining steps**
-(4b, 4d–4f, 5–10 + the aeroplane-mode Restore), **WALK-12** (R8, on the build you ship), **WALK-18**
-(mid-range device). Then 🚦 **the `internal` → `production` promotion**, which WALK-19 gates.
+
+**Then the owner ordered the purchase surface investigated hard — and it found something bigger than
+IMP-099.** Three rows are now open in [`docs/specs-open.md`](docs/specs-open.md); **IMP-100 first.**
+🔴 **IMP-100: every RevenueCat error becomes `failed`.** `mapError.js` matches names (`'NETWORK_ERROR'`)
+but the Android bridge rejects with the **stringified numeric enum** — `promise.reject(getCode() + "")`,
+`RNPurchasesModule.java:708`; `NETWORK_ERROR = "10"`, `PRODUCT_ALREADY_PURCHASED_ERROR = "6"`,
+`PAYMENT_PENDING_ERROR = "20"`. **Only `userCancelled` works.** So the `owned` rescue path — the code that
+hands an existing subscriber their entitlement back — has never executed and cannot; a **pending** Play
+payment (UPI/cash, normal on INR) is reported as "you weren't charged" with a **Try again** button; and
+Change plan is broken. **The fixtures use names the SDK never emits — IMP-099's failure mode verbatim, and
+the third time (085, 099, 100) a billing guard was tested against an imagined shape.**
+**IMP-101** takes the "you weren't charged" claim + the missing reconcile. **IMP-102** is 🔒 blocked on an
+owner answer: `subscribe()` grants +3 freezes on **every** completion, `restored` and `owned` included.
+⚠️ **None of this is visible to jest or the dev panel** — `simService` returns `kind` directly and never
+calls `mapPurchaseError`, which is exactly why `owned`/`network` have always looked healthy in simulation.
+**Also done:** `eas-version` pinned to `23.2.0` (owner) after `latest` broke the release on Node 20.
+
+**The exact next step.** 🔴 **A build chat takes [IMP-100](docs/specs-open.md#imp-100)** — test first, and
+six of its seven new assertions must fail before `mapError.js` is touched. **A walk chat** takes WALK-07 or
+WALK-08 (max font, this bundle), or WALK-19's remaining steps. ⚠️ **The owner is running the walks in their
+own chats.** 🚦 The `internal` → `production` promotion still waits on WALK-19.
 
 **Left open on purpose, and it is a real defect.** The `failed` card still claims *"you weren't charged"* on
 a path that cannot know it, and `run()` still reaches the result phase with **no store reconcile** —
 IMP-093's reconcile fires only for a flow abandoned while *pending*. Its primary button is "Try again",
 which walks an already-subscribed buyer back into Play. IMP-099 removes the **trigger**; the lie is still
 there behind it. **Needs its own row — owner call.**
-
-_2026-09-08 (Sonnet — **IMP-098 built the day after it was scoped: the Annual Recap's Top moods bars now
-share one label width, reusing IMP-067's `moodLabelWidth`.**) — branch-only, NOT pushed._
-
-**What finished.** [`AnnualRecap.js`](src/screens/AnnualRecap.js) now reuses `moodLabelWidth` from
-`../insights/moodMixLayout`: the Top-moods label column is `width: labelW` (computed above the early
-return) instead of `minWidth: 84, flexShrink: 1` — no new constant, no shared component. New
-`__tests__/screens/AnnualRecap.test.js` (+4), verified red against the pre-fix tree first (3/4 failed).
-**1063 passed, 96 suites** (was 1059/95), export clean. Committed `edcea0b`. Spec archived to
-[`docs/build-log.md`](docs/build-log.md); [`docs/specs-open.md`](docs/specs-open.md) is empty again.
-⚠️ **Gotcha for next time:** `T` wraps its own `Text` (host `Text` → composite `T`), so the label column's
-`View` is **three** `.parent` hops above `view.getByText(mood)`, not one as the spec's example implied.
-
-**The exact next step.** No build queue left. **DeeperInsights.js:139** carries the identical `minWidth`
-defect ("Moods that travel together") and remains deliberately unscoped — an owner call, not a bug fix.
-Otherwise unchanged: IMP-094…098 are all committed and **unshipped** (OTA lane, no `eas update` published),
-and **WALK-07/WALK-08 still need a build that carries 095/096** before they can be re-run.

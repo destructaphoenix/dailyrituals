@@ -3767,6 +3767,24 @@ owner decision on whether it is worth a round now that the trigger is gone.
 
 ## Session notes (archived from PROGRESS.md)
 
+_2026-09-08 (Sonnet — **IMP-098 built the day after it was scoped: the Annual Recap's Top moods bars now
+share one label width, reusing IMP-067's `moodLabelWidth`.**) — branch-only, NOT pushed._
+
+**What finished.** [`AnnualRecap.js`](src/screens/AnnualRecap.js) now reuses `moodLabelWidth` from
+`../insights/moodMixLayout`: the Top-moods label column is `width: labelW` (computed above the early
+return) instead of `minWidth: 84, flexShrink: 1` — no new constant, no shared component. New
+`__tests__/screens/AnnualRecap.test.js` (+4), verified red against the pre-fix tree first (3/4 failed).
+**1063 passed, 96 suites** (was 1059/95), export clean. Committed `edcea0b`. Spec archived to
+[`docs/build-log.md`](docs/build-log.md); [`docs/specs-open.md`](docs/specs-open.md) is empty again.
+⚠️ **Gotcha for next time:** `T` wraps its own `Text` (host `Text` → composite `T`), so the label column's
+`View` is **three** `.parent` hops above `view.getByText(mood)`, not one as the spec's example implied.
+
+**The exact next step.** No build queue left. **DeeperInsights.js:139** carries the identical `minWidth`
+defect ("Moods that travel together") and remains deliberately unscoped — an owner call, not a bug fix.
+Otherwise unchanged: IMP-094…098 are all committed and **unshipped** (OTA lane, no `eas update` published),
+and **WALK-07/WALK-08 still need a build that carries 095/096** before they can be re-run.
+
+
 _2026-09-07, later night (Opus — **an owner screenshot of the Annual Recap reopened the queue: IMP-098
 scoped, and it is IMP-067's defect on a screen IMP-067 never touched.**) — branch-only, NOT pushed._
 

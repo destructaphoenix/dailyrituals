@@ -253,6 +253,31 @@ Shipping is automated (GitHub Actions + one-tap owner approval). **Agents NEVER 
 
 Guardrails: a commit tagged `ota` that touched native files is auto-rejected by CI's backstop (re-tag as `build`). OTA reaches testers on **v5+** only. Rollback: owner runs the **Rollback OTA** workflow (Actions tab). Owner one-time setup was a three-step job, done long ago and recorded here now that the pipeline plan is deleted: an Expo access token, the repo secrets `EXPO_TOKEN` + `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`, and a GitHub Environment named `production` with the owner as Required Reviewer.
 
+### Billing — standing warnings
+
+_Moved from `PROGRESS.md` 2026-09-08 under its size rule. Permanent, not a live cursor. **Read these before
+touching the purchase surface.**_
+
+1. ⚠️ **jest cannot see any of this.** It renders with `__DEV__` true and cannot read a published manifest,
+   so every guard here is a **source assertion** — each was proven to fail on the real defect before it
+   shipped. A green suite is not evidence about billing.
+2. ⚠️ **IMP-088's escape is NOT a timeout-to-failure and must never be "simplified" into one.** A real
+   purchase takes minutes on INR/3DS flows; declaring failure mid-charge is worse than hanging.
+3. ⚠️ **A hung purchase cannot be reproduced cheaply.** Restore was the obvious no-money diagnostic and it
+   does not work: it answers instantly from RevenueCat's local cache (that is IMP-092). Testing the pending
+   overlay requires a real purchase attempt.
+
+✅ **Settled, do not re-raise.** The free trial is **burned on the owner's Google account** (subbed and
+unsubbed before; Play grants one per account ever) — Play saying "charging today" is Play being *correct*.
+RevenueCat has **no sandbox for Google Play**, and RC's own Play service-account credential is configured.
+⚠️ **Real charges are possible on `internal`** — confirm every account on that tester list is a Play
+**license tester**.
+
+6. ⚠️ **The SDK's shape is not what the code assumes, three times running.** IMP-085 (`require.resolve` is
+   not a Metro API), IMP-099 (the entitlement identifier), IMP-100 (`e.code` is a number, not a name) were
+   all the same mistake: a fixture invented to match the code, agreeing with it, and neither agreeing with
+   `react-native-purchases`. **Read `node_modules` before writing a billing test.**
+
 ### ⚠️ Two OTA traps that cost four rounds on 2026-09-06
 
 _Moved here from `PROGRESS.md` 2026-09-07 — they are permanent release mechanics, not a live cursor item.
