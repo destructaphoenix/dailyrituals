@@ -3781,6 +3781,38 @@ why the dev panel's `owned`/`network` outcomes have always looked healthy in sim
 cannot know that, and `run()` still reaches the result phase with no store reconcile. IMP-100 removes most of
 the wrong *triggers* into `failed`; IMP-101 removes the lie itself.
 
+## IMP-101 — the `failed` card claimed "you weren't charged" and never asked the store (2026-09-08)
+
+**Raised during IMP-099, deferred to its own row on purpose:** IMP-099 removed the *trigger* into `failed`;
+this removes the *lie* the card told once there.
+
+**The defect.** `RESULT_META.failed` asserted "you weren't charged" on a resolved purchase whose entitlement
+IMP-099 failed to read, a `PAYMENT_PENDING` charge in flight (IMP-100), a `STORE_PROBLEM_ERROR` after Play
+may have taken payment, and every unrecognised error — the app cannot know any of that. `run()` also set the
+result phase directly with no reconcile: IMP-093's store check only fires on an *abandoned* pending flow, so
+a purchase that resolves or errors never asks the store again, and its own primary button, "Try again", walks
+a possibly-subscribed buyer straight back into Play.
+
+**What was built.**
+1. `usePurchaseFlow`'s `run()` in [`PlusFlow.js`](../src/screens/PlusFlow.js) now reconciles: when
+   `mode === 'buy'` and `res.kind === 'failed'`, it `await checkEntitlement(service)` **before**
+   `clearTimer()` — order is load-bearing, since doing it first keeps IMP-088's escape armed for the
+   reconcile's duration. A returned entitlement promotes the result to `{ kind: 'success', entitlement }`.
+2. `resultCopy()` gained a `platform` param and a buy-mode branch alongside IMP-092's restore branch: a
+   `failed` buy now reads "We couldn't confirm that. We checked with {store} and couldn't see a
+   subscription. If you were charged it will appear shortly — check before buying again." The restore
+   variant is untouched. `PurchaseOverlay` now passes `platform` through to `resultCopy`.
+
+**The proof.** Two new tests in `purchaseFlow.test.js`: a `failed` buy the store confirms ends in `success`
+and never renders the failed card (asserts `getEntitlement` was called); one the store also cannot confirm
+renders the new copy and never denies a charge. `pendingEscape.test.js`'s IMP-092 `resultCopy` block updated
+— its old "keeps the purchase copy… charged-adjacent" assertion pinned exactly the lie this row removes, so
+it now pins the new title and the absence of "weren't charged" instead. **1079 passed, 96 suites** (was
+1077/96), `expo export --platform android` clean.
+
+**Not walked.** No new WALK row — reconcile-on-failure and the copy change are exercised by the existing
+purchase-flow walks (WALK-19); nothing here needs a fresh device step.
+
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
 
 > Moved out of PROGRESS.md on 2026-07-31 to keep the live cursor lean once a second spec (IMP-032) opened. These are **not** finished work. If the owner revives one, lift the block back into PROGRESS.md as the ACTIVE TRACK.
@@ -3823,6 +3855,36 @@ the wrong *triggers* into `failed`; IMP-101 removes the lie itself.
 ---
 
 ## Session notes (archived from PROGRESS.md)
+
+_2026-09-08, later (Opus — **the first completed purchase in the app's life was reported as a failure. The
+entitlement identifier never matched the dashboard, and no test could have seen it.**) — on `main`, merged
+and pushed by the owner._
+
+**What the owner hit.** A Play licence-tester purchase: Play confirmed the subscription, the app said
+**"That didn't go through … you weren't charged."** Both from the same successful transaction.
+
+**What finished.** **IMP-099**, archived to [`docs/build-log.md`](docs/build-log.md). `toEntitlement` read
+`entitlements.active['plus']`; the real RevenueCat identifier is `Daily Rituals Plus`, so a resolved
+purchase mapped to `null` and `buy()` reported `failed`. Fixed with the real constant + a sole-entitlement
+fallback (this app sells one thing; ambiguous only with 2+ active entitlements). +5 tests run red first,
+**1068 passed / 96 suites**, export clean. ⚠️ Proves the mapper, not the dashboard string — WALK-19 owed that.
+
+**✅ SHIPPED.** One `Release-Lane: ota` push carried IMP-094…099 — group `d42b7ec7`, runtime `1.0.9`,
+2026-09-08, manifest read back (`rcAndroidKey` live). First attempt shipped nothing (`eas-version: latest`
+→ eas-cli needing Node ≥22 against a Node-20 workflow); all `setup-node` pins now 24 (`c2f35a1`).
+**✅ Confirmed on the owner's device the same day** — Plus is live. WALK-19's IMP-099 item is closed
+(proved the outcome, not which route granted it).
+
+**Then the owner ordered the purchase surface audited hard, and found something bigger.** IMP-100/101/102
+opened in [`docs/specs-open.md`](docs/specs-open.md). **IMP-100:** `mapError.js` matched error-code
+*names*; the Android bridge sends the **stringified numeric code** (`getCode() + ""`,
+`RNPurchasesModule.java:708`) — only `userCancelled` ever worked, killing the `owned` rescue path and
+misreading `PAYMENT_PENDING` as failure. **IMP-101** takes the "you weren't charged" lie + missing
+reconcile. **IMP-102** 🔒 blocked on owner answer (+3 freezes: joining gift vs per-period perk). None of
+this is visible to jest/dev panel — `simService` never calls `mapPurchaseError`. Also: `eas-version` pinned
+to `23.2.0` (owner).
+
+**The exact next step (at the time).** A build chat takes IMP-100 first — **done that session.**
 
 _2026-09-08 (Sonnet — **IMP-098 built the day after it was scoped: the Annual Recap's Top moods bars now
 share one label width, reusing IMP-067's `moodLabelWidth`.**) — branch-only, NOT pushed._

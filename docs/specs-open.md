@@ -13,7 +13,7 @@
 > re-litigate a "why", and do not improve the scope.** If a step turns out to be impossible or the code
 > contradicts the spec, **STOP** and log it to `PROGRESS.md` → Open items rather than inventing a fix.
 >
-> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **1077 passed, 96 suites** — verified 2026-09-08), `npx expo export --platform android` clean, commit with the **exact** message given, then
+> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **1079 passed, 96 suites** — verified 2026-09-08), `npx expo export --platform android` clean, commit with the **exact** message given, then
 > update `PROGRESS.md` (tick the backlog row, write the session note) and **move the finished spec from
 > this file into `docs/build-log.md`**.
 >
@@ -22,60 +22,16 @@
 
 ---
 
-## The queue — three rows, opened 2026-09-08 by owner instruction
+## The queue — two rows left, opened 2026-09-08 by owner instruction
 
 **The owner asked for the Plus purchase surface to be investigated hard after IMP-099.** It was, by reading
 the shipped SDK rather than our assumptions about it, and **the audit found a defect larger than IMP-099**.
-Take them in order: **IMP-100 first — IMP-101 and IMP-102 are partly hidden behind it.**
 
 | Row | What | Severity |
 | --- | --- | --- |
 | IMP-100 | Every RevenueCat purchase error becomes `failed`. `e.code` is a **number**, our mapper matches **names**. | ✅ **done — archived in `docs/build-log.md`** |
-| [IMP-101](#imp-101) | The `failed` card claims "you weren't charged" and never asks the store. | 🟠 High |
+| IMP-101 | The `failed` card claims "you weren't charged" and never asks the store. | ✅ **done — archived in `docs/build-log.md`** |
 | [IMP-102](#imp-102) | Completing a purchase grants **+3 freezes every time**, not once. | 🟡 Owner decision first |
-
----
-
-## IMP-101
-
-### The failed card claims "you weren't charged", and nothing asks the store
-
-**Lane: OTA.** Raised during IMP-099 and deferred to its own row on purpose: IMP-099 removed the *trigger*,
-this removes the *lie*.
-
-**The defect.** `RESULT_META.failed` in [`PlusFlow.js:98`](../src/screens/PlusFlow.js#L98) reads *"Something
-interrupted the purchase and **you weren't charged**. You can try again."* The app cannot know that. It is
-asserted on: a resolved purchase whose entitlement we failed to read (IMP-099's exact shape), a
-`PAYMENT_PENDING` charge in flight (IMP-100), a `STORE_PROBLEM_ERROR` after Play may have taken payment,
-and every unrecognised error. **This is the same class of defect IMP-092 fixed for restore** — a card making
-a positive claim the code has no basis for — on the one path where money is involved.
-
-**The second half: no reconcile.** `run()` sets the result phase directly
-([`PlusFlow.js:291`](../src/screens/PlusFlow.js#L291)). IMP-093's store reconcile fires **only** when a
-pending flow is *abandoned* (`dismiss()`, `wasPending`). A purchase that **resolves or errors** never asks
-the store again — so the app declares failure without checking, and its primary button is **"Try again"**,
-which walks a possibly-subscribed buyer back into Play.
-
-**Steps.**
-
-1. **Reconcile before asserting failure.** In `usePurchaseFlow`'s `run()`, when `mode === 'buy'` and
-   `res.kind === 'failed'`, `await checkEntitlement(service)` (from
-   [`entitlementSync.js`](../src/billing/entitlementSync.js) — it never throws) **before** `clearTimer()`.
-   ⚠️ **Order matters and is not negotiable:** doing it before `clearTimer()` keeps IMP-088's escape armed
-   for the duration, so a hanging reconcile cannot re-create the trap that walk found. If it returns an
-   entitlement, set `res = { kind: 'success', entitlement }`.
-2. **Fix the copy.** `failed` for `mode === 'buy'` becomes: `title: "We couldn't confirm that."`,
-   `body: "We checked with ${store} and couldn't see a subscription. If you were charged it will appear
-   shortly — check before buying again."` — build the store word from the existing `storeWords(platform)`
-   helper rather than a new literal. Keep `primary: 'Try again'`, but change `secondary` to `'Not now'`
-   (unchanged) — the warning does the work, not the removal of the button.
-   ⚠️ Leave the **restore** variant of `failed` exactly as IMP-092 wrote it (`resultCopy`'s `mode` branch).
-3. Tests in `purchaseFlow.test.js`: a `buy` that returns `failed` while the store DOES hold an entitlement
-   ends in `success` and never renders the failed card; one where the store holds nothing renders the new
-   copy; **assert the word "charged" no longer appears as a denial** in the buy copy.
-4. `npm test` green, export clean.
-
-**Commit:** `fix(billing): stop claiming a purchase took no money (IMP-101)`
 
 ---
 

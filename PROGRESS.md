@@ -36,7 +36,7 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 >
 > | If this chat is… | Take |
 > | --- | --- |
-> | a **build task** | 🟠 **IMP-100 is done — take [IMP-101](docs/specs-open.md#imp-101) next.** The `failed` card still claims "you weren't charged" and never asks the store. ⚠️ **IMP-102 is BLOCKED on an owner answer** — see Open items. |
+> | a **build task** | ✅ **IMP-101 is done — the queue is empty.** ⚠️ **IMP-102 is BLOCKED on an owner answer** — see Open items. Nothing else is open in [`docs/specs-open.md`](docs/specs-open.md). |
 > | a **runtime walk** | 🚦 **The only queue with anything in it — [`docs/walk-open.md`](docs/walk-open.md), and its index says what is left.** ✅ **The OTA every open row was waiting for is LIVE — group `d42b7ec7`, 2026-09-08, all of IMP-094…099. Applies on the SECOND launch; never clear app data to "reset".** ✅ **IMP-099 is PROVEN — Plus works on the owner's device.** Left: WALK-07/WALK-08 at max font, **WALK-19's steps 4b, 4d–4f, 5–10 + the aeroplane-mode Restore**, WALK-12, WALK-18. **Do not re-derive WALK-19 — read its RESULT block; steps 3 and 4a are proven.** |
 > | a **design request** | See "Claude Design" below. The live request is **Insights**. |
 >
@@ -80,7 +80,7 @@ preflight. Detail → [`docs/build-log.md`](docs/build-log.md).
 
 **Current stack:** Expo SDK **54** · RN **0.81.5** · React **19.1.0** · **New Architecture** ·
 **Reanimated 4.1.1 + worklets 0.5.1** · `targetSdkVersion` **36**, `minSdk` **24** ·
-`npm test` → **1077 passed, 96 suites** (verified 2026-09-08) + **3 zone tests × 2 pinned zones**.
+`npm test` → **1079 passed, 96 suites** (verified 2026-09-08) + **3 zone tests × 2 pinned zones**.
 ⚠️ **Run `npm test`, not bare `npx jest`**, or the zone half is skipped. Version-checking a phone, the
 track-reading script and the rest of the stack notes are in [`docs/playbook.md`](docs/playbook.md).
 
@@ -100,7 +100,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 094–098 | **The 2026-09-07 walk-sitting fixes + the Recap's bar alignment.** The Annual Recap's phantom "quietest" month (094), DeeperInsights at max font (095), the Paywall badge over the selected tick (096), the dev harness's two lying labels (097), the Top moods bars starting at three different x (098). | OTA | ✅ **all code-complete, archived** in [`docs/build-log.md`](docs/build-log.md) — `085876a`, `3030bca`, `1e12cf7`, `7bced9f`, `edcea0b`. ✅ **shipped by OTA 2026-09-08, group `d42b7ec7`, manifest read back** (`rcAndroidKey` live). ⚠️ **095 and 096 are accepted on a screen, not by the suite** — WALK-08 at max font and WALK-07 at `font_scale` 2.0 in both nav modes. 094 and 098 are logic/style and owe nothing runtime |
 | 099 | **The entitlement the store grants is the one the app must read.** `ENTITLEMENT_ID` was `'plus'`; the RevenueCat identifier is `Daily Rituals Plus`, so a **successful** purchase mapped to `null` and `buy()` reported `failed`. | OTA | ✅ **code-complete, archived** in [`docs/build-log.md`](docs/build-log.md) — **1068 green / 96 suites** (was 1063/96), export clean, +5 tests **proven red on the shipped tree first**. ✅ **shipped by OTA 2026-09-08, group `d42b7ec7`, manifest read back** — and ✅ **PROVEN on hardware the same day: Plus is live on the owner's device.** ⚠️ The walk proved the outcome, **not which of the two routes granted it** (named lookup vs sole-entitlement fallback) — **the fallback is not dead code, do not remove it**. ⚠️ **The suite pins the string; only a device can confirm RevenueCat sends it** — WALK-19 owes that, and Restore/relaunch proves it without a second purchase |
 | 100 | **Every purchase error becomes `failed`.** `e.code` is the stringified numeric enum (`"6"`, `"10"`, `"20"`), `mapError.js` matched names, so only `userCancelled` worked. Killed the `owned` rescue path, read `PAYMENT_PENDING` as "you weren't charged", broke Change plan. | OTA | ✅ **code-complete, archived** in `docs/build-log.md` — `3774195`. **1077 passed, 96 suites** (was 1068/96), export clean, +9 tests, 6/7 new assertions proven red first. ⚠️ **Walk owed** — WALK-19 needs an already-owns-it Subscribe tap |
-| 101 | **The `failed` card claims "you weren't charged" and never asks the store.** Asserted on a resolved purchase, a pending charge, and every unrecognised error; `run()` reaches the result phase with no reconcile, and offers "Try again". | OTA | ⬜ **OPEN** — spec in [`docs/specs-open.md`](docs/specs-open.md#imp-101). IMP-099 removed the trigger; this removes the lie. Reconcile must happen **before** `clearTimer()` so IMP-088's escape stays armed |
+| 101 | **The `failed` card claims "you weren't charged" and never asks the store.** Asserted on a resolved purchase, a pending charge, and every unrecognised error; `run()` reaches the result phase with no reconcile, and offers "Try again". | OTA | ✅ **code-complete, archived** in `docs/build-log.md` — `f170c0a`. **1079 passed, 96 suites** (was 1077/96), export clean, +2 tests. ⚠️ **No new walk owed** — covered by WALK-19 |
 | 102 | **+3 freezes on every completion, not once.** `subscribe()` grants them for `success`, `owned` **and** `restored`; "Change plan" reopens the paywall for a member, so the loop is reachable — and IMP-100 is about to make the `owned` half work. | OTA | 🔒 **BLOCKED on an owner answer** (joining gift vs per-period perk) — see Open items. Do not build or guess |
 | 022 | Save as PDF + About sheet (the two dead You-tab buttons) | Build | ⏸ **deferred (owner)** — spec in build-log → "Deferred specs"; **perk #6 gate** |
 | 044 | R8 on release builds (dev client was shipping to the public) | Build | 🟢 **code-complete, UNWALKED.** R8 must be walked on the build you actually ship, so it rides **vc15 or later**; walk = WALK-12, on hardware, last in the sitting |
@@ -183,7 +183,29 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
-_2026-09-08, latest (Sonnet — **IMP-100 fixed: the Android bridge sends a numeric error code, `mapError.js`
+_2026-09-08, latest (Sonnet — **IMP-101 fixed: the `failed` card claimed "you weren't charged" and `run()`
+never asked the store before declaring failure.**) — on `main`, committed, not shipped._
+
+**What finished.** **IMP-101**, archived to [`docs/build-log.md`](docs/build-log.md), commit `f170c0a`.
+`usePurchaseFlow`'s `run()` now `await checkEntitlement(service)` **before** `clearTimer()` when a `buy`
+resolves to `failed`, promoting to `success` if the store confirms — order is load-bearing, keeping
+IMP-088's escape armed for the reconcile's duration. `resultCopy()` gained a `platform` param and a buy-mode
+branch (mirroring IMP-092's restore branch): the buy `failed` card now reads "We couldn't confirm that... If
+you were charged it will appear shortly" instead of denying a charge happened. Restore's variant is
+untouched.
+
+**The proof.** +2 tests in `purchaseFlow.test.js` (store confirms → ends in `success`; store also can't
+confirm → new copy, no denial). Updated `pendingEscape.test.js`'s IMP-092 `resultCopy` block, which had
+pinned the exact lie this row removes. **1079 passed, 96 suites** (was 1077/96), export clean.
+
+**Not shipped** — committed only, no trailer, no release requested. **No new walk owed** — WALK-19 already
+covers this surface.
+
+**The exact next step.** **The build queue is empty** — `docs/specs-open.md` now holds only IMP-102, which
+stays 🔒 **BLOCKED on the owner's joining-gift-vs-per-period-perk answer** (see Open items). The next build
+chat should check whether that answer has arrived; if not, there is no unblocked IMP row to take.
+
+_2026-09-08, earlier (Sonnet — **IMP-100 fixed: the Android bridge sends a numeric error code, `mapError.js`
 matched names, so every non-cancel error read as `failed`.**) — on `main`, committed, not shipped._
 
 **What finished.** **IMP-100**, archived to [`docs/build-log.md`](docs/build-log.md), commit `3774195`.
@@ -202,34 +224,3 @@ rescue path executing, not just the label. **1077 passed, 96 suites** (was 1068/
 **The exact next step.** **IMP-101** next — spec at
 [`docs/specs-open.md#imp-101`](docs/specs-open.md#imp-101): removes the "you weren't charged" claim + adds
 the missing store reconcile. **IMP-102 stays blocked** on the owner's joining-gift-vs-per-period-perk answer.
-
-_2026-09-08, later (Opus — **the first completed purchase in the app's life was reported as a failure. The
-entitlement identifier never matched the dashboard, and no test could have seen it.**) — on `main`, merged
-and pushed by the owner._
-
-**What the owner hit.** A Play licence-tester purchase: Play confirmed the subscription, the app said
-**"That didn't go through … you weren't charged."** Both from the same successful transaction.
-
-**What finished.** **IMP-099**, archived to [`docs/build-log.md`](docs/build-log.md). `toEntitlement` read
-`entitlements.active['plus']`; the real RevenueCat identifier is `Daily Rituals Plus`, so a resolved
-purchase mapped to `null` and `buy()` reported `failed`. Fixed with the real constant + a sole-entitlement
-fallback (this app sells one thing; ambiguous only with 2+ active entitlements). +5 tests run red first,
-**1068 passed / 96 suites**, export clean. ⚠️ Proves the mapper, not the dashboard string — WALK-19 owed that.
-
-**✅ SHIPPED.** One `Release-Lane: ota` push carried IMP-094…099 — group `d42b7ec7`, runtime `1.0.9`,
-2026-09-08, manifest read back (`rcAndroidKey` live). First attempt shipped nothing (`eas-version: latest`
-→ eas-cli needing Node ≥22 against a Node-20 workflow); all `setup-node` pins now 24 (`c2f35a1`).
-**✅ Confirmed on the owner's device the same day** — Plus is live. WALK-19's IMP-099 item is closed
-(proved the outcome, not which route granted it).
-
-**Then the owner ordered the purchase surface audited hard, and found something bigger.** IMP-100/101/102
-opened in [`docs/specs-open.md`](docs/specs-open.md). **IMP-100:** `mapError.js` matched error-code
-*names*; the Android bridge sends the **stringified numeric code** (`getCode() + ""`,
-`RNPurchasesModule.java:708`) — only `userCancelled` ever worked, killing the `owned` rescue path and
-misreading `PAYMENT_PENDING` as failure. **IMP-101** takes the "you weren't charged" lie + missing
-reconcile. **IMP-102** 🔒 blocked on owner answer (+3 freezes: joining gift vs per-period perk). None of
-this is visible to jest/dev panel — `simService` never calls `mapPurchaseError`. Also: `eas-version` pinned
-to `23.2.0` (owner).
-
-**The exact next step (at the time).** A build chat takes IMP-100 first — **done this session, see the note
-above.**
