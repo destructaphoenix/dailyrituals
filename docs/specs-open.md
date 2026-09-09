@@ -131,6 +131,52 @@ from Play, tapped Restore. Result: **"Nothing to restore."**
 | **A4** Play credentials | Valid | ✅ Clean |
 | **A5** Play Console order | Not findable | ⬜ **Inconclusive by design, not a finding.** Google Play **license-tester purchases are test purchases and never appear in Play Console Order Management.** Do not read this as evidence of anything. The place a test subscription *is* visible is on the phone: Play Store → Payments & subscriptions → Subscriptions |
 
+### Round 2.5 — a second, independent witness nobody read (2026-09-10)
+
+**`restore()` was not the only call that said "no entitlement" on 2026-09-08. `getEntitlement()` said it
+too, seconds earlier, and nobody noticed.** This was found by reading the shipped tree, not by a new walk.
+
+On the live group `d42b7ec7`, `useLaunchEntitlementCheck` runs **exactly** the step-9 scenario:
+
+```
+git show 768bc88:src/billing/entitlementSync.js
+  useLaunchEntitlementCheck({ plus, service, onEntitlementFound })
+    if (plus || ran.current) return;          // a reinstall has plus === false
+    checkEntitlement(service).then(...)       // → service.getEntitlement()
+    if (result.verified && result.entitlement) onEntitlementFound(...)
+```
+
+A reinstall mounts with `plus: false`, so the hook fires on its own at launch and asks the store
+directly. And the Restore row is gated on `!plus`
+([`YouScreen.js:134`](../src/screens/YouScreen.js#L134), identical on both bundles):
+
+```
+{plusEnabled && !plus && onRestorePurchases && ( … "Restore purchases" … )}
+```
+
+**So the row the owner tapped could only have been on screen because the launch check had already come
+back empty.** Had `getEntitlement()` found a live entitlement, `plus` would have flipped, the row would
+have vanished, and there would have been nothing to tap.
+
+**Why this matters: it is a different SDK call reaching the same verdict.** `restorePurchases()` and
+`getCustomerInfo()` are separate entry points; a defect confined to `restore()`, `toEntitlement()` or
+`mapPurchaseError()` cannot explain both. What explains both in one stroke is the customer genuinely
+having no active entitlement at that moment — **which is the expiry story.** ⚖️ **This pushes the balance
+back TOWARD expiry, partially offsetting C1.**
+
+⚠️ **Two caveats, and they are why this does not close the row on its own.**
+
+1. **A race is possible.** The check is async and unawaited. If the owner reached the You tab and tapped
+   before it resolved, the row's presence proves nothing. Unknowable after the fact.
+2. **First launch is exempt.** vc15's embedded bundle has IMP-085's broken probe, so on the reinstall's
+   *first* launch the service is not live and the check is meaningless. This argument applies only to the
+   second (post-OTA) launch — which is the one the owner tapped Restore on.
+
+**Consequence for WALK-19a: the Restore row's presence at step 6 is now itself a recorded observation,
+not scenery.** If the row is **absent** and the app already says member, the entitlement survived the
+reinstall by the launch path and IMP-105 is answered without a Restore tap at all. That is a pass, and it
+is a *cleaner* pass than tapping. The walk has been amended to say so.
+
 ### The new leading candidate: the test subscription expired mid-walk — **weakened by C1**
 
 **A2 is the whole story, and it fits a documented Google behaviour.** Google Play compresses test
@@ -157,6 +203,7 @@ truth, and there is no defect in this app.
 
 ### What settles it — four checks, still no code
 
+- **C0 · `getEntitlement()` agreed with `restore()`.** ✅ **ANSWERED 2026-09-10 from source** — see Round 2.5. Two independent SDK calls both found nothing, which no `restore()`-only defect explains. Weakens the bug theory; does not kill it (a race is possible).
 - **C1 · Which plan was bought at step 4d?** ✅ **ANSWERED 2026-09-09: annual.** Lifetime ≈ 3 hours, not
   30 minutes. **This weakens the expiry theory rather than confirming it** — see above.
 - **C2 · Wall-clock gap between step 4d and step 9.** Owner's recollection to within ten minutes is

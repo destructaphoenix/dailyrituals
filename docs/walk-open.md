@@ -428,13 +428,21 @@ else to prepare. There is no dev panel on a Play build — do not go looking for
    finding.** You will also be sent through onboarding, and may be offered a restore of backed-up data —
    answer either way, it does not affect this test. Leave the app open ~30 seconds so the update
    downloads.
-6. **Force-close the app and launch it again.** The OTA applies on the **second** launch. "Restore
-   purchases" now appears on the You tab.
+6. **Force-close the app and launch it again.** The OTA applies on the **second** launch. Now **look at
+   the You tab and write down which of these two you see** — this is a recorded observation, not scenery
+   (see IMP-105 → Round 2.5):
+   - **"Restore purchases" is there** → the app's own launch-time `getEntitlement()` already came back
+     empty. Carry on to step 7 and tap it.
+   - **The row is GONE and the app says Member / Manage** → ✅ **the entitlement survived the reinstall on
+     its own and IMP-105 is answered — a cleaner pass than tapping.** Stop here, record the time, and do
+     not tap anything. The row is closed.
 7. **Note the time. Tap Restore.**
 8. **Write down the exact words on screen.**
 
 **Reading the result.**
 
+- ✅ **Step 6 showed Member with no Restore row at all** → the strongest possible pass: two code paths
+  agree the entitlement is live. **IMP-105 was the test subscription expiring mid-walk, not a defect.**
 - ✅ **"Plus restored." / the app shows you as a member** → **IMP-105 was the test subscription expiring
   mid-walk, not a defect.** Close the row, unblock the `internal` → `production` promotion, and record
   step 9 as PASSED.
