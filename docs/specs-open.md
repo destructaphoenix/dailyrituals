@@ -13,7 +13,7 @@
 > re-litigate a "why", and do not improve the scope.** If a step turns out to be impossible or the code
 > contradicts the spec, **STOP** and log it to `PROGRESS.md` → Open items rather than inventing a fix.
 >
-> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **1079 passed, 96 suites** — verified 2026-09-08), `npx expo export --platform android` clean, commit with the **exact** message given, then
+> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **1085 passed, 97 suites** — verified 2026-09-09), `npx expo export --platform android` clean, commit with the **exact** message given, then
 > update `PROGRESS.md` (tick the backlog row, write the session note) and **move the finished spec from
 > this file into `docs/build-log.md`**.
 >
@@ -22,7 +22,7 @@
 
 ---
 
-## The queue — five rows left
+## The queue — four rows left
 
 **The owner asked for the Plus purchase surface to be investigated hard after IMP-099.** It was, by reading
 the shipped SDK rather than our assumptions about it, and **the audit found a defect larger than IMP-099**.
@@ -37,7 +37,7 @@ investigation also opened IMP-106.
 | IMP-101 | The `failed` card claims "you weren't charged" and never asks the store. | ✅ **done — archived in `docs/build-log.md`** |
 | [IMP-102](#imp-102) | Completing a purchase grants **+3 freezes every time**, not once. | 🟢 **UNBLOCKED — owner ruled per-period 2026-09-09. Ready to build** |
 | [IMP-103](#imp-103) | Step 4e failed on a bundle without IMP-100/101 — **neither was ever pushed or shipped**. | 🟢 **Ship + re-walk. NO code change** |
-| [IMP-104](#imp-104) | `tier: 'owned'` means free and `Shop.js` never reads it — and tapping such an item **wipes the ember balance to 0**. | 🟢 **Ready to build — cause found, no dump needed** |
+| IMP-104 | `tier: 'owned'` means free and `Shop.js` never reads it — and tapping such an item **wipes the ember balance to 0**. | ✅ **done — archived in `docs/build-log.md`** |
 | [IMP-105](#imp-105) | 🚦 Reinstall + Restore says "Nothing to restore." **Leading explanation is now a test subscription that expired mid-walk, not a defect.** | 🟠 **Four checks (C1–C4) settle it. Still gates promotion — unproven, not known broken. The walk protocol is defective regardless** |
 | [IMP-106](#imp-106) | A healthy build cannot say which JS bundle it is running — the gap that mis-scoped IMP-103. | 🟢 **Ready to build** |
 | [IMP-107](#imp-107) | A lapsed member keeps Plus until they happen to background the app — no launch-time downgrade check. | 🟢 **Ready to build** |
@@ -208,124 +208,6 @@ the entitlement gets reconciled by `run()` and lands on the `success` card inste
 ([`PlusFlow.js:299-303`](../src/screens/PlusFlow.js#L299)). Worst case the wording reads "You're in."
 instead of "You already have Plus." — cosmetic, and no one is charged twice either way. Record what 4e
 shows; do not pre-emptively widen the table.
-
----
-
-## IMP-104
-
-### `tier: 'owned'` means free, and the Shop does not read it
-
-**Lane: OTA.** Found on the WALK-19 re-run, 2026-09-08 (hardware, owner-run), step 7 — reproduces with
-Plus active, so it is not a Plus-gating bug. **Root cause found in source; the device-state dump the first
-write-up asked for is neither needed nor obtainable — see "Why there is no dump" below.**
-
-**The finding.** Golden Hour (palette), Golden Sun and Crescent Moon (skies) are declared
-`tier: 'owned'` in [`data.js:130,142,143`](../src/data.js#L130) — the tier `data.js:126` documents as free
-by default. On the device they rendered as ember-priced.
-
-**Cause 1 — `data.js` declares the tier and `Shop.js` ignores it.**
-[`Shop.js:33-38`](../src/screens/Shop.js#L33) reads:
-
-```js
-const palState = (p) => p.id === activePalette ? 'active'
-  : ownedPalettes.includes(p.id) ? 'owned'
-  : p.tier === 'plus' ? (plus ? 'owned' : 'plus') : 'buy';
-```
-
-`'plus'` is the only tier value ever consulted. An item tagged `tier: 'owned'` that is not currently
-applied and not in the `ownedPalettes` / `ownedSkies` array falls to the final `'buy'` — its declared tier
-never enters the decision. With Plus active the owner had applied a Plus palette and a Plus sky, so none
-of the three defaults was the `'active'` one, and all three fell through together. That is why the walk
-saw exactly these three and nothing else.
-
-**Cause 2 — `PalTag` then prints the tier as a price.** [`shopui.js:135-139`](../src/shopui.js#L135) ends
-in an unconditional ember pill rendering `{tier}`. For these items `tier` is the string `'owned'`, so the
-card shows an ember icon beside the literal word **"owned"**. That is the "ember-locked" the walk
-recorded — not a price at all.
-
-**Cause 3 — and the part the first write-up missed: the card is tappable, and tapping it destroys the
-ember balance.** `st === 'buy'` routes the press to `onBuyPalette`
-([`Shop.js:125`](../src/screens/Shop.js#L125)), and
-[`RitualsApp.js:265-271`](../src/RitualsApp.js#L265) guards with a numeric compare:
-
-```js
-if (embers < p.tier) { openGetEmbers(); return; }   // embers < 'owned'  →  NaN compare  →  false
-setEmbers((e) => e - p.tier);                        // e - 'owned'       →  NaN
-```
-
-`embers < 'owned'` is a NaN comparison, which is **false**, so the affordability guard passes for a user
-with any balance at all — including zero. Execution continues and the balance becomes `NaN`.
-`JSON.stringify` writes `NaN` as `null`, so `serialize()` persists `"embers": null`, and the next launch
-reads `initialState.embers ?? 0` — `null ?? 0` is `0`. **The user's entire ember balance is silently wiped
-by one tap on a free item.** `buySky` ([`RitualsApp.js:273-279`](../src/RitualsApp.js#L273)) is the same
-code with the same defect. This is the reason IMP-104 is worth more than its cosmetic report.
-
-**Why there is no dump.** The first write-up made the fix conditional on reading `ownedPalettes` /
-`ownedSkies` off the affected device via the dev panel. Two reasons that is dropped:
-
-1. **It cannot be done.** `RitualsApp.js:73-77` requires the dev panel under a literal `__DEV__` so Metro
-   strips `src/dev/*` from release bundles. The phone is running a Play release build. There is no
-   Inspect screen on it.
-2. **It would not change the fix.** Every write path was read — `pickPersisted` / `serialize` /
-   `deserialize` / `migrate` / `mergeWithDefaults` ([`state.js`](../src/persistence/state.js)),
-   `runQuarantine` and `pendingRestoreInventory` ([`restoreQuarantine.js`](../src/persistence/restoreQuarantine.js)),
-   `createBackup` / `readBackup` ([`backup.js`](../src/backup/backup.js)), `buildState`
-   ([`buildState.js:61-66`](../src/dev/buildState.js#L61), which seeds the defaults unconditionally), and
-   `handleResetData` / `handleReplaceAllData` ([`App.js:124-136`](../App.js#L124)). **No path in this
-   repository empties those arrays or drops an id from them.** So a one-off migration would be a fix
-   aimed at a cause that does not exist in the code, and the invariant would still be unenforced the next
-   time any state arrived from anywhere.
-
-The invariant `data.js` already states is the fix: **`tier: 'owned'` means free, full stop.** The
-`ownedPalettes` / `ownedSkies` arrays record what was *purchased*; they were never meant to be the only
-proof that a default is free. Make `data.js` authoritative and every possible persisted state renders
-correctly, including ones this repo cannot produce.
-
-**Steps.**
-
-1. [`src/screens/Shop.js`](../src/screens/Shop.js) — in `palState` and `skyState`, honour the declared
-   tier. Both become:
-
-   ```js
-   const palState = (p) => p.id === activePalette ? 'active'
-     : (p.tier === 'owned' || ownedPalettes.includes(p.id)) ? 'owned'
-     : p.tier === 'plus' ? (plus ? 'owned' : 'plus') : 'buy';
-   ```
-
-   and the same shape for `skyState` over `s.tier` / `ownedSkies`. Order matters: `'active'` still wins,
-   so an applied default keeps reading "Applied", not "Apply". Comment it with the IMP number and the
-   one-line reason (*the tier is the source of truth for free; the array is the record of purchases*).
-2. [`src/RitualsApp.js`](../src/RitualsApp.js) — make `buyPalette` and `buySky` refuse a non-numeric
-   tier before they touch the balance. Add as the first line of each, above the affordability check:
-
-   ```js
-   if (typeof p.tier !== 'number') return;   // buySky: s.tier
-   ```
-
-   Comment it: a string tier reaching this function is a bug upstream, but the NaN it produces is
-   unrecoverable — `NaN` serialises to `null` and reads back as `0`, so this guard is the balance's last
-   line of defence, not a redundancy. **Keep it even though step 1 makes it unreachable today.**
-3. Tests — new assertions, each proven red against the current tree first:
-   - `__tests__/screens/Shop.test.js` (or a sibling): with `activePalette: 'lavender'`,
-     `activeSky: 'aurora'`, `ownedPalettes: []`, `ownedSkies: []` and `plus: true`, the three default
-     items render the **"Apply"** pill and no ember pill. Assert on Golden Hour, Golden Sun **and**
-     Crescent Moon by name — the three the walk named.
-   - Same fixture with `plus: false` — the defaults are still free. This is not a Plus-gated behaviour.
-   - An applied default (`activePalette: 'goldenhour'`) still reads **"Applied"**, not "Apply".
-   - A priced item (`marigold`, `tier: 240`) is unaffected: still an ember pill reading `240`.
-   - A unit test for step 2: calling the buy handler with a `tier: 'owned'` item leaves `embers`
-     unchanged and never reaches `setEmbers`. If the handlers are not reachable from a test today,
-     extract the guard as a tiny pure predicate in the same file and pin that instead — do not restructure
-     `RitualsApp.js` for this.
-4. `npm test` green, **≥ 1079 passed / 96 suites**. `npx expo export --platform android` clean.
-5. Commit exactly:
-   `fix(shop): default palettes and skies are free, and a free item can never eat the ember balance (IMP-104)`
-6. Update `PROGRESS.md` (tick the row, session note) and move this spec into `docs/build-log.md`.
-
-**Acceptance.** WALK-19 step 7, or the Shop opened directly: Golden Hour, Golden Sun and Crescent Moon
-always read "Apply" (or "Applied") and never carry an ember price — with Plus on or off, whatever
-`ownedPalettes` / `ownedSkies` hold. Add to WALK-19 step 7 a check that the ember balance is unchanged
-after tapping each of the three.
 
 ---
 

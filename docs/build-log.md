@@ -3813,6 +3813,38 @@ it now pins the new title and the absence of "weren't charged" instead. **1079 p
 **Not walked.** No new WALK row — reconcile-on-failure and the copy change are exercised by the existing
 purchase-flow walks (WALK-19); nothing here needs a fresh device step.
 
+## IMP-104 — `tier: 'owned'` means free, and the Shop did not read it (2026-09-09)
+
+**Found on the WALK-19 re-run, 2026-09-08 (hardware, owner-run), step 7.** Golden Hour (palette), Golden Sun
+and Crescent Moon (skies) are declared `tier: 'owned'` in `data.js` — free by default — but
+`Shop.js`'s `palState`/`skyState` only ever consulted `p.tier === 'plus'`, so a default that was not
+currently applied and not yet in `ownedPalettes`/`ownedSkies` fell through to `'buy'`. `PalTag` then printed
+the literal string `'owned'` beside an ember icon — the "ember-locked" default the walk saw. **Worse:** the
+card was tappable, `onBuyPalette`/`onBuySky` guarded affordability with `embers < p.tier`, and `embers <
+'owned'` is a NaN comparison — always `false` — so the guard passed for any balance including zero,
+`setEmbers((e) => e - p.tier)` produced `NaN`, `JSON.stringify` wrote it as `null`, and the next launch read
+`null ?? 0` back as `0`. **One tap on a free item silently wiped the entire ember balance.**
+
+**What was built.**
+1. [`Shop.js`](../src/screens/Shop.js) — `palState`/`skyState` now also treat `p.tier === 'owned'` /
+   `s.tier === 'owned'` as owned, ahead of the array check. The tier is the source of truth for free; the
+   array only records what was purchased.
+2. [`RitualsApp.js`](../src/RitualsApp.js) — extracted `isPurchasableTier(tier)` (a tiny pure predicate,
+   exported so it is unit-testable without reaching into the component's closures) and `buyPalette`/
+   `buySky` now refuse a non-numeric tier before touching the balance. Kept even though step 1 makes it
+   unreachable today — it is the balance's last line of defence, not a redundancy.
+
+**The proof.** New tests in `Shop.test.js` (empty `ownedPalettes`/`ownedSkies`, Plus on and off, the three
+defaults read "Apply" with no ember pill; an applied default still reads "Applied"; a priced item is
+unaffected) and a new `RitualsApp.test.js` pinning `isPurchasableTier` directly. The two "reads free" tests
+and the two predicate tests were run red against the pre-fix tree first (stashed the source fix, kept the
+new tests, confirmed 4 failures) — the other two are non-regression checks and correctly passed in both
+states. **1085 passed, 97 suites** (was 1079/96), `npx expo export --platform android` clean. Commit
+`792a611`.
+
+**Not walked.** No new WALK row on its own — WALK-19 step 7 already covers this surface; add to it a check
+that the ember balance is unchanged after tapping each of the three defaults.
+
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
 
 > Moved out of PROGRESS.md on 2026-07-31 to keep the live cursor lean once a second spec (IMP-032) opened. These are **not** finished work. If the owner revives one, lift the block back into PROGRESS.md as the ACTIVE TRACK.
@@ -3855,6 +3887,48 @@ purchase-flow walks (WALK-19); nothing here needs a fresh device step.
 ---
 
 ## Session notes (archived from PROGRESS.md)
+
+_2026-09-08, latest (Sonnet — **IMP-101 fixed: the `failed` card claimed "you weren't charged" and `run()`
+never asked the store before declaring failure.**) — on `main`, committed, not shipped._
+
+**What finished.** **IMP-101**, archived to [`docs/build-log.md`](docs/build-log.md), commit `f170c0a`.
+`usePurchaseFlow`'s `run()` now `await checkEntitlement(service)` **before** `clearTimer()` when a `buy`
+resolves to `failed`, promoting to `success` if the store confirms — order is load-bearing, keeping
+IMP-088's escape armed for the reconcile's duration. `resultCopy()` gained a `platform` param and a buy-mode
+branch (mirroring IMP-092's restore branch): the buy `failed` card now reads "We couldn't confirm that... If
+you were charged it will appear shortly" instead of denying a charge happened. Restore's variant is
+untouched.
+
+**The proof.** +2 tests in `purchaseFlow.test.js` (store confirms → ends in `success`; store also can't
+confirm → new copy, no denial). Updated `pendingEscape.test.js`'s IMP-092 `resultCopy` block, which had
+pinned the exact lie this row removes. **1079 passed, 96 suites** (was 1077/96), export clean.
+
+**Not shipped** — committed only, no trailer, no release requested. **No new walk owed** — WALK-19 already
+covers this surface.
+
+**The exact next step.** **The build queue is empty** — `docs/specs-open.md` now holds only IMP-102, which
+stays 🔒 **BLOCKED on the owner's joining-gift-vs-per-period-perk answer** (see Open items). The next build
+chat should check whether that answer has arrived; if not, there is no unblocked IMP row to take.
+
+_2026-09-08, earlier (Sonnet — **IMP-100 fixed: the Android bridge sends a numeric error code, `mapError.js`
+matched names, so every non-cancel error read as `failed`.**) — on `main`, committed, not shipped._
+
+**What finished.** **IMP-100**, archived to [`docs/build-log.md`](docs/build-log.md), commit `3774195`.
+Added a `RC_CODE` exact-match map for the real numeric codes (`"6"`→owned, `"20"`→new **`deferred`** kind,
+etc.), name-matching kept as fallback for iOS/web/sim. `PlusFlow.js` gained `RESULT_META.deferred`
+("Payment still processing," `dismissTo: 'paywall'`, no "Try again"). `revenueCatService.js` needed no
+functional change — both `buy()`/`restore()` already passed unmatched kinds through correctly.
+
+**The proof.** +9 tests, new `mapError.test.js` block **run red first** (6/7 failed pre-fix).
+`revenueCatService.test.js` now asserts `getCustomerInfo` is actually **called** on `"6"` — the `owned`
+rescue path executing, not just the label. **1077 passed, 96 suites** (was 1068/96), export clean.
+
+**Not shipped** — committed only, no trailer, no release requested. **Walk owed**, added to
+`docs/walk-open.md` WALK-19 step 4: `owned` has never executed on a device before this fix.
+
+**The exact next step.** **IMP-101** next — spec at
+[`docs/specs-open.md#imp-101`](docs/specs-open.md#imp-101): removes the "you weren't charged" claim + adds
+the missing store reconcile. **IMP-102 stays blocked** on the owner's joining-gift-vs-per-period-perk answer.
 
 _2026-09-08, later (Opus — **the first completed purchase in the app's life was reported as a failure. The
 entitlement identifier never matched the dashboard, and no test could have seen it.**) — on `main`, merged
@@ -5407,6 +5481,13 @@ _2026-07-30 (billing) — **IMP-028: billing correctness pass** (OTA lane; no sh
 > All of these are **settled**. Kept verbatim because the reasoning is worth having when a
 > similar report arrives — especially the Auto-Backup-vs-JSON-export confusion, which the
 > owner themselves hit once. Live blockers stay in `PROGRESS.md`.
+
+### ✅ IMP-102's joining-gift-vs-per-period question → **ANSWERED 2026-09-09, PER-PERIOD PERK**
+
+The owner ruled: the 3 streak candles are a subscription perk, granted once per paid period, never on a
+re-recognition. Spec written in [`docs/specs-open.md`](specs-open.md#imp-102) — key the grant on the
+entitlement's `renewISO`, hang it off `liveEntitlement` (not `subscribe()`), persist
+`lastFreezeGrantPeriod`. Row moved from blocked to ready-to-build in the PROGRESS.md backlog table.
 
 ### 🟠 The suite was timezone-coupled → **✅ RESOLVED 2026-08-16, same day it was found**
 

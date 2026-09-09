@@ -36,8 +36,8 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 >
 > | If this chat is… | Take |
 > | --- | --- |
-> | a **build task** | 🟢 **Four rows are ready to build, in this order: [IMP-104](docs/specs-open.md#imp-104)** (it silently zeroes the ember balance — take it first)**, [IMP-107](docs/specs-open.md#imp-107)** (a lapsed member keeps Plus — and it is why the app is useless as a walk instrument)**, [IMP-102](docs/specs-open.md#imp-102)** (owner ruled per-period 2026-09-09)**, [IMP-106](docs/specs-open.md#imp-106)**. All four are fully specced; none needs a decision. 🟢 **[IMP-103](docs/specs-open.md#imp-103) is NOT a code task** — the phone never had IMP-100/101; it ships with the same OTA. 🚡 **[IMP-105](docs/specs-open.md#imp-105) is waiting on ONE owner check (C3) — do not open an editor on it.** |
-> | a **runtime walk** | 🚦 **START WITH [WALK-19a](docs/walk-open.md#walk-19a--the-imp-105-isolation-sitting-run-this-one-on-its-own) — the IMP-105 isolation sitting, ~20 min, needs no OTA, and it is the only thing standing between vc15 and promotion.** Then [`docs/walk-open.md`](docs/walk-open.md), and its index says what is left. 🔴 **WALK-19 re-ran 2026-09-08: steps 3, 4a, 4b, 4c, 4d, 4f, 5, 6 all PASS.** Two new defects: IMP-105 (critical, blocks promotion) and IMP-104. **Step 10 is blocked on IMP-105 being fixed and re-walked; step 8 (real money) is deliberately held for last.** Read WALK-19's RE-RUN result block before touching it again. Also open: WALK-12, WALK-18. |
+> | a **build task** | ✅ **IMP-104 is done** (`792a611`) — it silently zeroed the ember balance. 🟢 **Three rows are ready to build, in this order: [IMP-107](docs/specs-open.md#imp-107)** (a lapsed member keeps Plus — and it is why the app is useless as a walk instrument)**, [IMP-102](docs/specs-open.md#imp-102)** (owner ruled per-period 2026-09-09)**, [IMP-106](docs/specs-open.md#imp-106)**. All three are fully specced; none needs a decision. 🟢 **[IMP-103](docs/specs-open.md#imp-103) is NOT a code task** — the phone never had IMP-100/101; it ships with the same OTA. 🚡 **[IMP-105](docs/specs-open.md#imp-105) is waiting on ONE owner check (C3) — do not open an editor on it.** |
+> | a **runtime walk** | 🚦 **START WITH [WALK-19a](docs/walk-open.md#walk-19a--the-imp-105-isolation-sitting-run-this-one-on-its-own) — the IMP-105 isolation sitting, ~20 min, needs no OTA, and it is the only thing standing between vc15 and promotion.** Then [`docs/walk-open.md`](docs/walk-open.md), and its index says what is left. 🔴 **WALK-19 re-ran 2026-09-08: steps 3, 4a, 4b, 4c, 4d, 4f, 5, 6 all PASS.** Two new defects found: IMP-105 (critical, blocks promotion — still open) and IMP-104 (✅ fixed in code 2026-09-09, `792a611` — not yet re-walked; step 7 owes the re-check). **Step 10 is blocked on IMP-105 being fixed and re-walked; step 8 (real money) is deliberately held for last.** Read WALK-19's RE-RUN result block before touching it again. Also open: WALK-12, WALK-18. |
 > | a **design request** | See "Claude Design" below. The live request is **Insights**. |
 >
 > **The billing surface, honestly.** ✅ **It works end to end — a real entitlement grants Plus (2026-09-08).**
@@ -80,7 +80,7 @@ preflight. Detail → [`docs/build-log.md`](docs/build-log.md).
 
 **Current stack:** Expo SDK **54** · RN **0.81.5** · React **19.1.0** · **New Architecture** ·
 **Reanimated 4.1.1 + worklets 0.5.1** · `targetSdkVersion` **36**, `minSdk` **24** ·
-`npm test` → **1079 passed, 96 suites** (verified 2026-09-08) + **3 zone tests × 2 pinned zones**.
+`npm test` → **1085 passed, 97 suites** (verified 2026-09-09) + **3 zone tests × 2 pinned zones**.
 ⚠️ **Run `npm test`, not bare `npx jest`**, or the zone half is skipped. Version-checking a phone, the
 track-reading script and the rest of the stack notes are in [`docs/playbook.md`](docs/playbook.md).
 
@@ -103,7 +103,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 101 | **The `failed` card claims "you weren't charged" and never asks the store.** Asserted on a resolved purchase, a pending charge, and every unrecognised error; `run()` reaches the result phase with no reconcile, and offers "Try again". | OTA | ✅ **code-complete, archived** in `docs/build-log.md` — `f170c0a`. **1079 passed, 96 suites** (was 1077/96), export clean, +2 tests. ⚠️ **No new walk owed** — covered by WALK-19 |
 | 102 | **+3 freezes on every completion, not once.** `subscribe()` grants them for `success`, `owned` **and** `restored`; "Change plan" reopens the paywall for a member, so the loop is reachable. | OTA | 🟢 **UNBLOCKED — owner ruled PER-PERIOD 2026-09-09.** Spec written: key the grant on the entitlement's `renewISO`, hang it off `liveEntitlement` (not `subscribe()`), persist `lastFreezeGrantPeriod`. **Ready to build** |
 | 103 | **Not a defect — the phone never had IMP-100 or IMP-101.** Step 4e ran on OTA group `d42b7ec7` (commit `768bc88`, 04:58); IMP-100 landed 12:30 and IMP-101 12:39, **neither pushed, neither carrying a `Release-Lane: ota` trailer**. `git show 768bc88:src/billing/mapError.js` is the pre-IMP-100 name matcher, and the card's literal "That didn't go through." is copy IMP-101 replaced — the wording dates the bundle. | OTA | 🟢 **SHIP + RE-WALK, no code change.** Push `main` (4 ahead), OTA IMP-100/101, re-open WALK-19 step 4e |
-| 104 | **`tier: 'owned'` means free and `Shop.js` never reads it.** `palState`/`skyState` consult only `'plus'`, so a default that isn't currently applied falls to `'buy'` and `PalTag` prints the tier string as an ember price. **Worse: the card is tappable — `embers < 'owned'` is a NaN compare, so the guard passes, `embers` becomes `NaN`, serialises to `null`, and reads back as 0. One tap on a free item wipes the balance.** | OTA | 🟢 **READY TO BUILD.** Cause found in source; the device dump the first write-up asked for is impossible (dev panel is `__DEV__`-stripped) and wouldn't change the fix |
+| 104 | **`tier: 'owned'` means free and `Shop.js` never reads it.** `palState`/`skyState` consult only `'plus'`, so a default that isn't currently applied falls to `'buy'` and `PalTag` prints the tier string as an ember price. **Worse: the card is tappable — `embers < 'owned'` is a NaN compare, so the guard passes, `embers` becomes `NaN`, serialises to `null`, and reads back as 0. One tap on a free item wipes the balance.** | OTA | ✅ **code-complete, archived** in `docs/build-log.md` — `792a611`. **1085 passed, 97 suites** (was 1079/96), export clean, +6 tests, the two bug-reproducing pairs proven red first. ⚠️ **No new walk of its own** — add to WALK-19 step 7 |
 | 105 | 🚦 **Reinstall + Restore says "Nothing to restore."** Source review ruled out the embedded bundle, `ENTITLEMENT_ID`, and `restore()`/`toEntitlement()` (step 4f is the control — identical code passed minutes earlier). **Owner's dashboard checks 2026-09-08 killed the transfer-setting theory (it is set to "Transfer to new App User ID") and produced a better one: RevenueCat holds NO customer with an active entitlement.** Google compresses license-tester subscriptions — monthly renews every 5 min, yearly every 30 min, auto-cancelled after 6 renewals — so the test sub very plausibly **expired during the walk**, making "Nothing to restore" correct. | TBD | 🟠 **Still gates `internal` → `production` — unproven, not known broken.** Four checks (C1–C4) settle it; C1 (was it monthly or annual?) does most of the work. 🚦 **The walk protocol is defective either way — buy→reinstall→restore must be one tight block** |
 | 107 | **A lapsed member keeps Plus until they happen to background the app.** `useLaunchEntitlementCheck` bails when `plus` is true (it exists for the *upgrade* case), and the downgrade path is an `AppState` `'change'` listener — which does not fire on a cold start, because the app comes up already `active`. So a subscription can lapse and the app keeps showing Plus, the perks and a stale renewal date until the user happens to background and return. Observed by the owner 2026-09-09: no sub in Play, none in RevenueCat, app still said member. | OTA | 🟢 **READY TO BUILD.** Adds an *occasion* to ask, not a new reason to revoke — IMP-043's rule is untouched |
 | 106 | **A healthy build cannot say which JS it is running.** `describeUpdate()` already computes it and `RUNNING_BUNDLE` is built at `RitualsApp.js:115`, but its only consumer is the broken-gate alert, which renders only when `billingDiagnostic` is non-null **and** `!plus`. This is the gap that let IMP-103 be scoped as a billing defect. | OTA | 🟢 **READY TO BUILD** — a quiet always-present Version row on the You tab |
@@ -147,40 +147,27 @@ the two are indistinguishable. **Do not remove the fallback** — see WALK-19.
 
 ### ▶️ Owner decisions still open
 
-- **🚦 The `internal` → `production` promotion.** **vc15 is the live `internal` build and the only
-  promotion candidate.** Remaining: the device walks, then promote by hand (full review, ~7d).
-  🚦 **WALK-19 gates it, and as of 2026-09-08 it is failing on [IMP-105](docs/specs-open.md#imp-105)** —
-  a real subscriber who reinstalls loses their entitlement. **Do not promote until IMP-105 is fixed and
-  WALK-19 step 9 re-passes.** ⚠️ vc12 will not be promoted (owner, 2026-09-05) and vc14 must never be.
-- **🚦 `main` is 4 commits ahead of `origin/main` and IMP-100 + IMP-101 have never shipped.** This is
-  what made the WALK-19 re-run's step 4e read as a new defect (IMP-103). **Every device walk from here is
-  invalid until `main` is pushed and OTA'd** — the phone is two billing fixes behind whatever the specs
-  say. See IMP-103.
-- **🟠 IMP-105 — the dashboard round is DONE (2026-09-08) and it moved the row.** Restore Behavior is
-  "Transfer to new App User ID" (the permissive setting), entitlement id and Play credentials are clean,
-  and **RevenueCat holds no customer with an active entitlement**. ⚠️ **C1 answered 2026-09-09: the
-  purchase was ANNUAL**, so the test subscription lived ~3 hours, not ~30 minutes — **that weakens the
-  expiry theory rather than confirming it.** Expiry and a real defect are now equally live. **C3 is the
-  only remaining check that carries information, and it is still available: RevenueCat → Customers with
-  the SANDBOX filter ON; a lapsed subscription does not delete the customer record.** Read the
-  entitlement's expiration stamp against when Restore was tapped — before ⇒ no bug, after ⇒ real defect.
-  ⚠️ Play Console never shows these purchases, and the on-phone check is now moot (the sub is ~12h dead).
-  **Still no code on this row.**
+- **🚦 The `internal` → `production` promotion.** vc15 is the only candidate. Remaining: the device walks,
+  then promote by hand (full review, ~7d). 🚦 **WALK-19 gates it and is failing on
+  [IMP-105](docs/specs-open.md#imp-105)** — do not promote until it's fixed and WALK-19 step 9 re-passes.
+  ⚠️ vc12 will not be promoted (owner, 2026-09-05) and vc14 must never be.
+- **🚦 `main` is still ahead of `origin/main`, unshipped.** This is what made the WALK-19 re-run's step 4e
+  read as a new defect (IMP-103) — every device walk is invalid until `main` is pushed and OTA'd. See IMP-103.
+- **🟠 IMP-105 — still unproven, not known broken.** Dashboard round (2026-09-08) and C1 (2026-09-09,
+  purchase was ANNUAL) narrowed it but didn't settle it. **C3 is the only remaining check that carries
+  information** — full detail and reasoning in [`docs/specs-open.md`](docs/specs-open.md#imp-105). **Still
+  no code on this row.**
 - **🚦 WALK-19's ordering is defective independent of IMP-105's outcome.** Buy → uninstall →
   reinstall → Restore must run as one tight block immediately after the purchase; a license-tester
   subscription cannot survive the perks tour that currently sits between steps 4d and 9. Record the plan
   bought and the wall-clock time of every step.
-- **💰 EMBERS FOR MONEY — a conversation the owner parked for its own chat (2026-09-08).** The owner
-  wants embers purchasable for cash, reasoning that without embers you cannot buy candles. **Not scoped,
-  not started.** What the next chat needs to know is in [`docs/specs-open.md`](docs/specs-open.md) →
-  "Parked: embers for money" — three findings and two unanswered questions. **Do not flip
-  `EMBER_PACKS_ENABLED` in the meantime:** the buy handler at `RitualsApp.js:985` is a bare counter
-  increment, so the flag alone ships a store that shows `$1.99` and gives the goods away (the vc14 shape).
-- **✅ IMP-102 — ANSWERED 2026-09-09: PER-PERIOD PERK.** The 3 streak candles are a subscription perk,
-  granted once per paid period, never on a re-recognition. Spec is written in
-  [`docs/specs-open.md`](docs/specs-open.md#imp-102) and the row is ready to build.
-- **Cash embers: settled in principle (dropped 2026-08-03), not finalised.** It determines which Play
-  products get created. Full argument in the playbook.
+- **💰 EMBERS FOR MONEY — a conversation the owner parked for its own chat (2026-09-08).** Settled in
+  principle (dropped 2026-08-03) that embers should be purchasable for cash, but **not scoped, not
+  started** — full argument in the playbook. What the next chat needs is in
+  [`docs/specs-open.md`](docs/specs-open.md) → "Parked: embers for money" — three findings, two open
+  questions. **Do not flip `EMBER_PACKS_ENABLED` in the meantime:** the buy handler at
+  `RitualsApp.js:985` is a bare counter increment, so the flag alone ships a store that shows `$1.99` and
+  gives the goods away (the vc14 shape).
 - **Perk #6, the PDF, is still not built** (IMP-022, deferred). It was **cut** from `PLUS_PERKS` rather
   than built, which is how `PLUS_ENABLED` flipped honestly. Gate checklist in the playbook → Phase 10b.
 
@@ -213,7 +200,7 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
-_2026-09-09, latest (Opus — **the WALK-19 re-run's three defects investigated and re-scoped; IMP-102
+_2026-09-09, earlier (Opus — **the WALK-19 re-run's three defects investigated and re-scoped; IMP-102
 unblocked by the owner's ruling.**) — on `main`, committed, **not shipped**._
 
 **What finished.** No source changes — this was a scoping chat. **IMP-103 reclassified**: not a defect.
@@ -241,44 +228,23 @@ together**, and WALK-19 re-runs steps 4e/9/10 under the two new pre-flight rules
 buy→reinstall→restore as one tight block). ⚠️ **IMP-105 is waiting on a single owner check — C3, the
 RevenueCat customer record's expiration stamp with the sandbox filter on.** Do not write code for it.
 
-_2026-09-08, latest (Sonnet — **IMP-101 fixed: the `failed` card claimed "you weren't charged" and `run()`
-never asked the store before declaring failure.**) — on `main`, committed, not shipped._
+_2026-09-09, latest (Sonnet — **IMP-104 fixed: `tier: 'owned'` defaults fell through to 'buy' and a tap
+wiped the ember balance to 0.**) — on `main`, committed, not shipped._
 
-**What finished.** **IMP-101**, archived to [`docs/build-log.md`](docs/build-log.md), commit `f170c0a`.
-`usePurchaseFlow`'s `run()` now `await checkEntitlement(service)` **before** `clearTimer()` when a `buy`
-resolves to `failed`, promoting to `success` if the store confirms — order is load-bearing, keeping
-IMP-088's escape armed for the reconcile's duration. `resultCopy()` gained a `platform` param and a buy-mode
-branch (mirroring IMP-092's restore branch): the buy `failed` card now reads "We couldn't confirm that... If
-you were charged it will appear shortly" instead of denying a charge happened. Restore's variant is
-untouched.
+**What finished.** **IMP-104**, archived to [`docs/build-log.md`](docs/build-log.md), commit `792a611`.
+`Shop.js`'s `palState`/`skyState` now treat `tier === 'owned'` as owned ahead of the array check — tier is
+the source of truth for free, the array only records what was purchased. `RitualsApp.js` gained an exported
+pure predicate `isPurchasableTier(tier)`; `buyPalette`/`buySky` now refuse a non-numeric tier before
+touching the balance — kept as the balance's last line of defence even though the Shop fix makes it
+unreachable today.
 
-**The proof.** +2 tests in `purchaseFlow.test.js` (store confirms → ends in `success`; store also can't
-confirm → new copy, no denial). Updated `pendingEscape.test.js`'s IMP-092 `resultCopy` block, which had
-pinned the exact lie this row removes. **1079 passed, 96 suites** (was 1077/96), export clean.
+**The proof.** +6 tests (`Shop.test.js` ×4, new `RitualsApp.test.js` ×2). The two bug-reproducing pairs were
+run red against the pre-fix tree first (stashed the fix, kept the tests, confirmed 4 failures); the other
+two are non-regression checks and correctly passed in both states. **1085 passed, 97 suites** (was
+1079/96), export clean. **Not shipped.** **No new walk of its own** — add to WALK-19 step 7 a check the
+ember balance is unchanged after tapping each of the three defaults.
 
-**Not shipped** — committed only, no trailer, no release requested. **No new walk owed** — WALK-19 already
-covers this surface.
-
-**The exact next step.** **The build queue is empty** — `docs/specs-open.md` now holds only IMP-102, which
-stays 🔒 **BLOCKED on the owner's joining-gift-vs-per-period-perk answer** (see Open items). The next build
-chat should check whether that answer has arrived; if not, there is no unblocked IMP row to take.
-
-_2026-09-08, earlier (Sonnet — **IMP-100 fixed: the Android bridge sends a numeric error code, `mapError.js`
-matched names, so every non-cancel error read as `failed`.**) — on `main`, committed, not shipped._
-
-**What finished.** **IMP-100**, archived to [`docs/build-log.md`](docs/build-log.md), commit `3774195`.
-Added a `RC_CODE` exact-match map for the real numeric codes (`"6"`→owned, `"20"`→new **`deferred`** kind,
-etc.), name-matching kept as fallback for iOS/web/sim. `PlusFlow.js` gained `RESULT_META.deferred`
-("Payment still processing," `dismissTo: 'paywall'`, no "Try again"). `revenueCatService.js` needed no
-functional change — both `buy()`/`restore()` already passed unmatched kinds through correctly.
-
-**The proof.** +9 tests, new `mapError.test.js` block **run red first** (6/7 failed pre-fix).
-`revenueCatService.test.js` now asserts `getCustomerInfo` is actually **called** on `"6"` — the `owned`
-rescue path executing, not just the label. **1077 passed, 96 suites** (was 1068/96), export clean.
-
-**Not shipped** — committed only, no trailer, no release requested. **Walk owed**, added to
-`docs/walk-open.md` WALK-19 step 4: `owned` has never executed on a device before this fix.
-
-**The exact next step.** **IMP-101** next — spec at
-[`docs/specs-open.md#imp-101`](docs/specs-open.md#imp-101): removes the "you weren't charged" claim + adds
-the missing store reconcile. **IMP-102 stays blocked** on the owner's joining-gift-vs-per-period-perk answer.
+**The exact next step.** **Build [IMP-107](docs/specs-open.md#imp-107) next** (a lapsed member keeps Plus
+until backgrounded), then **IMP-102**, then **IMP-106** — all three ready, no decision needed. Then one OTA
+carries IMP-100/101/102/104/106/107 together and WALK-19 re-runs under the two new pre-flight rules (record
+the bundle; buy→reinstall→restore as one tight block). IMP-105 still waits on the owner's C3 check.
