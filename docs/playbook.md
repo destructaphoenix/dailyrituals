@@ -369,6 +369,24 @@ _(Older manual `eas` lane reference is in [build-log.md](build-log.md) → "Upda
 
 ---
 
+### 🟡 IMP-056 residual + the IMP-057 decision (2026-08-10)
+
+`dayKey` is now derived locally (walked both offset directions). **Existing entries were deliberately not
+migrated**, leaving two things:
+
+- **The residual — nothing to act on.** Old entries keep their UTC key, so for ~a day a negative-offset user
+  can have last evening's *already-stored* entry answer to today's key. New writes are correct immediately;
+  old data self-heals as those keys age out.
+- **IMP-057 is the owner's decision, not a build chat's.** The Inspector's "Data health" group counts rows
+  disagreeing with `dayKeyOf()` and whether remapping moves `currentStreak`. **It reads 0 on the emulator
+  fixture — meaningless** (`gen-v2-fixture.js` seeds ids the reporter doesn't key on), and **real device
+  numbers have never been read.** Once they exist IMP-057 can be scoped — noting remapping can move an entry
+  off a day and **break a live streak**: correct, but it reads as a regression to whoever it happens to.
+
+_Moved from `PROGRESS.md` 2026-09-10 under its size rule. Stable reference, not a live cursor._
+
+---
+
 ## 🔑 Android release signing — DO NOT BREAK (critical, repo-invisible)
 
 Production `.aab` **must** be signed with the local **`dailyrituals-release.keystore`** (git-ignored, in project root):

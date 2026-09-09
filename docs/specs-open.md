@@ -22,7 +22,7 @@
 
 ---
 
-## The queue — three rows, all opened by the owner on 2026-09-10
+## The queue — four rows, all opened by the owner on 2026-09-10
 
 **Both came out of WALK-19 step 7, and neither is what the walk was looking for.** The owner went to check
 IMP-104 and found something bigger: **the paywall sells a promise the shop does not keep.** Read
@@ -35,6 +35,7 @@ Five ember-priced items stay locked behind a grind for someone who has already p
 | [IMP-108](#imp-108) | **A paying member is still charged embers for five palettes and skies the paywall says they own.** | 🔴 **Live mis-sell on the paid surface** |
 | [IMP-109](#imp-109) | The "you can't afford this" toast never mentions the price, the balance, or affording anything. | 🟠 **Confusing, owner-reported, three call sites** |
 | [IMP-110](#imp-110) | `PLUS_PERKS[1]` sells streak insurance as a Plus perk; `applyAutoFreeze` is ungated and **every free user already has it**. | 🔴 **The second live mis-sell. Reword the line — the owner ruled the feature stays free** |
+| [IMP-111](#imp-111) | The tab transition draws shadow outlines around the next screen's cards. **Day mode only.** | 🎨 **Ugly, not destructive. Diagnosed in source; needs a device to confirm the fix** |
 
 ---
 
@@ -321,3 +322,57 @@ the spec's last step names its `WALK-nn` row in [`walk-open.md`](walk-open.md). 
 build chat**, and do not read a missing walk as an unfinished spec. IMP-077 is the newest worked example:
 it ended code-complete at 873 green tests, and **its green suite proves nothing about the motion** — the
 Reanimated jest mock no-ops every hook. WALK-18 settles it.
+
+---
+
+## IMP-111
+
+### The screen transition draws shadow outlines around the cards — day mode only
+
+**Lane: OTA.** Opened by the owner 2026-09-10 from WALK-18, on a **Galaxy S24 Ultra** (flagship, not the
+mid-range device the row asks for — see the WALK-18 re-scope). Their words: *"while transitioning from one
+screen to the other, there seems to be some 'shadows' that appear at the outline of the next screen's
+cards (in day mode, this looks ass)."*
+
+**Cause, confirmed in source — two facts that only bite together.**
+
+1. [`ScreenFade`](../src/motion.js#L143) animates **`opacity`** on an `Animated.View` wrapping the entire
+   screen, keyed on the active tab.
+2. [`Card`](../src/ui.js#L45) applies `t.shadow(14, …)` → on Android **`elevation: 8`**
+   ([`theme.js:232`](../src/theme.js#L232)) — **and only in day mode**, because the style is
+   `t.dark ? null : t.shadow(…)`.
+
+**Android elevation shadows do not composite correctly beneath a parent with fractional opacity.** An
+elevated view's shadow is drawn from its RenderNode outline; once an ancestor animates opacity the subtree
+renders into an offscreen layer and each card's shadow is drawn against *that* layer rather than the page,
+which reads as an outline hugging every card. It resolves the instant opacity hits 1.
+
+✅ **This explains the owner's day-mode-only observation exactly** — dark mode has no `elevation` at all,
+so there is nothing to mis-composite. **The report and the source agree with no gaps.**
+
+**Steps — try in order, stop at the first that works. This is a device question, not a test question.**
+
+1. Add **`renderToHardwareTextureAndroid`** to `ScreenFade`'s `Animated.View`. Promoting the subtree to a
+   single hardware layer makes opacity apply to the composited texture instead of per-child, which is the
+   standard fix for this class of artifact and is also a small win during the animation.
+2. If it persists, try **`needsOffscreenAlphaCompositing`** instead — it forces the subtree to be
+   composited as a unit *before* alpha is applied.
+3. If it still persists, **drop `opacity` from `ScreenFade` and animate `translateY` only.** No fractional
+   opacity means no offscreen compositing and the artifact cannot occur. The transition still reads as
+   motion. ⚠️ Do not silently do this first because it is easiest — it changes the designed feel, so it is
+   the fallback, not the opener.
+
+**⚠️ Nothing in `jest` can see this.** The Reanimated mock no-ops every hook and the suite renders a tree,
+not pixels — the same blindness that made WALK-18 necessary in the first place. **Keep the suite green and
+≥ the prior count, but the acceptance is the walk.**
+
+**Acceptance.** WALK-18 on a device, **day mode**, switching tabs repeatedly: no shadow outline appears
+around any card at any point in the transition. Re-check in dark mode that nothing regressed (it had no
+elevation to begin with, so this should be a no-op there).
+
+**🚦 The owner may make this moot.** They asked whether motion should be removed altogether. If the answer
+is yes, deleting `ScreenFade` from [`RitualsApp.js:885`](../src/RitualsApp.js#L885) resolves this row by
+subtraction and is a smaller change than any fix above. **Do not decide that here — see the open question
+in `PROGRESS.md`.**
+
+**Commit:** `fix(motion): the tab transition stops outlining every card in day mode (IMP-111)`
