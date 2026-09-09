@@ -36,7 +36,7 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 >
 > | If this chat is… | Take |
 > | --- | --- |
-> | a **build task** | ✅ **IMP-102, IMP-104 and IMP-107 are done** (`3e7cf1c`, `792a611`, `f7b27bb`). 🟢 **[IMP-106](docs/specs-open.md#imp-106) is ready to build** — fully specced, no decision needed. 🟢 **[IMP-103](docs/specs-open.md#imp-103) is NOT a code task** — the phone never had IMP-100/101; it ships with the same OTA. 🚡 **[IMP-105](docs/specs-open.md#imp-105) is waiting on ONE owner check (C3) — do not open an editor on it.** |
+> | a **build task** | ✅ **IMP-102, IMP-104, IMP-106 and IMP-107 are done** (`3e7cf1c`, `792a611`, `5ab7da7`, `f7b27bb`). 🟢 **[IMP-103](docs/specs-open.md#imp-103) is NOT a code task** — the phone never had IMP-100/101; it ships with the same OTA. 🚡 **[IMP-105](docs/specs-open.md#imp-105) is waiting on ONE owner check (C3) — do not open an editor on it.** No other build task is ready — the queue is empty of code work until IMP-105's C3 lands or the owner opens a new IMP row. |
 > | a **runtime walk** | 🚦 **START WITH [WALK-19a](docs/walk-open.md#walk-19a--the-imp-105-isolation-sitting-run-this-one-on-its-own) — the IMP-105 isolation sitting, ~20 min, needs no OTA, and it is the only thing standing between vc15 and promotion.** Then [`docs/walk-open.md`](docs/walk-open.md), and its index says what is left. 🔴 **WALK-19 re-ran 2026-09-08: steps 3, 4a, 4b, 4c, 4d, 4f, 5, 6 all PASS.** Two new defects found: IMP-105 (critical, blocks promotion — still open) and IMP-104 (✅ fixed in code 2026-09-09, `792a611` — not yet re-walked; step 7 owes the re-check). **Step 10 is blocked on IMP-105 being fixed and re-walked; step 8 (real money) is deliberately held for last.** Read WALK-19's RE-RUN result block before touching it again. Also open: WALK-12, WALK-18. |
 > | a **design request** | See "Claude Design" below. The live request is **Insights**. |
 >
@@ -80,7 +80,7 @@ preflight. Detail → [`docs/build-log.md`](docs/build-log.md).
 
 **Current stack:** Expo SDK **54** · RN **0.81.5** · React **19.1.0** · **New Architecture** ·
 **Reanimated 4.1.1 + worklets 0.5.1** · `targetSdkVersion` **36**, `minSdk` **24** ·
-`npm test` → **1102 passed, 98 suites** (verified 2026-09-09) + **3 zone tests × 2 pinned zones**.
+`npm test` → **1104 passed, 99 suites** (verified 2026-09-09) + **3 zone tests × 2 pinned zones**.
 ⚠️ **Run `npm test`, not bare `npx jest`**, or the zone half is skipped. Version-checking a phone, the
 track-reading script and the rest of the stack notes are in [`docs/playbook.md`](docs/playbook.md).
 
@@ -106,7 +106,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 104 | **`tier: 'owned'` means free and `Shop.js` never reads it.** `palState`/`skyState` consult only `'plus'`, so a default that isn't currently applied falls to `'buy'` and `PalTag` prints the tier string as an ember price. **Worse: the card is tappable — `embers < 'owned'` is a NaN compare, so the guard passes, `embers` becomes `NaN`, serialises to `null`, and reads back as 0. One tap on a free item wipes the balance.** | OTA | ✅ **code-complete, archived** in `docs/build-log.md` — `792a611`. **1085 passed, 97 suites** (was 1079/96), export clean, +6 tests, the two bug-reproducing pairs proven red first. ⚠️ **No new walk of its own** — add to WALK-19 step 7 |
 | 105 | 🚦 **Reinstall + Restore says "Nothing to restore."** Source review ruled out the embedded bundle, `ENTITLEMENT_ID`, and `restore()`/`toEntitlement()` (step 4f is the control — identical code passed minutes earlier). **Owner's dashboard checks 2026-09-08 killed the transfer-setting theory (it is set to "Transfer to new App User ID") and produced a better one: RevenueCat holds NO customer with an active entitlement.** Google compresses license-tester subscriptions — monthly renews every 5 min, yearly every 30 min, auto-cancelled after 6 renewals — so the test sub very plausibly **expired during the walk**, making "Nothing to restore" correct. | TBD | 🟠 **Still gates `internal` → `production` — unproven, not known broken.** Four checks (C1–C4) settle it; C1 (was it monthly or annual?) does most of the work. 🚦 **The walk protocol is defective either way — buy→reinstall→restore must be one tight block** |
 | 107 | **A lapsed member kept Plus until they happened to background the app.** `useLaunchEntitlementCheck` bailed when `plus` was true (it existed for the *upgrade* case only), and the downgrade path was an `AppState` `'change'` listener — which does not fire on a cold start, because the app comes up already `active`. Observed by the owner 2026-09-09: no sub in Play, none in RevenueCat, app still said member. | OTA | ✅ **code-complete, archived** in `docs/build-log.md` — `f7b27bb`. **1089 passed, 97 suites** (was 1085/97), export clean, +8 tests, all proven red first. ⚠️ **Walk owed** — WALK-19 gains a cold-start-with-a-lapsed-sub step |
-| 106 | **A healthy build cannot say which JS it is running.** `describeUpdate()` already computes it and `RUNNING_BUNDLE` is built at `RitualsApp.js:115`, but its only consumer is the broken-gate alert, which renders only when `billingDiagnostic` is non-null **and** `!plus`. This is the gap that let IMP-103 be scoped as a billing defect. | OTA | 🟢 **READY TO BUILD** — a quiet always-present Version row on the You tab |
+| 106 | **A healthy build cannot say which JS it is running.** `describeUpdate()` already computes it and `RUNNING_BUNDLE` is built at `RitualsApp.js:115`, but its only consumer is the broken-gate alert, which renders only when `billingDiagnostic` is non-null **and** `!plus`. This is the gap that let IMP-103 be scoped as a billing defect. | OTA | ✅ **code-complete, archived** in `docs/build-log.md` — `5ab7da7`. **1104 passed, 99 suites** (was 1102/98), export clean, +2 tests, proven red first. ⚠️ **No walk of its own** — WALK-19's pre-flight gains reading the new Version row |
 | 022 | Save as PDF + About sheet (the two dead You-tab buttons) | Build | ⏸ **deferred (owner)** — spec in build-log → "Deferred specs"; **perk #6 gate** |
 | 044 | R8 on release builds (dev client was shipping to the public) | Build | 🟢 **code-complete, UNWALKED.** R8 must be walked on the build you actually ship, so it rides **vc15 or later**; walk = WALK-12, on hardware, last in the sitting |
 | 057 | Historical `dayKey` migration | Build | 🔒 **reserved, not missing** — cannot be written until real device numbers come back from the dev panel's "Data health" reporter. See below |
@@ -200,31 +200,7 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
-_2026-09-09, earlier (Sonnet — **IMP-107 fixed: a member's `plus` flag was never re-checked at a cold start,
-only on a background→foreground transition, so a lapsed subscription kept showing Plus indefinitely.**) —
-on `main`, committed, not shipped._
-
-**What finished.** **IMP-107**, archived to [`docs/build-log.md`](docs/build-log.md), commit `f7b27bb`.
-`entitlementSync.js`'s `useLaunchEntitlementCheck` renamed to `useLaunchEntitlementSync` and generalised to
-run unconditionally at mount (dropped the `if (plus)` bail), handing the raw `checkEntitlement()` result to
-an `onResult` callback instead of only reporting a found entitlement. `RitualsApp.js` extracted the AppState
-listener's body into a shared `applyEntitlementResult(result)` and wired both the AppState listener and the
-new launch hook through it — one downgrade policy, not two, no toast on the downgrade edge.
-
-**The proof.** +8 tests in `entitlementSync.test.js`: four on the hook itself (fires on `plus: true` with a
-verified-null result — the case the old hook skipped; reports `verified: false` on an unreachable store
-unchanged, per IMP-043; the lost-phone upgrade case unregressed; runs exactly once per mount), and four
-source-assertions on `RitualsApp.js` pinning the shared decision point and the no-toast rule. All eight
-proven red first (stashed the source fix, kept the tests, confirmed 8 failures against the pre-fix tree).
-**1089 passed, 97 suites** (was 1085/97), export clean. **Not shipped.**
-
-**The exact next step.** **Build [IMP-102](docs/specs-open.md#imp-102) next** (per-period +3 freezes, owner
-ruled 2026-09-09), then **[IMP-106](docs/specs-open.md#imp-106)** — both ready, no decision needed. Then one
-OTA carries IMP-100/101/102/104/106/107 together and WALK-19 re-runs under the two new pre-flight rules
-(record the bundle; buy→reinstall→restore as one tight block), gaining IMP-107's cold-start-with-a-lapsed-sub
-step. IMP-105 still waits on the owner's C3 check.
-
-_2026-09-09, latest (Sonnet — **IMP-102 fixed: the +3 streak candles were granted on every purchase-flow
+_2026-09-09, earlier (Sonnet — **IMP-102 fixed: the +3 streak candles were granted on every purchase-flow
 completion instead of once per paid period.**) — on `main`, committed, not shipped._
 
 **What finished.** **IMP-102**, archived to [`docs/build-log.md`](docs/build-log.md), commit `3e7cf1c`.
@@ -248,3 +224,26 @@ WALK-19 step 4f/5 a check that the candle count is unchanged after a same-period
 needed. Then one OTA carries IMP-100/101/102/104/106/107 together and WALK-19 re-runs under the two new
 pre-flight rules (record the bundle; buy→reinstall→restore as one tight block). IMP-105 still waits on the
 owner's C3 check.
+
+_2026-09-09, latest (Sonnet — **IMP-106 fixed: `RUNNING_BUNDLE` was already computed but only ever shown
+inside the broken-gate alert, so a healthy build or a member's device had no way to say which JS it was
+running — the exact gap that let IMP-103 be mis-scoped.**) — on `main`, committed, not shipped._
+
+**What finished.** **IMP-106**, archived to [`docs/build-log.md`](docs/build-log.md), commit `5ab7da7`.
+`YouScreen.js` gained a `runningBundle = null` prop rendered as a quiet, always-present "Version" `Row` in
+the General card (after "About Daily Rituals", before "Reset all data") — no `onPress`, unconditional on
+`plus`/`plusEnabled`. `RitualsApp.js` passes `runningBundle={RUNNING_BUNDLE}` alongside the other You-tab
+props; `describeUpdate` and `explainBillingDiagnostic` untouched.
+
+**The proof.** +2 tests in new `runningBundleVisible.test.js`, proven red first (the row was absent under
+`plus: true, billingDiagnostic: null`): a member with no diagnostic sees the row, and a non-member on the
+built-in bundle sees it too. **1104 passed, 99 suites** (was 1102/98), export clean. **Not shipped.** **No
+walk of its own** — WALK-19's pre-flight gains one step: read the Version row and record the update id
+before running any step.
+
+**The exact next step.** **The build queue is empty of ready code work.** [IMP-103](docs/specs-open.md#imp-103)
+ships with no code change (push `main`, OTA, re-walk step 4e); [IMP-105](docs/specs-open.md#imp-105) is
+blocked on the owner's C3 check — do not open an editor on it. The next build chat should check whether C3
+has landed or a new IMP row has been opened before assuming there is nothing to do. Otherwise: one OTA
+carries IMP-100/101/102/104/106/107 together, then WALK-19 re-runs under the two new pre-flight rules
+(record the bundle via the new Version row; buy→reinstall→restore as one tight block).

@@ -3928,6 +3928,33 @@ path was added; it would cheat a real subscriber out of a period they paid for.
 "Change plan" that does not start a new period, the candle count must be unchanged. The renewal half is not
 walkable by hand (an annual test subscription renews every 30 minutes) and is not a gate.
 
+## IMP-106 — a healthy build cannot say which JS it is running (2026-09-09)
+
+**Opened out of the IMP-103 investigation.** `describeUpdate(Updates)` already computed the right string
+([`diagnostic.js:33-40`](../src/billing/diagnostic.js#L33), added by IMP-087 for this reason) and
+`RUNNING_BUNDLE` was already built at `RitualsApp.js:115` — but its only consumer was the
+`explainBillingDiagnostic` alert, reachable only through the You-tab card that renders when
+`billingDiagnostic` is non-null **and** `!plus`. The running bundle was legible exactly when billing was
+broken and the user was not a member; invisible on a working build or a member's device. That gap is what
+let IMP-103 be scoped as a live billing defect when the real answer was an unshipped bundle.
+
+**What was built.**
+1. [`YouScreen.js`](../src/screens/YouScreen.js) — new prop `runningBundle = null`, rendered as a quiet,
+   always-present `Row` labelled "Version" in the General card, right after "About Daily Rituals" and
+   before "Reset all data". No `onPress`, unconditional on `plus`/`plusEnabled`.
+2. [`RitualsApp.js`](../src/RitualsApp.js) — passes `runningBundle={RUNNING_BUNDLE}` alongside the other
+   You-tab props. `explainBillingDiagnostic` and `describeUpdate` untouched — the alert stays the loud path
+   for a broken gate; this is the quiet path for a healthy one.
+
+**The proof.** New `__tests__/screens/runningBundleVisible.test.js`, +2 tests, proven red first (the row
+was absent with `plus: true, billingDiagnostic: null` — the combination that rendered nothing before this
+fix): a member with no diagnostic sees the Version row, and a non-member on the built-in bundle sees it too.
+**1104 passed, 99 suites** (was 1102/98), `npx expo export --platform android` clean. Commit `5ab7da7`.
+
+**Not walked separately.** No WALK row of its own — it changes how the *next* walk is read. WALK-19's
+pre-flight gains one step: read the Version row and record the update id in the result block before running
+any step.
+
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
 
 > Moved out of PROGRESS.md on 2026-07-31 to keep the live cursor lean once a second spec (IMP-032) opened. These are **not** finished work. If the owner revives one, lift the block back into PROGRESS.md as the ACTIVE TRACK.
@@ -3970,6 +3997,30 @@ walkable by hand (an annual test subscription renews every 30 minutes) and is no
 ---
 
 ## Session notes (archived from PROGRESS.md)
+
+_2026-09-09, earlier (Sonnet — **IMP-107 fixed: a member's `plus` flag was never re-checked at a cold start,
+only on a background→foreground transition, so a lapsed subscription kept showing Plus indefinitely.**) —
+on `main`, committed, not shipped._
+
+**What finished.** **IMP-107**, archived to [`docs/build-log.md`](docs/build-log.md), commit `f7b27bb`.
+`entitlementSync.js`'s `useLaunchEntitlementCheck` renamed to `useLaunchEntitlementSync` and generalised to
+run unconditionally at mount (dropped the `if (plus)` bail), handing the raw `checkEntitlement()` result to
+an `onResult` callback instead of only reporting a found entitlement. `RitualsApp.js` extracted the AppState
+listener's body into a shared `applyEntitlementResult(result)` and wired both the AppState listener and the
+new launch hook through it — one downgrade policy, not two, no toast on the downgrade edge.
+
+**The proof.** +8 tests in `entitlementSync.test.js`: four on the hook itself (fires on `plus: true` with a
+verified-null result — the case the old hook skipped; reports `verified: false` on an unreachable store
+unchanged, per IMP-043; the lost-phone upgrade case unregressed; runs exactly once per mount), and four
+source-assertions on `RitualsApp.js` pinning the shared decision point and the no-toast rule. All eight
+proven red first (stashed the source fix, kept the tests, confirmed 8 failures against the pre-fix tree).
+**1089 passed, 97 suites** (was 1085/97), export clean. **Not shipped.**
+
+**The exact next step.** **Build [IMP-102](docs/specs-open.md#imp-102) next** (per-period +3 freezes, owner
+ruled 2026-09-09), then **[IMP-106](docs/specs-open.md#imp-106)** — both ready, no decision needed. Then one
+OTA carries IMP-100/101/102/104/106/107 together and WALK-19 re-runs under the two new pre-flight rules
+(record the bundle; buy→reinstall→restore as one tight block), gaining IMP-107's cold-start-with-a-lapsed-sub
+step. IMP-105 still waits on the owner's C3 check.
 
 _2026-09-09, earlier (Sonnet — **IMP-104 fixed: `tier: 'owned'` defaults fell through to 'buy' and a tap
 wiped the ember balance to 0.**) — on `main`, committed, not shipped._

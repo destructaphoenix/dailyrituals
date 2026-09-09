@@ -22,14 +22,14 @@
 
 ---
 
-## The queue — three rows left
+## The queue — two rows left
 
 **The owner asked for the Plus purchase surface to be investigated hard after IMP-099.** It was, by reading
 the shipped SDK rather than our assumptions about it, and **the audit found a defect larger than IMP-099**.
 **Three more rows came out of the WALK-19 re-run on 2026-09-08 (hardware, owner-run)**, and all three were
 re-scoped the same day by reading source rather than trusting the field report. **Two of the three moved:
 IMP-103 is not a defect at all, and IMP-104 no longer needs the device dump it asked for.** The
-investigation also opened IMP-106.
+investigation also opened IMP-106, now code-complete and archived.
 
 | Row | What | Severity |
 | --- | --- | --- |
@@ -39,7 +39,7 @@ investigation also opened IMP-106.
 | [IMP-103](#imp-103) | Step 4e failed on a bundle without IMP-100/101 — **neither was ever pushed or shipped**. | 🟢 **Ship + re-walk. NO code change** |
 | IMP-104 | `tier: 'owned'` means free and `Shop.js` never reads it — and tapping such an item **wipes the ember balance to 0**. | ✅ **done — archived in `docs/build-log.md`** |
 | [IMP-105](#imp-105) | 🚦 Reinstall + Restore says "Nothing to restore." **Leading explanation is now a test subscription that expired mid-walk, not a defect.** | 🟠 **Four checks (C1–C4) settle it. Still gates promotion — unproven, not known broken. The walk protocol is defective regardless** |
-| [IMP-106](#imp-106) | A healthy build cannot say which JS bundle it is running — the gap that mis-scoped IMP-103. | 🟢 **Ready to build** |
+| IMP-106 | A healthy build cannot say which JS bundle it is running — the gap that mis-scoped IMP-103. | ✅ **done — archived in `docs/build-log.md`** |
 | IMP-107 | A lapsed member kept Plus until they happened to background the app — no launch-time downgrade check. | ✅ **done — archived in `docs/build-log.md`** |
 
 ---
@@ -211,54 +211,6 @@ the last would undo IMP-092. If C1–C4 implicate timing rather than expiry, the
 **Acceptance.** WALK-19 step 9, re-run under the amended protocol above: uninstall → reinstall from Play →
 Restore recovers a **still-live** entitlement without a second charge. Step 10 (cancel flow) stays behind
 it.
-
----
-
-## IMP-106
-
-### A healthy build cannot say which JS it is running — and that is what mis-scoped IMP-103
-
-**Lane: OTA.** Opened 2026-09-08 out of the IMP-103 investigation. Small, and it pays for itself on the
-next walk.
-
-**The finding.** IMP-103 was written up as a live billing defect and reserved a device-log measurement,
-when the real answer was that the phone was running a bundle two fixes behind. Nothing on screen could
-have said so. `describeUpdate(Updates)` ([`diagnostic.js:33-40`](../src/billing/diagnostic.js#L33))
-already computes exactly the right string — it was added by IMP-087 for this reason — and
-`RUNNING_BUNDLE` is computed at [`RitualsApp.js:115`](../src/RitualsApp.js#L115). But its **only** consumer
-is the `explainBillingDiagnostic` alert at [`RitualsApp.js:243`](../src/RitualsApp.js#L243), which is
-reachable only through the You-tab card at [`YouScreen.js:120-126`](../src/screens/YouScreen.js#L120) —
-and that card renders only when `billingDiagnostic` is non-null **and** `!plus`. In other words: the
-running bundle is legible exactly when billing is broken and the user is not a member. On a working build,
-and on any member's device, it is invisible.
-
-Every walk from here depends on knowing which bundle is on the phone. The OTA applies on the **second**
-launch, which makes "the fix didn't work" and "the fix isn't there yet" look identical — the exact
-confusion IMP-087's comment predicted, and the one that has now cost a spec.
-
-**Steps.**
-
-1. [`src/screens/YouScreen.js`](../src/screens/YouScreen.js) — add a new prop `runningBundle = null` and
-   render it as a quiet, always-present row at the **bottom** of the tab, near the existing
-   About/data rows rather than up in the Plus block. Not a warning, not an alert: label
-   `Version`, value the `runningBundle` string. No `onPress`. Unconditional on `plus` and on
-   `plusEnabled` — the whole point is that it survives a healthy build.
-2. [`src/RitualsApp.js`](../src/RitualsApp.js) — pass `runningBundle={RUNNING_BUNDLE}` where the other
-   You-tab props are handed over (alongside `billingDiagnostic` at line ~795). Leave
-   `explainBillingDiagnostic` exactly as it is; it stays the loud path for a broken gate.
-3. Do **not** change `describeUpdate` — its strings (`'built-in bundle (no update applied)'`,
-   `'update d42b7ec7 · 2026-09-08 04:58 UTC'`) are already written for a human and are already pinned by
-   tests.
-4. Tests, proven red first: a YouScreen render asserting the row is present with `plus: true` and
-   `billingDiagnostic: null` — the combination that renders nothing today.
-5. `npm test` green, **≥ 1079 passed / 96 suites**. `npx expo export --platform android` clean.
-6. Commit exactly:
-   `feat(you): the running bundle is readable on a healthy build (IMP-106)`
-7. Update `PROGRESS.md` and move this spec into `docs/build-log.md`.
-
-**Acceptance.** No walk of its own — it is *how* the next walk is read. WALK-19's pre-flight gains one
-step: read the Version row on the You tab and record the update id in the result block **before** running
-any step. A walk that does not record it cannot scope a defect.
 
 ---
 
