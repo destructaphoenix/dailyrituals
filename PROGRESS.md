@@ -245,8 +245,7 @@ gating the feature, and its test guards against a chat "fixing" it the wrong way
 now, apply the vocabulary later.** Both ember questions are answered — **cash → embers → candles is
 decided**; the **cap (3 or 5?) is the only one left**.
 
-**The exact next step.** 🔨 **Build [IMP-108](docs/specs-open.md#imp-108) → 109 → 110 → 111, in that order**,
-one chat each. All four are fully specced with no decisions left. ⚠️ **IMP-111 is a deletion and its test
-count legitimately DROPS** — say so in the note. 🔴 **When it lands, do not remove `react-native-reanimated`
-or `react-native-worklets`** — `usePressScale` still uses them, they are native, and dropping them closes
-the OTA lane. Then WALK-19 step 8, WALK-08, WALK-07, WALK-18 (day mode), and **WALK-12 (R8) last of all**.
+**The exact next step.** 🔨 **Build [IMP-108](docs/specs-open.md#imp-108) → 109 → 110 → 111, one chat each**,
+all specced, no decisions left. ⚠️ **IMP-111 is a deletion — its test count legitimately DROPS.** 🔴 **Do not
+remove `react-native-reanimated`/`react-native-worklets`** — `usePressScale` uses them, they are native, and
+dropping them closes the OTA lane. Then WALK-19 step 8, WALK-08/07, WALK-18 (day mode), **WALK-12 last**.
