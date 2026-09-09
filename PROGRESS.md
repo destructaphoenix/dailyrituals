@@ -36,7 +36,7 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 >
 > | If this chat is… | Take |
 > | --- | --- |
-> | a **build task** | ✅ **IMP-102, IMP-104, IMP-106 and IMP-107 are done** (`3e7cf1c`, `792a611`, `5ab7da7`, `f7b27bb`). 🟢 **[IMP-103](docs/specs-open.md#imp-103) is NOT a code task** — the phone never had IMP-100/101; it ships with the same OTA. 🚡 **[IMP-105](docs/specs-open.md#imp-105) is waiting on ONE owner check (C3) — do not open an editor on it.** No other build task is ready — the queue is empty of code work until IMP-105's C3 lands or the owner opens a new IMP row. |
+> | a **build task** | ✅ **IMP-102, IMP-104, IMP-106 and IMP-107 are done** (`3e7cf1c`, `792a611`, `5ab7da7`, `f7b27bb`) **and shipped by OTA 2026-09-10, together with IMP-100/101 — which closes [IMP-103](docs/specs-open.md#imp-103), a ship row that never had any code in it.** 🚡 **[IMP-105](docs/specs-open.md#imp-105) is waiting on ONE owner check (C3) — do not open an editor on it.** No other build task is ready — the queue is empty of code work until IMP-105's C3 lands or the owner opens a new IMP row. |
 > | a **runtime walk** | 🚦 **START WITH [WALK-19a](docs/walk-open.md#walk-19a--the-imp-105-isolation-sitting-run-this-one-on-its-own) — the IMP-105 isolation sitting, ~20 min, needs no OTA, and it is the only thing standing between vc15 and promotion.** Then [`docs/walk-open.md`](docs/walk-open.md), and its index says what is left. 🔴 **WALK-19 re-ran 2026-09-08: steps 3, 4a, 4b, 4c, 4d, 4f, 5, 6 all PASS.** Two new defects found: IMP-105 (critical, blocks promotion — still open) and IMP-104 (✅ fixed in code 2026-09-09, `792a611` — not yet re-walked; step 7 owes the re-check). **Step 10 is blocked on IMP-105 being fixed and re-walked; step 8 (real money) is deliberately held for last.** Read WALK-19's RE-RUN result block before touching it again. Also open: WALK-12, WALK-18. |
 > | a **design request** | See "Claude Design" below. The live request is **Insights**. |
 >
@@ -151,8 +151,10 @@ the two are indistinguishable. **Do not remove the fallback** — see WALK-19.
   then promote by hand (full review, ~7d). 🚦 **WALK-19 gates it and is failing on
   [IMP-105](docs/specs-open.md#imp-105)** — do not promote until it's fixed and WALK-19 step 9 re-passes.
   ⚠️ vc12 will not be promoted (owner, 2026-09-05) and vc14 must never be.
-- **🚦 `main` is still ahead of `origin/main`, unshipped.** This is what made the WALK-19 re-run's step 4e
-  read as a new defect (IMP-103) — every device walk is invalid until `main` is pushed and OTA'd. See IMP-103.
+- **🚀 `main` pushed and OTA'd 2026-09-10** — the 19-commit backlog that made the WALK-19 re-run's step 4e
+  read as a new defect (IMP-103). One `Release-Lane: ota` trailer carries **IMP-100, 101, 102, 104, 106 and
+  107** together. ⚠️ **Group id and manifest read-back recorded in the session note below — an OTA is not
+  shipped until `rcAndroidKey` has been read back non-empty** (IMP-086). It applies on the **second** launch.
 - **🟠 IMP-105 — still unproven, not known broken.** Dashboard round (2026-09-08) and C1 (2026-09-09,
   purchase was ANNUAL) narrowed it but didn't settle it. **C3 is the only remaining check that carries
   information** — full detail and reasoning in [`docs/specs-open.md`](docs/specs-open.md#imp-105). **Still
