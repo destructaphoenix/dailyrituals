@@ -22,7 +22,7 @@
 
 ---
 
-## The queue — two rows left
+## The queue — one row left, and it is not a code task
 
 **The owner asked for the Plus purchase surface to be investigated hard after IMP-099.** It was, by reading
 the shipped SDK rather than our assumptions about it, and **the audit found a defect larger than IMP-099**.
@@ -36,65 +36,11 @@ investigation also opened IMP-106, now code-complete and archived.
 | IMP-100 | Every RevenueCat purchase error becomes `failed`. `e.code` is a **number**, our mapper matches **names**. | ✅ **done — archived in `docs/build-log.md`** |
 | IMP-101 | The `failed` card claims "you weren't charged" and never asks the store. | ✅ **done — archived in `docs/build-log.md`** |
 | IMP-102 | Completing a purchase grants **+3 freezes every time**, not once. | ✅ **done — archived in `docs/build-log.md`** |
-| [IMP-103](#imp-103) | Step 4e failed on a bundle without IMP-100/101 — **neither was ever pushed or shipped**. | 🟢 **Ship + re-walk. NO code change** |
+| IMP-103 | Step 4e failed on a bundle without IMP-100/101 — **neither was ever pushed or shipped**. | ✅ **done — shipped 2026-09-10, group `f961b427`; archived in `docs/build-log.md`** |
 | IMP-104 | `tier: 'owned'` means free and `Shop.js` never reads it — and tapping such an item **wipes the ember balance to 0**. | ✅ **done — archived in `docs/build-log.md`** |
 | [IMP-105](#imp-105) | 🚦 Reinstall + Restore says "Nothing to restore." **Leading explanation is now a test subscription that expired mid-walk, not a defect.** | 🟠 **Four checks (C1–C4) settle it. Still gates promotion — unproven, not known broken. The walk protocol is defective regardless** |
 | IMP-106 | A healthy build cannot say which JS bundle it is running — the gap that mis-scoped IMP-103. | ✅ **done — archived in `docs/build-log.md`** |
 | IMP-107 | A lapsed member kept Plus until they happened to background the app — no launch-time downgrade check. | ✅ **done — archived in `docs/build-log.md`** |
-
----
-
-## IMP-103
-
-### The device that failed step 4e never had IMP-100 or IMP-101 — ship them, then re-walk
-
-**Lane: OTA (ship only). NO CODE CHANGE.** Opened from the WALK-19 re-run, 2026-09-08 (hardware,
-owner-run), step 4e; re-scoped 2026-09-08 after reading what was actually running on that phone.
-
-**The finding as walked.** Tapped Subscribe while already a Plus member. Google's own sheet said the
-account already holds the subscription; the app showed **"That didn't go through."**
-
-**Why it is not a mapping defect.** The phone was running OTA group `d42b7ec7`, published from commit
-`768bc88` at 04:58 on 2026-09-08. IMP-100 landed at 12:30 (`3774195`) and IMP-101 at 12:39 (`f170c0a`) —
-**after** it. Neither commit is pushed (`main` is 4 ahead of `origin/main`, which still points at
-`ea02d23`) and **neither carries a `Release-Lane: ota` trailer**, so CI never published them. The last
-commit that carries one is `c2f35a1`, which also predates both. Read the shipped tree and it is
-unambiguous:
-
-- `git show 768bc88:src/billing/mapError.js` is the **pre-IMP-100 name matcher** — twelve lines, no
-  `RC_CODE` table. `e.code` of `"6"` falls straight through to `return 'failed'`.
-- `git show 768bc88:src/screens/PlusFlow.js` has **no reconcile in `run()`** and a two-argument
-  `resultCopy(kind, mode)` — IMP-101 is absent.
-
-**The copy is the timestamp.** After IMP-101, a `failed` card in *buy* mode never says "That didn't go
-through" — `resultCopy` rewrites it to **"We couldn't confirm that."** ([`PlusFlow.js:119-125`](../src/screens/PlusFlow.js#L119)).
-The only build that renders the literal `RESULT_META.failed` title is one without IMP-101. The owner's own
-words date the bundle.
-
-**So step 4e reproduced the bug IMP-100 fixed, on a build without the fix.** There is nothing here to
-diagnose and nothing to guess a second mapping for.
-
-**Steps.**
-
-1. **No source file changes.** If you find yourself editing `mapError.js`, stop — you are on the wrong row.
-2. Push `main` (`3774195`, `90c6759`, `f170c0a`, `469a4d2`) and ship IMP-100 + IMP-101 by OTA the normal
-   way: a `Release-Lane: ota` trailer on the pushed commit. **Never `eas update` by hand.**
-3. Read the manifest back and record the new group id in `PROGRESS.md`, same as `768bc88` did for
-   `d42b7ec7`. The OTA applies on the **second** launch — say so when handing the phone back.
-4. Re-open WALK-19 step 4e as owed. Move this spec to `docs/build-log.md`.
-
-**Acceptance.** Not a test count — a walk. WALK-19 step 4e on a device confirmed (via IMP-106's row) to be
-running the new group: tapping Subscribe while already a member must not re-charge and must not show a
-`failed` card.
-
-**One residual, deliberately left open and NOT a blocker.** Nobody has yet observed which numeric code
-Play actually sends for "already subscribed" — `6` (`PRODUCT_ALREADY_PURCHASED_ERROR`) and `7`
-(`RECEIPT_ALREADY_IN_USE_ERROR`) are what `mapError.js` bets on, and the bet is reasonable but unproven.
-It is low-stakes now: with IMP-101 shipped, a buy that maps to `failed` for an account that *does* hold
-the entitlement gets reconciled by `run()` and lands on the `success` card instead
-([`PlusFlow.js:299-303`](../src/screens/PlusFlow.js#L299)). Worst case the wording reads "You're in."
-instead of "You already have Plus." — cosmetic, and no one is charged twice either way. Record what 4e
-shows; do not pre-emptively widen the table.
 
 ---
 

@@ -3996,7 +3996,89 @@ any step.
 
 ---
 
-## Session notes (archived from PROGRESS.md)
+## IMP-103
+
+### The device that failed step 4e never had IMP-100 or IMP-101 — ship them, then re-walk
+
+**Lane: OTA (ship only). NO CODE CHANGE.** Opened from the WALK-19 re-run, 2026-09-08 (hardware,
+owner-run), step 4e; re-scoped 2026-09-08 after reading what was actually running on that phone.
+
+**The finding as walked.** Tapped Subscribe while already a Plus member. Google's own sheet said the
+account already holds the subscription; the app showed **"That didn't go through."**
+
+**Why it is not a mapping defect.** The phone was running OTA group `d42b7ec7`, published from commit
+`768bc88` at 04:58 on 2026-09-08. IMP-100 landed at 12:30 (`3774195`) and IMP-101 at 12:39 (`f170c0a`) —
+**after** it. Neither commit is pushed (`main` is 4 ahead of `origin/main`, which still points at
+`ea02d23`) and **neither carries a `Release-Lane: ota` trailer**, so CI never published them. The last
+commit that carries one is `c2f35a1`, which also predates both. Read the shipped tree and it is
+unambiguous:
+
+- `git show 768bc88:src/billing/mapError.js` is the **pre-IMP-100 name matcher** — twelve lines, no
+  `RC_CODE` table. `e.code` of `"6"` falls straight through to `return 'failed'`.
+- `git show 768bc88:src/screens/PlusFlow.js` has **no reconcile in `run()`** and a two-argument
+  `resultCopy(kind, mode)` — IMP-101 is absent.
+
+**The copy is the timestamp.** After IMP-101, a `failed` card in *buy* mode never says "That didn't go
+through" — `resultCopy` rewrites it to **"We couldn't confirm that."** ([`PlusFlow.js:119-125`](../src/screens/PlusFlow.js#L119)).
+The only build that renders the literal `RESULT_META.failed` title is one without IMP-101. The owner's own
+words date the bundle.
+
+**So step 4e reproduced the bug IMP-100 fixed, on a build without the fix.** There is nothing here to
+diagnose and nothing to guess a second mapping for.
+
+**Steps.**
+
+1. **No source file changes.** If you find yourself editing `mapError.js`, stop — you are on the wrong row.
+2. Push `main` (`3774195`, `90c6759`, `f170c0a`, `469a4d2`) and ship IMP-100 + IMP-101 by OTA the normal
+   way: a `Release-Lane: ota` trailer on the pushed commit. **Never `eas update` by hand.**
+3. Read the manifest back and record the new group id in `PROGRESS.md`, same as `768bc88` did for
+   `d42b7ec7`. The OTA applies on the **second** launch — say so when handing the phone back.
+4. Re-open WALK-19 step 4e as owed. Move this spec to `docs/build-log.md`.
+
+**Acceptance.** Not a test count — a walk. WALK-19 step 4e on a device confirmed (via IMP-106's row) to be
+running the new group: tapping Subscribe while already a member must not re-charge and must not show a
+`failed` card.
+
+**One residual, deliberately left open and NOT a blocker.** Nobody has yet observed which numeric code
+Play actually sends for "already subscribed" — `6` (`PRODUCT_ALREADY_PURCHASED_ERROR`) and `7`
+(`RECEIPT_ALREADY_IN_USE_ERROR`) are what `mapError.js` bets on, and the bet is reasonable but unproven.
+It is low-stakes now: with IMP-101 shipped, a buy that maps to `failed` for an account that *does* hold
+the entitlement gets reconciled by `run()` and lands on the `success` card instead
+([`PlusFlow.js:299-303`](../src/screens/PlusFlow.js#L299)). Worst case the wording reads "You're in."
+instead of "You already have Plus." — cosmetic, and no one is charged twice either way. Record what 4e
+shows; do not pre-emptively widen the table.
+
+**✅ SHIPPED 2026-09-10.** Pushed as part of the 19-commit backlog; one `Release-Lane: ota` trailer on `1f2d6c4` carried IMP-100/101 alongside 102/104/106/107. CI run `34390363861`, group `f961b427-a6de-4fc9-bb86-951eae3efe04`, runtime `1.0.9`, manifest read back with a non-empty `rcAndroidKey`. **WALK-19 step 4e owes its re-run on this bundle.**
+
+---
+
+## Session notes
+
+_2026-09-09, earlier (Sonnet — **IMP-102 fixed: the +3 streak candles were granted on every purchase-flow
+completion instead of once per paid period.**) — on `main`, committed, not shipped._
+
+**What finished.** **IMP-102**, archived to [`docs/build-log.md`](docs/build-log.md), commit `3e7cf1c`.
+New pure `src/billing/freezeGrant.js` keys the grant on the entitlement's `renewISO` (store-authoritative,
+immune to the device clock) rather than the device clock or a completion event; `'no-expiry'` sentinel
+grants once for an entitlement with no expiration date. Deleted the flat `setFreezes((f) => f + 3)` from
+`subscribe()`; a new `React.useEffect` keyed on `[liveEntitlement, lastFreezeGrantPeriod]` covers all five
+places the app learns a live entitlement (subscribe, reconcileAfterAbandon, doRestore, the AppState
+listener, the launch entitlement sync) with one piece of code. `lastFreezeGrantPeriod` added to
+`PERSISTED_KEYS` (no schema bump) and both persisted-slice literals in `RitualsApp.js`.
+
+**The proof.** +12 tests: `freezeGrant.test.js` covers the full decision table (first purchase, same-period
+restore/owned/change-plan/relaunch all silent, renewal, cancel-then-resubscribe, `null` entitlement,
+`active: false`, the `no-expiry` sentinel, and the same-period-restore regression) plus a persistence
+round-trip assertion. As new functionality with no prior broken behavior to reproduce, redness was proven
+by stashing the new source and test files together and confirming Jest matched zero tests, then restoring.
+**1102 passed, 98 suites** (was 1089/97), export clean. **Not shipped.** **No new walk of its own** — add to
+WALK-19 step 4f/5 a check that the candle count is unchanged after a same-period Restore or Change-plan.
+
+**The exact next step.** **Build [IMP-106](docs/specs-open.md#imp-106) next** — fully specced, no decision
+needed. Then one OTA carries IMP-100/101/102/104/106/107 together and WALK-19 re-runs under the two new
+pre-flight rules (record the bundle; buy→reinstall→restore as one tight block). IMP-105 still waits on the
+owner's C3 check.
+ (archived from PROGRESS.md)
 
 _2026-09-09, earlier (Sonnet — **IMP-107 fixed: a member's `plus` flag was never re-checked at a cold start,
 only on a background→foreground transition, so a lapsed subscription kept showing Plus indefinitely.**) —
