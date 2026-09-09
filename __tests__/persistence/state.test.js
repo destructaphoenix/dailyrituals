@@ -186,6 +186,20 @@ describe('lastSavedAt stamp (IMP-029 restore detection)', () => {
   });
 });
 
+describe('lastFreezeGrantPeriod persistence (IMP-102 — per-period candle grant)', () => {
+  test('lastFreezeGrantPeriod is a persisted key', () => {
+    expect(PERSISTED_KEYS).toContain('lastFreezeGrantPeriod');
+  });
+  test('pickPersisted carries lastFreezeGrantPeriod through', () => {
+    expect(pickPersisted({ lastFreezeGrantPeriod: '2026-10-09T00:00:00.000Z', junk: 1 }))
+      .toEqual({ lastFreezeGrantPeriod: '2026-10-09T00:00:00.000Z' });
+  });
+  test('survives a serialize/deserialize round-trip', () => {
+    const result = deserialize(serialize({ lastFreezeGrantPeriod: '2026-10-09T00:00:00.000Z' }));
+    expect(result.lastFreezeGrantPeriod).toBe('2026-10-09T00:00:00.000Z');
+  });
+});
+
 describe('mergeWithDefaults', () => {
   test('fills missing keys from defaults but keeps loaded values', () => {
     const merged = mergeWithDefaults({ embers: 999 }, { embers: 360, streak: 4 });

@@ -44,6 +44,7 @@ import { billingDiagnostic, describeUpdate } from './billing/diagnostic';
 import { PLUS_ENABLED, EMBER_PACKS_ENABLED } from './billing/config';
 import { formatRenewDate } from './billing/format';
 import { checkEntitlement, nextPlusState, useLaunchEntitlementSync } from './billing/entitlementSync';
+import { freezeGrantFor } from './billing/freezeGrant';
 import { saveState } from './persistence/storage';
 import { pickPersisted } from './persistence/state';
 import { pendingRestoreInventory } from './persistence/restoreQuarantine';
@@ -217,6 +218,9 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   // Which year's Annual Recap (IMP-046) is open, if any — null means closed.
   const [openRecapYear, setOpenRecapYear] = useState(null);
   const [liveEntitlement, setLiveEntitlement] = useState(null);
+  // IMP-102: the paid period the +3 candle grant was last recorded for — keyed
+  // on the entitlement's renewISO, not the device clock. See freezeGrant.js.
+  const [lastFreezeGrantPeriod, setLastFreezeGrantPeriod] = useState(initialState.lastFreezeGrantPeriod ?? null);
   // IMP-082: null when there is no live date — every member surface drops the
   // renewal claim rather than falling back to the RENEW_DATE design mock.
   const renewLabel = liveEntitlement ? formatRenewDate(liveEntitlement.renewISO) : null;
@@ -304,9 +308,24 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     else if (plan) setActivePlan(plan);
     if (entitlement) setLiveEntitlement(entitlement);
     setPaywall(false);
-    setFreezes((f) => f + 3);
     showToast('Welcome to Plus — enjoy.');
   };
+
+  // IMP-102: +3 candles once per paid period, keyed on the entitlement's
+  // renewISO rather than firing on every completion. Hangs off
+  // `liveEntitlement` changing so it covers all five places the app learns a
+  // live entitlement (subscribe, reconcileAfterAbandon, doRestore, the
+  // AppState listener, and the launch entitlement sync) with one piece of
+  // code, not five.
+  React.useEffect(() => {
+    const grant = freezeGrantFor(liveEntitlement, lastFreezeGrantPeriod);
+    if (!grant) return;
+    setFreezes((f) => f + grant.freezes);
+    // A first grant is already covered by subscribe()'s welcome toast — only
+    // a renewal (a non-null prior period) is otherwise invisible.
+    if (lastFreezeGrantPeriod !== null) showToast('+3 candles — your Plus perk renewed');
+    setLastFreezeGrantPeriod(grant.period);
+  }, [liveEntitlement, lastFreezeGrantPeriod]);
 
   // Cancel: route to the OS subscription settings (Apple/Google own cancellation),
   // then optimistically mark ending. A focus-refresh (below) corrects from truth.
@@ -538,14 +557,14 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
         entries, xp, done, quests, freezes, frozenDays, embers, plus,
         activePalette, ownedPalettes, activeSky, ownedSkies,
         subCanceled, activePlan, lastActiveDay, settings, lastBackupAt, promptDeck, trash,
-        freeRestoresUsed,
+        freeRestoresUsed, lastFreezeGrantPeriod,
       }));
     }, 400);
     return () => clearTimeout(id);
   }, [mode, entries, xp, done, quests, freezes, frozenDays, embers, plus,
     activePalette, ownedPalettes, activeSky, ownedSkies,
     subCanceled, activePlan, lastActiveDay, settings, lastBackupAt, promptDeck, trash,
-    freeRestoresUsed]);
+    freeRestoresUsed, lastFreezeGrantPeriod]);
 
   const complete = ({ did, wished, moods }) => {
     const entry = { id: 'new' + Date.now(), ...entryDateParts(), dayKey: dayKeyOf(), moods, did, wished, streak: true };
@@ -661,7 +680,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     entries, xp, done, quests, freezes, frozenDays, embers, plus,
     activePalette, ownedPalettes, activeSky, ownedSkies,
     subCanceled, activePlan, lastActiveDay, settings, lastBackupAt, promptDeck, trash,
-    freeRestoresUsed,
+    freeRestoresUsed, lastFreezeGrantPeriod,
   });
 
   const doExport = async () => {
