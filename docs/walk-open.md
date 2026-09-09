@@ -140,8 +140,9 @@ and `b773352` remain unproven on any running app; the row reopens whenever the o
 ⚠️ **The gap no closed row covers, and it does not go away by being named:** real doze, OEM battery managers,
 delivery to a real share target, and Google's own backup schedule have never been exercised anywhere.
 
-**Everything here runs on `feat/design-push` — a branch that is never pushed to GitHub** (owner instruction,
-2026-08-17). **Nothing is promoted `internal` → `production`.**
+⚠️ **The branch rule is OVER (2026-09-08).** `feat/design-push` fast-forwarded onto `main` and `main` is
+the lane now; CI (`release.yml`) ships from it on a `Release-Lane:` trailer. **Never `eas update` by hand.**
+**Nothing is promoted `internal` → `production`.**
 
 | # | Gate | Walk | Covers | Target | Runner | Status |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -163,6 +164,7 @@ delivery to a real share target, and Google's own backup schedule have never bee
 | WALK-16 | 🚦 | [The New Architecture cold start](build-log.md#walk-16) | IMP-076 | **device** (native runtime) | 👤 | ✅ **2026-09-05 — closed on emulator evidence at owner's instruction.** All 7 steps exercised across two agent-run sittings (1-3 New Arch live: Bridgeless + Fabric + TurboModule; 4-7 storage / notification scheduling / export-share-reimport / Auto Backup via T5 with the quarantine offering not imposing). **Owner's call 2026-09-05: emulator results are recorded as done, not smoke.** ⚠️ **Named gap — never exercised anywhere:** real doze, OEM battery managers, delivery to a real share target, Google's own backup schedule. **Unblocks IMP-077.** |
 | WALK-17 | 🚦 | [Edge-to-edge, re-audited under New Arch](build-log.md#walk-17) | IMP-076, IMP-027 regression | **device** | 👤 (visual) | ✅ **2026-09-05 — emulator, agent-run.** All four tabs clean under status bar + gesture bar in **both** day and night; bottom nav and write-FAB correct in **both** gesture and 3-button nav; onboarding + setup also clean. Sheets checked: trash, achievements, shop — the last two at night **and** max font. ⚠️ **Not opened: write flow, reading sheet, mood manager.** |
 | WALK-18 | 🎨 | [The app moves](#walk-18--the-app-moves) | IMP-077 | **device** (mid-range, real frame pacing) | 👤 (visual) | ⬜ — **branch-only. UNBLOCKED 2026-09-05: WALK-16 closed and IMP-077 landed.** ✅ **The build now exists: v1.0.8 / vc14 shipped to Play `internal` 2026-09-05 19:09** (EAS `87f81b24…`, submission `4b7cf3a2…`, from commit `6590834`). IMP-077 added `react-native-reanimated` + `react-native-worklets` (native deps), so **neither vc13 artifact carries this code** — install vc14 from Play, not an older APK. **An emulator cannot settle this row** — it renders dropped frames as smooth, which is the thing being judged. The jest suite is blind here too: the Reanimated mock no-ops every hook |
+| WALK-19a | 🚦 | [The IMP-105 isolation sitting](#walk-19a--the-imp-105-isolation-sitting-run-this-one-on-its-own) | [IMP-105](specs-open.md#imp-105) | **device** (real Play Billing + a license tester) | 👤 | ⬜ — **RUN THIS FIRST, ON ITS OWN, ~20 MINUTES. It is the only thing standing between vc15 and `production`.** Carved out of WALK-19 step 9 on 2026-09-09 because the 2026-09-08 attempt put a full perks tour between the purchase and the reinstall, and a license-tester subscription lives ~30 min (monthly) / ~3 hrs (annual) — so that ordering **structurally cannot test what step 9 exists to test**. Buy annual → uninstall → reinstall → Restore, as one tight block, writing the clock time next to every step. **Needs no pending OTA** (`restore()` and `toEntitlement()` are identical in the live group `d42b7ec7`). A result without the elapsed time settles nothing |
 | WALK-19 | 🚦 | [Money actually changes hands](#walk-19--money-actually-changes-hands) | **Phase 10b.5**, IMP-028, IMP-082 + IMP-083 (steps 5 and 10), IMP-084/085/086/087, **IMP-088** | **device** (real Play Billing + a license tester) | 👤 | 🔴 **2026-09-08 (hardware, owner-run) — steps 3, 4a, 4b, 4c, 4d, 4f, 5, 6 ✅ PASS.** [IMP-105](specs-open.md#imp-105) **blocks release**: reinstall + Restore on an account with an active subscription says "Nothing to restore" — and it is the one finding that survived the same-day source review (step 4f is its control: identical code passed minutes earlier). [IMP-104](specs-open.md#imp-104): default palette/sky items render as ember-locked, cause found, ready to build — **and tapping one wipes the ember balance to 0**. ⚠️ **Step 4e is INVALID, not a failure** — the phone ran OTA `d42b7ec7`, which predates IMP-100 **and** IMP-101; neither was ever pushed or shipped ([IMP-103](specs-open.md#imp-103)), so 4e owes a re-run after that OTA. Aeroplane-mode Restore reproduces the known IMP-092 cache limit (not new). Step 10 blocked on IMP-105; step 8 (real money) deliberately held for last. Full detail in the RE-RUN section below. **Nothing is promoted `internal` → `production`.** |
 
 ---
@@ -347,8 +349,9 @@ will render dropped frames as smooth, which is the exact thing being judged.
 
 ⚠️ **This row needs a NEW build before it can start.** IMP-077 installed `react-native-reanimated@~4.1.1`
 and `react-native-worklets@0.5.1` — native deps — and `bump:native` moved the tree to **v1.0.8 / vc14**.
-**Neither vc13 artifact contains this code**, and no amount of OTA reaches it. Cut a build from
-`feat/design-push` at vc14 for this walk. (WALK-07 and WALK-03 step 4 are pure-JS and do *not* need it.)
+**Neither vc13 artifact contains this code**, and no amount of OTA reaches it. ✅ **That build exists and
+is on Play `internal`** — v1.0.9 / vc15 supersedes the vc14 named below; install from Play, do not cut a
+new one. (WALK-07 and WALK-03 step 4 are pure-JS and do *not* need it.)
 
 ⚠️ **Nothing in the test suite is evidence for any step below.** `jest.setup.js` mocks
 `react-native-reanimated` to a no-op: no shared value updates, no animated styles, nothing scheduled on
