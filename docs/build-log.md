@@ -3883,6 +3883,51 @@ cancelled-and-expired subscription, cold-start the app without ever backgroundin
 that first screen; and in aeroplane mode a real member cold-starting must keep Plus (the check fails,
 nothing changes).
 
+## IMP-102 — the +3 streak candles are a per-period perk, not a per-completion one (2026-09-09)
+
+**Owner ruling, 2026-09-09: per-period, not a joining gift.** `subscribe()` ended with
+`setFreezes((f) => f + 3)` and ran on **every** completion (`success`, `owned` and `restored` all carry
+`dismissTo: 'complete'` → `onComplete` → `subscribe()`), so restoring purchases or reaching the `owned`
+card granted another 3 freezes each time, and "Change plan" reopening the paywall for an existing member
+made the loop reachable by hand. With no server, the only durable, store-authoritative marker of *which*
+period this is is the entitlement's own `renewISO` (RevenueCat's `expirationDate`) — it changes on a
+renewal and on nothing else.
+
+**What was built.**
+1. **New file** [`freezeGrant.js`](../src/billing/freezeGrant.js) — pure `freezeGrantFor(entitlement,
+   lastGrantedPeriod)`: returns `null` when nothing is owed, or `{ period, freezes }` to grant and record.
+   `renewISO` is the period key; `'no-expiry'` is the sentinel for an entitlement with no expiration date,
+   granting exactly once ever rather than on every read.
+2. [`persistence/state.js`](../src/persistence/state.js) — added `'lastFreezeGrantPeriod'` to
+   `PERSISTED_KEYS`. No schema bump, no migrator: an absent key reads as `undefined` → `?? null`, exactly
+   right for a user never granted.
+3. [`RitualsApp.js`](../src/RitualsApp.js) — deleted the flat `setFreezes((f) => f + 3)` from `subscribe()`
+   (its welcome toast is untouched). Added a `React.useEffect` keyed on `[liveEntitlement,
+   lastFreezeGrantPeriod]` that calls `freezeGrantFor` and applies the grant — this covers all five places
+   the app learns a live entitlement (`subscribe`, `reconcileAfterAbandon`, `doRestore`, the AppState
+   listener, `useLaunchEntitlementSync`) with one piece of code. A renewal (non-null prior period) also
+   shows a toast ("+3 candles — your Plus perk renewed"); a first grant does not, since `subscribe()`
+   already shows "Welcome to Plus — enjoy." `lastFreezeGrantPeriod` was added to both persisted-slice
+   literals (the autosave effect and `currentSlice()` for backups) and the autosave effect's dependency
+   array.
+
+**The proof.** New `__tests__/billing/freezeGrant.test.js` covers the full decision table (first purchase,
+same-period restore/owned/change-plan/relaunch all silent, renewal, cancel-then-resubscribe, `null`
+entitlement, `active: false`, the `no-expiry` sentinel granting once then never again, and the same-period
+restore regression) plus a persistence round-trip assertion in `state.test.js`. As new functionality (no
+prior broken behavior to reproduce), redness was proven by stashing the new source and test files together
+and confirming Jest found zero matching tests, then restoring and confirming all pass. **1102 passed, 98
+suites** (was 1089/97), `npx expo export --platform android` clean. Commit `3e7cf1c`.
+
+**One accepted side effect, not a bug.** An existing member upgrading to this build has no
+`lastFreezeGrantPeriod`, so the first entitlement read after the update grants +3 once — correct under the
+owner's ruling (they are in a paid period the app never recorded). No back-fill or "seed without granting"
+path was added; it would cheat a real subscriber out of a period they paid for.
+
+**Not walked separately.** No new WALK row — WALK-19 gains one line at step 4f/5: after a Restore or a
+"Change plan" that does not start a new period, the candle count must be unchanged. The renewal half is not
+walkable by hand (an annual test subscription renews every 30 minutes) and is not a gate.
+
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
 
 > Moved out of PROGRESS.md on 2026-07-31 to keep the live cursor lean once a second spec (IMP-032) opened. These are **not** finished work. If the owner revives one, lift the block back into PROGRESS.md as the ACTIVE TRACK.
@@ -3925,6 +3970,27 @@ nothing changes).
 ---
 
 ## Session notes (archived from PROGRESS.md)
+
+_2026-09-09, earlier (Sonnet — **IMP-104 fixed: `tier: 'owned'` defaults fell through to 'buy' and a tap
+wiped the ember balance to 0.**) — on `main`, committed, not shipped._
+
+**What finished.** **IMP-104**, archived to [`docs/build-log.md`](docs/build-log.md), commit `792a611`.
+`Shop.js`'s `palState`/`skyState` now treat `tier === 'owned'` as owned ahead of the array check — tier is
+the source of truth for free, the array only records what was purchased. `RitualsApp.js` gained an exported
+pure predicate `isPurchasableTier(tier)`; `buyPalette`/`buySky` now refuse a non-numeric tier before
+touching the balance — kept as the balance's last line of defence even though the Shop fix makes it
+unreachable today.
+
+**The proof.** +6 tests (`Shop.test.js` ×4, new `RitualsApp.test.js` ×2). The two bug-reproducing pairs were
+run red against the pre-fix tree first (stashed the fix, kept the tests, confirmed 4 failures); the other
+two are non-regression checks and correctly passed in both states. **1085 passed, 97 suites** (was
+1079/96), export clean. **Not shipped.** **No new walk of its own** — add to WALK-19 step 7 a check the
+ember balance is unchanged after tapping each of the three defaults.
+
+**The exact next step.** **Build [IMP-107](docs/specs-open.md#imp-107) next** (a lapsed member keeps Plus
+until backgrounded), then **IMP-102**, then **IMP-106** — all three ready, no decision needed. Then one OTA
+carries IMP-100/101/102/104/106/107 together and WALK-19 re-runs under the two new pre-flight rules (record
+the bundle; buy→reinstall→restore as one tight block). IMP-105 still waits on the owner's C3 check.
 
 _2026-09-09, earlier (Opus — **the WALK-19 re-run's three defects investigated and re-scoped; IMP-102
 unblocked by the owner's ruling.**) — on `main`, committed, **not shipped**._

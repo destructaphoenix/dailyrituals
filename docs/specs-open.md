@@ -13,7 +13,7 @@
 > re-litigate a "why", and do not improve the scope.** If a step turns out to be impossible or the code
 > contradicts the spec, **STOP** and log it to `PROGRESS.md` → Open items rather than inventing a fix.
 >
-> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **1089 passed, 97 suites** — verified 2026-09-09), `npx expo export --platform android` clean, commit with the **exact** message given, then
+> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **1102 passed, 98 suites** — verified 2026-09-09), `npx expo export --platform android` clean, commit with the **exact** message given, then
 > update `PROGRESS.md` (tick the backlog row, write the session note) and **move the finished spec from
 > this file into `docs/build-log.md`**.
 >
@@ -35,125 +35,12 @@ investigation also opened IMP-106.
 | --- | --- | --- |
 | IMP-100 | Every RevenueCat purchase error becomes `failed`. `e.code` is a **number**, our mapper matches **names**. | ✅ **done — archived in `docs/build-log.md`** |
 | IMP-101 | The `failed` card claims "you weren't charged" and never asks the store. | ✅ **done — archived in `docs/build-log.md`** |
-| [IMP-102](#imp-102) | Completing a purchase grants **+3 freezes every time**, not once. | 🟢 **UNBLOCKED — owner ruled per-period 2026-09-09. Ready to build** |
+| IMP-102 | Completing a purchase grants **+3 freezes every time**, not once. | ✅ **done — archived in `docs/build-log.md`** |
 | [IMP-103](#imp-103) | Step 4e failed on a bundle without IMP-100/101 — **neither was ever pushed or shipped**. | 🟢 **Ship + re-walk. NO code change** |
 | IMP-104 | `tier: 'owned'` means free and `Shop.js` never reads it — and tapping such an item **wipes the ember balance to 0**. | ✅ **done — archived in `docs/build-log.md`** |
 | [IMP-105](#imp-105) | 🚦 Reinstall + Restore says "Nothing to restore." **Leading explanation is now a test subscription that expired mid-walk, not a defect.** | 🟠 **Four checks (C1–C4) settle it. Still gates promotion — unproven, not known broken. The walk protocol is defective regardless** |
 | [IMP-106](#imp-106) | A healthy build cannot say which JS bundle it is running — the gap that mis-scoped IMP-103. | 🟢 **Ready to build** |
 | IMP-107 | A lapsed member kept Plus until they happened to background the app — no launch-time downgrade check. | ✅ **done — archived in `docs/build-log.md`** |
-
----
-
-## IMP-102
-
-### The +3 streak freezes are a PER-PERIOD perk — grant once per paid period, never on a re-recognition
-
-**Lane: OTA.** ✅ **UNBLOCKED — owner ruled 2026-09-09: per-period perk, not a joining gift.** The
-design below follows from that ruling; do not re-open it.
-
-**The finding.** `subscribe()` at [`RitualsApp.js:290-298`](../src/RitualsApp.js#L290) ends with
-`setFreezes((f) => f + 3)`, and it runs on **every** completion rather than on entering a new paid period.
-`success`, `owned` and `restored` all carry `dismissTo: 'complete'` → `onComplete` → `subscribe()`, so
-restoring purchases or reaching the `owned` card grants another 3 freezes each time. `RitualsApp.js:1016`
-("Change plan" in Manage Subscription) reopens the paywall for an existing member, so the loop is
-reachable by hand — and IMP-100 makes the `owned` half work.
-
-**What "per period" has to mean in an app with no server.** The grant must fire once for each paid period
-and never for a re-recognition of a period already granted. The device clock cannot be trusted and the
-local `plus` flag is a cache, so the only durable, store-authoritative marker of *which* period this is
-is the entitlement's own **`renewISO`** (RevenueCat's `expirationDate`, carried through
-[`toEntitlement`](../src/billing/revenueCatService.js#L29)). It changes on every renewal and on nothing
-else. Store the period already paid for; grant only when the live entitlement names a different one.
-
-That single rule covers every case without special-casing any of them:
-
-| Situation | `renewISO` | Grant? |
-| --- | --- | --- |
-| First purchase | `X` vs stored `null` | ✅ grant, store `X` |
-| `restored` / `owned` in the same period | `X` vs stored `X` | ❌ correctly silent |
-| "Change plan" reopening the paywall | `X` vs stored `X` | ❌ correctly silent |
-| Relaunch, launch check, AppState refresh | `X` vs stored `X` | ❌ correctly silent |
-| Renewal | `Y` vs stored `X` | ✅ grant, store `Y` |
-| Cancel, then resubscribe later | `Z` vs stored `X` | ✅ a genuinely new paid period |
-
-**Where the grant must live — NOT in `subscribe()`.** A renewal is learned in the background, never
-through the paywall. The app learns a live entitlement in **five** places
-([`subscribe`](../src/RitualsApp.js#L290), [`reconcileAfterAbandon`](../src/RitualsApp.js#L330),
-[`doRestore`](../src/RitualsApp.js#L344), the [AppState listener](../src/RitualsApp.js#L364), and
-`useLaunchEntitlementCheck`'s `onEntitlementFound`), and every one of them ends by calling
-`setLiveEntitlement`. So the grant hangs off **`liveEntitlement` changing**, which covers all five with
-one piece of code and cannot be missed by a sixth added later.
-
-**Steps.**
-
-1. **New file `src/billing/freezeGrant.js`** — pure, so the whole rule is pinnable in jest:
-
-   ```js
-   export const PERIOD_FREEZES = 3;
-
-   // Returns null when nothing is owed, or { period, freezes } to grant and record.
-   // `'no-expiry'` is the sentinel for an entitlement with no expiration date: it
-   // grants exactly once, ever, rather than on every read.
-   export function freezeGrantFor(entitlement, lastGrantedPeriod) {
-     if (!entitlement || entitlement.active !== true) return null;
-     const period = entitlement.renewISO || 'no-expiry';
-     if (period === lastGrantedPeriod) return null;
-     return { period, freezes: PERIOD_FREEZES };
-   }
-   ```
-
-   Header comment: the owner's 2026-09-09 ruling, and why `renewISO` is the period key (store-authoritative,
-   immune to the device clock, changes on renewal and nothing else).
-
-2. **`src/persistence/state.js`** — add `'lastFreezeGrantPeriod'` to `PERSISTED_KEYS`. **No schema bump
-   and no migrator**: an absent key reads as `undefined` → `?? null`, which is exactly right for a user
-   who has never been granted. `SCHEMA_VERSION` stays `3`.
-
-3. **`src/RitualsApp.js`** —
-   - Add state beside `freezes`: `const [lastFreezeGrantPeriod, setLastFreezeGrantPeriod] = useState(initialState.lastFreezeGrantPeriod ?? null);`
-   - **Delete `setFreezes((f) => f + 3);` from `subscribe()`.** Leave the rest of `subscribe()` alone,
-     including its `'Welcome to Plus — enjoy.'` toast.
-   - Add the effect:
-
-     ```js
-     React.useEffect(() => {
-       const grant = freezeGrantFor(liveEntitlement, lastFreezeGrantPeriod);
-       if (!grant) return;
-       setFreezes((f) => f + grant.freezes);
-       // Only a RENEWAL is otherwise invisible; a first grant is already covered
-       // by subscribe()'s welcome toast.
-       if (lastFreezeGrantPeriod !== null) showToast('+3 candles — your Plus perk renewed');
-       setLastFreezeGrantPeriod(grant.period);
-     }, [liveEntitlement, lastFreezeGrantPeriod]);
-     ```
-   - Add `lastFreezeGrantPeriod` to **both** persisted-slice literals (the save effect at
-     `RitualsApp.js:521-531` **and** the export slice at `~645`) and to the save effect's dependency
-     array. ⚠️ Missing either one is the whole bug back again — an unsaved marker re-grants on every
-     launch.
-
-4. **Tests**, each proven red first:
-   - `__tests__/billing/freezeGrant.test.js` — the six rows of the table above, plus: `null` entitlement →
-     `null`; `active: false` → `null`; `renewISO: null` twice in a row grants once then never again.
-   - A persistence assertion that `lastFreezeGrantPeriod` survives `serialize` → `deserialize`.
-   - Regression: a `restored` result for the same `renewISO` does **not** change `freezes`.
-
-5. `npm test` green, **≥ 1079 passed / 96 suites**. `npx expo export --platform android` clean.
-
-6. Commit exactly:
-   `fix(plus): 3 streak candles per paid period, not per completion (IMP-102)`
-
-7. Update `PROGRESS.md` and move this spec into `docs/build-log.md`.
-
-**One accepted side effect — state it in the session note, do not try to prevent it.** An existing member
-upgrading to this build has no `lastFreezeGrantPeriod`, so the first entitlement read after the update
-grants +3 once. That is correct under the owner's ruling — they are in a paid period the app never
-recorded — and the population is the internal testers. **Do not add a back-fill or a "seed from the
-current period without granting" path; it would cheat a real subscriber out of a period they paid for.**
-
-**Acceptance.** No new walk row. WALK-19 gains one line at step 4f/5: after a Restore or a "Change plan"
-that does not start a new period, **the candle count must be unchanged.** The renewal half is not
-walkable by hand — an annual test subscription renews every 30 minutes, so it is observable on a long
-sitting but is not being made a gate.
 
 ---
 
