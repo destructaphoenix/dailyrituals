@@ -4362,6 +4362,140 @@ two rounds of source review, a dashboard audit, and an owner's evening. The fix 
 
 ---
 
+## The embers-for-money conversation
+
+_Moved from `docs/specs-open.md` 2026-09-10 when it stopped being parked and became [IMP-113]. Kept in full: the economics and the streak-integrity argument are the reasoning behind decisions that are now made, and a decision without its reasoning gets re-litigated._
+
+### Parked: embers for money — a conversation, not yet a spec
+
+**Owner, 2026-09-08:** *"embers need to be made acquirable for money — without embers you cannot buy
+candles."* **Parked for its own chat. Nothing here is authorised to build.** This section exists so that
+chat starts from findings instead of re-deriving them. It is not an `IMP-xxx` and must not be given a
+number until the two questions at the bottom are answered.
+
+**Where it actually stands.** `EMBER_PACKS_ENABLED` is `false` ([`config.js:82`](../src/billing/config.js#L82)).
+`EMBER_PACKS` already exist in [`data.js:157-161`](../src/data.js#L157) carrying real prices
+(`$1.99` / `$4.99` / `$9.99`). But the buy handler at
+[`RitualsApp.js:985`](../src/RitualsApp.js#L985) is `onBuy={(pack) => setEmbers((e) => e + pack.amount)}`
+— a bare counter increment. No purchase service, no RevenueCat, no IAP of any kind.
+⚠️ **Flipping the flag today ships a store that displays dollar prices and hands over the goods for
+free** — the exact vc14 giveaway shape IMP-084 was opened for. The flag is the only thing preventing it.
+
+**The economy as built.** `EMBER_GAIN` is 15 per day kept. Candles cost 120 / 300 / 450 for 1 / 3 / 5;
+palettes 240–420; skies 300. One candle ≈ 8 days of writing; the $1.99 pack ≈ 16 days of earning.
+
+**Three findings the decision turns on.**
+
+1. **Selling embers is selling streak protection.** Candles auto-spend to repair a broken streak
+   ([`streakFreeze.js:14`](../src/home/streakFreeze.js#L14)). Once embers are purchasable, a user who
+   breaks a streak can buy it back with cash. For an app whose proposition is an honest record, that is
+   the one mechanic where money buying a better outcome costs something real. Mitigations exist (candles
+   must be *held before* the missed day; or cash buys cosmetics only and candles stay earned) — but the
+   choice has to be deliberate.
+2. **A shipped promise is already wrong, independent of this.** `PLUS_PERKS[1]` sells *"Streak insurance
+   — a candle spends itself when you miss a day"* as a **Plus** perk, and `Onboarding.js:31` shows it in
+   the first three. **`applyAutoFreeze` is not gated on `plus` at all** — free users already get it. Either
+   gate it or rewrite the line. This is a live mis-sell today and it decides what ember money would be
+   buying.
+3. **Consumables are a build lane and harder than the subscription was.** New Play *consumable* products
+   attached in RevenueCat; `revenueCatService.buy()` only knows subscription packages and would need
+   `purchaseStoreProduct` plus `getProducts(..., 'NON_SUBSCRIPTION')` (both confirmed present in
+   `react-native-purchases` 10.5.0). The sharp edge: **consumables are not restorable the way a
+   subscription is.** `CustomerInfo.nonSubscriptionTransactions` exists, but the app must track which
+   grants it has already applied or a reinstall double-grants / loses them. ✅ **The IMP-105 gate has
+   LIFTED (2026-09-10):** the simple case is now proven on hardware — a subscription entitlement survives
+   uninstall → reinstall untouched (WALK-19a). ⚠️ **That proof does not extend to consumables**, which
+   restore by a different mechanism entirely; the ledger problem below is still real and unsolved. The
+   `$1.99` literals
+   must also become store-fetched, the way IMP-090 made the trial copy honest, especially on INR.
+
+**Recommendation on the table (owner has not ruled).** Ship **cosmetics-first**: cash buys embers, embers
+buy palettes and skies, candles stay earned. Captures nearly all the revenue upside, costs none of the
+streak integrity, and avoids the consumable-ledger problem entirely because cosmetics are durable state
+the app already persists.
+
+### ✅ BOTH GATING QUESTIONS ANSWERED BY THE OWNER, 2026-09-10
+
+1. **Does cash buy candles, or only cosmetics?** → **Candles, via embers.** The owner's chain is
+   cash → embers → candles. ⚠️ **This is the streak-integrity trade named in finding 1 above, and it is
+   now a decision, not an oversight — do not re-litigate it.** See the cap below, which is what makes it
+   defensible.
+2. **Is auto-freeze a Plus perk or free for everyone?** → **FREE FOR EVERYONE.** The code was right and
+   the paywall was wrong. `applyAutoFreeze` stays ungated. **[IMP-110](#imp-110) fixes the copy.**
+
+### 🆕 The candle cap — the owner's design, 2026-09-10. NOT YET A SPEC
+
+**"Change the max candles that can be *stored* at 3 or 5, and make them purchasable through embers —
+hence why I want to bring back the ember economy."**
+
+⚠️ **Candles are ALREADY ember-purchasable.** `CANDLE_PACKS` ([`data.js:150`](../src/data.js#L150)) sells
+1/3/5 for 120/300/450 embers and `buyCandles` works. **The new thing is the cap, and the cap is the
+whole point** — today `setFreezes((f) => f + pack.count)`
+([`RitualsApp.js:298`](../src/RitualsApp.js#L298)) is **unbounded**, so a user can bank candles without
+limit, buy once, and never need embers again. There is no ongoing sink, which is precisely why the ember
+economy has nothing to do. A cap turns candles into a consumable you spend and re-buy.
+
+**It is also the answer to finding 1.** Uncapped, cash buys streak *immunity*. Capped at 3–5, cash buys
+at most 3–5 days of cover at any one moment. That is a materially different product.
+
+**❓ Open question, owner's call: 3 or 5?** Nothing can be specced until this is answered.
+
+**Three interactions a future spec must handle — found 2026-09-10, recorded so they are not rediscovered:**
+
+1. 🔴 **IMP-102's grant collides with the cap.** `setFreezes((f) => f + grant.freezes)`
+   ([`RitualsApp.js:323`](../src/RitualsApp.js#L323)) adds 3 per paid period. At a cap of 3 a member at
+   cap receives **nothing** — and the toast still says **"+3 candles — your Plus perk renewed"**
+   ([`RitualsApp.js:326`](../src/RitualsApp.js#L326)), which would be a lie. Both the clamp and the copy
+   need deciding together.
+2. 🟠 **`buyCandles` would burn embers for nothing.** Buying the 5-pack at cap 3 must refuse or clamp —
+   never charge for candles it cannot store. The shop also needs to *show* the cap, or the refusal is the
+   next "hella confusing" message (see [IMP-109](#imp-109)).
+3. 🟠 **`applyAutoFreeze` needs no change** — it only ever spends downward
+   ([`streakFreeze.js:14`](../src/home/streakFreeze.js#L14)). The cap is an intake problem, not a spend
+   problem. Do not touch that function.
+
+---
+
+## IMP-110
+
+### The paywall sells a perk every free user already has
+
+**Lane: OTA.** Opened 2026-09-10 by the owner's ruling that auto-freeze is free for everyone.
+
+**The mis-sell.** `PLUS_PERKS[1]` ([`data.js:176`](../src/data.js#L176)) reads **"Streak insurance — a
+candle spends itself when you miss a day"**, and it is shown on the paywall and in
+[`Onboarding.js:31`](../src/screens/Onboarding.js#L31)'s first three items. But `applyAutoFreeze` is not
+gated on `plus` in any way — **every free user already gets exactly this.** The owner confirmed on
+2026-09-10 that this is intended, so the feature is right and **the line is what is wrong.**
+
+**Why the fix is a reword, not a gate.** Gating auto-freeze would take a working feature away from every
+existing free user to make an advertisement true. That is backwards.
+
+**What IS a genuine, members-only streak benefit:** the **+3 candles per paid period** IMP-102 grants.
+That is real, it is gated on a live entitlement, and it is the honest version of the same idea.
+
+**Steps.**
+
+1. Replace `PLUS_PERKS[1]` with: **`'Three streak candles, every year you stay'`**
+2. Nothing else changes. ⚠️ **Do not gate `applyAutoFreeze`** — owner's ruling, 2026-09-10.
+3. ⚠️ The `PLUS_PERKS #n` comments in `src/screens` and `src/recap` are already off by one past #3
+   ([`data.js:171`](../src/data.js#L171)); this row does not renumber them and must not try.
+
+**⚠️ Copy is the owner's to veto.** The constraint is only that the line must name something free users
+do not get. If the candle cap lands at a different grant size, this string moves with it.
+
+**Acceptance.** `npm test` green and ≥ prior. A test asserting no `PLUS_PERKS` entry claims auto-freeze,
+and that `applyAutoFreeze` remains reachable with `plus: false` — the regression guard that stops a future
+chat "fixing" this by gating the feature.
+
+**Commit:** `fix(plus): stop selling a perk every free user already has (IMP-110)`
+
+---
+
+**✅ RESOLVED 2026-09-10.** Both questions answered by the owner: **cash → embers → candles** (question 1 — the streak-integrity trade this section argued against, overridden knowingly) and **auto-freeze is free for everyone** (question 2 — so IMP-110 rewords the paywall rather than gating the feature). The candle cap was set at **3**, which is what bounds the integrity cost: capped, cash buys at most three days of cover, never immunity. Scoped as IMP-112 (the cap) and IMP-113 (the purchase path).
+
+---
+
 ## Session notes
 
 _2026-09-10, earlier (Opus — **the 19-commit backlog shipped; nothing built since 2026-09-08 had reached a
