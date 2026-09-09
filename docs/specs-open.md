@@ -22,7 +22,7 @@
 
 ---
 
-## The queue — two rows, both opened by the owner on 2026-09-10
+## The queue — three rows, all opened by the owner on 2026-09-10
 
 **Both came out of WALK-19 step 7, and neither is what the walk was looking for.** The owner went to check
 IMP-104 and found something bigger: **the paywall sells a promise the shop does not keep.** Read
@@ -34,6 +34,7 @@ Five ember-priced items stay locked behind a grind for someone who has already p
 | --- | --- | --- |
 | [IMP-108](#imp-108) | **A paying member is still charged embers for five palettes and skies the paywall says they own.** | 🔴 **Live mis-sell on the paid surface** |
 | [IMP-109](#imp-109) | The "you can't afford this" toast never mentions the price, the balance, or affording anything. | 🟠 **Confusing, owner-reported, three call sites** |
+| [IMP-110](#imp-110) | `PLUS_PERKS[1]` sells streak insurance as a Plus perk; `applyAutoFreeze` is ungated and **every free user already has it**. | 🔴 **The second live mis-sell. Reword the line — the owner ruled the feature stays free** |
 
 ---
 
@@ -219,10 +220,81 @@ buy palettes and skies, candles stay earned. Captures nearly all the revenue ups
 streak integrity, and avoids the consumable-ledger problem entirely because cosmetics are durable state
 the app already persists.
 
-**The two questions that must be answered before any spec is written.**
+### ✅ BOTH GATING QUESTIONS ANSWERED BY THE OWNER, 2026-09-10
 
-1. **Does cash buy candles, or only cosmetics?**
-2. **Is auto-freeze a Plus perk or free for everyone?** The code says free; the paywall says Plus.
+1. **Does cash buy candles, or only cosmetics?** → **Candles, via embers.** The owner's chain is
+   cash → embers → candles. ⚠️ **This is the streak-integrity trade named in finding 1 above, and it is
+   now a decision, not an oversight — do not re-litigate it.** See the cap below, which is what makes it
+   defensible.
+2. **Is auto-freeze a Plus perk or free for everyone?** → **FREE FOR EVERYONE.** The code was right and
+   the paywall was wrong. `applyAutoFreeze` stays ungated. **[IMP-110](#imp-110) fixes the copy.**
+
+### 🆕 The candle cap — the owner's design, 2026-09-10. NOT YET A SPEC
+
+**"Change the max candles that can be *stored* at 3 or 5, and make them purchasable through embers —
+hence why I want to bring back the ember economy."**
+
+⚠️ **Candles are ALREADY ember-purchasable.** `CANDLE_PACKS` ([`data.js:150`](../src/data.js#L150)) sells
+1/3/5 for 120/300/450 embers and `buyCandles` works. **The new thing is the cap, and the cap is the
+whole point** — today `setFreezes((f) => f + pack.count)`
+([`RitualsApp.js:298`](../src/RitualsApp.js#L298)) is **unbounded**, so a user can bank candles without
+limit, buy once, and never need embers again. There is no ongoing sink, which is precisely why the ember
+economy has nothing to do. A cap turns candles into a consumable you spend and re-buy.
+
+**It is also the answer to finding 1.** Uncapped, cash buys streak *immunity*. Capped at 3–5, cash buys
+at most 3–5 days of cover at any one moment. That is a materially different product.
+
+**❓ Open question, owner's call: 3 or 5?** Nothing can be specced until this is answered.
+
+**Three interactions a future spec must handle — found 2026-09-10, recorded so they are not rediscovered:**
+
+1. 🔴 **IMP-102's grant collides with the cap.** `setFreezes((f) => f + grant.freezes)`
+   ([`RitualsApp.js:323`](../src/RitualsApp.js#L323)) adds 3 per paid period. At a cap of 3 a member at
+   cap receives **nothing** — and the toast still says **"+3 candles — your Plus perk renewed"**
+   ([`RitualsApp.js:326`](../src/RitualsApp.js#L326)), which would be a lie. Both the clamp and the copy
+   need deciding together.
+2. 🟠 **`buyCandles` would burn embers for nothing.** Buying the 5-pack at cap 3 must refuse or clamp —
+   never charge for candles it cannot store. The shop also needs to *show* the cap, or the refusal is the
+   next "hella confusing" message (see [IMP-109](#imp-109)).
+3. 🟠 **`applyAutoFreeze` needs no change** — it only ever spends downward
+   ([`streakFreeze.js:14`](../src/home/streakFreeze.js#L14)). The cap is an intake problem, not a spend
+   problem. Do not touch that function.
+
+---
+
+## IMP-110
+
+### The paywall sells a perk every free user already has
+
+**Lane: OTA.** Opened 2026-09-10 by the owner's ruling that auto-freeze is free for everyone.
+
+**The mis-sell.** `PLUS_PERKS[1]` ([`data.js:176`](../src/data.js#L176)) reads **"Streak insurance — a
+candle spends itself when you miss a day"**, and it is shown on the paywall and in
+[`Onboarding.js:31`](../src/screens/Onboarding.js#L31)'s first three items. But `applyAutoFreeze` is not
+gated on `plus` in any way — **every free user already gets exactly this.** The owner confirmed on
+2026-09-10 that this is intended, so the feature is right and **the line is what is wrong.**
+
+**Why the fix is a reword, not a gate.** Gating auto-freeze would take a working feature away from every
+existing free user to make an advertisement true. That is backwards.
+
+**What IS a genuine, members-only streak benefit:** the **+3 candles per paid period** IMP-102 grants.
+That is real, it is gated on a live entitlement, and it is the honest version of the same idea.
+
+**Steps.**
+
+1. Replace `PLUS_PERKS[1]` with: **`'Three streak candles, every year you stay'`**
+2. Nothing else changes. ⚠️ **Do not gate `applyAutoFreeze`** — owner's ruling, 2026-09-10.
+3. ⚠️ The `PLUS_PERKS #n` comments in `src/screens` and `src/recap` are already off by one past #3
+   ([`data.js:171`](../src/data.js#L171)); this row does not renumber them and must not try.
+
+**⚠️ Copy is the owner's to veto.** The constraint is only that the line must name something free users
+do not get. If the candle cap lands at a different grant size, this string moves with it.
+
+**Acceptance.** `npm test` green and ≥ prior. A test asserting no `PLUS_PERKS` entry claims auto-freeze,
+and that `applyAutoFreeze` remains reachable with `plus: false` — the regression guard that stops a future
+chat "fixing" this by gating the feature.
+
+**Commit:** `fix(plus): stop selling a perk every free user already has (IMP-110)`
 
 ---
 
