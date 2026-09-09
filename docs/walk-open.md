@@ -66,10 +66,9 @@ wipes data. **Export a backup first**; that export *is* WALK-03 step 1, so seque
 
 **After the 2026-09-07 emulator sitting, only three rows have live work — and two of them need a phone.**
 
-- **🚦 WALK-19a — [the IMP-105 isolation sitting](#walk-19a--the-imp-105-isolation-sitting-run-this-one-on-its-own). RUN THIS FIRST, ON ITS OWN, ~20 MINUTES.** It settles the one row blocking
-  `internal` → `production`, needs **no** pending OTA, and its whole design is that nothing else happens
-  between the purchase and the Restore tap. Everything else in WALK-19 waits for the OTA carrying
-  IMP-100/101/102/104/106.
+- ✅ **WALK-19a — PASSED 2026-09-10, and it closed IMP-105.** The row that blocked `internal` →
+  `production` is gone; the remaining gates are WALK-19's own leftovers (4e, 7, 9-as-recorded, 10, 8),
+  WALK-12 and WALK-18. Section archived to [`build-log.md`](build-log.md) → "Walk log".
 - **WALK-19** — the only 🚦 with live work in it. **2026-09-08 update: steps 3, 4a, 4b, 4c, 4d, 4f, 5, 6
   all PASS on hardware.** **[IMP-105](specs-open.md#imp-105) is CRITICAL and blocks `internal` →
   `production` promotion outright**: a reinstall + Restore on an account with an active subscription says
@@ -164,8 +163,8 @@ the lane now; CI (`release.yml`) ships from it on a `Release-Lane:` trailer. **N
 | WALK-16 | 🚦 | [The New Architecture cold start](build-log.md#walk-16) | IMP-076 | **device** (native runtime) | 👤 | ✅ **2026-09-05 — closed on emulator evidence at owner's instruction.** All 7 steps exercised across two agent-run sittings (1-3 New Arch live: Bridgeless + Fabric + TurboModule; 4-7 storage / notification scheduling / export-share-reimport / Auto Backup via T5 with the quarantine offering not imposing). **Owner's call 2026-09-05: emulator results are recorded as done, not smoke.** ⚠️ **Named gap — never exercised anywhere:** real doze, OEM battery managers, delivery to a real share target, Google's own backup schedule. **Unblocks IMP-077.** |
 | WALK-17 | 🚦 | [Edge-to-edge, re-audited under New Arch](build-log.md#walk-17) | IMP-076, IMP-027 regression | **device** | 👤 (visual) | ✅ **2026-09-05 — emulator, agent-run.** All four tabs clean under status bar + gesture bar in **both** day and night; bottom nav and write-FAB correct in **both** gesture and 3-button nav; onboarding + setup also clean. Sheets checked: trash, achievements, shop — the last two at night **and** max font. ⚠️ **Not opened: write flow, reading sheet, mood manager.** |
 | WALK-18 | 🎨 | [The app moves](#walk-18--the-app-moves) | IMP-077 | **device** (mid-range, real frame pacing) | 👤 (visual) | ⬜ — **branch-only. UNBLOCKED 2026-09-05: WALK-16 closed and IMP-077 landed.** ✅ **The build now exists: v1.0.8 / vc14 shipped to Play `internal` 2026-09-05 19:09** (EAS `87f81b24…`, submission `4b7cf3a2…`, from commit `6590834`). IMP-077 added `react-native-reanimated` + `react-native-worklets` (native deps), so **neither vc13 artifact carries this code** — install vc14 from Play, not an older APK. **An emulator cannot settle this row** — it renders dropped frames as smooth, which is the thing being judged. The jest suite is blind here too: the Reanimated mock no-ops every hook |
-| WALK-19a | 🚦 | [The IMP-105 isolation sitting](#walk-19a--the-imp-105-isolation-sitting-run-this-one-on-its-own) | [IMP-105](specs-open.md#imp-105) | **device** (real Play Billing + a license tester) | 👤 | ⬜ — **RUN THIS FIRST, ON ITS OWN, ~20 MINUTES. It is the only thing standing between vc15 and `production`.** Carved out of WALK-19 step 9 on 2026-09-09 because the 2026-09-08 attempt put a full perks tour between the purchase and the reinstall, and a license-tester subscription lives ~30 min (monthly) / ~3 hrs (annual) — so that ordering **structurally cannot test what step 9 exists to test**. Buy annual → uninstall → reinstall → Restore, as one tight block, writing the clock time next to every step. **Needs no pending OTA** (`restore()` and `toEntitlement()` are identical in the live group `d42b7ec7`). A result without the elapsed time settles nothing |
-| WALK-19 | 🚦 | [Money actually changes hands](#walk-19--money-actually-changes-hands) | **Phase 10b.5**, IMP-028, IMP-082 + IMP-083 (steps 5 and 10), IMP-084/085/086/087, **IMP-088** | **device** (real Play Billing + a license tester) | 👤 | 🔴 **2026-09-08 (hardware, owner-run) — steps 3, 4a, 4b, 4c, 4d, 4f, 5, 6 ✅ PASS.** [IMP-105](specs-open.md#imp-105) **blocks release**: reinstall + Restore on an account with an active subscription says "Nothing to restore" — and it is the one finding that survived the same-day source review (step 4f is its control: identical code passed minutes earlier). [IMP-104](specs-open.md#imp-104): default palette/sky items render as ember-locked, cause found, ready to build — **and tapping one wipes the ember balance to 0**. ⚠️ **Step 4e is INVALID, not a failure** — the phone ran OTA `d42b7ec7`, which predates IMP-100 **and** IMP-101; neither was ever pushed or shipped ([IMP-103](specs-open.md#imp-103)), so 4e owes a re-run after that OTA. Aeroplane-mode Restore reproduces the known IMP-092 cache limit (not new). Step 10 blocked on IMP-105; step 8 (real money) deliberately held for last. Full detail in the RE-RUN section below. **Nothing is promoted `internal` → `production`.** |
+| WALK-19a | 🚦 | [The IMP-105 isolation sitting](build-log.md#-walk-19a--the-imp-105-isolation-sitting-run-this-one-on-its-own) | [IMP-105](specs-open.md#imp-105) | **device** | 👤 | ✅ **2026-09-10 — PASSED (hardware, owner-run), 4 minutes.** Bought annual 00:43, uninstalled 00:44, reinstalled 00:45, **Plus already active on the second launch at 00:47 with no Restore tap** — the Restore row was gone and the You tab showed the member state. Elapsed 4 min against an annual test sub's ~3 hr life, so **expiry is arithmetically impossible and this run tested what step 9 always meant to test**. Play separately confirmed at uninstall that the subscription survives; the owner chose "keep the fresh start" (discarding local data) and Plus still returned, proving membership is store-authoritative. **IMP-105 closed — not reproducible, walk-protocol defect.** ⚠️ Named gap: `restorePurchases()` itself was never tapped (nothing to tap), so reinstall-then-Restore stays unexercised — not a blocker, step 4f already proved `restore()`. First walk here to name its own bundle before starting (`01a0877d`, via IMP-106). Detail in `build-log.md` → "Walk log" |
+| WALK-19 | 🚦 | [Money actually changes hands](#walk-19--money-actually-changes-hands) | **Phase 10b.5**, IMP-028, IMP-082 + IMP-083 (steps 5 and 10), IMP-084/085/086/087, **IMP-088** | **device** (real Play Billing + a license tester) | 👤 | 🔴 **2026-09-08 (hardware, owner-run) — steps 3, 4a, 4b, 4c, 4d, 4f, 5, 6 ✅ PASS.** [IMP-105](specs-open.md#imp-105) **blocks release**: reinstall + Restore on an account with an active subscription says "Nothing to restore" — and it is the one finding that survived the same-day source review (step 4f is its control: identical code passed minutes earlier). [IMP-104](specs-open.md#imp-104): default palette/sky items render as ember-locked, cause found, ready to build — **and tapping one wipes the ember balance to 0**. ⚠️ **Step 4e is INVALID, not a failure** — the phone ran OTA `d42b7ec7`, which predates IMP-100 **and** IMP-101; neither was ever pushed or shipped ([IMP-103](specs-open.md#imp-103)), so 4e owes a re-run after that OTA. Aeroplane-mode Restore reproduces the known IMP-092 cache limit (not new). ✅ **Step 9 is SETTLED — see WALK-19a (2026-09-10): the entitlement survives a reinstall, IMP-105 was the walk's own ordering, not a defect.** That **unblocks step 10** (cancel flow), which was only ever blocked on step 9. Step 8 (real money) still deliberately held for last. Full detail in the RE-RUN section below. **Nothing is promoted `internal` → `production`.** |
 
 ---
 
@@ -397,69 +396,6 @@ scope as a normal `IMP-xxx`; nothing here justifies reverting IMP-076.
 ## WALK-19 — money actually changes hands
 
 **Gate 🚦 · Target `device` · Runner 👤 · Build: v1.0.8 / vc14 from Play `internal`**
-
-### 🚦 WALK-19a — the IMP-105 isolation sitting (run this ONE on its own)
-
-**Why this exists as its own sitting.** WALK-19's step 9 has been attempted once and produced a result
-nobody can interpret, because a full perks tour sat between the purchase and the reinstall and a
-license-tester subscription only lives about three hours. **This sitting does one thing and nothing
-else**, so its answer is unambiguous either way. Budget **20 minutes**. Do not fold any other step into
-it — that is the mistake being corrected.
-
-**It does NOT need the pending OTA.** [IMP-105](specs-open.md#imp-105) lives in `restore()` and
-`toEntitlement()`, which are identical in the currently-live group `d42b7ec7`. Run it on the phone as it
-stands today. IMP-100/101/102/104/106 are irrelevant here.
-
-**Before you start.** Have the phone signed in to the Play account that is a **license tester**. Nothing
-else to prepare. There is no dev panel on a Play build — do not go looking for one.
-
-**The steps. Write the clock time next to each one as you go.**
-
-1. **Note the time.** Open the app → the paywall → buy **ANNUAL**. Annual test subscriptions live ~3
-   hours; monthly live ~30 minutes, which is not enough margin.
-2. Confirm the app says you are a member. **Then stop touching it.** Do not open the Shop, do not tour
-   the perks, do not check the renewal date — all of that is what invalidated the last attempt.
-3. **Uninstall the app.**
-4. **Reinstall it from Play.**
-5. **Launch it once.** ⚠️ **EXPECTED, NOT A BUG:** on this first launch the paid surface is dead — there
-   is no "Restore purchases" row on the You tab and the paywall will not open. That is vc15's built-in
-   JS, which carries IMP-085's broken probe; `PAYWALL_LIVE` is false so
-   [`YouScreen.js:134`](../src/screens/YouScreen.js#L134) hides the row. **Do not record this as a
-   finding.** You will also be sent through onboarding, and may be offered a restore of backed-up data —
-   answer either way, it does not affect this test. Leave the app open ~30 seconds so the update
-   downloads.
-6. **Force-close the app and launch it again.** The OTA applies on the **second** launch. Now **look at
-   the You tab and write down which of these two you see** — this is a recorded observation, not scenery
-   (see IMP-105 → Round 2.5):
-   - **"Restore purchases" is there** → the app's own launch-time `getEntitlement()` already came back
-     empty. Carry on to step 7 and tap it.
-   - **The row is GONE and the app says Member / Manage** → ✅ **the entitlement survived the reinstall on
-     its own and IMP-105 is answered — a cleaner pass than tapping.** Stop here, record the time, and do
-     not tap anything. The row is closed.
-7. **Note the time. Tap Restore.**
-8. **Write down the exact words on screen.**
-
-**Reading the result.**
-
-- ✅ **Step 6 showed Member with no Restore row at all** → the strongest possible pass: two code paths
-  agree the entitlement is live. **IMP-105 was the test subscription expiring mid-walk, not a defect.**
-- ✅ **"Plus restored." / the app shows you as a member** → **IMP-105 was the test subscription expiring
-  mid-walk, not a defect.** Close the row, unblock the `internal` → `production` promotion, and record
-  step 9 as PASSED.
-- ❌ **"Nothing to restore."** → and this time steps 1→7 took well under three hours, so expiry cannot
-  explain it. **IMP-105 is a real, reproducible defect.** Record the two clock times, then go to
-  RevenueCat → Customers (**sandbox filter ON**) and check whether a *second* anonymous App User ID was
-  created by the reinstall and what the first one's entitlement expiry says. That is Round 3's starting
-  data.
-- ❌ **"We couldn't check." / "Couldn't reach the store"** → a different thing entirely (the store was
-  unreachable, IMP-092's honest wording). Not IMP-105. Retry on a good connection.
-
-**What to record in the RESULT block below either way:** the two clock times, the plan bought (annual),
-the exact on-screen wording, and the running bundle. **A result without the elapsed time is worth
-nothing on this row** — that is the entire lesson of the 2026-09-08 sitting.
-
-**After this sitting, whatever it says:** the rest of WALK-19 (step 4e's re-run, step 7, step 10, step 8)
-waits for the OTA carrying IMP-100/101/102/104/106. Do not start it on today's bundle.
 
 ---
 

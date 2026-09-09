@@ -36,8 +36,8 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 >
 > | If this chat is… | Take |
 > | --- | --- |
-> | a **build task** | ✅ **IMP-102, IMP-104, IMP-106 and IMP-107 are done** (`3e7cf1c`, `792a611`, `5ab7da7`, `f7b27bb`) **and shipped by OTA 2026-09-10, together with IMP-100/101 — which closes [IMP-103](docs/specs-open.md#imp-103), a ship row that never had any code in it.** 🚡 **[IMP-105](docs/specs-open.md#imp-105) is waiting on ONE owner check (C3) — do not open an editor on it.** No other build task is ready — the queue is empty of code work until IMP-105's C3 lands or the owner opens a new IMP row. |
-> | a **runtime walk** | 🚦 **START WITH [WALK-19a](docs/walk-open.md#walk-19a--the-imp-105-isolation-sitting-run-this-one-on-its-own) — the IMP-105 isolation sitting, ~20 min, needs no OTA, and it is the only thing standing between vc15 and promotion.** Then [`docs/walk-open.md`](docs/walk-open.md), and its index says what is left. 🔴 **WALK-19 re-ran 2026-09-08: steps 3, 4a, 4b, 4c, 4d, 4f, 5, 6 all PASS.** Two new defects found: IMP-105 (critical, blocks promotion — still open) and IMP-104 (✅ fixed in code 2026-09-09, `792a611` — not yet re-walked; step 7 owes the re-check). **Step 10 is blocked on IMP-105 being fixed and re-walked; step 8 (real money) is deliberately held for last.** Read WALK-19's RE-RUN result block before touching it again. Also open: WALK-12, WALK-18. |
+> | a **build task** | ⛔ **NOTHING. The build queue is EMPTY.** Every IMP row is done and shipped — the last one, IMP-105, closed on 2026-09-10 when WALK-19a passed without any code being written for it. **Do not invent work.** The only candidate for a new row is the parked embers-for-money conversation in [`docs/specs-open.md`](docs/specs-open.md), and it is gated on two questions only the owner can answer. |
+> | a **runtime walk** | 🚦 **This is where all remaining work is.** ✅ WALK-19a passed 2026-09-10 and closed IMP-105. Owed now, on group `f961b427` / update `01a0877d`: **WALK-19 steps 4e, 7, 10** (all need a LIVE test subscription — buy annual and run them as one block, ~3 hr budget), then **step 8** (the one real-money purchase, held for last). Then **WALK-08** (DeeperInsights at max font), **WALK-07** (Paywall badge at font scale 2.0), **WALK-18** (motion, mid-range device), and **WALK-12 (R8) LAST** — it must be walked on the exact build you ship. |
 > | a **design request** | See "Claude Design" below. The live request is **Insights**. |
 >
 > **The billing surface, honestly.** ✅ **It works end to end — a real entitlement grants Plus (2026-09-08).**
@@ -104,7 +104,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 102 | **+3 freezes on every completion, not once.** `subscribe()` grants them for `success`, `owned` **and** `restored`; "Change plan" reopens the paywall for a member, so the loop is reachable. | OTA | ✅ **code-complete, archived** in `docs/build-log.md` — `3e7cf1c`. **1102 passed, 98 suites** (was 1089/97), export clean, +12 tests. ⚠️ **No new walk of its own** — add to WALK-19 step 4f/5: candle count unchanged after a same-period Restore/Change-plan |
 | 103 | **Not a defect — the phone never had IMP-100 or IMP-101.** A ship row with no code in it: step 4e ran on group `d42b7ec7`, published before either fix landed, and neither was ever pushed. | OTA | ✅ **done — shipped 2026-09-10 in group `f961b427`, archived in `docs/build-log.md`.** WALK-19 step 4e owes a re-run on the new bundle |
 | 104 | **`tier: 'owned'` means free and `Shop.js` never reads it.** `palState`/`skyState` consult only `'plus'`, so a default that isn't currently applied falls to `'buy'` and `PalTag` prints the tier string as an ember price. **Worse: the card is tappable — `embers < 'owned'` is a NaN compare, so the guard passes, `embers` becomes `NaN`, serialises to `null`, and reads back as 0. One tap on a free item wipes the balance.** | OTA | ✅ **code-complete, archived** in `docs/build-log.md` — `792a611`. **1085 passed, 97 suites** (was 1079/96), export clean, +6 tests, the two bug-reproducing pairs proven red first. ⚠️ **No new walk of its own** — add to WALK-19 step 7 |
-| 105 | 🚦 **Reinstall + Restore says "Nothing to restore."** Source review ruled out the embedded bundle, `ENTITLEMENT_ID`, and `restore()`/`toEntitlement()` (step 4f is the control — identical code passed minutes earlier). **Owner's dashboard checks 2026-09-08 killed the transfer-setting theory (it is set to "Transfer to new App User ID") and produced a better one: RevenueCat holds NO customer with an active entitlement.** Google compresses license-tester subscriptions — monthly renews every 5 min, yearly every 30 min, auto-cancelled after 6 renewals — so the test sub very plausibly **expired during the walk**, making "Nothing to restore" correct. | TBD | 🟠 **Still gates `internal` → `production` — unproven, not known broken.** Four checks (C1–C4) settle it; C1 (was it monthly or annual?) does most of the work. 🚦 **The walk protocol is defective either way — buy→reinstall→restore must be one tight block** |
+| 105 | 🚦 **Reinstall + Restore said "Nothing to restore."** Ruled out from source: not the embedded bundle, not `ENTITLEMENT_ID`, not `restore()`/`toEntitlement()`. The dashboard round killed the transfer theory; Round 2.5 showed the launch-time `getEntitlement()` had independently agreed, which no `restore()`-only defect explains. | — | ✅ **CLOSED 2026-09-10 by WALK-19a — not reproducible, walk-protocol defect. No code was ever written on this row.** Archived in `docs/build-log.md` |
 | 107 | **A lapsed member kept Plus until they happened to background the app.** `useLaunchEntitlementCheck` bailed when `plus` was true (it existed for the *upgrade* case only), and the downgrade path was an `AppState` `'change'` listener — which does not fire on a cold start, because the app comes up already `active`. Observed by the owner 2026-09-09: no sub in Play, none in RevenueCat, app still said member. | OTA | ✅ **code-complete, archived** in `docs/build-log.md` — `f7b27bb`. **1089 passed, 97 suites** (was 1085/97), export clean, +8 tests, all proven red first. ⚠️ **Walk owed** — WALK-19 gains a cold-start-with-a-lapsed-sub step |
 | 106 | **A healthy build cannot say which JS it is running.** `describeUpdate()` already computes it and `RUNNING_BUNDLE` is built at `RitualsApp.js:115`, but its only consumer is the broken-gate alert, which renders only when `billingDiagnostic` is non-null **and** `!plus`. This is the gap that let IMP-103 be scoped as a billing defect. | OTA | ✅ **code-complete, archived** in `docs/build-log.md` — `5ab7da7`. **1104 passed, 99 suites** (was 1102/98), export clean, +2 tests, proven red first. ⚠️ **No walk of its own** — WALK-19's pre-flight gains reading the new Version row |
 | 022 | Save as PDF + About sheet (the two dead You-tab buttons) | Build | ⏸ **deferred (owner)** — spec in build-log → "Deferred specs"; **perk #6 gate** |
@@ -148,11 +148,11 @@ the two are indistinguishable. **Do not remove the fallback** — see WALK-19.
 ### ▶️ Owner decisions still open
 
 - **🚦 The `internal` → `production` promotion.** vc15 is the only candidate; remaining work is the device
-  walks, then promote by hand (~7d review). 🚦 **Gated on [IMP-105](docs/specs-open.md#imp-105) — run
-  WALK-19a.** ⚠️ vc12 will not be promoted (owner, 2026-09-05) and vc14 must never be.
-- **🟠 IMP-105 — still unproven, not known broken.** The dashboard round, C1 (annual) and C0 (Round 2.5)
-  narrowed it without settling it. **C3 or WALK-19a decides** — reasoning in
-  [`docs/specs-open.md`](docs/specs-open.md#imp-105). **Still no code on this row.**
+  walks, then promote by hand (~7d review). ✅ **IMP-105 no longer gates it — WALK-19a passed 2026-09-10.**
+  🚦 **Still gated on WALK-19's leftovers (4e, 7, 10, 8) and WALK-12 (R8, must be last).** ⚠️ vc12 will not
+  be promoted (owner, 2026-09-05) and vc14 must never be.
+- ✅ **IMP-105 — CLOSED 2026-09-10, no code ever written on it.** WALK-19a passed in 4 minutes: the
+  entitlement survives a reinstall. The 2026-09-08 failure was the walk's own ordering, not the app.
 - ✅ **WALK-19's defective ordering is fixed** — carved out as **WALK-19a** (buy → uninstall → reinstall →
   Restore as one tight block). Durable rule + steps in [`docs/walk-open.md`](docs/walk-open.md).
 - **💰 EMBERS FOR MONEY — a conversation the owner parked for its own chat (2026-09-08).** Settled in
@@ -194,57 +194,50 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
-_2026-09-09, earlier (Sonnet — **IMP-106 fixed: `RUNNING_BUNDLE` was already computed but only ever shown
-inside the broken-gate alert, so a healthy build or a member's device had no way to say which JS it was
-running — the exact gap that let IMP-103 be mis-scoped.**) — ✅ **shipped 2026-09-10, group `f961b427`.**_
+_2026-09-10, earlier (Opus — **the 19-commit backlog shipped; nothing built since 2026-09-08 had reached a
+phone.**) — ✅ **pushed and OTA'd.**_
 
-**What finished.** **IMP-106**, archived to [`docs/build-log.md`](docs/build-log.md), commit `5ab7da7`.
-`YouScreen.js` gained a `runningBundle = null` prop rendered as a quiet, always-present "Version" `Row` in
-the General card (after "About Daily Rituals", before "Reset all data") — no `onPress`, unconditional on
-`plus`/`plusEnabled`. `RitualsApp.js` passes `runningBundle={RUNNING_BUNDLE}` alongside the other You-tab
-props; `describeUpdate` and `explainBillingDiagnostic` untouched.
+**What finished.** **IMP-103** — a ship row with no code in it — by doing the thing it asked. One
+`Release-Lane: ota` trailer on `1f2d6c4` carried **IMP-100, 101, 102, 104, 106, 107**. CI `34390363861`:
+backstop + test gate passed, `production` gate approved, `eas update` ran **on the runner, never by hand**.
 
-**The proof.** +2 tests in new `runningBundleVisible.test.js`, proven red first (the row was absent under
-`plus: true, billingDiagnostic: null`): a member with no diagnostic sees the row, and a non-member on the
-built-in bundle sees it too. **1104 passed, 99 suites** (was 1102/98), export clean. **Not shipped.** **No
-walk of its own** — WALK-19's pre-flight gains one step: read the Version row and record the update id
-before running any step.
+**The proof.** Pre-push **1104 passed, 99 suites** (+3 zone × 2), export clean. Branch `production`,
+runtime `1.0.9` (**vc15 only**), group **`f961b427`**, update **`01a0877d`**. ✅ Manifest read back
+(IMP-086): `rcAndroidKey` present and **non-empty** — 🔴 **never record the value; it went into a public
+commit message once (`3b28b70`) and the rule now lives in the playbook.** Applies on the **second** launch.
 
-**The exact next step.** **The build queue is empty of ready code work.** [IMP-103](docs/specs-open.md#imp-103)
-ships with no code change (push `main`, OTA, re-walk step 4e); [IMP-105](docs/specs-open.md#imp-105) is
-blocked on the owner's C3 check — do not open an editor on it. The next build chat should check whether C3
-has landed or a new IMP row has been opened before assuming there is nothing to do. Otherwise: one OTA
-carries IMP-100/101/102/104/106/107 together, then WALK-19 re-runs under the two new pre-flight rules
-(record the bundle via the new Version row; buy→reinstall→restore as one tight block).
+**Also:** WALK-19a gained an index row (`0f26474`) — it had a section but no row, and `walk-open.md`'s own
+rule is "take the first ⬜ in the index", so no walk chat would have found it. And IMP-105 gained Round 2.5
+(`a634a81`), the source finding that predicted WALK-19a's result before it ran.
 
-_2026-09-10, latest (Opus — **the whole backlog shipped. Nothing built since 2026-09-08 had reached a phone:
-`main` was 19 ahead of `origin/main`, not one `Release-Lane` trailer among them.**) — ✅ **pushed and OTA'd.**_
+_2026-09-10, latest (Opus + owner — **WALK-19a PASSED in four minutes and closed IMP-105. The build queue
+is now empty and every remaining task is a walk.**) — walk result, no code._
 
-**What finished.** **[IMP-103](docs/build-log.md)** — a ship row that never had any code in it — by doing
-the thing it asked for. One `Release-Lane: ota` trailer on `1f2d6c4` carried **IMP-100, 101, 102, 104, 106
-and 107**. CI run `34390363861`: native-change backstop passed (`ea02d23..HEAD` is pure JS + docs), test
-gate passed, `production` gate approved, `eas update` ran **on the runner, never by hand**.
+**What finished.** **IMP-105**, the row that had blocked `internal` → `production` since 2026-09-08,
+**closed with no code ever written on it.** Bought annual **00:43**, uninstalled **00:44**, reinstalled
+**00:45**, and at **00:47** the second launch already showed the member state — **the Restore row was gone
+and there was nothing to tap.** Four minutes against an annual test subscription's ~3-hour life, so expiry
+is arithmetically impossible: this run finally tested what step 9 always meant to test.
 
-**The proof.** Pre-push: **1104 passed, 99 suites** (+ 3 zone × 2), export clean. Published to branch
-`production`, runtime `1.0.9` (**vc15 only** — vc12/vc9 receive nothing), **group
-`f961b427-a6de-4fc9-bb86-951eae3efe04`**, Android update `01a0877d-62c1-73cf-8980-533630764cdf`.
-✅ **Manifest read back** (IMP-086): `rcAndroidKey` present and **non-empty** (never record the value), id
-matches CI. **Applies on the SECOND launch.**
+**Why the 2026-09-08 failure needed no fix.** ⚠️ **The code was never the variable.** On the failing bundle
+`d42b7ec7`, `useLaunchEntitlementCheck` guards on `if (plus || ran.current) return;` — a reinstall mounts
+with `plus: false`, so that bundle ran the same check, the same route, the same store. What differed was
+elapsed time: a full perks tour sat between purchase and reinstall, and a license-tester subscription
+cannot survive it. **C3 was never needed — the walk outranked the dashboard check**, and C0 (Round 2.5,
+written from source hours earlier) had already predicted both the outcome and the mechanism.
 
-**Two doc defects fixed on the way** (`0f26474`). **WALK-19a had a full section but no index row**, and
-`walk-open.md`'s own rule is "take the first ⬜ row in the index" — so a walk chat obeying the rule would
-never have found the one sitting that unblocks promotion. Also struck the stale "`feat/design-push` is
-never pushed" header, which contradicted the lane this OTA had to use.
+**Two corroborations nobody asked for.** Play notified the owner at uninstall that the subscription was
+still active and would not be cancelled. And the owner chose **"keep the fresh start"** — discarding local
+journal data — **and Plus still came back**: membership is store-authoritative, IMP-043 proven on hardware.
+⚠️ **Named gap:** `restorePurchases()` was never tapped (no button to tap), so reinstall-then-Restore stays
+unexercised. Not a blocker — step 4f already proved `restore()`.
 
-**One real finding, from source, not a walk** (`a634a81`) — **IMP-105 → Round 2.5, full reasoning in
-[`docs/specs-open.md`](docs/specs-open.md#imp-105).** `restore()` was not the only call that said "nothing"
-on 2026-09-08: the launch-time `getEntitlement()` said it too, seconds earlier, and nobody read it. ⚖️ **Two
-independent SDK entry points, one verdict — which expiry explains and a `restore()`-only defect cannot.
-Balance moves back toward "no bug", partially offsetting C1. Not conclusive; C3 still decides.**
+**The durable lesson.** A walk whose steps cannot fit inside the lifetime of the thing being tested does
+not produce a null result — it produces a **false** one. This one cost two rounds of source review, a
+dashboard audit and an owner's evening. **The fix was to the walk.**
 
-**The exact next step.** 🚦 **[WALK-19a](docs/walk-open.md#walk-19a--the-imp-105-isolation-sitting-run-this-one-on-its-own),
-on its own, ~20 min** — the only thing between vc15 and `production`. Two things make it settleable now:
-**IMP-106 puts the update id on the You tab** (the pre-flight rule the last sitting could not obey), and
-**step 6's Restore row is a recorded observation** — Member with *no* Restore row is a pass that closes
-IMP-105 without a tap. Buy **annual**, write the clock time by every step, touch nothing between purchase
-and reinstall. Then WALK-19 (4e, 7, 9, 10, 8) on `f961b427`. **Build queue: empty of ready code work.**
+**The exact next step.** ⛔ **The build queue is empty — do not invent code work.** Everything left is a
+walk, on group `f961b427` / update `01a0877d`. 🚦 **WALK-19 steps 4e, 7 and 10 all need a LIVE test
+subscription: buy annual and run them as ONE block inside the ~3-hour window** — the same discipline
+WALK-19a proved. Then step 8 (real money, last), **WALK-08**, **WALK-07**, **WALK-18** (mid-range device),
+and **WALK-12 (R8) last of all** — it must be walked on the exact build you intend to ship.

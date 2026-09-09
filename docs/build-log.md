@@ -4052,7 +4052,341 @@ shows; do not pre-emptively widen the table.
 
 ---
 
+### 🚦 WALK-19a — the IMP-105 isolation sitting (run this ONE on its own)
+
+**Why this exists as its own sitting.** WALK-19's step 9 has been attempted once and produced a result
+nobody can interpret, because a full perks tour sat between the purchase and the reinstall and a
+license-tester subscription only lives about three hours. **This sitting does one thing and nothing
+else**, so its answer is unambiguous either way. Budget **20 minutes**. Do not fold any other step into
+it — that is the mistake being corrected.
+
+**It does NOT need the pending OTA.** [IMP-105](specs-open.md#imp-105) lives in `restore()` and
+`toEntitlement()`, which are identical in the currently-live group `d42b7ec7`. Run it on the phone as it
+stands today. IMP-100/101/102/104/106 are irrelevant here.
+
+**Before you start.** Have the phone signed in to the Play account that is a **license tester**. Nothing
+else to prepare. There is no dev panel on a Play build — do not go looking for one.
+
+**The steps. Write the clock time next to each one as you go.**
+
+1. **Note the time.** Open the app → the paywall → buy **ANNUAL**. Annual test subscriptions live ~3
+   hours; monthly live ~30 minutes, which is not enough margin.
+2. Confirm the app says you are a member. **Then stop touching it.** Do not open the Shop, do not tour
+   the perks, do not check the renewal date — all of that is what invalidated the last attempt.
+3. **Uninstall the app.**
+4. **Reinstall it from Play.**
+5. **Launch it once.** ⚠️ **EXPECTED, NOT A BUG:** on this first launch the paid surface is dead — there
+   is no "Restore purchases" row on the You tab and the paywall will not open. That is vc15's built-in
+   JS, which carries IMP-085's broken probe; `PAYWALL_LIVE` is false so
+   [`YouScreen.js:134`](../src/screens/YouScreen.js#L134) hides the row. **Do not record this as a
+   finding.** You will also be sent through onboarding, and may be offered a restore of backed-up data —
+   answer either way, it does not affect this test. Leave the app open ~30 seconds so the update
+   downloads.
+6. **Force-close the app and launch it again.** The OTA applies on the **second** launch. Now **look at
+   the You tab and write down which of these two you see** — this is a recorded observation, not scenery
+   (see IMP-105 → Round 2.5):
+   - **"Restore purchases" is there** → the app's own launch-time `getEntitlement()` already came back
+     empty. Carry on to step 7 and tap it.
+   - **The row is GONE and the app says Member / Manage** → ✅ **the entitlement survived the reinstall on
+     its own and IMP-105 is answered — a cleaner pass than tapping.** Stop here, record the time, and do
+     not tap anything. The row is closed.
+7. **Note the time. Tap Restore.**
+8. **Write down the exact words on screen.**
+
+**Reading the result.**
+
+- ✅ **Step 6 showed Member with no Restore row at all** → the strongest possible pass: two code paths
+  agree the entitlement is live. **IMP-105 was the test subscription expiring mid-walk, not a defect.**
+- ✅ **"Plus restored." / the app shows you as a member** → **IMP-105 was the test subscription expiring
+  mid-walk, not a defect.** Close the row, unblock the `internal` → `production` promotion, and record
+  step 9 as PASSED.
+- ❌ **"Nothing to restore."** → and this time steps 1→7 took well under three hours, so expiry cannot
+  explain it. **IMP-105 is a real, reproducible defect.** Record the two clock times, then go to
+  RevenueCat → Customers (**sandbox filter ON**) and check whether a *second* anonymous App User ID was
+  created by the reinstall and what the first one's entitlement expiry says. That is Round 3's starting
+  data.
+- ❌ **"We couldn't check." / "Couldn't reach the store"** → a different thing entirely (the store was
+  unreachable, IMP-092's honest wording). Not IMP-105. Retry on a good connection.
+
+**What to record in the RESULT block below either way:** the two clock times, the plan bought (annual),
+the exact on-screen wording, and the running bundle. **A result without the elapsed time is worth
+nothing on this row** — that is the entire lesson of the 2026-09-08 sitting.
+
+**After this sitting, whatever it says:** the rest of WALK-19 (step 4e's re-run, step 7, step 10, step 8)
+waits for the OTA carrying IMP-100/101/102/104/106. Do not start it on today's bundle.
+
+### ✅ RESULT — 2026-09-10, PASSED on hardware (owner-run), 4 minutes end to end
+
+**Bundle walked:** Android update `01a0877d` (group `f961b427`), read off the You tab's Version row —
+the first walk in this project's history to name its own bundle before starting, which is what IMP-106
+was built for.
+
+**The times, which are the whole point of this sitting:**
+
+| Step | Clock |
+| --- | --- |
+| 1 · Bought **ANNUAL** | **00:43** |
+| 3 · Uninstalled | 00:44 |
+| 4 · Reinstalled from Play | 00:45 |
+| 6 · Second launch, Plus already active | **00:47** |
+
+**Elapsed 00:43 → 00:47 = four minutes.** An annual license-tester subscription lives ~3 hours. Expiry is
+arithmetically impossible here, so this run tested exactly what step 9 was always supposed to test.
+
+**What happened.** Step 6 took the second branch: **the "Restore purchases" row was gone and the You tab
+already showed the member state.** The entitlement came back on its own, with no Restore tap at all.
+
+**Three corroborating observations, none of them asked for:**
+
+1. **Google confirmed it independently.** At uninstall, Play notified the owner that the subscription was
+   still active, would not be cancelled, and could be used elsewhere. That is the store agreeing the
+   entitlement outlives the app.
+2. **The owner chose "keep the fresh start"** at the IMP-033 restore offer — local journal data was
+   deliberately discarded — **and Plus still came back.** Membership is store-authoritative, not
+   recovered from a local backup. That is IMP-043's design proven on hardware.
+3. **The mechanism is the one predicted in IMP-105 → Round 2.5**, written from source the same day and
+   before this walk ran: `useLaunchEntitlementCheck` fires because a reinstall mounts with `plus: false`,
+   `getEntitlement()` returns the live entitlement, `plus` flips, and
+   [`YouScreen.js:134`](../src/screens/YouScreen.js#L134) therefore renders no Restore row.
+
+**Why this settles the 2026-09-08 failure.** ⚠️ **The code is not the variable.** On the failing bundle
+`d42b7ec7`, `useLaunchEntitlementCheck` guards on `if (plus || ran.current) return;` — and after a
+reinstall `plus` is `false`, so that bundle ran the same check, by the same route, to the same store.
+Materially identical behaviour in this exact scenario. What differed on 2026-09-08 was not the code but
+the elapsed time: a full perks tour sat between the purchase and the reinstall. **IMP-105 is closed as
+*not reproducible — walk-protocol defect*, and the defect was in the walk, not the app.**
+
+⚠️ **Named gap, deliberately recorded.** **`restorePurchases()` itself was never tapped after the
+reinstall** — the app had already restored automatically, so there was no button to press. The
+reinstall-then-tap-Restore combination remains unexercised. It is **not** owed as a blocker: step 4f
+already proved `restore()` works on this account and bundle, and the question this row existed to answer
+— does a paid entitlement survive a reinstall — is answered yes by a stronger route than the one
+originally scripted.
+
+
+---
+
+## IMP-105
+
+### 🚦 Reinstall + Restore says "Nothing to restore" — the leading explanation is now test-subscription expiry, not a bug
+
+**Lane: TBD — no cause established, and the balance of evidence has moved AWAY from a code defect.**
+Still gates `internal` → `production`, because the case remains **unproven**, not because it is known
+broken. Found on the WALK-19 re-run, 2026-09-08 (hardware, owner-run), step 9.
+
+**The finding as walked.** With an active, just-purchased subscription: uninstalled the app, reinstalled
+from Play, tapped Restore. Result: **"Nothing to restore."**
+
+### Round 1 — what reading the source ruled out (2026-09-08)
+
+- **Not the embedded vc15 bundle.** On it, IMP-085's dead `require.resolve` probe makes
+  `isBillingConfigured` false, so `PAYWALL_LIVE` is false, so
+  [`YouScreen.js:134-140`](../src/screens/YouScreen.js#L134) hides the "Restore purchases" row and the
+  paywall cannot open. **There is no Restore button to tap on that bundle.** The observation came from the
+  OTA'd bundle, second launch or later.
+- **Not `ENTITLEMENT_ID` / IMP-099.** That bundle is `d42b7ec7`, which contains IMP-099.
+- **Not `restore()`, `toEntitlement()` or `mapPurchaseError()`.** Step 4f is the control: same device,
+  same account, same bundle, minutes earlier, Restore returned "Plus Restored." Identical code ran both
+  times. The only variable that changed is the reinstall.
+
+### Round 2 — the owner's dashboard checks (2026-09-08). Results, and what they mean
+
+| Check | Result | Verdict |
+| --- | --- | --- |
+| **A1** Restore Behavior | **"Transfer to new App User ID"** | ❌ **Candidate 1 is DEAD.** The transfer policy is the permissive one. A reinstall's new anonymous App User ID *should* receive the purchase |
+| **A2** Customer record | **No customer with an active entitlement.** 3 records, all dated the day before | 🔴 **The new lead — see below** |
+| **A3** Entitlement identifier | `Daily Rituals Plus` | ✅ Clean, matches `config.js` |
+| **A4** Play credentials | Valid | ✅ Clean |
+| **A5** Play Console order | Not findable | ⬜ **Inconclusive by design, not a finding.** Google Play **license-tester purchases are test purchases and never appear in Play Console Order Management.** Do not read this as evidence of anything. The place a test subscription *is* visible is on the phone: Play Store → Payments & subscriptions → Subscriptions |
+
+### Round 2.5 — a second, independent witness nobody read (2026-09-10)
+
+**`restore()` was not the only call that said "no entitlement" on 2026-09-08. `getEntitlement()` said it
+too, seconds earlier, and nobody noticed.** This was found by reading the shipped tree, not by a new walk.
+
+On the live group `d42b7ec7`, `useLaunchEntitlementCheck` runs **exactly** the step-9 scenario:
+
+```
+git show 768bc88:src/billing/entitlementSync.js
+  useLaunchEntitlementCheck({ plus, service, onEntitlementFound })
+    if (plus || ran.current) return;          // a reinstall has plus === false
+    checkEntitlement(service).then(...)       // → service.getEntitlement()
+    if (result.verified && result.entitlement) onEntitlementFound(...)
+```
+
+A reinstall mounts with `plus: false`, so the hook fires on its own at launch and asks the store
+directly. And the Restore row is gated on `!plus`
+([`YouScreen.js:134`](../src/screens/YouScreen.js#L134), identical on both bundles):
+
+```
+{plusEnabled && !plus && onRestorePurchases && ( … "Restore purchases" … )}
+```
+
+**So the row the owner tapped could only have been on screen because the launch check had already come
+back empty.** Had `getEntitlement()` found a live entitlement, `plus` would have flipped, the row would
+have vanished, and there would have been nothing to tap.
+
+**Why this matters: it is a different SDK call reaching the same verdict.** `restorePurchases()` and
+`getCustomerInfo()` are separate entry points; a defect confined to `restore()`, `toEntitlement()` or
+`mapPurchaseError()` cannot explain both. What explains both in one stroke is the customer genuinely
+having no active entitlement at that moment — **which is the expiry story.** ⚖️ **This pushes the balance
+back TOWARD expiry, partially offsetting C1.**
+
+⚠️ **Two caveats, and they are why this does not close the row on its own.**
+
+1. **A race is possible.** The check is async and unawaited. If the owner reached the You tab and tapped
+   before it resolved, the row's presence proves nothing. Unknowable after the fact.
+2. **First launch is exempt.** vc15's embedded bundle has IMP-085's broken probe, so on the reinstall's
+   *first* launch the service is not live and the check is meaningless. This argument applies only to the
+   second (post-OTA) launch — which is the one the owner tapped Restore on.
+
+**Consequence for WALK-19a: the Restore row's presence at step 6 is now itself a recorded observation,
+not scenery.** If the row is **absent** and the app already says member, the entitlement survived the
+reinstall by the launch path and IMP-105 is answered without a Restore tap at all. That is a pass, and it
+is a *cleaner* pass than tapping. The walk has been amended to say so.
+
+### The new leading candidate: the test subscription expired mid-walk — **weakened by C1**
+
+**A2 is the whole story, and it fits a documented Google behaviour.** Google Play compresses test
+subscriptions for license testers: **a monthly subscription renews every 5 minutes and a yearly one every
+30 minutes, and Google auto-cancels the test subscription after 6 renewals.** So a license-tester
+subscription has a total lifetime of roughly **30 minutes if monthly, ~3 hours if annual** — after which
+it is genuinely, correctly gone.
+
+WALK-19's re-run ran steps 4e, 4f, 5, 6 and a full step-7 perks tour between the purchase (4d) and the
+reinstall (9) — and step 9 itself includes an uninstall, a Play re-download and install, a first launch,
+a second launch for the OTA to apply, and only then the Restore tap.
+
+⚠️ **C1 is answered and it cuts against this theory. The owner bought ANNUAL (2026-09-09).** That is the
+long-lived test subscription — roughly **three hours**, not thirty minutes. The 4d→9 gap has to have
+exceeded three hours for expiry to explain step 9, and a perks tour plus a reinstall is more plausibly
+one to two. **Expiry is no longer the comfortable answer; it is one of two live possibilities, and the
+other one is a real bug.** Do not close this row on the expiry story without C3.
+
+If so: RevenueCat holding **no active customer** is not a missing record, it is an **expired** one, and
+`restorePurchases()` resolving with nothing active was **correct**. "Nothing to restore." would be the
+truth, and there is no defect in this app.
+
+**This is the leading candidate, not a conclusion.** It is not yet confirmed, and the row stays open.
+
+### What settles it — four checks, still no code
+
+- **C0 · `getEntitlement()` agreed with `restore()`.** ✅ **ANSWERED 2026-09-10 from source** — see Round 2.5. Two independent SDK calls both found nothing, which no `restore()`-only defect explains. Weakens the bug theory; does not kill it (a race is possible).
+- **C1 · Which plan was bought at step 4d?** ✅ **ANSWERED 2026-09-09: annual.** Lifetime ≈ 3 hours, not
+  30 minutes. **This weakens the expiry theory rather than confirming it** — see above.
+- **C2 · Wall-clock gap between step 4d and step 9.** Owner's recollection to within ten minutes is
+  enough. Under three hours ⇒ expiry does **not** explain step 9 and the defect is real.
+- **C3 · 🚦 THE DECIDING CHECK, and it is still available.** RevenueCat → Customers, **with the SANDBOX
+  filter ON** — Play license-tester purchases are sandbox transactions and the default view may exclude
+  them, which would explain "no active customer" all by itself. Open the 2026-09-08 customer and read
+  **the entitlement's `expiration date`** and the event timeline. ⚠️ **A lapsed subscription does not
+  delete the customer record** — RevenueCat keeps the history, so the fact that the subscription is now
+  long dead costs nothing here. Compare that expiry stamp against when Restore was tapped: **before ⇒
+  expiry, no bug. After ⇒ a real defect, and Round 3 begins.**
+- **C4 · On the phone: Play Store → Payments & subscriptions → Subscriptions.** ⬜ **Now moot** — the test
+  subscription is ~12 hours dead as of 2026-09-09, so this can no longer distinguish anything. Skip it.
+
+**Outcomes and what each means.**
+
+- **Expiry confirmed (C1+C2+C3 agree):** there is no bug. Close IMP-105 as *not reproducible — walk
+  protocol defect*, unblock the promotion, and fix the **walk**, not the app (see below). The row still
+  cannot be ticked until step 9 actually passes on a live subscription.
+- **The customer is there and active, only hidden by the sandbox filter:** the defect is real and
+  unexplained, and Check B (below) becomes the next step.
+- **The customer exists but the reinstall never created a second App User ID:** the SDK never
+  initialised on the reinstalled app. Different bug entirely — look at `Purchases.configure` in
+  [`App.js:50-55`](../App.js#L50) running before the RC key resolves.
+
+**Check B is now dead too.** Tapping Restore on the phone today cannot distinguish anything: the
+subscription has genuinely lapsed, so "Nothing to restore" is the correct answer regardless of which
+theory is true. **Do not run it and do not read anything into it.** C3 is the only check left that
+carries information.
+
+### 🚦 The walk protocol is defective regardless of the outcome
+
+**This is the durable fix and it is owed even if the app is innocent.** A license-tester subscription
+cannot survive a leisurely walk, so WALK-19's step ordering — purchase at 4d, reinstall at 9, an entire
+perks tour in between — **structurally cannot test what step 9 exists to test.** Amend WALK-19:
+
+1. **Buy → uninstall → reinstall → Restore must be ONE tight block**, run immediately after the purchase,
+   before anything else. Everything non-urgent (perks tour, renewal date, ember packs) moves after it, or
+   onto a second purchase.
+2. **Record the plan bought** (monthly / annual) and the **wall-clock time of every step**. Neither was
+   captured on 2026-09-08, and their absence is why this row cannot be closed today.
+3. **Prefer annual for any test that needs the subscription to outlive several steps** — ~3 hours of life
+   instead of ~30 minutes.
+4. Note in the row that Play Console Order Management will never show these purchases, so nobody burns
+   another ten minutes looking (A5).
+
+**Do not write a code fix on this row.** Not a retry loop, not a delay, not softer `restore-empty` copy —
+the last would undo IMP-092. If C1–C4 implicate timing rather than expiry, the shape to reach for is
+`Purchases.syncPurchasesForResult()`, present in `react-native-purchases` 10.5.0 and confirmed in
+`dist/purchases.d.ts`. Named so the next chat need not rediscover it; **not authorised.**
+
+**Acceptance.** WALK-19 step 9, re-run under the amended protocol above: uninstall → reinstall from Play →
+Restore recovers a **still-live** entitlement without a second charge. Step 10 (cancel flow) stays behind
+it.
+
+### ✅ CLOSED 2026-09-10 — not reproducible; the defect was in the walk, not the app
+
+**WALK-19a settled it in four minutes.** Bought annual at 00:43, uninstalled 00:44, reinstalled 00:45,
+and at 00:47 the second launch already showed the member state with **no Restore row to tap**. Against an
+annual test subscription's ~3-hour life, a 4-minute gap makes expiry arithmetically impossible — so this
+run finally tested what step 9 always meant to test, and the entitlement survived the reinstall cleanly.
+
+**The 2026-09-08 failure is explained without any code defect.** ⚠️ **The code was never the variable.**
+On the failing bundle `d42b7ec7`, `useLaunchEntitlementCheck` guards on `if (plus || ran.current) return;`
+— and a reinstall mounts with `plus: false`, so that bundle ran the same check, by the same route, to the
+same store as the bundle that just passed. What differed was elapsed time: a full perks tour sat between
+the purchase (4d) and the reinstall (9), and a license-tester subscription cannot survive it.
+
+**C3 was never needed.** The walk outranked the dashboard check. C0 (Round 2.5, from source) had already
+predicted both the outcome and the mechanism: the launch-time `getEntitlement()` grants Plus, so
+[`YouScreen.js:134`](../src/screens/YouScreen.js#L134) renders no Restore row. That is exactly what the
+owner saw.
+
+**Corroboration nobody asked for.** Play notified the owner at uninstall that the subscription was still
+active and would not be cancelled — the store agreeing independently. And the owner chose "keep the fresh
+start" at the IMP-033 offer, discarding local journal data, **and Plus still came back**: membership is
+store-authoritative, IMP-043's design proven on hardware.
+
+⚠️ **Named gap.** `restorePurchases()` was never tapped after the reinstall — there was no button, the app
+had already restored itself. Reinstall-then-tap-Restore stays unexercised. **Not owed as a blocker:** step
+4f proved `restore()` on this account and bundle, and the question this row existed to answer is answered
+by a stronger route than the one originally scripted.
+
+**The durable lesson, which outlives the row.** A walk whose steps cannot fit inside the lifetime of the
+thing being tested does not produce a null result — it produces a *false* one, and that false result cost
+two rounds of source review, a dashboard audit, and an owner's evening. The fix was to the walk.
+
+
+---
+
 ## Session notes
+
+_2026-09-09, earlier (Sonnet — **IMP-106 fixed: `RUNNING_BUNDLE` was already computed but only ever shown
+inside the broken-gate alert, so a healthy build or a member's device had no way to say which JS it was
+running — the exact gap that let IMP-103 be mis-scoped.**) — ✅ **shipped 2026-09-10, group `f961b427`.**_
+
+**What finished.** **IMP-106**, archived to [`docs/build-log.md`](docs/build-log.md), commit `5ab7da7`.
+`YouScreen.js` gained a `runningBundle = null` prop rendered as a quiet, always-present "Version" `Row` in
+the General card (after "About Daily Rituals", before "Reset all data") — no `onPress`, unconditional on
+`plus`/`plusEnabled`. `RitualsApp.js` passes `runningBundle={RUNNING_BUNDLE}` alongside the other You-tab
+props; `describeUpdate` and `explainBillingDiagnostic` untouched.
+
+**The proof.** +2 tests in new `runningBundleVisible.test.js`, proven red first (the row was absent under
+`plus: true, billingDiagnostic: null`): a member with no diagnostic sees the row, and a non-member on the
+built-in bundle sees it too. **1104 passed, 99 suites** (was 1102/98), export clean. **Not shipped.** **No
+walk of its own** — WALK-19's pre-flight gains one step: read the Version row and record the update id
+before running any step.
+
+**The exact next step.** **The build queue is empty of ready code work.** [IMP-103](docs/specs-open.md#imp-103)
+ships with no code change (push `main`, OTA, re-walk step 4e); [IMP-105](docs/specs-open.md#imp-105) is
+blocked on the owner's C3 check — do not open an editor on it. The next build chat should check whether C3
+has landed or a new IMP row has been opened before assuming there is nothing to do. Otherwise: one OTA
+carries IMP-100/101/102/104/106/107 together, then WALK-19 re-runs under the two new pre-flight rules
+(record the bundle via the new Version row; buy→reinstall→restore as one tight block).
+
 
 _2026-09-09, earlier (Sonnet — **IMP-102 fixed: the +3 streak candles were granted on every purchase-flow
 completion instead of once per paid period.**) — on `main`, committed, not shipped._
