@@ -25,7 +25,7 @@ export default function YouScreen({
   lastBackupAt, onExportData, onImportData, onExplainAutoBackup, onOpenDev,
   pendingRestore, onReopenPendingRestore, onDiscardPendingRestore,
   reminderValue, onOpenReminder, onOpenPlusPerks,
-  billingDiagnostic = null, onExplainBillingDiagnostic,
+  billingDiagnostic = null, onExplainBillingDiagnostic, runningBundle = null,
   trashCount = 0, onOpenTrash,
   customMoodsCount = 0, onOpenMoodManager,
   promptPackName, onOpenPromptPacks,
@@ -300,6 +300,8 @@ export default function YouScreen({
           <Divider />
           <Row icon={<Info size={20} color={c.accentDeep} />} label="About Daily Rituals"
             value="v1.0" onPress={() => {}} onLongPress={onOpenDev} />
+          <Divider />
+          <Row icon={<Info size={20} color={c.accentDeep} />} label="Version" value={runningBundle} />
           {onResetData && (
             <>
               <Divider />

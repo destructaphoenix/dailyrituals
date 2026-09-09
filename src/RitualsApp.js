@@ -829,6 +829,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             onOpenPaywall={PAYWALL_LIVE ? () => setPaywall(true) : () => {}}
             onOpenManage={plus ? openManage : () => {}}
             billingDiagnostic={BILLING_DIAGNOSTIC} onExplainBillingDiagnostic={explainBillingDiagnostic}
+            runningBundle={RUNNING_BUNDLE}
             onRestorePurchases={() => doRestore()}
             onOpenAchievements={() => setShowAch(true)}
             onResetData={onResetData}
