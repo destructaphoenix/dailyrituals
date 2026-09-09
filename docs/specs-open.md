@@ -13,7 +13,7 @@
 > re-litigate a "why", and do not improve the scope.** If a step turns out to be impossible or the code
 > contradicts the spec, **STOP** and log it to `PROGRESS.md` → Open items rather than inventing a fix.
 >
-> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **1085 passed, 97 suites** — verified 2026-09-09), `npx expo export --platform android` clean, commit with the **exact** message given, then
+> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **1089 passed, 97 suites** — verified 2026-09-09), `npx expo export --platform android` clean, commit with the **exact** message given, then
 > update `PROGRESS.md` (tick the backlog row, write the session note) and **move the finished spec from
 > this file into `docs/build-log.md`**.
 >
@@ -22,7 +22,7 @@
 
 ---
 
-## The queue — four rows left
+## The queue — three rows left
 
 **The owner asked for the Plus purchase surface to be investigated hard after IMP-099.** It was, by reading
 the shipped SDK rather than our assumptions about it, and **the audit found a defect larger than IMP-099**.
@@ -40,7 +40,7 @@ investigation also opened IMP-106.
 | IMP-104 | `tier: 'owned'` means free and `Shop.js` never reads it — and tapping such an item **wipes the ember balance to 0**. | ✅ **done — archived in `docs/build-log.md`** |
 | [IMP-105](#imp-105) | 🚦 Reinstall + Restore says "Nothing to restore." **Leading explanation is now a test subscription that expired mid-walk, not a defect.** | 🟠 **Four checks (C1–C4) settle it. Still gates promotion — unproven, not known broken. The walk protocol is defective regardless** |
 | [IMP-106](#imp-106) | A healthy build cannot say which JS bundle it is running — the gap that mis-scoped IMP-103. | 🟢 **Ready to build** |
-| [IMP-107](#imp-107) | A lapsed member keeps Plus until they happen to background the app — no launch-time downgrade check. | 🟢 **Ready to build** |
+| IMP-107 | A lapsed member kept Plus until they happened to background the app — no launch-time downgrade check. | ✅ **done — archived in `docs/build-log.md`** |
 
 ---
 
@@ -372,90 +372,6 @@ confusion IMP-087's comment predicted, and the one that has now cost a spec.
 **Acceptance.** No walk of its own — it is *how* the next walk is read. WALK-19's pre-flight gains one
 step: read the Version row on the You tab and record the update id in the result block **before** running
 any step. A walk that does not record it cannot scope a defect.
-
----
-
-## IMP-107
-
-### A lapsed member keeps Plus until they happen to background the app
-
-**Lane: OTA.** Opened 2026-09-09 from an owner observation: Play showed no subscription, RevenueCat
-showed no active entitlement, **and the app still said "member."** After the app was backgrounded and
-reopened, Plus disappeared.
-
-**This is not a bug in the downgrade — it is a gap in when the downgrade is allowed to run.** The app is
-right to treat `plus` as a cache and only act on a *verified* answer (IMP-043); what is missing is a
-verification opportunity at the one moment every session is guaranteed to have.
-
-**The two entitlement checks, and the hole between them.**
-
-- [`useLaunchEntitlementCheck`](../src/billing/entitlementSync.js#L33) runs at mount and **returns
-  immediately when `plus` is true** (`if (plus || ran.current) return;`). It exists for the *upgrade*
-  case — the returning subscriber whose cache says `false`. A member is deliberately never asked.
-- The AppState listener at [`RitualsApp.js:365-378`](../src/RitualsApp.js#L365) is the *downgrade* path,
-  and it is gated the other way (`if (s !== 'active' || !plus) return;`). But `AppState` emits `'change'`
-  on a **transition**. A cold launch comes up already `active`, so on Android this does not reliably fire
-  at startup — the app must first go to the background and come back.
-
-`entitlementSync.js:30-32` states the assumption in as many words: *"a true member has nothing to gain
-here and the periodic AppState check (RitualsApp.js) already covers the downgrade side for members."*
-**That is only true after a background→foreground round trip.** A user who opens the app, reads, writes
-and closes it — never backgrounding it — is never re-checked. Their subscription can have lapsed weeks
-ago and the app will still show Plus, the perks, and a stale renewal date.
-
-**Why it matters beyond correctness.** It also makes the app useless as a *walk instrument*: "the app says
-I'm a member" carried no information until this is fixed, which is exactly the confusion that cost a
-sitting on 2026-09-09.
-
-**What must NOT change.** IMP-043's rule stands: only `verified: true` may move the flag, and an
-unreachable store changes nothing. This spec adds an *occasion* to ask, not a new reason to revoke. Do
-not touch `nextPlusState`.
-
-**Steps.**
-
-1. [`src/billing/entitlementSync.js`](../src/billing/entitlementSync.js) — generalise the launch hook so
-   it runs for **both** directions. Rename to `useLaunchEntitlementSync` (keep the old export as an alias
-   only if a test needs it; otherwise update callers) and drop the `if (plus)` bail:
-
-   ```js
-   export function useLaunchEntitlementSync({ plus, service, onResult }) {
-     const ran = useRef(false);
-     useEffect(() => {
-       if (ran.current) return;
-       ran.current = true;
-       checkEntitlement(service).then(onResult);   // caller decides; nextPlusState still rules
-     }, []); // launch-only by design
-   }
-   ```
-
-   Rewrite the header comment: it now covers the lost-phone upgrade **and** the lapsed-member downgrade,
-   and it says why the AppState listener alone was not enough (no `'change'` event on a cold start).
-
-2. [`src/RitualsApp.js`](../src/RitualsApp.js) — the caller applies the same rules the AppState listener
-   already uses, so there is exactly one downgrade policy in the app. Extract the listener's body into a
-   local `applyEntitlementResult(result)` that sets `liveEntitlement` / `subCanceled` / `activePlan` when
-   there is one and then `setPlus(nextPlusState(plus, result))`, and call it from **both** the AppState
-   listener and the new launch hook. Keep the existing "Your subscription is active" toast on the
-   upgrade edge only; **add no toast on the downgrade edge** — a person who opens their journal should not
-   be greeted by a notice about billing.
-
-3. **Tests**, proven red first:
-   - `plus: true` + a verified `entitlement: null` at launch ⇒ the hook fires and the caller downgrades.
-     This is the case the current hook skips entirely.
-   - `plus: true` + `verified: false` (unreachable store) at launch ⇒ **no change.** IMP-043's guarantee,
-     and the most important assertion in this spec.
-   - `plus: false` + a verified entitlement ⇒ still upgrades (the existing lost-phone behaviour must not
-     regress).
-   - The hook runs exactly once per mount regardless of `plus` flipping afterwards.
-4. `npm test` green, **≥ 1079 passed / 96 suites**. `npx expo export --platform android` clean.
-5. Commit exactly:
-   `fix(plus): re-check the store at launch for members too, not only at foreground (IMP-107)`
-6. Update `PROGRESS.md` and move this spec into `docs/build-log.md`.
-
-**Acceptance.** WALK-19 gains one step: with a lapsed or cancelled-and-expired subscription, **cold-start
-the app without ever backgrounding it** — Plus must be gone on that first screen. And with the device in
-aeroplane mode, a real member cold-starting must **keep** Plus (IMP-043 — the check fails, nothing
-changes).
 
 ---
 

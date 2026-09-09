@@ -3845,6 +3845,44 @@ states. **1085 passed, 97 suites** (was 1079/96), `npx expo export --platform an
 **Not walked.** No new WALK row on its own — WALK-19 step 7 already covers this surface; add to it a check
 that the ember balance is unchanged after tapping each of the three defaults.
 
+## IMP-107 — a lapsed member kept Plus until they happened to background the app (2026-09-09)
+
+**Opened from an owner observation, 2026-09-09:** Play showed no subscription, RevenueCat showed no active
+entitlement, and the app still said "member" — until backgrounded and reopened, at which point Plus
+disappeared. Not a bug in the downgrade decision (IMP-043's rule was correct); a gap in when it got to run.
+`useLaunchEntitlementCheck` bailed immediately whenever `plus` was already true, so a member was never
+re-asked at launch, and the AppState listener that does re-ask only fires on a background→foreground
+*transition* — a cold start comes up already `active`, so it never fires there. A subscription could lapse
+weeks earlier and the app would keep showing Plus, the perks and a stale renewal date until the user
+happened to background it.
+
+**What was built.**
+1. [`entitlementSync.js`](../src/billing/entitlementSync.js) — `useLaunchEntitlementCheck` renamed to
+   `useLaunchEntitlementSync` and generalised to run unconditionally at mount (dropped the `if (plus)`
+   bail). It now hands the raw `checkEntitlement()` result to an `onResult` callback rather than only
+   reporting a found entitlement — the caller, not the hook, decides what a verified "no entitlement"
+   means.
+2. [`RitualsApp.js`](../src/RitualsApp.js) — extracted the AppState listener's body into a shared
+   `applyEntitlementResult(result)` (sets `liveEntitlement`/`subCanceled`/`activePlan` when there is one,
+   then `setPlus(nextPlusState(plus, result))`) and wired both the AppState listener and the new launch
+   hook through it — one downgrade policy, not two. No toast on the downgrade edge; the existing
+   "Your subscription is active" toast lives only at the explicit-action call sites
+   (`reconcileAfterAbandon`, `doRestore`), untouched by this spec.
+
+**The proof.** +8 tests in `entitlementSync.test.js`: four on `useLaunchEntitlementSync` itself (fires and
+reports on `plus: true` with a verified-null result — the case the old hook skipped entirely; reports
+`verified: false` on an unreachable store, changing nothing per IMP-043; the lost-phone upgrade case is
+unregressed; runs exactly once per mount regardless of `plus`), and four source-assertions on `RitualsApp.js`
+pinning that `applyEntitlementResult` is the sole shared decision point for both call sites and that neither
+carries a toast. All eight proven red first (stashed the source fix, kept the new tests, confirmed 8
+failures against the pre-fix tree). **1089 passed, 97 suites** (was 1085/97), `npx expo export --platform
+android` clean. Commit `f7b27bb`.
+
+**Not walked yet.** WALK-19 gains a new step per the spec's acceptance criteria: with a lapsed or
+cancelled-and-expired subscription, cold-start the app without ever backgrounding it — Plus must be gone on
+that first screen; and in aeroplane mode a real member cold-starting must keep Plus (the check fails,
+nothing changes).
+
 ## ⏸ Deferred specs (NOT history — still valid, waiting on the owner)
 
 > Moved out of PROGRESS.md on 2026-07-31 to keep the live cursor lean once a second spec (IMP-032) opened. These are **not** finished work. If the owner revives one, lift the block back into PROGRESS.md as the ACTIVE TRACK.
@@ -3887,6 +3925,34 @@ that the ember balance is unchanged after tapping each of the three defaults.
 ---
 
 ## Session notes (archived from PROGRESS.md)
+
+_2026-09-09, earlier (Opus — **the WALK-19 re-run's three defects investigated and re-scoped; IMP-102
+unblocked by the owner's ruling.**) — on `main`, committed, **not shipped**._
+
+**What finished.** No source changes — this was a scoping chat. **IMP-103 reclassified**: not a defect.
+The walked phone ran OTA `d42b7ec7` (commit `768bc88`), which predates IMP-100 **and** IMP-101; neither
+was pushed and neither carried a `Release-Lane` trailer, so CI never published them. `git show
+768bc88:src/billing/mapError.js` is the old name matcher, and the card's literal "That didn't go through."
+is copy IMP-101 replaced — **the wording dates the bundle.** **IMP-104 given a cause and a full spec** —
+`Shop.js` consults only `tier === 'plus'`, so a `tier: 'owned'` default falls to `'buy'`; and the card is
+tappable, where `embers < 'owned'` is a NaN compare that passes the guard and wipes the balance to 0.
+**IMP-105 narrowed twice** — source review killed three hypotheses, the owner's dashboard round killed a
+fourth (Restore Behavior is the permissive "Transfer to new App User ID"). **IMP-102 unblocked and
+specced** — owner ruled **per-period perk** on 2026-09-09. **IMP-106 opened**: a healthy build cannot say
+which bundle it runs, which is what mis-scoped IMP-103.
+
+**The proof.** Suite unchanged and green at **1079 passed, 96 suites** — no source touched. Every claim
+above was read off the shipped tree (`git show <commit>:<path>`), the installed SDK
+(`react-native-purchases` 10.5.0 in `node_modules`), or verified arithmetic (`embers - 'owned'` → `NaN` →
+`JSON.stringify` → `null` → `?? 0` → `0`). Google's compressed test-subscription behaviour was checked
+against its documentation, not recalled.
+
+**The exact next step.** **Build IMP-104 first** — it is destroying user data today. Then **IMP-102**,
+then **IMP-106**. All three are fully specced and need no decision. **Then one OTA carries IMP-100, 101,
+102, 104 and 106 together**, and WALK-19 re-runs steps 4e/9/10 under the two new pre-flight rules (record
+the bundle; run buy→reinstall→restore as one tight block). ⚠️ **IMP-105 is waiting on a single owner
+check — C3, the RevenueCat customer record's expiration stamp with the sandbox filter on.** Do not write
+code for it.
 
 _2026-09-08, latest (Sonnet — **IMP-101 fixed: the `failed` card claimed "you weren't charged" and `run()`
 never asked the store before declaring failure.**) — on `main`, committed, not shipped._
