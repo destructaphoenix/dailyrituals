@@ -40,17 +40,14 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 > | a **runtime walk** | 🚦 **This is where all remaining work is.** ✅ WALK-19a passed 2026-09-10 and closed IMP-105. Owed now, on group `f961b427` / update `01a0877d`: **WALK-19 steps 4e, 7, 10** (all need a LIVE test subscription — buy annual and run them as one block, ~3 hr budget), then **step 8** (the one real-money purchase, held for last). Then **WALK-08** (DeeperInsights at max font), **WALK-07** (Paywall badge at font scale 2.0), **WALK-18** (motion, mid-range device), and **WALK-12 (R8) LAST** — it must be walked on the exact build you ship. |
 > | a **design request** | See "Claude Design" below. The live request is **Insights**. |
 >
-> **The billing surface, honestly.** ✅ **It works end to end — a real entitlement grants Plus (2026-09-08).**
-> **089, 090 and 099 are proven on hardware; 092 is half proven** (its `catch` never ran on a device);
-> **091 has never been observed** and may be unobservable by design. **None of that is a jest question.**
+> **The billing surface, honestly.** ✅ **Proven end to end on hardware:** purchase, already-owns (4e),
+> reinstall + entitlement survival (WALK-19a), cancel, and lapse-at-cold-start (IMP-107). **089/090/099 too.**
+> **092 is half proven** (its `catch` never ran on a device); **091 has never been observed.** ⚠️ **None of
+> that is a jest question — `npm test` runs `simService`, which fabricates every purchase result.**
 >
-> **Three standing warnings for anyone touching this surface.** ⚠️ **The two OTA traps — `--environment
-> production`, and clearing app data deleting the update — are in [`docs/playbook.md`](docs/playbook.md) →
-> "Two OTA traps"; CI owns the first one now. Narrative → [`docs/build-log.md`](docs/build-log.md).**
->
-> **The five standing warnings + what is settled** (jest is blind here; IMP-088's escape is not a
-> timeout; a hung purchase cannot be reproduced cheaply; the burned trial; real charges on `internal`) →
-> [`docs/playbook.md`](docs/playbook.md) → "Billing — standing warnings". **Read before touching this surface.**
+> ⚠️ **Standing warnings — read before touching this surface:** the two OTA traps and the five billing
+> warnings both live in [`docs/playbook.md`](docs/playbook.md) → "Two OTA traps" / "Billing — standing
+> warnings". CI owns `--environment production` now. Narrative → [`docs/build-log.md`](docs/build-log.md).**
 
 **✅ The branch is merged** — `feat/design-push` fast-forwarded onto `main` 2026-09-08 (`cb3d60e`), ending
 the no-push rule. ⚠️ **Ship through CI now**: `release.yml` runs on `main`, so the test gate, the native-file
