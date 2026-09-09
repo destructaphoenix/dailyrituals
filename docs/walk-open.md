@@ -66,6 +66,10 @@ wipes data. **Export a backup first**; that export *is* WALK-03 step 1, so seque
 
 **After the 2026-09-07 emulator sitting, only three rows have live work — and two of them need a phone.**
 
+- **🚦 WALK-19a — [the IMP-105 isolation sitting](#walk-19a--the-imp-105-isolation-sitting-run-this-one-on-its-own). RUN THIS FIRST, ON ITS OWN, ~20 MINUTES.** It settles the one row blocking
+  `internal` → `production`, needs **no** pending OTA, and its whole design is that nothing else happens
+  between the purchase and the Restore tap. Everything else in WALK-19 waits for the OTA carrying
+  IMP-100/101/102/104/106.
 - **WALK-19** — the only 🚦 with live work in it. **2026-09-08 update: steps 3, 4a, 4b, 4c, 4d, 4f, 5, 6
   all PASS on hardware.** **[IMP-105](specs-open.md#imp-105) is CRITICAL and blocks `internal` →
   `production` promotion outright**: a reinstall + Restore on an account with an active subscription says
@@ -390,6 +394,63 @@ scope as a normal `IMP-xxx`; nothing here justifies reverting IMP-076.
 ## WALK-19 — money actually changes hands
 
 **Gate 🚦 · Target `device` · Runner 👤 · Build: v1.0.8 / vc14 from Play `internal`**
+
+### 🚦 WALK-19a — the IMP-105 isolation sitting (run this ONE on its own)
+
+**Why this exists as its own sitting.** WALK-19's step 9 has been attempted once and produced a result
+nobody can interpret, because a full perks tour sat between the purchase and the reinstall and a
+license-tester subscription only lives about three hours. **This sitting does one thing and nothing
+else**, so its answer is unambiguous either way. Budget **20 minutes**. Do not fold any other step into
+it — that is the mistake being corrected.
+
+**It does NOT need the pending OTA.** [IMP-105](specs-open.md#imp-105) lives in `restore()` and
+`toEntitlement()`, which are identical in the currently-live group `d42b7ec7`. Run it on the phone as it
+stands today. IMP-100/101/102/104/106 are irrelevant here.
+
+**Before you start.** Have the phone signed in to the Play account that is a **license tester**. Nothing
+else to prepare. There is no dev panel on a Play build — do not go looking for one.
+
+**The steps. Write the clock time next to each one as you go.**
+
+1. **Note the time.** Open the app → the paywall → buy **ANNUAL**. Annual test subscriptions live ~3
+   hours; monthly live ~30 minutes, which is not enough margin.
+2. Confirm the app says you are a member. **Then stop touching it.** Do not open the Shop, do not tour
+   the perks, do not check the renewal date — all of that is what invalidated the last attempt.
+3. **Uninstall the app.**
+4. **Reinstall it from Play.**
+5. **Launch it once.** ⚠️ **EXPECTED, NOT A BUG:** on this first launch the paid surface is dead — there
+   is no "Restore purchases" row on the You tab and the paywall will not open. That is vc15's built-in
+   JS, which carries IMP-085's broken probe; `PAYWALL_LIVE` is false so
+   [`YouScreen.js:134`](../src/screens/YouScreen.js#L134) hides the row. **Do not record this as a
+   finding.** You will also be sent through onboarding, and may be offered a restore of backed-up data —
+   answer either way, it does not affect this test. Leave the app open ~30 seconds so the update
+   downloads.
+6. **Force-close the app and launch it again.** The OTA applies on the **second** launch. "Restore
+   purchases" now appears on the You tab.
+7. **Note the time. Tap Restore.**
+8. **Write down the exact words on screen.**
+
+**Reading the result.**
+
+- ✅ **"Plus restored." / the app shows you as a member** → **IMP-105 was the test subscription expiring
+  mid-walk, not a defect.** Close the row, unblock the `internal` → `production` promotion, and record
+  step 9 as PASSED.
+- ❌ **"Nothing to restore."** → and this time steps 1→7 took well under three hours, so expiry cannot
+  explain it. **IMP-105 is a real, reproducible defect.** Record the two clock times, then go to
+  RevenueCat → Customers (**sandbox filter ON**) and check whether a *second* anonymous App User ID was
+  created by the reinstall and what the first one's entitlement expiry says. That is Round 3's starting
+  data.
+- ❌ **"We couldn't check." / "Couldn't reach the store"** → a different thing entirely (the store was
+  unreachable, IMP-092's honest wording). Not IMP-105. Retry on a good connection.
+
+**What to record in the RESULT block below either way:** the two clock times, the plan bought (annual),
+the exact on-screen wording, and the running bundle. **A result without the elapsed time is worth
+nothing on this row** — that is the entire lesson of the 2026-09-08 sitting.
+
+**After this sitting, whatever it says:** the rest of WALK-19 (step 4e's re-run, step 7, step 10, step 8)
+waits for the OTA carrying IMP-100/101/102/104/106. Do not start it on today's bundle.
+
+---
 
 **Why this row exists.** `PLUS_ENABLED` flipped to `true` on 2026-09-05 and the app now shows a real
 paywall wired to real Play products. **Every one of the following is asserted by code and proven by
