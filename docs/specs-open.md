@@ -327,52 +327,86 @@ Reanimated jest mock no-ops every hook. WALK-18 settles it.
 
 ## IMP-111
 
-### The screen transition draws shadow outlines around the cards — day mode only
+### Remove the tab-change fade — owner's decision, 2026-09-10
 
-**Lane: OTA.** Opened by the owner 2026-09-10 from WALK-18, on a **Galaxy S24 Ultra** (flagship, not the
-mid-range device the row asks for — see the WALK-18 re-scope). Their words: *"while transitioning from one
-screen to the other, there seems to be some 'shadows' that appear at the outline of the next screen's
-cards (in day mode, this looks ass)."*
+**Lane: OTA. This is a DELETION, not a fix.** Opened from WALK-18 on a Galaxy S24 Ultra, then re-scoped
+the same night when the owner ruled: **"I choose b and c. Remove the fade. Then some time later when plus
+is complete I can work on the motion."**
 
-**Cause, confirmed in source — two facts that only bite together.**
+**The defect it removes.** Switching tabs drew shadow outlines around the next screen's cards, **day mode
+only**. Cause, confirmed in source: [`ScreenFade`](../src/motion.js#L143) animates `opacity` over a subtree
+whose [`Card`](../src/ui.js#L45)s carry Android `elevation: 8` — but only in day mode, because the style is
+`t.dark ? null : t.shadow(…)`. Android elevation shadows do not composite under fractional parent opacity;
+the subtree renders offscreen and each card's shadow is drawn against that layer. Dark mode has no
+elevation, so it cannot occur there — which is exactly the owner's day-mode-only report.
 
-1. [`ScreenFade`](../src/motion.js#L143) animates **`opacity`** on an `Animated.View` wrapping the entire
-   screen, keyed on the active tab.
-2. [`Card`](../src/ui.js#L45) applies `t.shadow(14, …)` → on Android **`elevation: 8`**
-   ([`theme.js:232`](../src/theme.js#L232)) — **and only in day mode**, because the style is
-   `t.dark ? null : t.shadow(…)`.
+**Why deletion rather than a compositing fix.** `ScreenFade` is the sole cause of the defect and delivers a
+320ms fade the owner could not perceive on a flagship while actively looking for it. Fixing it would spend
+effort defending motion nobody sees. **Removing it resolves the defect by subtraction and is smaller than
+any fix.** Applying the motion vocabulary properly is deferred, not cancelled — see the parked section.
 
-**Android elevation shadows do not composite correctly beneath a parent with fractional opacity.** An
-elevated view's shadow is drawn from its RenderNode outline; once an ancestor animates opacity the subtree
-renders into an offscreen layer and each card's shadow is drawn against *that* layer rather than the page,
-which reads as an outline hugging every card. It resolves the instant opacity hits 1.
+**Steps.**
 
-✅ **This explains the owner's day-mode-only observation exactly** — dark mode has no `elevation` at all,
-so there is nothing to mis-composite. **The report and the source agree with no gaps.**
+1. In [`RitualsApp.js:885`](../src/RitualsApp.js#L885), replace the wrapper with a plain `View`, keeping
+   both style values exactly:
 
-**Steps — try in order, stop at the first that works. This is a device question, not a test question.**
+```jsx
+<View style={{ flex: 1, paddingTop: insets.top }}>{screen()}</View>
+```
 
-1. Add **`renderToHardwareTextureAndroid`** to `ScreenFade`'s `Animated.View`. Promoting the subtree to a
-   single hardware layer makes opacity apply to the composited texture instead of per-child, which is the
-   standard fix for this class of artifact and is also a small win during the animation.
-2. If it persists, try **`needsOffscreenAlphaCompositing`** instead — it forces the subtree to be
-   composited as a unit *before* alpha is applied.
-3. If it still persists, **drop `opacity` from `ScreenFade` and animate `translateY` only.** No fractional
-   opacity means no offscreen compositing and the artifact cannot occur. The transition still reads as
-   motion. ⚠️ Do not silently do this first because it is easiest — it changes the designed feel, so it is
-   the fallback, not the opener.
+2. Delete the three-line comment above it (it describes motion that will no longer be there) and drop
+   `ScreenFade` from the `./motion` import on [line 18](../src/RitualsApp.js#L18).
+3. **Delete the `ScreenFade` export from [`motion.js`](../src/motion.js)** and its tests. It has no other
+   consumer.
+4. ⚠️ **Nothing else in `motion.js` changes.** `DUR`, `EASE`, `riseIn`, `popIn`, `fadeOut`, `stagger`,
+   `useCountUp` and `usePressScale` all stay exactly as they are — they are the vocabulary the deferred
+   motion work is written in.
 
-**⚠️ Nothing in `jest` can see this.** The Reanimated mock no-ops every hook and the suite renders a tree,
-not pixels — the same blindness that made WALK-18 necessary in the first place. **Keep the suite green and
-≥ the prior count, but the acceptance is the walk.**
+**🔴 Three things a later chat will be tempted to do. Do none of them.**
 
-**Acceptance.** WALK-18 on a device, **day mode**, switching tabs repeatedly: no shadow outline appears
-around any card at any point in the transition. Re-check in dark mode that nothing regressed (it had no
-elevation to begin with, so this should be a no-op there).
+- **Do NOT remove `react-native-reanimated` or `react-native-worklets`.** `usePressScale` still uses
+  Reanimated and is live in [`ui.js`](../src/ui.js#L14). They are **native** deps: removing them needs a
+  new build, not an OTA, and would close the OTA lane. They stay.
+- **Do NOT delete `motion.js`** or the unused exports. The owner has explicitly deferred applying them,
+  not abandoned them.
+- **Do NOT "improve" this into a different transition.** No slide, no crossfade, no navigation library.
+  The tab swap becomes instant, and that is the decision.
 
-**🚦 The owner may make this moot.** They asked whether motion should be removed altogether. If the answer
-is yes, deleting `ScreenFade` from [`RitualsApp.js:885`](../src/RitualsApp.js#L885) resolves this row by
-subtraction and is a smaller change than any fix above. **Do not decide that here — see the open question
-in `PROGRESS.md`.**
+**⚠️ `tabKey` was never a remount key.** It is a `useEffect` dependency, not a React `key` prop, so
+children were never remounted on a tab change. **Removing `ScreenFade` is therefore purely visual** — no
+mount/unmount behaviour changes, and no screen loses or resets state. Verify this holds rather than
+assuming it.
 
-**Commit:** `fix(motion): the tab transition stops outlining every card in day mode (IMP-111)`
+**Acceptance.** `npm test` green and **≥ the prior count minus only the deleted `ScreenFade` tests** — say
+so explicitly in the session note, since this is the rare row where the count legitimately drops. Then
+WALK-18 re-run in **day mode**: switching tabs shows no shadow outline around any card, because there is no
+longer a transition to draw one during.
+
+**Commit:** `fix(motion): remove the tab fade that outlined every card in day mode (IMP-111)`
+
+---
+
+### ⏸ Parked: apply the motion vocabulary — owner's (c), deferred 2026-09-10
+
+**Owner: *"some time later when plus is complete I can work on the motion."* NOT A ROW YET. Do not open a
+number for it and do not start it — Plus is not complete.**
+
+**Why it exists.** IMP-077 bought a motion vocabulary and the app never spent it. **Six of eight exports
+have no consumer**: `riseIn`, `popIn`, `fadeOut`, `stagger`, `useCountUp`, and (after IMP-111)
+`ScreenFade` is gone too. Only `usePressScale` is live — a 0.99 press scale deliberately built to be
+imperceptible. ⚠️ **That vocabulary was not free:** IMP-077 added `react-native-reanimated` and
+`react-native-worklets` as **native** deps and forced the vc14 build. **This parked row is the only thing
+that ever makes that cost worth paying.**
+
+⚠️ **`stagger` is unused — do not be fooled by `Animated.stagger` in
+[`Celebration.js:23`](../src/screens/Celebration.js#L23).** That is React Native's own `Animated` API, a
+different function entirely. An audit on 2026-09-10 initially miscounted it as a consumer.
+
+**Where to start when it unparks.** `riseIn` on cards and rows is the default entrance the module was
+written around; `popIn` on rewards and badges is generalized from `Celebration.js`, which is the house
+motion. ⚠️ **`art.js`, `Celebration.js` and `Toast.js` stay on the RN `Animated` API — coexistence is the
+design, not a compromise. Do not port them** ([`motion.js:16`](../src/motion.js#L16)).
+
+**The gate.** "Plus is complete" is the owner's phrase and the owner's call. At minimum that means the
+open Plus rows (IMP-108, IMP-109, IMP-110) shipped and WALK-19 finished.
+

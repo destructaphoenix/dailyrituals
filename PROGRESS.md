@@ -158,19 +158,13 @@ the two are indistinguishable. **Do not remove the fallback** — see WALK-19.
   entitlement survives a reinstall. The 2026-09-08 failure was the walk's own ordering, not the app.
 - ✅ **WALK-19's defective ordering is fixed** — carved out as **WALK-19a** (buy → uninstall → reinstall →
   Restore as one tight block). Durable rule + steps in [`docs/walk-open.md`](docs/walk-open.md).
-- **🎨 KEEP MOTION, OR REMOVE IT? — owner's question, 2026-09-10, and it gates WALK-18 + [IMP-111](docs/specs-open.md#imp-111).**
-  Their words: *"the animations are not there ... I wonder if animations should be removed."* **The facts, from source:**
-  [`motion.js`](src/motion.js) says in its own header that it **adds no animation to any screen** — `riseIn`,
-  `popIn`, `fadeOut` and `useCountUp` are **all unused**. Only `usePressScale` (a 0.99 scale, deliberately
-  imperceptible) and `ScreenFade` (the tab transition) are live. **So the app has two motions, one of which
-  is designed not to be seen, and the other is currently drawing shadow outlines around every card in day
-  mode.** ⚖️ **The honest read: `ScreenFade` is not earning its keep** — it is the sole cause of IMP-111 and
-  delivers a 320ms fade nobody has noticed. **Three ways to go:** (a) fix IMP-111 and keep it; (b) delete
-  `ScreenFade` from [`RitualsApp.js:885`](src/RitualsApp.js#L885) — resolves IMP-111 by subtraction, smaller
-  than any fix; (c) keep it AND finally apply the unused vocabulary, which is the only option that makes
-  IMP-077 worth what it cost (it added `react-native-reanimated` + `react-native-worklets` as native deps,
-  and forced the vc14 build). ⚠️ **`motion.js` itself is pure and harmless — this decision is only about
-  `ScreenFade`.** Do not delete the module.
+- ✅ **MOTION — DECIDED 2026-09-10. Owner: *"I choose b and c. Remove the fade. Then some time later when
+  plus is complete I can work on the motion."*** **(b) now:** [IMP-111](docs/specs-open.md#imp-111) deletes
+  `ScreenFade`, resolving the day-mode card-outline defect by subtraction. **(c) deferred:** applying the
+  unused vocabulary is **parked in [`docs/specs-open.md`](docs/specs-open.md) → "Parked: apply the motion
+  vocabulary"**, gated on Plus being complete. 🔴 **Do NOT remove `react-native-reanimated` /
+  `react-native-worklets` when IMP-111 lands** — `usePressScale` still uses them, they are **native** deps,
+  and dropping them needs a build and closes the OTA lane. **Do not delete `motion.js`.**
 - **💰 EMBERS FOR MONEY — a conversation the owner parked for its own chat (2026-09-08).** Settled in
   principle (dropped 2026-08-03) that embers should be purchasable for cash, but **not scoped, not
   started** — full argument in the playbook. What the next chat needs is in
@@ -201,50 +195,58 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
-_2026-09-10, earlier (Opus — **the 19-commit backlog shipped; nothing built since 2026-09-08 had reached a
-phone.**) — ✅ **pushed and OTA'd.**_
+_2026-09-10, earlier (Opus + owner — **WALK-19a PASSED in four minutes and closed IMP-105.**) — walk, no code._
 
-**What finished.** **IMP-103** — a ship row with no code in it — by doing the thing it asked. One
-`Release-Lane: ota` trailer on `1f2d6c4` carried **IMP-100, 101, 102, 104, 106, 107**. CI `34390363861`:
-backstop + test gate passed, `production` gate approved, `eas update` ran **on the runner, never by hand**.
+**What finished.** **IMP-105**, which had blocked `internal` → `production` since 2026-09-08, **closed with
+no code ever written on it.** Annual bought **00:43**, uninstalled **00:44**, reinstalled **00:45**, and at
+**00:47** the second launch already showed Member — **no Restore row to tap.** Four minutes against a ~3-hour
+test-sub life, so expiry is arithmetically impossible: the first run that tested what step 9 always meant to.
 
-**The proof.** Pre-push **1104 passed, 99 suites** (+3 zone × 2), export clean. Branch `production`,
-runtime `1.0.9` (**vc15 only**), group **`f961b427`**, update **`01a0877d`**. ✅ Manifest read back
-(IMP-086): `rcAndroidKey` present and **non-empty** — 🔴 **never record the value; it went into a public
-commit message once (`3b28b70`) and the rule now lives in the playbook.** Applies on the **second** launch.
-
-**Also:** WALK-19a gained an index row (`0f26474`) — it had a section but no row, and `walk-open.md`'s own
-rule is "take the first ⬜ in the index", so no walk chat would have found it. And IMP-105 gained Round 2.5
-(`a634a81`), the source finding that predicted WALK-19a's result before it ran.
-
-_2026-09-10, latest (Opus + owner — **WALK-19a PASSED in four minutes and closed IMP-105. The build queue
-is now empty and every remaining task is a walk.**) — walk result, no code._
-
-**What finished.** **IMP-105**, the row that had blocked `internal` → `production` since 2026-09-08,
-**closed with no code ever written on it.** Bought annual **00:43**, uninstalled **00:44**, reinstalled
-**00:45**, and at **00:47** the second launch already showed the member state — **the Restore row was gone
-and there was nothing to tap.** Four minutes against an annual test subscription's ~3-hour life, so expiry
-is arithmetically impossible: this run finally tested what step 9 always meant to test.
-
-**Why the 2026-09-08 failure needed no fix.** ⚠️ **The code was never the variable.** On the failing bundle
+**Why 2026-09-08 needed no fix.** ⚠️ **The code was never the variable.** On the failing bundle
 `d42b7ec7`, `useLaunchEntitlementCheck` guards on `if (plus || ran.current) return;` — a reinstall mounts
-with `plus: false`, so that bundle ran the same check, the same route, the same store. What differed was
-elapsed time: a full perks tour sat between purchase and reinstall, and a license-tester subscription
-cannot survive it. **C3 was never needed — the walk outranked the dashboard check**, and C0 (Round 2.5,
-written from source hours earlier) had already predicted both the outcome and the mechanism.
+with `plus: false`, so it ran the same check, same route, same store. What differed was elapsed time: a
+perks tour sat between purchase and reinstall. **C3 was never needed — the walk outranked the dashboard**,
+and C0 (Round 2.5, from source hours earlier) had predicted both outcome and mechanism.
 
-**Two corroborations nobody asked for.** Play notified the owner at uninstall that the subscription was
-still active and would not be cancelled. And the owner chose **"keep the fresh start"** — discarding local
-journal data — **and Plus still came back**: membership is store-authoritative, IMP-043 proven on hardware.
-⚠️ **Named gap:** `restorePurchases()` was never tapped (no button to tap), so reinstall-then-Restore stays
-unexercised. Not a blocker — step 4f already proved `restore()`.
+**Corroborations nobody asked for.** Play confirmed at uninstall that the sub outlives the app; and the
+owner chose **"keep the fresh start"**, discarding local data, **and Plus still came back** — membership is
+store-authoritative, IMP-043 proven on hardware. ⚠️ **Named gap:** `restorePurchases()` was never tapped
+(no button to tap). Not a blocker — step 4f already proved `restore()`.
 
-**The durable lesson.** A walk whose steps cannot fit inside the lifetime of the thing being tested does
-not produce a null result — it produces a **false** one. This one cost two rounds of source review, a
-dashboard audit and an owner's evening. **The fix was to the walk.**
+**The durable lesson.** A walk whose steps cannot fit inside the lifetime of the thing being tested does not
+produce a null result — it produces a **false** one. This one cost two rounds of source review, a dashboard
+audit and an owner's evening. **The fix was to the walk.**
 
-**The exact next step.** ⛔ **The build queue is empty — do not invent code work.** Everything left is a
-walk, on group `f961b427` / update `01a0877d`. 🚦 **WALK-19 steps 4e, 7 and 10 all need a LIVE test
-subscription: buy annual and run them as ONE block inside the ~3-hour window** — the same discipline
-WALK-19a proved. Then step 8 (real money, last), **WALK-08**, **WALK-07**, **WALK-18** (mid-range device),
-and **WALK-12 (R8) last of all** — it must be walked on the exact build you intend to ship.
+_2026-09-10, latest (Opus + owner — **a full WALK-19 sitting on hardware: two rows closed, two proven, and
+FOUR new rows opened by the owner noticing things the walk was not looking for.**) — walk + specs, no code._
+
+**What finished — three rows closed on hardware, none needing code.** **IMP-104** ✅ with 15 embers the free
+Golden Sun sky applied and **the balance did not move** — the tap-wipes-your-embers half, invisible earlier
+at 0. **IMP-107** ✅ **unconditional** — the sub bought 00:43 expired 01:43 and after a confirmed
+**swipe-away cold start** Plus was gone: the new launch check, not the old `AppState` path, and this row's
+first ever test. **IMP-103's residual** ✅ — 4e returned **"You already have Plus"**, so `mapError.js`'s
+unproven bet on codes `6`/`7` was right.
+
+**WALK-19 steps** (group `f961b427`, update `01a0877d`): **4e ✅**, **7 ⚠️ found two defects instead**, **9 ✅
+via WALK-19a**, **10 ✅** — the deep link worked, and keeping Plus after cancelling is *correct*, the period
+had not ended; the **"+3 candles"** popup is IMP-102 on a test-compressed 30-min renewal. **Owed: step 8**
+(real money, last).
+
+**🔴 Four new rows, all owner-found, all specced, none built.** **[IMP-108](docs/specs-open.md#imp-108)** —
+`PLUS_PERKS[0]` promises *"Every palette & sky — unlocked forever"* and [`Shop.js:38`](src/screens/Shop.js#L38)
+unlocks only `tier: 'plus'`, so **a paying member is still charged embers for five items**; live since
+2026-09-05. **[IMP-109](docs/specs-open.md#imp-109)** — the shortfall toast never names the price or the
+balance (*"hella confusing"*); **three** call sites. **[IMP-110](docs/specs-open.md#imp-110)** — the paywall
+sells streak insurance, which every free user already has. **[IMP-111](docs/specs-open.md#imp-111)** — the
+tab fade outlines every card in day mode.
+
+**Two owner decisions.** **Auto-freeze stays FREE for everyone** — IMP-110 rewords the line rather than
+gating the feature, and its test guards against a chat "fixing" it the wrong way. **Motion: remove the fade
+now, apply the vocabulary later.** Both ember questions are answered — **cash → embers → candles is
+decided**; the **cap (3 or 5?) is the only one left**.
+
+**The exact next step.** 🔨 **Build [IMP-108](docs/specs-open.md#imp-108) → 109 → 110 → 111, in that order**,
+one chat each. All four are fully specced with no decisions left. ⚠️ **IMP-111 is a deletion and its test
+count legitimately DROPS** — say so in the note. 🔴 **When it lands, do not remove `react-native-reanimated`
+or `react-native-worklets`** — `usePressScale` still uses them, they are native, and dropping them closes
+the OTA lane. Then WALK-19 step 8, WALK-08, WALK-07, WALK-18 (day mode), and **WALK-12 (R8) last of all**.

@@ -4364,6 +4364,23 @@ two rounds of source review, a dashboard audit, and an owner's evening. The fix 
 
 ## Session notes
 
+_2026-09-10, earlier (Opus — **the 19-commit backlog shipped; nothing built since 2026-09-08 had reached a
+phone.**) — ✅ **pushed and OTA'd.**_
+
+**What finished.** **IMP-103** — a ship row with no code in it — by doing the thing it asked. One
+`Release-Lane: ota` trailer on `1f2d6c4` carried **IMP-100, 101, 102, 104, 106, 107**. CI `34390363861`:
+backstop + test gate passed, `production` gate approved, `eas update` ran **on the runner, never by hand**.
+
+**The proof.** Pre-push **1104 passed, 99 suites** (+3 zone × 2), export clean. Branch `production`,
+runtime `1.0.9` (**vc15 only**), group **`f961b427`**, update **`01a0877d`**. ✅ Manifest read back
+(IMP-086): `rcAndroidKey` present and **non-empty** — 🔴 **never record the value; it went into a public
+commit message once (`3b28b70`) and the rule now lives in the playbook.** Applies on the **second** launch.
+
+**Also:** WALK-19a gained an index row (`0f26474`) — it had a section but no row, and `walk-open.md`'s own
+rule is "take the first ⬜ in the index", so no walk chat would have found it. And IMP-105 gained Round 2.5
+(`a634a81`), the source finding that predicted WALK-19a's result before it ran.
+
+
 _2026-09-09, earlier (Sonnet — **IMP-106 fixed: `RUNNING_BUNDLE` was already computed but only ever shown
 inside the broken-gate alert, so a healthy build or a member's device had no way to say which JS it was
 running — the exact gap that let IMP-103 be mis-scoped.**) — ✅ **shipped 2026-09-10, group `f961b427`.**_
