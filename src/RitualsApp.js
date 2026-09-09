@@ -43,7 +43,7 @@ import { createPurchaseService, isBillingConfigured, paywallLive, billingStatus 
 import { billingDiagnostic, describeUpdate } from './billing/diagnostic';
 import { PLUS_ENABLED, EMBER_PACKS_ENABLED } from './billing/config';
 import { formatRenewDate } from './billing/format';
-import { checkEntitlement, nextPlusState, useLaunchEntitlementCheck } from './billing/entitlementSync';
+import { checkEntitlement, nextPlusState, useLaunchEntitlementSync } from './billing/entitlementSync';
 import { saveState } from './persistence/storage';
 import { pickPersisted } from './persistence/state';
 import { pendingRestoreInventory } from './persistence/restoreQuarantine';
@@ -371,37 +371,43 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   };
 
   // Store, not the local cache, is authoritative (IMP-043): only a verified
-  // "no entitlement" answer downgrades; a failed/unreachable check changes
-  // nothing (offline-first — never strand a real subscriber without a signal).
+  // "no entitlement" answer moves the flag; a failed/unreachable check
+  // changes nothing (offline-first — never strand a real subscriber without a
+  // signal). Shared by the AppState listener below (the foreground-transition
+  // path) and the launch hook (the cold-start path, IMP-107) — one downgrade
+  // policy, not two.
+  const applyEntitlementResult = (result) => {
+    if (result.entitlement) {
+      setLiveEntitlement(result.entitlement);
+      setSubCanceled(result.entitlement.willRenew === false);
+      setActivePlan(result.entitlement.plan);
+    }
+    const next = nextPlusState(plus, result);
+    if (next !== plus) setPlus(next);
+  };
+
   React.useEffect(() => {
     const sub = AppState.addEventListener('change', async (s) => {
       if (s !== 'active' || !plus) return;
-      const result = await checkEntitlement(service);
-      if (result.entitlement) {
-        setLiveEntitlement(result.entitlement);
-        setSubCanceled(result.entitlement.willRenew === false);
-        setActivePlan(result.entitlement.plan);
-      }
-      const next = nextPlusState(plus, result);
-      if (next !== plus) setPlus(next);
+      applyEntitlementResult(await checkEntitlement(service));
     });
     return () => sub.remove();
   }, [plus, service]);
 
-  // The lost-phone bug: a returning subscriber whose local cache reads false
-  // (fresh install, an IMP-033 quarantine, a corrected forged flag, ...) was
-  // never re-asked — "Restore purchases" lived only behind the paywall, the
-  // one screen a non-Plus-looking user has no reason to open. Silent,
-  // failure-tolerant, once per launch.
-  useLaunchEntitlementCheck({
+  // Covers the lost-phone upgrade (a returning subscriber whose local cache
+  // reads false — fresh install, an IMP-033 quarantine, a corrected forged
+  // flag, ...; "Restore purchases" lived only behind the paywall, the one
+  // screen a non-Plus-looking user has no reason to open) and the
+  // lapsed-member downgrade (IMP-107: a cold start comes up already `active`,
+  // so the AppState listener above never fires and a member is never
+  // re-checked unless they happen to background the app). Silent,
+  // failure-tolerant, once per launch, regardless of the current `plus`
+  // value — no toast either way, so opening the journal is never interrupted
+  // by a notice about billing.
+  useLaunchEntitlementSync({
     plus,
     service,
-    onEntitlementFound: (entitlement) => {
-      setPlus(true);
-      setLiveEntitlement(entitlement);
-      setActivePlan(entitlement.plan);
-      setSubCanceled(entitlement.willRenew === false);
-    },
+    onResult: applyEntitlementResult,
   });
 
   // Rolling-window reminder scheduling (IMP-031). A repeating OS trigger can't

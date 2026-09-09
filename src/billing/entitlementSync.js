@@ -24,20 +24,29 @@ export function nextPlusState(plus, result) {
   return !!result.entitlement;
 }
 
-// Fixes the lost-phone bug: a returning subscriber whose local cache says
-// `plus: false` (fresh install, IMP-033 quarantine, forged-then-corrected
-// backup, ...) is otherwise never re-asked. Runs the check once, only when
-// the app mounts with `plus` already false — a true member has nothing to
-// gain here and the periodic AppState check (RitualsApp.js) already covers
-// the downgrade side for members.
-export function useLaunchEntitlementCheck({ plus, service, onEntitlementFound }) {
+// Covers two bugs with one check, run once at mount regardless of `plus`:
+//
+// - The lost-phone bug (upgrade edge): a returning subscriber whose local
+//   cache says `plus: false` (fresh install, IMP-033 quarantine,
+//   forged-then-corrected backup, ...) was never re-asked, because "Restore
+//   purchases" lived only behind the paywall — the one screen a
+//   non-Plus-looking user has no reason to open.
+// - The lapsed-member bug (downgrade edge, IMP-107): the AppState listener in
+//   RitualsApp.js covers downgrade too, but only on a background→foreground
+//   *transition* — `AppState` does not emit `'change'` on a cold start, which
+//   comes up already `active`. A member who opens the app, writes and closes
+//   it without ever backgrounding it was never re-checked, so a lapsed
+//   subscription could keep showing Plus indefinitely.
+//
+// This hook only runs the check and hands the raw result to the caller —
+// `nextPlusState` still rules on whether the flag actually moves, so a
+// failed/unreachable check (`verified: false`) changes nothing either way.
+export function useLaunchEntitlementSync({ plus, service, onResult }) {
   const ran = useRef(false);
   useEffect(() => {
-    if (plus || ran.current) return;
+    if (ran.current) return;
     ran.current = true;
-    checkEntitlement(service).then((result) => {
-      if (result.verified && result.entitlement) onEntitlementFound(result.entitlement);
-    });
+    checkEntitlement(service).then(onResult); // caller decides; nextPlusState still rules
     // Launch-only by design — deliberately not re-run on later `plus` flips.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
