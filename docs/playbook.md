@@ -360,7 +360,9 @@ review any release. Treat "no review" as "usually none, and far faster", not as 
   The IMP-085 update (group `d5f03a47`) did exactly that to vc15. Read it back before trusting an OTA:
   `curl -sS -H 'expo-platform: android' -H 'expo-runtime-version: <ver>' -H 'expo-channel-name: production'
   -H 'expo-protocol-version: 1' -H 'accept: multipart/mixed' https://u.expo.dev/<projectId> | grep -o
-  'rcAndroidKey":"[^"]*"'` — it must not be empty. `scripts/check-billing-config.js` guards the workflow
+  'rcAndroidKey":"[^"]*"'` — it must not be empty. 🔴 **Record only "present / non-empty" — never paste the
+  value into a commit message, a doc, or a chat.** The check is a boolean; the value adds nothing. This repo
+  is PUBLIC, so a commit message is a permanent publication (learned the hard way, 2026-09-10, `3b28b70`). `scripts/check-billing-config.js` guards the workflow
   copy of the command; **it cannot guard what you type by hand.**
 
 _(Older manual `eas` lane reference is in [build-log.md](build-log.md) → "Update workflow".)_

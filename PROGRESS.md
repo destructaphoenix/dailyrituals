@@ -228,7 +228,7 @@ gate passed, `production` gate approved, `eas update` ran **on the runner, never
 **The proof.** Pre-push: **1104 passed, 99 suites** (+ 3 zone × 2), export clean. Published to branch
 `production`, runtime `1.0.9` (**vc15 only** — vc12/vc9 receive nothing), **group
 `f961b427-a6de-4fc9-bb86-951eae3efe04`**, Android update `01a0877d-62c1-73cf-8980-533630764cdf`.
-✅ **Manifest read back** (IMP-086): `rcAndroidKey` = `goog_VGhIfaDtkBCruQuHrZqLvuWGwEz`, **not empty**, id
+✅ **Manifest read back** (IMP-086): `rcAndroidKey` present and **non-empty** (never record the value), id
 matches CI. **Applies on the SECOND launch.**
 
 **Two doc defects fixed on the way** (`0f26474`). **WALK-19a had a full section but no index row**, and
