@@ -114,6 +114,15 @@ let _updates = null;
 try { _updates = require('expo-updates'); } catch (e) { _updates = null; }
 const RUNNING_BUNDLE = describeUpdate(_updates);
 
+// IMP-104: extracted so the buyPalette/buySky guard is unit-testable without
+// reaching into RitualsApp's closures. A string tier (e.g. 'owned') reaching
+// a buy handler is a bug upstream — Shop.js should never route an owned
+// default to a buy — but the NaN it would produce serialises to null and
+// reads back as 0, so this predicate is the balance's last line of defence.
+export function isPurchasableTier(tier) {
+  return typeof tier === 'number';
+}
+
 export default function RitualsApp({ mode = 'day', settings, setSettings, onToggleMode, initialPlus = false, initialState = {}, onResetData, onReplaceAllData, restoredFromMs = null, onDismissRestoreNotice, pendingRestore = null, onConsumePendingRestore, restoreOfferAnswered = false, onAnswerRestoreOffer, onReopenRestoreOffer }) {
   const theme = useMemo(() => makeTheme(mode, settings), [mode, settings]);
   const c = theme.colors;
@@ -263,6 +272,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   const retint = (swatch) => setSettings && setSettings((s) => ({ ...s, accent: swatch }));
   const applyPalette = (p) => { setActivePalette(p.id); retint(p.swatch); showToast(p.name + ' applied'); };
   const buyPalette = (p) => {
+    if (!isPurchasableTier(p.tier)) return;
     if (embers < p.tier) { openGetEmbers(); return; }
     setEmbers((e) => e - p.tier);
     setOwnedPalettes((o) => [...o, p.id]);
@@ -271,6 +281,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   };
   const applySky = (s) => { setActiveSky(s.id); showToast(s.name + ' applied'); };
   const buySky = (s) => {
+    if (!isPurchasableTier(s.tier)) return;
     if (embers < s.tier) { openGetEmbers(); return; }
     setEmbers((e) => e - s.tier);
     setOwnedSkies((o) => [...o, s.id]);

@@ -7,7 +7,7 @@
 // decoupled — the section keys off `embersForCash` alone — and the third test
 // below is the one that stops them being re-coupled.
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import { render, within } from '@testing-library/react-native';
 import Shop from './Shop';
 
 const baseProps = {
@@ -66,4 +66,56 @@ test('enabling Plus alone never surfaces the cash ember packs', () => {
 test('omitting embersForCash defaults to hidden', () => {
   const { queryByText } = render(<Shop {...baseProps} plusEnabled={true} />);
   expect(queryByText('Gather Embers')).toBeNull();
+});
+
+// IMP-104 — `tier: 'owned'` marks a default as free; ownedPalettes/ownedSkies
+// only record what was *purchased*. Golden Hour, Golden Sun and Crescent Moon
+// are declared `tier: 'owned'` but were never added to those arrays, so before
+// the fix they fell through to 'buy' and rendered an ember pill reading the
+// literal word "owned" — tappable, and wiping the balance on tap (RitualsApp.js).
+function cardFor(getByText, name) {
+  let node = getByText(name);
+  while (node && !(node.props && typeof node.props.onPress === 'function')) node = node.parent;
+  return node;
+}
+
+const imp104Props = {
+  ...baseProps,
+  activePalette: 'lavender',
+  ownedPalettes: [],
+  activeSky: 'aurora',
+  ownedSkies: [],
+};
+
+test('IMP-104: tier "owned" defaults read free even with an empty owned array', () => {
+  const { getByText } = render(<Shop {...imp104Props} plus={true} />);
+  for (const name of ['Golden Hour', 'Golden Sun', 'Crescent Moon']) {
+    const card = within(cardFor(getByText, name));
+    expect(card.getByText('Apply')).toBeTruthy();
+    expect(card.queryByText('owned')).toBeNull();
+  }
+});
+
+test('IMP-104: the defaults are free whether or not Plus is active', () => {
+  const { getByText } = render(<Shop {...imp104Props} plus={false} />);
+  for (const name of ['Golden Hour', 'Golden Sun', 'Crescent Moon']) {
+    const card = within(cardFor(getByText, name));
+    expect(card.getByText('Apply')).toBeTruthy();
+    expect(card.queryByText('owned')).toBeNull();
+  }
+});
+
+test('IMP-104: an applied default still reads Applied, not Apply', () => {
+  const { getByText } = render(
+    <Shop {...imp104Props} activePalette="goldenhour" plus={false} />
+  );
+  const card = within(cardFor(getByText, 'Golden Hour'));
+  expect(card.getByText('Applied')).toBeTruthy();
+  expect(card.queryByText('Apply')).toBeNull();
+});
+
+test('IMP-104: a priced item is unaffected', () => {
+  const { getByText } = render(<Shop {...imp104Props} plus={false} />);
+  const card = within(cardFor(getByText, 'Marigold'));
+  expect(card.getByText('240')).toBeTruthy();
 });
