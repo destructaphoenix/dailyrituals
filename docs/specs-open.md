@@ -22,12 +22,134 @@
 
 ---
 
-## The queue — EMPTY
+## The queue — two rows, both opened by the owner on 2026-09-10
 
-**No open IMP rows.** IMP-105, the last one, closed on 2026-09-10 when WALK-19a passed: the
-reinstall-restore "defect" was the walk's own ordering, not the app. The next row must be opened by the
-owner (the parked embers-for-money conversation at the bottom is the only candidate, and it is gated on
-two unanswered questions).
+**Both came out of WALK-19 step 7, and neither is what the walk was looking for.** The owner went to check
+IMP-104 and found something bigger: **the paywall sells a promise the shop does not keep.** Read
+[`data.js:174`](../src/data.js#L174) — `PLUS_PERKS[0]` is *"Every palette & sky — unlocked forever"* — and
+then [`Shop.js:38`](../src/screens/Shop.js#L38), which unlocks only `tier: 'plus'` items for a member.
+Five ember-priced items stay locked behind a grind for someone who has already paid.
+
+| Row | What | Severity |
+| --- | --- | --- |
+| [IMP-108](#imp-108) | **A paying member is still charged embers for five palettes and skies the paywall says they own.** | 🔴 **Live mis-sell on the paid surface** |
+| [IMP-109](#imp-109) | The "you can't afford this" toast never mentions the price, the balance, or affording anything. | 🟠 **Confusing, owner-reported, three call sites** |
+
+---
+
+## IMP-108
+
+### Plus must unlock every palette and sky — the paywall has been promising it since Plus went live
+
+**Lane: OTA.** Opened by the owner 2026-09-10 during WALK-19 step 7, on group `f961b427`.
+
+**The finding as walked.** A Plus member with 15 embers tapped **Harvest Moon** (`tier: 300`) and was
+refused. The owner's words: *"harvest moon is not free even for a subscriber."*
+
+**It is a mis-sell, not a preference.** [`data.js:174`](../src/data.js#L174) opens with the comment
+*"Every line here is a promise the paid surface makes"* — and the first promise is **"Every palette & sky
+— unlocked forever"**. It is shown on the paywall and in the first three items of
+[`Onboarding.js`](../src/screens/Onboarding.js). The shop disagrees
+([`Shop.js:36-41`](../src/screens/Shop.js#L36)):
+
+```js
+const palState = (p) => p.id === activePalette ? 'active'
+  : (p.tier === 'owned' || ownedPalettes.includes(p.id)) ? 'owned'
+  : p.tier === 'plus' ? (plus ? 'owned' : 'plus') : 'buy';   // ← `plus` only ever reaches tier 'plus'
+```
+
+**The five items a paying member is still charged for:** Marigold (240), Honey (240), Rose Dusk (420),
+Sage Eve (420) and Harvest Moon (300). ⚠️ **This is the same family of defect as IMP-084 and the
+`PLUS_PERKS[1]` streak-insurance line — the paid surface and the code telling different stories — and it
+has been live on every build since `PLUS_ENABLED` flipped on 2026-09-05.**
+
+**Steps.**
+
+1. In [`Shop.js`](../src/screens/Shop.js), make `plus` unlock **every** tier, not just `'plus'`:
+
+```js
+const palState = (p) => p.id === activePalette ? 'active'
+  : (plus || p.tier === 'owned' || ownedPalettes.includes(p.id)) ? 'owned'
+  : p.tier === 'plus' ? 'plus' : 'buy';
+```
+
+   Same shape for `skyState`. Note `'active'` still wins first, and with `plus` true the `'plus'` branch
+   becomes unreachable — that is correct, a member owns those too.
+
+2. 🔴 **Do NOT write unlocked items into `ownedPalettes` / `ownedSkies`.** Access must stay a **live read
+   on `plus`**, so it follows the membership. Persisting it would hand a lapsed member five palettes
+   permanently — the vc14 giveaway shape IMP-084 exists to prevent. `buyPalette`/`buySky` keep writing to
+   those arrays; that is the *ember-purchase* record and it is rightly permanent.
+
+3. No change to `buyPalette`/`buySky` in [`RitualsApp.js:278-294`](../src/RitualsApp.js#L278). They are
+   only reachable from the `'buy'` state, which a member can no longer be in.
+
+**⚠️ One accepted consequence — document it, do not "fix" it.** A member who applies Harvest Moon and
+later lapses keeps it *applied*, because `s.id === activeSky` returns `'active'` before any ownership test
+runs. **This is deliberate.** Forcibly changing someone's theme at the moment they lapse is punitive, reads
+as a bug, and risks more than it protects — it is one cosmetic they were already looking at, not a paid
+good. Leave a comment saying so, or the next reader will "correct" it. (They cannot re-apply it after
+switching away, which is a little odd and still better than the alternative.)
+
+**Not in scope.** The word *"forever"* in that perk line is loose for a subscription and the owner may want
+it reworded. **Not this row** — this row makes the code keep the promise as written.
+
+**Acceptance.** `npm test` green and ≥ the prior count, plus new tests: a member reads `'owned'` for a
+numeric-tier item, a non-member still reads `'buy'`, a member's `ownedPalettes` is **not** mutated by
+merely being a member, and a lapsed member reverts to `'buy'` for anything they never ember-bought. Then
+WALK-19 step 7 re-run: a member taps Harvest Moon and it applies.
+
+**Commit:** `fix(plus): a member owns every palette and sky, as the paywall promises (IMP-108)`
+
+---
+
+## IMP-109
+
+### The "you can't afford it" message never says you can't afford it
+
+**Lane: OTA.** Opened by the owner 2026-09-10, same sitting. Their words: *"That message is just hella
+confusing."* They are right.
+
+**The finding as walked.** With 15 embers, tapping Harvest Moon (300) produced **"Embers also gather on
+their own — one for every day you keep."** Nothing about the price, the balance, or being short.
+
+**Cause, confirmed in source.** [`RitualsApp.js:271-274`](../src/RitualsApp.js#L271) `openGetEmbers()`
+serves two different intents with one string:
+
+```js
+const openGetEmbers = () => {
+  if (EMBER_PACKS_ENABLED) setGetEmbersOpen(true);
+  else showToast(EMBERS_ARE_FREE_COPY);
+};
+```
+
+Called deliberately from the ember pill, that copy is a fine answer. Called from a **shortfall**, it
+answers a question the user did not ask. **Three call sites hit it that way** — `buyPalette` (280),
+`buySky` (289) and **`buyCandles` (295), which the owner did not reach but has the identical bug.**
+
+**Steps.**
+
+1. Add a shortfall message next to `EMBERS_ARE_FREE_COPY`, naming the item, the price and the balance:
+
+```js
+const shortfallCopy = (name, price) => `${name} costs ${price} embers — you have ${embers}`;
+```
+
+2. At all **three** sites, replace the bare `openGetEmbers()` on the shortfall branch with
+   `showToast(shortfallCopy(...))`. For candles the name is the pack (`'3 candles'` / `pack.count`).
+3. ⚠️ **Leave the ember-pill path alone.** `EMBERS_ARE_FREE_COPY` stays exactly as it is for a deliberate
+   tap on "Gather Embers" — it is the right answer to that question and IMP-034 put it there on purpose.
+4. ⚠️ **`EMBER_PACKS_ENABLED` stays `false`.** Do not touch it; see the parked section below.
+
+**Acceptance.** `npm test` green and ≥ prior, +3 tests — one per call site — asserting the toast names the
+price and the balance and is **not** `EMBERS_ARE_FREE_COPY`, plus one asserting the pill still shows the
+free copy. Re-walk in WALK-19 step 7.
+
+**Commit:** `fix(shop): say what it costs and what you have, not how embers accrue (IMP-109)`
+
+---
+
+
 
 **The owner asked for the Plus purchase surface to be investigated hard after IMP-099.** It was, by reading
 the shipped SDK rather than our assumptions about it, and **the audit found a defect larger than IMP-099**.
