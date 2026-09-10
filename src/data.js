@@ -146,11 +146,13 @@ export const SHOP_SKIES = [
   { id: 'aurora',   name: 'Aurora',        kind: 'aurora',  tier: 'plus' },
 ];
 
+// Max candles a user can hold at once. Caps CANDLE_PACKS and the Plus renewal grant.
+export const MAX_CANDLES = 3;
+
 // Streak-freeze candle packs (bought with embers).
 export const CANDLE_PACKS = [
   { id: 'c1', count: 1, price: 120 },
-  { id: 'c3', count: 3, price: 300, tag: 'Save 17%' },
-  { id: 'c5', count: 5, price: 450, tag: 'Best value' },
+  { id: 'c3', count: 3, price: 300, tag: 'Best value' },
 ];
 
 // Ember top-ups (bought with cash).

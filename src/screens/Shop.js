@@ -9,7 +9,7 @@ import { useTheme } from '../theme';
 import { T } from '../ui';
 import { Chevron, Ember, Check, Candle, Sun } from '../icons';
 import { EmberPill, PlusBanner, SkyPreview, PalTag } from '../shopui';
-import { SHOP_PALETTES, SHOP_SKIES, CANDLE_PACKS, EMBER_PACKS } from '../data';
+import { SHOP_PALETTES, SHOP_SKIES, CANDLE_PACKS, EMBER_PACKS, MAX_CANDLES } from '../data';
 
 export default function Shop({
   insets, onClose, embers, plus,
@@ -94,7 +94,7 @@ export default function Shop({
           <Sec title="Candles" right={
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
               <Candle size={14} lit body={c.accentSoft} deep={c.accentDeep} />
-              <T d w={800} color={c.accentDeep} style={{ fontSize: 13 }}>{freezes} kept</T>
+              <T d w={800} color={c.accentDeep} style={{ fontSize: 13 }}>{freezes} / {MAX_CANDLES} kept</T>
             </View>
           } />
           <Note>A candle spends itself the moment you miss a day, keeping your streak alive.</Note>

@@ -17,7 +17,7 @@ import { dayKeyOf } from './time/dayKey';
 import { T } from './ui';
 import { CHROME_FONT_SCALE } from './ui/textScale';
 import { HomeIcon, BookIcon, Pencil, ChartIcon, UserIcon } from './icons';
-import { COPY, DAILY_QUESTS, STREAK_MILESTONES, SHOP_PALETTES, EMBER_GAIN } from './data';
+import { COPY, DAILY_QUESTS, STREAK_MILESTONES, SHOP_PALETTES, EMBER_GAIN, MAX_CANDLES } from './data';
 import HomeScreen from './screens/HomeScreen';
 import ArchiveScreen from './screens/ArchiveScreen';
 import InsightsScreen from './screens/InsightsScreen';
@@ -44,6 +44,7 @@ import { PLUS_ENABLED, EMBER_PACKS_ENABLED } from './billing/config';
 import { formatRenewDate } from './billing/format';
 import { checkEntitlement, nextPlusState, useLaunchEntitlementSync } from './billing/entitlementSync';
 import { freezeGrantFor } from './billing/freezeGrant';
+import { roomFor } from './home/candleCap';
 import { saveState } from './persistence/storage';
 import { pickPersisted } from './persistence/state';
 import { pendingRestoreInventory } from './persistence/restoreQuarantine';
@@ -300,6 +301,10 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     showToast(s.name + ' unlocked');
   };
   const buyCandles = (pack) => {
+    if (freezes + pack.count > MAX_CANDLES) {
+      showToast(`You can hold ${MAX_CANDLES} candles — you have ${freezes}`);
+      return;
+    }
     if (embers < pack.price) {
       const name = pack.count + (pack.count > 1 ? ' candles' : ' candle');
       showToast(shortfallCopy(name, pack.price, embers));
@@ -331,10 +336,15 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   React.useEffect(() => {
     const grant = freezeGrantFor(liveEntitlement, lastFreezeGrantPeriod);
     if (!grant) return;
-    setFreezes((f) => f + grant.freezes);
-    // A first grant is already covered by subscribe()'s welcome toast — only
-    // a renewal (a non-null prior period) is otherwise invisible.
-    if (lastFreezeGrantPeriod !== null) showToast('+3 candles — your Plus perk renewed');
+    const got = roomFor(freezes, grant.freezes);
+    if (got > 0) {
+      setFreezes((f) => f + got);
+      // A first grant is already covered by subscribe()'s welcome toast — only
+      // a renewal (a non-null prior period) is otherwise invisible.
+      if (lastFreezeGrantPeriod !== null) {
+        showToast(`+${got} ${got === 1 ? 'candle' : 'candles'} — your Plus perk renewed`);
+      }
+    }
     setLastFreezeGrantPeriod(grant.period);
   }, [liveEntitlement, lastFreezeGrantPeriod]);
 
