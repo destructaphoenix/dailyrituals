@@ -22,14 +22,188 @@
 
 ---
 
-## The queue — empty as of 2026-09-10
+## The queue — four rows, opened 2026-09-11 from the lapse sitting
 
-**Came out of WALK-19 step 7.** The owner went to check IMP-104 and found something bigger: **the paywall
-sells a promise the shop does not keep.** IMP-108, IMP-109, IMP-110, IMP-111, IMP-112 and IMP-113 (the two
-live mis-sells, the confusing shortfall toast, the day-mode tab fade, the candle cap, and the ember-pack
-purchase path) are all code-complete — see `docs/build-log.md`. **No open `IMP-xxx` row right now** — the
-next chat should check `PROGRESS.md`'s backlog table for whether the owner has filed a new one, or take a
-`WALK-nn` row instead.
+**Came out of WALK-19 step 7 and the subscription lapse that followed it** (hardware, owner-run,
+2026-09-10 → 11, monthly licence-tester sub). Step 7's Shop half **proved IMP-108, IMP-109 and IMP-110**,
+and WALK-07 and WALK-18 both closed. The sitting also turned up **four new defects** — three of them found
+by reading source against what the owner saw, one reported directly off the screen.
+
+| Row | What | Gate |
+| --- | --- | --- |
+| [IMP-114](#imp-114) | The candle shortfall toast can never fire — the pack is `disabled` when you cannot afford it. | 🎨 |
+| [IMP-115](#imp-115) | `6 / 3 kept` — IMP-112 caps acquisition but never migrates a pre-cap holding. | 🎨 |
+| [IMP-116](#imp-116) | A palette applied under Plus is kept but never owned, and is lost on the next switch — the paywall says *"unlocked forever"*. | 🚦 mis-sell · ⛔ **owner decision first** |
+| [IMP-117](#imp-117) | At max font the ember pill's `+` and the custom-mood emoji circles are off-centre. | 🎨 |
+
+**Take IMP-114, IMP-115 and IMP-117 in any order — they do not touch each other.** ⛔ **IMP-116 is not
+buildable yet**: it has two valid resolutions with opposite code, and the owner has not picked one.
+
+---
+
+## IMP-114 — an unaffordable candle pack must say what it costs, not go inert
+
+**Found 2026-09-11 by source review during WALK-19 step 7, then confirmed on hardware.**
+[IMP-109](build-log.md) added a shortfall toast to `buyCandles`
+([`RitualsApp.js:324-327`](../src/RitualsApp.js#L324-L327)) that names the pack, its price and your
+balance. **It can never run.** [`Shop.js:106`](../src/screens/Shop.js#L106) computes
+`const afford = embers >= p.price` and hands `disabled={!afford}` to the pack's `Pressable`, so the one
+tap that would produce the explanation is swallowed before `onBuyCandles` is reached. The owner confirmed
+it the same day: 15 embers against packs at 120 and 300, both greyed and inert.
+
+**The inconsistency is the defect, not the greying.** Palettes and skies are **not** disabled
+([`RitualsApp.js:304`](../src/RitualsApp.js#L304) and [`:313`](../src/RitualsApp.js#L313)) — tapping one
+you cannot afford explains itself, which is exactly how IMP-109 came to be written. Two priced surfaces in
+the same sheet answer the same gesture differently, and the one that stays silent is the one whose toast
+was written most recently.
+
+**Decision — the toast wins.** IMP-109's premise is that a refusal says what it costs and what you have. A
+control that dims and then does nothing teaches nothing, and it is the reason this call site went
+unexercised through four hardware sittings.
+
+**Steps.**
+1. [`Shop.js`](../src/screens/Shop.js) — remove `disabled={!afford}` from the `CANDLE_PACKS` `Pressable`
+   (line 106). **Keep `opacity: afford ? 1 : 0.5`** — the dimming is a correct affordance hint; only the
+   inertness is wrong. `afford` stays, it still drives the opacity.
+2. **Do not touch `buyCandles`.** Its cap check already precedes its embers check (IMP-112), so a user at
+   the cap is told they are full rather than poor, and neither branch spends anything.
+3. Nothing else in the sheet changes. The ember-pack row is behind `EMBER_PACKS_ENABLED` and is out of
+   scope.
+
+**The proof.** Extend [`__tests__/billing/candleCapGrant.test.js`](../__tests__/billing/candleCapGrant.test.js)
+(it already holds this file's source assertions): pin that the candle `Pressable` carries **no `disabled`
+prop** while still computing `afford` for opacity. Add a render assertion that tapping an unaffordable
+pack calls `onBuyCandles` — the regression that matters is the tap being swallowed again. **Prove it red
+first** against the current line 106.
+
+**Commit message.**
+`fix(shop): an unaffordable candle pack explains itself instead of going dead (IMP-114)`
+
+---
+
+## IMP-115 — a pre-cap candle holding reads as "6 / 3 kept"
+
+**Reported off the screen 2026-09-11 (hardware, owner-run).** The owner holds **6 candles**, banked before
+[IMP-112](build-log.md#imp-112) landed. [`Shop.js:98`](../src/screens/Shop.js#L98) renders
+`{freezes} / {MAX_CANDLES} kept` unconditionally, so the Shop reads **"6 / 3 kept"** — a fraction whose
+numerator exceeds its denominator, presented as a limit that is visibly not holding.
+
+**IMP-112 capped intake, not holdings, and that was correct.** `buyCandles`
+([`RitualsApp.js:320`](../src/RitualsApp.js#L320)) refuses anything that would overflow, and the renewal
+grant clamps through `roomFor` — so a user at 6 can never reach 7. **`applyAutoFreeze` only ever spends
+downward**, so the holding drains on its own. Nothing is broken underneath; the display is the whole
+defect.
+
+**Decision — display, not migration. Do NOT silently delete candles a user already holds.** They were
+legitimately earned or bought under the old rules, and confiscating them on an app update to tidy a label
+is a worse outcome than an odd-looking fraction. The holding drains to the cap on its own the first few
+times a day is missed.
+
+**Steps.**
+1. [`Shop.js`](../src/screens/Shop.js) — when `freezes > MAX_CANDLES`, render the held count **without**
+   the `/ 3` denominator: `{freezes} kept`. At or below the cap, the existing `{freezes} / {MAX_CANDLES}
+   kept` is unchanged.
+2. Put the branch in a tiny exported pure helper in
+   [`candleCap.js`](../src/home/candleCap.js) — `keptLabel(held, cap = MAX_CANDLES)` returning the string
+   — so it is unit-testable without rendering the sheet, matching how `roomFor` is already factored.
+3. **Nothing touches `setFreezes`.** No migrator, no schema bump, no clamp on load.
+
+**The proof.** Extend [`__tests__/home/candleCap.test.js`](../__tests__/home/candleCap.test.js):
+`keptLabel` below the cap, exactly at it, and above it (the `6` case). Add a `Shop.js` source assertion
+that the kept row goes through `keptLabel` rather than interpolating `MAX_CANDLES` directly — that
+interpolation is the bug and it should not be able to come back.
+
+**Commit message.**
+`fix(shop): stop showing a kept count larger than the cap it is divided by (IMP-115)`
+
+---
+
+## IMP-116 — ⛔ BLOCKED ON AN OWNER DECISION — a palette applied under Plus is kept but never owned
+
+**Found 2026-09-11 across a real subscription lapse (hardware, owner-run).** Under Plus the owner applied
+**Harvest Moon** (palette) and **Frostlight** (sky). The monthly licence-tester sub expired. Both survived
+the lapse and stayed applied, embers untouched at 15 — **and then, on switching to another palette,
+Frostlight went back under the Plus lock and could not be returned to.**
+
+**Cause, pinned.** `applyPalette` ([`RitualsApp.js:301`](../src/RitualsApp.js#L301)) sets `activePalette`
+and retints; **it never adds the id to `ownedPalettes`.** Only `buyPalette`
+([`:305`](../src/RitualsApp.js#L305)) does that, and IMP-108 routes a member straight to `applyPalette`
+because a member should not be charged. So a member's applied cosmetic is *active* but not *owned*, and
+`activePalette` is the only thing keeping it — the moment it changes, the entitlement to it is gone.
+`applySky` ([`:310`](../src/RitualsApp.js#L310)) has the identical shape.
+
+**Why this is a mis-sell and not a curiosity.** `PLUS_PERKS[0]` promises **"Every palette & sky — unlocked
+forever."** The shipped behaviour is neither of the two things a reader could take that to mean: it is not
+"yours permanently", and it is not "yours while you are a member". It is "yours until you next change your
+mind", which nobody would write on a paywall. **Same family as IMP-084, IMP-108 and IMP-110** — the paid
+surface and the code telling different stories — and it is the fourth in that family from this one sheet.
+
+### ⛔ The decision, and why a chat must not make it
+
+Two resolutions, both defensible, **opposite code**:
+
+**(a) "Forever" is the promise — honour it.** Applying a `tier`-priced palette or sky while `plus` is true
+adds it to `ownedPalettes` / `ownedSkies` permanently. A month of Plus buys permanent cosmetics.
+*Cost:* every cosmetic in the shop is claimable for one month's subscription, and the ember sink IMP-112
+was built to protect loses most of its pressure.
+
+**(b) "While you are a member" is the promise — fix the copy and the lapse.** `PLUS_PERKS[0]` drops
+"forever"; on losing `plus`, an applied-but-unowned palette/sky reverts to a free default rather than
+waiting to be silently dropped at the next switch. *Cost:* a lapsed member's app visibly changes colour on
+them, which needs a toast so it does not read as data loss.
+
+**This is the same shape as the IMP-110 ruling** (auto-freeze stays free → the copy was what was wrong),
+and the owner made that call directly. **Do not infer it from IMP-110's precedent** — that one had no
+revenue consequence and this one does.
+
+**Until it is answered, this row is not buildable.** Log the answer here, then write Steps.
+
+**One thing to fix either way, and it can ship now:** the silent loss at switch-time is wrong under both
+readings. Whatever the ruling, a cosmetic disappearing without a word is the part the owner actually hit.
+
+---
+
+## IMP-117 — at max font the ember pill's `+` and the mood emoji circles lose their centre
+
+**Reported off the screen 2026-09-11 (hardware, owner-run, OS font size at maximum).** Two fixed-size
+circles whose contents scale while the box does not. **Same family as IMP-067 and IMP-095** — a hardcoded
+dimension that ignores font scale.
+
+**Cause 1 — the ember pill's `+`.** [`shopui.js:31-32`](../src/shopui.js#L31-L32): a `width: 17,
+height: 17, borderRadius: 9` circle holding a `T` at `fontSize: 13, **lineHeight: 15**` with
+`maxFontSizeMultiplier={CHROME_FONT_SCALE}` (1.2). **`maxFontSizeMultiplier` scales `fontSize` and leaves
+a literal `lineHeight` alone** — so at the chrome cap the glyph grows to ~15.6dp inside a fixed 15dp line
+box inside a 17dp circle, and it rides off centre. The `borderRadius: 9` on a 17dp box is also half a
+pixel out; cosmetic, fix it in passing.
+
+**Cause 2 — the custom-mood emoji circles.** [`WriteFlow.js:182`](../src/screens/WriteFlow.js#L182) (the
+chosen-face circle) and [`:196`](../src/screens/WriteFlow.js#L196) (each swatch in the horizontal palette)
+are `width: 34, height: 34, borderRadius: 17` holding a bare `<Text style={{ fontSize: 18 }}>` / `17` with
+**no `maxFontSizeMultiplier` at all**. At OS scale 2.0 the emoji renders at up to twice its size inside an
+unchanged 34dp circle.
+
+**Steps.**
+1. [`shopui.js`](../src/shopui.js) — remove the literal `lineHeight: 15` from the `+`. Let the glyph centre
+   itself in the flex box (`alignItems`/`justifyContent` are already `center`). Size the circle from the
+   capped scale rather than a literal: multiply 17 by `Math.min(PixelRatio.getFontScale(),
+   CHROME_FONT_SCALE)` so the box grows exactly as far as the text is allowed to. Set `borderRadius` to
+   half the computed size.
+2. [`WriteFlow.js`](../src/screens/WriteFlow.js) — put `maxFontSizeMultiplier={CHROME_FONT_SCALE}` on both
+   emoji `Text`s, and size the two circles the same way as step 1 (a shared local
+   `const dot = …` is fine — do not export a new module for two call sites in one file).
+3. **Do not change any emoji or the palette contents.** This is dimensional only.
+
+**The proof.** Extend [`__tests__/screens/WriteFlowMood.test.js`](../__tests__/screens/WriteFlowMood.test.js)
+with source assertions that both emoji `Text`s carry `maxFontSizeMultiplier` and that neither circle
+hardcodes `34`. Add an equivalent for `shopui.js` — assert no literal `lineHeight` on the `+` and that the
+circle derives from `getFontScale()`. **jest renders a tree, not pixels, and cannot see a mis-centred
+glyph** — these are source assertions and the walk is the real acceptance. Prove each red first.
+
+**Walk owed.** Re-open the Shop and the write flow's "Name your own" at OS font scale 2.0. Folds into
+WALK-08.
+
+**Commit message.**
+`fix(a11y): the ember plus and the mood emoji circles grow with the font (IMP-117)`
 
 ---
 
