@@ -109,7 +109,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 110 | **The paywall sells a perk every free user already has.** `PLUS_PERKS[1]` = *"Streak insurance — a candle spends itself when you miss a day"*, shown on the paywall and in Onboarding's first three — but `applyAutoFreeze` is not gated on `plus` at all. **Owner ruled 2026-09-10 that free-for-all is correct**, so the line is what is wrong, not the feature. | OTA | ⬜ **specced, ready.** Reword to the +3-candles-per-period grant, which IS members-only. 🔴 **Do NOT gate `applyAutoFreeze`** — the acceptance test guards against exactly that |
 | 111 | **The tab fade outlines every card in day mode.** `ScreenFade` animates `opacity` over a subtree whose `Card`s carry Android `elevation: 8` (day only — `t.dark ? null : t.shadow(…)`), and elevation shadows do not composite under fractional parent opacity. | OTA | ⬜ **specced — a DELETION.** Owner chose removal over a fix 2026-09-10. 🔴 **Do NOT remove `react-native-reanimated`/`react-native-worklets`** — `usePressScale` still uses them, they are native, dropping them closes the OTA lane. Test count legitimately drops |
 | 112 | **Stored candles are unbounded**, so a user banks them, buys once, and the ember economy has no ongoing sink. **Owner set the cap at 3** (2026-09-10). Also makes the IMP-102 renewal toast honest — it says "+3" unconditionally today. | OTA | ⬜ **specced, ready.** ⚠️ **A cap of 3 makes the 5-candle pack unsellable in every state — the spec deletes it.** Keeping it would require a cap of 5 |
-| 113 | **Ember packs show real prices and hand over the goods for free** — `onBuy` at `RitualsApp.js:985` is `setEmbers((e) => e + pack.amount)`, a bare counter increment. Consumables are a history, not a balance, so the grant needs an idempotent local ledger of `transactionIdentifier`s. | OTA (SDK already installed — **corrected from BUILD**) | 🚦 **BLOCKED on the owner:** three Play **consumable** products must exist and be attached in RevenueCat, ids written into the spec. SDK shape verified against `node_modules` 2026-09-10. Owes a new **WALK-20** |
+| 113 | **Ember packs show real prices and hand over the goods for free** — `onBuy` at `RitualsApp.js:985` is a bare counter increment. Consumables are a history, not a balance, so the grant needs an idempotent local ledger of `transactionIdentifier`s. | OTA (SDK already installed — **corrected from BUILD**) | 🚦 **BLOCKED on the owner. A step-by-step checklist is in the spec** — create `embers_240` / `embers_680` / `embers_1500` in Play Console, register the same ids in RevenueCat, 🔴 **attached to NO entitlement** (an ember pack on the Plus entitlement would grant Plus), then paste the ids back. Owes a new **WALK-20** |
 | 022 | Save as PDF + About sheet (the two dead You-tab buttons) | Build | ⏸ **deferred (owner)** — spec in build-log → "Deferred specs"; **perk #6 gate** |
 | 044 | R8 on release builds (dev client was shipping to the public) | Build | 🟢 **code-complete, UNWALKED.** R8 must be walked on the build you actually ship, so it rides **vc15 or later**; walk = WALK-12, on hardware, last in the sitting |
 | 057 | Historical `dayKey` migration | Build | 🔒 **reserved, not missing** — cannot be written until real device numbers come back from the dev panel's "Data health" reporter. See below |
@@ -119,21 +119,8 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 
 ## 🎨 Claude Design (IMP-078)
 
-**Project `Daily Rituals Design System`** · id `7bf44d09-f93a-42d2-a8b6-d412d671cf60` · writable ·
-**13 cards** (Tokens · Frozen · Components · Screens day+night). Regenerate after a theme change with
-`node scripts/gen-design-system.js`, then re-push — the cards are generated from `theme.js`/`data.js`/
-`art.js` so they cannot drift, but they do not update themselves. **No auto-sync** — but the reason expired: it needed the branch
-published, and `main` now carries `design-system/`. Wiring the pane's GitHub connection to it is an owner
-call, not a chat's.
-
-**Ask for ONE screen per request** — "redesign the app" produces mush. **The live request is
-Insights** (owner, 2026-09-05). ⚠️ **The four standing rules — baseline-first, specs in token names, the
-frozen sun/rays, and design-is-not-enablement — plus the motion-card and night-shot rules now live in
-[`docs/playbook.md`](docs/playbook.md) → "Claude Design — standing rules". Read them before asking.**
-**Porting a returned design is a normal build task** — a new `IMP-xxx` scoped by Opus. Claude Design does
-not emit React Native; it returns HTML/CSS previews plus a spec.
-
----
+**Moved to [`docs/playbook.md`](docs/playbook.md) → "Claude Design" (2026-09-10, size rule).** Stable
+reference — project id, card list, regeneration steps. The live design request is still **Insights**.
 
 ## Open items / blockers
 
@@ -158,6 +145,11 @@ the two are indistinguishable. **Do not remove the fallback** — see WALK-19.
   entitlement survives a reinstall. The 2026-09-08 failure was the walk's own ordering, not the app.
 - ✅ **WALK-19's defective ordering is fixed** — carved out as **WALK-19a** (buy → uninstall → reinstall →
   Restore as one tight block). Durable rule + steps in [`docs/walk-open.md`](docs/walk-open.md).
+- ✅ **The `rcAndroidKey` in `3b28b70`'s commit message STAYS — owner's call, 2026-09-10** (*"let the
+  message be"*). It is a RevenueCat **public** client key, already inside every installed APK and served
+  from the unauthenticated manifest endpoint, so there is nothing to rotate and a force-push of a public
+  repo buys nothing. 🔴 **Do not propose rewriting that history again, and never record the VALUE of a key
+  anywhere** — the read-back check is a boolean; the rule is in the playbook.
 - ✅ **MOTION — DECIDED 2026-09-10.** Owner: *"I choose b and c."* **(b) now** —
   [IMP-111](docs/specs-open.md#imp-111) deletes `ScreenFade`. **(c) deferred** — applying the unused
   vocabulary is parked in [`docs/specs-open.md`](docs/specs-open.md), gated on Plus being complete.

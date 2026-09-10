@@ -313,9 +313,10 @@ three days of streak cover, never immunity.
 never be bought by anyone, in any state** — and the 3-pack only from exactly zero. **The cap and the pack
 lineup are coupled, and the owner chose the cap without this in front of them.**
 
-**Decision, and it is reversible:** **delete the `c5` pack.** Shipping a "Best value" product that is
-always refused is worse than not shipping it. `c1` (1 for 120) and `c3` (3 for 300) remain. ⚠️ **If the
-owner would rather keep the 5-pack, the cap must be 5 — tell them, do not quietly re-add it.**
+✅ **RATIFIED by the owner 2026-09-10, after being shown this consequence: the cap stays 3 and the `c5`
+pack goes.** Shipping a "Best value" product that is always refused is worse than not shipping it. `c1`
+(1 for 120) and `c3` (3 for 300) remain. ⚠️ **Do not re-add the 5-pack.** Restoring it would require the
+cap to be 5, and the owner has now declined that twice.
 
 **Steps.**
 
@@ -385,10 +386,62 @@ answered both gating questions and set the candle cap.
 
 ### 🚦 OWNER PREREQUISITE — the build cannot start without this
 
-**Three consumable products must exist in Play Console and be attached in RevenueCat**, and their product
-IDs must be written into this spec before a build chat picks it up. Nothing in code can create them.
-⚠️ **They must be Play *consumable* in-app products, not subscriptions and not entitlements.** Until the
-IDs are here, this row is **blocked, not ready.**
+**Nothing in code can create these. Until the product IDs are filled in below, this row is blocked, not
+ready.** Written for the owner, not for a build chat.
+
+#### Part 1 — Play Console: create three one-time products
+
+Play Console → **Daily Rituals** → **Monetize** → **Products** → **In-app products** → *Create product*.
+(Menu names drift between Play Console redesigns; the thing you want is one-time in-app products, **not**
+Subscriptions.) Make three:
+
+| Product ID — type these EXACTLY | Embers | Suggested price |
+| --- | --- | --- |
+| `embers_240` | 240 | $1.99 |
+| `embers_680` | 680 | $4.99 |
+| `embers_1500` | 1500 | $9.99 |
+
+🔴 **A product ID is permanent. Google will not let you rename or reuse it, ever — not even after
+deleting the product.** Type them carefully; a typo is forever.
+
+**Set each one Active.** Prices are your call — the app reads the real price from the store
+(`priceString`), so whatever you set is what users see, correctly converted per country. The
+`$1.99`/`$4.99`/`$9.99` literals in `data.js` stop being used at step 4 of this spec.
+
+⚠️ **Do not look for a "consumable" checkbox.** Play has no such setting on the product — whether a
+one-time product can be re-bought is decided by the app consuming it, which RevenueCat handles. This is
+the right kind of product; there is nothing extra to tick.
+
+#### Part 2 — RevenueCat: register the same three products
+
+RevenueCat dashboard → your project → **Products** → *New*. Add all three by the **same IDs**, against the
+Play Store app.
+
+🔴 **Do NOT attach them to an entitlement — not `Daily Rituals Plus`, not anything.** An entitlement is how
+the app decides someone has Plus. Attach an ember pack to one and **buying embers would grant Plus.**
+Ember packs grant embers through the app's own ledger (step 2 of this spec) and must own no entitlement at
+all.
+
+**Why RevenueCat must know about them:** the grant ledger reads `customerInfo.nonSubscriptionTransactions`
+from the RevenueCat customer record. Products RevenueCat has never heard of will not reliably appear
+there, and the ledger is what stops a double-grant.
+
+⚠️ **No Offering is needed.** This spec fetches by ID with `getProducts(...)`, not through an Offering, so
+there is nothing to configure on that screen.
+
+#### Part 3 — hand back three things
+
+1. **The three product IDs**, exactly as created (paste them, do not retype).
+2. **Confirmation they are Active** in Play Console.
+3. **Confirmation none of them is attached to an entitlement** in RevenueCat.
+
+Then the IDs get written into step 1 below and this row unblocks.
+
+⚠️ **Testing is already set up.** The Google account used for WALK-19 is a **license tester**, so these
+purchases will be test purchases too — no real money. Two things carry over from that sitting: test
+purchases **never appear in Play Console Order Management**, so do not go looking; and a new product can
+take a little while to propagate after you activate it, so a "product not found" on the first try is
+usually patience, not a bug.
 
 ### The SDK shape — verified against `node_modules` on 2026-09-10, not assumed
 

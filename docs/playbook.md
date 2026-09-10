@@ -387,6 +387,28 @@ _Moved from `PROGRESS.md` 2026-09-10 under its size rule. Stable reference, not 
 
 ---
 
+## 🎨 Claude Design (IMP-078)
+
+**Project `Daily Rituals Design System`** · id `7bf44d09-f93a-42d2-a8b6-d412d671cf60` · writable ·
+**13 cards** (Tokens · Frozen · Components · Screens day+night). Regenerate after a theme change with
+`node scripts/gen-design-system.js`, then re-push — the cards are generated from `theme.js`/`data.js`/
+`art.js` so they cannot drift, but they do not update themselves. **No auto-sync** — but the reason expired: it needed the branch
+published, and `main` now carries `design-system/`. Wiring the pane's GitHub connection to it is an owner
+call, not a chat's.
+
+**Ask for ONE screen per request** — "redesign the app" produces mush. **The live request is
+Insights** (owner, 2026-09-05). ⚠️ **The four standing rules — baseline-first, specs in token names, the
+frozen sun/rays, and design-is-not-enablement — plus the motion-card and night-shot rules now live in
+[`docs/playbook.md`](docs/playbook.md) → "Claude Design — standing rules". Read them before asking.**
+**Porting a returned design is a normal build task** — a new `IMP-xxx` scoped by Opus. Claude Design does
+not emit React Native; it returns HTML/CSS previews plus a spec.
+
+---
+
+_Moved from `PROGRESS.md` 2026-09-10 under its size rule._
+
+---
+
 ## 🔑 Android release signing — DO NOT BREAK (critical, repo-invisible)
 
 Production `.aab` **must** be signed with the local **`dailyrituals-release.keystore`** (git-ignored, in project root):
