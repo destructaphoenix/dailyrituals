@@ -3952,6 +3952,31 @@ regression guard against a future chat "fixing" this by gating the feature. **11
 **Not walked yet.** No new walk of its own — folds into WALK-19's remaining Plus-surface re-runs (paywall
 copy is now accurate; no runtime behavior changed).
 
+## IMP-111 — remove the tab fade that outlined every card in day mode (2026-09-10)
+
+**A deletion, not a fix — owner's ruling, 2026-09-10: "I choose b and c. Remove the fade."** Opened from
+WALK-18 on a Galaxy S24 Ultra: switching tabs drew shadow outlines around the next screen's cards, **day
+mode only**. Cause: [`ScreenFade`](../src/motion.js) animated `opacity` over a subtree whose `Card`s carry
+Android `elevation: 8` in day mode only (`t.dark ? null : t.shadow(…)`) — elevation shadows do not composite
+under fractional parent opacity. `ScreenFade` delivered a 320ms fade the owner could not perceive on a
+flagship while looking for it, so removing it resolves the defect by subtraction rather than defending
+motion nobody sees.
+
+**What was built.** [`RitualsApp.js`](../src/RitualsApp.js)'s screen wrapper is now a plain `View` — the
+`ScreenFade` import, its three-line comment, and the JSX are gone. `ScreenFade`'s export and its
+"Screens" section were deleted from [`motion.js`](../src/motion.js); `DUR`, `EASE`, `riseIn`, `popIn`,
+`fadeOut`, `stagger`, `useCountUp` and `usePressScale` are untouched. `react-native-reanimated` and
+`react-native-worklets` stay — `usePressScale` in `ui.js` still uses them, and they are native deps that
+would close the OTA lane if dropped. Confirmed `tabKey` was never a remount key (a `useEffect` dependency,
+not a React `key` prop), so this is purely visual — no mount/unmount behavior changed.
+
+**The proof.** No test file ever asserted on `ScreenFade` by name (`motion.test.js` only pins `DUR`, `EASE`
+and `stagger`), so the suite count did **not** drop: **1116 passed, 100 suites**, unchanged from before this
+row. `npx expo export --platform android` clean. Commit `76c1d76`.
+
+**Not walked yet.** WALK-18 re-run owed, day mode: switching tabs should show no shadow outline around any
+card.
+
 ## IMP-102 — the +3 streak candles are a per-period perk, not a per-completion one (2026-09-09)
 
 **Owner ruling, 2026-09-09: per-period, not a joining gift.** `subscribe()` ended with
@@ -4530,6 +4555,25 @@ at most 3–5 days of cover at any one moment. That is a materially different pr
 ---
 
 ## Session notes
+
+_2026-09-10 (Sonnet — **IMP-109 built: the "you can't afford it" toast now names the item, its
+price, and your balance.**) — ✅ code-complete, no walk yet._
+
+**What finished.** [`RitualsApp.js`](../src/RitualsApp.js)'s `buyPalette`/`buySky`/`buyCandles` no longer
+route a shortfall through `openGetEmbers()` (the ember-pill copy). A new exported `shortfallCopy(name, price,
+embers)` — extracted next to `isPurchasableTier` for the same testability reason — produces `"<name> costs
+<price> embers — you have <embers>"`; `buyCandles` names the pack (`'3 candles'` / `'1 candle'`).
+`openGetEmbers()` and `EMBERS_ARE_FREE_COPY` are untouched, so a deliberate ember-pill tap still gets the
+free-embers copy, and `EMBER_PACKS_ENABLED` was not touched.
+
+**The proof.** +4 tests in `RitualsApp.test.js` — one per call site's message shape, plus one confirming the
+free-embers copy is a distinct string. **1113 passed, 99 suites** (was 1109/99), `npx expo export --platform
+android` clean. Commit `b565393`. Spec archived to `docs/build-log.md`; its row dropped from
+`docs/specs-open.md`'s index (four rows left there now).
+
+**The exact next step.** 🔨 Build **110 → 111 → 112**, one chat each, same rules as above. WALK-19 step 7
+owes a re-run once a build/OTA carries this commit — an unaffordable tap should now name the price and
+balance.
 
 _2026-09-10, earlier (Sonnet — **IMP-108 built: a Plus member now owns every palette and sky, not just the
 `tier: 'plus'` ones.**) — ✅ code-complete, no walk yet._

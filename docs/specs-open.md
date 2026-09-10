@@ -22,15 +22,15 @@
 
 ---
 
-## The queue — three rows left, all opened by the owner on 2026-09-10
+## The queue — two rows left, all opened by the owner on 2026-09-10
 
 **Both came out of WALK-19 step 7, and neither is what the walk was looking for.** The owner went to check
-IMP-104 and found something bigger: **the paywall sells a promise the shop does not keep.** IMP-108, IMP-109
-and IMP-110 (the two live mis-sells and the confusing shortfall toast) are done — see `docs/build-log.md`.
+IMP-104 and found something bigger: **the paywall sells a promise the shop does not keep.** IMP-108, IMP-109,
+IMP-110 and IMP-111 (the two live mis-sells, the confusing shortfall toast, and the day-mode tab fade) are
+done — see `docs/build-log.md`.
 
 | Row | What | Severity |
 | --- | --- | --- |
-| [IMP-111](#imp-111) | The tab transition draws shadow outlines around the next screen's cards. **Day mode only.** | 🎨 **Owner chose deletion over a fix — remove `ScreenFade`** |
 | [IMP-112](#imp-112) | Stored candles are unbounded, so the ember economy has no sink. **Owner set the cap at 3.** | 🟢 **Ready. ⚠️ A cap of 3 makes the 5-pack unsellable — it goes** |
 | [IMP-113](#imp-113) | Ember packs display real prices and hand the goods over for free; `onBuy` is a bare counter increment. | 🚦 **BLOCKED on an owner prerequisite — 3 consumable products must exist in Play Console + RevenueCat first** |
 
@@ -90,75 +90,15 @@ Reanimated jest mock no-ops every hook. WALK-18 settles it.
 
 ---
 
-## IMP-111
-
-### Remove the tab-change fade — owner's decision, 2026-09-10
-
-**Lane: OTA. This is a DELETION, not a fix.** Opened from WALK-18 on a Galaxy S24 Ultra, then re-scoped
-the same night when the owner ruled: **"I choose b and c. Remove the fade. Then some time later when plus
-is complete I can work on the motion."**
-
-**The defect it removes.** Switching tabs drew shadow outlines around the next screen's cards, **day mode
-only**. Cause, confirmed in source: [`ScreenFade`](../src/motion.js#L143) animates `opacity` over a subtree
-whose [`Card`](../src/ui.js#L45)s carry Android `elevation: 8` — but only in day mode, because the style is
-`t.dark ? null : t.shadow(…)`. Android elevation shadows do not composite under fractional parent opacity;
-the subtree renders offscreen and each card's shadow is drawn against that layer. Dark mode has no
-elevation, so it cannot occur there — which is exactly the owner's day-mode-only report.
-
-**Why deletion rather than a compositing fix.** `ScreenFade` is the sole cause of the defect and delivers a
-320ms fade the owner could not perceive on a flagship while actively looking for it. Fixing it would spend
-effort defending motion nobody sees. **Removing it resolves the defect by subtraction and is smaller than
-any fix.** Applying the motion vocabulary properly is deferred, not cancelled — see the parked section.
-
-**Steps.**
-
-1. In [`RitualsApp.js:885`](../src/RitualsApp.js#L885), replace the wrapper with a plain `View`, keeping
-   both style values exactly:
-
-```jsx
-<View style={{ flex: 1, paddingTop: insets.top }}>{screen()}</View>
-```
-
-2. Delete the three-line comment above it (it describes motion that will no longer be there) and drop
-   `ScreenFade` from the `./motion` import on [line 18](../src/RitualsApp.js#L18).
-3. **Delete the `ScreenFade` export from [`motion.js`](../src/motion.js)** and its tests. It has no other
-   consumer.
-4. ⚠️ **Nothing else in `motion.js` changes.** `DUR`, `EASE`, `riseIn`, `popIn`, `fadeOut`, `stagger`,
-   `useCountUp` and `usePressScale` all stay exactly as they are — they are the vocabulary the deferred
-   motion work is written in.
-
-**🔴 Three things a later chat will be tempted to do. Do none of them.**
-
-- **Do NOT remove `react-native-reanimated` or `react-native-worklets`.** `usePressScale` still uses
-  Reanimated and is live in [`ui.js`](../src/ui.js#L14). They are **native** deps: removing them needs a
-  new build, not an OTA, and would close the OTA lane. They stay.
-- **Do NOT delete `motion.js`** or the unused exports. The owner has explicitly deferred applying them,
-  not abandoned them.
-- **Do NOT "improve" this into a different transition.** No slide, no crossfade, no navigation library.
-  The tab swap becomes instant, and that is the decision.
-
-**⚠️ `tabKey` was never a remount key.** It is a `useEffect` dependency, not a React `key` prop, so
-children were never remounted on a tab change. **Removing `ScreenFade` is therefore purely visual** — no
-mount/unmount behaviour changes, and no screen loses or resets state. Verify this holds rather than
-assuming it.
-
-**Acceptance.** `npm test` green and **≥ the prior count minus only the deleted `ScreenFade` tests** — say
-so explicitly in the session note, since this is the rare row where the count legitimately drops. Then
-WALK-18 re-run in **day mode**: switching tabs shows no shadow outline around any card, because there is no
-longer a transition to draw one during.
-
-**Commit:** `fix(motion): remove the tab fade that outlined every card in day mode (IMP-111)`
-
----
-
 ### ⏸ Parked: apply the motion vocabulary — owner's (c), deferred 2026-09-10
 
 **Owner: *"some time later when plus is complete I can work on the motion."* NOT A ROW YET. Do not open a
-number for it and do not start it — Plus is not complete.**
+number for it and do not start it — Plus is not complete.** [IMP-111](build-log.md) (removing `ScreenFade`)
+is done — archived in `docs/build-log.md`.
 
-**Why it exists.** IMP-077 bought a motion vocabulary and the app never spent it. **Six of eight exports
-have no consumer**: `riseIn`, `popIn`, `fadeOut`, `stagger`, `useCountUp`, and (after IMP-111)
-`ScreenFade` is gone too. Only `usePressScale` is live — a 0.99 press scale deliberately built to be
+**Why it exists.** IMP-077 bought a motion vocabulary and the app never spent it. **Six exports have no
+consumer**: `riseIn`, `popIn`, `fadeOut`, `stagger`, `useCountUp`, and `ScreenFade` (IMP-111 deleted it
+rather than fixing it). Only `usePressScale` is live — a 0.99 press scale deliberately built to be
 imperceptible. ⚠️ **That vocabulary was not free:** IMP-077 added `react-native-reanimated` and
 `react-native-worklets` as **native** deps and forced the vc14 build. **This parked row is the only thing
 that ever makes that cost worth paying.**
