@@ -36,7 +36,7 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 >
 > | If this chat is… | Take |
 > | --- | --- |
-> | a **build task** | 🔨 **[IMP-108](docs/specs-open.md#imp-108) → 109 → 110 → 111 → 112**, one chat each, all specced with no decisions left. **[IMP-113](docs/specs-open.md#imp-113) is BLOCKED** — three consumable products must exist in Play Console + RevenueCat and their ids written into the spec before a build chat can take it. ⚠️ **IMP-111 is a deletion; its test count legitimately DROPS.** ⚠️ **IMP-112 deletes the 5-candle pack** — a cap of 3 makes it unsellable. |
+> | a **build task** | 🔨 **[108](docs/specs-open.md#imp-108) → 109 → 110 → 111 → 112 → 113**, one chat each, **all six specced and ready — nothing is blocked.** ⚠️ **111 is a deletion; its test count legitimately DROPS.** ⚠️ **112 deletes the 5-candle pack** (a cap of 3 makes it unsellable — owner ratified). ⚠️ **113's store products are live and its ids are settled** — `embers_240`/`embers_680`/`embers_1500`, **no `:standard` suffix**; it owes a new WALK-20 on hardware. |
 > | a **runtime walk** | 🚦 **This is where all remaining work is.** ✅ WALK-19a passed 2026-09-10 and closed IMP-105. Owed now, on group `f961b427` / update `01a0877d`: **WALK-19 steps 4e, 7, 10** (all need a LIVE test subscription — buy annual and run them as one block, ~3 hr budget), then **step 8** (the one real-money purchase, held for last). Then **WALK-08** (DeeperInsights at max font), **WALK-07** (Paywall badge at font scale 2.0), **WALK-18** (motion, mid-range device), and **WALK-12 (R8) LAST** — it must be walked on the exact build you ship. |
 > | a **design request** | See "Claude Design" below. The live request is **Insights**. |
 >
@@ -109,7 +109,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 110 | **The paywall sells a perk every free user already has.** `PLUS_PERKS[1]` = *"Streak insurance — a candle spends itself when you miss a day"*, shown on the paywall and in Onboarding's first three — but `applyAutoFreeze` is not gated on `plus` at all. **Owner ruled 2026-09-10 that free-for-all is correct**, so the line is what is wrong, not the feature. | OTA | ⬜ **specced, ready.** Reword to the +3-candles-per-period grant, which IS members-only. 🔴 **Do NOT gate `applyAutoFreeze`** — the acceptance test guards against exactly that |
 | 111 | **The tab fade outlines every card in day mode.** `ScreenFade` animates `opacity` over a subtree whose `Card`s carry Android `elevation: 8` (day only — `t.dark ? null : t.shadow(…)`), and elevation shadows do not composite under fractional parent opacity. | OTA | ⬜ **specced — a DELETION.** Owner chose removal over a fix 2026-09-10. 🔴 **Do NOT remove `react-native-reanimated`/`react-native-worklets`** — `usePressScale` still uses them, they are native, dropping them closes the OTA lane. Test count legitimately drops |
 | 112 | **Stored candles are unbounded**, so a user banks them, buys once, and the ember economy has no ongoing sink. **Owner set the cap at 3** (2026-09-10). Also makes the IMP-102 renewal toast honest — it says "+3" unconditionally today. | OTA | ⬜ **specced, ready.** ⚠️ **A cap of 3 makes the 5-candle pack unsellable in every state — the spec deletes it.** Keeping it would require a cap of 5 |
-| 113 | **Ember packs show real prices and hand over the goods for free** — `onBuy` at `RitualsApp.js:985` is a bare counter increment. Consumables are a history, not a balance, so the grant needs an idempotent local ledger of `transactionIdentifier`s. | OTA (SDK already installed — **corrected from BUILD**) | 🚦 **BLOCKED on the owner. A step-by-step checklist is in the spec** — create `embers_240` / `embers_680` / `embers_1500` in Play Console, register the same ids in RevenueCat, 🔴 **attached to NO entitlement** (an ember pack on the Plus entitlement would grant Plus), then paste the ids back. Owes a new **WALK-20** |
+| 113 | **Ember packs show real prices and hand over the goods for free** — `onBuy` at `RitualsApp.js:985` is a bare counter increment. Consumables are a history, not a balance, so the grant needs an idempotent local ledger of `transactionIdentifier`s. | OTA (SDK already installed — **corrected from BUILD**) | ⬜ **UNBLOCKED 2026-09-10 — specced and ready.** Products live: `embers_240` / `embers_680` / `embers_1500`, Active, **Consumable**, **no entitlement**. ✅ **No `:standard` suffix — RevenueCat reports the bare id; do not re-guess this.** Owes a new **WALK-20** |
 | 022 | Save as PDF + About sheet (the two dead You-tab buttons) | Build | ⏸ **deferred (owner)** — spec in build-log → "Deferred specs"; **perk #6 gate** |
 | 044 | R8 on release builds (dev client was shipping to the public) | Build | 🟢 **code-complete, UNWALKED.** R8 must be walked on the build you actually ship, so it rides **vc15 or later**; walk = WALK-12, on hardware, last in the sitting |
 | 057 | Historical `dayKey` migration | Build | 🔒 **reserved, not missing** — cannot be written until real device numbers come back from the dev panel's "Data health" reporter. See below |
@@ -160,8 +160,8 @@ the two are indistinguishable. **Do not remove the fallback** — see WALK-19.
   conversation" — **a decision without its reasoning gets re-litigated.** 🔴 **`EMBER_PACKS_ENABLED` still
   must not be flipped** until IMP-113 is built AND walked: `onBuy` is still a bare counter increment, so
   the flag alone ships a store showing dollar prices and giving the goods away (the vc14 shape).
-  🚦 **IMP-113 needs the owner to create three consumable products in Play Console and attach them in
-  RevenueCat first.** ⚠️ **Candle cap 3 and the pack lineup are coupled** — the 5-pack becomes unsellable
+  ✅ **The three consumables are LIVE as of 2026-09-10** — Active, Consumable, no entitlement, ids settled.
+  ⚠️ **Candle cap 3 and the pack lineup are coupled** — the 5-pack becomes unsellable
   and IMP-112 deletes it; keeping it would mean a cap of 5.
 - **Perk #6, the PDF, is still not built** (IMP-022, deferred). It was **cut** from `PLUS_PERKS` rather
   than built, which is how `PLUS_ENABLED` flipped honestly. Gate checklist in the playbook → Phase 10b.
@@ -228,7 +228,7 @@ WALK-19a**, **10 ✅** — the deep link worked and keeping Plus after cancellin
 confusing"*), three call sites. **[110](docs/specs-open.md#imp-110)** — the paywall sells a perk every free
 user has. **[111](docs/specs-open.md#imp-111)** — the tab fade outlines every card in day mode.
 **[112](docs/specs-open.md#imp-112)** — the candle cap of 3. **[113](docs/specs-open.md#imp-113)** — ember
-packs for cash, **blocked on the owner creating three Play consumables.**
+packs for cash, ✅ **unblocked: the three consumables are live and confirmed.**
 
 **Two owner decisions.** **Auto-freeze stays FREE for everyone** — IMP-110 rewords the line rather than
 gating the feature, and its test guards against a chat "fixing" it the wrong way. **Motion: remove the fade

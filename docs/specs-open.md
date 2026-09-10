@@ -384,10 +384,32 @@ that stops the `c5` problem coming back.
 ⚠️ **But there is an owner prerequisite that no spec can do — see below.** Opened 2026-09-10 once the owner
 answered both gating questions and set the candle cap.
 
-### 🚦 OWNER PREREQUISITE — the build cannot start without this
+### ✅ OWNER PREREQUISITE — DONE 2026-09-10. This row is UNBLOCKED
 
-**Nothing in code can create these. Until the product IDs are filled in below, this row is blocked, not
-ready.** Written for the owner, not for a build chat.
+**The owner confirmed all four hand-back items on 2026-09-10:** the three products exist and are **Active**
+in Play Console, all three are typed **Consumable** in RevenueCat, and **none is attached to any
+entitlement.** Imported rather than hand-entered, so the identifiers cannot disagree with Play.
+
+🚦 **THE IDENTIFIERS, AS REVENUECAT REPORTS THEM — use these verbatim:**
+
+```js
+['embers_240', 'embers_680', 'embers_1500']
+```
+
+✅ **Question resolved: there is NO `:standard` suffix.** RevenueCat presents these one-time products by
+their bare product id, unlike the `productId:basePlanId` form it uses for subscriptions. **Do not append
+the purchase-option id.** This was an open unknown until the owner read it off the dashboard; it is now
+settled and must not be re-guessed.
+
+**The mapping the grant ledger needs:**
+
+| RevenueCat / Play id | Embers | Pack |
+| --- | --- | --- |
+| `embers_240` | 240 | `e1` |
+| `embers_680` | 680 | `e2` — *Popular* |
+| `embers_1500` | 1500 | `e3` — *Best value* |
+
+_The setup record below is kept for the day these ever need recreating — it is done, not owed._
 
 #### Part 1 — Play Console: create three one-time products
 
@@ -535,8 +557,11 @@ free palette. It is also consistent with how this app already treats the store �
 
 **Steps.**
 
-1. Extend [`revenueCatService.js`](../src/billing/revenueCatService.js) with `getEmberProducts()` and
-   `buyEmberPack(product)` using the two APIs above. **Mirror the existing `buy()`/`getPrices()` error
+1. Add `productId` to each entry of `EMBER_PACKS` ([`data.js:157`](../src/data.js#L157)) using the table
+   above, so one place maps a store product to an ember amount. Then extend
+   [`revenueCatService.js`](../src/billing/revenueCatService.js) with `getEmberProducts()` — which calls
+   `Purchases.getProducts(['embers_240','embers_680','embers_1500'], PRODUCT_CATEGORY.NON_SUBSCRIPTION)` —
+   and `buyEmberPack(product)`. **Mirror the existing `buy()`/`getPrices()` error
    handling — reuse [`mapError.js`](../src/billing/mapError.js), do not invent a second mapper.**
 2. Add the same methods to the **sim service**, or every test silently exercises a shape that does not
    exist. ⚠️ **`npm test` runs `simService` — a green suite is not evidence about billing.**
