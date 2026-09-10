@@ -173,7 +173,7 @@ export const PLUS_PRICES = {
 // past #3.
 export const PLUS_PERKS = [
   'Every palette & sky — unlocked forever',
-  'Streak insurance — a candle spends itself when you miss a day',
+  'Three streak candles, every year you stay',
   'On this day — your own words, brought back to you',
   'Deeper insights — moods & seasonal themes',
   'Your year, remembered — the Annual Recap',
