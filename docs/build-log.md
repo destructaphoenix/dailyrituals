@@ -3883,6 +3883,33 @@ cancelled-and-expired subscription, cold-start the app without ever backgroundin
 that first screen; and in aeroplane mode a real member cold-starting must keep Plus (the check fails,
 nothing changes).
 
+## IMP-108 — Plus must unlock every palette and sky, not just `tier: 'plus'` ones (2026-09-10)
+
+**Opened by the owner during WALK-19 step 7, group `f961b427`.** A Plus member with 15 embers tapped
+Harvest Moon (`tier: 300`) and was refused — *"harvest moon is not free even for a subscriber."*
+[`data.js:174`](../src/data.js#L174)'s first perk line is *"Every palette & sky — unlocked forever,"* shown
+on the paywall and in Onboarding's first three items, but [`Shop.js`](../src/screens/Shop.js) only let
+`plus` unlock `tier: 'plus'` items — Marigold (240), Honey (240), Rose Dusk (420), Sage Eve (420) and
+Harvest Moon (300) stayed ember-locked for a paying member. Same family as IMP-084: the paid surface and
+the code telling different stories.
+
+**What was built.** `palState`/`skyState` in `Shop.js` now check `plus` first, ahead of `tier === 'owned'`
+and the ownership arrays — a member reads `'owned'` for *any* tier. `'active'` still wins before the `plus`
+check runs, which is deliberate and now commented in source: a lapsed member keeps a Plus-only cosmetic they
+had *applied* (can't re-apply it once they switch away) rather than being forced off it at the moment of
+lapsing — one cosmetic already on screen, not a paid good. 🔴 Access stays a **live read on `plus`**, never
+written into `ownedPalettes`/`ownedSkies` — `buyPalette`/`buySky` are untouched and only reachable from the
+`'buy'` state, which a member can no longer be in.
+
+**The proof.** +5 tests in `Shop.test.js`: a member reads `'owned'` (renders "Apply", not the ember price)
+for an unpurchased numeric-tier palette and sky; a non-member still reads `'buy'` for the same item; tapping
+a numeric-tier item as a member calls `onApplyPalette`, never `onBuyPalette`, so membership alone cannot
+mutate `ownedPalettes`; and a lapsed member (`plus: false`) reverts to `'buy'` for anything never
+ember-bought. **1109 passed, 99 suites** (was 1104/99), `npx expo export --platform android` clean.
+Commit `0078872`.
+
+**Not walked yet.** WALK-19 step 7 owes a re-run: a member taps Harvest Moon and it applies.
+
 ## IMP-102 — the +3 streak candles are a per-period perk, not a per-completion one (2026-09-09)
 
 **Owner ruling, 2026-09-09: per-period, not a joining gift.** `subscribe()` ended with
@@ -4497,6 +4524,28 @@ chat "fixing" this by gating the feature.
 ---
 
 ## Session notes
+
+_2026-09-10 (Opus + owner — **WALK-19a PASSED in four minutes and closed IMP-105.**) — walk, no code._
+
+**What finished.** **IMP-105**, which had blocked `internal` → `production` since 2026-09-08, **closed with
+no code ever written on it.** Annual bought **00:43**, uninstalled **00:44**, reinstalled **00:45**, and at
+**00:47** the second launch already showed Member — **no Restore row to tap.** Four minutes against a ~3-hour
+test-sub life, so expiry is arithmetically impossible: the first run that tested what step 9 always meant to.
+
+**Why 2026-09-08 needed no fix.** ⚠️ **The code was never the variable.** On the failing bundle
+`d42b7ec7`, `useLaunchEntitlementCheck` guards on `if (plus || ran.current) return;` — a reinstall mounts
+with `plus: false`, so it ran the same check, same route, same store. What differed was elapsed time: a
+perks tour sat between purchase and reinstall. **C3 was never needed — the walk outranked the dashboard**,
+and C0 (Round 2.5, from source hours earlier) had predicted both outcome and mechanism.
+
+**Corroborations nobody asked for.** Play confirmed at uninstall that the sub outlives the app; and the
+owner chose **"keep the fresh start"**, discarding local data, **and Plus still came back** — membership is
+store-authoritative, IMP-043 proven on hardware. ⚠️ **Named gap:** `restorePurchases()` was never tapped
+(no button to tap). Not a blocker — step 4f already proved `restore()`.
+
+**The durable lesson.** A walk whose steps cannot fit inside the lifetime of the thing being tested does not
+produce a null result — it produces a **false** one. This one cost two rounds of source review, a dashboard
+audit and an owner's evening. **The fix was to the walk.**
 
 _2026-09-10, earlier (Opus — **the 19-commit backlog shipped; nothing built since 2026-09-08 had reached a
 phone.**) — ✅ **pushed and OTA'd.**_

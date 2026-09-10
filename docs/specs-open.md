@@ -13,7 +13,7 @@
 > re-litigate a "why", and do not improve the scope.** If a step turns out to be impossible or the code
 > contradicts the spec, **STOP** and log it to `PROGRESS.md` → Open items rather than inventing a fix.
 >
-> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **1102 passed, 98 suites** — verified 2026-09-09), `npx expo export --platform android` clean, commit with the **exact** message given, then
+> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **1109 passed, 99 suites** — verified 2026-09-10), `npx expo export --platform android` clean, commit with the **exact** message given, then
 > update `PROGRESS.md` (tick the backlog row, write the session note) and **move the finished spec from
 > this file into `docs/build-log.md`**.
 >
@@ -22,88 +22,19 @@
 
 ---
 
-## The queue — six rows, all opened by the owner on 2026-09-10
+## The queue — five rows left, all opened by the owner on 2026-09-10
 
 **Both came out of WALK-19 step 7, and neither is what the walk was looking for.** The owner went to check
-IMP-104 and found something bigger: **the paywall sells a promise the shop does not keep.** Read
-[`data.js:174`](../src/data.js#L174) — `PLUS_PERKS[0]` is *"Every palette & sky — unlocked forever"* — and
-then [`Shop.js:38`](../src/screens/Shop.js#L38), which unlocks only `tier: 'plus'` items for a member.
-Five ember-priced items stay locked behind a grind for someone who has already paid.
+IMP-104 and found something bigger: **the paywall sells a promise the shop does not keep.** IMP-108 (the
+live mis-sell) is done — see [`docs/build-log.md`](build-log.md#imp-108--plus-must-unlock-every-palette-and-sky-not-just-tier-plus-ones-2026-09-10).
 
 | Row | What | Severity |
 | --- | --- | --- |
-| [IMP-108](#imp-108) | **A paying member is still charged embers for five palettes and skies the paywall says they own.** | 🔴 **Live mis-sell on the paid surface** |
 | [IMP-109](#imp-109) | The "you can't afford this" toast never mentions the price, the balance, or affording anything. | 🟠 **Confusing, owner-reported, three call sites** |
 | [IMP-110](#imp-110) | `PLUS_PERKS[1]` sells streak insurance as a Plus perk; `applyAutoFreeze` is ungated and **every free user already has it**. | 🔴 **The second live mis-sell. Reword the line — the owner ruled the feature stays free** |
 | [IMP-111](#imp-111) | The tab transition draws shadow outlines around the next screen's cards. **Day mode only.** | 🎨 **Owner chose deletion over a fix — remove `ScreenFade`** |
 | [IMP-112](#imp-112) | Stored candles are unbounded, so the ember economy has no sink. **Owner set the cap at 3.** | 🟢 **Ready. ⚠️ A cap of 3 makes the 5-pack unsellable — it goes** |
 | [IMP-113](#imp-113) | Ember packs display real prices and hand the goods over for free; `onBuy` is a bare counter increment. | 🚦 **BLOCKED on an owner prerequisite — 3 consumable products must exist in Play Console + RevenueCat first** |
-
----
-
-## IMP-108
-
-### Plus must unlock every palette and sky — the paywall has been promising it since Plus went live
-
-**Lane: OTA.** Opened by the owner 2026-09-10 during WALK-19 step 7, on group `f961b427`.
-
-**The finding as walked.** A Plus member with 15 embers tapped **Harvest Moon** (`tier: 300`) and was
-refused. The owner's words: *"harvest moon is not free even for a subscriber."*
-
-**It is a mis-sell, not a preference.** [`data.js:174`](../src/data.js#L174) opens with the comment
-*"Every line here is a promise the paid surface makes"* — and the first promise is **"Every palette & sky
-— unlocked forever"**. It is shown on the paywall and in the first three items of
-[`Onboarding.js`](../src/screens/Onboarding.js). The shop disagrees
-([`Shop.js:36-41`](../src/screens/Shop.js#L36)):
-
-```js
-const palState = (p) => p.id === activePalette ? 'active'
-  : (p.tier === 'owned' || ownedPalettes.includes(p.id)) ? 'owned'
-  : p.tier === 'plus' ? (plus ? 'owned' : 'plus') : 'buy';   // ← `plus` only ever reaches tier 'plus'
-```
-
-**The five items a paying member is still charged for:** Marigold (240), Honey (240), Rose Dusk (420),
-Sage Eve (420) and Harvest Moon (300). ⚠️ **This is the same family of defect as IMP-084 and the
-`PLUS_PERKS[1]` streak-insurance line — the paid surface and the code telling different stories — and it
-has been live on every build since `PLUS_ENABLED` flipped on 2026-09-05.**
-
-**Steps.**
-
-1. In [`Shop.js`](../src/screens/Shop.js), make `plus` unlock **every** tier, not just `'plus'`:
-
-```js
-const palState = (p) => p.id === activePalette ? 'active'
-  : (plus || p.tier === 'owned' || ownedPalettes.includes(p.id)) ? 'owned'
-  : p.tier === 'plus' ? 'plus' : 'buy';
-```
-
-   Same shape for `skyState`. Note `'active'` still wins first, and with `plus` true the `'plus'` branch
-   becomes unreachable — that is correct, a member owns those too.
-
-2. 🔴 **Do NOT write unlocked items into `ownedPalettes` / `ownedSkies`.** Access must stay a **live read
-   on `plus`**, so it follows the membership. Persisting it would hand a lapsed member five palettes
-   permanently — the vc14 giveaway shape IMP-084 exists to prevent. `buyPalette`/`buySky` keep writing to
-   those arrays; that is the *ember-purchase* record and it is rightly permanent.
-
-3. No change to `buyPalette`/`buySky` in [`RitualsApp.js:278-294`](../src/RitualsApp.js#L278). They are
-   only reachable from the `'buy'` state, which a member can no longer be in.
-
-**⚠️ One accepted consequence — document it, do not "fix" it.** A member who applies Harvest Moon and
-later lapses keeps it *applied*, because `s.id === activeSky` returns `'active'` before any ownership test
-runs. **This is deliberate.** Forcibly changing someone's theme at the moment they lapse is punitive, reads
-as a bug, and risks more than it protects — it is one cosmetic they were already looking at, not a paid
-good. Leave a comment saying so, or the next reader will "correct" it. (They cannot re-apply it after
-switching away, which is a little odd and still better than the alternative.)
-
-**Not in scope.** The word *"forever"* in that perk line is loose for a subscription and the owner may want
-it reworded. **Not this row** — this row makes the code keep the promise as written.
-
-**Acceptance.** `npm test` green and ≥ the prior count, plus new tests: a member reads `'owned'` for a
-numeric-tier item, a non-member still reads `'buy'`, a member's `ownedPalettes` is **not** mutated by
-merely being a member, and a lapsed member reverts to `'buy'` for anything they never ember-bought. Then
-WALK-19 step 7 re-run: a member taps Harvest Moon and it applies.
-
-**Commit:** `fix(plus): a member owns every palette and sky, as the paywall promises (IMP-108)`
 
 ---
 
