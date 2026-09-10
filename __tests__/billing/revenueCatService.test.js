@@ -10,6 +10,9 @@ jest.mock('react-native-purchases', () => ({
     getCustomerInfo: jest.fn(),
     purchasePackage: jest.fn(),
     restorePurchases: jest.fn(),
+    getProducts: jest.fn(),
+    purchaseStoreProduct: jest.fn(),
+    PRODUCT_CATEGORY: { NON_SUBSCRIPTION: 'NON_SUBSCRIPTION' },
   },
 }));
 
@@ -17,6 +20,7 @@ import Purchases from 'react-native-purchases';
 import {
   toEntitlement, trialDaysFromProduct, createRevenueCatService,
 } from '../../src/billing/revenueCatService';
+import { EMBER_PACKS } from '../../src/data';
 import { ENTITLEMENT_ID } from '../../src/billing/config';
 
 beforeEach(() => { jest.clearAllMocks(); });
@@ -253,5 +257,53 @@ describe('restore does not relabel a failed check — IMP-092', () => {
   test('a cancelled restore is not reported as an empty account either', async () => {
     Purchases.restorePurchases.mockRejectedValue({ userCancelled: true });
     expect((await svc().restore()).kind).not.toBe('restore-empty');
+  });
+});
+
+// ── IMP-113 — ember packs, bought with real money ────────────────────────────
+describe('getEmberProducts', () => {
+  test('fetches the three ids as NON_SUBSCRIPTION products', async () => {
+    Purchases.getProducts.mockResolvedValue([{ identifier: 'embers_240' }]);
+    const out = await createRevenueCatService().getEmberProducts();
+    expect(Purchases.getProducts).toHaveBeenCalledWith(
+      EMBER_PACKS.map((p) => p.productId),
+      Purchases.PRODUCT_CATEGORY.NON_SUBSCRIPTION
+    );
+    expect(out).toEqual([{ identifier: 'embers_240' }]);
+  });
+
+  test('an unreachable store returns an empty list, not a throw', async () => {
+    Purchases.getProducts.mockRejectedValue(new Error('offline'));
+    expect(await createRevenueCatService().getEmberProducts()).toEqual([]);
+  });
+});
+
+describe('buyEmberPack', () => {
+  const product = { identifier: 'embers_240', priceString: '$1.99' };
+
+  test('a resolved purchase hands back its kind and customerInfo, unaltered', async () => {
+    const customerInfo = { nonSubscriptionTransactions: [{ transactionIdentifier: 't1', productIdentifier: 'embers_240' }] };
+    Purchases.purchaseStoreProduct.mockResolvedValue({ customerInfo });
+    const res = await createRevenueCatService().buyEmberPack(product);
+    expect(Purchases.purchaseStoreProduct).toHaveBeenCalledWith(product);
+    expect(res).toEqual({ kind: 'success', customerInfo });
+  });
+
+  test('a cancelled purchase maps through the shared mapError, not a second mapper', async () => {
+    Purchases.purchaseStoreProduct.mockRejectedValue({ userCancelled: true });
+    expect(await createRevenueCatService().buyEmberPack(product)).toEqual({ kind: 'cancel' });
+  });
+
+  test('"6" (already owned / pending elsewhere) re-fetches customerInfo, same rescue as buy()', async () => {
+    Purchases.purchaseStoreProduct.mockRejectedValue({ code: '6' });
+    const customerInfo = { nonSubscriptionTransactions: [] };
+    Purchases.getCustomerInfo.mockResolvedValue(customerInfo);
+    const res = await createRevenueCatService().buyEmberPack(product);
+    expect(res).toEqual({ kind: 'owned', customerInfo });
+  });
+
+  test('an unrecognised error is failed, with no customerInfo to act on', async () => {
+    Purchases.purchaseStoreProduct.mockRejectedValue({ code: 'STORE_PROBLEM_ERROR' });
+    expect(await createRevenueCatService().buyEmberPack(product)).toEqual({ kind: 'failed' });
   });
 });

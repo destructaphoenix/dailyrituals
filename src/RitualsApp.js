@@ -17,7 +17,7 @@ import { dayKeyOf } from './time/dayKey';
 import { T } from './ui';
 import { CHROME_FONT_SCALE } from './ui/textScale';
 import { HomeIcon, BookIcon, Pencil, ChartIcon, UserIcon } from './icons';
-import { COPY, DAILY_QUESTS, STREAK_MILESTONES, SHOP_PALETTES, EMBER_GAIN, MAX_CANDLES } from './data';
+import { COPY, DAILY_QUESTS, STREAK_MILESTONES, SHOP_PALETTES, EMBER_PACKS, EMBER_GAIN, MAX_CANDLES } from './data';
 import HomeScreen from './screens/HomeScreen';
 import ArchiveScreen from './screens/ArchiveScreen';
 import InsightsScreen from './screens/InsightsScreen';
@@ -44,6 +44,8 @@ import { PLUS_ENABLED, EMBER_PACKS_ENABLED } from './billing/config';
 import { formatRenewDate } from './billing/format';
 import { checkEntitlement, nextPlusState, useLaunchEntitlementSync } from './billing/entitlementSync';
 import { freezeGrantFor } from './billing/freezeGrant';
+import { useLiveEmberProducts } from './billing/useLiveEmberProducts';
+import { pendingEmberGrants } from './billing/emberGrants';
 import { roomFor } from './home/candleCap';
 import { saveState } from './persistence/storage';
 import { pickPersisted } from './persistence/state';
@@ -229,6 +231,11 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   // IMP-102: the paid period the +3 candle grant was last recorded for — keyed
   // on the entitlement's renewISO, not the device clock. See freezeGrant.js.
   const [lastFreezeGrantPeriod, setLastFreezeGrantPeriod] = useState(initialState.lastFreezeGrantPeriod ?? null);
+  // IMP-113: nonSubscriptionTransactions is a HISTORY the store keeps forever,
+  // not a balance, so this local ledger of already-granted transaction ids is
+  // what stops a purchase (or a reinstall re-reading the same history) from
+  // granting the same embers twice. See billing/emberGrants.js.
+  const [appliedEmberTx, setAppliedEmberTx] = useState(initialState.appliedEmberTx ?? []);
   // IMP-082: null when there is no live date — every member surface drops the
   // renewal claim rather than falling back to the RENEW_DATE design mock.
   const renewLabel = liveEntitlement ? formatRenewDate(liveEntitlement.renewISO) : null;
@@ -240,6 +247,15 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   const service = useMemo(
     () => createPurchaseService({ sim, alreadyPlus: plus, platform: PLATFORM }),
     [sim.purchase, sim.restore, plus]
+  );
+  // IMP-113: only fetches while the purchase path is actually live — an
+  // unshipped feature has no business making a store call on every launch.
+  const { packs: emberPacks, products: emberProducts } = useLiveEmberProducts(
+    EMBER_PACKS_ENABLED ? service : null
+  );
+  const EMBER_PACKS_BY_ID = useMemo(
+    () => Object.fromEntries(EMBER_PACKS.map((p) => [p.productId, p])),
+    []
   );
   // IMP-083: every route to the store's subscription settings carries the
   // product so Play opens THIS subscription instead of the account-wide list.
@@ -314,8 +330,37 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     setFreezes((f) => f + pack.count);
     showToast(pack.count + (pack.count > 1 ? ' candles lit' : ' candle lit'));
   };
+  // IMP-113. `customerInfo.nonSubscriptionTransactions` is a HISTORY, not a
+  // balance — see emberGrants.js. This is the only place embers get granted
+  // from a store purchase, so both call sites below (the sheet and a direct
+  // pack tap in the Shop) route through it rather than incrementing embers
+  // themselves.
+  const applyEmberGrants = (customerInfo) => {
+    const { amount, grantedIds } = pendingEmberGrants(
+      customerInfo && customerInfo.nonSubscriptionTransactions,
+      appliedEmberTx,
+      EMBER_PACKS_BY_ID
+    );
+    if (amount > 0) {
+      setEmbers((e) => e + amount);
+      setAppliedEmberTx((ids) => [...ids, ...grantedIds]);
+    }
+    return amount;
+  };
+  const buyEmberPack = async (pack) => {
+    const product = emberProducts.find((p) => p.identifier === pack.productId);
+    if (!product) { showToast("That pack isn't available right now — try again shortly"); return; }
+    const res = await service.buyEmberPack(product);
+    if (res.kind === 'success' || res.kind === 'owned') {
+      const granted = applyEmberGrants(res.customerInfo);
+      showToast(granted > 0 ? '+' + granted + ' Embers' : "Nothing new to grant — you're already up to date");
+      setGetEmbersOpen(false);
+    } else if (res.kind !== 'cancel') {
+      showToast('Purchase failed — try again');
+    }
+  };
   const getEmbers = (pack) => {
-    if (EMBER_PACKS_ENABLED && pack && pack.amount) { setEmbers((e) => e + pack.amount); showToast('+' + pack.amount + ' Embers'); setGetEmbersOpen(false); }
+    if (EMBER_PACKS_ENABLED && pack && pack.amount) { buyEmberPack(pack); }
     else { openGetEmbers(); }
   };
   const subscribe = (plan, entitlement) => {
@@ -578,14 +623,14 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
         entries, xp, done, quests, freezes, frozenDays, embers, plus,
         activePalette, ownedPalettes, activeSky, ownedSkies,
         subCanceled, activePlan, lastActiveDay, settings, lastBackupAt, promptDeck, trash,
-        freeRestoresUsed, lastFreezeGrantPeriod,
+        freeRestoresUsed, lastFreezeGrantPeriod, appliedEmberTx,
       }));
     }, 400);
     return () => clearTimeout(id);
   }, [mode, entries, xp, done, quests, freezes, frozenDays, embers, plus,
     activePalette, ownedPalettes, activeSky, ownedSkies,
     subCanceled, activePlan, lastActiveDay, settings, lastBackupAt, promptDeck, trash,
-    freeRestoresUsed, lastFreezeGrantPeriod]);
+    freeRestoresUsed, lastFreezeGrantPeriod, appliedEmberTx]);
 
   const complete = ({ did, wished, moods }) => {
     const entry = { id: 'new' + Date.now(), ...entryDateParts(), dayKey: dayKeyOf(), moods, did, wished, streak: true };
@@ -701,7 +746,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     entries, xp, done, quests, freezes, frozenDays, embers, plus,
     activePalette, ownedPalettes, activeSky, ownedSkies,
     subCanceled, activePlan, lastActiveDay, settings, lastBackupAt, promptDeck, trash,
-    freeRestoresUsed, lastFreezeGrantPeriod,
+    freeRestoresUsed, lastFreezeGrantPeriod, appliedEmberTx,
   });
 
   const doExport = async () => {
@@ -1028,6 +1073,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
               onOpenPaywall={PAYWALL_LIVE ? () => setPaywall(true) : () => {}}
               onGetEmbers={getEmbers}
               embersForCash={EMBER_PACKS_ENABLED}
+              emberPacks={emberPacks}
               onManage={plus ? openManage : () => {}}
             />
             {toast && <Toast key={toast.key} message={toast.msg} bottom={insets.bottom} />}
@@ -1037,7 +1083,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
         <Modal visible={EMBER_PACKS_ENABLED && getEmbersOpen} animationType="slide" presentationStyle="overFullScreen" onRequestClose={() => setGetEmbersOpen(false)}>
           <ThemeContext.Provider value={theme}>
             <GetEmbers insets={insets} onClose={() => setGetEmbersOpen(false)} embers={embers}
-              onBuy={(pack) => { setEmbers((e) => e + pack.amount); showToast('+' + pack.amount + ' Embers'); setGetEmbersOpen(false); }} />
+              packs={emberPacks} onBuy={buyEmberPack} />
           </ThemeContext.Provider>
         </Modal>
 

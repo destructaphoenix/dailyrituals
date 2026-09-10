@@ -2,9 +2,10 @@
 // interface. Preserves the original reviewable timing (1500ms buy / 1300ms
 // restore) so the pending overlay is still visible. `delayMs` is injectable so
 // tests can run with 0.
-import { RENEW_DATE } from '../data';
+import { RENEW_DATE, EMBER_PACKS } from '../data';
 
 const FALLBACK_RENEW_ISO = '2026-06-12T00:00:00.000Z'; // matches RENEW_DATE
+let emberTxSeq = 0;
 
 function ent(plan) {
   // IMP-083: the sim carries a productId too, so Expo Go and the dev panel walk
@@ -36,6 +37,27 @@ export function createSimService(sim, alreadyPlus, buyDelay = 1500, restoreDelay
     },
     async getPrices() {
       return {}; // sim uses the PLUS_PRICES constants in the UI
+    },
+    // IMP-113 — mirrors revenueCatService's shape so the suite (which only
+    // ever runs simService) exercises the real interface.
+    async getEmberProducts() {
+      return EMBER_PACKS.map((p) => ({ identifier: p.productId, priceString: p.price }));
+    },
+    async buyEmberPack(product) {
+      await wait(buyDelay);
+      const o = (sim && sim.purchase) || 'success';
+      if (o !== 'success' && o !== 'owned') return { kind: o };
+      emberTxSeq += 1;
+      return {
+        kind: o,
+        customerInfo: {
+          nonSubscriptionTransactions: [{
+            transactionIdentifier: 'sim-' + product.identifier + '-' + emberTxSeq,
+            productIdentifier: product.identifier,
+            purchaseDate: new Date().toISOString(),
+          }],
+        },
+      };
     },
     renewLabel: RENEW_DATE, // convenience for callers that want the constant
   };

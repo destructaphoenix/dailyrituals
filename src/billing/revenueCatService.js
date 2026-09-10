@@ -1,7 +1,10 @@
 import Purchases from 'react-native-purchases';
 import { ENTITLEMENT_ID } from './config';
+import { EMBER_PACKS } from '../data';
 import { formatRenewDate, planFromProductId } from './format';
 import { mapPurchaseError } from './mapError';
+
+const EMBER_PRODUCT_IDS = EMBER_PACKS.map((p) => p.productId);
 
 // Exported for test: IMP-083 depends on `productId` surviving onto the object,
 // and a refactor that quietly drops it silently restores the account-wide list.
@@ -188,6 +191,31 @@ export function createRevenueCatService() {
         return out;
       } catch (e) {
         return {};
+      }
+    },
+    // IMP-113. Consumables, fetched by id — no Offering carries them.
+    async getEmberProducts() {
+      try {
+        return await Purchases.getProducts(EMBER_PRODUCT_IDS, Purchases.PRODUCT_CATEGORY.NON_SUBSCRIPTION);
+      } catch (e) {
+        return [];
+      }
+    },
+    // Mirrors buy()'s error handling exactly (mapError.js, the "owned" rescue)
+    // rather than inventing a second mapper. `customerInfo` rides back on both
+    // the success and the owned/pending rescue paths — it is what
+    // pendingEmberGrants() (src/billing/emberGrants.js) reads to grant.
+    async buyEmberPack(product) {
+      try {
+        const { customerInfo } = await Purchases.purchaseStoreProduct(product);
+        return { kind: 'success', customerInfo };
+      } catch (e) {
+        const kind = mapPurchaseError(e);
+        if (kind === 'owned') {
+          const customerInfo = await Purchases.getCustomerInfo().catch(() => null);
+          return { kind: 'owned', customerInfo };
+        }
+        return { kind };
       }
     },
   };

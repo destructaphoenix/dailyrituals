@@ -38,3 +38,40 @@ describe('createSimService', () => {
     await expect(svc.restore()).resolves.toMatchObject({ kind: 'restored' });
   });
 });
+
+// ── IMP-113 — the sim must carry the same shape or the suite exercises a
+// method that does not exist on the real service. `npm test` runs simService,
+// never revenueCatService — a green suite is not evidence about billing.
+describe('createSimService — ember packs', () => {
+  test('getEmberProducts returns a product per EMBER_PACKS, keyed by productId', async () => {
+    const svc = createSimService({ purchase: 'success', restore: 'empty' }, false, 0);
+    const products = await svc.getEmberProducts();
+    expect(products.map((p) => p.identifier)).toEqual(['embers_240', 'embers_680', 'embers_1500']);
+  });
+
+  test('buyEmberPack resolves to the configured purchase outcome', async () => {
+    const svc = createSimService({ purchase: 'failed', restore: 'empty' }, false, 0);
+    const products = await svc.getEmberProducts();
+    await expect(svc.buyEmberPack(products[0])).resolves.toMatchObject({ kind: 'failed' });
+  });
+
+  test('a successful buyEmberPack carries a customerInfo with a fresh, grantable transaction', async () => {
+    const svc = createSimService({ purchase: 'success', restore: 'empty' }, false, 0);
+    const products = await svc.getEmberProducts();
+    const res = await svc.buyEmberPack(products[0]);
+    expect(res.kind).toBe('success');
+    const [txn] = res.customerInfo.nonSubscriptionTransactions;
+    expect(txn.productIdentifier).toBe('embers_240');
+    expect(typeof txn.transactionIdentifier).toBe('string');
+  });
+
+  test('two buys in a row mint two different transaction ids, so both are grantable', async () => {
+    const svc = createSimService({ purchase: 'success', restore: 'empty' }, false, 0);
+    const products = await svc.getEmberProducts();
+    const a = await svc.buyEmberPack(products[0]);
+    const b = await svc.buyEmberPack(products[0]);
+    const [txA] = a.customerInfo.nonSubscriptionTransactions;
+    const [txB] = b.customerInfo.nonSubscriptionTransactions;
+    expect(txA.transactionIdentifier).not.toBe(txB.transactionIdentifier);
+  });
+});

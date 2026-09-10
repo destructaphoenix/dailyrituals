@@ -9,7 +9,7 @@ import { T } from '../ui';
 import { Close, Ember } from '../icons';
 import { EMBER_PACKS } from '../data';
 
-export default function GetEmbers({ insets, onClose, embers, onBuy }) {
+export default function GetEmbers({ insets, onClose, embers, onBuy, packs = EMBER_PACKS }) {
   const t = useTheme();
   const c = t.colors;
 
@@ -17,6 +17,16 @@ export default function GetEmbers({ insets, onClose, embers, onBuy }) {
   // measure pass, where flex:1 alone bounds nothing. See Shop.js for the full
   // explanation.
   const { height: winH } = useWindowDimensions();
+
+  // IMP-113: onBuy is now a real (async) store purchase, not an instant bare
+  // increment — this guards against a double-tap firing two purchases and
+  // shows the buyer their tap registered while the sheet is in flight.
+  const [buyingId, setBuyingId] = React.useState(null);
+  const handleBuy = async (p) => {
+    if (buyingId) return;
+    setBuyingId(p.id);
+    try { await onBuy(p); } finally { setBuyingId(null); }
+  };
   return (
     <View style={{ flex: 1, maxHeight: winH, backgroundColor: c.cream, paddingTop: insets.top }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingTop: 12, paddingBottom: 4 }}>
@@ -41,9 +51,9 @@ export default function GetEmbers({ insets, onClose, embers, onBuy }) {
         </T>
 
         <View style={{ width: '100%', marginTop: 26, gap: 10 }}>
-          {EMBER_PACKS.map((p) => (
-            <Pressable key={p.id} onPress={() => onBuy(p)}
-              style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 15, borderRadius: t.radius.btn, backgroundColor: c.surface, borderWidth: 1.5, borderColor: c.border, transform: [{ scale: pressed ? 0.99 : 1 }] }, t.dark ? null : t.shadow(8, c.shadowColor, 0.08)]}>
+          {packs.map((p) => (
+            <Pressable key={p.id} disabled={!!buyingId} onPress={() => handleBuy(p)}
+              style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 15, borderRadius: t.radius.btn, backgroundColor: c.surface, borderWidth: 1.5, borderColor: c.border, opacity: buyingId && buyingId !== p.id ? 0.5 : 1, transform: [{ scale: pressed ? 0.99 : 1 }] }, t.dark ? null : t.shadow(8, c.shadowColor, 0.08)]}>
               <View style={{ width: 38, height: 38, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: c.accentSoft }}>
                 <Ember size={22} deep={c.accentDeep} />
               </View>
@@ -53,7 +63,7 @@ export default function GetEmbers({ insets, onClose, embers, onBuy }) {
                   <T d w={800} color={c.accentDeep} style={{ fontSize: 10, letterSpacing: 0.3 }}>{p.tag.toUpperCase()}</T>
                 </View>
               )}
-              <T d w={800} color={c.accentDeep} style={{ fontSize: 16 }}>{p.price}</T>
+              <T d w={800} color={c.accentDeep} style={{ fontSize: 16 }}>{buyingId === p.id ? '…' : p.price}</T>
             </Pressable>
           ))}
         </View>

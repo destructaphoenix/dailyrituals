@@ -78,3 +78,19 @@ export function ctaLabel({ trialDays } = {}) {
   const n = Number(trialDays);
   return Number.isFinite(n) && n > 0 ? 'Try free, then subscribe' : 'Subscribe';
 }
+
+// ── Ember packs (IMP-113) ─────────────────────────────────────────────────────
+//
+// Same rule as mergePrices: a live priceString replaces the fallback string;
+// everything else about a pack (amount, tag) is the constants' to assert —
+// the store has no opinion on what an ember pack is worth in embers.
+export function mergeEmberPrices(fallback, products) {
+  const byId = {};
+  (Array.isArray(products) ? products : []).forEach((p) => {
+    if (p && p.identifier) byId[p.identifier] = p;
+  });
+  return fallback.map((pack) => {
+    const live = byId[pack.productId];
+    return live && live.priceString ? { ...pack, price: live.priceString } : { ...pack };
+  });
+}

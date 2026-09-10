@@ -19,7 +19,7 @@ export const PERSISTED_KEYS = [
   'entries', 'xp', 'done', 'quests', 'freezes', 'frozenDays', 'embers',
   'plus', 'activePalette', 'ownedPalettes', 'activeSky', 'ownedSkies',
   'subCanceled', 'activePlan', 'lastActiveDay', 'settings', 'lastBackupAt',
-  'promptDeck', 'trash', 'freeRestoresUsed', 'lastFreezeGrantPeriod',
+  'promptDeck', 'trash', 'freeRestoresUsed', 'lastFreezeGrantPeriod', 'appliedEmberTx',
 ];
 
 export function pickPersisted(state) {

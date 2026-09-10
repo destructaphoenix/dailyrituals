@@ -155,11 +155,14 @@ export const CANDLE_PACKS = [
   { id: 'c3', count: 3, price: 300, tag: 'Best value' },
 ];
 
-// Ember top-ups (bought with cash).
+// Ember top-ups (bought with cash). `price` is the offline/Expo-Go fallback —
+// live builds overlay the store's real priceString (IMP-113, mergeEmberPrices).
+// `productId` is the RevenueCat identifier verbatim — no `:standard` suffix,
+// read off the dashboard, not guessed (see docs/build-log.md).
 export const EMBER_PACKS = [
-  { id: 'e1', amount: 240,  price: '$1.99' },
-  { id: 'e2', amount: 680,  price: '$4.99', tag: 'Popular' },
-  { id: 'e3', amount: 1500, price: '$9.99', tag: 'Best value' },
+  { id: 'e1', amount: 240,  price: '$1.99', productId: 'embers_240' },
+  { id: 'e2', amount: 680,  price: '$4.99', tag: 'Popular', productId: 'embers_680' },
+  { id: 'e3', amount: 1500, price: '$9.99', tag: 'Best value', productId: 'embers_1500' },
 ];
 
 export const PLUS_PRICES = {

@@ -18,6 +18,7 @@ export default function Shop({
   freezes, onBuyCandles, onOpenPaywall, onGetEmbers, onManage, plusEnabled = true,
   renewLabel = null, // IMP-082 — the real renewal date, or null to say nothing about renewal
   embersForCash = false,
+  emberPacks = EMBER_PACKS, // IMP-113 — live store prices when the purchase path is on
 }) {
   const t = useTheme();
   const c = t.colors;
@@ -200,7 +201,7 @@ export default function Shop({
             <Sec title="Gather Embers" />
             <Note>Embers also gather on their own — one for every day you keep.</Note>
             <View style={{ flexDirection: 'row', gap: 11 }}>
-              {EMBER_PACKS.map((p) => (
+              {emberPacks.map((p) => (
                 <Pressable key={p.id} onPress={() => onGetEmbers(p)}
                   style={({ pressed }) => [{ flex: 1, alignItems: 'center', paddingTop: 16, paddingBottom: 12, paddingHorizontal: 6, borderRadius: t.radius.sm, transform: [{ scale: pressed ? 0.97 : 1 }] }, ...cardBase]}>
                   {p.tag && <PackTag label={p.tag} c={c} soft />}

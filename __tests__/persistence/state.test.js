@@ -200,6 +200,19 @@ describe('lastFreezeGrantPeriod persistence (IMP-102 — per-period candle grant
   });
 });
 
+describe('appliedEmberTx persistence (IMP-113 — the local ember-grant ledger)', () => {
+  test('appliedEmberTx is a persisted key', () => {
+    expect(PERSISTED_KEYS).toContain('appliedEmberTx');
+  });
+  test('pickPersisted carries appliedEmberTx through', () => {
+    expect(pickPersisted({ appliedEmberTx: ['t1', 't2'], junk: 1 })).toEqual({ appliedEmberTx: ['t1', 't2'] });
+  });
+  test('survives a serialize/deserialize round-trip', () => {
+    const result = deserialize(serialize({ appliedEmberTx: ['t1'] }));
+    expect(result.appliedEmberTx).toEqual(['t1']);
+  });
+});
+
 describe('mergeWithDefaults', () => {
   test('fills missing keys from defaults but keeps loaded values', () => {
     const merged = mergeWithDefaults({ embers: 999 }, { embers: 360, streak: 4 });

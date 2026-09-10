@@ -1,7 +1,7 @@
 // __tests__/billing/prices.test.js — the paywall must never show a price the
 // store won't charge. These lock the merge of live RevenueCat offerings over
 // the design constants, and the refusal to assert an unverified saving.
-import { mergePrices, savePercent, ANNUAL_SUB_LIVE, ctaLabel } from '../../src/billing/prices';
+import { mergePrices, savePercent, ANNUAL_SUB_LIVE, ctaLabel, mergeEmberPrices } from '../../src/billing/prices';
 
 const FALLBACK = {
   monthly: { id: 'monthly', label: 'Monthly', price: '$4.99', per: 'per month', sub: 'Billed monthly' },
@@ -180,5 +180,49 @@ describe('ctaLabel — IMP-090', () => {
     expect(ctaLabel({ trialDays: 0 })).toBe('Subscribe');
     expect(ctaLabel({ trialDays: -7 })).toBe('Subscribe');
     expect(ctaLabel({ trialDays: NaN })).toBe('Subscribe');
+  });
+});
+
+// ── IMP-113 — the ember packs must show what the store will actually charge,
+// not the $1.99/$4.99/$9.99 design constants (wrong on INR and everywhere
+// else that isn't USD).
+describe('mergeEmberPrices', () => {
+  const FALLBACK_PACKS = [
+    { id: 'e1', amount: 240, price: '$1.99', productId: 'embers_240' },
+    { id: 'e2', amount: 680, price: '$4.99', tag: 'Popular', productId: 'embers_680' },
+    { id: 'e3', amount: 1500, price: '$9.99', tag: 'Best value', productId: 'embers_1500' },
+  ];
+
+  test('returns the fallback packs unchanged when no live products exist', () => {
+    expect(mergeEmberPrices(FALLBACK_PACKS, null)).toEqual(FALLBACK_PACKS);
+    expect(mergeEmberPrices(FALLBACK_PACKS, [])).toEqual(FALLBACK_PACKS);
+  });
+
+  test('does not mutate the fallback it was given', () => {
+    const before = JSON.parse(JSON.stringify(FALLBACK_PACKS));
+    mergeEmberPrices(FALLBACK_PACKS, [{ identifier: 'embers_240', priceString: '₹199.00' }]);
+    expect(FALLBACK_PACKS).toEqual(before);
+  });
+
+  test('a live priceString replaces the hardcoded price, matched by productId', () => {
+    const out = mergeEmberPrices(FALLBACK_PACKS, [
+      { identifier: 'embers_240', priceString: '₹199.00' },
+      { identifier: 'embers_1500', priceString: '₹799.00' },
+    ]);
+    expect(out.find((p) => p.id === 'e1').price).toBe('₹199.00');
+    expect(out.find((p) => p.id === 'e3').price).toBe('₹799.00');
+    expect(out.find((p) => p.id === 'e2').price).toBe('$4.99'); // no live match — untouched
+  });
+
+  test('keeps amount and tag from the constants — the store never asserts those', () => {
+    const out = mergeEmberPrices(FALLBACK_PACKS, [{ identifier: 'embers_680', priceString: '₹499.00' }]);
+    const e2 = out.find((p) => p.id === 'e2');
+    expect(e2.amount).toBe(680);
+    expect(e2.tag).toBe('Popular');
+  });
+
+  test('a product with no priceString does not blank out the fallback', () => {
+    const out = mergeEmberPrices(FALLBACK_PACKS, [{ identifier: 'embers_240' }]);
+    expect(out.find((p) => p.id === 'e1').price).toBe('$1.99');
   });
 });
