@@ -395,11 +395,23 @@ Play Console → **Daily Rituals** → **Monetize** → **Products** → **In-ap
 (Menu names drift between Play Console redesigns; the thing you want is one-time in-app products, **not**
 Subscriptions.) Make three:
 
-| Product ID — type these EXACTLY | Embers | Suggested price |
-| --- | --- | --- |
-| `embers_240` | 240 | $1.99 |
-| `embers_680` | 680 | $4.99 |
-| `embers_1500` | 1500 | $9.99 |
+| Product ID — type these EXACTLY | Embers | Price | Name (Play field, ≤55 chars) |
+| --- | --- | --- | --- |
+| `embers_240` | 240 | $1.99 | `Kindling — 240 Embers` |
+| `embers_680` | 680 | $4.99 | `Firelight — 680 Embers` |
+| `embers_1500` | 1500 | $9.99 | `Hearthfire — 1500 Embers` |
+
+**Descriptions (Play field, ≤200 chars).** Same shape for all three, only the number changes:
+
+> `240 embers to spend in the Shop on palettes, skies and streak candles. Embers also gather on their own — fifteen for every day you keep.`
+
+⚠️ **The second sentence is deliberate and should stay.** It tells a buyer they do not have to pay, which
+is both true and the tone this app takes about money. It also matches the app's own line in
+[`tips.js:21`](../src/content/tips.js#L21) and the Shop's `EMBERS_ARE_FREE_COPY`.
+
+⚠️ **Do not call a pack a "handful".** [`tips.js:21`](../src/content/tips.js#L21) already uses *handful*
+to mean **one day's earnings (15 embers)**. Reusing it for a 240-pack would contradict copy that ships
+today. `EMBER_GAIN` is `15` ([`data.js:126`](../src/data.js#L126)) — verified, not remembered.
 
 🔴 **A product ID is permanent. Google will not let you rename or reuse it, ever — not even after
 deleting the product.** Type them carefully; a typo is forever.
