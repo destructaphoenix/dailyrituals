@@ -4587,7 +4587,83 @@ at most 3–5 days of cover at any one moment. That is a materially different pr
 
 ---
 
+## IMP-113 — ember packs grant real embers through a store purchase (2026-09-10)
+
+**`onBuy` was `setEmbers((e) => e + pack.amount)`** — a bare counter increment sitting behind real Play
+prices ($1.99/$4.99/$9.99), the exact vc14 shape IMP-084 exists to prevent. Products were made live in Play
+Console and RevenueCat first (Active, Consumable, no entitlement — `embers_240`/`embers_680`/`embers_1500`,
+confirmed **no `:standard` suffix**), which is what unblocked this row.
+
+**The hard part, accepted deliberately.** A subscription has one live truth the store can be asked for at
+any time (`getEntitlement()`); a consumable does not — `customerInfo.nonSubscriptionTransactions` is a
+**history**, every ember pack this account has ever bought, forever. Granting from it naively would
+re-grant on every relaunch. The fix is a local ledger of applied `transactionIdentifier`s
+(`appliedEmberTx`, persisted the same way `lastFreezeGrantPeriod` was for IMP-102) — which also makes the
+grant self-healing: a purchase that resolves while the app is killed mid-flight is still in the next
+history and not yet in the ledger, so the next launch catches it. **On reinstall the local ledger is empty,
+so the whole purchase history re-grants** — accepted per the spec because the app is offline-first with no
+server-side ledger, the exploit needs a full uninstall/reinstall per repeat, and losing embers an honest
+buyer paid for is worse than a determined cheat getting a free palette (consistent with how restore already
+treats this app's economy — IMP-043, IMP-092).
+
+**What was built.** [`data.js`](../src/data.js) adds `productId` to each `EMBER_PACKS` entry (the
+`price` string stays as the offline/Expo-Go fallback). [`revenueCatService.js`](../src/billing/revenueCatService.js)
+adds `getEmberProducts()` (`Purchases.getProducts(ids, Purchases.PRODUCT_CATEGORY.NON_SUBSCRIPTION)`) and
+`buyEmberPack(product)` (`Purchases.purchaseStoreProduct`), mirroring `buy()`'s `mapError.js` handling and
+`owned`-rescue shape exactly rather than inventing a second mapper.
+[`simService.js`](../src/billing/simService.js) mirrors both methods (a fake product list and a fresh fake
+transaction per buy) so `npm test` — which only ever runs `simService`, never RevenueCat — exercises the
+real interface shape. New pure [`emberGrants.js`](../src/billing/emberGrants.js) exports
+`pendingEmberGrants(transactions, applied, packsById)` — the ledger core, no React, no persistence. New
+[`useLiveEmberProducts.js`](../src/billing/useLiveEmberProducts.js) mirrors `useLivePrices.js`'s
+fetch-once-and-merge hook; new `mergeEmberPrices` in [`prices.js`](../src/billing/prices.js) overlays live
+`priceString` onto the constants, matched by `productId`, the same rule as `mergePrices`. In
+[`RitualsApp.js`](../src/RitualsApp.js): `appliedEmberTx` state (added to `PERSISTED_KEYS` and both
+persisted-slice literals, exactly as IMP-102 did); `applyEmberGrants(customerInfo)` runs
+`pendingEmberGrants` and applies the result; `buyEmberPack(pack)` looks up the live product, calls
+`service.buyEmberPack`, and grants on both `success` and `owned`. **Both purchase surfaces route through
+it** — the Get Embers sheet's `onBuy` and the Shop's inline pack row (`getEmbers`, previously a second bare
+increment the spec didn't name but which is the same bug). [`GetEmbers.js`](../src/screens/GetEmbers.js)
+takes a `packs` prop (defaults to `EMBER_PACKS`) and guards against a double-tap while a purchase is in
+flight. [`Shop.js`](../src/screens/Shop.js) takes an `emberPacks` prop the same way.
+
+**The proof.** New `__tests__/billing/emberGrants.test.js` (new-grants-once, repeat-grants-once,
+ledger-already-applied-grants-nothing, empty-ledger-regrants-the-whole-history asserted as deliberate,
+unknown `productIdentifier` grants nothing not `NaN`). Extended `revenueCatService.test.js` and
+`simService.test.js` for the two new methods. Extended `prices.test.js` for `mergeEmberPrices`. New
+`__tests__/billing/emberPurchaseWiring.test.js` — source assertions (closures, same pattern as
+`candleCapGrant.test.js`) pinning that `onBuy` is no longer a bare increment, that `buyEmberPack` calls the
+real service method and `pendingEmberGrants` before touching embers, and that `appliedEmberTx` rides both
+persisted slices. **1164 passed, 104 suites** (was 1129/102), `npx expo export --platform android` clean,
++35 tests. Commit `4df867d`.
+
+**Not walked yet — and `EMBER_PACKS_ENABLED` stays `false`.** The spec's own step 6 says flip the flag only
+once steps 1–5 are built **and walked**; this closes 1–5, not the flag. Owes a new **WALK-20** on hardware
+with the license tester, and the IMP-112 cap interaction must be walked alongside it.
+
+---
+
 ## Session notes
+
+_2026-09-10, earlier (Sonnet — **IMP-111 built: the tab-change fade that outlined every card in day mode is
+gone.**) — ✅ code-complete, no walk yet._
+
+**What finished.** A deletion, not a fix — owner's ruling 2026-09-10. [`RitualsApp.js`](../src/RitualsApp.js)'s
+screen wrapper is now a plain `View` in place of `ScreenFade` (import, comment and JSX all removed).
+`ScreenFade`'s export and the "Screens" section were deleted from [`motion.js`](../src/motion.js); `DUR`,
+`EASE`, `riseIn`, `popIn`, `fadeOut`, `stagger`, `useCountUp` and `usePressScale` are untouched.
+`react-native-reanimated`/`react-native-worklets` stay (native deps, still used by `usePressScale`).
+Confirmed `tabKey` was never a remount key, so this is purely visual — no mount/unmount behavior changed.
+
+**The proof.** No test ever asserted on `ScreenFade` by name, so the count did **not** drop — **1116
+passed, 100 suites**, unchanged, `npx expo export --platform android` clean. Commit `76c1d76`. Spec archived
+to `docs/build-log.md`; its row dropped from `docs/specs-open.md`'s index (two rows left there now, IMP-112
+and IMP-113). The parked "apply the motion vocabulary" section stays in `docs/specs-open.md`, still gated on
+Plus being complete.
+
+**The exact next step.** 🔨 Build **112 → 113**, one chat each, same rules as above. 112 deletes the
+5-candle pack (cap of 3 makes it unsellable — owner ratified). No new walk owed by 111 on its own — folds
+into WALK-18's re-run (day mode, no shadow outline on tab switch).
 
 _2026-09-10, earlier (Sonnet — **IMP-110 built: the paywall no longer sells auto-freeze as a Plus perk.**)
 — ✅ code-complete, no walk yet._

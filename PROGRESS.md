@@ -32,12 +32,12 @@
 runtime proof is a separate WALK row for a separate chat, so a missing walk is *not* an unfinished spec.
 Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`](docs/playbook.md).
 
-> ## 🧭 WHAT TO TAKE RIGHT NOW (2026-09-09)
+> ## 🧭 WHAT TO TAKE RIGHT NOW (2026-09-10)
 >
 > | If this chat is… | Take |
 > | --- | --- |
-> | a **build task** | 🔨 **[113](docs/specs-open.md#imp-113)**, the last backlog row. **108, 109, 110, 111 and 112 are done** (`0078872`, `b565393`, `54b8bd5`, `76c1d76`, `a8ef8ed`, archived). ⚠️ **113's store products are live and its ids are settled** — `embers_240`/`embers_680`/`embers_1500`, **no `:standard` suffix**; it owes a new WALK-20 on hardware. |
-> | a **runtime walk** | 🚦 **This is where all remaining work is.** ✅ WALK-19a passed 2026-09-10 and closed IMP-105. Owed now, on group `f961b427` / update `01a0877d`: **WALK-19 steps 4e, 7, 10** (all need a LIVE test subscription — buy annual and run them as one block, ~3 hr budget), then **step 8** (the one real-money purchase, held for last). Then **WALK-08** (DeeperInsights at max font), **WALK-07** (Paywall badge at font scale 2.0), **WALK-18** (motion, mid-range device), and **WALK-12 (R8) LAST** — it must be walked on the exact build you ship. |
+> | a **build task** | **The Improvements backlog is EMPTY — 108 through 113 are all done** (`0078872`, `b565393`, `54b8bd5`, `76c1d76`, `a8ef8ed`, `4df867d`, all archived). Check for a newly-filed `IMP-xxx` row before assuming there's nothing to build; otherwise take a runtime walk instead. |
+> | a **runtime walk** | 🚦 **This is where all remaining work is.** ✅ WALK-19a passed 2026-09-10 and closed IMP-105. Owed now, on group `f961b427` / update `01a0877d`: **WALK-19 steps 4e, 7, 10** (all need a LIVE test subscription — buy annual and run them as one block, ~3 hr budget), then **step 8** (the one real-money purchase, held for last). Then **WALK-08** (DeeperInsights at max font), **WALK-07** (Paywall badge at font scale 2.0), **WALK-18** (motion, mid-range device), and **WALK-12 (R8) LAST** — it must be walked on the exact build you ship. ⚠️ **WALK-20 (IMP-113's ember purchase, plus the IMP-112 cap interaction) still needs to be written into `docs/walk-open.md` — it does not exist there yet.** |
 > | a **design request** | See "Claude Design" below. The live request is **Insights**. |
 >
 > **The billing surface, honestly.** ✅ **Proven end to end on hardware:** purchase, already-owns (4e),
@@ -77,7 +77,7 @@ preflight. Detail → [`docs/build-log.md`](docs/build-log.md).
 
 **Current stack:** Expo SDK **54** · RN **0.81.5** · React **19.1.0** · **New Architecture** ·
 **Reanimated 4.1.1 + worklets 0.5.1** · `targetSdkVersion` **36**, `minSdk` **24** ·
-`npm test` → **1129 passed, 102 suites** (verified 2026-09-10) + **3 zone tests × 2 pinned zones**.
+`npm test` → **1164 passed, 104 suites** (verified 2026-09-10) + **3 zone tests × 2 pinned zones**.
 ⚠️ **Run `npm test`, not bare `npx jest`**, or the zone half is skipped. Version-checking a phone, the
 track-reading script and the rest of the stack notes are in [`docs/playbook.md`](docs/playbook.md).
 
@@ -109,7 +109,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 110 | **The paywall sells a perk every free user already has.** `PLUS_PERKS[1]` = *"Streak insurance — a candle spends itself when you miss a day"*, shown on the paywall and in Onboarding's first three — but `applyAutoFreeze` is not gated on `plus` at all. **Owner ruled 2026-09-10 that free-for-all is correct**, so the line is what is wrong, not the feature. | OTA | ✅ **done, archived** in `docs/build-log.md` — `54b8bd5`. **1116 passed, 100 suites** (was 1113/99), export clean, +3 tests. ⚠️ **Walk owed** — folds into WALK-19's remaining re-runs |
 | 111 | **The tab fade outlined every card in day mode.** `ScreenFade` animated `opacity` over a subtree whose `Card`s carry Android `elevation: 8` (day only — `t.dark ? null : t.shadow(…)`), and elevation shadows do not composite under fractional parent opacity. | OTA | ✅ **done, archived** in `docs/build-log.md` — `76c1d76`. **1116 passed, 100 suites** (unchanged — no test ever asserted on `ScreenFade` by name), export clean. ⚠️ **Walk owed** — WALK-18 re-run in day mode |
 | 112 | **Stored candles are unbounded**, so a user banks them, buys once, and the ember economy has no ongoing sink. **Owner set the cap at 3** (2026-09-10). Also makes the IMP-102 renewal toast honest — it says "+3" unconditionally today. | OTA | ✅ **done, archived** in `docs/build-log.md` — `a8ef8ed`. **1129 passed, 102 suites** (was 1116/100), export clean, +13 tests. The `c5` pack is gone. ⚠️ **Walk owed** — folds into WALK-19's remaining Plus-surface re-runs |
-| 113 | **Ember packs show real prices and hand over the goods for free** — `onBuy` at `RitualsApp.js:985` is a bare counter increment. Consumables are a history, not a balance, so the grant needs an idempotent local ledger of `transactionIdentifier`s. | OTA (SDK already installed — **corrected from BUILD**) | ⬜ **UNBLOCKED 2026-09-10 — specced and ready.** Products live: `embers_240` / `embers_680` / `embers_1500`, Active, **Consumable**, **no entitlement**. ✅ **No `:standard` suffix — RevenueCat reports the bare id; do not re-guess this.** Owes a new **WALK-20** |
+| 113 | **Ember packs show real prices and hand over the goods for free** — `onBuy` was a bare counter increment. Consumables are a history, not a balance, so the grant needed an idempotent local ledger of `transactionIdentifier`s. | OTA | ✅ **done, archived** in `docs/build-log.md` — `4df867d`. **1164 passed, 104 suites** (was 1129/102), export clean, +35 tests. `EMBER_PACKS_ENABLED` stays `false`. ⚠️ **Owes a new WALK-20** on hardware with the license tester, alongside the IMP-112 cap interaction |
 | 022 | Save as PDF + About sheet (the two dead You-tab buttons) | Build | ⏸ **deferred (owner)** — spec in build-log → "Deferred specs"; **perk #6 gate** |
 | 044 | R8 on release builds (dev client was shipping to the public) | Build | 🟢 **code-complete, UNWALKED.** R8 must be walked on the build you actually ship, so it rides **vc15 or later**; walk = WALK-12, on hardware, last in the sitting |
 | 057 | Historical `dayKey` migration | Build | 🔒 **reserved, not missing** — cannot be written until real device numbers come back from the dev panel's "Data health" reporter. See below |
@@ -153,15 +153,13 @@ the two are indistinguishable. **Do not remove the fallback** — see WALK-19.
 - ✅ **MOTION — DECIDED 2026-09-10.** Owner: *"I choose b and c."* **(b) done** — IMP-111 deleted
   `ScreenFade` (`76c1d76`, archived). **(c) deferred** — applying the unused vocabulary is parked in
   [`docs/specs-open.md`](docs/specs-open.md), gated on Plus being complete.
-- ✅ **EMBERS FOR MONEY — DECIDED 2026-09-10, no longer parked.** Owner answered both gating questions
-  (**cash → embers → candles**; **auto-freeze free for everyone**) and set the **candle cap at 3**. ✅
-  **IMP-112 (the cap) is done** — `MAX_CANDLES = 3`, `c5` deleted, archived in `docs/build-log.md`.
-  [IMP-113](docs/specs-open.md#imp-113) (the purchase path) is what's left. Reasoning preserved in
-  [`docs/build-log.md`](docs/build-log.md) → "The embers-for-money conversation" — **a decision without its
-  reasoning gets re-litigated.** 🔴 **`EMBER_PACKS_ENABLED` still must not be flipped** until IMP-113 is
-  built AND walked: `onBuy` is still a bare counter increment, so the flag alone ships a store showing
-  dollar prices and giving the goods away (the vc14 shape).
-  ✅ **The three consumables are LIVE as of 2026-09-10** — Active, Consumable, no entitlement, ids settled.
+- ✅ **EMBERS FOR MONEY — DONE, 2026-09-10.** Owner answered both gating questions (**cash → embers →
+  candles**; **auto-freeze free for everyone**) and set the **candle cap at 3**. ✅ **IMP-112 (the cap)**
+  and ✅ **IMP-113 (the purchase path)** are both done — archived in `docs/build-log.md` (`a8ef8ed`,
+  `4df867d`). Reasoning preserved there → "The embers-for-money conversation" — **a decision without its
+  reasoning gets re-litigated.** 🔴 **`EMBER_PACKS_ENABLED` still must not be flipped** — it flips only
+  after **WALK-20** proves the real purchase path on hardware; that walk still needs to be written into
+  `docs/walk-open.md`.
 - **Perk #6, the PDF, is still not built** (IMP-022, deferred). It was **cut** from `PLUS_PERKS` rather
   than built, which is how `PLUS_ENABLED` flipped honestly. Gate checklist in the playbook → Phase 10b.
 
@@ -185,27 +183,7 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
-_2026-09-10, earlier (Sonnet — **IMP-111 built: the tab-change fade that outlined every card in day mode is
-gone.**) — ✅ code-complete, no walk yet._
-
-**What finished.** A deletion, not a fix — owner's ruling 2026-09-10. [`RitualsApp.js`](src/RitualsApp.js)'s
-screen wrapper is now a plain `View` in place of `ScreenFade` (import, comment and JSX all removed).
-`ScreenFade`'s export and the "Screens" section were deleted from [`motion.js`](src/motion.js); `DUR`,
-`EASE`, `riseIn`, `popIn`, `fadeOut`, `stagger`, `useCountUp` and `usePressScale` are untouched.
-`react-native-reanimated`/`react-native-worklets` stay (native deps, still used by `usePressScale`).
-Confirmed `tabKey` was never a remount key, so this is purely visual — no mount/unmount behavior changed.
-
-**The proof.** No test ever asserted on `ScreenFade` by name, so the count did **not** drop — **1116
-passed, 100 suites**, unchanged, `npx expo export --platform android` clean. Commit `76c1d76`. Spec archived
-to `docs/build-log.md`; its row dropped from `docs/specs-open.md`'s index (two rows left there now, IMP-112
-and IMP-113). The parked "apply the motion vocabulary" section stays in `docs/specs-open.md`, still gated on
-Plus being complete.
-
-**The exact next step.** 🔨 Build **112 → 113**, one chat each, same rules as above. 112 deletes the
-5-candle pack (cap of 3 makes it unsellable — owner ratified). No new walk owed by 111 on its own — folds
-into WALK-18's re-run (day mode, no shadow outline on tab switch).
-
-_2026-09-10, latest (Sonnet — **IMP-112 built: stored candles are capped at 3, and the renewal toast no
+_2026-09-10, earlier (Sonnet — **IMP-112 built: stored candles are capped at 3, and the renewal toast no
 longer lies about the amount.**) — ✅ code-complete, no walk yet._
 
 **What finished.** [`data.js`](src/data.js) exports `MAX_CANDLES = 3`; `CANDLE_PACKS` drops the now-unsellable
@@ -229,3 +207,38 @@ toast naming the real granted amount). **1129 passed, 102 suites** (was 1116/100
 **The exact next step.** 🔨 Build **113**, last row in the backlog. It owes a new WALK-20 on hardware; no
 new walk owed by 112 on its own — folds into WALK-19's remaining Plus-surface re-runs and a fresh look at
 the Shop's candle row.
+
+_2026-09-10, latest (Sonnet — **IMP-113 built: ember packs grant real embers through a store purchase, not
+a free counter increment.**) — ✅ code-complete, no walk yet._
+
+**What finished.** `onBuy` was `setEmbers((e) => e + pack.amount)` — a bare increment behind real Play
+prices. [`data.js`](src/data.js) adds `productId` to each `EMBER_PACKS` entry.
+[`revenueCatService.js`](src/billing/revenueCatService.js) adds `getEmberProducts()` and `buyEmberPack()`,
+mirroring `buy()`'s `mapError.js` handling exactly; [`simService.js`](src/billing/simService.js) mirrors
+both so `npm test` (which only ever runs simService) exercises the real shape. New pure
+[`emberGrants.js`](src/billing/emberGrants.js) exports `pendingEmberGrants(transactions, applied,
+packsById)` — the ledger core that keys on `transactionIdentifier` so a purchase grants exactly once
+against `nonSubscriptionTransactions` (a history, not a balance). New `appliedEmberTx` persisted state
+(added to `PERSISTED_KEYS` and both persisted-slice literals, same pattern as IMP-102's
+`lastFreezeGrantPeriod`). New [`useLiveEmberProducts.js`](src/billing/useLiveEmberProducts.js) hook +
+`mergeEmberPrices` in [`prices.js`](src/billing/prices.js) replace the `$1.99`/`$4.99`/`$9.99` literals with
+the store's real `priceString`. Both purchase surfaces — the Get Embers sheet and the Shop's inline pack
+row — now route through the same `buyEmberPack` closure in `RitualsApp.js`.
+[`GetEmbers.js`](src/screens/GetEmbers.js) and [`Shop.js`](src/screens/Shop.js) take `packs`/`emberPacks`
+props (default to the constants) instead of importing `EMBER_PACKS` unconditionally. **Accepted
+deliberately, per the spec:** a reinstall re-grants the whole purchase history, since the ledger is local
+and this app has no server — flagged so it's a choice, not an accident.
+
+**The proof.** New `__tests__/billing/emberGrants.test.js` (+8), extended `revenueCatService.test.js` (+6),
+`simService.test.js` (+4), `prices.test.js` (+5), `state.test.js` (+3), and new
+`__tests__/billing/emberPurchaseWiring.test.js` (+9, source assertions — closures aren't unit-testable, same
+pattern as `candleCapGrant.test.js`) pinning that `onBuy` is no longer a bare increment. **1164 passed, 104
+suites** (was 1129/102), `npx expo export --platform android` clean. Commit `4df867d`. Spec archived to
+`docs/build-log.md`; its row dropped from `docs/specs-open.md`'s index — **the backlog is now empty.**
+`EMBER_PACKS_ENABLED` stays `false`.
+
+**The exact next step.** The Improvements backlog has **no open row** — check for a newly-filed `IMP-xxx`
+before starting a build chat. Otherwise take a runtime walk: **WALK-20** (IMP-113's purchase path + the
+IMP-112 cap interaction) needs to be **written into `docs/walk-open.md` first** — it doesn't exist there
+yet — or take one of the walks already queued in WALK-19's remaining steps (4e, 7, 10, 8), WALK-08, WALK-07,
+WALK-18, or WALK-12 (last).
