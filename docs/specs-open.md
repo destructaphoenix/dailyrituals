@@ -13,7 +13,7 @@
 > re-litigate a "why", and do not improve the scope.** If a step turns out to be impossible or the code
 > contradicts the spec, **STOP** and log it to `PROGRESS.md` → Open items rather than inventing a fix.
 >
-> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **1113 passed, 99 suites** — verified 2026-09-10), `npx expo export --platform android` clean, commit with the **exact** message given, then
+> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **1116 passed, 100 suites** — verified 2026-09-10), `npx expo export --platform android` clean, commit with the **exact** message given, then
 > update `PROGRESS.md` (tick the backlog row, write the session note) and **move the finished spec from
 > this file into `docs/build-log.md`**.
 >
@@ -22,15 +22,14 @@
 
 ---
 
-## The queue — four rows left, all opened by the owner on 2026-09-10
+## The queue — three rows left, all opened by the owner on 2026-09-10
 
 **Both came out of WALK-19 step 7, and neither is what the walk was looking for.** The owner went to check
-IMP-104 and found something bigger: **the paywall sells a promise the shop does not keep.** IMP-108 (the
-live mis-sell) and IMP-109 (the confusing shortfall toast) are done — see `docs/build-log.md`.
+IMP-104 and found something bigger: **the paywall sells a promise the shop does not keep.** IMP-108, IMP-109
+and IMP-110 (the two live mis-sells and the confusing shortfall toast) are done — see `docs/build-log.md`.
 
 | Row | What | Severity |
 | --- | --- | --- |
-| [IMP-110](#imp-110) | `PLUS_PERKS[1]` sells streak insurance as a Plus perk; `applyAutoFreeze` is ungated and **every free user already has it**. | 🔴 **The second live mis-sell. Reword the line — the owner ruled the feature stays free** |
 | [IMP-111](#imp-111) | The tab transition draws shadow outlines around the next screen's cards. **Day mode only.** | 🎨 **Owner chose deletion over a fix — remove `ScreenFade`** |
 | [IMP-112](#imp-112) | Stored candles are unbounded, so the ember economy has no sink. **Owner set the cap at 3.** | 🟢 **Ready. ⚠️ A cap of 3 makes the 5-pack unsellable — it goes** |
 | [IMP-113](#imp-113) | Ember packs display real prices and hand the goods over for free; `onBuy` is a bare counter increment. | 🚦 **BLOCKED on an owner prerequisite — 3 consumable products must exist in Play Console + RevenueCat first** |

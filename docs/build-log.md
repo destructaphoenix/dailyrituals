@@ -3931,6 +3931,27 @@ Commit `0078872`.
 
 **Not walked yet.** WALK-19 step 7 owes a re-run: a member taps Harvest Moon and it applies.
 
+## IMP-110 — the paywall sold a perk every free user already had (2026-09-10)
+
+**Opened the same night by the owner's ruling: auto-freeze stays free for everyone.**
+[`data.js:176`](../src/data.js#L176)'s `PLUS_PERKS[1]` read *"Streak insurance — a candle spends itself
+when you miss a day"*, shown on the paywall and in Onboarding's first three items, but `applyAutoFreeze`
+([`streakFreeze.js:14`](../src/home/streakFreeze.js#L14)) has never been gated on `plus` — every free user
+already gets exactly this. The feature was right; the line was the mis-sell.
+
+**What was built.** Reworded `PLUS_PERKS[1]` to `'Three streak candles, every year you stay'` — the honest,
+genuinely members-only grant (IMP-102's per-period +3). Nothing else touched: `applyAutoFreeze` and its
+mount-effect call site in `RitualsApp.js` are untouched and remain unconditional.
+
+**The proof.** New `__tests__/billing/autoFreezeStaysFree.test.js`: no `PLUS_PERKS` entry mentions
+"insurance" or a self-spending candle, the reworded line is pinned exactly, and a source assertion on
+`RitualsApp.js` confirms the `applyAutoFreeze` mount effect is never wrapped in a `plus` check — the
+regression guard against a future chat "fixing" this by gating the feature. **1116 passed, 100 suites**
+(was 1113/99), `npx expo export --platform android` clean. Commit `54b8bd5`.
+
+**Not walked yet.** No new walk of its own — folds into WALK-19's remaining Plus-surface re-runs (paywall
+copy is now accurate; no runtime behavior changed).
+
 ## IMP-102 — the +3 streak candles are a per-period perk, not a per-completion one (2026-09-09)
 
 **Owner ruling, 2026-09-09: per-period, not a joining gift.** `subscribe()` ended with
@@ -4504,47 +4525,29 @@ at most 3–5 days of cover at any one moment. That is a materially different pr
 
 ---
 
-## IMP-110
-
-### The paywall sells a perk every free user already has
-
-**Lane: OTA.** Opened 2026-09-10 by the owner's ruling that auto-freeze is free for everyone.
-
-**The mis-sell.** `PLUS_PERKS[1]` ([`data.js:176`](../src/data.js#L176)) reads **"Streak insurance — a
-candle spends itself when you miss a day"**, and it is shown on the paywall and in
-[`Onboarding.js:31`](../src/screens/Onboarding.js#L31)'s first three items. But `applyAutoFreeze` is not
-gated on `plus` in any way — **every free user already gets exactly this.** The owner confirmed on
-2026-09-10 that this is intended, so the feature is right and **the line is what is wrong.**
-
-**Why the fix is a reword, not a gate.** Gating auto-freeze would take a working feature away from every
-existing free user to make an advertisement true. That is backwards.
-
-**What IS a genuine, members-only streak benefit:** the **+3 candles per paid period** IMP-102 grants.
-That is real, it is gated on a live entitlement, and it is the honest version of the same idea.
-
-**Steps.**
-
-1. Replace `PLUS_PERKS[1]` with: **`'Three streak candles, every year you stay'`**
-2. Nothing else changes. ⚠️ **Do not gate `applyAutoFreeze`** — owner's ruling, 2026-09-10.
-3. ⚠️ The `PLUS_PERKS #n` comments in `src/screens` and `src/recap` are already off by one past #3
-   ([`data.js:171`](../src/data.js#L171)); this row does not renumber them and must not try.
-
-**⚠️ Copy is the owner's to veto.** The constraint is only that the line must name something free users
-do not get. If the candle cap lands at a different grant size, this string moves with it.
-
-**Acceptance.** `npm test` green and ≥ prior. A test asserting no `PLUS_PERKS` entry claims auto-freeze,
-and that `applyAutoFreeze` remains reachable with `plus: false` — the regression guard that stops a future
-chat "fixing" this by gating the feature.
-
-**Commit:** `fix(plus): stop selling a perk every free user already has (IMP-110)`
-
----
-
 **✅ RESOLVED 2026-09-10.** Both questions answered by the owner: **cash → embers → candles** (question 1 — the streak-integrity trade this section argued against, overridden knowingly) and **auto-freeze is free for everyone** (question 2 — so IMP-110 rewords the paywall rather than gating the feature). The candle cap was set at **3**, which is what bounds the integrity cost: capped, cash buys at most three days of cover, never immunity. Scoped as IMP-112 (the cap) and IMP-113 (the purchase path).
 
 ---
 
 ## Session notes
+
+_2026-09-10, earlier (Sonnet — **IMP-108 built: a Plus member now owns every palette and sky, not just the
+`tier: 'plus'` ones.**) — ✅ code-complete, no walk yet._
+
+**What finished.** [`Shop.js`](../src/screens/Shop.js)'s `palState`/`skyState` now check `plus` before
+`tier === 'owned'`/the ownership arrays, so a member reads `'owned'` for Marigold, Honey, Rose Dusk, Sage
+Eve and Harvest Moon — the five numeric-tier items the paywall already promised but the shop still charged
+for. `'active'` still wins first (a lapsed member keeps a Plus cosmetic they had *applied*, now commented in
+source as deliberate); access is a live read on `plus`, nothing written into `ownedPalettes`/`ownedSkies`.
+
+**The proof.** +5 tests in `Shop.test.js` (member reads `'owned'` for an unpurchased numeric-tier palette
+and sky; non-member still reads `'buy'`; tapping as a member calls `onApplyPalette` not `onBuyPalette`; a
+lapsed member reverts to `'buy'`). **1109 passed, 99 suites** (was 1104/99), `npx expo export --platform
+android` clean. Commit `0078872`. Spec archived to `docs/build-log.md`; its row dropped from
+`docs/specs-open.md`'s index (five rows left there now).
+
+**The exact next step.** 🔨 Build **109 → 110 → 111 → 112**, one chat each, same rules as above. WALK-19
+step 7 owes a re-run once a build/OTA carries this commit — a member should be able to apply Harvest Moon.
 
 _2026-09-10 (Opus + owner — **a full WALK-19 sitting on hardware: two rows closed, two proven, and
 FOUR new rows opened by the owner noticing things the walk was not looking for.**) — walk + specs, no code._
