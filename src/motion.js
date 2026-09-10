@@ -132,24 +132,3 @@ export function useCountUp(value, duration = DUR.settle) {
 
   return display;
 }
-
-// ── Screens ──────────────────────────────────────────────────────────────────
-
-// Wraps the screen container. `tabKey` is the remount key: when the active tab
-// changes the animation restarts, which is what makes the swap read as a transition
-// instead of an instant substitution. This is presentation only — no routing
-// change, no state change, no navigation library. The Modal sheets keep
-// animationType="slide"; OS modal presentation is correct for them.
-export function ScreenFade({ tabKey, style, children }) {
-  const p = useSharedValue(0);
-  useEffect(() => {
-    p.value = 0;
-    p.value = withTiming(1, { duration: DUR.enter, easing: EASE.standard });
-    return () => cancelAnimation(p);
-  }, [p, tabKey]);
-  const anim = useAnimatedStyle(() => ({
-    opacity: p.value,
-    transform: [{ translateY: 8 * (1 - p.value) }],
-  }));
-  return <Animated.View style={[style, anim]}>{children}</Animated.View>;
-}
