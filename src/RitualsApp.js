@@ -124,6 +124,14 @@ export function isPurchasableTier(tier) {
   return typeof tier === 'number';
 }
 
+// IMP-109: extracted for the same reason as isPurchasableTier above — a
+// shortfall message is unit-testable this way without driving the full app
+// through the Shop modal. Only a buy handler's shortfall branch calls this;
+// a deliberate tap on the ember pill still gets EMBERS_ARE_FREE_COPY.
+export function shortfallCopy(name, price, embers) {
+  return `${name} costs ${price} embers — you have ${embers}`;
+}
+
 export default function RitualsApp({ mode = 'day', settings, setSettings, onToggleMode, initialPlus = false, initialState = {}, onResetData, onReplaceAllData, restoredFromMs = null, onDismissRestoreNotice, pendingRestore = null, onConsumePendingRestore, restoreOfferAnswered = false, onAnswerRestoreOffer, onReopenRestoreOffer }) {
   const theme = useMemo(() => makeTheme(mode, settings), [mode, settings]);
   const c = theme.colors;
@@ -277,7 +285,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   const applyPalette = (p) => { setActivePalette(p.id); retint(p.swatch); showToast(p.name + ' applied'); };
   const buyPalette = (p) => {
     if (!isPurchasableTier(p.tier)) return;
-    if (embers < p.tier) { openGetEmbers(); return; }
+    if (embers < p.tier) { showToast(shortfallCopy(p.name, p.tier, embers)); return; }
     setEmbers((e) => e - p.tier);
     setOwnedPalettes((o) => [...o, p.id]);
     setActivePalette(p.id); retint(p.swatch);
@@ -286,14 +294,18 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   const applySky = (s) => { setActiveSky(s.id); showToast(s.name + ' applied'); };
   const buySky = (s) => {
     if (!isPurchasableTier(s.tier)) return;
-    if (embers < s.tier) { openGetEmbers(); return; }
+    if (embers < s.tier) { showToast(shortfallCopy(s.name, s.tier, embers)); return; }
     setEmbers((e) => e - s.tier);
     setOwnedSkies((o) => [...o, s.id]);
     setActiveSky(s.id);
     showToast(s.name + ' unlocked');
   };
   const buyCandles = (pack) => {
-    if (embers < pack.price) { openGetEmbers(); return; }
+    if (embers < pack.price) {
+      const name = pack.count + (pack.count > 1 ? ' candles' : ' candle');
+      showToast(shortfallCopy(name, pack.price, embers));
+      return;
+    }
     setEmbers((e) => e - pack.price);
     setFreezes((f) => f + pack.count);
     showToast(pack.count + (pack.count > 1 ? ' candles lit' : ' candle lit'));
