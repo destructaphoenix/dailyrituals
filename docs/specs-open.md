@@ -416,6 +416,29 @@ today. `EMBER_GAIN` is `15` ([`data.js:126`](../src/data.js#L126)) — verified,
 🔴 **A product ID is permanent. Google will not let you rename or reuse it, ever — not even after
 deleting the product.** Type them carefully; a typo is forever.
 
+**Each product needs one purchase option.** Play's newer one-time-product model nests
+**product → purchase option → offer**, the way subscriptions nest base plans. For each of the three:
+
+| Field | Value |
+| --- | --- |
+| Purchase option ID | `standard` — the same for all three; it only has to be unique *within* its product |
+| Type | **Buy**, not Rent |
+| Multi-quantity | 🔴 **OFF** — see below |
+
+🔴 **Multi-quantity MUST be off, and this is not a preference.** `PurchasesStoreTransaction` carries
+`transactionIdentifier`, `productIdentifier`, `purchaseDate`, `purchaseToken`, `originalJson` and
+`signature` — **and no quantity field** (verified in `node_modules` 2026-09-10). The grant ledger keys on
+the transaction, so a user who buys **3 × `embers_240` in one transaction would be granted 240 embers, not
+720**, and would be short-changed 480 they paid for. The quantity does exist inside `originalJson`, but
+parsing raw store JSON is fragile and deliberately not in this spec. **Turn it off and the ledger is
+correct as written.**
+
+🚦 **The identifier the CODE needs comes from RevenueCat, not from Play.** With purchase options in play,
+RevenueCat may present a one-time product as `embers_240` **or** as `embers_240:standard` — the same way it
+uses `productId:basePlanId` for subscriptions. **Do not assume.** After Part 2, read the identifier off the
+RevenueCat product row and paste *that exact string* back; it is what goes into `getProducts([...])` in
+step 1. Guessing this wrong produces an empty product list and a Shop that silently shows nothing.
+
 **Set each one Active.** Prices are your call — the app reads the real price from the store
 (`priceString`), so whatever you set is what users see, correctly converted per country. The
 `$1.99`/`$4.99`/`$9.99` literals in `data.js` stop being used at step 4 of this spec.
@@ -443,7 +466,8 @@ there is nothing to configure on that screen.
 
 #### Part 3 — hand back three things
 
-1. **The three product IDs**, exactly as created (paste them, do not retype).
+1. **The three identifiers AS REVENUECAT SHOWS THEM** — not as Play shows them. They may carry the
+   `:standard` purchase-option suffix. Paste, do not retype.
 2. **Confirmation they are Active** in Play Console.
 3. **Confirmation none of them is attached to an entitlement** in RevenueCat.
 
