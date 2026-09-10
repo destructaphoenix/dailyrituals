@@ -13,7 +13,7 @@
 > re-litigate a "why", and do not improve the scope.** If a step turns out to be impossible or the code
 > contradicts the spec, **STOP** and log it to `PROGRESS.md` → Open items rather than inventing a fix.
 >
-> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **1116 passed, 100 suites** — verified 2026-09-10), `npx expo export --platform android` clean, commit with the **exact** message given, then
+> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **1129 passed, 102 suites** — verified 2026-09-10), `npx expo export --platform android` clean, commit with the **exact** message given, then
 > update `PROGRESS.md` (tick the backlog row, write the session note) and **move the finished spec from
 > this file into `docs/build-log.md`**.
 >
@@ -22,17 +22,16 @@
 
 ---
 
-## The queue — two rows left, all opened by the owner on 2026-09-10
+## The queue — one row left, opened by the owner on 2026-09-10
 
-**Both came out of WALK-19 step 7, and neither is what the walk was looking for.** The owner went to check
-IMP-104 and found something bigger: **the paywall sells a promise the shop does not keep.** IMP-108, IMP-109,
-IMP-110 and IMP-111 (the two live mis-sells, the confusing shortfall toast, and the day-mode tab fade) are
-done — see `docs/build-log.md`.
+**Came out of WALK-19 step 7.** The owner went to check IMP-104 and found something bigger: **the paywall
+sells a promise the shop does not keep.** IMP-108, IMP-109, IMP-110, IMP-111 and IMP-112 (the two live
+mis-sells, the confusing shortfall toast, the day-mode tab fade, and the candle cap) are done — see
+`docs/build-log.md`.
 
 | Row | What | Severity |
 | --- | --- | --- |
-| [IMP-112](#imp-112) | Stored candles are unbounded, so the ember economy has no sink. **Owner set the cap at 3.** | 🟢 **Ready. ⚠️ A cap of 3 makes the 5-pack unsellable — it goes** |
-| [IMP-113](#imp-113) | Ember packs display real prices and hand the goods over for free; `onBuy` is a bare counter increment. | 🚦 **BLOCKED on an owner prerequisite — 3 consumable products must exist in Play Console + RevenueCat first** |
+| [IMP-113](#imp-113) | Ember packs display real prices and hand the goods over for free; `onBuy` is a bare counter increment. | 🟢 **Ready — products live, ids settled** |
 
 ---
 
@@ -114,85 +113,6 @@ design, not a compromise. Do not port them** ([`motion.js:16`](../src/motion.js#
 
 **The gate.** "Plus is complete" is the owner's phrase and the owner's call. At minimum that means the
 open Plus rows (IMP-108, IMP-109, IMP-110) shipped and WALK-19 finished.
-
----
-
-## IMP-112
-
-### Cap stored candles at 3
-
-**Lane: OTA. Pure logic.** Owner set the cap on 2026-09-10: **"candle cap is 3."**
-
-**Why a cap exists at all.** `setFreezes` is unbounded today, so a user banks candles, buys once, and the
-ember economy has no ongoing sink. A cap turns candles into a consumable you spend and re-buy — it is what
-makes [IMP-113](#imp-113) worth building. It also bounds what money can buy: capped at 3, cash buys at most
-three days of streak cover, never immunity.
-
-### 🔴 Read this before touching code: a cap of 3 makes the 5-pack unsellable
-
-`CANDLE_PACKS` ([`data.js:150`](../src/data.js#L150)) sells **1 / 3 / 5**. With a cap of 3 the **5-pack can
-never be bought by anyone, in any state** — and the 3-pack only from exactly zero. **The cap and the pack
-lineup are coupled, and the owner chose the cap without this in front of them.**
-
-✅ **RATIFIED by the owner 2026-09-10, after being shown this consequence: the cap stays 3 and the `c5`
-pack goes.** Shipping a "Best value" product that is always refused is worse than not shipping it. `c1`
-(1 for 120) and `c3` (3 for 300) remain. ⚠️ **Do not re-add the 5-pack.** Restoring it would require the
-cap to be 5, and the owner has now declined that twice.
-
-**Steps.**
-
-1. In [`data.js`](../src/data.js), export **`export const MAX_CANDLES = 3;`** beside `CANDLE_PACKS`, and
-   **remove the `c5` entry**. Move `tag: 'Best value'` to `c3`.
-2. New pure helper `src/home/candleCap.js`, tested in isolation the way
-   [`freezeGrant.js`](../src/billing/freezeGrant.js) is:
-
-```js
-// How many of `wanted` actually fit, given `held`. Never negative.
-export function roomFor(held, wanted, cap = MAX_CANDLES) {
-  return Math.max(0, Math.min(wanted, cap - held));
-}
-```
-
-3. **The Plus renewal grant** ([`RitualsApp.js:323`](../src/RitualsApp.js#L323)). Clamp it, and **make the
-   toast tell the truth** — today it always says `+3` ([line 326](../src/RitualsApp.js#L326)):
-
-```js
-const got = roomFor(freezes, grant.freezes);
-if (got > 0) {
-  setFreezes((f) => f + got);
-  showToast(`+${got} ${got === 1 ? 'candle' : 'candles'} — your Plus perk renewed`);
-}
-```
-
-   ⚠️ **When `got` is 0, say nothing.** A renewal is a background event with nothing for the user to do,
-   and a "you're full" toast on every renewal is noise. **Deliberate — do not add a message here.**
-
-4. **`buyCandles`** ([`RitualsApp.js:295`](../src/RitualsApp.js#L295)). **Refuse a pack that does not fit
-   entirely, and charge nothing.** Never take embers for candles that cannot be stored, and never
-   part-fill a pack the user paid full price for. The refusal message must follow
-   [IMP-109](#imp-109)'s lesson and say *why*:
-
-```js
-if (freezes + pack.count > MAX_CANDLES) {
-  showToast(`You can hold ${MAX_CANDLES} candles — you have ${freezes}`);
-  return;
-}
-```
-
-   Order matters: **check the cap before the ember balance**, so a full user is told they are full rather
-   than told they are poor.
-5. **Show the cap in the Shop** ([`Shop.js`](../src/screens/Shop.js)), next to the candle count — e.g.
-   `3 / 3`. Without it the refusal in step 4 is the next "hella confusing" message.
-6. ⚠️ **Do not touch [`applyAutoFreeze`](../src/home/streakFreeze.js#L14).** It only ever spends downward.
-   **The cap is an intake problem, not a spend problem.**
-
-**Acceptance.** `npm test` green and ≥ prior. New `candleCap.test.js` covering `roomFor` at, below and
-above the cap; a member at 3 receiving a renewal grant gains **nothing and sees no toast**; a member at 1
-gains **2** and the toast says **"+2 candles"**, not "+3"; `buyCandles` at 2 refuses the 3-pack **and does
-not decrement embers**; and a `data.js` assertion that no pack exceeds `MAX_CANDLES`, which is the guard
-that stops the `c5` problem coming back.
-
-**Commit:** `feat(shop): cap stored candles at 3, and stop lying about the renewal grant (IMP-112)`
 
 ---
 
@@ -401,4 +321,4 @@ free palette. It is also consistent with how this app already treats the store �
 once; the same transaction seen twice grants **once**; an empty ledger re-grants history (the accepted
 behaviour above, asserted so it is deliberate); and an unknown `productIdentifier` grants **nothing**
 rather than `NaN`. ⚠️ **None of that is evidence the purchase works** — this row owes a new `WALK-20` on
-hardware with a license tester, and the cap interaction from [IMP-112](#imp-112) must be walked with it.
+hardware with a license tester, and the cap interaction from IMP-112 must be walked with it.

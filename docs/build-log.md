@@ -3977,6 +3977,39 @@ row. `npx expo export --platform android` clean. Commit `76c1d76`.
 **Not walked yet.** WALK-18 re-run owed, day mode: switching tabs should show no shadow outline around any
 card.
 
+## IMP-112 — cap stored candles at 3, and stop lying about the renewal grant (2026-09-10)
+
+**Owner set the cap 2026-09-10: "candle cap is 3."** `setFreezes` was unbounded, so a user could bank
+candles and buy once, leaving the ember economy no ongoing sink. A cap of 3 turns candles into a
+consumable you spend and re-buy — the premise [IMP-113](#imp-113) needs to be worth building — and bounds
+what money can buy: capped at 3, cash buys at most three days of streak cover, never immunity. **A cap of 3
+makes the 5-candle pack unsellable in every state; the owner was shown this and ratified the cap over the
+pack** — `c5` is deleted rather than the cap raised to 5.
+
+**What was built.** [`data.js`](../src/data.js) exports `MAX_CANDLES = 3`; `CANDLE_PACKS` drops `c5` and
+moves `tag: 'Best value'` onto `c3`. New pure helper [`candleCap.js`](../src/home/candleCap.js) exports
+`roomFor(held, wanted, cap = MAX_CANDLES)`, clamped to `[0, cap - held]`. `buyCandles`
+([`RitualsApp.js`](../src/RitualsApp.js)) now refuses a pack that would overflow the cap — checked **before**
+the embers check, so a full member is told they're full rather than poor — and takes no embers on refusal.
+The IMP-102 renewal-grant effect now runs the grant through `roomFor` before applying it: at the cap it
+grants nothing and shows no toast (a background event with nothing to do is not worth interrupting for);
+below the cap it grants only what fits and the toast names the real number (`+2 candles`, not a hardcoded
+`+3`). [`Shop.js`](../src/screens/Shop.js) shows the cap next to the held count (`{freezes} / {MAX_CANDLES}
+kept`). `applyAutoFreeze` ([`streakFreeze.js`](../src/home/streakFreeze.js)) is untouched — it only ever
+spends downward, so the cap is an intake problem, not a spend problem.
+
+**The proof.** New `__tests__/home/candleCap.test.js`: `roomFor` at, below and above the cap plus a custom
+cap, and a `data.js` assertion that no `CANDLE_PACKS` entry exceeds `MAX_CANDLES` (the guard against the
+`c5` problem returning) and that `c5` is gone. New `__tests__/billing/candleCapGrant.test.js`: source
+assertions (closures aren't unit-testable, same pattern as `autoFreezeStaysFree.test.js`) pinning that
+`buyCandles`'s cap check precedes its embers check and never touches `setEmbers`/`setFreezes` on refusal,
+and that the renewal effect clamps through `roomFor`, gates both the grant and the toast on `got > 0`, and
+no longer hardcodes `+3` in the toast string. **1129 passed, 102 suites** (was 1116/100), `npx expo export
+--platform android` clean. Commit `a8ef8ed`.
+
+**Not walked yet.** No dedicated walk — folds into WALK-19's remaining Plus-surface re-runs (the renewal
+toast) and a fresh look at the Shop's candle row (the `x / 3 kept` display and the cap refusal toast).
+
 ## IMP-102 — the +3 streak candles are a per-period perk, not a per-completion one (2026-09-09)
 
 **Owner ruling, 2026-09-09: per-period, not a joining gift.** `subscribe()` ended with
@@ -4555,6 +4588,31 @@ at most 3–5 days of cover at any one moment. That is a materially different pr
 ---
 
 ## Session notes
+
+_2026-09-10, earlier (Sonnet — **IMP-110 built: the paywall no longer sells auto-freeze as a Plus perk.**)
+— ✅ code-complete, no walk yet._
+
+**A filing bug found first.** The `## IMP-110` spec body was missing from `docs/specs-open.md` — an earlier
+restructuring commit (`603e30b`) accidentally swept it into `docs/build-log.md` along with the "parked
+embers" section it sat next to, even though IMP-110 was never built. Recovered intact from git history,
+restored to `specs-open.md`, then executed as written. Docs bookkeeping only — not a design change.
+
+**What finished.** [`data.js`](../src/data.js)'s `PLUS_PERKS[1]` — *"Streak insurance — a candle spends itself
+when you miss a day"* — is now `'Three streak candles, every year you stay'`, naming IMP-102's genuine
+per-period grant instead. `applyAutoFreeze` and its mount-effect call site in `RitualsApp.js` are untouched
+and remain unconditional — the owner ruled 2026-09-10 that the feature stays free for everyone, so the copy
+was the defect, not the code.
+
+**The proof.** New `__tests__/billing/autoFreezeStaysFree.test.js`: no `PLUS_PERKS` entry mentions
+"insurance" or a self-spending candle, the reworded line is pinned exactly, and a source assertion on
+`RitualsApp.js` confirms the `applyAutoFreeze` mount effect is never wrapped in a `plus` check (proven red
+against the pre-change string first). **1116 passed, 100 suites** (was 1113/99), `npx expo export
+--platform android` clean. Commit `54b8bd5`. Spec archived to `docs/build-log.md`; its row dropped from
+`docs/specs-open.md`'s index (three rows left there now).
+
+**The exact next step.** 🔨 Build **111 → 112**, one chat each, same rules as above. 111 is a deletion
+(`ScreenFade`) — its test count legitimately drops. No new walk owed by 110 — folds into WALK-19's
+remaining Plus-surface re-runs.
 
 _2026-09-10 (Sonnet — **IMP-109 built: the "you can't afford it" toast now names the item, its
 price, and your balance.**) — ✅ code-complete, no walk yet._
