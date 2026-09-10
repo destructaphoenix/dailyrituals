@@ -449,8 +449,23 @@ the right kind of product; there is nothing extra to tick.
 
 #### Part 2 — RevenueCat: register the same three products
 
-RevenueCat dashboard → your project → **Products** → *New*. Add all three by the **same IDs**, against the
-Play Store app.
+RevenueCat dashboard → your project → **Products**.
+
+✅ **Use "Import products" rather than adding them by hand.** The single biggest risk in Part 1 is a
+mistyped identifier, and importing pulls the IDs straight from Play so they cannot disagree. It also
+**answers the open question above for free**: whatever the imported rows are called *is* the string
+`getProducts()` needs, `:standard` suffix or not. Importing existing subscription products alongside them
+is harmless — **do not delete anything it brings in.**
+
+🔴 **Set the product type to CONSUMABLE. Not non-consumable.** RevenueCat offers subscription /
+consumable / non-consumable, and this is the one setting on the page that cannot be shrugged off:
+
+- **Consumable** = can be bought again and again. Correct for embers, which are spent and re-bought.
+- **Non-consumable** = bought once, owned forever (a permanent unlock). **Pick this and every user could
+  buy each pack exactly once, ever** — the store would refuse their second purchase.
+
+⚠️ **Import will not necessarily infer the type.** After importing, open each of the three and confirm it
+says **Consumable**.
 
 🔴 **Do NOT attach them to an entitlement — not `Daily Rituals Plus`, not anything.** An entitlement is how
 the app decides someone has Plus. Attach an ember pack to one and **buying embers would grant Plus.**
@@ -469,7 +484,8 @@ there is nothing to configure on that screen.
 1. **The three identifiers AS REVENUECAT SHOWS THEM** — not as Play shows them. They may carry the
    `:standard` purchase-option suffix. Paste, do not retype.
 2. **Confirmation they are Active** in Play Console.
-3. **Confirmation none of them is attached to an entitlement** in RevenueCat.
+3. **Confirmation all three are typed CONSUMABLE** in RevenueCat.
+4. **Confirmation none of them is attached to an entitlement.**
 
 Then the IDs get written into step 1 below and this row unblocks.
 
