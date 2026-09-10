@@ -3883,6 +3883,27 @@ cancelled-and-expired subscription, cold-start the app without ever backgroundin
 that first screen; and in aeroplane mode a real member cold-starting must keep Plus (the check fails,
 nothing changes).
 
+## IMP-109 — the "you can't afford it" toast never said you couldn't afford it (2026-09-10)
+
+**Owner-reported, same WALK-19 sitting: "That message is just hella confusing."** With 15 embers, tapping
+Harvest Moon (300) produced *"Embers also gather on their own — one for every day you keep"* — the deliberate
+answer for a tap on the ember pill, wrongly reused for a shortfall. [`RitualsApp.js`](../src/RitualsApp.js)'s
+`openGetEmbers()` served both intents with one string, and three call sites hit it on the shortfall branch:
+`buyPalette`, `buySky`, and `buyCandles` (which the owner never reached but had the identical bug).
+
+**What was built.** Added `shortfallCopy(name, price, embers)` — an exported pure function next to
+`isPurchasableTier`, extracted for the same reason: unit-testable without driving the full app through the
+Shop modal. `buyPalette`/`buySky`'s shortfall branch now calls `showToast(shortfallCopy(p.name, p.tier,
+embers))`; `buyCandles`' names the pack (`'3 candles'` / `'1 candle'`). `openGetEmbers()` and
+`EMBERS_ARE_FREE_COPY` are untouched — a deliberate ember-pill tap still gets the free-embers copy.
+`EMBER_PACKS_ENABLED` was not touched.
+
+**The proof.** +4 tests in `RitualsApp.test.js`: one per call site's message shape, plus one confirming the
+free-embers copy is a distinct string from `shortfallCopy`'s output. **1113 passed, 99 suites** (was
+1109/99), `npx expo export --platform android` clean. Commit `b565393`.
+
+**Not walked yet.** WALK-19 step 7 owes a re-run: an unaffordable tap should now name the price and balance.
+
 ## IMP-108 — Plus must unlock every palette and sky, not just `tier: 'plus'` ones (2026-09-10)
 
 **Opened by the owner during WALK-19 step 7, group `f961b427`.** A Plus member with 15 embers tapped
@@ -4524,6 +4545,39 @@ chat "fixing" this by gating the feature.
 ---
 
 ## Session notes
+
+_2026-09-10 (Opus + owner — **a full WALK-19 sitting on hardware: two rows closed, two proven, and
+FOUR new rows opened by the owner noticing things the walk was not looking for.**) — walk + specs, no code._
+
+**What finished — three rows closed on hardware, none needing code.** **IMP-104** ✅ with 15 embers the free
+Golden Sun sky applied and **the balance did not move** — the tap-wipes-your-embers half, invisible earlier
+at 0. **IMP-107** ✅ **unconditional** — the sub bought 00:43 expired 01:43 and after a confirmed
+**swipe-away cold start** Plus was gone: the new launch check, not the old `AppState` path, and this row's
+first ever test. **IMP-103's residual** ✅ — 4e returned **"You already have Plus"**, so `mapError.js`'s
+unproven bet on codes `6`/`7` was right.
+
+**WALK-19 steps** (`f961b427` / `01a0877d`): **4e ✅**, **7 ⚠️ found two defects instead**, **9 ✅ via
+WALK-19a**, **10 ✅** — the deep link worked and keeping Plus after cancelling is *correct*. **Owed: step 8.**
+
+**🔴 Six new rows, all owner-found, all specced, none built.** **[108](specs-open.md#imp-108)** —
+`PLUS_PERKS[0]` promises *"Every palette & sky"* but [`Shop.js:38`](../src/screens/Shop.js#L38) unlocks only
+`tier: 'plus'`, so **a paying member is still charged embers for five items**; live since 2026-09-05.
+**[109](specs-open.md#imp-109)** — the shortfall toast never names price or balance (*"hella
+confusing"*), three call sites. **[110](specs-open.md#imp-110)** — the paywall sells a perk every free
+user has. **[111](specs-open.md#imp-111)** — the tab fade outlines every card in day mode.
+**[112](specs-open.md#imp-112)** — the candle cap of 3. **[113](specs-open.md#imp-113)** — ember
+packs for cash, ✅ **unblocked: the three consumables are live and confirmed.**
+
+**Two owner decisions.** **Auto-freeze stays FREE for everyone** — IMP-110 rewords the line rather than
+gating the feature, and its test guards against a chat "fixing" it the wrong way. **Motion: remove the fade
+now, apply the vocabulary later.** Both ember questions are answered — **cash → embers → candles is
+decided**; the **cap (3 or 5?) is the only one left**.
+
+**The exact next step.** 🔨 **Build 108 → 109 → 110 → 111 → 112, one chat each**, all specced. **113 is
+blocked on the owner creating three Play consumables.** ⚠️ **111 is a deletion — its test count legitimately
+DROPS**; **112 deletes the 5-candle pack.** 🔴 **Do not remove `react-native-reanimated`/`-worklets`** —
+`usePressScale` uses them, they are native, dropping them closes the OTA lane. Then WALK-19 step 8,
+WALK-08/07, WALK-18 (day mode), **WALK-12 last**.
 
 _2026-09-10 (Opus + owner — **WALK-19a PASSED in four minutes and closed IMP-105.**) — walk, no code._
 

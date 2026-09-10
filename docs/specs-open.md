@@ -13,7 +13,7 @@
 > re-litigate a "why", and do not improve the scope.** If a step turns out to be impossible or the code
 > contradicts the spec, **STOP** and log it to `PROGRESS.md` → Open items rather than inventing a fix.
 >
-> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **1109 passed, 99 suites** — verified 2026-09-10), `npx expo export --platform android` clean, commit with the **exact** message given, then
+> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **1113 passed, 99 suites** — verified 2026-09-10), `npx expo export --platform android` clean, commit with the **exact** message given, then
 > update `PROGRESS.md` (tick the backlog row, write the session note) and **move the finished spec from
 > this file into `docs/build-log.md`**.
 >
@@ -22,69 +22,20 @@
 
 ---
 
-## The queue — five rows left, all opened by the owner on 2026-09-10
+## The queue — four rows left, all opened by the owner on 2026-09-10
 
 **Both came out of WALK-19 step 7, and neither is what the walk was looking for.** The owner went to check
 IMP-104 and found something bigger: **the paywall sells a promise the shop does not keep.** IMP-108 (the
-live mis-sell) is done — see [`docs/build-log.md`](build-log.md#imp-108--plus-must-unlock-every-palette-and-sky-not-just-tier-plus-ones-2026-09-10).
+live mis-sell) and IMP-109 (the confusing shortfall toast) are done — see `docs/build-log.md`.
 
 | Row | What | Severity |
 | --- | --- | --- |
-| [IMP-109](#imp-109) | The "you can't afford this" toast never mentions the price, the balance, or affording anything. | 🟠 **Confusing, owner-reported, three call sites** |
 | [IMP-110](#imp-110) | `PLUS_PERKS[1]` sells streak insurance as a Plus perk; `applyAutoFreeze` is ungated and **every free user already has it**. | 🔴 **The second live mis-sell. Reword the line — the owner ruled the feature stays free** |
 | [IMP-111](#imp-111) | The tab transition draws shadow outlines around the next screen's cards. **Day mode only.** | 🎨 **Owner chose deletion over a fix — remove `ScreenFade`** |
 | [IMP-112](#imp-112) | Stored candles are unbounded, so the ember economy has no sink. **Owner set the cap at 3.** | 🟢 **Ready. ⚠️ A cap of 3 makes the 5-pack unsellable — it goes** |
 | [IMP-113](#imp-113) | Ember packs display real prices and hand the goods over for free; `onBuy` is a bare counter increment. | 🚦 **BLOCKED on an owner prerequisite — 3 consumable products must exist in Play Console + RevenueCat first** |
 
 ---
-
-## IMP-109
-
-### The "you can't afford it" message never says you can't afford it
-
-**Lane: OTA.** Opened by the owner 2026-09-10, same sitting. Their words: *"That message is just hella
-confusing."* They are right.
-
-**The finding as walked.** With 15 embers, tapping Harvest Moon (300) produced **"Embers also gather on
-their own — one for every day you keep."** Nothing about the price, the balance, or being short.
-
-**Cause, confirmed in source.** [`RitualsApp.js:271-274`](../src/RitualsApp.js#L271) `openGetEmbers()`
-serves two different intents with one string:
-
-```js
-const openGetEmbers = () => {
-  if (EMBER_PACKS_ENABLED) setGetEmbersOpen(true);
-  else showToast(EMBERS_ARE_FREE_COPY);
-};
-```
-
-Called deliberately from the ember pill, that copy is a fine answer. Called from a **shortfall**, it
-answers a question the user did not ask. **Three call sites hit it that way** — `buyPalette` (280),
-`buySky` (289) and **`buyCandles` (295), which the owner did not reach but has the identical bug.**
-
-**Steps.**
-
-1. Add a shortfall message next to `EMBERS_ARE_FREE_COPY`, naming the item, the price and the balance:
-
-```js
-const shortfallCopy = (name, price) => `${name} costs ${price} embers — you have ${embers}`;
-```
-
-2. At all **three** sites, replace the bare `openGetEmbers()` on the shortfall branch with
-   `showToast(shortfallCopy(...))`. For candles the name is the pack (`'3 candles'` / `pack.count`).
-3. ⚠️ **Leave the ember-pill path alone.** `EMBERS_ARE_FREE_COPY` stays exactly as it is for a deliberate
-   tap on "Gather Embers" — it is the right answer to that question and IMP-034 put it there on purpose.
-4. ⚠️ **`EMBER_PACKS_ENABLED` stays `false`.** Do not touch it; see the parked section below.
-
-**Acceptance.** `npm test` green and ≥ prior, +3 tests — one per call site — asserting the toast names the
-price and the balance and is **not** `EMBERS_ARE_FREE_COPY`, plus one asserting the pill still shows the
-free copy. Re-walk in WALK-19 step 7.
-
-**Commit:** `fix(shop): say what it costs and what you have, not how embers accrue (IMP-109)`
-
----
-
-
 
 **The owner asked for the Plus purchase surface to be investigated hard after IMP-099.** It was, by reading
 the shipped SDK rather than our assumptions about it, and **the audit found a defect larger than IMP-099**.

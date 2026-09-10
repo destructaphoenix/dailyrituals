@@ -36,7 +36,7 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 >
 > | If this chat is… | Take |
 > | --- | --- |
-> | a **build task** | 🔨 **[109](docs/specs-open.md#imp-109) → 110 → 111 → 112 → 113**, one chat each. **108 is done** (`0078872`, archived). ⚠️ **111 is a deletion; its test count legitimately DROPS.** ⚠️ **112 deletes the 5-candle pack** (a cap of 3 makes it unsellable — owner ratified). ⚠️ **113's store products are live and its ids are settled** — `embers_240`/`embers_680`/`embers_1500`, **no `:standard` suffix**; it owes a new WALK-20 on hardware. |
+> | a **build task** | 🔨 **[110](docs/specs-open.md#imp-110) → 111 → 112 → 113**, one chat each. **108 and 109 are done** (`0078872`, `b565393`, archived). ⚠️ **111 is a deletion; its test count legitimately DROPS.** ⚠️ **112 deletes the 5-candle pack** (a cap of 3 makes it unsellable — owner ratified). ⚠️ **113's store products are live and its ids are settled** — `embers_240`/`embers_680`/`embers_1500`, **no `:standard` suffix**; it owes a new WALK-20 on hardware. |
 > | a **runtime walk** | 🚦 **This is where all remaining work is.** ✅ WALK-19a passed 2026-09-10 and closed IMP-105. Owed now, on group `f961b427` / update `01a0877d`: **WALK-19 steps 4e, 7, 10** (all need a LIVE test subscription — buy annual and run them as one block, ~3 hr budget), then **step 8** (the one real-money purchase, held for last). Then **WALK-08** (DeeperInsights at max font), **WALK-07** (Paywall badge at font scale 2.0), **WALK-18** (motion, mid-range device), and **WALK-12 (R8) LAST** — it must be walked on the exact build you ship. |
 > | a **design request** | See "Claude Design" below. The live request is **Insights**. |
 >
@@ -77,7 +77,7 @@ preflight. Detail → [`docs/build-log.md`](docs/build-log.md).
 
 **Current stack:** Expo SDK **54** · RN **0.81.5** · React **19.1.0** · **New Architecture** ·
 **Reanimated 4.1.1 + worklets 0.5.1** · `targetSdkVersion` **36**, `minSdk` **24** ·
-`npm test` → **1109 passed, 99 suites** (verified 2026-09-10) + **3 zone tests × 2 pinned zones**.
+`npm test` → **1113 passed, 99 suites** (verified 2026-09-10) + **3 zone tests × 2 pinned zones**.
 ⚠️ **Run `npm test`, not bare `npx jest`**, or the zone half is skipped. Version-checking a phone, the
 track-reading script and the rest of the stack notes are in [`docs/playbook.md`](docs/playbook.md).
 
@@ -105,7 +105,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 107 | **A lapsed member kept Plus until they happened to background the app.** `useLaunchEntitlementCheck` bailed when `plus` was true (it existed for the *upgrade* case only), and the downgrade path was an `AppState` `'change'` listener — which does not fire on a cold start, because the app comes up already `active`. Observed by the owner 2026-09-09: no sub in Play, none in RevenueCat, app still said member. | OTA | ✅ **code-complete, archived** in `docs/build-log.md` — `f7b27bb`. **1089 passed, 97 suites** (was 1085/97), export clean, +8 tests, all proven red first. ✅ **PROVEN ON HARDWARE 2026-09-10 (~02:00):** the annual sub bought at 00:43 expired at 01:43 and the app no longer showed Plus on re-open — the first and only test of this row. ✅ **Owner confirmed the app was swiped away and reopened fresh, so this is a true cold start and an UNCONDITIONAL pass of the new launch check** — not the old `AppState` path |
 | 106 | **A healthy build cannot say which JS it is running.** `describeUpdate()` already computes it and `RUNNING_BUNDLE` is built at `RitualsApp.js:115`, but its only consumer is the broken-gate alert, which renders only when `billingDiagnostic` is non-null **and** `!plus`. This is the gap that let IMP-103 be scoped as a billing defect. | OTA | ✅ **code-complete, archived** in `docs/build-log.md` — `5ab7da7`. **1104 passed, 99 suites** (was 1102/98), export clean, +2 tests, proven red first. ⚠️ **No walk of its own** — WALK-19's pre-flight gains reading the new Version row |
 | 108 | **A member is still charged embers for five palettes and skies.** `PLUS_PERKS[0]` promises *"Every palette & sky — unlocked forever"*, but [`Shop.js:38`](src/screens/Shop.js#L38) only lets `plus` unlock `tier: 'plus'` items — Marigold, Honey, Rose Dusk, Sage Eve and Harvest Moon stay ember-locked for someone who has already paid. Same family as IMP-084: the paid surface and the code telling different stories. | OTA | ✅ **code-complete, archived** in `docs/build-log.md` — `0078872`. **1109 passed, 99 suites** (was 1104/99), export clean, +5 tests. ⚠️ **Walk owed** — WALK-19 step 7 re-run |
-| 109 | **The shortfall toast never mentions the shortfall.** `openGetEmbers()` serves both a deliberate "get embers" tap and a "you're 285 short" refusal with one string, so tapping an unaffordable item answers a question you didn't ask. **Three call sites**, incl. `buyCandles`, which the owner never reached. | OTA | ⬜ **specced, ready** — owner-reported 2026-09-10 (*"hella confusing"*). ⚠️ Leave the ember-pill copy alone and do not touch `EMBER_PACKS_ENABLED` |
+| 109 | **The shortfall toast never mentions the shortfall.** `openGetEmbers()` serves both a deliberate "get embers" tap and a "you're 285 short" refusal with one string, so tapping an unaffordable item answers a question you didn't ask. **Three call sites**, incl. `buyCandles`, which the owner never reached. | OTA | ✅ **done, archived** in `docs/build-log.md` — `b565393`. **1113 passed, 99 suites** (was 1109/99), export clean, +4 tests. ⚠️ **Walk owed** — WALK-19 step 7 re-run |
 | 110 | **The paywall sells a perk every free user already has.** `PLUS_PERKS[1]` = *"Streak insurance — a candle spends itself when you miss a day"*, shown on the paywall and in Onboarding's first three — but `applyAutoFreeze` is not gated on `plus` at all. **Owner ruled 2026-09-10 that free-for-all is correct**, so the line is what is wrong, not the feature. | OTA | ⬜ **specced, ready.** Reword to the +3-candles-per-period grant, which IS members-only. 🔴 **Do NOT gate `applyAutoFreeze`** — the acceptance test guards against exactly that |
 | 111 | **The tab fade outlines every card in day mode.** `ScreenFade` animates `opacity` over a subtree whose `Card`s carry Android `elevation: 8` (day only — `t.dark ? null : t.shadow(…)`), and elevation shadows do not composite under fractional parent opacity. | OTA | ⬜ **specced — a DELETION.** Owner chose removal over a fix 2026-09-10. 🔴 **Do NOT remove `react-native-reanimated`/`react-native-worklets`** — `usePressScale` still uses them, they are native, dropping them closes the OTA lane. Test count legitimately drops |
 | 112 | **Stored candles are unbounded**, so a user banks them, buys once, and the ember economy has no ongoing sink. **Owner set the cap at 3** (2026-09-10). Also makes the IMP-102 renewal toast honest — it says "+3" unconditionally today. | OTA | ⬜ **specced, ready.** ⚠️ **A cap of 3 makes the 5-candle pack unsellable in every state — the spec deletes it.** Keeping it would require a cap of 5 |
@@ -186,40 +186,7 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
-_2026-09-10, earlier (Opus + owner — **a full WALK-19 sitting on hardware: two rows closed, two proven, and
-FOUR new rows opened by the owner noticing things the walk was not looking for.**) — walk + specs, no code._
-
-**What finished — three rows closed on hardware, none needing code.** **IMP-104** ✅ with 15 embers the free
-Golden Sun sky applied and **the balance did not move** — the tap-wipes-your-embers half, invisible earlier
-at 0. **IMP-107** ✅ **unconditional** — the sub bought 00:43 expired 01:43 and after a confirmed
-**swipe-away cold start** Plus was gone: the new launch check, not the old `AppState` path, and this row's
-first ever test. **IMP-103's residual** ✅ — 4e returned **"You already have Plus"**, so `mapError.js`'s
-unproven bet on codes `6`/`7` was right.
-
-**WALK-19 steps** (`f961b427` / `01a0877d`): **4e ✅**, **7 ⚠️ found two defects instead**, **9 ✅ via
-WALK-19a**, **10 ✅** — the deep link worked and keeping Plus after cancelling is *correct*. **Owed: step 8.**
-
-**🔴 Six new rows, all owner-found, all specced, none built.** **[108](docs/specs-open.md#imp-108)** —
-`PLUS_PERKS[0]` promises *"Every palette & sky"* but [`Shop.js:38`](src/screens/Shop.js#L38) unlocks only
-`tier: 'plus'`, so **a paying member is still charged embers for five items**; live since 2026-09-05.
-**[109](docs/specs-open.md#imp-109)** — the shortfall toast never names price or balance (*"hella
-confusing"*), three call sites. **[110](docs/specs-open.md#imp-110)** — the paywall sells a perk every free
-user has. **[111](docs/specs-open.md#imp-111)** — the tab fade outlines every card in day mode.
-**[112](docs/specs-open.md#imp-112)** — the candle cap of 3. **[113](docs/specs-open.md#imp-113)** — ember
-packs for cash, ✅ **unblocked: the three consumables are live and confirmed.**
-
-**Two owner decisions.** **Auto-freeze stays FREE for everyone** — IMP-110 rewords the line rather than
-gating the feature, and its test guards against a chat "fixing" it the wrong way. **Motion: remove the fade
-now, apply the vocabulary later.** Both ember questions are answered — **cash → embers → candles is
-decided**; the **cap (3 or 5?) is the only one left**.
-
-**The exact next step.** 🔨 **Build 108 → 109 → 110 → 111 → 112, one chat each**, all specced. **113 is
-blocked on the owner creating three Play consumables.** ⚠️ **111 is a deletion — its test count legitimately
-DROPS**; **112 deletes the 5-candle pack.** 🔴 **Do not remove `react-native-reanimated`/`-worklets`** —
-`usePressScale` uses them, they are native, dropping them closes the OTA lane. Then WALK-19 step 8,
-WALK-08/07, WALK-18 (day mode), **WALK-12 last**.
-
-_2026-09-10, latest (Sonnet — **IMP-108 built: a Plus member now owns every palette and sky, not just the
+_2026-09-10, earlier (Sonnet — **IMP-108 built: a Plus member now owns every palette and sky, not just the
 `tier: 'plus'` ones.**) — ✅ code-complete, no walk yet._
 
 **What finished.** [`Shop.js`](src/screens/Shop.js)'s `palState`/`skyState` now check `plus` before
@@ -236,3 +203,22 @@ android` clean. Commit `0078872`. Spec archived to `docs/build-log.md`; its row 
 
 **The exact next step.** 🔨 Build **109 → 110 → 111 → 112**, one chat each, same rules as above. WALK-19
 step 7 owes a re-run once a build/OTA carries this commit — a member should be able to apply Harvest Moon.
+
+_2026-09-10, latest (Sonnet — **IMP-109 built: the "you can't afford it" toast now names the item, its
+price, and your balance.**) — ✅ code-complete, no walk yet._
+
+**What finished.** [`RitualsApp.js`](src/RitualsApp.js)'s `buyPalette`/`buySky`/`buyCandles` no longer route
+a shortfall through `openGetEmbers()` (the ember-pill copy). A new exported `shortfallCopy(name, price,
+embers)` — extracted next to `isPurchasableTier` for the same testability reason — produces `"<name> costs
+<price> embers — you have <embers>"`; `buyCandles` names the pack (`'3 candles'` / `'1 candle'`).
+`openGetEmbers()` and `EMBERS_ARE_FREE_COPY` are untouched, so a deliberate ember-pill tap still gets the
+free-embers copy, and `EMBER_PACKS_ENABLED` was not touched.
+
+**The proof.** +4 tests in `RitualsApp.test.js` — one per call site's message shape, plus one confirming the
+free-embers copy is a distinct string. **1113 passed, 99 suites** (was 1109/99), `npx expo export --platform
+android` clean. Commit `b565393`. Spec archived to `docs/build-log.md`; its row dropped from
+`docs/specs-open.md`'s index (four rows left there now).
+
+**The exact next step.** 🔨 Build **110 → 111 → 112**, one chat each, same rules as above. WALK-19 step 7
+owes a re-run once a build/OTA carries this commit — an unaffordable tap should now name the price and
+balance.
