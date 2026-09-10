@@ -33,12 +33,19 @@ export default function Shop({
   // IMP-104: the tier is the source of truth for free; the array is only the
   // record of what was purchased — a `tier: 'owned'` default must read as
   // owned even when it was never added to ownedPalettes/ownedSkies.
+  // IMP-108: a member owns every palette and sky, not just `tier: 'plus'`
+  // ones — this must stay a live read on `plus`, never written into
+  // ownedPalettes/ownedSkies, or a lapsed member keeps them forever.
   const palState = (p) => p.id === activePalette ? 'active'
-    : (p.tier === 'owned' || ownedPalettes.includes(p.id)) ? 'owned'
-    : p.tier === 'plus' ? (plus ? 'owned' : 'plus') : 'buy';
+    : (plus || p.tier === 'owned' || ownedPalettes.includes(p.id)) ? 'owned'
+    : p.tier === 'plus' ? 'plus' : 'buy';
   const skyState = (s) => s.id === activeSky ? 'active'
-    : (s.tier === 'owned' || ownedSkies.includes(s.id)) ? 'owned'
-    : s.tier === 'plus' ? (plus ? 'owned' : 'plus') : 'buy';
+    : (plus || s.tier === 'owned' || ownedSkies.includes(s.id)) ? 'owned'
+    : s.tier === 'plus' ? 'plus' : 'buy';
+  // Accepted: `'active'` wins before the `plus` check runs, so a lapsed member
+  // keeps a Plus-only palette/sky they had applied (but can't re-apply it once
+  // they switch away). Deliberate — forcing their theme off at the moment of
+  // lapsing is punitive and reads as a bug for one cosmetic, not a paid good.
 
   const cardBase = [{ backgroundColor: c.surface, borderWidth: 1.5, borderColor: c.border }, t.dark ? null : t.shadow(8, c.shadowColor, 0.08)];
 

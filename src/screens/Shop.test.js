@@ -119,3 +119,57 @@ test('IMP-104: a priced item is unaffected', () => {
   const card = within(cardFor(getByText, 'Marigold'));
   expect(card.getByText('240')).toBeTruthy();
 });
+
+// IMP-108 — the paywall promises "Every palette & sky — unlocked forever",
+// but Shop.js only unlocked `tier: 'plus'` items for a member, leaving five
+// numeric-tier items (Marigold, Honey, Rose Dusk, Sage Eve, Harvest Moon)
+// still ember-locked. `plus` must now unlock every tier.
+test('IMP-108: a member reads owned for a numeric-tier palette, unpurchased', () => {
+  const { getByText } = render(
+    <Shop {...baseProps} plus={true} ownedPalettes={['goldenhour']} />
+  );
+  const card = within(cardFor(getByText, 'Marigold'));
+  expect(card.getByText('Apply')).toBeTruthy();
+  expect(card.queryByText('240')).toBeNull();
+});
+
+test('IMP-108: a member reads owned for a numeric-tier sky, unpurchased', () => {
+  const { getByText } = render(
+    <Shop {...baseProps} plus={true} ownedSkies={['classic', 'crescent']} />
+  );
+  const card = within(cardFor(getByText, 'Harvest Moon'));
+  expect(card.getByText('Apply')).toBeTruthy();
+  expect(card.queryByText('300')).toBeNull();
+});
+
+test('IMP-108: a non-member still reads buy for a numeric-tier item', () => {
+  const { getByText } = render(
+    <Shop {...baseProps} plus={false} ownedPalettes={['goldenhour']} />
+  );
+  const card = within(cardFor(getByText, 'Marigold'));
+  expect(card.getByText('240')).toBeTruthy();
+  expect(card.queryByText('Apply')).toBeNull();
+});
+
+test('IMP-108: being a member applies, never buys — ownedPalettes is not mutated by membership alone', () => {
+  const onApplyPalette = jest.fn();
+  const onBuyPalette = jest.fn();
+  const { getByText } = render(
+    <Shop {...baseProps} plus={true} ownedPalettes={['goldenhour']}
+      onApplyPalette={onApplyPalette} onBuyPalette={onBuyPalette} />
+  );
+  const card = cardFor(getByText, 'Marigold');
+  card.props.onPress();
+  expect(onApplyPalette).toHaveBeenCalledTimes(1);
+  expect(onBuyPalette).not.toHaveBeenCalled();
+});
+
+test('IMP-108: a lapsed member reverts to buy for anything never ember-bought', () => {
+  const { getByText } = render(
+    <Shop {...baseProps} plus={false} ownedPalettes={['goldenhour']} ownedSkies={['classic', 'crescent']} />
+  );
+  const palCard = within(cardFor(getByText, 'Marigold'));
+  expect(palCard.getByText('240')).toBeTruthy();
+  const skyCard = within(cardFor(getByText, 'Harvest Moon'));
+  expect(skyCard.getByText('300')).toBeTruthy();
+});
