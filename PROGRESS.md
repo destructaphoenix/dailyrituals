@@ -36,7 +36,7 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 >
 > | If this chat is… | Take |
 > | --- | --- |
-> | a **build task** | **Take the first unchecked of [IMP-114](docs/specs-open.md#imp-114), [IMP-115](docs/specs-open.md#imp-115), [IMP-116](docs/specs-open.md#imp-116), [IMP-117](docs/specs-open.md#imp-117)** — four rows opened 2026-09-11 from the lapse sitting; they do not touch each other. [IMP-116](docs/specs-open.md#imp-116) is now unblocked too — the owner ruled **(b) membership-scoped** on 2026-09-11 — and it is the biggest of the four. 108 through 113 are all done and archived. |
+> | a **build task** | **Take the first unchecked of [IMP-115](docs/specs-open.md#imp-115), [IMP-116](docs/specs-open.md#imp-116), [IMP-117](docs/specs-open.md#imp-117)** — three rows left of the four opened 2026-09-11 from the lapse sitting; they do not touch each other. [IMP-116](docs/specs-open.md#imp-116) is unblocked — the owner ruled **(b) membership-scoped** on 2026-09-11 — and it is the biggest of the three. 108 through 114 are all done and archived. |
 > | a **runtime walk** | ✅ **Step 7 is DONE — the 2026-09-10/11 lapse sitting cleared it** (hardware, owner-run, monthly tester sub). **WALK-18 ✅, WALK-07 ✅, WALK-19 steps 7A/7B/7D ✅** — IMP-108, IMP-109, IMP-110, IMP-111 and IMP-096 are all now proven on hardware. ⚠️ **7C is NOT proven** — the owner held 6 pre-cap candles, so the cap was never exercised; it re-runs once the holding drains to ≤2 ([IMP-115](docs/specs-open.md#imp-115)). Remaining 🚦: **step 8** (the one real-money purchase, held for last) and **WALK-12 (R8) LAST** — it must be walked on the exact build you ship. **WALK-08 still owes DeeperInsights at max font** — the owner's real journal cannot reach the "Moods by season" threshold, so this one goes to an emulator with a seeded journal, plus IMP-117's two circles. ⚠️ **WALK-20 (IMP-113's ember purchase) still does not exist in `docs/walk-open.md`, and cannot be walked at all while `EMBER_PACKS_ENABLED` is `false`.** |
 > | a **design request** | See "Claude Design" below. The live request is **Insights**. |
 >
@@ -77,7 +77,7 @@ preflight. Detail → [`docs/build-log.md`](docs/build-log.md).
 
 **Current stack:** Expo SDK **54** · RN **0.81.5** · React **19.1.0** · **New Architecture** ·
 **Reanimated 4.1.1 + worklets 0.5.1** · `targetSdkVersion` **36**, `minSdk` **24** ·
-`npm test` → **1164 passed, 104 suites** (verified 2026-09-10) + **3 zone tests × 2 pinned zones**.
+`npm test` → **1167 passed, 104 suites** (verified 2026-09-11) + **3 zone tests × 2 pinned zones**.
 ⚠️ **Run `npm test`, not bare `npx jest`**, or the zone half is skipped. Version-checking a phone, the
 track-reading script and the rest of the stack notes are in [`docs/playbook.md`](docs/playbook.md).
 
@@ -110,7 +110,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 111 | **The tab fade outlined every card in day mode.** `ScreenFade` animated `opacity` over a subtree whose `Card`s carry Android `elevation: 8` (day only — `t.dark ? null : t.shadow(…)`), and elevation shadows do not composite under fractional parent opacity. | OTA | ✅ **done, archived** in `docs/build-log.md` — `76c1d76`. **1116 passed, 100 suites** (unchanged — no test ever asserted on `ScreenFade` by name), export clean. ⚠️ **Walk owed** — WALK-18 re-run in day mode |
 | 112 | **Stored candles are unbounded**, so a user banks them, buys once, and the ember economy has no ongoing sink. **Owner set the cap at 3** (2026-09-10). Also makes the IMP-102 renewal toast honest — it says "+3" unconditionally today. | OTA | ✅ **done, archived** in `docs/build-log.md` — `a8ef8ed`. **1129 passed, 102 suites** (was 1116/100), export clean, +13 tests. The `c5` pack is gone. ⚠️ **Walk owed** — folds into WALK-19's remaining Plus-surface re-runs |
 | 113 | **Ember packs show real prices and hand over the goods for free** — `onBuy` was a bare counter increment. Consumables are a history, not a balance, so the grant needed an idempotent local ledger of `transactionIdentifier`s. | OTA | ✅ **done, archived** in `docs/build-log.md` — `4df867d`. **1164 passed, 104 suites** (was 1129/102), export clean, +35 tests. `EMBER_PACKS_ENABLED` stays `false`. ⚠️ **Owes a new WALK-20** on hardware with the license tester, alongside the IMP-112 cap interaction |
-| 114 | **An unaffordable candle pack goes inert instead of explaining itself.** IMP-109's shortfall toast at [`RitualsApp.js:324`](src/RitualsApp.js#L324) can never fire: [`Shop.js:106`](src/screens/Shop.js#L106) passes `disabled={!afford}`, swallowing the tap. Palettes and skies are not disabled and *do* toast — the two priced surfaces answer the same gesture differently. | OTA | ⬜ **open, spec in [`docs/specs-open.md`](docs/specs-open.md#imp-114)** — found by source review 2026-09-11, confirmed on hardware (15 embers vs packs at 120/300, both greyed and dead) |
+| 114 | **An unaffordable candle pack goes inert instead of explaining itself.** IMP-109's shortfall toast at `RitualsApp.js:324` could never fire: `Shop.js:106` passed `disabled={!afford}`, swallowing the tap. Palettes and skies were not disabled and *did* toast — the two priced surfaces answered the same gesture differently. | OTA | ✅ **done, archived** in `docs/build-log.md` — `fa10a2a`. **1167 passed, 104 suites** (was 1164/104), export clean, +3 tests (source + render assertion), proven red first. ⚠️ **No walk of its own** — folds into WALK-19 step 7's re-run |
 | 115 | **A pre-cap holding reads `6 / 3 kept`.** IMP-112 capped intake, not holdings — correctly — but [`Shop.js:98`](src/screens/Shop.js#L98) interpolates `{freezes} / {MAX_CANDLES}` unconditionally, so a user who banked 6 candles before the cap sees a fraction larger than its own limit. | OTA | ⬜ **open, spec in [`docs/specs-open.md`](docs/specs-open.md#imp-115)** — display only. 🔴 **Do not migrate holdings down**; confiscating earned candles to tidy a label is the worse outcome, and `applyAutoFreeze` drains them anyway |
 | 116 | 🚦 **A palette applied under Plus is kept but never owned.** `applyPalette` ([`RitualsApp.js:301`](src/RitualsApp.js#L301)) sets `activePalette` without adding to `ownedPalettes`, and IMP-108 routes members there. Survives a lapse, then vanishes at the next switch. `PLUS_PERKS[0]` promises *"Every palette & sky — unlocked forever."* | OTA | ⬜ **open, spec in [`docs/specs-open.md`](docs/specs-open.md#imp-116)** — ✅ **owner ruled (b) membership-scoped, 2026-09-11**: drop "forever" from `PLUS_PERKS[0]`, revert an applied-but-unowned cosmetic on lapse with one toast. (a) was rejected because one month's sub would claim every cosmetic and gut the IMP-112 ember sink. Same family as IMP-084/108/110 |
 | 117 | **Max font breaks two circles.** The ember pill's `+` ([`shopui.js:31`](src/shopui.js#L31)) has a literal `lineHeight: 15` that `maxFontSizeMultiplier` does not scale, so the glyph outgrows its line box; the custom-mood emoji circles ([`WriteFlow.js:182`](src/screens/WriteFlow.js#L182), [`:196`](src/screens/WriteFlow.js#L196)) are fixed 34dp with no `maxFontSizeMultiplier` at all. | OTA | ⬜ **open, spec in [`docs/specs-open.md`](docs/specs-open.md#imp-117)** — reported off the screen 2026-09-11 at OS font scale 2.0. **Same family as IMP-067 and IMP-095.** Walk folds into WALK-08 |
@@ -187,31 +187,6 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
-_2026-09-10, earlier (Sonnet — **IMP-112 built: stored candles are capped at 3, and the renewal toast no
-longer lies about the amount.**) — ✅ code-complete, no walk yet._
-
-**What finished.** [`data.js`](src/data.js) exports `MAX_CANDLES = 3`; `CANDLE_PACKS` drops the now-unsellable
-`c5` entry and moves `tag: 'Best value'` onto `c3`. New pure helper [`candleCap.js`](src/home/candleCap.js)
-exports `roomFor(held, wanted, cap = MAX_CANDLES)`. `buyCandles` ([`RitualsApp.js`](src/RitualsApp.js)) now
-refuses a pack that would overflow the cap — checked **before** the embers check, so a full member is told
-they're full, not poor — and takes no embers on refusal. The IMP-102 renewal-grant effect runs the grant
-through `roomFor` first: at the cap it grants nothing and shows no toast, below the cap the toast names the
-real amount (`+2 candles`, not a hardcoded `+3`). [`Shop.js`](src/screens/Shop.js) shows the cap next to the
-held count (`{freezes} / {MAX_CANDLES} kept`). `applyAutoFreeze` untouched, per the spec — it only spends,
-never accrues.
-
-**The proof.** New `__tests__/home/candleCap.test.js` (`roomFor` at/below/above the cap, plus a `data.js`
-assertion that no pack exceeds `MAX_CANDLES` and that `c5` is gone) and `__tests__/billing/candleCapGrant.test.js`
-(source assertions — `buyCandles` and the renewal effect are closures, same pattern as
-`autoFreezeStaysFree.test.js` — pinning the cap-before-embers order, no state mutated on refusal, and the
-toast naming the real granted amount). **1129 passed, 102 suites** (was 1116/100), `npx expo export
---platform android` clean. Commit `a8ef8ed`. Spec archived to `docs/build-log.md`; its row dropped from
-`docs/specs-open.md`'s index (one row left there now, IMP-113).
-
-**The exact next step.** 🔨 Build **113**, last row in the backlog. It owes a new WALK-20 on hardware; no
-new walk owed by 112 on its own — folds into WALK-19's remaining Plus-surface re-runs and a fresh look at
-the Shop's candle row.
-
 _2026-09-10, latest (Sonnet — **IMP-113 built: ember packs grant real embers through a store purchase, not
 a free counter increment.**) — ✅ code-complete, no walk yet._
 
@@ -246,3 +221,26 @@ before starting a build chat. Otherwise take a runtime walk: **WALK-20** (IMP-11
 IMP-112 cap interaction) needs to be **written into `docs/walk-open.md` first** — it doesn't exist there
 yet — or take one of the walks already queued in WALK-19's remaining steps (4e, 7, 10, 8), WALK-08, WALK-07,
 WALK-18, or WALK-12 (last).
+
+_2026-09-11 (Sonnet — **IMP-114 built: an unaffordable candle pack explains itself instead of going
+inert.**) — ✅ code-complete, no walk of its own owed._
+
+**What finished.** [`Shop.js`](src/screens/Shop.js) — removed `disabled={!afford}` from the `CANDLE_PACKS`
+`Pressable`. `afford` still drives `opacity: afford ? 1 : 0.5`, so the dimming stays as a correct affordance
+hint; only the inertness was wrong. `buyCandles` untouched, per the spec — its cap check already precedes
+its embers check (IMP-112), so a user at the cap is told they're full, not poor, and neither branch spends
+anything.
+
+**The proof.** Extended [`__tests__/billing/candleCapGrant.test.js`](__tests__/billing/candleCapGrant.test.js)
+with a source assertion (no `disabled` prop on the candle `Pressable`, `afford` still gates opacity) and a
+new render test (`@testing-library/react-native` — Shop.js, unlike `buyCandles`, is directly renderable)
+proving a tap on an unaffordable pack (15 embers vs. the 120-price pack) still calls `onBuyCandles`. Both
+new assertions proven red first against the pre-fix `disabled` prop. **1167 passed, 104 suites** (was
+1164/104), `npx expo export --platform android` clean, +3 tests. Commit `fa10a2a`. Spec archived to
+`docs/build-log.md`; its row dropped from `docs/specs-open.md`'s index (three rows left there now — IMP-115,
+IMP-116, IMP-117).
+
+**The exact next step.** 🔨 Take the next unchecked build row: **IMP-115** (the pre-cap `6 / 3 kept` label)
+or **IMP-116** (the biggest of the three, owner-ruled and buildable) — both in
+[`docs/specs-open.md`](docs/specs-open.md), independent of each other and of IMP-117. No walk owed by
+IMP-114 on its own — it folds into WALK-19 step 7's re-run.

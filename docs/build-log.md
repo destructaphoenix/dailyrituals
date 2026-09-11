@@ -4643,6 +4643,35 @@ with the license tester, and the IMP-112 cap interaction must be walked alongsid
 
 ---
 
+## IMP-114 — an unaffordable candle pack must say what it costs, not go inert (2026-09-11)
+
+**Found by source review during WALK-19 step 7, then confirmed on hardware.** IMP-109 added a shortfall
+toast to `buyCandles` ([`RitualsApp.js:324-327`](../src/RitualsApp.js#L324-L327)) that names the pack, its
+price and the balance. It could never run: [`Shop.js:106`](../src/screens/Shop.js#L106) computed
+`const afford = embers >= p.price` and handed `disabled={!afford}` to the pack's `Pressable`, so the tap
+that would have produced the explanation was swallowed before `onBuyCandles` was reached. The owner
+confirmed it the same day: 15 embers against packs at 120 and 300, both greyed and inert. Palettes and
+skies were never disabled — tapping one you can't afford explains itself — so the two priced surfaces in
+the same sheet answered the same gesture differently.
+
+**What was built.** [`Shop.js`](../src/screens/Shop.js) — removed `disabled={!afford}` from the
+`CANDLE_PACKS` `Pressable`. `afford` still drives `opacity: afford ? 1 : 0.5`, so the dimming stays as a
+correct affordance hint; only the inertness was wrong. `buyCandles` untouched — its cap check already
+precedes its embers check (IMP-112), so a user at the cap is told they're full, not poor, and neither
+branch spends anything.
+
+**The proof.** Extended [`__tests__/billing/candleCapGrant.test.js`](../__tests__/billing/candleCapGrant.test.js)
+with a source assertion (no `disabled` prop on the candle `Pressable`, `afford` still gates opacity) and a
+new render test (`@testing-library/react-native`, since Shop.js — unlike `buyCandles` — is directly
+renderable) proving a tap on an unaffordable pack (15 embers vs. the 120-price pack) still calls
+`onBuyCandles`. Both new assertions proven red first against the pre-fix `disabled` prop. **1167 passed,
+104 suites** (was 1164/104), `npx expo export --platform android` clean, +3 tests. Commit `fa10a2a`.
+
+**No walk of its own** — the fix removes an inert control from a surface WALK-19 step 7 already exercises;
+folds into that re-run.
+
+---
+
 ## Session notes
 
 _2026-09-10, earlier (Sonnet — **IMP-111 built: the tab-change fade that outlined every card in day mode is
@@ -6460,6 +6489,31 @@ ACTIVE TRACK banner and stack line, moved the IMP-071 note down to `docs/build-l
 five other screens' nav-mode/font-scale re-checks and the IMP-067 spot-check, all paused mid-run when this
 surfaced). NEXT: backlog is empty — Opus must scope a new `IMP-xxx` before there's a spec to take. A walk
 chat can take **WALK-07** (unblocked), **WALK-09** (unblocked), or **WALK-15**._
+
+_2026-09-10, earlier (Sonnet — **IMP-112 built: stored candles are capped at 3, and the renewal toast no
+longer lies about the amount.**) — ✅ code-complete, no walk yet._
+
+**What finished.** [`data.js`](../src/data.js) exports `MAX_CANDLES = 3`; `CANDLE_PACKS` drops the now-unsellable
+`c5` entry and moves `tag: 'Best value'` onto `c3`. New pure helper [`candleCap.js`](../src/home/candleCap.js)
+exports `roomFor(held, wanted, cap = MAX_CANDLES)`. `buyCandles` ([`RitualsApp.js`](../src/RitualsApp.js)) now
+refuses a pack that would overflow the cap — checked **before** the embers check, so a full member is told
+they're full, not poor — and takes no embers on refusal. The IMP-102 renewal-grant effect runs the grant
+through `roomFor` first: at the cap it grants nothing and shows no toast, below the cap the toast names the
+real amount (`+2 candles`, not a hardcoded `+3`). [`Shop.js`](../src/screens/Shop.js) shows the cap next to the
+held count (`{freezes} / {MAX_CANDLES} kept`). `applyAutoFreeze` untouched, per the spec — it only spends,
+never accrues.
+
+**The proof.** New `__tests__/home/candleCap.test.js` (`roomFor` at/below/above the cap, plus a `data.js`
+assertion that no pack exceeds `MAX_CANDLES` and that `c5` is gone) and `__tests__/billing/candleCapGrant.test.js`
+(source assertions — `buyCandles` and the renewal effect are closures, same pattern as
+`autoFreezeStaysFree.test.js` — pinning the cap-before-embers order, no state mutated on refusal, and the
+toast naming the real granted amount). **1129 passed, 102 suites** (was 1116/100), `npx expo export
+--platform android` clean. Commit `a8ef8ed`. Spec archived to `docs/build-log.md`; its row dropped from
+`docs/specs-open.md`'s index (one row left there now, IMP-113).
+
+**The exact next step.** 🔨 Build **113**, last row in the backlog. It owes a new WALK-20 on hardware; no
+new walk owed by 112 on its own — folds into WALK-19's remaining Plus-surface re-runs and a fresh look at
+the Shop's candle row.
 
 ---
 

@@ -31,7 +31,6 @@ by reading source against what the owner saw, one reported directly off the scre
 
 | Row | What | Gate |
 | --- | --- | --- |
-| [IMP-114](#imp-114) | The candle shortfall toast can never fire — the pack is `disabled` when you cannot afford it. | 🎨 |
 | [IMP-115](#imp-115) | `6 / 3 kept` — IMP-112 caps acquisition but never migrates a pre-cap holding. | 🎨 |
 | [IMP-116](#imp-116) | A palette applied under Plus is kept but never owned, and is lost on the next switch — the paywall says *"unlocked forever"*. | 🚦 mis-sell · ✅ **decided 2026-09-11, buildable** |
 | [IMP-117](#imp-117) | At max font the ember pill's `+` and the custom-mood emoji circles are off-centre. | 🎨 |
@@ -39,46 +38,6 @@ by reading source against what the owner saw, one reported directly off the scre
 **All four are buildable and none of them touch each other — take them in any order.** IMP-116 was blocked
 on an owner ruling for about an hour on 2026-09-11; **the owner chose (b) membership-scoped** and its Steps
 are written. IMP-116 is the largest of the four and the only one with a walk of its own.
-
----
-
-## IMP-114 — an unaffordable candle pack must say what it costs, not go inert
-
-**Found 2026-09-11 by source review during WALK-19 step 7, then confirmed on hardware.**
-[IMP-109](build-log.md) added a shortfall toast to `buyCandles`
-([`RitualsApp.js:324-327`](../src/RitualsApp.js#L324-L327)) that names the pack, its price and your
-balance. **It can never run.** [`Shop.js:106`](../src/screens/Shop.js#L106) computes
-`const afford = embers >= p.price` and hands `disabled={!afford}` to the pack's `Pressable`, so the one
-tap that would produce the explanation is swallowed before `onBuyCandles` is reached. The owner confirmed
-it the same day: 15 embers against packs at 120 and 300, both greyed and inert.
-
-**The inconsistency is the defect, not the greying.** Palettes and skies are **not** disabled
-([`RitualsApp.js:304`](../src/RitualsApp.js#L304) and [`:313`](../src/RitualsApp.js#L313)) — tapping one
-you cannot afford explains itself, which is exactly how IMP-109 came to be written. Two priced surfaces in
-the same sheet answer the same gesture differently, and the one that stays silent is the one whose toast
-was written most recently.
-
-**Decision — the toast wins.** IMP-109's premise is that a refusal says what it costs and what you have. A
-control that dims and then does nothing teaches nothing, and it is the reason this call site went
-unexercised through four hardware sittings.
-
-**Steps.**
-1. [`Shop.js`](../src/screens/Shop.js) — remove `disabled={!afford}` from the `CANDLE_PACKS` `Pressable`
-   (line 106). **Keep `opacity: afford ? 1 : 0.5`** — the dimming is a correct affordance hint; only the
-   inertness is wrong. `afford` stays, it still drives the opacity.
-2. **Do not touch `buyCandles`.** Its cap check already precedes its embers check (IMP-112), so a user at
-   the cap is told they are full rather than poor, and neither branch spends anything.
-3. Nothing else in the sheet changes. The ember-pack row is behind `EMBER_PACKS_ENABLED` and is out of
-   scope.
-
-**The proof.** Extend [`__tests__/billing/candleCapGrant.test.js`](../__tests__/billing/candleCapGrant.test.js)
-(it already holds this file's source assertions): pin that the candle `Pressable` carries **no `disabled`
-prop** while still computing `afford` for opacity. Add a render assertion that tapping an unaffordable
-pack calls `onBuyCandles` — the regression that matters is the tap being swallowed again. **Prove it red
-first** against the current line 106.
-
-**Commit message.**
-`fix(shop): an unaffordable candle pack explains itself instead of going dead (IMP-114)`
 
 ---
 
