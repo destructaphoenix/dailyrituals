@@ -4792,6 +4792,26 @@ WALK-08.
 
 ## Session notes
 
+_2026-09-11 (Sonnet — **IMP-116 built: a Plus cosmetic applied for free reverts to the default on
+lapse instead of staying stranded.**) — ✅ code-complete; **walk CLOSED 2026-09-11 by Sitting 1 on hardware.**_
+
+**What finished.** New pure [`cosmeticEntitlement.js`](../src/home/cosmeticEntitlement.js) —
+`entitledId(activeId, ownedIds, items, plus, defaultId)`, the five-branch rule from the spec's tier
+taxonomy. One `React.useEffect` in [`RitualsApp.js`](../src/RitualsApp.js), keyed on `[plus, activePalette,
+activeSky, ownedPalettes, ownedSkies]`, computes both reverts, applies them (pairing `setActivePalette`
+with `retint`, matching `applyPalette`'s own shape), and emits a single toast — both/palette-only/sky-only,
+or nothing for a free user who never applied a Plus cosmetic. Self-healing, not transition-gated, so the
+owner's own stranded Frostlight/Harvest Moon repair on next launch. `data.js` — `PLUS_PERKS[0]` dropped
+"forever" for *"yours while you're a member"*. `buyPalette`/`buySky` untouched — an ember purchase stays
+permanent.
+
+**The proof.** New `__tests__/home/cosmeticEntitlement.test.js` — `entitledId` across all five branches for
+both palettes and skies, the owner's two real cases pinned by name, Harvest Moon surviving after a real
+ember purchase, an `'owned'` item surviving under `plus: false`; source assertions that the effect exists,
+is keyed on the right five deps, and never emits more than one `showToast(`. **1187 passed, 105 suites**,
+`npx expo export --platform android` clean. Commit `b588f2a`. ✅ **Then proven on hardware** — the owner's
+lapse sitting reverted both cosmetics under exactly one message.
+
 _2026-09-11, earlier (Sonnet — **IMP-115 built: a pre-cap candle holding no longer reads as a fraction over
 its own cap.**) — ✅ code-complete, no walk of its own owed._
 

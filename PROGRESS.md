@@ -36,8 +36,8 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 >
 > | If this chat is… | Take |
 > | --- | --- |
-> | a **build task** | ⬜ **Take [IMP-118](docs/specs-open.md#imp-118)** — the one open row, opened 2026-09-11 by WALK-08: a weekday with entries every week draws as an empty bar when its top mood ties, and the card above it says the opposite. One line in `deeper.js` plus tests; the renderer already has the branch. Prior: `docs/specs-open.md` has no open spec left. ✅ **And it has now SHIPPED: IMP-114/115/116/117 went out by OTA on 2026-09-11** (10 commits pushed to `main`, `Release-Lane: ota` on `176b782`, CI run `34594673765` green in 2m16s). **Group `95411ab6-1c03-4f2d-b261-9a7d6e2011b8`, runtime `1.0.9`, update `01a09044-cdb7-7c46-9660-0a1bedd08a0a`** — manifest read back by hand, `rcAndroidKey` **present and non-empty** (IMP-086 holds). Predecessor group was `7e97df68` (IMP-113, 2026-09-10), not `f961b427` as `176b782`'s own message says — that was the IMP-100 group, two ships back. Until that OTA is applied on the **second** launch, every walk that re-runs these four rows is walking a bundle without them. The phase ladder (8 / 10b / 11) is explicitly **parked until the owner resumes it** — do not start one on your own read of this table; ask the owner what to take next. |
-> | a **runtime walk** | ✅ **The owner's phone is CONFIRMED on the IMP-114/115/116/117 bundle — it reads `update 01a09044` (2026-09-11).** ⚠️ **The You tab prints the UPDATE id, not the group** — [`diagnostic.js:35`](src/billing/diagnostic.js#L35) strips dashes and takes 8 chars of `Updates.updateId`, so look for **`01a09044`**, never the group `95411ab6`. A walk of 7C, the IMP-116 lapse block, WALK-08's circles or WALK-12 on any older bundle proves nothing; after any further OTA, re-read this string before starting. 📱 **Take the running order from [`walk-open.md`](docs/walk-open.md) → "THE DEVICE SITTING PLAN"** — three sittings (IMP-116 lapse + IMP-114/115 · WALK-19 step 8 real money · WALK-12 last), each with the membership state it needs. ⚠️ **7C stays unwalkable** until the candle holding drains to ≤2 — do not record it as passed because nothing broke. ✅ **Step 7 is DONE — the 2026-09-10/11 lapse sitting cleared it** (hardware, owner-run, monthly tester sub). **WALK-18 ✅, WALK-07 ✅, WALK-19 steps 7A/7B/7D ✅** — IMP-108, IMP-109, IMP-110, IMP-111 and IMP-096 are all now proven on hardware. ⚠️ **7C is NOT proven** — the owner held 6 pre-cap candles, so the cap was never exercised; it re-runs once the holding drains to ≤2 ([IMP-115](docs/specs-open.md#imp-115)). Remaining 🚦: **step 8** (the one real-money purchase, held for last) and **WALK-12 (R8) LAST** — it must be walked on the exact build you ship. ✅ **WALK-08 is CLOSED (2026-09-11, emulator, agent-run)** — DeeperInsights passes at max font, IMP-095 and IMP-117 both proven, cap measured biting (scale 2, caps 1.5/1.2). It found IMP-118 on the way. ⚠️ **WALK-20 (IMP-113's ember purchase) still does not exist in `docs/walk-open.md`, and cannot be walked at all while `EMBER_PACKS_ENABLED` is `false`.** |
+> | a **build task** | ⬜ **Take [IMP-118](docs/specs-open.md#imp-118)** — first of **two** open rows, opened 2026-09-11 by WALK-08: a weekday with entries every week draws as an empty bar when its top mood ties, and the card above it says the opposite. One line in `deeper.js` plus tests; the renderer already has the branch. ⬜ **Then [IMP-119](docs/specs-open.md#imp-119)** — opened 2026-09-11 by Sitting 1 on hardware: the ember pill's `+` is off-centre at **every** font size because `a59aea9` deleted the `lineHeight` that centred it. ⚠️ **A test asserts the deletion and must be rewritten** — a fix that leaves it standing has fixed nothing. Both are JavaScript-only, so they can ship by OTA together. ✅ **And it has now SHIPPED: IMP-114/115/116/117 went out by OTA on 2026-09-11** (10 commits pushed to `main`, `Release-Lane: ota` on `176b782`, CI run `34594673765` green in 2m16s). **Group `95411ab6-1c03-4f2d-b261-9a7d6e2011b8`, runtime `1.0.9`, update `01a09044-cdb7-7c46-9660-0a1bedd08a0a`** — manifest read back by hand, `rcAndroidKey` **present and non-empty** (IMP-086 holds). Predecessor group was `7e97df68` (IMP-113, 2026-09-10), not `f961b427` as `176b782`'s own message says — that was the IMP-100 group, two ships back. Until that OTA is applied on the **second** launch, every walk that re-runs these four rows is walking a bundle without them. The phase ladder (8 / 10b / 11) is explicitly **parked until the owner resumes it** — do not start one on your own read of this table; ask the owner what to take next. |
+> | a **runtime walk** | ✅ **The owner's phone is CONFIRMED on the IMP-114/115/116/117 bundle — it reads `update 01a09044` (2026-09-11).** ⚠️ **The You tab prints the UPDATE id, not the group** — [`diagnostic.js:35`](src/billing/diagnostic.js#L35) strips dashes and takes 8 chars of `Updates.updateId`, so look for **`01a09044`**, never the group `95411ab6`. A walk of 7C, the IMP-116 lapse block, WALK-08's circles or WALK-12 on any older bundle proves nothing; after any further OTA, re-read this string before starting. 📱 **Take the running order from [`walk-open.md`](docs/walk-open.md) → "THE DEVICE SITTING PLAN"** — three sittings (IMP-116 lapse + IMP-114/115 · WALK-19 step 8 real money · WALK-12 last), each with the membership state it needs. ⚠️ **7C stays unwalkable** until the candle holding drains to ≤2 — do not record it as passed because nothing broke. ✅ **Step 7 is DONE — the 2026-09-10/11 lapse sitting cleared it** (hardware, owner-run, monthly tester sub). **WALK-18 ✅, WALK-07 ✅, WALK-19 steps 7A/7B/7D ✅** — IMP-108, IMP-109, IMP-110, IMP-111 and IMP-096 are all now proven on hardware. ⚠️ **7C is NOT proven** — the owner held 6 pre-cap candles, so the cap was never exercised; it re-runs once the holding drains to ≤2 ([IMP-115](docs/specs-open.md#imp-115)). Remaining 🚦: **step 8** (the one real-money purchase, held for last) and **WALK-12 (R8) LAST** — it must be walked on the exact build you ship. ✅ **WALK-08 is CLOSED (2026-09-11, emulator, agent-run)** — DeeperInsights passes at max font, IMP-095 proven, cap measured biting (scale 2, caps 1.5/1.2). It found IMP-118 on the way. 🔴 **But its IMP-117 pass was HALF WRONG and the device overturned it** — the `+` is off-centre at every font size ([IMP-119](docs/specs-open.md#imp-119)); the emoji half stands. **A glyph-centring claim is not emulator-provable — route that shape to `device`.** ✅ **SITTING 1 is DONE (2026-09-11, hardware, owner-run) — do not re-run it.** IMP-116 proven: on lapse both cosmetics revert under one message. **IMP-114 stays UNEXERCISED** — `buyCandles` checks the cap before affordability, so 6 candles against a cap of 3 returns at the first guard and its message cannot fire; same blocker as 7C. Step 5's control was dropped by inspection (ownership is consulted independently of `plus` in all three paths). Still owed, cheaply: the `6 kept` label and the no-ember-price check. ⚠️ **WALK-20 (IMP-113's ember purchase) still does not exist in `docs/walk-open.md`, and cannot be walked at all while `EMBER_PACKS_ENABLED` is `false`.** |
 > | a **design request** | See "Claude Design" below. The live request is **Insights**. |
 >
 > **The billing surface, honestly.** ✅ **Proven end to end on hardware:** purchase, already-owns (4e),
@@ -188,34 +188,7 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
-_2026-09-11, earlier (Sonnet — **IMP-116 built: a Plus cosmetic applied for free reverts to the default on
-lapse instead of staying stranded.**) — ✅ code-complete, walk owed (folds into WALK-19's Plus block)._
-
-**What finished.** New pure [`cosmeticEntitlement.js`](src/home/cosmeticEntitlement.js) —
-`entitledId(activeId, ownedIds, items, plus, defaultId)`, the five-branch rule from the spec's tier
-taxonomy. One `React.useEffect` in [`RitualsApp.js`](src/RitualsApp.js), keyed on `[plus, activePalette,
-activeSky, ownedPalettes, ownedSkies]`, computes both reverts, applies them (pairing `setActivePalette`
-with `retint`, matching `applyPalette`'s own shape), and emits a single toast — both/palette-only/sky-only,
-or nothing for a free user who never applied a Plus cosmetic. Self-healing, not transition-gated, so the
-owner's own stranded Frostlight/Harvest Moon repair on next launch. `data.js` — `PLUS_PERKS[0]` dropped
-"forever" for *"yours while you're a member"*; the other perks' off-by-one `#n` comments left untouched, per
-the spec. `buyPalette`/`buySky` untouched — an ember purchase stays permanent.
-
-**The proof.** New `__tests__/home/cosmeticEntitlement.test.js` — `entitledId` across all five branches for
-both palettes and skies, the owner's two real cases pinned by name (Frostlight and Harvest Moon both
-revert), Harvest Moon surviving after a real ember purchase, an `'owned'` item surviving under `plus:
-false`; source assertions that the effect exists, is keyed on the right five deps, pairs `retint` with
-`setActivePalette`, and never emits more than one `showToast(` call; a `data.js` assertion that
-`PLUS_PERKS[0]` no longer contains "forever". The two revert cases and the copy/effect assertions proven
-red first. **1187 passed, 105 suites** (was 1172/104), `npx expo export --platform android` clean, +15
-tests. Commit `b588f2a`. Spec archived to `docs/build-log.md`; its row dropped from `docs/specs-open.md`'s
-index (one row left there now — IMP-117).
-
-**The exact next step (at the time).** Take the next unchecked build row: **IMP-117** (max font breaks two
-circles). **Walk owed by IMP-116** — folds into WALK-19's Plus block, needs a fresh Plus-on → Plus-off
-sitting (cannot share a sitting with the paywall rows).
-
-_2026-09-11, latest (Sonnet — **IMP-117 built: the ember pill's `+` and the two custom-mood emoji circles
+_2026-09-11, earlier (Sonnet — **IMP-117 built: the ember pill's `+` and the two custom-mood emoji circles
 now grow with the font instead of clipping at the max OS scale.**) — ✅ code-complete, walk owed (folds
 into WALK-08)._
 
@@ -244,3 +217,25 @@ chat should ask the owner what to take next rather than opening a phase-ladder r
 outstanding: WALK-08 (folds in IMP-117 + DeeperInsights at max font), WALK-19's remaining steps (4e re-run,
 7 re-run, 10, 8, and the Plus-on→off block for IMP-116), WALK-12 (R8, must be last), and WALK-20 (does not
 exist yet in `docs/walk-open.md`, blocked on `EMBER_PACKS_ENABLED`).
+
+_2026-09-11, latest (Opus — **Sitting 1 walked on hardware by the owner: IMP-116 proven, IMP-119
+opened, and WALK-08's IMP-117 pass overturned.**) — ✅ walk closed, two build rows now open._
+
+**What finished.** The owner ran Sitting 1 on their phone. **IMP-116 PASSES** — on lapse the Plus palette
+and sky both revert to the defaults under exactly one message. **IMP-117's emoji half passes; its ember-pill
+half fails** — the `+` is off-centre at **every** font size, default included, which `a59aea9` caused by
+deleting the `lineHeight: 15` that was doing the centring (the IMP-117 note above describes that deletion
+as the fix). Scoped as **IMP-119**, including the test that currently asserts the deletion and must be
+rewritten. **WALK-08's ✅ for IMP-117 was an emulator call and is corrected** in `docs/walk-open.md`.
+
+**The proof, and its limits.** Owner-run on hardware, `update 01a09044`. **IMP-114 is UNEXERCISED, not
+passed** — [`RitualsApp.js:320`](src/RitualsApp.js#L320) checks the cap before affordability, so 6 candles
+against a cap of 3 always returns at the first guard; the tap does respond, with the cap message, so the
+path is healthy. Step 5's control was dropped by inspection — ownership is consulted independently of
+`plus` in the revert, the Shop's lock rendering and the persisted state. Still owed and cheap: the
+`6 kept` label (IMP-115) and the no-ember-price check (IMP-108). Docs only, commit `1102865`.
+
+**The exact next step.** Build chats: **IMP-118, then IMP-119** — both JavaScript-only, so they ship
+together by OTA. Walk chats: **Sitting 3 (WALK-12, R8)** — it needs no membership state, and a JS-only OTA
+does not invalidate an R8 pass on the same binary. **Sitting 2** (WALK-19 step 8, real money) waits on the
+owner's choice of second account vs. temporarily leaving the license-tester list.
