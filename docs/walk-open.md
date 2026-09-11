@@ -90,7 +90,174 @@ wipes data. **Export a backup first**; that export *is* WALK-03 step 1, so seque
 > `EMBER_PACKS_ENABLED` is `false` in [`config.js:82`](../src/billing/config.js#L82), which gates the modal,
 > the buy handler and the Shop prop. There is no surface to walk until the owner flips it, and WALK-19
 > step 6 currently asserts the opposite (that the packs are absent).
+>
+> 📱 **The running order for everything above that needs the phone is written out below — "THE DEVICE SITTING PLAN" (2026-09-11): three sittings, the state each needs, and a 30-second pre-flight. It also corrects two stale instructions inside WALK-12's own section.**
 
+
+## 📱 THE DEVICE SITTING PLAN — written 2026-09-11, take it in this order
+
+> **What this is.** Everything left on the board that needs the owner's phone, grouped into **three
+> sittings** with the state each one needs spelled out. It is not a new `WALK` row — it is the running
+> order for rows that already exist. Each sitting is self-contained: stop after any one of them and
+> nothing is left half-proven.
+>
+> **Why grouped this way.** A sitting is defined by the **membership state it needs**, because you cannot
+> be a member and a non-member at the same time and switching costs half an hour of waiting. Sitting 1
+> needs Plus to turn on and then off. Sitting 2 needs a real charge. Sitting 3 needs nothing but the
+> shipped app. ⚠️ **Do not interleave them.**
+
+### Pre-flight — 30 seconds, every sitting, no exceptions
+
+Open the app, go to the **You** tab, and find the line that names the running JavaScript. **It must read
+`update 01a09044`.**
+
+- If it reads **`built-in bundle (no update applied)`** or any other 8 characters, the phone does not have
+  the IMP-114/115/116/117 fixes. Fix it like this: **open the app, wait about 15 seconds, swipe it away
+  from recents completely, open it again.** The update downloads on one launch and applies on the *next*
+  one. ⚠️ **Do not "clear app data" to get a clean start — that deletes the downloaded update** and sends
+  you back to the version baked into the installed app, which predates all four fixes.
+- If you see a row saying **"Plus is unavailable"**, stop. That is the app telling you its billing setup is
+  broken, and any result recorded past it is void. Write down what it says.
+- If the You tab shows **no such line at all**, you are on a build older than vc15. Reinstall from Play.
+
+⚠️ **That string is the UPDATE id, not the update GROUP.** The app prints 8 characters of the update id
+([`diagnostic.js:35`](../src/billing/diagnostic.js#L35)). The group (`95411ab6…`) appears in CI and in
+`eas update:list` and **never on the phone** — hunting for it on screen looks exactly like a failed OTA.
+
+---
+
+### Sitting 1 — a Plus cosmetic must give itself back when membership ends
+
+**Rows this closes:** [IMP-116](build-log.md) (the point of the sitting), plus
+[IMP-114](build-log.md), [IMP-115](build-log.md) and a re-proof of [IMP-108](build-log.md) for free.
+**Target `device` · Runner 👤 · License tester, no real money · About 45 minutes, most of it waiting.**
+
+**State it needs:** the license-tester account, **no active subscription at the start**, and the app on
+`update 01a09044`.
+
+**Write these three things down before you start** — the test is partly "did anything else move?":
+your **ember balance**, your **current palette**, your **current sky**.
+
+1. **The kept row, before anything else.** Open the **Shop** and look at the candle line. You hold 6
+   candles from before the cap existed. It must read **`6 kept`** with **no `/ 3`** after it. Seeing
+   `6 / 3 kept` is [IMP-115](build-log.md) failing — that is the whole fix.
+2. **Tap a candle pack you cannot afford.** It must answer with a message naming the price and what you
+   hold. Going dead — nothing happens at all — is [IMP-114](build-log.md) failing. That tap has never once
+   been exercised on a phone; it sat behind a disabled button through four sittings.
+3. **Buy the MONTHLY plan.** Not annual. Test subscriptions renew on a compressed clock and then stop, so
+   a monthly one ends your membership in roughly half an hour, while an annual one took an hour on
+   2026-09-10 and can take about three. You are not charged; the payment method will say **"Test card,
+   always approves"**, which is correct and not a bug.
+4. **Apply one Plus-only palette and one Plus-only sky.** The Plus palettes are **Lavender Hour**,
+   **Frostlight** and **Bloom**; the Plus skies are **Meteor Shower** and **Aurora**. Both must show **no
+   ember price** and your **balance must not move** — that is [IMP-108](build-log.md) re-proved on this
+   bundle.
+5. **The control, if you can afford it: buy one ember-priced item outright.** Harvest Moon sky is 300
+   embers; Marigold and Honey palettes are 240. An item you actually spent embers on must **survive** what
+   happens next. If you cannot afford one, skip this and say so in the report — the sitting still works,
+   it just does not prove the control half.
+6. **Cancel in Play** — Manage → Cancel. ⚠️ **Plus must NOT disappear at this point.** You keep it to the
+   end of the period you paid for; losing it immediately is its own defect, so record it if it happens.
+7. **Wait for the period to end, with the app closed.** Roughly 30 minutes on monthly. Play will email you
+   about the renewals as they compress.
+8. **Swipe the app away from recents, then open it fresh.** This must be a genuine cold start — a
+   background-and-return proves something weaker and was the exact ambiguity that muddied IMP-107.
+9. **What must happen.** The Plus palette and the Plus sky are **both gone**, back to the defaults
+   (**Golden Hour** palette, **Golden Sun** sky), and **exactly one** message explains it. The item you
+   bought with embers in step 5 is **still there**.
+10. **Failure shapes — record which one you saw, they need opposite fixes.**
+    - The Plus cosmetic is **still applied** after the lapse → IMP-116 did not fire at all.
+    - It reverted but **no message** appeared → the revert works, the explanation does not.
+    - **Two or more messages** → the effect is firing per-item instead of once.
+    - The **ember-bought** item reverted too → over-reverting, and that is **worse than the original bug**:
+      it takes away something that was actually paid for.
+
+**Optional add-on, five minutes, while you are here.** Turn the phone's font size up to its maximum in
+Android settings, then look at two things: the **`+` on the ember pill** in the Shop, and the **emoji
+circles in the custom-mood picker** when writing an entry. The glyphs must stay inside their circles and
+stay centred. That is [IMP-117](build-log.md), and doing it here leaves only DeeperInsights owed on
+[WALK-08](#walk-08--font-scale) — which your own journal cannot test and an emulator must.
+
+⚠️ **7C (the candle cap) still cannot be walked, and this sitting does not change that.** The cap stops you
+*gaining* a 4th candle; you hold 6 from before it existed, so there is no room to fill and nothing to cap.
+It becomes walkable only when the holding drains to **2 or fewer** — candles are spent by missing days, so
+this is a matter of time, not of sequencing. **Do not record it as passed because nothing went wrong.**
+
+---
+
+### Sitting 2 — WALK-19 step 8: one real transaction, refunded
+
+**Row:** [WALK-19](#walk-19--money-actually-changes-hands) step 8 — the last 🚦 with live billing work.
+**Target `device` · Runner 👤 · REAL MONEY · Playbook 10b.5.**
+
+⚠️ **Read this before you plan the sitting: a license tester is never charged.** The whole point of step 8
+is that money genuinely moves, so it **cannot** be run on the account you used for Sitting 1 while that
+account is on the license-tester list. You have two routes and they cost different things:
+
+- **(a) A second Google account** that is an internal tester but **not** a license tester. Cleanest, and it
+  leaves your tester setup untouched. Needs the internal opt-in link accepted on that account.
+- **(b) Remove your account from Play Console → Setup → License testing**, walk step 8, then add it back.
+  Fewer moving parts, but **license-tester status takes time to propagate in both directions**, so budget
+  for it and re-check before you buy — a purchase that silently still uses the test card proves nothing.
+
+**Which one is your call**; I would take (a) if you have a spare account, because (b) temporarily breaks
+the ability to re-run every other billing step.
+
+1. Pre-flight as above, on whichever account you are using.
+2. Buy the **monthly** plan with a real card. It is the cheapest real charge available.
+3. **Confirm the money is real** — the payment method must **not** say "Test card, always approves", and a
+   Google receipt must arrive. If it says test card, stop: you are still a license tester and this step did
+   not happen.
+4. **Check the renewal date.** This is the first time the app is showing a date from a subscription on a
+   normal clock rather than a compressed test one, so it is the only honest test of that copy: You tab,
+   Shop banner and Manage must all show the **real** next-renewal date. `12 Jun 2026` anywhere is a
+   regression. The bare word `Member` with no date is **not** a bug — it means the store returned no
+   usable date, which the app handles deliberately.
+5. **Refund it** — Play Console → Order management, refund **and revoke**.
+6. **Then cold-start the app** (swipe away, reopen). Membership must be gone. That is a second, independent
+   proof of [IMP-107](build-log.md) on a real purchase rather than an expiring test sub.
+
+---
+
+### Sitting 3 — WALK-12 (R8), and it goes last
+
+**Row:** [WALK-12](#walk-12--the-r8-release-variant-pass). **Target `device` · Runner 👤.**
+**Run it on the Play `internal` build — vc15 carrying `update 01a09044`.**
+
+⚠️ **Two instructions in WALK-12's own section below are now WRONG. Corrected here; that section is being
+read through this note.**
+
+1. 🔴 **"`PLUS_ENABLED` must be back to `false` before you build" — STRUCK.** It has been permanently
+   `true` since `7d2e515`. Following that line would turn the paid surface off and walk a build nobody will
+   ever ship.
+2. 🔴 **Do not build it locally with `npx expo run:android --variant release` (T6).** That was written
+   before a minified build existed on a track. It produces a *different* APK with a different signing key,
+   which cannot take Play purchases at all — and `android/` is gitignored, so a local build can quietly
+   carry stale native config. **vc15 from Play is itself a minified release build** (`app.config.js:95`
+   `enableMinifyInReleaseBuilds: true` + resource shrinking, R8 on since 2026-08-08), so the artifact you
+   ship is the artifact to walk. Installing it from Play is the whole setup.
+3. **`grep -r "SENTINEL"` against the bundle — replace it with what you can actually do from a phone:**
+   confirm the **dev panel simply is not reachable**. It does not exist on a Play build, and that absence
+   *is* the check.
+
+**What to check** (everything else in WALK-12's list stands): the app launches, fonts load, **every icon
+renders** — `react-native-svg` is the classic victim of over-shrinking — the **daily reminder** fires with
+the app backgrounded and routes in when tapped (set it two minutes out through the app's own settings, not
+the dev harness, which is absent), JSON export → share → restore survives a round trip, the paywall opens
+and prices resolve, and search / moods / trash / recap all work. Note the APK size.
+
+**If something is missing, it is stripped:** add the specific keep rule, never disable shrinking wholesale.
+
+**Why it is last, stated accurately.** R8 shrinks the **Android native** code at build time; the
+JavaScript bundle is an asset it does not touch. So — correcting the reasoning in the section below, which
+conflates the two — **a JavaScript-only OTA does not invalidate an R8 pass on the same binary.** What
+invalidates it is **a new binary**, or new JavaScript that reaches native code the pass never exercised
+(a new library, a new native module). IMP-114 through IMP-117 touch Shop, WriteFlow and palette code only,
+so **vc15 + `01a09044` is a valid thing to walk today.** It still goes last, for a simpler reason: if
+Sitting 1 or 2 finds a defect worth shipping, you would rather walk R8 once, at the end, on the bundle that
+actually ships.
+
+---
 
 **After the 2026-09-07 emulator sitting, only three rows have live work — and two of them need a phone.**
 
