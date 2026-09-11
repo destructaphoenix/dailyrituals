@@ -4672,7 +4672,78 @@ folds into that re-run.
 
 ---
 
+## IMP-115 — a pre-cap candle holding reads as "6 / 3 kept" (2026-09-11)
+
+**Reported off the screen 2026-09-11 (hardware, owner-run).** The owner holds **6 candles**, banked before
+[IMP-112](#imp-112) landed. [`Shop.js:98`](../src/screens/Shop.js#L98) rendered
+`{freezes} / {MAX_CANDLES} kept` unconditionally, so the Shop read **"6 / 3 kept"** — a fraction whose
+numerator exceeds its denominator, presented as a limit that is visibly not holding.
+
+**IMP-112 capped intake, not holdings, and that was correct.** `buyCandles`
+([`RitualsApp.js:320`](../src/RitualsApp.js#L320)) refuses anything that would overflow, and the renewal
+grant clamps through `roomFor` — so a user at 6 can never reach 7. **`applyAutoFreeze` only ever spends
+downward**, so the holding drains on its own. Nothing was broken underneath; the display was the whole
+defect.
+
+**Decision — display, not migration. Did NOT silently delete candles a user already held.** They were
+legitimately earned or bought under the old rules, and confiscating them on an app update to tidy a label
+is a worse outcome than an odd-looking fraction. The holding drains to the cap on its own the first few
+times a day is missed.
+
+**What was built.** [`candleCap.js`](../src/home/candleCap.js) — new exported pure helper
+`keptLabel(held, cap = MAX_CANDLES)`: returns `` `${held} / ${cap} kept` `` at or below the cap, and drops
+the denominator to `` `${held} kept` `` above it, matching how `roomFor` was already factored.
+[`Shop.js`](../src/screens/Shop.js) — the kept row now calls `keptLabel(freezes)` instead of interpolating
+`{freezes} / {MAX_CANDLES}` directly; the now-unused `MAX_CANDLES` import was dropped. Nothing touches
+`setFreezes` — no migrator, no schema bump, no clamp on load.
+
+**The proof.** Extended [`__tests__/home/candleCap.test.js`](../__tests__/home/candleCap.test.js) with
+`keptLabel` below the cap, exactly at it, above it (the `6` case), and with a custom cap; plus a `Shop.js`
+source assertion that the kept row goes through `keptLabel` and never interpolates `MAX_CANDLES` directly —
+that interpolation was the bug and should not be able to come back. **1172 passed, 104 suites** (was
+1167/104), `npx expo export --platform android` clean, +5 tests. Commit `ea00b0c`.
+
+**No walk of its own** — display-only fix on a surface WALK-19 step 7 already exercises; folds into that
+re-run.
+
+---
+
 ## Session notes
+
+_2026-09-10, latest (Sonnet — **IMP-113 built: ember packs grant real embers through a store purchase, not
+a free counter increment.**) — ✅ code-complete, no walk yet._
+
+**What finished.** `onBuy` was `setEmbers((e) => e + pack.amount)` — a bare increment behind real Play
+prices. [`data.js`](../src/data.js) adds `productId` to each `EMBER_PACKS` entry.
+[`revenueCatService.js`](../src/billing/revenueCatService.js) adds `getEmberProducts()` and `buyEmberPack()`,
+mirroring `buy()`'s `mapError.js` handling exactly; [`simService.js`](../src/billing/simService.js) mirrors
+both so `npm test` (which only ever runs simService) exercises the real shape. New pure
+[`emberGrants.js`](../src/billing/emberGrants.js) exports `pendingEmberGrants(transactions, applied,
+packsById)` — the ledger core that keys on `transactionIdentifier` so a purchase grants exactly once
+against `nonSubscriptionTransactions` (a history, not a balance). New `appliedEmberTx` persisted state
+(added to `PERSISTED_KEYS` and both persisted-slice literals, same pattern as IMP-102's
+`lastFreezeGrantPeriod`). New [`useLiveEmberProducts.js`](../src/billing/useLiveEmberProducts.js) hook +
+`mergeEmberPrices` in [`prices.js`](../src/billing/prices.js) replace the `$1.99`/`$4.99`/`$9.99` literals with
+the store's real `priceString`. Both purchase surfaces — the Get Embers sheet and the Shop's inline pack
+row — now route through the same `buyEmberPack` closure in `RitualsApp.js`.
+[`GetEmbers.js`](../src/screens/GetEmbers.js) and [`Shop.js`](../src/screens/Shop.js) take `packs`/`emberPacks`
+props (default to the constants) instead of importing `EMBER_PACKS` unconditionally. **Accepted
+deliberately, per the spec:** a reinstall re-grants the whole purchase history, since the ledger is local
+and this app has no server — flagged so it's a choice, not an accident.
+
+**The proof.** New `__tests__/billing/emberGrants.test.js` (+8), extended `revenueCatService.test.js` (+6),
+`simService.test.js` (+4), `prices.test.js` (+5), `state.test.js` (+3), and new
+`__tests__/billing/emberPurchaseWiring.test.js` (+9, source assertions — closures aren't unit-testable, same
+pattern as `candleCapGrant.test.js`) pinning that `onBuy` is no longer a bare increment. **1164 passed, 104
+suites** (was 1129/102), `npx expo export --platform android` clean. Commit `4df867d`. Spec archived to
+`docs/build-log.md`; its row dropped from `docs/specs-open.md`'s index — **the backlog is now empty.**
+`EMBER_PACKS_ENABLED` stays `false`.
+
+**The exact next step.** The Improvements backlog has **no open row** — check for a newly-filed `IMP-xxx`
+before starting a build chat. Otherwise take a runtime walk: **WALK-20** (IMP-113's purchase path + the
+IMP-112 cap interaction) needs to be **written into `docs/walk-open.md` first** — it doesn't exist there
+yet — or take one of the walks already queued in WALK-19's remaining steps (4e, 7, 10, 8), WALK-08, WALK-07,
+WALK-18, or WALK-12 (last).
 
 _2026-09-10, earlier (Sonnet — **IMP-111 built: the tab-change fade that outlined every card in day mode is
 gone.**) — ✅ code-complete, no walk yet._

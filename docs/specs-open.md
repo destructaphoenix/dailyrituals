@@ -22,59 +22,21 @@
 
 ---
 
-## The queue — four rows, opened 2026-09-11 from the lapse sitting
+## The queue — two rows left, opened 2026-09-11 from the lapse sitting
 
 **Came out of WALK-19 step 7 and the subscription lapse that followed it** (hardware, owner-run,
 2026-09-10 → 11, monthly licence-tester sub). Step 7's Shop half **proved IMP-108, IMP-109 and IMP-110**,
-and WALK-07 and WALK-18 both closed. The sitting also turned up **four new defects** — three of them found
-by reading source against what the owner saw, one reported directly off the screen.
+and WALK-07 and WALK-18 both closed. The sitting also turned up new defects — one of them, IMP-115, is done
+and archived in [`docs/build-log.md`](build-log.md#imp-115).
 
 | Row | What | Gate |
 | --- | --- | --- |
-| [IMP-115](#imp-115) | `6 / 3 kept` — IMP-112 caps acquisition but never migrates a pre-cap holding. | 🎨 |
 | [IMP-116](#imp-116) | A palette applied under Plus is kept but never owned, and is lost on the next switch — the paywall says *"unlocked forever"*. | 🚦 mis-sell · ✅ **decided 2026-09-11, buildable** |
 | [IMP-117](#imp-117) | At max font the ember pill's `+` and the custom-mood emoji circles are off-centre. | 🎨 |
 
-**All four are buildable and none of them touch each other — take them in any order.** IMP-116 was blocked
+**Both are buildable and don't touch each other — take them in any order.** IMP-116 was blocked
 on an owner ruling for about an hour on 2026-09-11; **the owner chose (b) membership-scoped** and its Steps
-are written. IMP-116 is the largest of the four and the only one with a walk of its own.
-
----
-
-## IMP-115 — a pre-cap candle holding reads as "6 / 3 kept"
-
-**Reported off the screen 2026-09-11 (hardware, owner-run).** The owner holds **6 candles**, banked before
-[IMP-112](build-log.md#imp-112) landed. [`Shop.js:98`](../src/screens/Shop.js#L98) renders
-`{freezes} / {MAX_CANDLES} kept` unconditionally, so the Shop reads **"6 / 3 kept"** — a fraction whose
-numerator exceeds its denominator, presented as a limit that is visibly not holding.
-
-**IMP-112 capped intake, not holdings, and that was correct.** `buyCandles`
-([`RitualsApp.js:320`](../src/RitualsApp.js#L320)) refuses anything that would overflow, and the renewal
-grant clamps through `roomFor` — so a user at 6 can never reach 7. **`applyAutoFreeze` only ever spends
-downward**, so the holding drains on its own. Nothing is broken underneath; the display is the whole
-defect.
-
-**Decision — display, not migration. Do NOT silently delete candles a user already holds.** They were
-legitimately earned or bought under the old rules, and confiscating them on an app update to tidy a label
-is a worse outcome than an odd-looking fraction. The holding drains to the cap on its own the first few
-times a day is missed.
-
-**Steps.**
-1. [`Shop.js`](../src/screens/Shop.js) — when `freezes > MAX_CANDLES`, render the held count **without**
-   the `/ 3` denominator: `{freezes} kept`. At or below the cap, the existing `{freezes} / {MAX_CANDLES}
-   kept` is unchanged.
-2. Put the branch in a tiny exported pure helper in
-   [`candleCap.js`](../src/home/candleCap.js) — `keptLabel(held, cap = MAX_CANDLES)` returning the string
-   — so it is unit-testable without rendering the sheet, matching how `roomFor` is already factored.
-3. **Nothing touches `setFreezes`.** No migrator, no schema bump, no clamp on load.
-
-**The proof.** Extend [`__tests__/home/candleCap.test.js`](../__tests__/home/candleCap.test.js):
-`keptLabel` below the cap, exactly at it, and above it (the `6` case). Add a `Shop.js` source assertion
-that the kept row goes through `keptLabel` rather than interpolating `MAX_CANDLES` directly — that
-interpolation is the bug and it should not be able to come back.
-
-**Commit message.**
-`fix(shop): stop showing a kept count larger than the cap it is divided by (IMP-115)`
+are written. IMP-116 is the larger of the two and the only one with a walk of its own.
 
 ---
 
