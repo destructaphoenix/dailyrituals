@@ -17,6 +17,68 @@
 
 ---
 
+## ⚠️ Before you paste a row into Claude Design — read this
+
+**A row of this file is not a request.** It is written for the repo: every piece of evidence in it is a
+`../src/...` link that Claude Design cannot open. Pasting one verbatim hands it a case it cannot see.
+Each request needs, in the message itself: **the ask**, **the screen's actual source**, **the token
+names**, and **the constraints that are already pinned** (see each row).
+
+### What the design system actually has
+
+**Baselines are 7 screens × 2 modes, captured 2026-08-17** (`design-system/screens/`), and three facts
+about them decide how much help they are:
+
+1. **They are single-viewport captures, not full-page.** `day-05-insights.png` ends mid-grid in "Mar" —
+   which makes it *excellent* evidence for D-01 — but **"Your patterns", "Weekly rhythm" and "Deeper" are
+   all below the fold and appear in no asset anywhere.** D-03 and D-04 have no picture at all.
+2. **The fixture is a 210-day perfect streak.** Every consistency cell is `done`; **`missed`, `frozen` and
+   `empty` never appear in any baseline**, so the four states D-01 must carry through the transpose are
+   invisible in the only picture of them. Paste
+   [`heatCellStyle`](../src/screens/InsightsScreen.js#L217) with that request.
+3. **They predate ~28 commits to `src/screens/`** — IMP-094 through IMP-119 among them. `day-07-shop.png`
+   in particular is older than the candle cap (IMP-112), the kept label (IMP-115), the tier tags
+   (IMP-104/108) and both ember-pill fixes (IMP-117/119).
+
+### 🔴 The Plus card is wrong, and it is the one D-05/06/07 would lean on
+
+`design-system/components/plus.html` states three things the app has since contradicted:
+
+| The card says | The truth |
+| --- | --- |
+| *"`PLUS_ENABLED` is `false` and stays false"* | `true` since 2026-09-05. The rule is **hands-off, not off** — `playbook.md` was corrected, the card was not. |
+| banner copy *"Keep every day you write / Deeper insights, unlimited restores, and every palette."* | IMP-090 replaced it with **"Every palette, sky & candle." / "Plus your graveyard kept forever."** |
+| member card *"Member · renews soon"* | **IMP-082 forbade exactly that invented string.** The shipped banner says `Member · renews <real date>`, or just `Member` when the date is unknown. |
+
+⚠️ **`node scripts/gen-design-system.js` does not fix this** — all three strings are hardcoded in
+[`scripts/gen-design-system.js:663-690`](../scripts/gen-design-system.js#L663). The generator must be
+edited first, then the cards regenerated and re-pushed. **Do that before any Tier-2 request.**
+
+### Row-by-row: what exists, what you must paste
+
+| Row | Baseline | Also paste | Note |
+| --- | --- | --- | --- |
+| D-01 Insights grid | `day/night-05` ✅ — shows the defect | `calendar.js:68`, `heatCellStyle`, `heatCells.js` | the 4 states are not in the shot |
+| D-02 Reflections | `day/night-04` ✅ — shows "210 matches" + one card | `ArchiveScreen.js` | the shot is *with* a query active |
+| D-03 period window | ❌ below the fold | `InsightsScreen.js` + `derive.js` | **no picture of these cards exists** |
+| D-04 mood mix | ❌ below the fold | `InsightsScreen.js:134-149` | buildable without any design |
+| D-05 one lock treatment | partial (`day-07` shows the swatch lock) | all four locked shapes' source | fix the Plus card first |
+| D-06 paywall | ❌ none | `Paywall.js`, `PLUS_PERKS` | **start from your 5 hero cards already in the project** |
+| D-07 member home | ❌ none | `PlusPerks.js`, `PlusBanner`, `ManageSubscription` | fix the Plus card first |
+| D-08 member Shop | `day/night-07` ⚠️ stale | `Shop.js:41-46` | shot predates 4 shipped changes |
+| D-09 ember `+` | in `day-07` chrome | `shopui.js:14` | IMP-119's fix is **unwalked** — do not redesign over it |
+| D-10 You | ❌ none | `YouScreen.js` | no baseline will ever exist (7-shot cap) |
+| D-11 zero states | ❌ none, uncapturable | the empty branch of each screen | |
+| D-12 Home | `day/night-01` ✅ | — | notice cards are absent from the fixture |
+| D-13 Keepsakes | `day/night-06` ✅ | `Achievements.js` | |
+| D-14 WriteFlow | `day/night-02,03` ✅ | `WriteFlow.js:173-262` | the custom-mood form is below the fold |
+
+**Not in the repo, but in the project:** the five Plus hero cards, the celebration screens and the updated
+skies you designed there. They are the right starting point for D-06 — this file cannot see them, so check
+their state yourself before asking for a redraw.
+
+---
+
 ## The short answer
 
 **Three things get worse the more the app is used** — that is the family your Insights complaint belongs
