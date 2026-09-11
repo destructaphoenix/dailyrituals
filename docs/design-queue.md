@@ -354,12 +354,49 @@ A 16:9 clip throws away half the frame you paid to generate, and every byte of i
 
 ```sh
 ffmpeg -i in.mp4 \
-  -vf "scale=1280:1280:force_original_aspect_ratio=increase,crop=1280:1280,fps=30" \
+  -vf "scale=1280:1280:force_original_aspect_ratio=increase,crop=1280:1280" \
   -c:v libx264 -profile:v high -pix_fmt yuv420p \
-  -crf 21 -maxrate 3M -bufsize 6M \
-  -g 60 -keyint_min 60 -sc_threshold 0 \
-  -an -movflags +faststart out.mp4
+  -crf 23 -maxrate 3500k -bufsize 7000k \
+  -g 48 -keyint_min 48 -sc_threshold 0 \
+  -an -fps_mode passthrough -movflags +faststart out.mp4
 ```
+
+🔴 **The re-encode must not touch the frame rate.** An earlier version of this recipe carried `fps=30`,
+which is **wrong for a crafted loop**: 24 or 25 → 30 resamples frames, and the resampled end frame no
+longer matches the start. `-fps_mode passthrough` (older ffmpeg: `-vsync 0`) guarantees every source
+frame comes out once, in order, unchanged. **The only safe fps change is exact integer decimation** —
+60 → 30 drops every second frame and is fine; 24 → 30 is not.
+
+**Nothing temporal in the filter chain, either.** Temporal denoise, `minterpolate`, deflicker and
+stabilisation all carry state across frames, so they treat frame 0 as "the beginning" and quietly make it
+stop matching the last one. Spatial-only filters are safe.
+
+**Verify the loop survived, rather than assuming:**
+
+```sh
+# frame count must be identical in and out
+ffprobe -v error -count_frames -select_streams v:0 \
+  -show_entries stream=nb_read_frames -of csv=p=0 out.mp4
+
+# first vs last frame — compare against the same pair from the source
+ffmpeg -v error -i out.mp4 -vf "select=eq(n\,0)" -vframes 1 -y first.png
+ffmpeg -v error -sseof -0.05 -i out.mp4 -vframes 1 -y last.png
+ffmpeg -v error -i first.png -i last.png -lavfi ssim -f null -
+```
+
+### When it is still too big
+
+AI-generated footage is usually **noisy**, and noise is incompressible — it is what turns an 8-second
+clip into 40MB. In order of least visual harm:
+
+1. **Spatial denoise.** `hqdn3d=4:3:0:0` — the two zeros are the temporal terms, and they **must** stay
+   zero or the loop breaks. Often halves the bitrate on generated footage at no visible cost.
+2. **Shorten the clip.** Linear saving, and a shorter loop is usually a better loop.
+3. **Drop to 1080×1080**, the floor.
+4. **Raise CRF** 23 → 26. Past that, banding shows in gradients — and a sky is mostly gradient.
+
+For an exact ceiling, two-pass to a computed bitrate: `kbps = target_MB × 8192 ÷ duration_s`.
+A 3MB, 8-second clip is ~3,000 kbps.
 
 `-an` drops the audio track — nothing here has sound, and a silent track still costs bytes and can trip
 autoplay policies. `+faststart` moves the index to the front, which matters because these are downloaded.
