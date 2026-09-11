@@ -22,120 +22,16 @@
 
 ---
 
-## The queue — two rows left, opened 2026-09-11 from the lapse sitting
+## The queue — one row left, opened 2026-09-11 from the lapse sitting
 
 **Came out of WALK-19 step 7 and the subscription lapse that followed it** (hardware, owner-run,
 2026-09-10 → 11, monthly licence-tester sub). Step 7's Shop half **proved IMP-108, IMP-109 and IMP-110**,
-and WALK-07 and WALK-18 both closed. The sitting also turned up new defects — one of them, IMP-115, is done
-and archived in [`docs/build-log.md`](build-log.md#imp-115).
+and WALK-07 and WALK-18 both closed. The sitting also turned up new defects — IMP-115 and IMP-116 are both
+done and archived, in [`docs/build-log.md`](build-log.md#imp-115) and [`docs/build-log.md`](build-log.md#imp-116).
 
 | Row | What | Gate |
 | --- | --- | --- |
-| [IMP-116](#imp-116) | A palette applied under Plus is kept but never owned, and is lost on the next switch — the paywall says *"unlocked forever"*. | 🚦 mis-sell · ✅ **decided 2026-09-11, buildable** |
 | [IMP-117](#imp-117) | At max font the ember pill's `+` and the custom-mood emoji circles are off-centre. | 🎨 |
-
-**Both are buildable and don't touch each other — take them in any order.** IMP-116 was blocked
-on an owner ruling for about an hour on 2026-09-11; **the owner chose (b) membership-scoped** and its Steps
-are written. IMP-116 is the larger of the two and the only one with a walk of its own.
-
----
-
-## IMP-116 — a palette applied under Plus is kept but never owned
-
-**Found 2026-09-11 across a real subscription lapse (hardware, owner-run).** Under Plus the owner applied
-**Harvest Moon** (palette) and **Frostlight** (sky). The monthly licence-tester sub expired. Both survived
-the lapse and stayed applied, embers untouched at 15 — **and then, on switching to another palette,
-Frostlight went back under the Plus lock and could not be returned to.**
-
-**Cause, pinned.** `applyPalette` ([`RitualsApp.js:301`](../src/RitualsApp.js#L301)) sets `activePalette`
-and retints; **it never adds the id to `ownedPalettes`.** Only `buyPalette`
-([`:305`](../src/RitualsApp.js#L305)) does that, and IMP-108 routes a member straight to `applyPalette`
-because a member should not be charged. So a member's applied cosmetic is *active* but not *owned*, and
-`activePalette` is the only thing keeping it — the moment it changes, the entitlement to it is gone.
-`applySky` ([`:310`](../src/RitualsApp.js#L310)) has the identical shape.
-
-**Why this is a mis-sell and not a curiosity.** `PLUS_PERKS[0]` promises **"Every palette & sky — unlocked
-forever."** The shipped behaviour is neither of the two things a reader could take that to mean: it is not
-"yours permanently", and it is not "yours while you are a member". It is "yours until you next change your
-mind", which nobody would write on a paywall. **Same family as IMP-084, IMP-108 and IMP-110** — the paid
-surface and the code telling different stories — and it is the fourth in that family from this one sheet.
-
-### ✅ DECIDED 2026-09-11 — (b) membership-scoped. The copy is what was wrong.
-
-**Owner's ruling:** Plus cosmetics are **yours while you are a member**, not forever. `PLUS_PERKS[0]`
-loses "forever", and a lapse reverts an applied-but-unowned cosmetic to the default **with a toast**, so
-it never disappears silently. **This is the same shape as the IMP-110 ruling** — the feature was right and
-the paid surface was overclaiming.
-
-**Rejected, and why it is recorded:** (a) granting permanent ownership on apply would let **one month's
-subscription claim every cosmetic in the shop**, which guts the ember sink [IMP-112](build-log.md#imp-112)
-was built two days earlier to create. Do not re-open this without re-opening the candle cap with it.
-
-### The tier taxonomy this turns on — read it before writing code
-
-[`data.js:129-148`](../src/data.js#L129-L148). Three kinds, and only the middle one is subtle:
-
-| `tier` | Meaning | On lapse |
-| --- | --- | --- |
-| `'owned'` | Free for everyone — Golden Hour, Crescent Moon, Golden Sun | **Keep.** Never touched. |
-| a **number** (240, 300, 420) | Ember-priced. A member gets it free ([IMP-108](build-log.md)); a free user buys it | **Keep only if actually bought** — i.e. present in `ownedPalettes`/`ownedSkies`. Applying under Plus does not put it there. |
-| `'plus'` | Plus-exclusive — Lavender Hour, Frostlight, Bloom, Meteor Shower, Aurora | **Revert.** Unbuyable at any ember price, so membership is the only route. |
-
-The owner's own sitting hit one of each: **Frostlight** (`'plus'`) and **Harvest Moon** (`300`), both
-applied free under Plus, both still applied after the lapse.
-
-**Steps.**
-1. **New pure module** [`src/home/cosmeticEntitlement.js`](../src/home/cosmeticEntitlement.js), exporting
-   `entitledId(activeId, ownedIds, items, plus, defaultId)`. Returns the id that *should* be active:
-   - item not found by id → `defaultId` (defensive; a stale persisted id from a deleted item)
-   - `item.tier === 'owned'` → `activeId`
-   - `ownedIds.includes(activeId)` → `activeId` (they paid embers; ownership is permanent and unconditional)
-   - `plus` → `activeId`
-   - otherwise → `defaultId`
-
-   **Pure, no React, no imports from `RitualsApp.js`** — same shape as `roomFor` in
-   [`candleCap.js`](../src/home/candleCap.js).
-2. [`RitualsApp.js`](../src/RitualsApp.js) — **one** `React.useEffect`, not a hook at each call site.
-   There are two downgrade paths ([`:434`](../src/RitualsApp.js#L434) and
-   [`:471`](../src/RitualsApp.js#L471)) and both funnel through `setPlus`, so key the effect on
-   `[plus, activePalette, activeSky, ownedPalettes, ownedSkies]` and let it settle. **Precedent:
-   [IMP-102](build-log.md#imp-102) solved the same five-call-sites problem with a single effect** — follow it.
-3. **Make it self-healing, not transition-only.** Do **not** gate on a `true → false` edge with a ref. Run
-   the check whenever it can fire: any user already stranded by the shipped build (the owner is one) is
-   repaired on next launch. It is idempotent — once reverted, `entitledId` returns the active id unchanged
-   and the effect no-ops.
-4. **Reverting a palette must retint.** `applyPalette` pairs `setActivePalette` with `retint(p.swatch)`
-   ([`:301`](../src/RitualsApp.js#L301)); the revert must do both or the app keeps the Plus accent colour
-   with a default palette selected. Defaults: palette `goldenhour`, sky `classic` (both `note: 'Default'`).
-5. **One toast, even when both revert.** Two `showToast` calls in one effect would stack. Compute both
-   reverts, apply them, then emit a single message naming what changed:
-   - both → `Plus has ended — your palette and sky are back to the defaults`
-   - one → `Plus has ended — your palette is back to Golden Hour` / `…your sky is back to Golden Sun`
-   - neither → **no toast.** A free user who never applied a Plus cosmetic must never see this.
-6. [`data.js`](../src/data.js) — `PLUS_PERKS[0]` becomes
-   **`'Every palette & sky — yours while you're a member'`**. ⚠️ **Do not renumber the other perks or touch
-   the `PLUS_PERKS #n` comments** in `src/screens` and `src/recap`; the file's own header notes they are
-   already off by one past #3 and that is a separate cleanup.
-7. **Do not touch `buyPalette`/`buySky`.** Ember purchases add to `ownedPalettes`/`ownedSkies` and stay
-   permanent under this ruling — that is the whole point of the middle row in the table above.
-
-**The proof.** New `__tests__/home/cosmeticEntitlement.test.js` — `entitledId` across all five branches, for
-both palettes and skies, with the owner's two real cases pinned by name: **Frostlight** (`'plus'`, not
-owned, `plus` false → reverts) and **Harvest Moon** (`300`, not owned, `plus` false → reverts), plus
-**Harvest Moon after a real ember purchase** (in `ownedSkies` → survives), and a `'owned'` item under
-`plus: false` (survives). Add a `RitualsApp.js` source assertion in the same style as
-[`candleCapGrant.test.js`](../__tests__/billing/candleCapGrant.test.js): the revert effect exists, calls
-`retint` alongside `setActivePalette`, and emits at most one `showToast`. Add a `data.js` assertion that
-`PLUS_PERKS[0]` **does not contain "forever"** — that string is the mis-sell and it must not come back.
-**Prove the two revert cases red first** against today's code, which keeps both.
-
-**Walk owed.** Folds into WALK-19's Plus block on the next tester subscription: apply a `'plus'` palette
-and an ember-priced sky, let the sub lapse, confirm both revert on the next launch with one toast, and
-confirm an ember-**bought** sky survives. ⚠️ **Needs a Plus-on → Plus-off sitting**, so it cannot share a
-sitting with the paywall rows.
-
-**Commit message.**
-`fix(plus): cosmetics are yours while you're a member, and say so (IMP-116)`
 
 ---
 

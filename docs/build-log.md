@@ -4708,7 +4708,71 @@ re-run.
 
 ---
 
+## IMP-116 — a palette applied under Plus is kept but never owned (2026-09-11)
+
+**Found across a real subscription lapse (hardware, owner-run).** Under Plus the owner applied **Harvest
+Moon** (palette) and **Frostlight** (sky). The monthly licence-tester sub expired. Both survived the lapse
+and stayed applied — and on switching away from Frostlight it went back under the Plus lock, unreachable.
+
+**Cause.** `applyPalette`/`applySky` ([`RitualsApp.js:301`](../src/RitualsApp.js#L301),
+[`:310`](../src/RitualsApp.js#L310)) set the active id and retint without adding it to
+`ownedPalettes`/`ownedSkies` — only a purchase does that, and [IMP-108](#imp-108) routes a member straight
+to apply so they are not charged. The applied cosmetic was active but never owned.
+
+**Owner ruled (b) membership-scoped, 2026-09-11.** Plus cosmetics are yours while you're a member, not
+forever — `PLUS_PERKS[0]` overclaimed, not the code. (a) permanent-on-apply was rejected: one month's sub
+would claim every cosmetic in the shop and gut the [IMP-112](#imp-112) ember sink.
+
+**What was built.** New pure module [`src/home/cosmeticEntitlement.js`](../src/home/cosmeticEntitlement.js)
+— `entitledId(activeId, ownedIds, items, plus, defaultId)`, the five-branch rule from the tier taxonomy
+(owned tier always stays; an ember-bought id always stays; a Plus-only or ember-priced id survives only
+while `plus` is true; everything else, including a stale deleted id, falls to the default). One
+`React.useEffect` in [`RitualsApp.js`](../src/RitualsApp.js), keyed on
+`[plus, activePalette, activeSky, ownedPalettes, ownedSkies]`, computes both reverts, applies them (pairing
+`setActivePalette` with `retint`, matching `applyPalette`'s own shape), and emits a single toast naming
+what changed — both, palette-only, sky-only, or (the common case) nothing. Self-healing, not
+transition-gated, so a user already stranded by the shipped build is repaired on next launch; idempotent
+once reverted. `data.js` — `PLUS_PERKS[0]` dropped "forever" for *"yours while you're a member"*; the other
+perks' `#n` comments (already off by one, noted in the file) were left untouched, per the spec.
+`buyPalette`/`buySky` were not touched — an ember purchase stays permanent, which is the whole point of the
+middle tier row.
+
+**The proof.** New `__tests__/home/cosmeticEntitlement.test.js` — `entitledId` across all five branches for
+both palettes and skies, the owner's two real cases pinned by name (Frostlight and Harvest Moon both
+revert), Harvest Moon surviving after a real ember purchase, and an `'owned'` item surviving under
+`plus: false`; a `RitualsApp.js` source assertion that the effect exists, is keyed on the right five deps,
+pairs `retint` with `setActivePalette`, and never emits more than one `showToast(` call; a `data.js`
+assertion that `PLUS_PERKS[0]` no longer contains "forever". The two revert cases and the copy/effect
+assertions proven red first against pre-fix code. **1187 passed, 105 suites** (was 1172/104), `npx expo
+export --platform android` clean, +15 tests. Commit `b588f2a`.
+
+**Walk owed.** Folds into WALK-19's Plus block: apply a `'plus'` palette and an ember-priced sky, let the
+sub lapse, confirm both revert on next launch with one toast, confirm an ember-bought sky survives. Needs
+a Plus-on → Plus-off sitting, so it cannot share a sitting with the paywall rows.
+
+---
+
 ## Session notes
+
+_2026-09-11, earlier (Sonnet — **IMP-114 built: an unaffordable candle pack explains itself instead of going
+inert.**) — ✅ code-complete, no walk of its own owed._
+
+**What finished.** [`Shop.js`](../src/screens/Shop.js) — removed `disabled={!afford}` from the `CANDLE_PACKS`
+`Pressable`. `afford` still drives `opacity: afford ? 1 : 0.5`, so the dimming stays as a correct affordance
+hint; only the inertness was wrong. `buyCandles` untouched, per the spec — its cap check already precedes
+its embers check (IMP-112), so a user at the cap is told they're full, not poor, and neither branch spends
+anything.
+
+**The proof.** Extended [`__tests__/billing/candleCapGrant.test.js`](../__tests__/billing/candleCapGrant.test.js)
+with a source assertion (no `disabled` prop on the candle `Pressable`, `afford` still gates opacity) and a
+new render test (`@testing-library/react-native` — Shop.js, unlike `buyCandles`, is directly renderable)
+proving a tap on an unaffordable pack (15 embers vs. the 120-price pack) still calls `onBuyCandles`. Both
+new assertions proven red first against the pre-fix `disabled` prop. **1167 passed, 104 suites** (was
+1164/104), `npx expo export --platform android` clean, +3 tests. Commit `fa10a2a`.
+
+**The exact next step.** Take the next unchecked build row: IMP-116 or IMP-117, both in
+`docs/specs-open.md`, independent of each other. No walk owed by IMP-114 on its own — it folds into
+WALK-19 step 7's re-run.
 
 _2026-09-10, latest (Sonnet — **IMP-113 built: ember packs grant real embers through a store purchase, not
 a free counter increment.**) — ✅ code-complete, no walk yet._
