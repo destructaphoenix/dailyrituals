@@ -38,9 +38,9 @@ export function moodByWeekday(entries) {
     if (!ranked.length) return;
     const maxN = Math.max(...ranked.map(([, n]) => n));
     const winners = ranked.filter(([, n]) => n === maxN);
+    b.n = maxN;
     if (winners.length === 1) {
       b.top = winners[0][0];
-      b.n = maxN;
     }
   });
 

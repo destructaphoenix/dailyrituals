@@ -28,6 +28,18 @@ describe('moodByWeekday', () => {
     expect(buckets[0].top).toBeNull();
   });
 
+  test('a tie still carries the tied count in n, not 0', () => {
+    const entries = [
+      { dayKey: '2026-06-01', moods: ['Tender'] },
+      { dayKey: '2026-06-08', moods: ['Grateful'] },
+      { dayKey: '2026-06-15', moods: ['Tender'] },
+      { dayKey: '2026-06-22', moods: ['Grateful'] },
+    ];
+    const buckets = moodByWeekday(entries);
+    expect(buckets[0].top).toBeNull();
+    expect(buckets[0].n).toBe(2);
+  });
+
   test('returns top: null for an empty weekday', () => {
     const buckets = moodByWeekday([{ dayKey: '2026-06-01', moods: ['Tender'] }]);
     expect(buckets[1].top).toBeNull();
