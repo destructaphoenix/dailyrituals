@@ -17,6 +17,32 @@
 
 ---
 
+## 🔭 READ FIRST — most of Tier 1 and Tier 2 is ALREADY DESIGNED
+
+**Corrected 2026-09-11, after reading the live Claude Design project** (`7bf44d09…`) rather than the
+repo's copy of it. The project holds **26 cards, not the 13 this repo generates.** Thirteen of them exist
+only there, and several answer queue rows that the rest of this file still describes as open work.
+
+| In the project | Queue rows it already answers |
+| --- | --- |
+| **`screens/insights-redesign.html`** — "Two directions, day + night" | **D-01 and D-03.** It explicitly retires the lifetime heatmap ("*Reflections keeps it as a navigation device*") for month-by-month calendars using `c.heat0–heat3`, **and** adds time scoping (`This year · 2025 · All time`). Direction **A** opens on a shareable keepsake poster; **B** is a typographic almanac with no card chrome. It also proposes milestones, themes and per-rite completion. |
+| **`screens/plus-home.html`** — 9 directions, day + night, with motion notes | **D-05**, much of **D-07**, and it reshapes **D-12**. Three problems × three directions: member identity at the hero, the locked teaser (redacted peek / dark invitation / one-offer-two-rows), and the unlocked perk. Every direction is already specced in token names. |
+| **`screens/shop-plus-skins.html`** | **D-08** — the unlock tag, five Plus palettes, six sky previews. |
+| **`screens/celebration.html`**, **`screens/home-plus-skies.html`** | Not queue rows — new surfaces. |
+| **`art/`** — 7 animated Plus heroes (Aurora, Tideline, Meteorfall, Sakura Fuji, Fernlight, Local Line, Event Horizon) with `.mp4` assets | **Not a queue row and not a small port.** The app's `SkyPreview` draws static gradients; these are live video heroes. Treat as a product decision with native weight (playback, asset size, battery), not a design task. |
+| **`art/brand/`** | The shipped brand/Play assets. |
+
+**So the bottleneck is not design — it is porting.** The rows below still describe the *defects* accurately,
+and the invariants each one lists are still what a port must honour. **What changes is the ask:** for D-01,
+D-03, D-05, D-07 and D-08 the next step is **"choose a direction and scope an `IMP`"**, not "write a
+request". Only the rows with no card in the project (**D-02 Reflections, D-04 mood mix, D-10 You,
+D-11 zero states, D-13 Keepsakes, D-14 WriteFlow**) are genuinely un-designed.
+
+⚠️ **Direction A vs B on Insights is the owner's call and nobody else's** — they are different products
+(a shareable artefact vs. a reading surface), not two drafts of one.
+
+---
+
 ## ⚠️ Before you paste a row into Claude Design — read this
 
 **A row of this file is not a request.** It is written for the repo: every piece of evidence in it is a
@@ -61,11 +87,9 @@ about them decide how much help they are:
 asserts every string on the card is still present in `src/shopui.js`, and that the four retired claims stay
 retired. All five checks were verified red against the previous generator before the fix landed.
 
-⚠️ **One manual step remains, and it is yours:** the regenerated cards are in the repo but **not in the
-Claude Design project** — pushing needs `/design-login` from an interactive session (this session could not
-authorize). Either run that and I will push them with `DesignSync`, or upload
-`design-system/components/plus.html` by hand. **Until one of those happens the project still shows the old
-card**, so do a Tier-2 request only after re-pushing.
+✅ **Pushed to the live project 2026-09-11** via `DesignSync` after the owner ran `/design-login` —
+`components/plus.html` plus both `screens/baseline-*.html` (the caption fixes). The project now shows the
+corrected card; nothing else in it was touched.
 
 ### Row-by-row: what exists, what you must paste
 

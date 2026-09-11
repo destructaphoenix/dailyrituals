@@ -1,5 +1,13 @@
 # D-01 · Insights → the consistency grid — Claude Design request
 
+> ⚠️ **AMENDED 2026-09-11 — do not send this as a fresh request.** The live Claude Design project already
+> holds **`screens/insights-redesign.html`: two complete directions**, day and night, and both retire the
+> lifetime grid — *"The lifetime heatmap leaves. Reflections keeps it as a navigation device. Insights gets
+> a month-by-month calendar instead: seven small months, tappable, using `c.heat0–heat3`."* **Read that card
+> first.** What follows is still the right brief, but it is now a **port brief**: the measurement that
+> justifies the change, and the eight invariants any chosen direction must honour. Send it to Claude Design
+> only if you want a *third* direction or a refinement of A or B.
+>
 > **This whole file is the request.** Select all, paste into Claude Design, send. Nothing outside it is
 > needed and nothing inside it should be summarised away — the source blocks are what replace the repo
 > links Claude Design cannot open. Generated from the real files 2026-09-11; regenerate rather than
