@@ -396,8 +396,9 @@ _Moved from `PROGRESS.md` 2026-09-10 under its size rule. Stable reference, not 
 published, and `main` now carries `design-system/`. Wiring the pane's GitHub connection to it is an owner
 call, not a chat's.
 
-**Ask for ONE screen per request** — "redesign the app" produces mush. **The live request is
-Insights** (owner, 2026-09-05). ⚠️ **The four standing rules — baseline-first, specs in token names, the
+**Ask for ONE screen per request** — "redesign the app" produces mush. **The queue is
+[`design-queue.md`](design-queue.md)** (2026-09-11, 14 ranked rows); **D-01 Insights is still first**,
+as it has been since 2026-09-05. ⚠️ **The four standing rules — baseline-first, specs in token names, the
 frozen sun/rays, and design-is-not-enablement — plus the motion-card and night-shot rules now live in
 [`docs/playbook.md`](docs/playbook.md) → "Claude Design — standing rules". Read them before asking.**
 **Porting a returned design is a normal build task** — a new `IMP-xxx` scoped by Opus. Claude Design does
@@ -462,8 +463,8 @@ rules and the rest of the detail are in [`docs/playbook.md`](playbook.md).
 
 _Moved from `PROGRESS.md` 2026-09-07. The **live request** stays in `PROGRESS.md`; these rules do not change._
 
-**Ask for ONE screen per request** — "redesign the app" produces mush. The live request is **Insights**
-(owner, 2026-09-05). Four rules:
+**Ask for ONE screen per request** — "redesign the app" produces mush. The queue is
+[`design-queue.md`](design-queue.md); the first row is still **Insights** (owner, 2026-09-05). Four rules:
 1. **Check the screen has a baseline first** — only `day-01…07`/`night-01…07` exist. For one that does
    not, **paste its source** into the request rather than describing it.
 2. **Insist the spec comes back in token names** (`c.accentSoft`, `t.radius.card`) — not hex, not "gentle
