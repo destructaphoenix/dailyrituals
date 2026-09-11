@@ -4816,7 +4816,66 @@ outlined with no emoji where moods tie.
 
 ---
 
+## IMP-119 — the ember pill's `+` lost the line that centred it (2026-09-11)
+
+**Found by the device sitting plan, Sitting 1, 2026-09-11 (owner-run, real hardware).** A regression
+introduced by [IMP-117](#imp-117) (`a59aea9`), not a survival of the bug IMP-117 was opened to fix. The `+`
+in the ember balance pill sat off-centre in its circle at max font **and** at default font. IMP-117's other
+half — the custom-mood emoji circles — stayed correct at both sizes. [WALK-08](walk-open.md#walk-08--font-scale)
+had closed claiming the opposite; that was an emulator judgement by eye on a 17dp circle, and the device
+overruled it.
+
+**The cause.** IMP-117 made two changes to [`shopui.js`](../src/shopui.js) `EmberPill`. The circle sizing
+(`plusSize` scaling with the capped OS font scale) was right and stayed. But it also deleted
+`lineHeight: 15` from the `+` glyph's `<T>`, leaving a bare `fontSize: 13`. That `lineHeight` was
+load-bearing: a `+` is drawn above the baseline, so a line box taken from the font's natural metrics
+reserves descender space the glyph never occupies, and `justifyContent: 'center'` centres the line box, not
+the ink. The old `lineHeight: 15` against `fontSize: 13` had tightened the box back to optical centre;
+deleting it restored the asymmetry at every scale. An emoji fills its em box, so centring its line box
+centres the glyph — which is why that half was fine and the `+` was not.
+
+**What was built.** Extracted the shared scale factor into `fontScale` and used it for both the circle and
+the glyph: `const fontScale = Math.min(PixelRatio.getFontScale(), CHROME_FONT_SCALE); const plusSize = 17 *
+fontScale;` and the `+` text now carries `{ fontSize: 13, lineHeight: 15 * fontScale }`. The 13/15 ratio is
+the proportion that shipped correctly for the whole life of the pill before `a59aea9`; scaling both by one
+factor preserves it at every font size and cannot reintroduce IMP-117's max-font clipping.
+
+**The proof.** [`__tests__/ui/EmberPill.test.js`](../__tests__/ui/EmberPill.test.js) had a test asserting the
+regression's absence-of-lineHeight (`not.toMatch(/fontSize: 13, lineHeight: 15/)`) — rewritten to require
+the scaled `lineHeight: 15 * fontScale` instead, since a fix that left that assertion standing would not
+have fixed the row. The sibling `plusSize`/circle-sizing assertion was updated to match the renamed
+`fontScale` variable and kept otherwise. **1193 passed, 106 suites** (unchanged — a rewrite, not an
+addition), `npx expo export --platform android` clean. Commit `1fc0664`.
+
+**Walk owed — device, not emulator.** Folds into Sitting 1's optional add-on (already has the owner in the
+Shop at two font sizes): the `+` should sit optically centred in its circle at default font *and* at max
+font, with the emoji circles still correct.
+
+---
+
 ## Session notes
+
+_2026-09-11, earlier (Opus — **Sitting 1 walked on hardware by the owner: IMP-116 proven, IMP-119
+opened, and WALK-08's IMP-117 pass overturned.**) — ✅ walk closed, two build rows now open._
+
+**What finished.** The owner ran Sitting 1 on their phone. **IMP-116 PASSES** — on lapse the Plus palette
+and sky both revert to the defaults under exactly one message. **IMP-117's emoji half passes; its ember-pill
+half fails** — the `+` is off-centre at **every** font size, default included, which `a59aea9` caused by
+deleting the `lineHeight: 15` that was doing the centring (the IMP-117 note above describes that deletion
+as the fix). Scoped as **IMP-119**, including the test that currently asserts the deletion and must be
+rewritten. **WALK-08's ✅ for IMP-117 was an emulator call and is corrected** in `docs/walk-open.md`.
+
+**The proof, and its limits.** Owner-run on hardware, `update 01a09044`. **IMP-114 is UNEXERCISED, not
+passed** — [`RitualsApp.js:320`](../src/RitualsApp.js#L320) checks the cap before affordability, so 6 candles
+against a cap of 3 always returns at the first guard; the tap does respond, with the cap message, so the
+path is healthy. Step 5's control was dropped by inspection — ownership is consulted independently of
+`plus` in the revert, the Shop's lock rendering and the persisted state. Still owed and cheap: the
+`6 kept` label (IMP-115) and the no-ember-price check (IMP-108). Docs only, commit `1102865`.
+
+**The exact next step (at the time).** Build chats: **IMP-118, then IMP-119** — both JavaScript-only, so
+they ship together by OTA. Walk chats: **Sitting 3 (WALK-12, R8)** — it needs no membership state, and a
+JS-only OTA does not invalidate an R8 pass on the same binary. **Sitting 2** (WALK-19 step 8, real money)
+waits on the owner's choice of second account vs. temporarily leaving the license-tester list.
 
 _2026-09-11, earlier (Sonnet — **IMP-117 built: the ember pill's `+` and the two custom-mood emoji circles
 now grow with the font instead of clipping at the max OS scale.**) — ✅ code-complete, walk owed (folds
