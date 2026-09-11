@@ -36,7 +36,7 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 >
 > | If this chat is… | Take |
 > | --- | --- |
-> | a **build task** | ⬜ **Take [IMP-118](docs/specs-open.md#imp-118)** — first of **two** open rows, opened 2026-09-11 by WALK-08: a weekday with entries every week draws as an empty bar when its top mood ties, and the card above it says the opposite. One line in `deeper.js` plus tests; the renderer already has the branch. ⬜ **Then [IMP-119](docs/specs-open.md#imp-119)** — opened 2026-09-11 by Sitting 1 on hardware: the ember pill's `+` is off-centre at **every** font size because `a59aea9` deleted the `lineHeight` that centred it. ⚠️ **A test asserts the deletion and must be rewritten** — a fix that leaves it standing has fixed nothing. Both are JavaScript-only, so they can ship by OTA together. ✅ **And it has now SHIPPED: IMP-114/115/116/117 went out by OTA on 2026-09-11** (10 commits pushed to `main`, `Release-Lane: ota` on `176b782`, CI run `34594673765` green in 2m16s). **Group `95411ab6-1c03-4f2d-b261-9a7d6e2011b8`, runtime `1.0.9`, update `01a09044-cdb7-7c46-9660-0a1bedd08a0a`** — manifest read back by hand, `rcAndroidKey` **present and non-empty** (IMP-086 holds). Predecessor group was `7e97df68` (IMP-113, 2026-09-10), not `f961b427` as `176b782`'s own message says — that was the IMP-100 group, two ships back. Until that OTA is applied on the **second** launch, every walk that re-runs these four rows is walking a bundle without them. The phase ladder (8 / 10b / 11) is explicitly **parked until the owner resumes it** — do not start one on your own read of this table; ask the owner what to take next. |
+> | a **build task** | ✅ **IMP-118 is done** (commit `dc22e32`, archived in `docs/build-log.md`) — a tied weekday now draws its bar instead of vanishing. ⬜ **Take [IMP-119](docs/specs-open.md#imp-119)** — the one open row, opened 2026-09-11 by Sitting 1 on hardware: the ember pill's `+` is off-centre at **every** font size because `a59aea9` deleted the `lineHeight` that centred it. ⚠️ **A test asserts the deletion and must be rewritten** — a fix that leaves it standing has fixed nothing. JavaScript-only, so it ships by OTA. ✅ **And it has now SHIPPED: IMP-114/115/116/117 went out by OTA on 2026-09-11** (10 commits pushed to `main`, `Release-Lane: ota` on `176b782`, CI run `34594673765` green in 2m16s). **Group `95411ab6-1c03-4f2d-b261-9a7d6e2011b8`, runtime `1.0.9`, update `01a09044-cdb7-7c46-9660-0a1bedd08a0a`** — manifest read back by hand, `rcAndroidKey` **present and non-empty** (IMP-086 holds). Predecessor group was `7e97df68` (IMP-113, 2026-09-10), not `f961b427` as `176b782`'s own message says — that was the IMP-100 group, two ships back. Until that OTA is applied on the **second** launch, every walk that re-runs these four rows is walking a bundle without them. The phase ladder (8 / 10b / 11) is explicitly **parked until the owner resumes it** — do not start one on your own read of this table; ask the owner what to take next. |
 > | a **runtime walk** | ✅ **The owner's phone is CONFIRMED on the IMP-114/115/116/117 bundle — it reads `update 01a09044` (2026-09-11).** ⚠️ **The You tab prints the UPDATE id, not the group** — [`diagnostic.js:35`](src/billing/diagnostic.js#L35) strips dashes and takes 8 chars of `Updates.updateId`, so look for **`01a09044`**, never the group `95411ab6`. A walk of 7C, the IMP-116 lapse block, WALK-08's circles or WALK-12 on any older bundle proves nothing; after any further OTA, re-read this string before starting. 📱 **Take the running order from [`walk-open.md`](docs/walk-open.md) → "THE DEVICE SITTING PLAN"** — three sittings (IMP-116 lapse + IMP-114/115 · WALK-19 step 8 real money · WALK-12 last), each with the membership state it needs. ⚠️ **7C stays unwalkable** until the candle holding drains to ≤2 — do not record it as passed because nothing broke. ✅ **Step 7 is DONE — the 2026-09-10/11 lapse sitting cleared it** (hardware, owner-run, monthly tester sub). **WALK-18 ✅, WALK-07 ✅, WALK-19 steps 7A/7B/7D ✅** — IMP-108, IMP-109, IMP-110, IMP-111 and IMP-096 are all now proven on hardware. ⚠️ **7C is NOT proven** — the owner held 6 pre-cap candles, so the cap was never exercised; it re-runs once the holding drains to ≤2 ([IMP-115](docs/specs-open.md#imp-115)). Remaining 🚦: **step 8** (the one real-money purchase, held for last) and **WALK-12 (R8) LAST** — it must be walked on the exact build you ship. ✅ **WALK-08 is CLOSED (2026-09-11, emulator, agent-run)** — DeeperInsights passes at max font, IMP-095 proven, cap measured biting (scale 2, caps 1.5/1.2). It found IMP-118 on the way. 🔴 **But its IMP-117 pass was HALF WRONG and the device overturned it** — the `+` is off-centre at every font size ([IMP-119](docs/specs-open.md#imp-119)); the emoji half stands. **A glyph-centring claim is not emulator-provable — route that shape to `device`.** ✅ **SITTING 1 is DONE (2026-09-11, hardware, owner-run) — do not re-run it.** IMP-116 proven: on lapse both cosmetics revert under one message. **IMP-114 stays UNEXERCISED** — `buyCandles` checks the cap before affordability, so 6 candles against a cap of 3 returns at the first guard and its message cannot fire; same blocker as 7C. Step 5's control was dropped by inspection (ownership is consulted independently of `plus` in all three paths). Still owed, cheaply: the `6 kept` label and the no-ember-price check. ⚠️ **WALK-20 (IMP-113's ember purchase) still does not exist in `docs/walk-open.md`, and cannot be walked at all while `EMBER_PACKS_ENABLED` is `false`.** |
 > | a **design request** | See "Claude Design" below. The live request is **Insights**. |
 >
@@ -77,7 +77,7 @@ preflight. Detail → [`docs/build-log.md`](docs/build-log.md).
 
 **Current stack:** Expo SDK **54** · RN **0.81.5** · React **19.1.0** · **New Architecture** ·
 **Reanimated 4.1.1 + worklets 0.5.1** · `targetSdkVersion` **36**, `minSdk` **24** ·
-`npm test` → **1187 passed, 105 suites** (verified 2026-09-11) + **3 zone tests × 2 pinned zones**.
+`npm test` → **1193 passed, 106 suites** (verified 2026-09-11) + **3 zone tests × 2 pinned zones**.
 ⚠️ **Run `npm test`, not bare `npx jest`**, or the zone half is skipped. Version-checking a phone, the
 track-reading script and the rest of the stack notes are in [`docs/playbook.md`](docs/playbook.md).
 
@@ -114,7 +114,8 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 115 | **A pre-cap holding reads `6 / 3 kept`.** IMP-112 capped intake, not holdings — correctly — but [`Shop.js:98`](src/screens/Shop.js#L98) interpolated `{freezes} / {MAX_CANDLES}` unconditionally, so a user who banked 6 candles before the cap saw a fraction larger than its own limit. | OTA | ✅ **done, archived** in `docs/build-log.md` — `ea00b0c`. **1172 passed, 104 suites** (was 1167/104), export clean, +5 tests. New `keptLabel` helper drops the `/ 3` above the cap; holdings untouched |
 | 116 | **A palette applied under Plus is kept but never owned.** `applyPalette` ([`RitualsApp.js:301`](src/RitualsApp.js#L301)) sets `activePalette` without adding to `ownedPalettes`, and IMP-108 routes members there. Survives a lapse, then vanishes at the next switch. `PLUS_PERKS[0]` promised *"Every palette & sky — unlocked forever."* | OTA | ✅ **done, archived** in `docs/build-log.md` — `b588f2a`. **1187 passed, 105 suites** (was 1172/104), export clean, +15 tests, the two revert cases proven red first. Owner-ruled (b) membership-scoped: `PLUS_PERKS[0]` now says "yours while you're a member"; a self-healing effect reverts an applied-but-unowned cosmetic on lapse with one toast. ⚠️ **Walk owed** — folds into WALK-19's Plus block, needs a fresh Plus-on → Plus-off sitting |
 | 117 | **Max font breaks two circles.** The ember pill's `+` ([`shopui.js:31`](src/shopui.js#L31)) has a literal `lineHeight: 15` that `maxFontSizeMultiplier` does not scale, so the glyph outgrows its line box; the custom-mood emoji circles ([`WriteFlow.js:182`](src/screens/WriteFlow.js#L182), [`:196`](src/screens/WriteFlow.js#L196)) are fixed 34dp with no `maxFontSizeMultiplier` at all. | OTA | ✅ **done, archived** in `docs/build-log.md` — `a59aea9`. **1192 passed, 106 suites** (was 1187/105), export clean, +5 tests, all 5 new source assertions proven red first. ⚠️ **Walk owed** — folds into WALK-08 |
-| 118 | **A tied weekday draws as an empty bar.** `moodByWeekday` assigns `n` only when one mood wins outright, so a weekday with 66 entries and a tie returns `n: 0` and [`DeeperInsights.js:83`](src/screens/DeeperInsights.js#L83) sizes the bar from `n` — pixel-identical to a weekday never written on, while "Weekly rhythm" directly above calls those same days the fullest. `top: null` on a tie is correct and test-pinned; the renderer's soft/outlined branch is simply unreachable today. | OTA | ⬜ **open** — spec in [`docs/specs-open.md`](docs/specs-open.md#imp-118). Found by WALK-08 2026-09-11 (emulator); **not a font bug**, reproduces at every font size |
+| 118 | **A tied weekday draws as an empty bar.** `moodByWeekday` assigns `n` only when one mood wins outright, so a weekday with 66 entries and a tie returns `n: 0` and [`DeeperInsights.js:83`](src/screens/DeeperInsights.js#L83) sizes the bar from `n` — pixel-identical to a weekday never written on, while "Weekly rhythm" directly above calls those same days the fullest. `top: null` on a tie is correct and test-pinned; the renderer's soft/outlined branch is simply unreachable today. | OTA | ✅ **done, archived** in `docs/build-log.md` — `dc22e32`. **1193 passed, 106 suites** (was 1192/106), export clean, +1 test, proven red first. ⚠️ **Walk owed** — folds into WALK-08's re-run |
+| 119 | **IMP-117 half-regressed.** It deleted the `lineHeight: 15` that optically centred the ember pill's `+`; the glyph is now off-centre at **every** font size, including default. Found on hardware, overturning WALK-08's emulator pass. | OTA | ⬜ **open** — spec in [`docs/specs-open.md`](docs/specs-open.md#imp-119). ⚠️ A test currently pins the regression in place and must be rewritten, not worked around |
 | 022 | Save as PDF + About sheet (the two dead You-tab buttons) | Build | ⏸ **deferred (owner)** — spec in build-log → "Deferred specs"; **perk #6 gate** |
 | 044 | R8 on release builds (dev client was shipping to the public) | Build | 🟢 **code-complete, UNWALKED.** R8 must be walked on the build you actually ship, so it rides **vc15 or later**; walk = WALK-12, on hardware, last in the sitting |
 | 057 | Historical `dayKey` migration | Build | 🔒 **reserved, not missing** — cannot be written until real device numbers come back from the dev panel's "Data health" reporter. See below |
@@ -188,37 +189,7 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
-_2026-09-11, earlier (Sonnet — **IMP-117 built: the ember pill's `+` and the two custom-mood emoji circles
-now grow with the font instead of clipping at the max OS scale.**) — ✅ code-complete, walk owed (folds
-into WALK-08)._
-
-**What finished.** [`shopui.js`](src/shopui.js) — dropped the `+`'s literal `lineHeight: 15`; its circle's
-size and radius now derive from `17 * Math.min(PixelRatio.getFontScale(), CHROME_FONT_SCALE)`, so the box
-grows exactly as far as the capped glyph is allowed to. [`WriteFlow.js`](src/screens/WriteFlow.js) — added
-`maxFontSizeMultiplier={CHROME_FONT_SCALE}` to both the chosen-face and palette-swatch emoji `Text`s, and
-sized both circles from one shared local `dot = 34 * Math.min(PixelRatio.getFontScale(), CHROME_FONT_SCALE)`
-— one const, two call sites, no new module, per the spec. The file's third, unrelated 34dp circle (the
-typed-emoji preview) was left untouched — out of scope. No emoji or palette contents changed.
-
-**The proof.** New `__tests__/ui/EmberPill.test.js` — source assertions that the `+` carries no literal
-`lineHeight` and the circle derives from `PixelRatio.getFontScale()`. Extended
-[`__tests__/screens/WriteFlowMood.test.js`](__tests__/screens/WriteFlowMood.test.js) with source assertions
-that both emoji `Text`s carry `maxFontSizeMultiplier={CHROME_FONT_SCALE}`, that neither circle hardcodes the
-old `34/17` box, and that both derive from the shared `dot`. jest renders a tree, not pixels — these are
-source assertions only, and all 5 were proven red first by stashing the source changes, confirming failure,
-then restoring them. **1192 passed, 106 suites** (was 1187/105), `npx expo export --platform android`
-clean, +5 tests. Commit `a59aea9`. Spec archived to `docs/build-log.md`; `docs/specs-open.md`'s queue is
-now empty.
-
-**The exact next step.** ✅ **The Improvements backlog (IMP-001 through IMP-117) is fully cleared** — every
-row is done, deferred (022), or reserved (057, 044 code-complete/unwalked). `docs/specs-open.md` has no open
-spec. The phase ladder (8 / 10b / 11) is explicitly parked until the owner resumes it — **the next build
-chat should ask the owner what to take next rather than opening a phase-ladder row unprompted.** Walk debt
-outstanding: WALK-08 (folds in IMP-117 + DeeperInsights at max font), WALK-19's remaining steps (4e re-run,
-7 re-run, 10, 8, and the Plus-on→off block for IMP-116), WALK-12 (R8, must be last), and WALK-20 (does not
-exist yet in `docs/walk-open.md`, blocked on `EMBER_PACKS_ENABLED`).
-
-_2026-09-11, latest (Opus — **Sitting 1 walked on hardware by the owner: IMP-116 proven, IMP-119
+_2026-09-11, earlier (Opus — **Sitting 1 walked on hardware by the owner: IMP-116 proven, IMP-119
 opened, and WALK-08's IMP-117 pass overturned.**) — ✅ walk closed, two build rows now open._
 
 **What finished.** The owner ran Sitting 1 on their phone. **IMP-116 PASSES** — on lapse the Plus palette
@@ -235,7 +206,29 @@ path is healthy. Step 5's control was dropped by inspection — ownership is con
 `plus` in the revert, the Shop's lock rendering and the persisted state. Still owed and cheap: the
 `6 kept` label (IMP-115) and the no-ember-price check (IMP-108). Docs only, commit `1102865`.
 
-**The exact next step.** Build chats: **IMP-118, then IMP-119** — both JavaScript-only, so they ship
-together by OTA. Walk chats: **Sitting 3 (WALK-12, R8)** — it needs no membership state, and a JS-only OTA
-does not invalidate an R8 pass on the same binary. **Sitting 2** (WALK-19 step 8, real money) waits on the
-owner's choice of second account vs. temporarily leaving the license-tester list.
+**The exact next step (at the time).** Build chats: **IMP-118, then IMP-119** — both JavaScript-only, so
+they ship together by OTA. Walk chats: **Sitting 3 (WALK-12, R8)** — it needs no membership state, and a
+JS-only OTA does not invalidate an R8 pass on the same binary. **Sitting 2** (WALK-19 step 8, real money)
+waits on the owner's choice of second account vs. temporarily leaving the license-tester list.
+
+_2026-09-11, latest (Sonnet — **IMP-118 built: a tied weekday now draws its bar instead of vanishing.**) —
+✅ code-complete, walk owed (folds into WALK-08)._
+
+**What finished.** [`deeper.js`](src/insights/deeper.js) `moodByWeekday` — `b.n = maxN` now runs
+unconditionally whenever a weekday has any moods at all; `b.top` still only sets on a clear winner
+(`winners.length === 1`), so `top: null` on a tie is unchanged and stays test-pinned. `DeeperInsights.js`
+was untouched, per the spec — its soft/outlined branch (`d.top ? c.accent : c.accentSoft`) was already there
+and becomes reachable on its own now that a tied bucket carries real height instead of `0`.
+
+**The proof.** Extended `__tests__/insights/deeper.test.js` with a new tie case asserting `n === maxN` (not
+`0`) alongside `top: null`, proven red first (received `0`, expected the tied count) against the pre-fix
+code. The existing *"returns top: null on a tie"* and *"returns top: null for an empty weekday"* tests pass
+unchanged — the empty-weekday case still reports `n: 0`, keeping the two states distinguishable. **1193
+passed, 106 suites** (was 1192/106), `npx expo export --platform android` clean, +1 test. Commit `dc22e32`.
+Spec archived to `docs/build-log.md`; `docs/specs-open.md`'s queue now holds **IMP-119 only**.
+
+**The exact next step.** Take **IMP-119** (`docs/specs-open.md#imp-119`) — the ember pill's `+` regression:
+restore a `lineHeight`, but derive it from the same font-scale factor the circle already uses, and rewrite
+the `EmberPill.test.js` assertion that currently pins the deleted `lineHeight` in place (a fix that leaves
+it standing has fixed nothing). Walk owed by IMP-118 — folds into WALK-08's re-run (re-add T3's `twoYears`
+fixture, any font scale, Insights tab).

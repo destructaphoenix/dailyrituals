@@ -4790,7 +4790,64 @@ WALK-08.
 
 ---
 
+## IMP-118 — a tied weekday no longer draws as an empty bar (2026-09-11)
+
+**Found by [WALK-08](walk-open.md#walk-08--font-scale), 2026-09-11 (emulator, agent-run).** "Moods by
+weekday" drew bars on Saturday/Sunday only, while "Weekly rhythm" directly above it on the same screen named
+Mon–Fri as the fullest days. [`deeper.js`](../src/insights/deeper.js)'s `moodByWeekday` only assigned `n`
+when one mood won outright, so a tied weekday kept `n: 0` and rendered pixel-identical to a weekday never
+written on.
+
+**What was built.** One line: `b.n = maxN` now runs unconditionally whenever a weekday has any moods at
+all; `b.top` still only sets on a clear winner (`winners.length === 1`), so `top: null` on a tie is
+unchanged and stays test-pinned. [`DeeperInsights.js`](../src/screens/DeeperInsights.js) was untouched —
+its soft/outlined branch (`d.top ? c.accent : c.accentSoft`) was already there and becomes reachable on its
+own now that a tied bucket carries real height.
+
+**The proof.** Extended [`__tests__/insights/deeper.test.js`](../__tests__/insights/deeper.test.js) with a
+new tie case asserting `n === maxN` (not `0`) alongside `top: null`, proven red first against the pre-fix
+code. The existing "returns top: null on a tie" and "returns top: null for an empty weekday" tests pass
+unchanged — the empty-weekday case still reports `n: 0`, keeping the two states distinguishable. **1193
+passed, 106 suites** (was 1192/106), `npx expo export --platform android` clean, +1 test. Commit `dc22e32`.
+
+**Walk owed.** Folds into WALK-08's re-run — re-add technique T3's `twoYears` fixture, any OS font scale,
+Insights tab: every weekday "Weekly rhythm" calls busy should now draw a bar in "Moods by weekday" too,
+outlined with no emoji where moods tie.
+
+---
+
 ## Session notes
+
+_2026-09-11, earlier (Sonnet — **IMP-117 built: the ember pill's `+` and the two custom-mood emoji circles
+now grow with the font instead of clipping at the max OS scale.**) — ✅ code-complete, walk owed (folds
+into WALK-08)._
+
+**What finished.** [`shopui.js`](../src/shopui.js) — dropped the `+`'s literal `lineHeight: 15`; its
+circle's size and radius now derive from `17 * Math.min(PixelRatio.getFontScale(), CHROME_FONT_SCALE)`, so
+the box grows exactly as far as the capped glyph is allowed to. [`WriteFlow.js`](../src/screens/WriteFlow.js)
+— added `maxFontSizeMultiplier={CHROME_FONT_SCALE}` to both the chosen-face and palette-swatch emoji
+`Text`s, and sized both circles from one shared local `dot = 34 * Math.min(PixelRatio.getFontScale(),
+CHROME_FONT_SCALE)` — one const, two call sites, no new module, per the spec. The file's third, unrelated
+34dp circle (the typed-emoji preview) was left untouched — out of scope. No emoji or palette contents
+changed.
+
+**The proof.** New `__tests__/ui/EmberPill.test.js` — source assertions that the `+` carries no literal
+`lineHeight` and the circle derives from `PixelRatio.getFontScale()`. Extended
+[`__tests__/screens/WriteFlowMood.test.js`](../__tests__/screens/WriteFlowMood.test.js) with source
+assertions that both emoji `Text`s carry `maxFontSizeMultiplier={CHROME_FONT_SCALE}`, that neither circle
+hardcodes the old `34/17` box, and that both derive from the shared `dot`. jest renders a tree, not pixels —
+these are source assertions only, and all 5 were proven red first by stashing the source changes, confirming
+failure, then restoring them. **1192 passed, 106 suites** (was 1187/105), `npx expo export --platform
+android` clean, +5 tests. Commit `a59aea9`. Spec archived to `docs/build-log.md`; `docs/specs-open.md`'s
+queue is now empty.
+
+**⚠️ This pass was WRONG on the ember pill.** [WALK-08](walk-open.md#walk-08--font-scale) accepted it on the
+emulator, but the device sitting overturned it — the `+` is off-centre at every font size, including
+default, because this commit deleted a `lineHeight` that was load-bearing. Reopened as
+[IMP-119](specs-open.md#imp-119). The emoji-circle half stands.
+
+**The exact next step (at the time).** ✅ The Improvements backlog (IMP-001 through IMP-117) was believed
+fully cleared. Corrected by the device sitting above.
 
 _2026-09-11 (Sonnet — **IMP-116 built: a Plus cosmetic applied for free reverts to the default on
 lapse instead of staying stranded.**) — ✅ code-complete; **walk CLOSED 2026-09-11 by Sitting 1 on hardware.**_
