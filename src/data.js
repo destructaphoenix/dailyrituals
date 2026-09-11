@@ -177,7 +177,7 @@ export const PLUS_PRICES = {
 // src/recap were numbered against the old six-item list and are now off by one
 // past #3.
 export const PLUS_PERKS = [
-  'Every palette & sky — unlocked forever',
+  "Every palette & sky — yours while you're a member",
   'Three streak candles, every year you stay',
   'On this day — your own words, brought back to you',
   'Deeper insights — moods & seasonal themes',

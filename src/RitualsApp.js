@@ -17,7 +17,7 @@ import { dayKeyOf } from './time/dayKey';
 import { T } from './ui';
 import { CHROME_FONT_SCALE } from './ui/textScale';
 import { HomeIcon, BookIcon, Pencil, ChartIcon, UserIcon } from './icons';
-import { COPY, DAILY_QUESTS, STREAK_MILESTONES, SHOP_PALETTES, EMBER_PACKS, EMBER_GAIN, MAX_CANDLES } from './data';
+import { COPY, DAILY_QUESTS, STREAK_MILESTONES, SHOP_PALETTES, SHOP_SKIES, EMBER_PACKS, EMBER_GAIN, MAX_CANDLES } from './data';
 import HomeScreen from './screens/HomeScreen';
 import ArchiveScreen from './screens/ArchiveScreen';
 import InsightsScreen from './screens/InsightsScreen';
@@ -47,6 +47,7 @@ import { freezeGrantFor } from './billing/freezeGrant';
 import { useLiveEmberProducts } from './billing/useLiveEmberProducts';
 import { pendingEmberGrants } from './billing/emberGrants';
 import { roomFor } from './home/candleCap';
+import { entitledId } from './home/cosmeticEntitlement';
 import { saveState } from './persistence/storage';
 import { pickPersisted } from './persistence/state';
 import { pendingRestoreInventory } from './persistence/restoreQuarantine';
@@ -392,6 +393,31 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     }
     setLastFreezeGrantPeriod(grant.period);
   }, [liveEntitlement, lastFreezeGrantPeriod]);
+
+  // IMP-116: a Plus cosmetic applied for free (applyPalette/applySky never
+  // add to ownedPalettes/ownedSkies — only a purchase does) is active but not
+  // owned. Self-healing rather than transition-only: it runs on every render
+  // these deps change, including a fresh launch that is already stranded, and
+  // is idempotent once reverted (entitledId then returns the id unchanged).
+  React.useEffect(() => {
+    const nextPalette = entitledId(activePalette, ownedPalettes, SHOP_PALETTES, plus, 'goldenhour');
+    const nextSky = entitledId(activeSky, ownedSkies, SHOP_SKIES, plus, 'classic');
+    const paletteChanged = nextPalette !== activePalette;
+    const skyChanged = nextSky !== activeSky;
+    if (!paletteChanged && !skyChanged) return;
+    if (paletteChanged) {
+      setActivePalette(nextPalette);
+      const p = SHOP_PALETTES.find((x) => x.id === nextPalette);
+      if (p) retint(p.swatch);
+    }
+    if (skyChanged) setActiveSky(nextSky);
+    const message = paletteChanged && skyChanged
+      ? 'Plus has ended — your palette and sky are back to the defaults'
+      : paletteChanged
+      ? 'Plus has ended — your palette is back to Golden Hour'
+      : 'Plus has ended — your sky is back to Golden Sun';
+    showToast(message);
+  }, [plus, activePalette, activeSky, ownedPalettes, ownedSkies]);
 
   // Cancel: route to the OS subscription settings (Apple/Google own cancellation),
   // then optimistically mark ending. A focus-refresh (below) corrects from truth.
