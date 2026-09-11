@@ -387,6 +387,48 @@ _Moved from `PROGRESS.md` 2026-09-10 under its size rule. Stable reference, not 
 
 ---
 
+## 🌌 Plus skies — the delivery decision (LOCKED by the owner 2026-09-12)
+
+**Animated Plus skies ship as downloaded content, not as app assets.** Decided after costing the
+alternatives; the owner ruled out the drawn/procedural route (Meteorfall) explicitly — **every hero sky is
+footage, and they must all be the same type**, so no sky may look cheaper than its neighbour.
+
+**The shape of it:**
+
+| Decision | Value | Why |
+| --- | --- | --- |
+| Container / codec | **`.mp4`, H.264 High** | hardware-decoded on every Android that can run this app. HEVC/VP9 save ~40% but narrow the guarantee; **AV1 is out** — software decode on a loop running all session cooks the battery |
+| Resolution | **720×1280 at the chosen crop** | the hero is ~412dp wide; 1080p is wasted bytes |
+| Length / bitrate | **6–10s, ~2–3 Mbps → ~2–3MB per clip** | |
+| Where they live | **a static host, fetched per sky** | the binary ships with **none** of them |
+| When they download | **on unlock / apply**, then cached on device | a user holds only what they own |
+| Playback | **`expo-video`** (SDK 54 pins `~3.0.16`) | `expo-av` is being retired; do not reach for it |
+| Caching | **`expo-file-system`** — already a dependency | download to a local URI, play from disk |
+
+**The three things this buys**, and the reason it beat bundling: the app stays ~4MB instead of ~40MB; a
+user downloads only the skies they own; and **a new sky becomes content rather than code** — no Play
+release per sky. That last one also disposes of the Meteorfall problem: replacing it with footage becomes
+a file upload.
+
+⚠️ **Two hard rules that fall out of this:**
+1. **Never ship clips inside an OTA update.** `expo-updates` hands every user every asset in an update
+   whether they own that sky or not — it would turn a 2-minute update lane into a 30MB push.
+2. **`expo-video` is a native dependency.** The first sky release is a **new binary through Play**
+   (`Release-Lane: build`, `versionCode` bump), not the OTA lane everything since vc15 has used. Only the
+   *first* one — after that, skies are files on a host.
+
+**Named risks, chosen rather than discovered:** first-play latency on a fresh unlock (the poster frame
+covers it — every design card already specifies one); unlocking while offline (queue the download, hold
+the poster); and a user who clears app storage re-downloads. Play Asset Delivery is the fallback if
+hosting ever becomes a problem — Google hosts the assets free — but wiring it through Expo means custom
+Gradle work, so it is not the first move.
+
+**Not yet scoped.** This is the delivery decision only. The build spec waits on the art — which clips
+exist, and which of them loop. Loop technique, subject selection and the day/night rule are in
+[`docs/design-queue.md`](design-queue.md) → "Plus skies".
+
+---
+
 ## 🎨 Claude Design (IMP-078)
 
 **Project `Daily Rituals Design System`** · id `7bf44d09-f93a-42d2-a8b6-d412d671cf60` · writable ·

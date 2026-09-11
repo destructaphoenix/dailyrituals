@@ -304,6 +304,80 @@ last beat. It works (IMP-066 numbered it), but it is the heaviest thing in the l
 
 ---
 
+## 🌌 Plus skies — what to generate, and when a sky needs two clips
+
+> **Delivery is settled** — `.mp4`/H.264, 720p, 6–10s, downloaded per sky, `expo-video` + `expo-file-system`.
+> Locked in [`playbook.md`](playbook.md) → "Plus skies". **This section is the art direction only.**
+
+### The loop rule
+
+A clip loops seamlessly when its motion is **statistically stationary** (any frame could be any other —
+drifting motes, shimmer, particle fields) or **cyclic by construction** (one full rotation, one full
+swing). It cannot loop when the motion **accumulates** (snow piling up in frame), **traverses** (something
+crosses and leaves), or has a **beginning, middle and end** (a wave breaking, a firework).
+
+**So do not generate:** anything moving through frame (this is why `Local Line` cannot be saved as a
+loop), waves that break, petals that land, snow that settles, fireworks — and **sunrise or sunset**, which
+is progressive by definition. That last one stings, given the palette is called Golden Hour, but the light
+changing and never returning is exactly what a loop cannot do.
+
+**Second criterion, equally binding: keep the centre quiet.** The streak numeral sits in the middle of the
+hero. Put the motion at the edges, the top, or in the depth of field. A busy, high-contrast centre makes
+the number unreadable no matter how good the scrim is.
+
+### Does a sky need two clips? It depends on the subject, not on policy
+
+**The hard requirement:** every purchasable sky must render correctly in **both** app modes. A daylit clip
+behind a night UI is broken, and falling back to the default sky punishes someone who paid.
+
+**That is not the same as needing two files:**
+
+- **Lit by the sun → two clips.** Its whole look depends on daylight, so the night version is a different
+  shoot, not a filter. Beaches, blossom, meadows, forest floors.
+- **Makes its own light → one clip.** Fire, stars, aurora, fireflies, caustics, a black hole. These read
+  correctly in both modes because the scrim and the numeral adapt around them, not the art.
+  `Event Horizon` already works this way.
+
+⚠️ **Do not grade one clip into the other.** On footage, a tint-and-exposure pass reads as a filter, not
+as a time of day. Two shoots or one clip — not one clip pretending.
+
+💡 **A one-clip sky is half the bytes and half the generation work.** Build those first.
+
+### Candidates that loop by nature
+
+**One clip, both modes:**
+
+| Sky | Why it loops | Why it belongs here |
+| --- | --- | --- |
+| **Emberfall** — sparks rising from a fire below frame | particles, stationary | the app's currency is **Embers**; nothing else ties the art to the economy this directly |
+| **Candle** — a single flame in the dark | flicker is stationary | a candle **is** the streak-freeze metaphor — `Shop.js` already sells them |
+| **Starfield** — slow rotation | one revolution is an exact loop | the quietest possible hero; the numeral sits in empty sky |
+| **Fireflies** — blinking points over dark grass | random blinking, stationary | |
+| **Caustics** — refracted water-light on a dark floor | endless shimmer | mesmerising at hero scale, tiny to encode |
+| **Lighthouse** — one sweep of the beam | one revolution = one loop | gives a slow, breathing pulse rather than constant motion |
+
+**Two clips, day and night:**
+
+| Sky | Why it loops | Note |
+| --- | --- | --- |
+| **Dust in a sunbeam** (night: the same room, lamplit) | motes drift, nothing accumulates | Golden Hour made literal — the closest of all of these to the app's own palette |
+| **Rain on glass** | droplets run continuously | the most "end of the day" image in the list |
+| **Snowfall** — framed **above** the ground | stationary only if nothing settles in frame | crop matters more here than anywhere else |
+| **Fog over hills** | drifts, never clears | |
+| **Grass or wheat in wind** | sway is cyclic | |
+
+### The existing six, re-read against this rule
+
+| Existing | Verdict |
+| --- | --- |
+| `Event Horizon` | ✅ already one clip, both modes — the model for the rest |
+| `Aurora` | **should probably be one clip, not two.** An aurora is not a daylight phenomenon; the day variant is the weaker idea and it costs a file, a generation and a download |
+| `Fernlight`, `Sakura Fuji`, `Tideline` | daylight-defined → keep both modes |
+| `Meteorfall` | drawn, so it is the odd one out of a set that must match. **Regenerate as footage** — a meteor shower is stationary and loops well |
+| `Local Line` | ⛔ **cannot loop** — the train traverses. Either drop it, or reshoot as a held shot where the *light* moves and the train does not |
+
+---
+
 ## Not in scope — do not ask for these
 
 - **`RayFan` and `NightRays` are frozen.** A design that redraws them cannot ship. `BigSun`/`BigMoon` may
