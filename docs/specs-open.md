@@ -22,13 +22,114 @@
 
 ---
 
-## The queue — empty as of 2026-09-11
+## The queue — one row, opened 2026-09-11 by WALK-08
+
+| Row | What | Severity |
+| --- | --- | --- |
+| ⬜ **IMP-118** | A weekday with entries every single week draws as an **empty bar** whenever its top mood ties — and the card directly above it says the opposite. | 🔴 **the screen contradicts itself** |
+
+---
+
+## IMP-118 — a tied weekday is not an empty weekday
+
+**Found by:** [WALK-08](walk-open.md), 2026-09-11, emulator, agent-run — at max font, but **this is not a
+font bug and it reproduces at every font size.**
+
+**What was seen.** On the Insights tab with a 460-entry journal, "Moods by weekday" drew bars on
+**Saturday and Sunday only**. The "Weekly rhythm" card **immediately above it on the same screen** showed
+**Monday–Friday** as the fullest days. One screen, two cards, opposite claims about the same journal.
+
+**The cause, established by running the shipped function over the fixture rather than by eye:**
+
+```
+label  total  top       n          <- bar height is (n / weekdayMax) * 100%
+M       66    null      0
+T       66    null      0
+W       66    null      0
+T       66    null      0
+F       66    null      0
+S       65    Heavy     9
+S       65    Hopeful   9
+```
+
+[`deeper.js`](../src/insights/deeper.js) `moodByWeekday` builds each bucket as
+`{ l, top: null, n: 0, total: 0 }`, then assigns `top` and `n` **only when one mood wins outright**:
+
+```js
+const winners = ranked.filter(([, n]) => n === maxN);
+if (winners.length === 1) { b.top = winners[0][0]; b.n = maxN; }
+```
+
+On a tie both stay at their initial values, so `n` is `0` — and
+[`DeeperInsights.js:83`](../src/screens/DeeperInsights.js#L83) sizes the bar as
+`` height: `${(d.n / weekdayMax) * 100}%` ``. **A weekday with 66 entries and a tied top mood renders
+pixel-identical to a weekday the user has never written on.**
+
+⚠️ **`top: null` on a tie is CORRECT and deliberate** — it is pinned by an existing test
+(`__tests__/insights/deeper.test.js`, *"returns top: null on a tie"*). **Do not change that.** Refusing to
+crown a winner that does not exist is the honest answer; drawing that refusal as *nothing* is the defect.
+
+⚠️ **Ties are not a fixture artifact.** They are **most** likely on a young journal: two Mondays with two
+different moods already tie. This gets worse the fewer entries a user has, which is exactly backwards.
+
+**The fix, and why it is one line.** The renderer **already** has a branch for a bar with no winner:
+
+```js
+backgroundColor: d.top ? c.accent : c.accentSoft,
+borderWidth: d.top ? 0 : 1,
+borderColor: c.border,
+```
+
+That soft, outlined style exists for precisely this case and is **currently unreachable**, because a
+null `top` always arrives with `n: 0` and therefore zero height. The data layer just never hands it a
+height. So: give the bucket its height on a tie and leave `top` alone.
+
+### Steps
+
+1. In [`src/insights/deeper.js`](../src/insights/deeper.js), `moodByWeekday`: set `b.n = maxN`
+   **unconditionally** whenever the weekday has any moods at all, and keep assigning `b.top` **only** when
+   `winners.length === 1`. A weekday with no entries keeps `n: 0` and draws nothing, which is correct and
+   is what makes the two states distinguishable.
+2. Do **not** touch [`DeeperInsights.js`](../src/screens/DeeperInsights.js). Its soft/outlined branch
+   becomes reachable on its own, and that is the whole visual fix: a tied weekday now draws a bar of the
+   right height, outlined rather than filled, with no emoji under it.
+3. Do **not** touch `moodByMonth` or `moodPairings`. Neither has this shape.
+
+### Acceptance
+
+- The existing *"returns top: null on a tie"* test still passes **unchanged** — prove it red-first by
+  asserting the new `n` behaviour before writing step 1.
+- New tests in `__tests__/insights/deeper.test.js`:
+  - a tie returns `top: null` **and** `n === maxN` (the tied count), not `0`;
+  - a weekday with **no** entries still returns `top: null` **and** `n === 0` — this is the assertion that
+    keeps the two states distinguishable, and it is the point of the whole row;
+  - a clear winner is unchanged.
+- ⚠️ **jest renders a tree, not pixels.** The bar heights are not provable here; what is provable is that
+  the two states now carry different numbers. The visual half re-runs in the walk below.
+
+### The walk it owes
+
+A new **WALK-21** row is NOT needed — fold it into WALK-08's re-run, which needs the same setup: technique
+**T3**'s throwaway `twoYears` scenario (it was reverted after the 2026-09-11 sitting, so re-add it), OS
+font scale anything, Insights tab. **What to see:** every weekday that the "Weekly rhythm" card shows as
+busy now draws a bar in "Moods by weekday" too — outlined with no emoji where the moods tie, filled with an
+emoji where one wins. **The two cards must stop contradicting each other.**
+
+### Commit message (exact)
+
+```
+fix(insights): a tied weekday draws its bar instead of vanishing (IMP-118)
+```
+
+---
+
+
 
 **IMP-117 (the last row, at max font the ember pill's `+` and the custom-mood emoji circles were
 off-centre) is done and archived** in [`docs/build-log.md`](build-log.md#imp-117), commit `a59aea9`. The
-lapse sitting that opened IMP-114 through IMP-117 is fully closed — all four are archived. **No open spec
-remains in this file.** The next build chat should check with the owner before opening the parked phase
-ladder (8 / 10b / 11, in `docs/playbook.md`) — it is not part of this queue.
+lapse sitting that opened IMP-114 through IMP-117 is fully closed — all four are archived. **One open spec
+remains: [IMP-118](#imp-118) above**, opened 2026-09-11 by WALK-08 — take that, not the parked phase ladder
+(8 / 10b / 11, in `docs/playbook.md`), which still needs the owner before anyone opens it.
 
 ---
 

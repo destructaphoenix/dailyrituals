@@ -351,7 +351,7 @@ the lane now; CI (`release.yml`) ships from it on a `Release-Lane:` trailer. **N
 | WALK-12 | 🚦 | [The R8 release-variant pass](#walk-12--the-r8-release-variant-pass) | IMP-044 | **device** | 👤 | ⬜ — **the last 🚦, and it cannot move: R8 must be walked on the exact build you intend to ship.** ✅ **That build now exists: v1.0.7 / vc13 on Play `internal`** (2026-09-05) — install it from Play and walk this row **last**, after every other row has cleared, because any re-cut build invalidates a pass taken before it. Failure is silent |
 | WALK-06 | 🎨 | [Streak insurance — candles spend themselves](build-log.md#walk-06--streak-insurance) | IMP-039, IMP-063, IMP-064 | emulator | 👤 | ✅ **2026-08-16** — full pass, re-run after IMP-063 + IMP-064 landed; detail in `build-log.md` → "Walk log" |
 | WALK-07 | 🎨 | [Modal screens actually scroll](build-log.md#walk-07--modal-scroll) | IMP-042 | emulator | 👤 (visual, two nav modes) | ✅ **FULLY CLOSED 2026-09-11 — the IMP-096 badge re-run PASSED on hardware** (owner-run, OS font scale 2.0, 3-button nav): with the Annual card selected, the **"SAVE 51%" badge sits completely separate from the selected-state checkmark** — the 2026-09-07 blob is gone and [`Paywall.js:30`](../src/screens/Paywall.js#L30)'s computed tick offset holds. ⚠️ **Named gap: gesture nav was not re-checked** at max font; the offset is pure arithmetic with no nav-mode input, so this is recorded as a lowered-but-named gap rather than owed work. ✅ **Bonus proof, unasked:** the badge read **51%**, not 50% — "Save 50%" is only the offline fallback ([`data.js:170`](../src/data.js#L170)), so a computed figure from [`prices.js:26`](../src/billing/prices.js#L26) means the **real Play prices resolved through the live offerings path**. Prior: ✅ **2026-09-07 (emulator, agent-run).** The Paywall half re-run after IMP-080 and it **passes in all four combinations**: default+gesture (first open AND after selecting a plan), max+gesture, max+3-button, default+3-button. Footer sits below its divider, the plan selector and the IMP-043 line are fully visible, content scrolls to the plan selector and clears both footer and nav bar. The 2026-08-16 first-open overlap is gone. The other five screens passed 2026-08-16. 🔴 **One NEW max-font-only defect found: the "SAVE 50%" badge on the Annual card overlaps the top of the selected-state checkmark** (clean at default font). Cosmetic, does not block purchase. **Scoped and BUILT as IMP-096** (`1e12cf7`, 2026-09-07, archived in `build-log.md`) — ✅ **SHIPPED 2026-09-08, group `d42b7ec7`** — the bundle on the phone now carries it (second launch). **Re-run the Paywall at `font_scale` 2.0 in BOTH nav modes on a build that has the fix** to close this; jest cannot see the overlap and nothing here is proven yet |
-| WALK-08 | 🎨 | [Font scale + layout on the nine new screens](#walk-08--font-scale) | IMP-030 regression | **device** (real font metrics) | 👤 | 🟠 **PARTIAL → nearly closed, 2026-09-07 (emulator, agent-run).** Everything previously unrun has now been walked at OS `font_scale` 2.0, **except two items that turned out to be unwalkable.** Harness Inspect confirms the cap bites: **font scale 2, caps 1.5 body / 1.2 chrome.** **Clean at max font:** `TrashSheet` (empty *and* with a real deleted day — date, preview, Restore/Delete forever side by side), `AnnualRecap`, `AnnualRecapCard`, `PlusPerks`, `RestoreOffer`, `OnThisDayCard`, plus the `longName` (40-char) scenario across Home (greeting wraps to 3 lines) and You (wraps 2 lines then ellipsises in the profile header — bounded, not a collapse). 🔴 **`DeeperInsights` FAILS at max font** — see the new defect below. ⏭ **`TipCard` cannot be walked — it no longer exists** (IMP-075 deleted the tip cards, `11fa421`; `grep -rc TipCard src/` is empty). ⏭ **Landscape rotation cannot be walked — the app is hard-locked to portrait** (`app.config.js:6` `orientation: portrait` **and** `AndroidManifest.xml:20` `screenOrientation="portrait"`); the device rotated and the app window stayed `port`. **Both items should be struck from this row, not carried as debt.** This row stays open only for the DeeperInsights item — and **the fix has now BUILT as IMP-095** (`3030bca`, 2026-09-07, archived in `build-log.md`): month rows stack above effective scale 1.3, so the label has no fixed width to wrap inside and the mood line gets two lines. ✅ **SHIPPED 2026-09-08, group `d42b7ec7`** — re-run on the relaunched bundle. ⚠️ **Nothing is proven: jest renders a tree, not pixels, and cannot see the mid-word wrap.** Closing this row means re-opening DeeperInsights at max font on a build that has the fix |
+| WALK-08 | 🎨 | [Font scale + layout on the nine new screens](build-log.md#walk-08--font-scale) | IMP-030 regression | **device** (real font metrics) | 👤 | ✅ **CLOSED 2026-09-11 (emulator, agent-run) — the last item is proven.** Seeded `twoYears` journal (460 entries, Plus on), OS `font_scale` 2.0, cap measured biting in Harness → Inspect: **Font scale 2, caps 1.5 body / 1.2 chrome, window 427×952**. **`DeeperInsights` "Moods by season" PASSES** — September, October, November and December all render their month name whole, no mid-word wrap, and **all three moods show on every row with no ellipsis**. [IMP-095](build-log.md)'s stacking above effective scale 1.3 is doing exactly what it was written to do. ✅ **[IMP-117](build-log.md) proven on both surfaces in the same sitting:** the ember pill's `+` sits centred in a circle that grew with the glyph, and both custom-mood emoji circles (chosen face + palette swatches) hold their emoji centred with margin to spare. 🔴 **One NEW defect found, and it is not a font bug — [IMP-118](specs-open.md#imp-118): a weekday you wrote on every single week draws as an EMPTY bar** whenever its top mood ties. Proven by running the shipped `moodByWeekday` over the fixture: five weekdays hold **66 entries each** and return `n: 0`, so the chart draws nothing and the same screen's "Weekly rhythm" card simultaneously names those days the fullest. ⚠️ **Named gap:** "Moods that travel together" still reads *"Not enough days yet"* here — the dev fixture gives every entry exactly one mood, and pairings need days with two or more, so that third card stayed unexercised. Not a defect, and not proven either. Prior: 🟠 PARTIAL 2026-09-05 / 2026-09-07 — everything else in the row already passed, and `TipCard` + landscape were struck as unwalkable. Detail in `build-log.md` → "Walk log" |
 | WALK-09 | 🎨 | [Lifetime heatmap's four states + the XP line](build-log.md#walk-09--lifetime-heatmap--closed-2026-09-05-emulator-owner-run) | IMP-045, **IMP-073** | emulator | 👤 (visual) | ✅ **2026-09-05** — full pass on the re-run after IMP-073; all three 2026-08-16 defects fixed, re-confirmed at max font. **`not yet started` was not exercised** (fixture has no pre-first-entry days) and the walk was closed with that gap recorded; detail in `build-log.md` → "Walk log" |
 | WALK-10 | 🎨 | [Tips, explainers, empty states](build-log.md#walk-10--teach-the-app) | IMP-041 | emulator | 👤 | ✅ **2026-08-16** — full pass, all 4 steps; owner decided live to drop the tip cards anyway, reserved as **IMP-075**; detail in `build-log.md` → "Walk log" |
 | WALK-14 | ⏭ | [TalkBack can write an entry](build-log.md#-walk-14--talkback-can-write-an-entry--dropped-2026-08-16-owners-call-section-moved-here-2026-08-17) | IMP-059 | **device** | 👤 | ⏭ — **dropped 2026-08-16** per owner; section archived to `build-log.md` → "Walk log". Reopen trigger: an accessibility complaint, or institutional Plus buyers |
@@ -404,64 +404,6 @@ Google account needed:
 **T6 · Release builds work locally.** `android/app/build.gradle` signs `release` with the **debug**
 keystore, so `npx expo run:android --variant release` needs no keystore setup. That build has **no dev
 harness** (`__DEV__` false) and no Metro.
-
----
-
-## WALK-08 — font scale
-
-**Covers:** IMP-030 regression across the screens that did not exist when it was walked.
-
-Emulator → Settings → Display → **font size max + display size largest**. No row may collapse to a
-one-character-per-line column; rows auto-stack. Harness → Inspect shows `PixelRatio.getFontScale()` next
-to `MAX_FONT_SCALE` / `CHROME_FONT_SCALE` — confirm the cap is biting.
-
-**One trap worth more than the result.** React Native reads the font scale **at startup**. Changing
-`font_scale` under a running app moves the system UI immediately and the app not at all — which looks
-exactly like a correctly-clamping cap and is not. The app must be force-stopped and relaunched before any
-measurement here means anything.
-
-**Result — 🟠 2026-09-05 (emulator, agent-run), extended 2026-09-07 (emulator, agent-run).**
-
-**2026-09-05 pass:** cap confirmed biting; clean at max font on Home, Insights, Reflections +
-`ArchiveFilters`, You, achievements and shop sheets.
-
-**2026-09-07 — everything that was still unrun has now been walked, and two items turned out to be
-unwalkable.** Harness → Inspect reads **Font scale 2**, **Font scale cap (body / chrome) 1.5 / 1.2**,
-window 427×952, insets `{top:52, bottom:48}` — the cap is biting, measured rather than inferred.
-
-**Clean at max font (2.0), 3-button nav:**
-- `TrashSheet` — both states. Empty: title, 30-day explainer and the Plus line all wrap, nothing clipped.
-  **Populated with a really-deleted day** (deleted via the Reading sheet so the state was genuine, not
-  faked): date, preview text and the **Restore / Delete forever** buttons sit side by side without
-  collision.
-- `AnnualRecap` — title wraps to two lines, the four stats stack 2×2, mood bars stay aligned, and the
-  page scrolls until the last card clears the nav bar.
-- `AnnualRecapCard` and `OnThisDayCard` on Home — date column and text side by side, no truncation.
-- `PlusPerks` — all five perk bullets wrap, icons stay aligned to the first line.
-- `RestoreOffer` — copy wraps to four lines, both buttons full width inside the card.
-- `longName` (40 chars): **Home** grows the greeting to three lines rather than clipping; **You** wraps to
-  two lines then ellipsises inside the profile header — bounded, not a collapse. **Recap** does not render
-  the name, so the long-name case does not reach it; the long *entry* text it also sets pushed the recap
-  to 26,063 words and the layout held.
-
-🔴 **`DeeperInsights` FAILS at max font.** "Moods by season" wraps month names mid-word — "Septemb/er",
-"Novemb/er", "Decemb/er" — and ellipsises the third mood out of every row. Cause found in the file, not
-guessed: [`DeeperInsights.js:103`](../src/screens/DeeperInsights.js#L103) hardcodes `width: 84` on the
-month label so it cannot grow with the text, and line 104 puts `numberOfLines={1}` + `flex: 1` on the mood
-list. Correct at default font. **Same family as IMP-067.** Needs an `IMP-xxx`; this row stays open for it
-and nothing else.
-
-⏭ **Two listed items cannot be walked and should be struck from the row:**
-- **`TipCard` no longer exists.** IMP-075 ("the tip cards go away", `11fa421`) deleted them;
-  `grep -rc TipCard src/` returns nothing. Carrying it as unrun debt overstates what is owed.
-- **Landscape rotation is impossible by design.** The app is portrait-locked in *two* places —
-  `app.config.js:6` `orientation: 'portrait'` and `AndroidManifest.xml:20`
-  `android:screenOrientation="portrait"`. Setting `user_rotation 1` rotated the device and the app window
-  stayed `port` (`mDisplayRotation=ROTATION_0`, config `port`). There is no rotation to check.
-
-⚠️ **Still true and not closed by this sitting:** the target says `device` for *real font metrics*. These
-results are emulator results. Nothing here depended on physical DPI, but a device pass would be strictly
-stronger.
 
 ---
 

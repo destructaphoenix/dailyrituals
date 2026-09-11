@@ -6902,6 +6902,122 @@ Owner: *"When I press 'Backup my journal' it gives me the option to send or shar
 
 ## Walk log (passed walks, moved out of docs/walk-open.md)
 
+---
+
+### WALK-08 — font scale — ✅ CLOSED 2026-09-11 (emulator, agent-run)
+
+**Result — ✅ PASS, and the row is closed.** Ran on a Pixel 9 Pro AVD against the working tree (Metro, debug
+build), OS `font_scale` 2.0, seeded `twoYears` journal — 460 entries, Plus on, 2000 embers — via technique
+**T3** (the throwaway scenario row was reverted after the sitting, per T3).
+
+**The cap is biting, measured not inferred.** Harness → Inspect: **Font scale 2**, **Font scale cap
+(body / chrome) 1.5 / 1.2**, window **427×952**, insets `{top:52, bottom:24}`.
+
+**✅ `DeeperInsights` — "Moods by season" PASSES at max font.** This was the single item keeping the row
+open. Every month from January to December renders its name **whole** — September, October, November and
+December included, which are the four that broke — and **all three moods appear on every row with no
+ellipsis**. The month name takes its own line and the moods sit below it: [IMP-095](#imp-095)'s stack
+above effective scale 1.3, doing exactly what it was written for. The 2026-09-07 "Septemb/er" wrap is gone.
+
+**✅ [IMP-117](#imp-117) proven on both of its surfaces, same sitting.** The ember pill's `+` sits centred
+in a circle that grew with the capped glyph — no clipping, no drift. Both custom-mood emoji circles (the
+chosen-face circle and the palette swatch row) hold their emoji centred with margin to spare.
+
+**🔴 NEW DEFECT — [IMP-118](specs-open.md#imp-118), and it is NOT a font bug.** "Moods by weekday" drew
+bars on **Saturday and Sunday only**, while the "Weekly rhythm" card **directly above it on the same
+screen** showed Monday–Friday as the fullest days. The screen contradicts itself. Cause established by
+running the shipped `moodByWeekday` over the same fixture rather than by eye:
+
+```
+label  total  top       n
+M       66    null      0
+T       66    null      0
+W       66    null      0
+T       66    null      0
+F       66    null      0
+S       65    Heavy     9
+S       65    Hopeful   9
+```
+
+Five weekdays hold **66 entries each** and return `n: 0`, because `deeper.js` only assigns `top`/`n` when a
+single mood wins outright — a tie leaves both at their initial values. The bar height is
+`(d.n / weekdayMax) * 100%`, so a tied weekday draws at **zero height with no emoji**, which is pixel-identical
+to a weekday the user has never written on. Ties are not a fixture artifact: they are *most* likely on a
+young journal, where two entries on a Monday with different moods already tie.
+
+⚠️ **Named gap — one card stayed unexercised.** "Moods that travel together" still reads *"Not enough days
+yet"* even at 460 entries, because [`generateEntries.js:68`](../src/dev/generateEntries.js#L68) gives every
+entry exactly **one** mood and pairings need days carrying two or more. That is the fixture's shape, not a
+defect — but it is also **not proven**, and closing it needs a fixture that assigns multi-mood days.
+
+**Struck, not owed** (from the 2026-09-07 sitting): `TipCard` no longer exists (IMP-075 deleted it), and
+landscape is impossible — the app is portrait-locked in `app.config.js` and `AndroidManifest.xml` both.
+
+⚠️ **These are emulator results.** The row's target says `device` for real font metrics. Nothing here
+depended on physical DPI, but a device pass would be strictly stronger.
+
+**The prior partial record, kept for the reasoning:**
+
+#### Prior record — WALK-08 as it stood before closure
+
+**Covers:** IMP-030 regression across the screens that did not exist when it was walked.
+
+Emulator → Settings → Display → **font size max + display size largest**. No row may collapse to a
+one-character-per-line column; rows auto-stack. Harness → Inspect shows `PixelRatio.getFontScale()` next
+to `MAX_FONT_SCALE` / `CHROME_FONT_SCALE` — confirm the cap is biting.
+
+**One trap worth more than the result.** React Native reads the font scale **at startup**. Changing
+`font_scale` under a running app moves the system UI immediately and the app not at all — which looks
+exactly like a correctly-clamping cap and is not. The app must be force-stopped and relaunched before any
+measurement here means anything.
+
+**Result — 🟠 2026-09-05 (emulator, agent-run), extended 2026-09-07 (emulator, agent-run).**
+
+**2026-09-05 pass:** cap confirmed biting; clean at max font on Home, Insights, Reflections +
+`ArchiveFilters`, You, achievements and shop sheets.
+
+**2026-09-07 — everything that was still unrun has now been walked, and two items turned out to be
+unwalkable.** Harness → Inspect reads **Font scale 2**, **Font scale cap (body / chrome) 1.5 / 1.2**,
+window 427×952, insets `{top:52, bottom:48}` — the cap is biting, measured rather than inferred.
+
+**Clean at max font (2.0), 3-button nav:**
+- `TrashSheet` — both states. Empty: title, 30-day explainer and the Plus line all wrap, nothing clipped.
+  **Populated with a really-deleted day** (deleted via the Reading sheet so the state was genuine, not
+  faked): date, preview text and the **Restore / Delete forever** buttons sit side by side without
+  collision.
+- `AnnualRecap` — title wraps to two lines, the four stats stack 2×2, mood bars stay aligned, and the
+  page scrolls until the last card clears the nav bar.
+- `AnnualRecapCard` and `OnThisDayCard` on Home — date column and text side by side, no truncation.
+- `PlusPerks` — all five perk bullets wrap, icons stay aligned to the first line.
+- `RestoreOffer` — copy wraps to four lines, both buttons full width inside the card.
+- `longName` (40 chars): **Home** grows the greeting to three lines rather than clipping; **You** wraps to
+  two lines then ellipsises inside the profile header — bounded, not a collapse. **Recap** does not render
+  the name, so the long-name case does not reach it; the long *entry* text it also sets pushed the recap
+  to 26,063 words and the layout held.
+
+🔴 **`DeeperInsights` FAILS at max font.** "Moods by season" wraps month names mid-word — "Septemb/er",
+"Novemb/er", "Decemb/er" — and ellipsises the third mood out of every row. Cause found in the file, not
+guessed: [`DeeperInsights.js:103`](../src/screens/DeeperInsights.js#L103) hardcodes `width: 84` on the
+month label so it cannot grow with the text, and line 104 puts `numberOfLines={1}` + `flex: 1` on the mood
+list. Correct at default font. **Same family as IMP-067.** Needs an `IMP-xxx`; this row stays open for it
+and nothing else.
+
+⏭ **Two listed items cannot be walked and should be struck from the row:**
+- **`TipCard` no longer exists.** IMP-075 ("the tip cards go away", `11fa421`) deleted them;
+  `grep -rc TipCard src/` returns nothing. Carrying it as unrun debt overstates what is owed.
+- **Landscape rotation is impossible by design.** The app is portrait-locked in *two* places —
+  `app.config.js:6` `orientation: 'portrait'` and `AndroidManifest.xml:20`
+  `android:screenOrientation="portrait"`. Setting `user_rotation 1` rotated the device and the app window
+  stayed `port` (`mDisplayRotation=ROTATION_0`, config `port`). There is no rotation to check.
+
+⚠️ **Still true and not closed by this sitting:** the target says `device` for *real font metrics*. These
+results are emulator results. Nothing here depended on physical DPI, but a device pass would be strictly
+stronger.
+
+---
+
+
+
 ## WALK-03 — JSON export round trip
 
 **Covers:** IMP-020, plus IMP-043's backup-health copy. **Target: device** (real share-sheet targets).
