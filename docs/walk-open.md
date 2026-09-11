@@ -183,6 +183,79 @@ stay centred. That is [IMP-117](build-log.md), and doing it here leaves only Dee
 It becomes walkable only when the holding drains to **2 or fewer** — candles are spent by missing days, so
 this is a matter of time, not of sequencing. **Do not record it as passed because nothing went wrong.**
 
+#### ✅ SITTING 1 — DONE 2026-09-11, owner-run, device. Its purpose is achieved; do not re-run it.
+
+**The sitting was written to prove [IMP-116](build-log.md), and IMP-116 is proven.** It also found one
+defect the emulator had called a pass. What it did **not** do is exercise IMP-114 or two cosmetic checks —
+all three are blocked or cheap-elsewhere, none justify a second 45-minute sitting. **Next: Sitting 2 or 3.**
+
+**PROVEN:**
+- ✅ **[IMP-116](build-log.md) PASSES, in its exact intended shape.** After the subscription lapsed, the
+  app reverted the Plus sky and palette to default and explained it in **one** message. That is step 9's
+  pass shape and it rules out three of step 10's four failure modes (no revert / no message / two-plus
+  messages).
+- ✅ **[IMP-117](build-log.md)'s emoji half PASSES on hardware** — the custom-mood circles hold their
+  emoji centred at default *and* max font.
+- 🔴 **[IMP-117](build-log.md)'s ember-pill half FAILS on hardware** — the `+` is off-centre at **default
+  font as well as max**. Scoped as **[IMP-119](specs-open.md#imp-119)**; it is a regression that `a59aea9`
+  introduced, and a test currently pins it in place.
+
+**🚦 UNRUNNABLE — step 2 / [IMP-114](build-log.md), and the plan above was wrong to ask for it.**
+The owner reports they still cannot get a candle pack to *buy* — it answers, but always with a refusal.
+**Confirmed in source, not guessed:**
+[`RitualsApp.js:320-333`](../src/RitualsApp.js#L320) checks the **cap before affordability** —
+
+```js
+if (freezes + pack.count > MAX_CANDLES) { showToast(`You can hold ${MAX_CANDLES}…`); return; }
+if (embers < pack.price)                { showToast(shortfallCopy(…)); return; }   // ← IMP-114 lives here
+```
+
+With `freezes = 6` and [`MAX_CANDLES = 3`](../src/data.js#L150), **every** pack trips the first guard and
+returns. **IMP-114's shortfall message is unreachable on this device** — not broken, not proven, simply
+never executed. ⚠️ **Step 2 is blocked by the identical condition as 7C**, and the plan named that blocker
+for 7C while failing to notice step 2 shares it. **Both unlock only when the holding drains to 2 or fewer.**
+**IMP-114 remains unexercised after five sittings** — now for a new reason, which is worth saying plainly:
+the disabled button *was* removed ([`Shop.js:107`](../src/screens/Shop.js#L107) has no `disabled` prop, only
+`opacity: 0.5` dimming), so the fix landed; the guard order hides it.
+
+✅ **ANSWERED 2026-09-11 — the tap DOES respond**, with exactly the expected string: *"You can hold 3
+candles — you have 6"*. **So there is no second defect, and the toast path is healthy.** IMP-114's own
+message is simply gated behind a guard that returns first. **Record IMP-114 as UNEXERCISED, not as passed
+and not as failed.**
+
+**✅ THE CONTROL HALF — resolved by inspection, and step 5 is safe to SKIP. Do not re-run 45 minutes for it.**
+Step 5/9 existed to catch **over-reverting** (step 10's worst shape: the app taking back an item real
+embers were spent on). **Every path that could do that consults ownership independently of membership:**
+
+1. **The revert itself** — [`cosmeticEntitlement.js:10`](../src/home/cosmeticEntitlement.js#L10):
+   `if (ownedIds.includes(activeId)) return activeId;` sits **above** the `plus` check, so an owned item is
+   returned unchanged whatever membership says.
+2. **The Shop's lock rendering** — [`Shop.js:41-45`](../src/screens/Shop.js#L41): ownership is its own
+   `||` arm (`plus || tier === 'owned' || ownedPalettes.includes(p.id)`), so it still reads `owned` once
+   `plus` goes false. An ember-bought item cannot re-lock.
+3. **Persistence across the cold start** — both lists are in the persisted key set
+   ([`persistence/state.js:20`](../src/persistence/state.js#L20)) and rehydrate into `useState`, so the
+   relaunch in step 8 does not empty them.
+
+**The risk step 5 was written to detect is structurally absent in all three.** Inspection is not a walk and
+this is **not** recorded as a runtime pass — but the expected value of re-running for it is near zero.
+
+⚠️ **A FLAW IN THIS PLAN, for whoever writes the next one: steps 4 and 5 compete for the same two slots.**
+Step 4 requires a Plus palette **and** a Plus sky to be worn; there are only two slots. So an ember-bought
+item **can never be the active item at the moment of lapse** in this sitting as written — meaning step 5
+could only ever have tested Shop *lock rendering*, never the *revert* path it reads as though it targets.
+The owner's outcome confirms it: they got the **both-changed** message
+([`RitualsApp.js:414`](../src/RitualsApp.js#L414)), so both slots held Plus-tier unowned items. **Split
+these into two lapses, or drop the step, next time.**
+
+**NOT REPORTED — these stayed silent and are NOT passes:**
+- Step 1 — does the candle line read **`6 kept`** with no `/ 3`? ([IMP-115](build-log.md)'s whole fix.) The
+  owner confirmed *holding* 6, not how it is *rendered*. ⚠️ **Cheap to close** — one look at the Shop's
+  Candles header, no state needed; fold it into any later sitting.
+- Step 4 — did the Plus palette and sky show **no ember price**, and did the balance **not move**?
+  ([IMP-108](build-log.md) re-proof.) Needs Plus back on, so it rides with a future membership sitting.
+- Step 6 — did Plus correctly **stay** after Cancel was tapped, rather than vanishing immediately?
+
 ---
 
 ### Sitting 2 — WALK-19 step 8: one real transaction, refunded
@@ -351,7 +424,7 @@ the lane now; CI (`release.yml`) ships from it on a `Release-Lane:` trailer. **N
 | WALK-12 | 🚦 | [The R8 release-variant pass](#walk-12--the-r8-release-variant-pass) | IMP-044 | **device** | 👤 | ⬜ — **the last 🚦, and it cannot move: R8 must be walked on the exact build you intend to ship.** ✅ **That build now exists: v1.0.7 / vc13 on Play `internal`** (2026-09-05) — install it from Play and walk this row **last**, after every other row has cleared, because any re-cut build invalidates a pass taken before it. Failure is silent |
 | WALK-06 | 🎨 | [Streak insurance — candles spend themselves](build-log.md#walk-06--streak-insurance) | IMP-039, IMP-063, IMP-064 | emulator | 👤 | ✅ **2026-08-16** — full pass, re-run after IMP-063 + IMP-064 landed; detail in `build-log.md` → "Walk log" |
 | WALK-07 | 🎨 | [Modal screens actually scroll](build-log.md#walk-07--modal-scroll) | IMP-042 | emulator | 👤 (visual, two nav modes) | ✅ **FULLY CLOSED 2026-09-11 — the IMP-096 badge re-run PASSED on hardware** (owner-run, OS font scale 2.0, 3-button nav): with the Annual card selected, the **"SAVE 51%" badge sits completely separate from the selected-state checkmark** — the 2026-09-07 blob is gone and [`Paywall.js:30`](../src/screens/Paywall.js#L30)'s computed tick offset holds. ⚠️ **Named gap: gesture nav was not re-checked** at max font; the offset is pure arithmetic with no nav-mode input, so this is recorded as a lowered-but-named gap rather than owed work. ✅ **Bonus proof, unasked:** the badge read **51%**, not 50% — "Save 50%" is only the offline fallback ([`data.js:170`](../src/data.js#L170)), so a computed figure from [`prices.js:26`](../src/billing/prices.js#L26) means the **real Play prices resolved through the live offerings path**. Prior: ✅ **2026-09-07 (emulator, agent-run).** The Paywall half re-run after IMP-080 and it **passes in all four combinations**: default+gesture (first open AND after selecting a plan), max+gesture, max+3-button, default+3-button. Footer sits below its divider, the plan selector and the IMP-043 line are fully visible, content scrolls to the plan selector and clears both footer and nav bar. The 2026-08-16 first-open overlap is gone. The other five screens passed 2026-08-16. 🔴 **One NEW max-font-only defect found: the "SAVE 50%" badge on the Annual card overlaps the top of the selected-state checkmark** (clean at default font). Cosmetic, does not block purchase. **Scoped and BUILT as IMP-096** (`1e12cf7`, 2026-09-07, archived in `build-log.md`) — ✅ **SHIPPED 2026-09-08, group `d42b7ec7`** — the bundle on the phone now carries it (second launch). **Re-run the Paywall at `font_scale` 2.0 in BOTH nav modes on a build that has the fix** to close this; jest cannot see the overlap and nothing here is proven yet |
-| WALK-08 | 🎨 | [Font scale + layout on the nine new screens](build-log.md#walk-08--font-scale) | IMP-030 regression | **device** (real font metrics) | 👤 | ✅ **CLOSED 2026-09-11 (emulator, agent-run) — the last item is proven.** Seeded `twoYears` journal (460 entries, Plus on), OS `font_scale` 2.0, cap measured biting in Harness → Inspect: **Font scale 2, caps 1.5 body / 1.2 chrome, window 427×952**. **`DeeperInsights` "Moods by season" PASSES** — September, October, November and December all render their month name whole, no mid-word wrap, and **all three moods show on every row with no ellipsis**. [IMP-095](build-log.md)'s stacking above effective scale 1.3 is doing exactly what it was written to do. ✅ **[IMP-117](build-log.md) proven on both surfaces in the same sitting:** the ember pill's `+` sits centred in a circle that grew with the glyph, and both custom-mood emoji circles (chosen face + palette swatches) hold their emoji centred with margin to spare. 🔴 **One NEW defect found, and it is not a font bug — [IMP-118](specs-open.md#imp-118): a weekday you wrote on every single week draws as an EMPTY bar** whenever its top mood ties. Proven by running the shipped `moodByWeekday` over the fixture: five weekdays hold **66 entries each** and return `n: 0`, so the chart draws nothing and the same screen's "Weekly rhythm" card simultaneously names those days the fullest. ⚠️ **Named gap:** "Moods that travel together" still reads *"Not enough days yet"* here — the dev fixture gives every entry exactly one mood, and pairings need days with two or more, so that third card stayed unexercised. Not a defect, and not proven either. Prior: 🟠 PARTIAL 2026-09-05 / 2026-09-07 — everything else in the row already passed, and `TipCard` + landscape were struck as unwalkable. Detail in `build-log.md` → "Walk log" |
+| WALK-08 | 🎨 | [Font scale + layout on the nine new screens](build-log.md#walk-08--font-scale) | IMP-030 regression | **device** (real font metrics) | 👤 | ✅ **CLOSED 2026-09-11 (emulator, agent-run) — the last item is proven.** Seeded `twoYears` journal (460 entries, Plus on), OS `font_scale` 2.0, cap measured biting in Harness → Inspect: **Font scale 2, caps 1.5 body / 1.2 chrome, window 427×952**. **`DeeperInsights` "Moods by season" PASSES** — September, October, November and December all render their month name whole, no mid-word wrap, and **all three moods show on every row with no ellipsis**. [IMP-095](build-log.md)'s stacking above effective scale 1.3 is doing exactly what it was written to do. 🔴 **[IMP-117](build-log.md) — this row's ✅ was HALF WRONG and is CORRECTED 2026-09-11 by the device.** What it claimed: *"the ember pill's `+` sits centred in a circle that grew with the glyph, and both custom-mood emoji circles (chosen face + palette swatches) hold their emoji centred with margin to spare."* **The emoji half stands** — the owner re-confirmed both circles correct at default *and* max font on hardware. **The ember-pill half is false:** on a real device the `+` is off-centre at **every** font size, default included. Now [IMP-119](specs-open.md#imp-119). ⚠️ **How the emulator got it wrong, because it will happen again:** this was a by-eye call on a **17dp** circle, and the underlying miss is a **line-box** offset of a couple of points — below what an emulator screenshot resolves, and dependent on real font metrics the emulator does not reproduce. **A glyph-centring claim is not emulator-provable.** Any future row of this shape is `device` or it is not answered. 🔴 **One NEW defect found, and it is not a font bug — [IMP-118](specs-open.md#imp-118): a weekday you wrote on every single week draws as an EMPTY bar** whenever its top mood ties. Proven by running the shipped `moodByWeekday` over the fixture: five weekdays hold **66 entries each** and return `n: 0`, so the chart draws nothing and the same screen's "Weekly rhythm" card simultaneously names those days the fullest. ⚠️ **Named gap:** "Moods that travel together" still reads *"Not enough days yet"* here — the dev fixture gives every entry exactly one mood, and pairings need days with two or more, so that third card stayed unexercised. Not a defect, and not proven either. Prior: 🟠 PARTIAL 2026-09-05 / 2026-09-07 — everything else in the row already passed, and `TipCard` + landscape were struck as unwalkable. Detail in `build-log.md` → "Walk log" |
 | WALK-09 | 🎨 | [Lifetime heatmap's four states + the XP line](build-log.md#walk-09--lifetime-heatmap--closed-2026-09-05-emulator-owner-run) | IMP-045, **IMP-073** | emulator | 👤 (visual) | ✅ **2026-09-05** — full pass on the re-run after IMP-073; all three 2026-08-16 defects fixed, re-confirmed at max font. **`not yet started` was not exercised** (fixture has no pre-first-entry days) and the walk was closed with that gap recorded; detail in `build-log.md` → "Walk log" |
 | WALK-10 | 🎨 | [Tips, explainers, empty states](build-log.md#walk-10--teach-the-app) | IMP-041 | emulator | 👤 | ✅ **2026-08-16** — full pass, all 4 steps; owner decided live to drop the tip cards anyway, reserved as **IMP-075**; detail in `build-log.md` → "Walk log" |
 | WALK-14 | ⏭ | [TalkBack can write an entry](build-log.md#-walk-14--talkback-can-write-an-entry--dropped-2026-08-16-owners-call-section-moved-here-2026-08-17) | IMP-059 | **device** | 👤 | ⏭ — **dropped 2026-08-16** per owner; section archived to `build-log.md` → "Walk log". Reopen trigger: an accessibility complaint, or institutional Plus buyers |

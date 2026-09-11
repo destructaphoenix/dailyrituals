@@ -22,11 +22,12 @@
 
 ---
 
-## The queue — one row, opened 2026-09-11 by WALK-08
+## The queue — two rows, opened 2026-09-11
 
 | Row | What | Severity |
 | --- | --- | --- |
 | ⬜ **IMP-118** | A weekday with entries every single week draws as an **empty bar** whenever its top mood ties — and the card directly above it says the opposite. | 🔴 **the screen contradicts itself** |
+| ⬜ **IMP-119** | IMP-117 deleted the one line that optically centred the ember pill's `+`. It is now off-centre at **every** font size, including default — and a test pins the regression in place. | 🟠 **shipped cosmetic regression** |
 
 ---
 
@@ -123,12 +124,110 @@ fix(insights): a tied weekday draws its bar instead of vanishing (IMP-118)
 
 ---
 
+## IMP-119 — the ember pill's `+` lost the line that centred it
+
+**Found by:** the device sitting plan, **Sitting 1, 2026-09-11, owner-run, real hardware.** This is a
+**regression introduced by [IMP-117](build-log.md#imp-117)** (`a59aea9`), not a survival of the bug IMP-117
+was opened to fix.
+
+**What was seen.** The `+` in the ember balance pill is off-centre in its circle **at max font AND at
+default font**. The owner's words: *"off center in max font AND even in the default font. Something
+clearly went wrong here."* The **custom-mood emoji circles — the other half of IMP-117 — are correct at
+both font sizes**, confirmed in the same sitting. So IMP-117 half-worked: it fixed the emoji circles and
+broke the pill.
+
+⚠️ **[WALK-08](walk-open.md#walk-08--font-scale) closed on 2026-09-11 claiming the exact opposite** —
+*"the ember pill's `+` sits centred in a circle that grew with the glyph."* That was an **emulator**
+judgement, by eye, on a 17dp circle. The device overrules it. See the corrected row in `walk-open.md`.
+
+### The cause — one deleted declaration
+
+IMP-117 made **two** changes to [`shopui.js`](../src/shopui.js) `EmberPill`. Keep the first, undo the second.
+
+1. ✅ **RIGHT, and it stays.** The circle now scales with the font:
+   `const plusSize = 17 * Math.min(PixelRatio.getFontScale(), CHROME_FONT_SCALE)`. That was the genuine
+   max-font fix and it is doing its job.
+2. 🔴 **THE REGRESSION.** `lineHeight: 15` was **deleted** from the `+` glyph's `<T>`, leaving a bare
+   `fontSize: 13`.
+
+```diff
+-<T … style={{ fontSize: 13, lineHeight: 15 }}>+</T>
++<T … style={{ fontSize: 13 }}>+</T>
+```
+
+**That `lineHeight` was load-bearing, not decoration.** A `+` does not sit at the centre of its own line
+box: it is drawn above the baseline, and a line box taken from the font's natural metrics reserves
+descender space *below* the baseline that a `+` never occupies. `justifyContent: 'center'` centres the
+**line box**, not the ink — so once the box regained its natural descender slack, the visible glyph rode
+high. `lineHeight: 15` against `fontSize: 13` had tightened that box and pulled the glyph back to optical
+centre. Deleting it restored the asymmetry at **every** scale, which is exactly the owner's report.
+
+**This is also why the emoji circles are fine and the `+` is not** — an emoji fills its em box, so centring
+its line box centres the glyph. A punctuation glyph does not. The two halves of IMP-117 were never the
+same problem, and applying one remedy to both is what broke this one.
+
+### The fix
+
+Restore a `lineHeight`, but **derive it from the same scale factor the circle already uses**, so it can
+neither clip at max font (IMP-117's original complaint) nor decentre at default (this row):
+
+```js
+const fontScale = Math.min(PixelRatio.getFontScale(), CHROME_FONT_SCALE);
+const plusSize  = 17 * fontScale;
+…
+<T d w={800} color={c.onAccent} maxFontSizeMultiplier={CHROME_FONT_SCALE} numberOfLines={1}
+   style={{ fontSize: 13, lineHeight: 15 * fontScale }}>+</T>
+```
+
+The 13/15 ratio is the proportion that shipped correctly for the whole life of the pill before `a59aea9`.
+Scaling both by one factor preserves it at every font size.
+
+⚠️ **Do NOT centre it with `marginTop` / `paddingBottom`.** A fixed dp nudge does not scale with the font,
+which is the precise shape of the bug IMP-117 existed to remove. Whoever reaches for a margin here is
+reintroducing IMP-117 to fix IMP-119.
+
+### ⚠️ A test currently pins the regression in place
+
+[`__tests__/ui/EmberPill.test.js`](../__tests__/ui/EmberPill.test.js) asserts the deletion:
+
+```js
+test('the "+" text carries no literal lineHeight', () => {
+  expect(SRC).not.toMatch(/fontSize: 13, lineHeight: 15/);
+});
+```
+
+**That test was written to lock in the defect and it must be rewritten**, not worked around — require a
+*scaled* lineHeight rather than the absence of one. A change that leaves this assertion standing has not
+fixed the row. The sibling assertion (`plusSize` derives from the capped font scale) is correct — keep it.
+
+### Tests
+
+- Rewrite the assertion above to demand `lineHeight: 15 * fontScale` (or whatever the final expression is).
+- Keep the `plusSize` assertion unchanged.
+- ⚠️ **jest renders a tree, not pixels.** These stay source assertions; they cannot prove centring. The real
+  acceptance is the walk — **and this row has now been called wrong once from an emulator, so the walk is
+  `device`, not `emulator`.**
+
+### The walk it owes
+
+Fold into the **Sitting 1 optional add-on**, which already has the owner in the Shop at two font sizes.
+**What to see:** the `+` sits optically centred in its circle at default font *and* at max font, and the
+emoji circles stay correct.
+
+### Commit message (exact)
+
+```
+fix(a11y): the ember plus keeps a lineHeight that scales with it (IMP-119)
+```
+
+---
 
 
-**IMP-117 (the last row, at max font the ember pill's `+` and the custom-mood emoji circles were
-off-centre) is done and archived** in [`docs/build-log.md`](build-log.md#imp-117), commit `a59aea9`. The
-lapse sitting that opened IMP-114 through IMP-117 is fully closed — all four are archived. **One open spec
-remains: [IMP-118](#imp-118) above**, opened 2026-09-11 by WALK-08 — take that, not the parked phase ladder
+
+**IMP-117 is archived** in [`docs/build-log.md`](build-log.md#imp-117), commit `a59aea9` — but **half of it
+regressed and is reopened as [IMP-119](#imp-119) above**; read that row before touching `EmberPill`. The
+lapse sitting that opened IMP-114 through IMP-117 is otherwise closed. **Two open specs remain:
+[IMP-118](#imp-118) and [IMP-119](#imp-119)** — take those, not the parked phase ladder
 (8 / 10b / 11, in `docs/playbook.md`), which still needs the owner before anyone opens it.
 
 ---
