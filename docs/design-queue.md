@@ -309,6 +309,67 @@ last beat. It works (IMP-066 numbered it), but it is the heaviest thing in the l
 > **Delivery is settled** — `.mp4`/H.264, 720p, 6–10s, downloaded per sky, `expo-video` + `expo-file-system`.
 > Locked in [`playbook.md`](playbook.md) → "Plus skies". **This section is the art direction only.**
 
+### The frame — measured from the hero box, not guessed
+
+The hero art is full-bleed in the streak card: **the card's full width × 336dp tall** (the design cards'
+own figure). Width is fluid and height is fixed, so **the box changes aspect with the device**:
+
+| Device | Card | Box in px | Box aspect |
+| --- | --- | --- | --- |
+| small phone (320dp @2×) | 280dp | 560 × 672 | 0.83 |
+| common 1080p (360dp @3×) | 320dp | 960 × 1008 | 0.95 |
+| Pixel-class (411dp @2.625×) | 371dp | 974 × 882 | 1.10 |
+| large phone (432dp @3×) | 392dp | 1176 × 1008 | 1.17 |
+| 1440p flagship (411dp @3.5×) | 371dp | **1298 × 1176** | 1.10 |
+
+**So the box is near-square — 0.83 to 1.17 — and the worst case to cover without upscaling is 1298×1176.**
+
+**Generate square.** Under `cover`, how much of the source survives the crop:
+
+| Source | Narrow box | Wide box |
+| --- | --- | --- |
+| **1:1** | **83%** | **86%** |
+| 4:3 | 63% | 88% |
+| 9:16 portrait | 68% | 48% |
+| 16:9 landscape | 47% | 66% |
+
+A 16:9 clip throws away half the frame you paid to generate, and every byte of it still ships.
+
+> ### The numbers
+>
+> **1280 × 1280, 1:1 · 6–10s · 30fps · H.264 High · ~2.5–3 Mbps · no audio → ~2.5–3.5MB**
+>
+> 1440×1440 if the generator offers it and the file stays under ~4MB. **1080×1080 is the floor** — it
+> upscales ~1.09× on a 1440p flagship, which is invisible on footage under a scrim.
+
+**Two safe zones, both binding:**
+
+- **Crop margin.** Up to 17% of width (narrow devices) or 14% of height (wide ones) is cropped away.
+  Keep anything essential inside a **centred 83% × 86%** region — nothing that matters in the outer ~8%.
+- **The numeral's quiet centre.** The streak number sits mid-frame and the bottom **~28%** (96 of 336dp)
+  sits under a scrim. Keep the central region low-contrast and low-detail; put the motion in the top
+  third, the edges, or out of focus.
+
+**The encode**, once a clip is chosen:
+
+```sh
+ffmpeg -i in.mp4 \
+  -vf "scale=1280:1280:force_original_aspect_ratio=increase,crop=1280:1280,fps=30" \
+  -c:v libx264 -profile:v high -pix_fmt yuv420p \
+  -crf 21 -maxrate 3M -bufsize 6M \
+  -g 60 -keyint_min 60 -sc_threshold 0 \
+  -an -movflags +faststart out.mp4
+```
+
+`-an` drops the audio track — nothing here has sound, and a silent track still costs bytes and can trip
+autoplay policies. `+faststart` moves the index to the front, which matters because these are downloaded.
+`-g 60` with `-sc_threshold 0` gives a keyframe every 2s, so the half-offset crossfade loop can seek
+cleanly. **Use `crop`, not `pad`** — the black bars `pad` adds would be baked into the file.
+
+⚠️ **Crop position is per sky.** The design cards already chose the focal band for each existing clip
+(`50% 68%` Aurora, `50% 46%` Fernlight, `50% 38%` Sakura Fuji, `50% 50%` Tideline). Bake that into the
+`crop` above with an explicit offset rather than centring blindly.
+
 ### The loop rule
 
 A clip loops seamlessly when its motion is **statistically stationary** (any frame could be any other —
@@ -375,6 +436,76 @@ as a time of day. Two shoots or one clip — not one clip pretending.
 | `Fernlight`, `Sakura Fuji`, `Tideline` | daylight-defined → keep both modes |
 | `Meteorfall` | drawn, so it is the odd one out of a set that must match. **Regenerate as footage** — a meteor shower is stationary and loops well |
 | `Local Line` | ⛔ **cannot loop** — the train traverses. Either drop it, or reshoot as a held shot where the *light* moves and the train does not |
+
+### The 36-idea sweep — 2026-09-12
+
+A list of 36 subjects was put up for the hero. All 36 are judged below. Three filters do the work, and
+only the first one is new:
+
+1. **The loop rule** (above) — stationary or cyclic.
+2. **The quiet centre** (above) — the streak numeral owns the middle.
+3. 🆕 **Field, not object.** Every one of the existing six is a *field*: weather, light, particles,
+   distance. A field has no silhouette, so it crops to 720×1280 at any framing and sits *behind* the
+   numeral as ground. A single recognisable object — a watch, a record, a pendulum, a cup — puts a second
+   subject in the frame, competes with the numeral for the eye, and does not survive a portrait crop.
+   It is also the same argument the delivery decision already made: the set must look like one set.
+
+⚠️ **A visible mechanism shows the seam.** Gears, a second hand, a pendulum and an orrery all carry their
+own clock. Loop an 8s clip of one and the viewer sees the hand jump backwards — a seam that a particle
+field never has. An orrery is worse: a true loop needs every orbit to share a period, which real orbits
+do not. Cyclic on paper is not the same as loopable.
+
+**Build these first — one clip, self-lit, quiet centre, and each one earns its place:**
+
+| Sky | Verdict |
+| --- | --- |
+| **Emberfall** | ✅ **the strongest idea in the list.** Motion enters from the bottom edge and dies before the middle, so the centre is quiet by construction — and it is the only subject that names the app's own currency |
+| **Fireflies** | ✅ "sparse points near the edges" *is* the quiet-centre rule, already obeyed |
+| **Star Rotation** | ✅ exact cyclic loop, emptiest possible centre. Same family as the existing `Meteorfall` regen — ship one or the other first, not both |
+| **Candlelight** | ✅ off-centre flame, stationary flicker, and the candle is already merchandise in `Shop.js` |
+| **City Window at Night** | ✅ **this is the fix for `Local Line`.** "Bokeh shimmer, no cars traversing the frame" is exactly the held shot where the light moves and the vehicle does not |
+| **Snow Globe** | ✅ suspended particles that never settle — it solves the accumulation problem that makes plain snowfall a two-clip, crop-sensitive risk |
+| **Japanese Lanterns** | ✅ self-lit, sways in place, and visually unlike anything in the set |
+| **Moonlit Clouds** | ✅ drift around a fixed point; night-defined, so one clip, on the `Aurora` precedent. Keep the moon out of the middle third |
+| **Lighthouse** | ✅ already a candidate. One caveat: the beam must sweep the **upper** frame, or it strobes across the numeral once a cycle |
+| **Crystal Refractions** | ✅ "highlights shifting around the borders" obeys the centre rule by construction. Weakest *idea* of the ten — it risks reading as a screensaver rather than a place |
+
+**Two clips, and worth the second file:**
+
+| Sky | Verdict |
+| --- | --- |
+| **Dust in Sunlight** | ✅ already the pick of the two-clip set — Golden Hour made literal |
+| **Rain on Glass** | ✅ "centre kept clear" was specified unprompted; it is the most end-of-day image available |
+| **Golden Wheat** | ✅ "oscillating rather than sweeping" is the right instinct — close-up stalks, no camera move |
+| **Underwater Sun Rays** | 🟡 loops fine, but daylight-defined, so it costs two shoots to land in a crowded water family (below). Build it only if none of the one-clip water ideas is chosen |
+
+**Already owned — do not generate:**
+
+| Idea | Because |
+| --- | --- |
+| **Northern Lights** | this is `Aurora`. It does confirm the verdict above: one clip, night only |
+| **Black Hole Accretion Disk** | this is `Event Horizon`, which is already the model for the set |
+| **Fireplace Glow** | the same image as Emberfall with the fire in frame. Pick Emberfall — the currency tie is free |
+| **Aquarium Light** / **Pool Caustics** / **Bioluminescent Water** / **Deep-Sea Glow** | four framings of `Caustics` and `Fireflies`. **Generate one** — a dark floor under low-contrast shimmer — and drop the other three; a shop of near-identical water tiles makes all of them look cheap |
+| **Library Lamp** | the night half of **Dust in Sunlight**. Use it as that clip, not as its own sky |
+
+**Rejected — and the reason is the rule, not taste:**
+
+| Idea | Fails on |
+| --- | --- |
+| **Record Player**, **Mechanical Watch**, **Clock Pendulum**, **Orrery**, **Kinetic Sculpture** | *field, not object* — and all five show the seam ⚠️. The three timepieces also put a clock in a habit app, which reads as a deadline, not a ritual |
+| **Coffee Steam**, **Velvet Curtains**, **Floating Silk**, **Wind Chimes** | *field, not object*. Silk and curtains also move through the middle of the frame; wind-chime sway is aperiodic, so it never closes a loop |
+| **Ceiling Fan Shadows** | the shadow sweeps the centre once per revolution, straight across the numeral — and being sun-cast it costs two clips to do it |
+| **Marble Fountain Ripples** | the ripples originate dead centre and expand outward through the numeral. The one subject here whose motion is *aimed* at the quiet zone |
+| **Neon Sign Flicker** | a sign carries **text**. A second set of glyphs behind the streak numeral, in one language, on a screen that is mostly a number |
+| **Incense Smoke** | salvageable, not rejected — the column is the problem, not the smoke. Only viable framed hard to one side, and even then the rising column reads as traversal at the top of frame |
+| **Planet Rotation** | loops perfectly, but the disc fills the centre and it sits one step from `Event Horizon`. Park it until the set is larger |
+
+**What the sweep changes:** nothing in the delivery decision, and nothing in the existing six beyond
+confirming `Aurora` → one clip and handing `Local Line` a replacement it can actually be
+(**City Window at Night**). It adds five new one-clip candidates — City Window, Snow Globe, Japanese
+Lanterns, Moonlit Clouds, Crystal Refractions — to the six already listed, which is enough one-clip
+subjects to fill the shop without generating a single daylight pair.
 
 ---
 

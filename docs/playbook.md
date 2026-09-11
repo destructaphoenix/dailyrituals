@@ -398,8 +398,8 @@ footage, and they must all be the same type**, so no sky may look cheaper than i
 | Decision | Value | Why |
 | --- | --- | --- |
 | Container / codec | **`.mp4`, H.264 High** | hardware-decoded on every Android that can run this app. HEVC/VP9 save ~40% but narrow the guarantee; **AV1 is out** — software decode on a loop running all session cooks the battery |
-| Resolution | **720×1280 at the chosen crop** | the hero is ~412dp wide; 1080p is wasted bytes |
-| Length / bitrate | **6–10s, ~2–3 Mbps → ~2–3MB per clip** | |
+| Resolution | **1280×1280, square** | measured, not guessed — see `design-queue.md` → "Plus skies". The hero box is near-square (0.83–1.17 across devices) and needs 1298×1176 worst case. A 16:9 source throws away half the frame |
+| Length / bitrate | **6–10s, ~2.5–3 Mbps, 30fps → ~2.5–3.5MB per clip** | H.264 High, `yuv420p`, `+faststart`, **no audio track** |
 | Where they live | **a static host, fetched per sky** | the binary ships with **none** of them |
 | When they download | **on unlock / apply**, then cached on device | a user holds only what they own |
 | Playback | **`expo-video`** (SDK 54 pins `~3.0.16`) | `expo-av` is being retired; do not reach for it |
