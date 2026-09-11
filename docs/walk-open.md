@@ -78,10 +78,12 @@ wipes data. **Export a backup first**; that export *is* WALK-03 step 1, so seque
 > 2. **WALK-12 (R8)** — must be walked on the exact build you intend to ship, so it goes after step 8
 >    and after IMP-114/115/117 land.
 >
-> **🎨 And one leftover:** **WALK-08** still owes DeeperInsights at max font. ⚠️ **It cannot be run on the
-> owner's phone** — their real journal does not have enough days, so "Moods by season" correctly says
-> *"Not enough days yet."* This needs an **emulator with a seeded journal** (T3, the `twoYears` scenario).
-> [IMP-117](specs-open.md#imp-117)'s two circles fold into the same sitting.
+> **🎨 That leftover is gone: WALK-08 is CLOSED (2026-09-11, emulator, agent-run)** — see its index row.
+> It proved IMP-095 on a seeded `twoYears` journal at `font_scale` 2.0 and found [IMP-118](build-log.md)
+> on the way. ⚠️ **Two things it touched are still owed on a DEVICE, not an emulator:**
+> [IMP-119](build-log.md) (the ember pill's `+`, which the emulator called a pass and hardware overturned)
+> and [IMP-118](build-log.md)'s tied-weekday bar. **Both are eye-checks with no state cost — fold them
+> into whichever sitting happens next**, after confirming the phone reads `update 01a090d8`.
 >
 > ⚠️ **7C (the candle cap) is NOT proven and was briefly recorded as passed in error.** The owner held 6
 > candles banked before IMP-112; nothing capped, they merely had no room. Re-runs when the holding drains.
@@ -109,19 +111,23 @@ wipes data. **Export a backup first**; that export *is* WALK-03 step 1, so seque
 ### Pre-flight — 30 seconds, every sitting, no exceptions
 
 Open the app, go to the **You** tab, and find the line that names the running JavaScript. **It must read
-`update 01a09044`.**
+`update 01a090d8`.**
 
-- If it reads **`built-in bundle (no update applied)`** or any other 8 characters, the phone does not have
-  the IMP-114/115/116/117 fixes. Fix it like this: **open the app, wait about 15 seconds, swipe it away
+⚠️ **Read all eight characters.** The previous bundle was `01a09044` and the one before it `01a0877d` —
+EAS update ids are time-ordered, so they share a prefix and `01a090…` matches **two** of them. Only
+`01a090d8` carries IMP-118 and IMP-119.
+
+- If it reads **`built-in bundle (no update applied)`**, `update 01a09044`, or any other 8 characters, the
+  phone does not have the IMP-114 through IMP-119 fixes. Fix it like this: **open the app, wait about 15 seconds, swipe it away
   from recents completely, open it again.** The update downloads on one launch and applies on the *next*
   one. ⚠️ **Do not "clear app data" to get a clean start — that deletes the downloaded update** and sends
-  you back to the version baked into the installed app, which predates all four fixes.
+  you back to the version baked into the installed app, which predates all six fixes.
 - If you see a row saying **"Plus is unavailable"**, stop. That is the app telling you its billing setup is
   broken, and any result recorded past it is void. Write down what it says.
 - If the You tab shows **no such line at all**, you are on a build older than vc15. Reinstall from Play.
 
 ⚠️ **That string is the UPDATE id, not the update GROUP.** The app prints 8 characters of the update id
-([`diagnostic.js:35`](../src/billing/diagnostic.js#L35)). The group (`95411ab6…`) appears in CI and in
+([`diagnostic.js:35`](../src/billing/diagnostic.js#L35)). The group (`b38ae63a…`) appears in CI and in
 `eas update:list` and **never on the phone** — hunting for it on screen looks exactly like a failed OTA.
 
 ---
@@ -133,7 +139,7 @@ Open the app, go to the **You** tab, and find the line that names the running Ja
 **Target `device` · Runner 👤 · License tester, no real money · About 45 minutes, most of it waiting.**
 
 **State it needs:** the license-tester account, **no active subscription at the start**, and the app on
-`update 01a09044`.
+`update 01a090d8`.
 
 **Write these three things down before you start** — the test is partly "did anything else move?":
 your **ember balance**, your **current palette**, your **current sky**.
@@ -295,7 +301,7 @@ the ability to re-run every other billing step.
 ### Sitting 3 — WALK-12 (R8), and it goes last
 
 **Row:** [WALK-12](#walk-12--the-r8-release-variant-pass). **Target `device` · Runner 👤.**
-**Run it on the Play `internal` build — vc15 carrying `update 01a09044`.**
+**Run it on the Play `internal` build — vc15 carrying `update 01a090d8`.**
 
 ⚠️ **Two instructions in WALK-12's own section below are now WRONG. Corrected here; that section is being
 read through this note.**
@@ -325,8 +331,8 @@ and prices resolve, and search / moods / trash / recap all work. Note the APK si
 JavaScript bundle is an asset it does not touch. So — correcting the reasoning in the section below, which
 conflates the two — **a JavaScript-only OTA does not invalidate an R8 pass on the same binary.** What
 invalidates it is **a new binary**, or new JavaScript that reaches native code the pass never exercised
-(a new library, a new native module). IMP-114 through IMP-117 touch Shop, WriteFlow and palette code only,
-so **vc15 + `01a09044` is a valid thing to walk today.** It still goes last, for a simpler reason: if
+(a new library, a new native module). IMP-114 through IMP-119 touch Shop, WriteFlow, Insights and palette
+code only, so **vc15 + `01a090d8` is a valid thing to walk today.** It still goes last, for a simpler reason: if
 Sitting 1 or 2 finds a defect worth shipping, you would rather walk R8 once, at the end, on the bundle that
 actually ships.
 
@@ -368,9 +374,11 @@ actually ships.
   now [IMP-111](specs-open.md#imp-111). 🚦 **Blocked on an owner decision — keep motion or remove it.**
 - **WALK-12 (R8) — last, and it cannot move.** R8 runs at build time, so it must be walked on the exact
   build you intend to ship: any fix an earlier walk turns up invalidates an R8 pass taken before it.
-- **WALK-08 — one item only.** Everything else in it is now walked; it stays open purely for the
-  DeeperInsights max-font defect below. Two of its listed items turned out to be unwalkable and should
-  be struck (`TipCard` deleted by IMP-075; landscape rotation impossible — the app is portrait-locked).
+- **WALK-08 — CLOSED 2026-09-11** (emulator, agent-run); the sentence below that called it "one item
+  only" described the state before that sitting. Two of its listed items were unwalkable and are struck
+  (`TipCard` deleted by IMP-075; landscape rotation impossible — the app is portrait-locked). ⚠️ Its
+  IMP-117 pass was **half wrong** — a glyph-centring claim is not emulator-provable; route that shape to
+  `device`.
 
 **Closed on 2026-09-07 (emulator, agent-run):** WALK-03 ✅, WALK-07 ✅, WALK-11 ✅. All three were
 "ready to re-run" rows whose fixes had landed and never been looked at.
