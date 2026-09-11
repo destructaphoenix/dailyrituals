@@ -103,7 +103,7 @@ export default function Shop({
             {CANDLE_PACKS.map((p) => {
               const afford = embers >= p.price;
               return (
-                <Pressable key={p.id} onPress={() => onBuyCandles(p)} disabled={!afford}
+                <Pressable key={p.id} onPress={() => onBuyCandles(p)}
                   style={({ pressed }) => [{ flex: 1, alignItems: 'center', paddingTop: 18, paddingBottom: 12, paddingHorizontal: 6, borderRadius: t.radius.sm, opacity: afford ? 1 : 0.5, transform: [{ scale: pressed ? 0.97 : 1 }] }, ...cardBase]}>
                   {p.tag && <PackTag label={p.tag} c={c} />}
                   <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginBottom: 10 }}>
