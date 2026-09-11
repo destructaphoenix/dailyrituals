@@ -36,7 +36,7 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 >
 > | If this chat is… | Take |
 > | --- | --- |
-> | a **build task** | **Take [IMP-117](docs/specs-open.md#imp-117)** — the one row left of the four opened 2026-09-11 from the lapse sitting. 108 through 116 are all done and archived. |
+> | a **build task** | ✅ **The Improvements backlog is empty** — IMP-117 (the last row) is done and archived. `docs/specs-open.md` has no open spec left. The phase ladder (8 / 10b / 11) is explicitly **parked until the owner resumes it** — do not start one on your own read of this table; ask the owner what to take next. |
 > | a **runtime walk** | ✅ **Step 7 is DONE — the 2026-09-10/11 lapse sitting cleared it** (hardware, owner-run, monthly tester sub). **WALK-18 ✅, WALK-07 ✅, WALK-19 steps 7A/7B/7D ✅** — IMP-108, IMP-109, IMP-110, IMP-111 and IMP-096 are all now proven on hardware. ⚠️ **7C is NOT proven** — the owner held 6 pre-cap candles, so the cap was never exercised; it re-runs once the holding drains to ≤2 ([IMP-115](docs/specs-open.md#imp-115)). Remaining 🚦: **step 8** (the one real-money purchase, held for last) and **WALK-12 (R8) LAST** — it must be walked on the exact build you ship. **WALK-08 still owes DeeperInsights at max font** — the owner's real journal cannot reach the "Moods by season" threshold, so this one goes to an emulator with a seeded journal, plus IMP-117's two circles. ⚠️ **WALK-20 (IMP-113's ember purchase) still does not exist in `docs/walk-open.md`, and cannot be walked at all while `EMBER_PACKS_ENABLED` is `false`.** |
 > | a **design request** | See "Claude Design" below. The live request is **Insights**. |
 >
@@ -113,7 +113,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 114 | **An unaffordable candle pack goes inert instead of explaining itself.** IMP-109's shortfall toast at `RitualsApp.js:324` could never fire: `Shop.js:106` passed `disabled={!afford}`, swallowing the tap. Palettes and skies were not disabled and *did* toast — the two priced surfaces answered the same gesture differently. | OTA | ✅ **done, archived** in `docs/build-log.md` — `fa10a2a`. **1167 passed, 104 suites** (was 1164/104), export clean, +3 tests (source + render assertion), proven red first. ⚠️ **No walk of its own** — folds into WALK-19 step 7's re-run |
 | 115 | **A pre-cap holding reads `6 / 3 kept`.** IMP-112 capped intake, not holdings — correctly — but [`Shop.js:98`](src/screens/Shop.js#L98) interpolated `{freezes} / {MAX_CANDLES}` unconditionally, so a user who banked 6 candles before the cap saw a fraction larger than its own limit. | OTA | ✅ **done, archived** in `docs/build-log.md` — `ea00b0c`. **1172 passed, 104 suites** (was 1167/104), export clean, +5 tests. New `keptLabel` helper drops the `/ 3` above the cap; holdings untouched |
 | 116 | **A palette applied under Plus is kept but never owned.** `applyPalette` ([`RitualsApp.js:301`](src/RitualsApp.js#L301)) sets `activePalette` without adding to `ownedPalettes`, and IMP-108 routes members there. Survives a lapse, then vanishes at the next switch. `PLUS_PERKS[0]` promised *"Every palette & sky — unlocked forever."* | OTA | ✅ **done, archived** in `docs/build-log.md` — `b588f2a`. **1187 passed, 105 suites** (was 1172/104), export clean, +15 tests, the two revert cases proven red first. Owner-ruled (b) membership-scoped: `PLUS_PERKS[0]` now says "yours while you're a member"; a self-healing effect reverts an applied-but-unowned cosmetic on lapse with one toast. ⚠️ **Walk owed** — folds into WALK-19's Plus block, needs a fresh Plus-on → Plus-off sitting |
-| 117 | **Max font breaks two circles.** The ember pill's `+` ([`shopui.js:31`](src/shopui.js#L31)) has a literal `lineHeight: 15` that `maxFontSizeMultiplier` does not scale, so the glyph outgrows its line box; the custom-mood emoji circles ([`WriteFlow.js:182`](src/screens/WriteFlow.js#L182), [`:196`](src/screens/WriteFlow.js#L196)) are fixed 34dp with no `maxFontSizeMultiplier` at all. | OTA | ⬜ **open, spec in [`docs/specs-open.md`](docs/specs-open.md#imp-117)** — reported off the screen 2026-09-11 at OS font scale 2.0. **Same family as IMP-067 and IMP-095.** Walk folds into WALK-08 |
+| 117 | **Max font breaks two circles.** The ember pill's `+` ([`shopui.js:31`](src/shopui.js#L31)) has a literal `lineHeight: 15` that `maxFontSizeMultiplier` does not scale, so the glyph outgrows its line box; the custom-mood emoji circles ([`WriteFlow.js:182`](src/screens/WriteFlow.js#L182), [`:196`](src/screens/WriteFlow.js#L196)) are fixed 34dp with no `maxFontSizeMultiplier` at all. | OTA | ✅ **done, archived** in `docs/build-log.md` — `a59aea9`. **1192 passed, 106 suites** (was 1187/105), export clean, +5 tests, all 5 new source assertions proven red first. ⚠️ **Walk owed** — folds into WALK-08 |
 | 022 | Save as PDF + About sheet (the two dead You-tab buttons) | Build | ⏸ **deferred (owner)** — spec in build-log → "Deferred specs"; **perk #6 gate** |
 | 044 | R8 on release builds (dev client was shipping to the public) | Build | 🟢 **code-complete, UNWALKED.** R8 must be walked on the build you actually ship, so it rides **vc15 or later**; walk = WALK-12, on hardware, last in the sitting |
 | 057 | Historical `dayKey` migration | Build | 🔒 **reserved, not missing** — cannot be written until real device numbers come back from the dev panel's "Data health" reporter. See below |
@@ -187,28 +187,7 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
-_2026-09-11, earlier (Sonnet — **IMP-115 built: a pre-cap candle holding no longer reads as a fraction over
-its own cap.**) — ✅ code-complete, no walk of its own owed._
-
-**What finished.** New exported pure helper `keptLabel(held, cap = MAX_CANDLES)` in
-[`candleCap.js`](src/home/candleCap.js): the existing `{held} / {cap} kept` at or below the cap, and just
-`{held} kept` above it — matching how `roomFor` was already factored. [`Shop.js`](src/screens/Shop.js)'s
-kept row now calls `keptLabel(freezes)` instead of interpolating `{freezes} / {MAX_CANDLES}` directly; the
-now-unused `MAX_CANDLES` import was dropped. **Nothing touches `setFreezes`** — no migrator, no schema
-bump, no clamp on load, exactly as the spec required.
-
-**The proof.** Extended [`__tests__/home/candleCap.test.js`](__tests__/home/candleCap.test.js) with
-`keptLabel` below/at/above the cap (the `6` case) and a custom-cap case, plus a `Shop.js` source assertion
-that the kept row goes through `keptLabel` and never interpolates `MAX_CANDLES` directly. **1172 passed,
-104 suites** (was 1167/104), `npx expo export --platform android` clean, +5 tests. Commit `ea00b0c`. Spec
-archived to `docs/build-log.md`; its row dropped from `docs/specs-open.md`'s index (two rows left there —
-IMP-116, IMP-117).
-
-**The exact next step.** 🔨 Take the next unchecked build row: **IMP-116** (the bigger of the two,
-owner-ruled and buildable) or **IMP-117** — both in [`docs/specs-open.md`](docs/specs-open.md), independent
-of each other. No walk owed by IMP-115 on its own — folds into WALK-19 step 7's re-run.
-
-_2026-09-11, latest (Sonnet — **IMP-116 built: a Plus cosmetic applied for free reverts to the default on
+_2026-09-11, earlier (Sonnet — **IMP-116 built: a Plus cosmetic applied for free reverts to the default on
 lapse instead of staying stranded.**) — ✅ code-complete, walk owed (folds into WALK-19's Plus block)._
 
 **What finished.** New pure [`cosmeticEntitlement.js`](src/home/cosmeticEntitlement.js) —
@@ -231,7 +210,36 @@ red first. **1187 passed, 105 suites** (was 1172/104), `npx expo export --platfo
 tests. Commit `b588f2a`. Spec archived to `docs/build-log.md`; its row dropped from `docs/specs-open.md`'s
 index (one row left there now — IMP-117).
 
-**The exact next step.** 🔨 Take the next unchecked build row: **IMP-117** (max font breaks two circles) —
-[`docs/specs-open.md`](docs/specs-open.md#imp-117), the only row left in the queue. **Walk owed by IMP-116**
-— folds into WALK-19's Plus block, needs a fresh Plus-on → Plus-off sitting (cannot share a sitting with the
-paywall rows).
+**The exact next step (at the time).** Take the next unchecked build row: **IMP-117** (max font breaks two
+circles). **Walk owed by IMP-116** — folds into WALK-19's Plus block, needs a fresh Plus-on → Plus-off
+sitting (cannot share a sitting with the paywall rows).
+
+_2026-09-11, latest (Sonnet — **IMP-117 built: the ember pill's `+` and the two custom-mood emoji circles
+now grow with the font instead of clipping at the max OS scale.**) — ✅ code-complete, walk owed (folds
+into WALK-08)._
+
+**What finished.** [`shopui.js`](src/shopui.js) — dropped the `+`'s literal `lineHeight: 15`; its circle's
+size and radius now derive from `17 * Math.min(PixelRatio.getFontScale(), CHROME_FONT_SCALE)`, so the box
+grows exactly as far as the capped glyph is allowed to. [`WriteFlow.js`](src/screens/WriteFlow.js) — added
+`maxFontSizeMultiplier={CHROME_FONT_SCALE}` to both the chosen-face and palette-swatch emoji `Text`s, and
+sized both circles from one shared local `dot = 34 * Math.min(PixelRatio.getFontScale(), CHROME_FONT_SCALE)`
+— one const, two call sites, no new module, per the spec. The file's third, unrelated 34dp circle (the
+typed-emoji preview) was left untouched — out of scope. No emoji or palette contents changed.
+
+**The proof.** New `__tests__/ui/EmberPill.test.js` — source assertions that the `+` carries no literal
+`lineHeight` and the circle derives from `PixelRatio.getFontScale()`. Extended
+[`__tests__/screens/WriteFlowMood.test.js`](__tests__/screens/WriteFlowMood.test.js) with source assertions
+that both emoji `Text`s carry `maxFontSizeMultiplier={CHROME_FONT_SCALE}`, that neither circle hardcodes the
+old `34/17` box, and that both derive from the shared `dot`. jest renders a tree, not pixels — these are
+source assertions only, and all 5 were proven red first by stashing the source changes, confirming failure,
+then restoring them. **1192 passed, 106 suites** (was 1187/105), `npx expo export --platform android`
+clean, +5 tests. Commit `a59aea9`. Spec archived to `docs/build-log.md`; `docs/specs-open.md`'s queue is
+now empty.
+
+**The exact next step.** ✅ **The Improvements backlog (IMP-001 through IMP-117) is fully cleared** — every
+row is done, deferred (022), or reserved (057, 044 code-complete/unwalked). `docs/specs-open.md` has no open
+spec. The phase ladder (8 / 10b / 11) is explicitly parked until the owner resumes it — **the next build
+chat should ask the owner what to take next rather than opening a phase-ladder row unprompted.** Walk debt
+outstanding: WALK-08 (folds in IMP-117 + DeeperInsights at max font), WALK-19's remaining steps (4e re-run,
+7 re-run, 10, 8, and the Plus-on→off block for IMP-116), WALK-12 (R8, must be last), and WALK-20 (does not
+exist yet in `docs/walk-open.md`, blocked on `EMBER_PACKS_ENABLED`).

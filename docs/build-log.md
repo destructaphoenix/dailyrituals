@@ -4752,7 +4752,64 @@ a Plus-on → Plus-off sitting, so it cannot share a sitting with the paywall ro
 
 ---
 
+## IMP-117 — at max font the ember pill's `+` and the mood emoji circles lose their centre (2026-09-11)
+
+**Reported off the screen 2026-09-11 (hardware, owner-run, OS font size at maximum).** Two fixed-size
+circles whose contents scale while the box does not. Same family as IMP-067 and IMP-095 — a hardcoded
+dimension that ignores font scale.
+
+**Cause 1 — the ember pill's `+`.** [`shopui.js`](../src/shopui.js)'s `EmberPill` held a `T` at
+`fontSize: 13, lineHeight: 15` inside a fixed `17×17` circle. `maxFontSizeMultiplier` scales `fontSize` and
+leaves a literal `lineHeight` alone, so at the chrome cap the glyph outgrew its line box and rode off
+centre.
+
+**Cause 2 — the custom-mood emoji circles.** [`WriteFlow.js`](../src/screens/WriteFlow.js)'s chosen-face
+circle and each palette-swatch circle were fixed `34×34` holding a bare `<Text>` with no
+`maxFontSizeMultiplier` at all — at OS scale 2.0 the emoji could render at up to twice its size inside an
+unchanged circle.
+
+**What was built.** `shopui.js` — dropped the literal `lineHeight`; the `+` circle's size and radius now
+derive from `17 * Math.min(PixelRatio.getFontScale(), CHROME_FONT_SCALE)`, so the box grows exactly as far
+as the capped text is allowed to. `WriteFlow.js` — added `maxFontSizeMultiplier={CHROME_FONT_SCALE}` to
+both emoji `Text`s and sized both circles from a shared local `dot = 34 * Math.min(PixelRatio.getFontScale(),
+CHROME_FONT_SCALE)` (one const, two call sites, no new module). The third, unrelated 34dp circle in
+`WriteFlow.js` (the typed-emoji preview) was left untouched — out of scope per the spec. No emoji or
+palette contents changed.
+
+**The proof.** New `__tests__/ui/EmberPill.test.js` — source assertions that the `+` carries no literal
+`lineHeight` and that the circle derives from `PixelRatio.getFontScale()`. Extended
+[`__tests__/screens/WriteFlowMood.test.js`](../__tests__/screens/WriteFlowMood.test.js) with source
+assertions that both emoji `Text`s carry `maxFontSizeMultiplier={CHROME_FONT_SCALE}`, that neither circle
+hardcodes the old `34/17` box, and that both derive from the shared `dot`. jest renders a tree, not pixels,
+so these are source assertions only, proven red first against pre-fix code (stashed, re-applied after
+confirming failure). **1192 passed, 106 suites** (was 1187/105), `npx expo export --platform android`
+clean, +5 tests. Commit `a59aea9`.
+
+**Walk owed.** Re-open the Shop and the write flow's "Name your own" at OS font scale 2.0. Folds into
+WALK-08.
+
+---
+
 ## Session notes
+
+_2026-09-11, earlier (Sonnet — **IMP-115 built: a pre-cap candle holding no longer reads as a fraction over
+its own cap.**) — ✅ code-complete, no walk of its own owed._
+
+**What finished.** New exported pure helper `keptLabel(held, cap = MAX_CANDLES)` in
+[`candleCap.js`](../src/home/candleCap.js): the existing `{held} / {cap} kept` at or below the cap, and just
+`{held} kept` above it — matching how `roomFor` was already factored. [`Shop.js`](../src/screens/Shop.js)'s
+kept row now calls `keptLabel(freezes)` instead of interpolating `{freezes} / {MAX_CANDLES}` directly; the
+now-unused `MAX_CANDLES` import was dropped. **Nothing touches `setFreezes`** — no migrator, no schema
+bump, no clamp on load, exactly as the spec required.
+
+**The proof.** Extended [`__tests__/home/candleCap.test.js`](../__tests__/home/candleCap.test.js) with
+`keptLabel` below/at/above the cap (the `6` case) and a custom-cap case, plus a `Shop.js` source assertion
+that the kept row goes through `keptLabel` and never interpolates `MAX_CANDLES` directly. **1172 passed,
+104 suites** (was 1167/104), `npx expo export --platform android` clean, +5 tests. Commit `ea00b0c`.
+
+**The exact next step.** Take the next unchecked build row: IMP-116 (the bigger of the two, owner-ruled and
+buildable) or IMP-117 — both in `docs/specs-open.md`, independent of each other. No walk owed by IMP-115 on
+its own — folds into WALK-19 step 7's re-run.
 
 _2026-09-11, earlier (Sonnet — **IMP-114 built: an unaffordable candle pack explains itself instead of going
 inert.**) — ✅ code-complete, no walk of its own owed._

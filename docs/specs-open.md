@@ -22,60 +22,13 @@
 
 ---
 
-## The queue — one row left, opened 2026-09-11 from the lapse sitting
+## The queue — empty as of 2026-09-11
 
-**Came out of WALK-19 step 7 and the subscription lapse that followed it** (hardware, owner-run,
-2026-09-10 → 11, monthly licence-tester sub). Step 7's Shop half **proved IMP-108, IMP-109 and IMP-110**,
-and WALK-07 and WALK-18 both closed. The sitting also turned up new defects — IMP-115 and IMP-116 are both
-done and archived, in [`docs/build-log.md`](build-log.md#imp-115) and [`docs/build-log.md`](build-log.md#imp-116).
-
-| Row | What | Gate |
-| --- | --- | --- |
-| [IMP-117](#imp-117) | At max font the ember pill's `+` and the custom-mood emoji circles are off-centre. | 🎨 |
-
----
-
-## IMP-117 — at max font the ember pill's `+` and the mood emoji circles lose their centre
-
-**Reported off the screen 2026-09-11 (hardware, owner-run, OS font size at maximum).** Two fixed-size
-circles whose contents scale while the box does not. **Same family as IMP-067 and IMP-095** — a hardcoded
-dimension that ignores font scale.
-
-**Cause 1 — the ember pill's `+`.** [`shopui.js:31-32`](../src/shopui.js#L31-L32): a `width: 17,
-height: 17, borderRadius: 9` circle holding a `T` at `fontSize: 13, **lineHeight: 15**` with
-`maxFontSizeMultiplier={CHROME_FONT_SCALE}` (1.2). **`maxFontSizeMultiplier` scales `fontSize` and leaves
-a literal `lineHeight` alone** — so at the chrome cap the glyph grows to ~15.6dp inside a fixed 15dp line
-box inside a 17dp circle, and it rides off centre. The `borderRadius: 9` on a 17dp box is also half a
-pixel out; cosmetic, fix it in passing.
-
-**Cause 2 — the custom-mood emoji circles.** [`WriteFlow.js:182`](../src/screens/WriteFlow.js#L182) (the
-chosen-face circle) and [`:196`](../src/screens/WriteFlow.js#L196) (each swatch in the horizontal palette)
-are `width: 34, height: 34, borderRadius: 17` holding a bare `<Text style={{ fontSize: 18 }}>` / `17` with
-**no `maxFontSizeMultiplier` at all**. At OS scale 2.0 the emoji renders at up to twice its size inside an
-unchanged 34dp circle.
-
-**Steps.**
-1. [`shopui.js`](../src/shopui.js) — remove the literal `lineHeight: 15` from the `+`. Let the glyph centre
-   itself in the flex box (`alignItems`/`justifyContent` are already `center`). Size the circle from the
-   capped scale rather than a literal: multiply 17 by `Math.min(PixelRatio.getFontScale(),
-   CHROME_FONT_SCALE)` so the box grows exactly as far as the text is allowed to. Set `borderRadius` to
-   half the computed size.
-2. [`WriteFlow.js`](../src/screens/WriteFlow.js) — put `maxFontSizeMultiplier={CHROME_FONT_SCALE}` on both
-   emoji `Text`s, and size the two circles the same way as step 1 (a shared local
-   `const dot = …` is fine — do not export a new module for two call sites in one file).
-3. **Do not change any emoji or the palette contents.** This is dimensional only.
-
-**The proof.** Extend [`__tests__/screens/WriteFlowMood.test.js`](../__tests__/screens/WriteFlowMood.test.js)
-with source assertions that both emoji `Text`s carry `maxFontSizeMultiplier` and that neither circle
-hardcodes `34`. Add an equivalent for `shopui.js` — assert no literal `lineHeight` on the `+` and that the
-circle derives from `getFontScale()`. **jest renders a tree, not pixels, and cannot see a mis-centred
-glyph** — these are source assertions and the walk is the real acceptance. Prove each red first.
-
-**Walk owed.** Re-open the Shop and the write flow's "Name your own" at OS font scale 2.0. Folds into
-WALK-08.
-
-**Commit message.**
-`fix(a11y): the ember plus and the mood emoji circles grow with the font (IMP-117)`
+**IMP-117 (the last row, at max font the ember pill's `+` and the custom-mood emoji circles were
+off-centre) is done and archived** in [`docs/build-log.md`](build-log.md#imp-117), commit `a59aea9`. The
+lapse sitting that opened IMP-114 through IMP-117 is fully closed — all four are archived. **No open spec
+remains in this file.** The next build chat should check with the owner before opening the parked phase
+ladder (8 / 10b / 11, in `docs/playbook.md`) — it is not part of this queue.
 
 ---
 
