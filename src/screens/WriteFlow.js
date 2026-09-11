@@ -2,9 +2,10 @@
 // WriteFlow. Rendered full-screen inside a Modal by RitualsApp.
 
 import React, { useState } from 'react';
-import { View, ScrollView, TextInput, Pressable, Text } from 'react-native';
+import { View, ScrollView, TextInput, Pressable, Text, PixelRatio } from 'react-native';
 import { useTheme } from '../theme';
 import { T, PrimaryButton } from '../ui';
+import { CHROME_FONT_SCALE } from '../ui/textScale';
 import { Sun, Chevron, Close } from '../icons';
 import { MOODS, MOOD_PALETTE, moodEmoji } from '../data';
 import { stripEmoji, firstEmoji } from '../entries/emojiInput';
@@ -19,6 +20,7 @@ const countWords = (s) => (s.trim() ? s.trim().split(/\s+/).length : 0);
 export default function WriteFlow({ copy, insets, onClose, onComplete, initial, customMoods = [], customMoodEmoji = {}, onAddCustomMood }) {
   const t = useTheme();
   const c = t.colors;
+  const dot = 34 * Math.min(PixelRatio.getFontScale(), CHROME_FONT_SCALE);
 
   const [step, setStep] = useState(0);
   const [did, setDid] = useState(initial?.did ?? '');
@@ -179,8 +181,8 @@ export default function WriteFlow({ copy, insets, onClose, onComplete, initial, 
 
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 16 }}>
                 <T w={800} color={c.muted} style={{ fontSize: 12, letterSpacing: 0.5, textTransform: 'uppercase' }}>1 · Its face</T>
-                <View style={{ width: 34, height: 34, borderRadius: 17, borderWidth: 2, borderColor: c.accent, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' }}>
-                  <Text style={{ fontSize: 18 }}>{emojiPick}</Text>
+                <View style={{ width: dot, height: dot, borderRadius: dot / 2, borderWidth: 2, borderColor: c.accent, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' }}>
+                  <Text maxFontSizeMultiplier={CHROME_FONT_SCALE} style={{ fontSize: 18 }}>{emojiPick}</Text>
                 </View>
               </View>
 
@@ -193,11 +195,11 @@ export default function WriteFlow({ copy, insets, onClose, onComplete, initial, 
                       onPress={() => pickPaletteEmoji(e)}
                       accessibilityLabel={`Choose ${e} for your custom mood`}
                       style={{
-                        width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center',
+                        width: dot, height: dot, borderRadius: dot / 2, alignItems: 'center', justifyContent: 'center',
                         borderWidth: sel ? 2 : 0, borderColor: c.accent, backgroundColor: c.surface,
                       }}
                     >
-                      <Text style={{ fontSize: 17 }}>{e}</Text>
+                      <Text maxFontSizeMultiplier={CHROME_FONT_SCALE} style={{ fontSize: 17 }}>{e}</Text>
                     </Pressable>
                   );
                 })}

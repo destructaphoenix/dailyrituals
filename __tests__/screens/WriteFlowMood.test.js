@@ -1,4 +1,6 @@
 import React from 'react';
+import fs from 'fs';
+import path from 'path';
 import { ScrollView } from 'react-native';
 import { render, fireEvent } from '@testing-library/react-native';
 import WriteFlow from '../../src/screens/WriteFlow';
@@ -183,5 +185,28 @@ describe('WriteFlow — a feeling you picked can be put back down (IMP-069)', ()
   test('customMoods={["Grateful", "Sleepy"]} yields exactly one chip labelled Grateful', () => {
     const view = renderOnMoodStep({ customMoods: ['Grateful', 'Sleepy'] });
     expect(chipCount(view, 'Grateful')).toBe(1);
+  });
+});
+
+// IMP-117: at max font the two custom-mood circles must grow with the text
+// they hold, not clip it. jest renders a tree, not pixels — these are source
+// assertions; the walk (WALK-08) is the real acceptance.
+describe('WriteFlow — the custom-mood circles scale with the font (IMP-117)', () => {
+  const SRC = fs.readFileSync(path.join(__dirname, '../../src/screens/WriteFlow.js'), 'utf8');
+
+  test('the chosen-face emoji and each palette-swatch emoji cap at CHROME_FONT_SCALE', () => {
+    expect(SRC).toMatch(/<Text maxFontSizeMultiplier=\{CHROME_FONT_SCALE\} style=\{\{ fontSize: 18 \}\}>\{emojiPick\}<\/Text>/);
+    expect(SRC).toMatch(/<Text maxFontSizeMultiplier=\{CHROME_FONT_SCALE\} style=\{\{ fontSize: 17 \}\}>\{e\}<\/Text>/);
+  });
+
+  test('neither circle hardcodes the old fixed 34dp box', () => {
+    expect(SRC).not.toMatch(/width: 34, height: 34, borderRadius: 17, borderWidth: 2, borderColor: c\.accent, backgroundColor: c\.surface, alignItems: 'center', justifyContent: 'center' \}\}>/);
+    expect(SRC).not.toMatch(/width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center',\n\s*borderWidth: sel \? 2 : 0/);
+  });
+
+  test('both circles derive their size from the capped OS font scale', () => {
+    expect(SRC).toMatch(/const dot = 34 \* Math\.min\(PixelRatio\.getFontScale\(\), CHROME_FONT_SCALE\);/);
+    expect(SRC).toMatch(/width: dot, height: dot, borderRadius: dot \/ 2, borderWidth: 2,/);
+    expect(SRC).toMatch(/width: dot, height: dot, borderRadius: dot \/ 2, alignItems: 'center', justifyContent: 'center',/);
   });
 });
