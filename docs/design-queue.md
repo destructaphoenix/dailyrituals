@@ -24,6 +24,11 @@
 Each request needs, in the message itself: **the ask**, **the screen's actual source**, **the token
 names**, and **the constraints that are already pinned** (see each row).
 
+📋 **Ready-to-paste packets live in [`docs/design-requests/`](design-requests/)** — one file per row,
+select-all-and-send, with the source blocks pulled from the real files so they cannot drift.
+**[D-01 is written](design-requests/D-01-insights-consistency.md).** Ask and I will write the next one;
+they are generated from source, so a row whose code has moved should be regenerated rather than edited.
+
 ### What the design system actually has
 
 **Baselines are 7 screens × 2 modes, captured 2026-08-17** (`design-system/screens/`), and three facts
@@ -40,19 +45,27 @@ about them decide how much help they are:
    in particular is older than the candle cap (IMP-112), the kept label (IMP-115), the tier tags
    (IMP-104/108) and both ember-pill fixes (IMP-117/119).
 
-### 🔴 The Plus card is wrong, and it is the one D-05/06/07 would lean on
+### ✅ The Plus card was wrong — fixed 2026-09-11, but it still has to be re-pushed
 
-`design-system/components/plus.html` states three things the app has since contradicted:
+`design-system/components/plus.html` had carried **four** stale claims. All four are corrected in
+[`scripts/gen-design-system.js`](../scripts/gen-design-system.js) and the card is regenerated:
 
-| The card says | The truth |
+| The card said | The truth it now states |
 | --- | --- |
-| *"`PLUS_ENABLED` is `false` and stays false"* | `true` since 2026-09-05. The rule is **hands-off, not off** — `playbook.md` was corrected, the card was not. |
-| banner copy *"Keep every day you write / Deeper insights, unlimited restores, and every palette."* | IMP-090 replaced it with **"Every palette, sky & candle." / "Plus your graveyard kept forever."** |
-| member card *"Member · renews soon"* | **IMP-082 forbade exactly that invented string.** The shipped banner says `Member · renews <real date>`, or just `Member` when the date is unknown. |
+| *"`PLUS_ENABLED` is `false` and stays false"* | `true` since 2026-09-05 — the rule is **hands-off, not off**, and the card says so. |
+| banner copy *"Keep every day you write / Deeper insights, unlimited restores, and every palette."* | IMP-090's shipped copy: **"Every palette, sky & candle." / "Plus your graveyard kept forever."** + the "See Plus ›" CTA. |
+| member card *"Member · renews soon"* | `Member · renews <real date>`, with IMP-082's rule stated: **never invent one**; an unknown date means the row says only `Member`. |
+| three price tags the app does not render (`🔒 Plus`, `✓ Owned`, `◆ 420` alone) | **all four real `PalTag` states**, including `Applied` — a bare label with **no pill**, which the card had omitted entirely and which is exactly what D-05 is about. |
 
-⚠️ **`node scripts/gen-design-system.js` does not fix this** — all three strings are hardcoded in
-[`scripts/gen-design-system.js:663-690`](../scripts/gen-design-system.js#L663). The generator must be
-edited first, then the cards regenerated and re-pushed. **Do that before any Tier-2 request.**
+🔒 **It cannot rot again.** [`__tests__/scripts/genDesignSystem.test.js`](../__tests__/scripts/genDesignSystem.test.js)
+asserts every string on the card is still present in `src/shopui.js`, and that the four retired claims stay
+retired. All five checks were verified red against the previous generator before the fix landed.
+
+⚠️ **One manual step remains, and it is yours:** the regenerated cards are in the repo but **not in the
+Claude Design project** — pushing needs `/design-login` from an interactive session (this session could not
+authorize). Either run that and I will push them with `DesignSync`, or upload
+`design-system/components/plus.html` by hand. **Until one of those happens the project still shows the old
+card**, so do a Tier-2 request only after re-pushing.
 
 ### Row-by-row: what exists, what you must paste
 
@@ -62,9 +75,9 @@ edited first, then the cards regenerated and re-pushed. **Do that before any Tie
 | D-02 Reflections | `day/night-04` ✅ — shows "210 matches" + one card | `ArchiveScreen.js` | the shot is *with* a query active |
 | D-03 period window | ❌ below the fold | `InsightsScreen.js` + `derive.js` | **no picture of these cards exists** |
 | D-04 mood mix | ❌ below the fold | `InsightsScreen.js:134-149` | buildable without any design |
-| D-05 one lock treatment | partial (`day-07` shows the swatch lock) | all four locked shapes' source | fix the Plus card first |
+| D-05 one lock treatment | partial (`day-07` shows the swatch lock) | all four locked shapes' source | re-push the Plus card first |
 | D-06 paywall | ❌ none | `Paywall.js`, `PLUS_PERKS` | **start from your 5 hero cards already in the project** |
-| D-07 member home | ❌ none | `PlusPerks.js`, `PlusBanner`, `ManageSubscription` | fix the Plus card first |
+| D-07 member home | ❌ none | `PlusPerks.js`, `PlusBanner`, `ManageSubscription` | re-push the Plus card first |
 | D-08 member Shop | `day/night-07` ⚠️ stale | `Shop.js:41-46` | shot predates 4 shipped changes |
 | D-09 ember `+` | in `day-07` chrome | `shopui.js:14` | IMP-119's fix is **unwalked** — do not redesign over it |
 | D-10 You | ❌ none | `YouScreen.js` | no baseline will ever exist (7-shot cap) |

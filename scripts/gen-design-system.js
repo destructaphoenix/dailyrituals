@@ -660,31 +660,67 @@ ${specTable([
     });
 }
 
+// The Plus copy is duplicated from src/shopui.js on purpose — this script must
+// not import RN components — and __tests__/scripts/genDesignSystem.test.js
+// asserts every string below still appears there. That guard exists because the
+// card carried the PRE-IMP-090 banner copy, "Member · renews soon" (the exact
+// invented string IMP-082 forbade) and "PLUS_ENABLED is false and stays false"
+// for a month after each became untrue, and a design system that describes an
+// app that no longer exists is worse than none. Do not edit a string here
+// without changing shopui.js, or the test fails — which is the point.
+const PLUS_COPY = {
+  bannerLabel: 'DAILY RITUALS PLUS',
+  bannerHead: 'Every palette, sky & candle.',
+  bannerBody: 'Plus your graveyard kept forever.',
+  bannerCta: 'See Plus',
+  memberTitle: 'Daily Rituals Plus',
+  memberSub: 'Member · renews 12 Oct',
+  memberCta: 'Manage',
+  tagActive: 'Applied',
+  tagOwned: 'Apply',
+  tagPlus: 'Plus',
+};
+
 function plusPage() {
   return comp('Plus surfaces', 'Components',
-    '<code>PlusBanner</code>, <code>PalTag</code> and <code>SkyPreview</code> from <code>src/shopui.js</code> — the least-designed part of the product, and the first redesign target.',
+    '<code>PlusBanner</code>, <code>PalTag</code> and <code>SkyPreview</code> from <code>src/shopui.js</code> — the surfaces a member and a non-member both live in.',
     `<div class="note"><strong>The Plus banner is the app's one dark surface in both modes.</strong> It uses
 its own gradient pair <code>c.plusGradient[0→1]</code> and its own text tokens
 (<code>c.plusWhite</code> headline, <code>c.plusMuted</code> body, <code>c.plusLight</code> label) —
 these exist precisely so the banner stays legible on any palette. Do not substitute <code>c.ink</code>.</div>
-<div class="note bad" style="border-left:3px solid #dc2626;background:#fef2f2"><strong>Design only —
-<code>PLUS_ENABLED</code> is <code>false</code> and stays false.</strong> Redesigning these screens does
-not enable them. <code>PLUS_PERKS</code> copy in <code>src/data.js</code>, the entitlement state and
-everything under <code>src/billing/</code> are untouched by any design work.</div>
+<div class="note"><strong>Design is not enablement — but Plus is LIVE.</strong> <code>PLUS_ENABLED</code> has
+been <code>true</code> since 2026-09-05 and the app takes real money on hardware. The rule is hands-off, not
+off: <code>PLUS_PERKS</code> copy in <code>src/data.js</code>, the entitlement state and everything under
+<code>src/billing/</code> are untouched by any design work.</div>
+<div class="note bad" style="border-left:3px solid #dc2626;background:#fef2f2"><strong>Two copy rules a
+design may not break.</strong> <strong>(1)</strong> The member row says <code>Member · renews &lt;real
+date&gt;</code> — and when the app does not know the date it says only <code>Member</code>. It may never
+invent "renews soon" or reach for a mock date (IMP-082). <strong>(2)</strong> The banner promises no trial
+and names no day count; eligibility is the store's to decide and is disclosed on the paywall, where the
+live offer actually is (IMP-090).</div>
 ${specTable([
   ['banner fill', 'c.plusGradient[0] → c.plusGradient[1]'],
   ['banner headline', 'c.plusWhite, t.display(800)'],
   ['banner body', 'c.plusMuted'], ['banner label / icon', 'c.plusLight'],
+  ['banner CTA', 'c.onAccent'],
   ['member card', 'c.surface + 1px c.accentBorder'],
-  ['locked price tag', 'c.accentSoft fill, c.accentDeep label'],
+  ['tag — applied', 'c.accentDeep label, NO pill'],
+  ['tag — owned', 'c.accent fill, c.onAccent label'],
+  ['tag — plus', 'c.accentSoft fill, c.accentDeep label + Sun'],
+  ['tag — for sale', 'c.accentSoft fill, c.accentDeep label + Ember'],
 ])}`,
     (t) => {
       const c = t.colors;
+      const pill = (bg, fg) => `padding:6px 12px;border-radius:999px;background:${bg};`
+        + `font:800 13px/1.2 'Quicksand_700Bold',ui-sans-serif;color:${fg}`;
       return `<div style="background:linear-gradient(135deg,${c.plusGradient[0]},${c.plusGradient[1]});
-     border-radius:${t.radius.card}px;padding:17px 18px">
-  <div style="font:800 11px/1.2 'Quicksand_700Bold',ui-sans-serif;letter-spacing:.09em;text-transform:uppercase;color:${c.plusLight}">Daily Rituals Plus</div>
-  <div style="font:800 19px/1.3 'Quicksand_700Bold',ui-sans-serif;color:${c.plusWhite};margin-top:5px">Keep every day you write</div>
-  <div style="font:15px/1.5 'Nunito_400Regular',ui-sans-serif;color:${c.plusMuted};margin-top:4px">Deeper insights, unlimited restores, and every palette.</div>
+     border-radius:${t.radius.card}px;padding:17px 18px;display:flex;align-items:center;gap:14px">
+  <div style="flex:1">
+    <div style="font:800 11px/1.2 'Quicksand_700Bold',ui-sans-serif;letter-spacing:.09em;color:${c.plusLight}">${PLUS_COPY.bannerLabel}</div>
+    <div style="font:800 18px/1.3 'Quicksand_700Bold',ui-sans-serif;color:${c.plusWhite};margin-top:7px">${PLUS_COPY.bannerHead}</div>
+    <div style="font:600 12.5px/1.4 'Nunito_600SemiBold',ui-sans-serif;color:${c.plusMuted};margin-top:4px">${PLUS_COPY.bannerBody}</div>
+  </div>
+  <div style="font:800 13.5px/1.2 'Quicksand_700Bold',ui-sans-serif;color:${c.onAccent};white-space:nowrap">${PLUS_COPY.bannerCta} ›</div>
 </div>
 <div style="height:14px"></div>
 <div style="display:flex;align-items:center;gap:13px;padding:15px;border-radius:${t.radius.card}px;
@@ -692,20 +728,22 @@ ${specTable([
   <div style="width:40px;height:40px;border-radius:20px;background:${c.accent};color:${c.onAccent};
        display:flex;align-items:center;justify-content:center;box-shadow:0 4px 8px ${c.accentDeep}cc">☀</div>
   <div style="flex:1">
-    <div style="font:800 16px/1.3 'Quicksand_700Bold',ui-sans-serif;color:${c.ink}">Daily Rituals Plus</div>
-    <div style="font:600 12.5px/1.4 'Nunito_600SemiBold',ui-sans-serif;color:${c.muted};margin-top:1px">Member · renews soon</div>
+    <div style="font:800 16px/1.3 'Quicksand_700Bold',ui-sans-serif;color:${c.ink}">${PLUS_COPY.memberTitle}</div>
+    <div style="font:600 12.5px/1.4 'Nunito_600SemiBold',ui-sans-serif;color:${c.muted};margin-top:1px">${PLUS_COPY.memberSub}</div>
   </div>
-  <div style="font:800 12.5px/1.2 'Quicksand_700Bold',ui-sans-serif;color:${c.accentDeep}">Manage ›</div>
+  <div style="font:800 12.5px/1.2 'Quicksand_700Bold',ui-sans-serif;color:${c.accentDeep}">${PLUS_COPY.memberCta} ›</div>
 </div>
-<div style="height:14px"></div>
-<div style="display:flex;gap:8px;flex-wrap:wrap">
-  <div style="padding:6px 12px;border-radius:999px;background:${c.accentSoft};border:1px solid ${c.deepBorder};
-       font:800 13px/1.2 'Quicksand_700Bold',ui-sans-serif;color:${c.accentDeep}">◆ 420</div>
-  <div style="padding:6px 12px;border-radius:999px;background:${c.accentSoft};border:1px solid ${c.deepBorder};
-       font:800 13px/1.2 'Quicksand_700Bold',ui-sans-serif;color:${c.accentDeep}">🔒 Plus</div>
-  <div style="padding:6px 12px;border-radius:999px;background:${c.accent};
-       font:800 13px/1.2 'Quicksand_700Bold',ui-sans-serif;color:${c.onAccent}">✓ Owned</div>
-</div>`;
+<div style="height:16px"></div>
+<div style="font:600 11px/1.2 'Nunito_600SemiBold',ui-sans-serif;letter-spacing:.07em;text-transform:uppercase;color:${c.muted};margin-bottom:8px">PalTag — all four states</div>
+<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+  <div style="font:800 12px/1.2 'Quicksand_700Bold',ui-sans-serif;color:${c.accentDeep}">${PLUS_COPY.tagActive}</div>
+  <div style="${pill(c.accent, c.onAccent)}">${PLUS_COPY.tagOwned}</div>
+  <div style="${pill(c.accentSoft, c.accentDeep)}">☀ ${PLUS_COPY.tagPlus}</div>
+  <div style="${pill(c.accentSoft, c.accentDeep)}">◆ 420</div>
+</div>
+<div style="font:400 11.5px/1.5 'Nunito_400Regular',ui-sans-serif;color:${c.muted};margin-top:8px;max-width:46ch">
+  Left to right: applied (bare label, no pill) · owned, tap to apply · Plus-only · for sale, the number is
+  its ember price.</div>`;
     });
 }
 
@@ -719,8 +757,8 @@ const SCREEN_TITLES = {
   '01-today': 'Today — the home screen: streak hero, rites, level',
   '02-write': 'Write — step 1 of the entry flow',
   '03-moods': 'Write — the mood step (multi-select)',
-  '04-reflections': 'Reflections — search, filters, the lifetime heatmap',
-  '05-insights': 'Insights — the record, consistency grid',
+  '04-reflections': 'Reflections — search, filters, the last-5-weeks heat',
+  '05-insights': 'Insights — the record, consistency grid (cut off mid-grid: that is the defect, not the capture)',
   '06-achievements': 'Achievements / Keepsakes',
   '07-shop': 'Shop — palettes, skies, embers',
 };
