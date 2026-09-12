@@ -7,7 +7,7 @@ import { View, Image, StyleSheet } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { LinearGradient } from 'expo-linear-gradient';
 
-export default function SkyHero({ source, poster, accent, children }) {
+export default function SkyHero({ source, poster, children }) {
   const player = useVideoPlayer(source, (p) => {
     p.loop = true;
     p.muted = true;

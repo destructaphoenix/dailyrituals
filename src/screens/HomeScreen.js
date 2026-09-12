@@ -13,6 +13,7 @@ import { dayKeyOf } from '../time/dayKey';
 import { pickForDay } from '../time/dailyPick';
 import { HELLOS } from '../content/greetings';
 import { streakSubtitle } from '../home/streakCopy';
+import { heroChrome } from '../home/heroChrome';
 import { buildWeekStrip } from '../home/calendar';
 import { MISS_EMOJI, FREEZE_EMOJI } from '../data';
 import { deriveKeepsakes } from '../profile/achievements';
@@ -47,30 +48,25 @@ export default function HomeScreen({ copy, mode, streak, level, levelName, xpInt
   const inRecapWindow = RECAP_WINDOW_MONTHS.includes(now.getMonth());
   const topRecapYear = plusEnabled && inRecapWindow ? (recapYears(entries || [], now)[0] ?? null) : null;
   const showRecapCard = topRecapYear != null && recapSeen !== topRecapYear;
-  const streakShadow = { textShadowColor: 'rgba(0,0,0,0.7)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 10 };
-  // Footage isn't lighter in day mode the way the app's day theme is, so the
-  // dark-mode contrast chrome applies whenever a video sky is behind the hero
-  // too, regardless of t.dark (IMP-121).
-  const heroNeedsContrast = t.dark || videoSkyActive;
-  const numberGlow = heroNeedsContrast ? { textShadowColor: c.accent + '8C', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 16 } : {};
+  const hero = heroChrome(c, { dark: t.dark, overVideo: videoSkyActive });
 
   // Shared between the video-sky and classic-art hero shells — unchanged in
   // every respect except what sits behind it (IMP-121).
   const heroInner = (
     <>
       <View style={{ zIndex: 1, alignItems: 'center', marginTop: 13 }}>
-        <T d w={800} color={c.accentDeep} style={[{ fontSize: 76, lineHeight: 82, includeFontPadding: false, textAlign: 'center' }, numberGlow]}>{streak}</T>
-        <T d w={700} color={c.ink} style={[{ fontSize: 16, marginTop: 2 }, heroNeedsContrast && streakShadow]}>day streak</T>
-        <T w={600} color={c.dimText} style={[{ fontSize: 13, marginTop: 4 }, heroNeedsContrast && streakShadow]}>{streakSubtitle(streak)}</T>
+        <T d w={800} color={c.accentDeep} style={[{ fontSize: 76, lineHeight: 82, includeFontPadding: false, textAlign: 'center' }, hero.numeralShadow]}>{streak}</T>
+        <T d w={700} color={hero.title} style={[{ fontSize: 16, marginTop: 2 }, hero.textShadow]}>day streak</T>
+        <T w={600} color={hero.subtitle} style={[{ fontSize: 13, marginTop: 4 }, hero.textShadow]}>{streakSubtitle(streak)}</T>
       </View>
       <View style={{ zIndex: 1, width: '100%', marginTop: 22 }}>
         <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 7 }}>
-          <T d w={700} color={c.ink} numberOfLines={1} style={{ fontSize: 14, flexShrink: 1 }}>Lv {level} · {levelName}</T>
-          <T w={700} color={c.muted} style={{ fontSize: 12 }}>{xpToNext == null ? 'Max' : `${xpInto} / ${xpToNext} XP`}</T>
+          <T d w={700} color={hero.meta} numberOfLines={1} style={[{ fontSize: 14, flexShrink: 1 }, hero.textShadow]}>Lv {level} · {levelName}</T>
+          <T w={700} color={hero.metaDim} style={[{ fontSize: 12 }, hero.textShadow]}>{xpToNext == null ? 'Max' : `${xpInto} / ${xpToNext} XP`}</T>
         </View>
-        <ProgressBar value={xpToNext == null ? 100 : Math.min(100, (xpInto / xpToNext) * 100)} accent={videoSkyActive ? videoSky.accent : undefined} />
+        <ProgressBar value={xpToNext == null ? 100 : Math.min(100, (xpInto / xpToNext) * 100)} accent={videoSkyActive ? videoSky.accent : undefined} onVideo={videoSkyActive} />
       </View>
-      {freezes != null && <StreakFreeze count={freezes} />}
+      {freezes != null && <StreakFreeze count={freezes} onVideo={videoSkyActive} />}
     </>
   );
 
@@ -102,7 +98,7 @@ export default function HomeScreen({ copy, mode, streak, level, levelName, xpInt
       <View style={{ paddingHorizontal: 20 }}>
         {videoSkyActive ? (
           <Card style={{ height: HERO_HEIGHT, overflow: 'hidden' }}>
-            <SkyHero source={skyVideoSource(videoSky, mode)} poster={{ uri: videoSky.poster }} accent={videoSky.accent}>
+            <SkyHero source={skyVideoSource(videoSky, mode)} poster={{ uri: videoSky.poster }}>
               <View style={{ flex: 1, paddingHorizontal: 22, paddingTop: 26, paddingBottom: 22, alignItems: 'center' }}>
                 {heroInner}
               </View>

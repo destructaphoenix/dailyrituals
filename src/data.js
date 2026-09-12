@@ -161,7 +161,7 @@ export const SHOP_SKIES = [
   { id: 'meteor',   name: 'Meteor Shower', kind: 'meteor',  tier: 'plus',
     clip: `${SKY_BASE}/ocean.mp4`,
     poster: `${SKY_BASE}/ocean-poster.jpg`,
-    accent: '#5AA9E6',
+    accent: '#BFE6FF',
     credit: 'Pexels — Pexels Licence, free for commercial use, no attribution required. Sourced 2026-09-12; loop window (frames 226–345) cut 2026-09-13.' },
   { id: 'aurora',   name: 'Aurora',        kind: 'aurora',  tier: 'plus' },
 ];
