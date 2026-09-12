@@ -66,7 +66,6 @@ export default function HomeScreen({ copy, mode, streak, level, levelName, xpInt
         </View>
         <ProgressBar value={xpToNext == null ? 100 : Math.min(100, (xpInto / xpToNext) * 100)} accent={videoSkyActive ? videoSky.accent : undefined} onVideo={videoSkyActive} />
       </View>
-      {freezes != null && <StreakFreeze count={freezes} onVideo={videoSkyActive} />}
     </>
   );
 
@@ -204,6 +203,7 @@ export default function HomeScreen({ copy, mode, streak, level, levelName, xpInt
               );
             })}
           </View>
+          {freezes != null && <StreakFreeze count={freezes} />}
         </Card>
       </View>
 

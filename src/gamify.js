@@ -10,7 +10,6 @@ import { T } from './ui';
 import { Pencil, Heart, BookIcon, Sun, Ring, Check, Candle } from './icons';
 import { questsXp, questsGoal } from './data';
 import { candleRow, candleRowCopy } from './home/candleRow';
-import { heroChrome } from './home/heroChrome';
 
 const QUEST_ICON = { write: Pencil, feel: Heart, revisit: BookIcon };
 
@@ -44,13 +43,12 @@ export function GoalRing({ value, goal, size = 70, stroke = 7, children }) {
   );
 }
 
-// Streak-freeze candles, shown inside the streak hero.
-export function StreakFreeze({ count, onVideo = false }) {
+// Streak-freeze candles, shown as a footer row under the week strip (IMP-125).
+export function StreakFreeze({ count }) {
   const c = useTheme().colors;
   const row = candleRow(count);
-  const hero = heroChrome(c, { overVideo: onVideo });
   return (
-    <View style={{ marginTop: 16, paddingTop: 15, width: '100%', borderTopWidth: 1, borderTopColor: onVideo ? hero.hairline : c.border, alignItems: 'center', gap: 6 }}>
+    <View style={{ marginTop: 16, paddingTop: 15, width: '100%', borderTopWidth: 1, borderTopColor: c.border, alignItems: 'center', gap: 6 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
         {Array.from({ length: row.slots }, (_, i) => (
           <Candle key={i} size={19} lit={i < row.lit} body={c.accentSoft} deep={c.accentDeep} />
@@ -59,7 +57,7 @@ export function StreakFreeze({ count, onVideo = false }) {
           <T d w={800} color={c.accentDeep} style={{ fontSize: 14, marginLeft: 2 }}>{row.overflow}</T>
         ) : null}
       </View>
-      <T w={700} color={onVideo ? hero.metaDim : c.muted} style={[{ fontSize: 12, textAlign: 'center' }, onVideo && hero.textShadow]}>{candleRowCopy(count)}</T>
+      <T w={700} color={c.muted} style={{ fontSize: 12, textAlign: 'center' }}>{candleRowCopy(count)}</T>
     </View>
   );
 }
