@@ -216,8 +216,12 @@ the bug: it `slice(0, 6)`s first ([`DeeperInsights.js:137`](../src/screens/Deepe
 
 **Ask Design for.** A top-N with an honest remainder ("+4 more feelings"), and a shading rule that is
 bounded by construction rather than by index — e.g. clamp at a floor, or key the opacity to the value
-rather than the row number. **Scope the clamp as an IMP now regardless of the design** — it is a
-two-character fix and the design can land later.
+rather than the row number.
+
+✅ **The clamp half is now [IMP-126](specs-open.md#imp-126--the-11th-moods-bar-is-invisible)** (filed
+2026-09-13), as this row instructed. Floor is `0.3` — the value index 7, the last of the 8 built-ins, already
+sits at — so no journal that exists today renders differently. **Only the remainder line is still open here,
+and a design request for this row must say so** rather than re-asking for the clamp.
 
 ---
 
@@ -275,6 +279,15 @@ for a pill that reads as a balance rather than a button. ⚠️ The `+` glyph's 
 [IMP-119](build-log.md) and is **owed a device walk** — do not let a redesign land on top of an unproven
 fix.
 
+🔴 **Corrected 2026-09-13, and this row was half wrong.** There are **two** `EmberPill` call sites and only
+one is the defect: [`Shop.js:78`](../src/screens/Shop.js#L78) routes to `onGetEmbers` and toasts into nothing,
+but [`HomeScreen.js:88`](../src/screens/HomeScreen.js#L88) routes to `onOpenShop` — **Home's `+` opens the
+Shop, which is where embers are got, and is fine.** ✅ **Filed as
+[IMP-127](specs-open.md#imp-127--the-shops-ember--promises-an-action-it-cannot-perform)**: hide it where it
+cannot act, keep it where it can. The redesign option is **rejected** — the flag flips to `true` the moment
+WALK-20 passes and a balance-pill would have to be undone. That correction is also what protects IMP-119's
+owed walk: the `+` survives on Home, same component, so there is still something to look at.
+
 ---
 
 ## Tier 3 — polish. Real, but nothing breaks.
@@ -300,6 +313,12 @@ these states, and they are the least-designed screens in the app.
 weight (freeze notice, on-this-day, recap, today's CTA, quests, week strip) plus the Keepsakes rail.
 **Today's reflection — the reason the app exists — is the fourth card down** on a day with notices. Ask
 for a priority rule, not a reshuffle.
+
+📌 **Related, and already decided elsewhere:** the owner's WALK-21 remark that the candle indicator need not
+live inside the hero card is [IMP-125](specs-open.md#imp-125--the-candle-indicator-leaves-the-hero-card) —
+⏸ owner-gated, and its destination is the **week-strip card's** footer, chosen so it does **not** add a
+seventh equal-weight card to the stack this row is about. A design pass here should treat that placement as
+the assumption, or say plainly why it is wrong.
 
 ### D-13 · Keepsakes are "tiered" in the comment only
 **Baseline:** `day-06` / `night-06` ✅. [`Achievements.js`](../src/screens/Achievements.js) renders one

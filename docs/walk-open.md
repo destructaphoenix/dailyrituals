@@ -454,7 +454,9 @@ the lane now; CI (`release.yml`) ships from it on a `Release-Lane:` trailer. **N
 | WALK-18 | 🎨 | [The app moves](#walk-18--the-app-moves) | IMP-077 | **device** | 👤 (visual) | ✅ **CLOSED 2026-09-11 (hardware, owner-run) — IMP-111 proven.** Day mode, all four tabs, slow and rapid: tabs now switch **instantly with no transition at all** and **no shadow outlines around any card**. `ScreenFade` was deleted outright (`76c1d76` removed it from both `RitualsApp.js` and `motion.js`), so there is no fade left to composite elevation under. ⚠️ **Steps 2 and 3 of this row below are STRUCK, not owed** — "cards rise in and stagger" and press-scale describe `riseIn`/`stagger`, which have **no consumer**; the row's own audit already established six of eight motion exports are unused. Absence of animation is the designed state, not a failure. 🟠 Previously PARTIAL, 2026-09-10 (Galaxy S24 Ultra, owner-run) — **the row's PREMISE was wrong.** ⚠️ **The owner has no mid-range device and will not be getting one; this row cannot be run as written.** Two findings, both from a flagship, both valid there. **(1) "The animations are not there" — CORRECT AND EXPECTED.** [`motion.js`](../src/motion.js) states in its own header that it *"adds no animation to any screen"*: `riseIn`, `popIn`, `fadeOut` and `useCountUp` are **all unused**, and the only two live motions are `usePressScale` (a 0.99 scale, deliberately imperceptible) and `ScreenFade`. **There is essentially no motion here to frame-pace, so the mid-range requirement was never the real gate.** **(2) 🔴 NEW DEFECT — shadow outlines around the next screen's cards during a tab change, DAY MODE ONLY.** Cause found in source and it matches the day-mode-only symptom exactly: `ScreenFade` animates `opacity` over a subtree whose `Card`s carry Android `elevation: 8`, and elevation shadows do not composite under fractional parent opacity; dark mode has no elevation so it cannot occur. **Scoped as [IMP-111](specs-open.md#imp-111).** ✅ **DECIDED 2026-09-10 — the fade is being removed ([IMP-111](specs-open.md#imp-111)), and applying the motion vocabulary is parked until Plus is complete.** Re-run this row in **day mode** once IMP-111 ships: there should be no transition left to draw an outline during. ⚠️ **Correction to this row's own audit:** `stagger` is **also unused** — the hit in `Celebration.js:23` is RN's `Animated.stagger`, a different function. Six of eight motion exports have no consumer |
 | WALK-19a | 🚦 | [The IMP-105 isolation sitting](build-log.md#-walk-19a--the-imp-105-isolation-sitting-run-this-one-on-its-own) | [IMP-105](specs-open.md#imp-105) | **device** | 👤 | ✅ **2026-09-10 — PASSED (hardware, owner-run), 4 minutes.** Bought annual 00:43, uninstalled 00:44, reinstalled 00:45, **Plus already active on the second launch at 00:47 with no Restore tap** — the Restore row was gone and the You tab showed the member state. Elapsed 4 min against an annual test sub's ~3 hr life, so **expiry is arithmetically impossible and this run tested what step 9 always meant to test**. Play separately confirmed at uninstall that the subscription survives; the owner chose "keep the fresh start" (discarding local data) and Plus still returned, proving membership is store-authoritative. **IMP-105 closed — not reproducible, walk-protocol defect.** ⚠️ Named gap: `restorePurchases()` itself was never tapped (nothing to tap), so reinstall-then-Restore stays unexercised — not a blocker, step 4f already proved `restore()`. First walk here to name its own bundle before starting (`01a0877d`, via IMP-106). Detail in `build-log.md` → "Walk log" |
 | WALK-19 | 🚦 | [Money actually changes hands](#walk-19--money-actually-changes-hands) | **Phase 10b.5**, IMP-028, IMP-082 + IMP-083 (steps 5 and 10), IMP-084/085/086/087, **IMP-088** | **device** (real Play Billing + a license tester) | 👤 | 🔴 **2026-09-11 (hardware, owner-run, MONTHLY tester sub) — STEP 7 IS DONE.** Ran as the sub lapsed, the ordering rule honoured. **7A ✅ — [IMP-108](build-log.md) PROVEN:** with Plus live, Marigold, Honey, Rose Dusk, Sage Eve and Harvest Moon all showed **no ember price**, applied cleanly, and the balance stayed at 15. **7B ✅ — [IMP-109](build-log.md) PROVEN on palettes:** the shortfall names the item, its price and the balance. **7D ✅** — no "Gather Embers" section and no `$1.99`/`$4.99`/`$9.99` anywhere, so the `EMBER_PACKS_ENABLED` guard holds on a shipped build. **[IMP-110](build-log.md) ✅ PROVEN** — the paywall perk list no longer claims streak insurance is members-only. ⚠️ **7C is NOT a pass and was previously recorded as one in error:** the owner held **6 candles banked before IMP-112**, so the cap was never exercised — nothing capped, they simply had no room. It re-runs once the holding drains to ≤2. 🔴 **Three new defects out of this sitting:** [IMP-114](specs-open.md#imp-114) (the candle shortfall toast is unreachable — `disabled={!afford}` swallows the tap, which is why this call site survived four sittings unexercised), [IMP-115](specs-open.md#imp-115) (`6 / 3 kept`), and [IMP-117](specs-open.md#imp-117) (max-font centring). 🚦 **And one across the lapse:** [IMP-116](specs-open.md#imp-116) — Harvest Moon and Frostlight survived the subscription expiring, then **vanished at the next palette switch**, because `applyPalette` never adds to `ownedPalettes`. The paywall promises *"unlocked forever"*. **Blocked on an owner ruling.** **Owed now: step 8 only** (real money, held for last). Prior: 🔴 **2026-09-08 (hardware, owner-run) — steps 3, 4a, 4b, 4c, 4d, 4f, 5, 6 ✅ PASS.** [IMP-105](specs-open.md#imp-105) **blocks release**: reinstall + Restore on an account with an active subscription says "Nothing to restore" — and it is the one finding that survived the same-day source review (step 4f is its control: identical code passed minutes earlier). [IMP-104](specs-open.md#imp-104): default palette/sky items render as ember-locked, cause found, ready to build — **and tapping one wipes the ember balance to 0**. ⚠️ **Step 4e is INVALID, not a failure** — the phone ran OTA `d42b7ec7`, which predates IMP-100 **and** IMP-101; neither was ever pushed or shipped ([IMP-103](specs-open.md#imp-103)), so 4e owes a re-run after that OTA. Aeroplane-mode Restore reproduces the known IMP-092 cache limit (not new). 🔴 **2026-09-10 (hardware, owner-run), on group `f961b427`: step 4e ✅ PASS — "You already have Plus", which also settles IMP-103's open residual (the numeric `6`/`7` bet in `mapError.js` was correct). Step 7 ⚠️ INCONCLUSIVE for IMP-104 — the free items were never tapped (Crescent Moon ✅ applies cleanly), and with a 0 ember balance the NaN-wipe half is untestable; re-run once embers are earned. Step 7 instead found TWO new defects: [IMP-108](specs-open.md#imp-108) (a member is still charged embers for five palettes/skies the paywall promises) and [IMP-109](specs-open.md#imp-109) (the shortfall toast never names the price or balance). **Step 10 ✅ PASS, and the lapse confirmed at ~02:00** — the subscription bought at 00:43 expired at 01:43, and on re-opening the app the member state was gone. ✅ **That is [IMP-107](build-log.md)'s first and only hardware proof** — the row was opened 2026-09-09 because a lapsed member kept Plus until they happened to background the app. ⚠️ **The strength of this result depends on whether the app was truly force-closed first:** a cold start proves IMP-107's new launch check; a background→foreground cycle would have been caught by the pre-existing `AppState` listener and proves nothing new. Owner was asked for a force-close and reported the downgrade; recorded as a pass with that condition named. Step 10's earlier half ✅ PASS — the Play deep link worked, cancelling correctly did NOT revoke Plus before the period ended, and the "+3 candles — your Plus perk renewed" toast is IMP-102 firing on a test-compressed renewal, not a bug.** ✅ **Step 9 is SETTLED — see WALK-19a (2026-09-10): the entitlement survives a reinstall, IMP-105 was the walk's own ordering, not a defect.** That **unblocks step 10** (cancel flow), which was only ever blocked on step 9. Step 8 (real money) still deliberately held for last. Full detail in the RE-RUN section below. **Nothing is promoted `internal` → `production`.** |
-| WALK-21 | 🎨 | [The first video sky plays](#walk-21--the-first-video-sky-plays) | IMP-121, IMP-122, **IMP-123** | **device** (real panel, real GPU compositing, real battery) | 👤 | ⬜ — **ready. vc17 is live** (Play `internal`, confirmed on the owner's phone 2026-09-13). The whole animated-sky feature has never run outside jest, and the jest stub no-ops `useVideoPlayer` entirely. Also the first look at IMP-120's month strip on hardware |
+| WALK-21 | 🎨 | [The first video sky plays](#walk-21--the-first-video-sky-plays) | IMP-121, IMP-122, **IMP-123** | **device** (real panel, real GPU compositing, real battery) | 👤 | 🟠 **PARTIAL — 2026-09-13 (Play `internal` vc17, owner-run).** Steps 1-3, 6-10 ✅ — corners clean (no `textureView` needed, closes IMP-121's open question), loop seam holds, latency/offline/heat/fallback all clean, and step 8 re-confirms WALK-19a's store-authoritative membership. 🔴 **Steps 4 + 5 FAIL: day-mode hero contrast — scoped as [IMP-124](specs-open.md#imp-124)** (the streak subtitle is unreadable over the footage in day mode; the XP bar accent doesn't read as a bar). Step 11 (month strip) is a named gap — thin journal, nothing to scroll |
+| WALK-22 | 🎨 | [The day-mode hero re-check](#walk-22--the-day-mode-hero-re-check) | **IMP-124** (and IMP-125 if it ships with it) | **device** | 👤 (visual) | ⬜ — ✅ **IMP-124 is built** (`87771c4`, 2026-09-13). **Blocked only on the OTA push now** — the commit carries no `Release-Lane` trailer, so nothing has shipped and the phone is still running the bundle that failed. WALK-21's steps 4 and 5, plus the three elements the walk did not name. 4 minutes; a single day-mode look at one card |
+| WALK-23 | 🎨 | [The month strip on a journal that has months](#walk-23--the-month-strip-on-a-journal-that-has-months) | IMP-120 | **emulator** | 🤖 (agent-runnable) | ⬜ — **ready now, needs no build.** WALK-21 step 11 could not run: the owner's journal is one month, so there was nothing to scroll. The dev panel's `storeShots` scenario is 210 days and settles it in a dev build |
 
 ---
 
@@ -1128,3 +1130,132 @@ section says why. **Do not record it as a defect.**
 **If the sky does not appear at all**, the order of suspicion is: not on vc17 → Plus not active → Meteor
 Shower not applied → the R2 URLs not reachable from the phone. The You tab's Version row settles the first
 and `activeSkyManifest()` needs all three of the next.
+
+### Result — 🟠 PARTIAL, 2026-09-13 (device, Play `internal` vc17, owner-run)
+
+**Steps 1, 2, 3, 6, 7, 9, 10 ✅ PASS.** Poster covers cold launch, all four rounded corners are clean on the
+default `surfaceView` (no `textureView` switch needed — **IMP-121's open question is closed**), the loop
+seam is barely noticeable at hero size, first-play latency is near-instant, the clip survives aeroplane
+mode, the device stayed cool over the long session, and the `RayFan`/`NightRays` fallback returns cleanly
+with no leftover video frame on a non-video sky.
+
+**Step 8 ✅ PASS, and it's a second confirmation of WALK-19a.** After clearing app storage the owner did not
+re-buy a subscription or tap Restore, yet Meteor Shower applied and played immediately — because the
+monthly test subscription bought for this sitting was still inside its ~30 min window, so Play's backend
+still read the account as a member. Membership is store-authoritative on launch, same finding as WALK-19a;
+not a new gap.
+
+**Step 11 — named gap, not proven either way.** The month strip only renders on the owner's own thin
+journal, so it's a single block with nothing to scroll and no tertile spread to judge — matches the standing
+gap in `PROGRESS.md` that history-dependent screens can't run on a young journal. Needs a seeded/older
+journal to actually test.
+
+🔴 **Steps 4 and 5 both FAIL — day-mode legibility on the Meteor Shower hero. Scoped as [IMP-124](specs-open.md#imp-124).**
+- **Step 4:** the "X day streak" subtitle renders in a dark/near-black color in day mode and is hard to read
+  over the water footage. Night mode is fine (white, legible) — so whatever `streakShadow`/`numberGlow`
+  do for the numeral is not reaching this subtitle's own color in day mode.
+- **Step 5:** the XP bar's `#5AA9E6` accent is technically present but doesn't read as a bar against the
+  footage — exactly the risk IMP-123's own note flagged as "unverified by eye" and left for this walk to
+  decide. It didn't hold up.
+- Both look like one contrast pass (day-mode hero text/accent colors), not two separate causes — bundled
+  under one `IMP-124` row rather than split.
+
+**Not a defect, just an observation for a design chat:** the owner thinks the candle indicator doesn't need
+to live inside the hero card at all. Not tested against any step here — route it to `design-queue.md` if
+it's worth acting on, no `IMP` number opened for an opinion.
+
+---
+
+## WALK-22 — the day-mode hero re-check
+
+**Target: `device`. Runner: 👤 (visual judgement — this is a "can you read it" walk and nothing else).**
+
+✅ **[IMP-124](build-log.md) is built** — `87771c4`, 2026-09-13. 🚦 **This row is blocked on the OTA push and
+nothing else.** That commit carries **no `Release-Lane` trailer**, which is the normal end state for a build
+chat: it means the fix exists in `main` and **not on any phone**. Running this walk before the OTA lands
+re-observes the original defect and looks like a failed fix. It is **not** a new binary — check the You tab
+still reads `1.0.10 / vc17`, and that **the bundle id in that row is not the one WALK-21 ran on.** That
+comparison is the whole pre-flight; IMP-106 exists so it can be made.
+
+**Pre-flight is WALK-21's, unchanged**: Plus ON, **Meteor Shower applied in the Shop before opening Home**,
+and remember a licence-tester monthly sub lapses in ~30 minutes. This walk takes four minutes, so that is
+plenty — but if the sky is gone, the sub lapsed and the sky went with it (IMP-116), not a new defect.
+
+**Day mode. One card. Look at five things.**
+
+1. **The line under the big number** — "a week of kindling", or whatever the streak earns. WALK-21 found it
+   near-black on the water. It should now be white and obviously readable while the clip moves under it.
+2. **"day streak"**, the bold line directly above it — same question.
+3. **`Lv 1 · Spark` and `2 / 10 XP`**, the two small labels above the bar. These were **never** shadowed
+   before, in any mode. They should read against a bright frame of water, not only a dark one.
+4. **The XP bar.** It should read as a *bar*: a dark pill with a pale blue fill and a faint light edge, not
+   a smear the same colour as the sea. Watch it through a full loop — the judgement is whether it still
+   reads when a whitecap passes behind it.
+5. **The candle row at the bottom** — the three candles and the line of copy under the hairline rule.
+   Readable, and the rule visible as a rule.
+
+**Then switch to night mode and confirm nothing got worse.** Over footage, day and night are meant to look
+**identical** now — that is the fix, not a side effect. If night changed, something read the mode that
+should have read the ground.
+
+**Last, turn Meteor Shower off** (apply Golden Sun) and confirm the ordinary day hero is exactly as it was:
+amber numeral, dark text, no halo, the pale amber XP bar. **A change there is a regression**, and the whole
+point of `heroChrome`'s non-video branch was that there should not be one.
+
+⚠️ **If 1–3 pass and 4 still fails**, that is not this row failing twice. The text and the bar were one
+cause but two fixes; record the bar separately and it becomes its own row about `meteor.accent`, not a
+re-open of IMP-124.
+
+---
+
+## WALK-23 — the month strip on a journal that has months
+
+**Target: `emulator`. Runner: 🤖 — an agent can drive all of it.** ⬜ **Ready now. No build, no OTA, no
+device.** This is the walk [WALK-21](#walk-21--the-first-video-sky-plays) step 11 could not be:
+IMP-120 replaced Insights' unbounded consistency grid with a horizontally-scrolled month strip, and the
+owner's own journal is **one month long**, so the strip rendered as a single block with nothing to scroll
+and no spread to judge. **That is the standing "history-dependent screens can't run on a young journal" gap,
+not a defect.** A seeded fixture closes it without waiting a year.
+
+**Setup.** Dev build on the emulator, dev panel → Scenarios → **`storeShots`** (210 entries, streak 128).
+That is the same fixture the design baselines were captured from, so what you see is comparable to
+`design-system/screens/day-05-insights.png` — which is itself **evidence of the old defect**, ending
+mid-grid in "Mar".
+
+**Steps.**
+
+1. **Insights → Consistency.** The card has a **bounded height** — ~124dp of strip, not a wall. Nothing
+   below it is pushed off the screen. Compare against `day-05-insights.png`: that shot could not fit the
+   card at all.
+2. **Scroll the strip sideways.** 210 days is ~7 months, so there is real travel. It scrolls smoothly,
+   stops at both ends without bouncing into blank space, and the month labels stay attached to their own
+   columns rather than drifting.
+3. 🔴 **Which month is showing when you arrive? This is the highest-value step in the row.** The strip should
+   open scrolled to the **latest** month — a user's own week is what they came to look at — and it gets there
+   with `contentOffset={{ x: 100000, y: 0 }}`
+   ([`InsightsScreen.js:270`](../src/screens/InsightsScreen.js#L270)). ⚠️ **Checked before filing this step:
+   `contentOffset` is in RN 0.81's *shared* `ScrollViewBaseProps`, not an iOS-only block** (verified in
+   `node_modules`, 2026-09-13), so this is **not** the old iOS-only-prop trap — do not report it as one. What
+   is still unproven is the behaviour: it is an *initial* offset of 100000dp that depends on Android clamping
+   to the content width. If the clamp lands short, long, or not at all, every user with more than one month of
+   history opens on the **oldest** month. **A green suite cannot see this** — jest renders the prop and asserts
+   nothing about where the platform actually scrolled. If it fails it is a real `IMP` row: the fix is a `ref`
+   plus `scrollToEnd({ animated: false })` on layout.
+4. **Font scale.** `adb shell settings put system font_scale 2.0`, relaunch, look again. IMP-120 shipped two
+   `fontScale`-invariance tests, so the strip's geometry should not move at all — only the labels grow.
+   Reset to `1.0` afterwards.
+5. **Night mode** (dev panel → Mode — **not** `adb uimode`, which does nothing in this app). The heat ramp
+   in night is `darken(accent)` at four steps; confirm the four levels are still four distinguishable
+   levels on a true-black card.
+6. **Then `emptyInsights`** (zero entries) and confirm the strip is absent rather than an empty husk.
+
+**⚠️ What this walk CANNOT settle, and must not claim to.** `storeShots` is a **210-day perfect streak**,
+so **`missed`, `frozen` and `empty` cells never appear** — three of the four states `monthCellStyle` draws
+([`InsightsScreen.js:248`](../src/screens/InsightsScreen.js#L248)) are invisible in this fixture, exactly as
+they are invisible in every design baseline. **Record that as a named gap.** The heat ramp itself *should*
+be exercised: `buildMonthHeat` assigns heat by **word-count tertile**, `storeShots` sets `textLength: 'long'`
+against a varied fixture pool, and the `noSpread` guard (which flattens every day to `heat2`) should
+therefore not trigger — **if every cell comes out the same shade, that is a finding, not the fixture.**
+`brokenStreak` has the gaps but only 6 entries, so it cannot fill the other half; a long-and-gapped scenario
+in [`src/dev/scenarios.js`](../src/dev/scenarios.js) would, and nobody has asked for one. **Do not record a
+pass on a state you did not see on screen.**
