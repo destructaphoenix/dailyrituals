@@ -423,9 +423,54 @@ the poster); and a user who clears app storage re-downloads. Play Asset Delivery
 hosting ever becomes a problem — Google hosts the assets free — but wiring it through Expo means custom
 Gradle work, so it is not the first move.
 
+🔴 **BLOCKING — provenance must be cleared before any sky ships.** The footage now in the design project
+cannot be sold as it stands. See "Every sky must be ours to sell" below.
+
 **Not yet scoped.** This is the delivery decision only. The build spec waits on the art — which clips
 exist, and which of them loop. Loop technique, subject selection and the day/night rule are in
 [`docs/design-queue.md`](design-queue.md) → "Plus skies".
+
+### 🔴 Every sky must be ours to sell — the provenance gate
+
+**Established 2026-09-12, and it blocks the whole feature.** The design project's `uploads/` folder holds
+**8 Pinterest clips** pulled through `Klickpin.com`, and **11 of the 12** AI-tool files beside them are named
+after *editing* prompts, not creation prompts — `Change_the_lighting_in_the_vid`, `now_a_night_version_of_this_vide`,
+`The_waves_are_different_from_t`, `Edit_or_cut_this_video_or_anim`. That is the signature of
+**video-to-video**: an existing clip went in, a modified clip came out.
+
+⚠️ **An AI edit does not clear a copyright.** A restyled, relit, day/night-swapped version of someone
+else's video is a **derivative work**, and it carries the original's rights with it. This is not a
+grey area about training data — it is one specific file, taken from one identifiable pin, altered.
+
+**And these are sold.** Plus skies are paid IAP, so this would be commercial infringement in a Play-listed
+app, exposed to DMCA takedown, a Play policy strike, and a refund liability on anyone who already bought
+one. That is a different order of risk from the same clip in a private mockup, where it was fine.
+
+**Three things must be true of every clip that ships:**
+
+1. **Nothing scraped is in its chain** — not as the source, not as a reference frame, not as an
+   img2vid seed.
+2. **The tool's terms grant commercial use and output ownership.** This varies by tool *and by tier* —
+   several grant commercial rights on paid plans only. ℹ️ **Claude does not generate video**, so whichever
+   tool produced these, its terms are the ones that govern; find out which it was.
+3. **Provenance is written down per sky**, in the build spec — tool, prompt or licence, date. A sky whose
+   origin nobody can state is a sky that cannot ship.
+
+**The two clean routes, and the second one solves the resolution problem too:**
+
+| Route | Licensing | Resolution |
+| --- | --- | --- |
+| **Text-to-video, nothing fed in** | clean if the tool's tier grants it | pick the largest short edge — see design-queue |
+| **Licensed stock** — Pexels / Pixabay (free, commercial OK, no attribution) or Artgrid / Filmsupply (paid) | clean and documented | **often 4K**, far past the 1080 floor |
+
+💡 **Stock is the underrated option here.** Embers, starfields, caustics, fog, rain-on-glass and fireflies
+are *heavily* covered stock subjects, usually shot on a locked-off camera — which is exactly the
+stationary framing the loop rule wants. It fixes ownership and sharpness in one move, and costs less
+than regenerating.
+
+**What survives:** the *design* is untouched. The cards, the crops, the accent ramps, the day/night
+decisions and the layout are all original work and all still good. **It is the footage underneath that has
+to be replaced**, and each card already specifies exactly what its replacement has to show.
 
 ---
 

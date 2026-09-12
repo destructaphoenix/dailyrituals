@@ -462,7 +462,12 @@ or the spec is relaxed, and that is not a chat's call to make.
 
 ### The short edge is the only number that matters
 
-**720×1280 was the generator's ceiling**, so the question is what to do about it. The first thing to know
+> 🔴 **Read the provenance gate first** — [`playbook.md`](playbook.md) → "Every sky must be ours to sell".
+> Most of this footage traces back to Pinterest and has to be replaced regardless of its resolution.
+> **This section applies to the replacements**, which are ours; there is no preset to change on a scraped
+> clip, and `720×1280` is simply what Pinterest serves.
+
+**Assume the ceiling is the generator's preset**, and the question is what to do about it. The first thing to know
 is that **aspect does not affect sharpness at all** — the hero crop is near-square, so the delivered
 resolution is `min(width, height)` of the source and nothing else.
 
