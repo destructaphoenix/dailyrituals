@@ -32,13 +32,13 @@
 runtime proof is a separate WALK row for a separate chat, so a missing walk is *not* an unfinished spec.
 Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`](docs/playbook.md).
 
-> ## 🧭 WHAT TO TAKE RIGHT NOW (2026-09-11)
+> ## 🧭 WHAT TO TAKE RIGHT NOW (2026-09-12)
 >
 > | If this chat is… | Take |
 > | --- | --- |
-> | a **build task** | ✅ **IMP-118 and IMP-119 SHIPPED BY OTA 2026-09-11 19:21 IST** — commit `a8cb64e` (`Release-Lane: ota`), CI run `34606754613` green in 29m54s. **Group `b38ae63a-7a5c-4533-960f-2e78aef15c97`, runtime `1.0.9`, android update `01a090d8-88cb-7e99-a4f0-6091adc9df19`** — manifest read back by hand, `rcAndroidKey` **present and non-empty** (IMP-086 holds). **The phone will print `update 01a090d8`.** ⬜ **TAKE [IMP-120](docs/specs-open.md#imp-120--the-consistency-grid-becomes-a-bounded-month-strip)** — scoped 2026-09-12, the first row open since IMP-119. The Insights consistency grid grows one row per week forever (~1,870dp for a single year); it becomes a horizontally scrolled month strip of constant ~124dp. Ported from `design-system/proposals/insights-redesign.html` direction **A**, and it **closes D-01**, the design queue's first row since 2026-09-05. Every open question is decided in the spec — the A/B screen choice is *not* one of them, because both directions share this component. Do not open the parked phase ladder (8 / 10b / 11) on your own read. ✅ **IMP-114/115/116/117 went out by OTA on 2026-09-11** (10 commits pushed to `main`, `Release-Lane: ota` on `176b782`, CI run `34594673765` green in 2m16s). **Group `95411ab6-1c03-4f2d-b261-9a7d6e2011b8`, runtime `1.0.9`, update `01a09044-cdb7-7c46-9660-0a1bedd08a0a`** — manifest read back by hand, `rcAndroidKey` **present and non-empty** (IMP-086 holds). Predecessor group was `7e97df68` (IMP-113, 2026-09-10), not `f961b427` as `176b782`'s own message says — that was the IMP-100 group, two ships back. Until that OTA is applied on the **second** launch, every walk that re-runs these four rows is walking a bundle without them. The phase ladder (8 / 10b / 11) is explicitly **parked until the owner resumes it** — do not start one on your own read of this table; ask the owner what to take next. |
+> | a **build task** | ✅ **IMP-120 done** (commit `72b0049`, code-complete, archived in `docs/build-log.md`) — `LifetimeHeat` is now `MonthStrip`, a horizontally-scrolled month strip of constant ~124dp; **closes D-01**. Walk owed, a new `WALK` row filed separately. ⬜ **TAKE [IMP-121](docs/specs-open.md#imp-121--the-streak-hero-plays-a-video-sky)** — the streak hero plays one looping video sky behind the numeral, against a single bundled fixture clip. **Native — new binary.** [IMP-122](docs/specs-open.md#imp-122--the-sky-catalogue-becomes-a-manifest) (the sky manifest) is next after it and **needs IMP-121 first** — do not take it out of order. Do not open the parked phase ladder (8 / 10b / 11) on your own read; ask the owner what to take next. ✅ IMP-118/119 shipped by OTA 2026-09-11 19:21 IST — commit `a8cb64e`, CI run `34606754613` green. Group `b38ae63a-7a5c-4533-960f-2e78aef15c97`, runtime `1.0.9`, android update `01a090d8-88cb-7e99-a4f0-6091adc9df19` — manifest read back by hand, `rcAndroidKey` present and non-empty (IMP-086 holds). |
 > | a **runtime walk** | 🔄 **THE TARGET BUNDLE MOVED — the pre-flight string is now `update 01a090d8`, not `01a09044`.** The IMP-118/119 OTA published at 19:21 IST superseded the bundle the owner's phone was confirmed on two hours earlier; it applies on the **second** launch after the download. ⚠️ **Read all eight characters — `01a09044` and `01a090d8` share six**, and only the second carries IMP-118/IMP-119. ⚠️ **The You tab prints the UPDATE id, not the group** — [`diagnostic.js:35`](src/billing/diagnostic.js#L35) strips dashes and takes 8 chars of `Updates.updateId`, so look for **`01a090d8`**, never the group `b38ae63a`. A walk of 7C, the IMP-116 lapse block, WALK-08's circles or WALK-12 on any older bundle proves nothing; after any further OTA, re-read this string before starting. 📱 **Take the running order from [`walk-open.md`](docs/walk-open.md) → "THE DEVICE SITTING PLAN"** — three sittings (IMP-116 lapse + IMP-114/115 · WALK-19 step 8 real money · WALK-12 last), each with the membership state it needs. ⚠️ **7C stays unwalkable** until the candle holding drains to ≤2 — do not record it as passed because nothing broke. ✅ **Step 7 is DONE — the 2026-09-10/11 lapse sitting cleared it** (hardware, owner-run, monthly tester sub). **WALK-18 ✅, WALK-07 ✅, WALK-19 steps 7A/7B/7D ✅** — IMP-108, IMP-109, IMP-110, IMP-111 and IMP-096 are all now proven on hardware. ⚠️ **7C is NOT proven** — the owner held 6 pre-cap candles, so the cap was never exercised; it re-runs once the holding drains to ≤2 ([IMP-115](docs/specs-open.md#imp-115)). Remaining 🚦: **step 8** (the one real-money purchase, held for last) and **WALK-12 (R8) LAST** — it must be walked on the exact build you ship. ✅ **WALK-08 is CLOSED (2026-09-11, emulator, agent-run)** — DeeperInsights passes at max font, IMP-095 proven, cap measured biting (scale 2, caps 1.5/1.2). It found IMP-118 on the way. 🔴 **But its IMP-117 pass was HALF WRONG and the device overturned it** — the `+` was off-centre at every font size, fixed as [IMP-119](docs/build-log.md#imp-119-the-ember-pills--lost-the-line-that-centred-it-2026-09-11) (commit `1fc0664`, walk still owed on device); the emoji half stands. **A glyph-centring claim is not emulator-provable — route that shape to `device`.** ✅ **SITTING 1 is DONE (2026-09-11, hardware, owner-run) — do not re-run it.** IMP-116 proven: on lapse both cosmetics revert under one message. **IMP-114 stays UNEXERCISED** — `buyCandles` checks the cap before affordability, so 6 candles against a cap of 3 returns at the first guard and its message cannot fire; same blocker as 7C. Step 5's control was dropped by inspection (ownership is consulted independently of `plus` in all three paths). Still owed, cheaply: the `6 kept` label and the no-ember-price check. ⚠️ **WALK-20 (IMP-113's ember purchase) still does not exist in `docs/walk-open.md`, and cannot be walked at all while `EMBER_PACKS_ENABLED` is `false`.** |
-> | a **design request** | 📋 **Take the first row of [`docs/design-queue.md`](docs/design-queue.md)** — a ranked audit of all 14 user-facing surfaces, written 2026-09-11 from source. **D-01 (the Insights consistency grid, which draws every day since your first entry — ~1,870dp per year) is still first**, so the long-standing "the live request is Insights" is unchanged, only evidenced. ⚠️ **One screen per request**; the four standing rules stay in [`docs/playbook.md`](docs/playbook.md) → "Claude Design — standing rules". **Three rows need no design at all** (D-04, D-09, D-10) — they are defects found during the audit and want IMP numbers. |
+> | a **design request** | 📋 **Take the first row of [`docs/design-queue.md`](docs/design-queue.md)** — a ranked audit of all 14 user-facing surfaces, written 2026-09-11 from source. ✅ **D-01 (the Insights consistency grid) is built as IMP-120** — no further design pass needed, `docs/design-queue.md` still names it first and wants its own row updated by a design chat. **D-02 (Reflections)** is next. ⚠️ **One screen per request**; the four standing rules stay in [`docs/playbook.md`](docs/playbook.md) → "Claude Design — standing rules". **Three rows need no design at all** (D-04, D-09, D-10) — they are defects found during the audit and want IMP numbers. |
 >
 > **The billing surface, honestly.** ✅ **Proven end to end on hardware:** purchase, already-owns (4e),
 > reinstall + entitlement survival (WALK-19a), cancel, and lapse-at-cold-start (IMP-107). **089/090/099 too.**
@@ -77,7 +77,7 @@ preflight. Detail → [`docs/build-log.md`](docs/build-log.md).
 
 **Current stack:** Expo SDK **54** · RN **0.81.5** · React **19.1.0** · **New Architecture** ·
 **Reanimated 4.1.1 + worklets 0.5.1** · `targetSdkVersion` **36**, `minSdk` **24** ·
-`npm test` → **1193 passed, 106 suites** (verified 2026-09-11) + **3 zone tests × 2 pinned zones**.
+`npm test` → **1200 passed, 108 suites** (verified 2026-09-12) + **3 zone tests × 2 pinned zones**.
 ⚠️ **Run `npm test`, not bare `npx jest`**, or the zone half is skipped. Version-checking a phone, the
 track-reading script and the rest of the stack notes are in [`docs/playbook.md`](docs/playbook.md).
 
@@ -116,6 +116,9 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 117 | **Max font breaks two circles.** The ember pill's `+` ([`shopui.js:31`](src/shopui.js#L31)) has a literal `lineHeight: 15` that `maxFontSizeMultiplier` does not scale, so the glyph outgrows its line box; the custom-mood emoji circles ([`WriteFlow.js:182`](src/screens/WriteFlow.js#L182), [`:196`](src/screens/WriteFlow.js#L196)) are fixed 34dp with no `maxFontSizeMultiplier` at all. | OTA | ✅ **done, archived** in `docs/build-log.md` — `a59aea9`. **1192 passed, 106 suites** (was 1187/105), export clean, +5 tests, all 5 new source assertions proven red first. ⚠️ **Walk owed** — folds into WALK-08 |
 | 118 | **A tied weekday draws as an empty bar.** `moodByWeekday` assigns `n` only when one mood wins outright, so a weekday with 66 entries and a tie returns `n: 0` and [`DeeperInsights.js:83`](src/screens/DeeperInsights.js#L83) sizes the bar from `n` — pixel-identical to a weekday never written on, while "Weekly rhythm" directly above calls those same days the fullest. `top: null` on a tie is correct and test-pinned; the renderer's soft/outlined branch is simply unreachable today. | OTA | ✅ **done, archived** in `docs/build-log.md` — `dc22e32`. **1193 passed, 106 suites** (was 1192/106), export clean, +1 test, proven red first. ⚠️ **Walk owed** — folds into WALK-08's re-run |
 | 119 | **IMP-117 half-regressed.** It deleted the `lineHeight: 15` that optically centred the ember pill's `+`; the glyph is now off-centre at **every** font size, including default. Found on hardware, overturning WALK-08's emulator pass. | OTA | ✅ **done, archived** in `docs/build-log.md` — `1fc0664`. **1193 passed, 106 suites** (unchanged — a rewrite, not an addition), export clean. The pinning test now requires a *scaled* `lineHeight`. ⚠️ **Walk owed, device not emulator** — folds into Sitting 1's optional add-on |
+| 120 | **The Insights consistency grid grows one row per week forever** — ~1,870dp for a single year. Replaced with a horizontally-scrolled month strip of constant ~124dp, direction A of the returned design. **Closes D-01.** | OTA | ✅ **done, archived** in `docs/build-log.md` — `72b0049`. **1200 passed, 108 suites** (was 1199/107), export clean, +9 `buildMonthHeat` tests, +2 fontScale-invariance tests, -10 tests for the deleted `heatGutterWidth`/`monthLabelsForRows`. ⚠️ **Walk owed** — a new `WALK` row, filed separately |
+| 121 | **The streak hero is static art.** Teach it to play one looping video sky behind the numeral, against a single bundled fixture clip. **Native — new binary.** | Build | ⬜ **open — take this one next** |
+| 122 | **`SHOP_SKIES` knows five gradient `kind` strings.** Make a sky a manifest (clip URL, poster, mode pair, accent) and feed the shop tiles from it. | OTA | ⬜ open — needs IMP-121 first |
 | 022 | Save as PDF + About sheet (the two dead You-tab buttons) | Build | ⏸ **deferred (owner)** — spec in build-log → "Deferred specs"; **perk #6 gate** |
 | 044 | R8 on release builds (dev client was shipping to the public) | Build | 🟢 **code-complete, UNWALKED.** R8 must be walked on the build you actually ship, so it rides **vc15 or later**; walk = WALK-12, on hardware, last in the sitting |
 | 057 | Historical `dayKey` migration | Build | 🔒 **reserved, not missing** — cannot be written until real device numbers come back from the dev panel's "Data health" reporter. See below |
@@ -128,8 +131,9 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 **Moved to [`docs/playbook.md`](docs/playbook.md) → "Claude Design" (2026-09-10, size rule).** Stable
 reference — project id, card list, regeneration steps. **The queue itself is now
 [`docs/design-queue.md`](docs/design-queue.md)** (2026-09-11): 14 ranked rows across three tiers —
-what degrades as the journal grows, the six disagreeing Plus surfaces, and polish. **D-01 Insights
-first**, unchanged.
+what degrades as the journal grows, the six disagreeing Plus surfaces, and polish. ✅ **D-01 (Insights)
+is built as IMP-120** — `docs/design-queue.md` itself still wants a design chat to update its own row.
+**D-02 (Reflections)** is next.
 
 ## Open items / blockers
 
@@ -192,25 +196,7 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
-_2026-09-11, earlier (Sonnet — **IMP-118 built: a tied weekday now draws its bar instead of vanishing.**) —
-✅ code-complete, walk owed (folds into WALK-08)._
-
-**What finished.** [`deeper.js`](src/insights/deeper.js) `moodByWeekday` — `b.n = maxN` now runs
-unconditionally whenever a weekday has any moods at all; `b.top` still only sets on a clear winner
-(`winners.length === 1`), so `top: null` on a tie is unchanged and stays test-pinned. `DeeperInsights.js`
-was untouched, per the spec — its soft/outlined branch (`d.top ? c.accent : c.accentSoft`) was already there
-and becomes reachable on its own now that a tied bucket carries real height instead of `0`.
-
-**The proof.** Extended `__tests__/insights/deeper.test.js` with a new tie case asserting `n === maxN` (not
-`0`) alongside `top: null`, proven red first (received `0`, expected the tied count) against the pre-fix
-code. The existing *"returns top: null on a tie"* and *"returns top: null for an empty weekday"* tests pass
-unchanged — the empty-weekday case still reports `n: 0`, keeping the two states distinguishable. **1193
-passed, 106 suites** (was 1192/106), `npx expo export --platform android` clean, +1 test. Commit `dc22e32`.
-Spec archived to `docs/build-log.md`; `docs/specs-open.md`'s queue now holds **IMP-119 only**.
-
-**The exact next step (at the time).** Take **IMP-119** — the ember pill's `+` regression. Corrected below.
-
-_2026-09-11, latest (Sonnet — **IMP-119 built: the ember pill's `+` keeps a `lineHeight` that scales with
+_2026-09-11 (Sonnet — **IMP-119 built: the ember pill's `+` keeps a `lineHeight` that scales with
 the font instead of a fixed or absent one.**) — ✅ code-complete, walk owed (device, folds into Sitting 1)._
 
 **What finished.** [`shopui.js`](src/shopui.js) `EmberPill` — pulled the circle's scale factor out into a
@@ -227,9 +213,35 @@ the renamed `fontScale` variable and otherwise kept. **1193 passed, 106 suites**
 an addition), `npx expo export --platform android` clean. Commit `1fc0664`. Spec archived to
 `docs/build-log.md`; **`docs/specs-open.md`'s queue is now empty.**
 
-**The exact next step.** No `IMP-xxx` row is open. The next build chat waits on the owner filing a new
-issue, or being told to resume the parked phase ladder (8 / 10b / 11 in `docs/playbook.md`) — do not open
-that on your own read. Walk chats: this row's proof is owed on **device**, folding into Sitting 1's optional
-add-on (already has the owner in the Shop at two font sizes) — confirm the `+` sits optically centred at
-default *and* max font, emoji circles still correct. Sitting 2 (WALK-19 step 8, real money) and Sitting 3
-(WALK-12, R8, last) remain the other open walk debts.
+**The exact next step (at the time).** No `IMP-xxx` row was open. **Superseded within hours** — Opus scoped
+IMP-120, IMP-121 and IMP-122 into `docs/specs-open.md` the same day; see the note below. Walk chats: this
+row's proof is owed on **device**, folding into Sitting 1's optional add-on (already has the owner in the
+Shop at two font sizes) — confirm the `+` sits optically centred at default *and* max font, emoji circles
+still correct. Sitting 2 (WALK-19 step 8, real money) and Sitting 3 (WALK-12, R8, last) remain the other
+open walk debts.
+
+---
+
+_2026-09-12 (Sonnet — **IMP-120 built: the Insights consistency grid stops growing with the journal.**) —
+✅ code-complete, walk owed (new WALK row, filed separately)._
+
+**What finished.** `buildMonthHeat` in [`calendar.js`](src/home/calendar.js) returns one block per calendar
+month from the first entry's month through the current month, oldest first — every day of the month, `lead`
+blanks before day 1, word-density tertiles (`heat0-3`) computed once across every `done` cell in the whole
+strip, falling back to `heat2` when there are fewer than 3 done days or no spread.
+[`InsightsScreen.js`](src/screens/InsightsScreen.js)'s `LifetimeHeat` is replaced by `MonthStrip` — a
+horizontally-scrolled strip of 95dp month blocks (7×11dp cells, 3dp gaps), month-level press target,
+`onOpenMonth` wired as a no-op. `heatGutterWidth`, `HEAT_GUTTER_BASE_DP` and `monthLabelsForRows` are deleted
+from `heatCells.js` with their tests; `cellState` and `buildLifetimeHeatmap` stay. **Closes D-01.**
+
+**The proof.** New `buildMonthHeat` tests (empty journal, single-entry month, Sunday-first month, leap-year
+February, the three-tertile split, both heat2 fallbacks, a frozen day's `heat === 0`, future days in the
+current month) plus a new `InsightsMonthStrip.test.js` rendering `InsightsScreen` at `fontScale` 1 and 1.5 to
+confirm a day cell stays 11×11dp. **1200 passed, 108 suites** (was 1199/107), `npx expo export --platform
+android` clean. Commit `72b0049`. Spec archived to `docs/build-log.md`; `docs/specs-open.md`'s queue now
+holds **IMP-121 only** (IMP-122 needs IMP-121 first).
+
+**The exact next step.** Take **IMP-121** — the streak hero plays a looping video sky against a bundled
+fixture clip (native, new binary). IMP-122 (the sky manifest) follows it. Walk chats: this row owes a new
+`WALK` row for the strip's real scroll behaviour and the tertile ramp under a real journal, not yet filed in
+`docs/walk-open.md`.

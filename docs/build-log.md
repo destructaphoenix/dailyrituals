@@ -4853,7 +4853,66 @@ font, with the emoji circles still correct.
 
 ---
 
+## IMP-120 — the consistency grid becomes a bounded month strip (2026-09-12)
+
+**Closes D-01**, the design queue's first row since 2026-09-05. Ported from
+`design-system/proposals/insights-redesign.html`, direction A — the "Your year" block. `LifetimeHeat` drew
+one row per calendar week from the first entry forever: ~52 rows / ~1,870dp for a single year on a 360dp
+phone, about three screenfuls, pushing the hero number and the totals grid that far above it. Reflections
+had already shipped the bounded version of the same component under "Last 5 weeks" one tab over.
+
+**What was built.** `buildMonthHeat` in [`calendar.js`](../src/home/calendar.js) returns one block per
+calendar month from the first entry's month through the current month, oldest first — every day of the
+month, `lead` blank cells before day 1, `kept`/`total` for the accessibility label. Word-density tertiles
+(`heat0-3`) are computed once across every `done` cell in the whole strip, not per month, falling back to
+`heat2` for every done day when there are fewer than 3 done days or no spread. [`InsightsScreen.js`](../src/screens/InsightsScreen.js)'s
+`LifetimeHeat` is replaced by `MonthStrip`: a horizontally scrolled `ScrollView` of 95dp month blocks (7
+columns × 11dp cells, 3dp gaps — the direction-A measurement that beat direction B's 440dp-overflowing
+transpose), `contentOffset` opening at the last month. The press target is the whole month block
+(`onOpenMonth`, wired as a no-op — the month detail sheet is a separate row); day-level entry opening leaves
+this surface to Reflections. Every cell state still returns `borderWidth: 1` with a transparent border where
+no ring shows (frozen's `accentSoft` ring aside), so geometry never varies by state. The legend drops its
+old gutter+gap indent (gone with the gutter) for a flush left edge, and now carries the density ramp plus
+one `frozen` chip. `heatGutterWidth`, `HEAT_GUTTER_BASE_DP` and `monthLabelsForRows` are deleted from
+`heatCells.js` along with their tests; `cellState` and `buildLifetimeHeatmap` stay — the latter's tests
+still document the date maths for `buildHeatmap`/`buildWeekStrip`. `heatCellStyle` and `LEGEND`
+(`InsightsScreen.js`) are untouched and unconsumed now — nothing in the spec asked to delete them, and
+`heatCellStyle.test.js` still exercises them directly.
+
+**The proof.** New `buildMonthHeat` tests in [`calendar.test.js`](../__tests__/home/calendar.test.js) cover
+an empty journal, a single-entry month, a Sunday-first month (`lead === 6`), a leap-year February, the
+three-tertile split, both heat2 fallbacks (fewer than 3 done days; zero spread), a frozen day's `heat === 0`,
+and future days inside the current month. A new
+[`InsightsMonthStrip.test.js`](../__tests__/screens/InsightsMonthStrip.test.js) renders `InsightsScreen` at
+`fontScale` 1 and 1.5 and asserts a day cell stays 11×11dp — the grid is dp, not type. **1200 passed, 108
+suites** (was 1199/107), `npx expo export --platform android` clean. Commit `72b0049`.
+
+**Walk owed.** This spec is code-complete at green tests, not proven at runtime. The strip's real scroll
+behaviour and the tertile ramp under a real journal want a new `WALK` row, which the owner files separately.
+
+---
+
 ## Session notes
+
+_2026-09-11, earlier (Sonnet — **IMP-118 built: a tied weekday now draws its bar instead of vanishing.**) —
+✅ code-complete, walk owed (folds into WALK-08)._
+
+**What finished.** [`deeper.js`](../src/insights/deeper.js) `moodByWeekday` — `b.n = maxN` now runs
+unconditionally whenever a weekday has any moods at all; `b.top` still only sets on a clear winner
+(`winners.length === 1`), so `top: null` on a tie is unchanged and stays test-pinned. `DeeperInsights.js`
+was untouched, per the spec — its soft/outlined branch (`d.top ? c.accent : c.accentSoft`) was already there
+and becomes reachable on its own now that a tied bucket carries real height instead of `0`.
+
+**The proof.** Extended `__tests__/insights/deeper.test.js` with a new tie case asserting `n === maxN` (not
+`0`) alongside `top: null`, proven red first (received `0`, expected the tied count) against the pre-fix
+code. The existing *"returns top: null on a tie"* and *"returns top: null for an empty weekday"* tests pass
+unchanged — the empty-weekday case still reports `n: 0`, keeping the two states distinguishable. **1193
+passed, 106 suites** (was 1192/106), `npx expo export --platform android` clean, +1 test. Commit `dc22e32`.
+Spec archived to `docs/build-log.md`; `docs/specs-open.md`'s queue now holds **IMP-119 only**.
+
+**The exact next step (at the time).** Take **IMP-119** — the ember pill's `+` regression. Corrected below.
+
+---
 
 _2026-09-11, earlier (Opus — **Sitting 1 walked on hardware by the owner: IMP-116 proven, IMP-119
 opened, and WALK-08's IMP-117 pass overturned.**) — ✅ walk closed, two build rows now open._

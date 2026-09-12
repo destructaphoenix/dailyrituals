@@ -13,7 +13,7 @@
 > re-litigate a "why", and do not improve the scope.** If a step turns out to be impossible or the code
 > contradicts the spec, **STOP** and log it to `PROGRESS.md` → Open items rather than inventing a fix.
 >
-> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **1199 passed, 107 suites** — verified 2026-09-12), `npx expo export --platform android` clean, commit with the **exact** message given, then
+> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **1200 passed, 108 suites** — verified 2026-09-12), `npx expo export --platform android` clean, commit with the **exact** message given, then
 > update `PROGRESS.md` (tick the backlog row, write the session note) and **move the finished spec from
 > this file into `docs/build-log.md`**.
 >
@@ -26,180 +26,12 @@
 
 | Row | What | State |
 | --- | --- | --- |
-| [IMP-120](#imp-120--the-consistency-grid-becomes-a-bounded-month-strip) | The Insights consistency grid grows forever — one row per week, ~1,870dp for a single year. Replace it with a horizontally-scrolled month strip of constant height. | ⬜ **open — take this one** |
-| [IMP-121](#imp-121--the-streak-hero-plays-a-video-sky) | The streak hero is static art. Teach it to play one looping video behind the numeral, against a single bundled fixture clip. **Native — new binary.** | ⬜ open |
+| [IMP-121](#imp-121--the-streak-hero-plays-a-video-sky) | The streak hero is static art. Teach it to play one looping video behind the numeral, against a single bundled fixture clip. **Native — new binary.** | ⬜ **open — take this one** |
 | [IMP-122](#imp-122--the-sky-catalogue-becomes-a-manifest) | `SHOP_SKIES` knows five gradient `kind` strings. Make a sky a manifest (clip URL, poster, mode pair, accent) and feed the shop tiles from it. **Pure JS — OTA.** | ⬜ open — needs IMP-121 |
 
+**IMP-120 is done** — archived in [`docs/build-log.md`](build-log.md#imp-120--the-consistency-grid-becomes-a-bounded-month-strip-2026-09-12), commit `72b0049`.
 **IMP-119 is done** — archived in [`docs/build-log.md`](build-log.md#imp-119-the-ember-pills--lost-the-line-that-centred-it-2026-09-11), commit `1fc0664`.
 **IMP-118 is done** — archived in [`docs/build-log.md`](build-log.md#imp-118-a-tied-weekday-no-longer-draws-as-an-empty-bar-2026-09-11), commit `dc22e32`.
-
----
-
-## IMP-120 — the consistency grid becomes a bounded month strip
-
-**Closes [D-01](design-queue.md), the design queue's first row since 2026-09-05.** Ported from
-`design-system/proposals/insights-redesign.html` → direction **A**, its "Your year" block.
-
-### The defect
-
-[`LifetimeHeat`](../src/screens/InsightsScreen.js#L239) draws **one row per calendar week from the user's
-first entry to today, forever**. On a 360dp phone at default font scale the card content width is 280dp,
-the month gutter is 28dp + one 4dp gap, so each cell is `(280 − 32 − 6×4) ÷ 7 = 32dp` and the row pitch is
-36dp. **One year is ~52 rows ≈ 1,870dp — about three screenfuls.** Two years is six. The hero number and
-the totals grid are pushed that far above it.
-
-The same app already ships the bounded version one tab over: Reflections titles its heat **"Last 5 weeks"**.
-Insights is the only unbounded surface of the two.
-
-### The measurement that decides the layout
-
-The returned design gives two directions. **Both retire the lifetime heatmap and both replace it with the
-same month-blocked calendar**, so building this commits to neither A nor B as a whole screen — that choice
-stays open. They differ only in how the months are laid out, and the numbers settle it:
-
-| | Direction A (`.mo`/`.mgrid`) | Direction B (`.ycal`/`.cg`) |
-| --- | --- | --- |
-| Month shape | 7 columns × up-to-6 week rows — a conventional calendar | 7 weekday rows × 5 week columns — the transpose |
-| Cell | **11dp**, 3dp gap | **5dp**, 2dp gap |
-| Month block | 95dp wide | 33dp wide |
-| 12 months | scrolls horizontally, ~2.8 visible at 280dp | **440dp — overflows a 280dp card anyway** |
-| Component height | **~124dp, constant** | ~65dp, constant |
-
-🔑 **Take A.** B is only nominally scroll-free — twelve 33dp months need 440dp and the card has 280dp, so it
-scrolls before the year is out *and* its 5dp cells are illegible on a phone. A scrolls deliberately, stays
-readable, and **124dp against today's 1,870dp is the whole point of the row**. D-01's own brief proposed a
-horizontally-scrolled transpose at ~250dp; A beats it and gets month labels for free.
-
-### The five decisions this spec makes
-
-**1. `heat0–heat3` is word density, and it does not replace the four states.** The design's ramp
-("Fewer words → More") is a different axis from `done`/`frozen`/`missed`/`empty`. Both survive, like this:
-
-| State | Fill | Ring |
-| --- | --- | --- |
-| `done` | `c.heat1` / `c.heat2` / `c.heat3` by word-count tertile | transparent |
-| `frozen` | `c.heat0` | **`c.accentSoft`, 1dp** — a candle kept it, so it is not a miss and has no words |
-| `missed` | `c.heat0` | transparent |
-| `empty`, `future` | `transparent` | transparent |
-
-**Tertiles are computed over the `done` days in the whole strip**, so the ramp is comparable across months.
-If there are fewer than 3 done days, or every count is equal, **every done day is `c.heat2`** — never a
-ramp derived from one value.
-
-**2. Geometry still must not vary by state** (the D-01 invariant that was already a fixed bug). Android
-strokes a rounded border half *outside* the bounds, so a bordered cell measures ~1dp larger and breaks the
-rhythm. **Every state returns `borderWidth: 1`** and a transparent colour where no ring shows. **No dashed
-borders** — Android renders `borderStyle: 'dashed'` with `borderRadius` inconsistently.
-
-**3. The press target is the month, not the day.** An 11dp cell cannot be a touch target, and the design
-says "tap a month". The whole 95×81dp block is pressable and opens the month; **day-level entry opening
-leaves this surface** — Reflections keeps the day-tappable heat as its navigation device, which is the
-returned design's own reasoning. Accessibility label on the block:
-`"<Month> <year>, <n> of <m> days kept"`. Today is still marked by an **inset ring child**
-(`top/left/right/bottom: 1`, `borderRadius: 1`, `borderWidth: 1`, `c.accentDeep`), never by different
-geometry.
-
-⚠️ **What the month opens is out of scope here.** Wire `onOpenMonth` as a prop and have `InsightsScreen`
-pass a no-op for now. **Do not build a month detail sheet** — that is a separate row.
-
-**4. The legend loses its indent problem.** The old legend had to indent to `gutter + gap` and those two
-magic numbers had already drifted apart once (24 vs 28). There is no gutter on this axis, so **the legend
-aligns to 0 — the left edge of the first month block.** It carries the density ramp
-(`Fewer words` · four 10dp swatches `heat0→heat3` · `More`) and **one chip for `frozen`** ("a candle kept
-this day"). `missed` needs no chip — `heat0` is the ground tone and absence reads as absence. **`empty`
-stays out of the legend deliberately**, as it was before.
-
-**5. No year selector, no time-scoping control.** The strip runs from the first entry's month to the
-current month and **starts scrolled to the end**. Height is constant whatever the range, so "all time" is
-free and costs no new control. The `This year · 2025 · All time` scoping in the returned design also
-re-scopes the numbers above it — that is a different, larger row.
-
-### Steps
-
-1. **`src/home/calendar.js` — add `buildMonthHeat(entries, today = new Date(), { frozenDays = [] } = {})`.**
-   It goes in this file, not a new one, because `shiftKey`, `weekdayMon0`, `indexByDay` and `minDayKey` are
-   module-private here and must not be exported just for this. Return, oldest month first:
-   ```js
-   [{ year, month, label, lead, kept, total, cells: [{ dayKey, state, heat, today, moods }] }]
-   ```
-   - `label` from the existing `MONTH_SHORT` shape in `heatCells.js` (export it).
-   - `lead` = `weekdayMon0` of the 1st — the count of blank cells before day 1, Monday-first, matching the
-     rest of the app.
-   - `cells` covers **every day of the month**, so a month block is always a full calendar.
-   - `state` from `cellState` in `heatCells.js` — reuse it, do not restate the precedence.
-   - `heat` is `0–3`: `0` for every non-`done` state; `1|2|3` for `done` by the tertile rule in decision 1.
-     Word counts come from `countWords` (`src/insights/words.js`) over the entry's text.
-   - `kept` / `total` feed the accessibility label.
-   - Empty journal → `[]`, exactly as `buildLifetimeHeatmap` does.
-2. **`__tests__/home/` — test `buildMonthHeat` as a pure function.** Cover: empty journal; a single-entry
-   journal; a month whose 1st is a Sunday (`lead === 6`); February in a leap year; the three-tertile split;
-   **the <3-done-days and zero-spread fallbacks both returning `heat === 2`**; a `frozen` day carrying
-   `heat === 0`; and days after today inside the current month coming back `future`.
-3. **`src/screens/InsightsScreen.js` — replace `LifetimeHeat` with `MonthStrip`.** A horizontal
-   `ScrollView` (`showsHorizontalScrollIndicator={false}`, `contentContainerStyle={{ gap: 10 }}`) of month
-   blocks: `width: 95`, 7-column grid of `11dp` cells at `3dp` gaps, `borderRadius: 3`. Set
-   `contentOffset` so it opens at the last month. Keep the section header `Consistency` and its
-   `borderTopWidth` rule exactly as they are.
-4. **Delete `LifetimeHeat`, `heatGutterWidth`, `HEAT_GUTTER_BASE_DP` and `monthLabelsForRows`**, and the
-   tests that only covered them. `buildLifetimeHeatmap` **stays** — `buildHeatmap` and `buildWeekStrip` are
-   its neighbours and its tests still document the date maths. ⚠️ Check nothing else imports the four
-   deletions before removing them.
-5. **The grid is dp, not type — it must not scale with the OS font scale.** Only the month label and the
-   legend text scale. The old 28dp gutter existed solely to keep "Aug" legible at the 1.5× cap; a 95dp
-   block clears `Sep` at 12pt × 1.5 with room to spare, so `heatGutterWidth` goes away with it. Add a test
-   at `fontScale: 1.5` asserting the cell dp is unchanged.
-
-### Done when
-
-`npm test` green and **≥ 1164 passed / 104 suites**, `npx expo export --platform android` clean. Commit:
-
-```
-feat(insights): the consistency grid stops growing with the journal
-
-IMP-120. LifetimeHeat drew one row per week from the first entry
-forever -- ~1,870dp for a single year on a 360dp phone, about three
-screenfuls, with the hero number pushed that far above it. Reflections
-already shipped the bounded version of the same component one tab over.
-
-Ported from the returned design's direction A: a horizontally scrolled
-strip of month blocks, 95dp wide, 11dp cells at 3dp gaps. Height is
-~124dp and constant whatever the journal's length, which is the row.
-Direction B measured worse on both counts -- twelve of its 33dp months
-need 440dp against a 280dp card, so it scrolls anyway, and its 5dp cells
-are illegible on a phone.
-
-heat0-heat3 carries word density without displacing the four states:
-done ramps heat1-3 by tertile over the whole strip, frozen takes heat0
-plus an accentSoft ring because a candle kept it and it has no words,
-missed takes heat0 bare, empty and future stay transparent. Fewer than
-three done days, or no spread, gives every day heat2 rather than a ramp
-invented from one value.
-
-The press target moves from the day to the month, since an 11dp cell
-cannot be one. Day-level opening leaves this surface to Reflections,
-which is the design's own reasoning. onOpenMonth lands as a no-op prop;
-the month sheet is a separate row.
-
-Every state still returns borderWidth 1 with a transparent colour where
-no ring shows, so geometry cannot vary by state. The legend's old
-gutter+gap indent is gone with the gutter, and takes its two-magic-
-numbers drift with it.
-
-Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
-```
-
-Then tick the row in `PROGRESS.md`, write the session note, and move this spec into `docs/build-log.md`.
-**No `Release-Lane:` trailer** — the owner has not asked to ship it.
-
-⚠️ **This spec is code-complete at green tests.** It does not end in a walk. The strip's real scroll
-behaviour and the tertile ramp under a real journal want a `WALK` row, which the owner files separately.
-
----
-
-**IMP-117 and its IMP-119 regression are both archived** in [`docs/build-log.md`](build-log.md#imp-117)
-(commit `a59aea9`) and [`docs/build-log.md`](build-log.md#imp-119-the-ember-pills--lost-the-line-that-centred-it-2026-09-11)
-(commit `1fc0664`). **IMP-118 is done** (commit `dc22e32`, archived). **The queue is empty** — do not open
-the parked phase ladder (8 / 10b / 11, in `docs/playbook.md`) on your own read; it still needs the owner.
 
 ---
 
@@ -338,6 +170,14 @@ poster must always cover a cold frame. Never treat a cached clip as a permanent 
    project's `uploads/` or `art/assets/`** — see the provenance gate in [`playbook.md`](playbook.md). The
    fixture is a Pexels/Pixabay clip encoded with the recipe in [`design-queue.md`](design-queue.md).
    **If it is not in the tree when you start this spec, STOP and log it** — do not substitute one.
+   ✅ **In the tree as of 2026-09-12.** [Pexels — "View Of Waves In Water From Motorboat" by Andrey
+   Baranov](https://www.pexels.com/video/view-of-waves-in-water-from-motorboat-10144321/), free/commercial
+   licence, no attribution required. ⚠️ Filename (`fixture.mp4`) is a leftover from an earlier download
+   attempt named `pexels-embers.mp4` — the content is ocean waves, not embers. It also **fails the
+   first-vs-last-frame loop check** (SSIM ≈ 0.006 — a fade-up from black into breaking waves, exactly the
+   non-looping motion `design-queue.md` rules out). Acceptable here only because it is dev-only: the jest
+   mock never plays the file, so no automated test sees the seam. **Do not reuse this file for a real
+   shipped sky** — swap it before any sky named after this clip goes near `SHOP_SKIES`.
 4. **`src/home/skyHero.js`** — a new component, `<SkyHero source poster accent>`: absolutely-positioned
    `VideoView` (`contentFit="cover"`, `nativeControls={false}`), poster `<Image>` beneath it, a bottom
    scrim `LinearGradient` over the lower 28%, `pointerEvents="none"` throughout. It renders **children**
