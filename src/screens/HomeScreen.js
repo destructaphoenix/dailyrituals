@@ -6,6 +6,8 @@ import { useTheme } from '../theme';
 import { T, Card, PrimaryButton, ProgressBar } from '../ui';
 import { Sun, Moon, Check, Pencil, BADGE_ICON } from '../icons';
 import { RayFan, NightRays } from '../art';
+import SkyHero from '../home/skyHero';
+import { hasVideoSky } from '../home/videoSkyGate';
 import { greetingFor, todayLabel } from '../time/clock';
 import { dayKeyOf } from '../time/dayKey';
 import { pickForDay } from '../time/dailyPick';
@@ -26,9 +28,19 @@ import AnnualRecapCard from './AnnualRecapCard';
 // for why (a "year in review" outside Dec–Jan is either premature or stale).
 const RECAP_WINDOW_MONTHS = [11, 0]; // Dec, Jan
 
+// The streak hero's video sky (IMP-121). One bundled fixture clip; the gate
+// itself lives in videoSkyGate.js, which IMP-122 turns into a manifest lookup.
+const HERO_HEIGHT = 336;
+const HERO_ACCENT = '#5AA9E6';
+const FIXTURE_SKY = {
+  source: require('../../assets/skies/fixture.mp4'),
+  poster: require('../../assets/skies/fixture-poster.png'),
+};
+
 export default function HomeScreen({ copy, mode, streak, level, levelName, xpInto, xpToNext, entries, quests, freezes, onOpenAchievements, done, onWrite, onToggleMode, embers, plus, plusEnabled = false, onOpenShop, dailyPrompt = '', userName = '', pendingFreezeNotice = [], onDismissFreezeNotice, onThisDayDismissed = '', onDismissOnThisDay, onOpenOnThisDay, onOpenPaywall, recapSeen = null, onDismissAnnualRecap, onOpenAnnualRecap, frozenDays = [] }) {
   const t = useTheme();
   const c = t.colors;
+  const videoSkyActive = hasVideoSky();
   const Orb = mode === 'night' ? Moon : Sun;
   const hello = pickForDay(HELLOS);
   const week = buildWeekStrip(entries || [], new Date(), { frozenDays });
@@ -40,7 +52,31 @@ export default function HomeScreen({ copy, mode, streak, level, levelName, xpInt
   const topRecapYear = plusEnabled && inRecapWindow ? (recapYears(entries || [], now)[0] ?? null) : null;
   const showRecapCard = topRecapYear != null && recapSeen !== topRecapYear;
   const streakShadow = { textShadowColor: 'rgba(0,0,0,0.7)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 10 };
-  const numberGlow = t.dark ? { textShadowColor: c.accent + '8C', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 16 } : {};
+  // Footage isn't lighter in day mode the way the app's day theme is, so the
+  // dark-mode contrast chrome applies whenever a video sky is behind the hero
+  // too, regardless of t.dark (IMP-121).
+  const heroNeedsContrast = t.dark || videoSkyActive;
+  const numberGlow = heroNeedsContrast ? { textShadowColor: c.accent + '8C', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 16 } : {};
+
+  // Shared between the video-sky and classic-art hero shells — unchanged in
+  // every respect except what sits behind it (IMP-121).
+  const heroInner = (
+    <>
+      <View style={{ zIndex: 1, alignItems: 'center', marginTop: 13 }}>
+        <T d w={800} color={c.accentDeep} style={[{ fontSize: 76, lineHeight: 82, includeFontPadding: false, textAlign: 'center' }, numberGlow]}>{streak}</T>
+        <T d w={700} color={c.ink} style={[{ fontSize: 16, marginTop: 2 }, heroNeedsContrast && streakShadow]}>day streak</T>
+        <T w={600} color={c.dimText} style={[{ fontSize: 13, marginTop: 4 }, heroNeedsContrast && streakShadow]}>{streakSubtitle(streak)}</T>
+      </View>
+      <View style={{ zIndex: 1, width: '100%', marginTop: 22 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 7 }}>
+          <T d w={700} color={c.ink} numberOfLines={1} style={{ fontSize: 14, flexShrink: 1 }}>Lv {level} · {levelName}</T>
+          <T w={700} color={c.muted} style={{ fontSize: 12 }}>{xpToNext == null ? 'Max' : `${xpInto} / ${xpToNext} XP`}</T>
+        </View>
+        <ProgressBar value={xpToNext == null ? 100 : Math.min(100, (xpInto / xpToNext) * 100)} accent={videoSkyActive ? HERO_ACCENT : undefined} />
+      </View>
+      {freezes != null && <StreakFreeze count={freezes} />}
+    </>
+  );
 
   return (
     <ScrollView
@@ -68,22 +104,20 @@ export default function HomeScreen({ copy, mode, streak, level, levelName, xpInt
 
       {/* streak hero */}
       <View style={{ paddingHorizontal: 20 }}>
-        <Card style={{ paddingHorizontal: 22, paddingTop: 26, paddingBottom: 22, alignItems: 'center', overflow: 'hidden' }}>
-          {mode === 'night' ? <NightRays /> : <RayFan />}
-          <View style={{ zIndex: 1, alignItems: 'center', marginTop: 13 }}>
-            <T d w={800} color={c.accentDeep} style={[{ fontSize: 76, lineHeight: 82, includeFontPadding: false, textAlign: 'center' }, numberGlow]}>{streak}</T>
-            <T d w={700} color={c.ink} style={[{ fontSize: 16, marginTop: 2 }, t.dark && streakShadow]}>day streak</T>
-            <T w={600} color={c.dimText} style={[{ fontSize: 13, marginTop: 4 }, t.dark && streakShadow]}>{streakSubtitle(streak)}</T>
-          </View>
-          <View style={{ zIndex: 1, width: '100%', marginTop: 22 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 7 }}>
-              <T d w={700} color={c.ink} numberOfLines={1} style={{ fontSize: 14, flexShrink: 1 }}>Lv {level} · {levelName}</T>
-              <T w={700} color={c.muted} style={{ fontSize: 12 }}>{xpToNext == null ? 'Max' : `${xpInto} / ${xpToNext} XP`}</T>
-            </View>
-            <ProgressBar value={xpToNext == null ? 100 : Math.min(100, (xpInto / xpToNext) * 100)} />
-          </View>
-          {freezes != null && <StreakFreeze count={freezes} />}
-        </Card>
+        {videoSkyActive ? (
+          <Card style={{ height: HERO_HEIGHT, overflow: 'hidden' }}>
+            <SkyHero source={FIXTURE_SKY.source} poster={FIXTURE_SKY.poster} accent={HERO_ACCENT}>
+              <View style={{ flex: 1, paddingHorizontal: 22, paddingTop: 26, paddingBottom: 22, alignItems: 'center' }}>
+                {heroInner}
+              </View>
+            </SkyHero>
+          </Card>
+        ) : (
+          <Card style={{ paddingHorizontal: 22, paddingTop: 26, paddingBottom: 22, alignItems: 'center', overflow: 'hidden' }}>
+            {mode === 'night' ? <NightRays /> : <RayFan />}
+            {heroInner}
+          </Card>
+        )}
       </View>
 
       {/* candle spent notice (IMP-060) — outranks On this day: something */}

@@ -130,7 +130,9 @@ export function GhostButton({ label, onPress }) {
 }
 
 // ── XP / progress bar with shimmer ───────────────────────────────────────────
-export function ProgressBar({ value }) {
+// `accent` overrides the theme's fill/track colors — used over a video sky
+// (IMP-121) where the theme accent may not read against real footage.
+export function ProgressBar({ value, accent }) {
   const t = useTheme();
   const w = useRef(new Animated.Value(0)).current;
   const shimmer = useRef(new Animated.Value(0)).current;
@@ -153,10 +155,10 @@ export function ProgressBar({ value }) {
   const tx = shimmer.interpolate({ inputRange: [0, 1], outputRange: [-80, 320] });
 
   return (
-    <View style={[styles.bar, { backgroundColor: t.colors.accentSoft }]}>
+    <View style={[styles.bar, { backgroundColor: accent ? accent + '40' : t.colors.accentSoft }]}>
       <Animated.View style={{ width, height: '100%' }}>
         <LinearGradient
-          colors={[t.colors.accentBright, t.colors.accent]}
+          colors={accent ? [accent, accent] : [t.colors.accentBright, t.colors.accent]}
           start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
           style={{ flex: 1, borderRadius: 999, overflow: 'hidden' }}
         >

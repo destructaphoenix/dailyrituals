@@ -17,6 +17,10 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 jest.mock('expo-file-system/legacy', () => require('./test-mocks/expoFileSystemStub'));
 jest.mock('expo-file-system', () => require('./test-mocks/expoFileSystemStub'));
 
+// expo-video is a native module (IMP-121's SkyHero) — jest never plays a
+// frame, so useVideoPlayer/VideoView are stubbed to plain React elements.
+jest.mock('expo-video', () => require('./test-mocks/expoVideoStub'));
+
 jest.mock('expo-sharing', () => ({
   isAvailableAsync: jest.fn(async () => true),
   shareAsync: jest.fn(async () => {}),
