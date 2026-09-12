@@ -4892,7 +4892,77 @@ behaviour and the tertile ramp under a real journal want a new `WALK` row, which
 
 ---
 
+## IMP-121 — the streak hero plays a video sky (2026-09-12)
+
+**Stage 3 of [`skies-route.md`](skies-route.md).** Opens the animated-skies feature — one bundled fixture
+clip, hardcoded, no catalogue and no shop change (IMP-122 does that on top). **Native — `expo-video` is a
+new dependency**, so this ships `Release-Lane: build`, `versionCode` 15 → 16.
+
+**What was built.** `app.config.js` gains the `'expo-video'` plugin. New
+[`test-mocks/expoVideoStub.js`](../test-mocks/expoVideoStub.js) stubs `useVideoPlayer`/`VideoView` for jest,
+wired in [`jest.setup.js`](../jest.setup.js). New [`src/home/skyHero.js`](../src/home/skyHero.js) —
+`<SkyHero source poster accent>` layers an absolutely-positioned `VideoView` (`contentFit="cover"`), a poster
+`<Image>` held over the frame until the player's `statusChange` event reports `readyToPlay`, and a bottom
+`LinearGradient` scrim over the lower 28%; it renders `children` over itself and knows nothing about streaks.
+New [`src/home/videoSkyGate.js`](../src/home/videoSkyGate.js) exports `hasVideoSky()` — hardcoded `true` for
+now, the one seam IMP-122 turns into a manifest lookup instead of introducing new plumbing.
+[`HomeScreen.js`](../src/screens/HomeScreen.js) branches on `hasVideoSky()`: when true, the `Card` drops to a
+fixed 336dp full-bleed shell wrapping `SkyHero` (source/poster = `assets/skies/fixture.mp4` /
+`fixture-poster.png`, `accent = '#5AA9E6'`), with the numeral/streak-text/subtitle/level-row/XP-bar/freeze
+content moved into an inner padded `View` — unchanged in every respect except its ground; when false, the
+`Card` is byte-for-byte the pre-existing `RayFan`/`NightRays` shell. `streakShadow`/`numberGlow` now apply
+whenever `t.dark || hasVideoSky()`, not `t.dark` alone — footage isn't lighter in day mode.
+[`ui.js`](../src/ui.js)'s `ProgressBar` gained an optional `accent` override (solid fill + tinted track)
+used only when a video sky is active, so the theme's day-mode accent can't clash with real footage; IMP-122
+only has to change what value flows into a slot that already exists.
+
+**The proof.** New [`__tests__/home/skyHero.test.js`](../__tests__/home/skyHero.test.js) (poster shows while
+`status !== 'readyToPlay'`, drops once `readyToPlay`) and
+[`__tests__/screens/HomeScreenSkyHero.test.js`](../__tests__/screens/HomeScreenSkyHero.test.js) (falls back to
+`RayFan` with the gate mocked off; the streak-text shadow is present in day mode with the gate mocked on and
+absent with it mocked off). **1205 passed, 110 suites** (was 1200/108), `npx expo export --platform android`
+clean, +5 tests. Commit `d0fe2cb`.
+
+**Open question, not a defect — carried to the walk.** `SkyHero` ships on the default `surfaceType`
+(`'surfaceView'`) per the spec's own ruling: lower power/better performance, but the module's docs flag
+`SurfaceView` as unreliable at clipping to a rounded, overlapping parent — exactly this card's shape
+(numeral + scrim + progress bar over `borderRadius: t.radius.card`, `overflow: 'hidden'`). An emulator cannot
+answer this; **the device walk decides** whether corners square off or the numeral composites wrong, and if
+so `surfaceType="textureView"` is the fallback. Not switched pre-emptively.
+
+**Walk owed.** A new device walk: the clip plays and loops behind the numeral without visible seams at the
+card's rounded corners, the poster covers the cold launch frame, contrast holds in both day and night, and
+the 720-short-edge fixture (ocean waves, not embers — filename is a leftover, dev-only, never to be reused as
+a shipped sky) reads acceptably behind the scrim on a real screen.
+
+---
+
 ## Session notes
+
+_2026-09-11 (Sonnet — **IMP-119 built: the ember pill's `+` keeps a `lineHeight` that scales with
+the font instead of a fixed or absent one.**) — ✅ code-complete, walk owed (device, folds into Sitting 1)._
+
+**What finished.** [`shopui.js`](../src/shopui.js) `EmberPill` — pulled the circle's scale factor out into a
+shared `fontScale` const (`Math.min(PixelRatio.getFontScale(), CHROME_FONT_SCALE)`), reused it for
+`plusSize` (unchanged behaviour) and restored the `+` glyph's `lineHeight` as `15 * fontScale` against
+`fontSize: 13` — the 13/15 ratio that centred it correctly for the pill's whole life before IMP-117's
+`a59aea9` deleted it. Scaling both the circle and the glyph by one factor means neither can clip at max
+font (IMP-117's original bug) nor decentre at default (this row's bug).
+
+**The proof.** [`EmberPill.test.js`](../__tests__/ui/EmberPill.test.js)'s assertion that pinned the deletion
+in place (`not.toMatch(/fontSize: 13, lineHeight: 15/)`) was rewritten to require the scaled expression
+instead (`toMatch(/fontSize: 13, lineHeight: 15 \* fontScale/)`); the sibling circle-sizing assertion was
+updated for the renamed `fontScale` variable and otherwise kept. **1193 passed, 106 suites** (unchanged — a
+rewrite, not an addition), `npx expo export --platform android` clean. Commit `1fc0664`. Spec archived to
+`docs/build-log.md`; **`docs/specs-open.md`'s queue is now empty.**
+
+**The exact next step (at the time).** No `IMP-xxx` row was open. **Superseded within hours** — Opus scoped
+IMP-120, IMP-121 and IMP-122 into `docs/specs-open.md` the same day. Walk chats: this row's proof is owed on
+**device**, folding into Sitting 1's optional add-on (already has the owner in the Shop at two font sizes) —
+confirm the `+` sits optically centred at default *and* max font, emoji circles still correct. Sitting 2
+(WALK-19 step 8, real money) and Sitting 3 (WALK-12, R8, last) remain the other open walk debts.
+
+---
 
 _2026-09-11, earlier (Sonnet — **IMP-118 built: a tied weekday now draws its bar instead of vanishing.**) —
 ✅ code-complete, walk owed (folds into WALK-08)._
