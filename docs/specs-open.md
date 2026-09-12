@@ -24,24 +24,34 @@
 
 ## The queue
 
-**Three open rows.** **IMP-124 is done** (archived to `docs/build-log.md`, commit `87771c4`) — take
-**IMP-126** next. **IMP-125 is owner-gated** — it comes from an offhand remark, not a defect, and needs a yes
-before a build chat touches it. **IMP-127** is now buildable — its own spec gated it on IMP-124 being
-committed, which it now is.
+**Three open rows, all buildable — no gates left.** **IMP-124 is done** (archived to `docs/build-log.md`,
+commit `87771c4`). ✅ **IMP-125's gate is lifted: the owner ruled on 2026-09-13 and chose the week-strip
+footer**, which is what its spec already specified — so the spec stands unchanged and needs no redesign.
 
 | Row | What | Lane | Take it? |
 | --- | --- | --- | --- |
-| **IMP-126** | The 11th mood's bar is invisible (D-04's defect half) | OTA | ✅ **first** |
-| IMP-127 | The Shop's ember `+` promises an action it cannot perform (D-09) | OTA | ✅ second — IMP-124 committed |
-| IMP-125 | The candle indicator leaves the hero card | OTA | ⏸ **owner's yes first** |
+| **IMP-125** | The candle indicator leaves the hero card | OTA | ✅ **first — take this one** |
+| IMP-126 | The 11th mood's bar is invisible (D-04's defect half) | OTA | ✅ second |
+| IMP-127 | The Shop's ember `+` promises an action it cannot perform (D-09) | OTA | ✅ third |
+
+⚠️ **Why IMP-125 goes first even though IMP-126 is smaller.** IMP-124 is committed and **not yet shipped**.
+IMP-125 **deletes code IMP-124 just added** (`StreakFreeze`'s `onVideo` branch) and moves a surface
+[WALK-22](walk-open.md#walk-22--the-day-mode-hero-re-check) is about to walk. Landing it before the OTA means
+**one** OTA and **one** walk of the final layout, instead of shipping a candle row over footage and then
+moving it off the footage a day later.
 
 ---
 
 ### IMP-125 — the candle indicator leaves the hero card
 
-⏸ **OWNER-GATED. Do not build this without an explicit yes.** It is not a defect: it is the owner's
-observation during WALK-21 that *"the candle indicator doesn't need to live inside the hero card at all"*.
-It was not tested against any walk step and nothing is broken. **Severity 🎨.**
+✅ **APPROVED — the owner ruled on 2026-09-13 and chose the week-strip footer.** The gate is lifted and this
+spec is unchanged by the ruling: the destination below was already the recommendation and it was accepted
+against three alternatives (its own card under the hero, Shop-only with no candles on Home, and leaving it
+where it is). **Take it.**
+
+**It began as a preference, not a defect** — the owner's observation during WALK-21 that *"the candle
+indicator doesn't need to live inside the hero card at all"*. Nothing is broken today, so there is no failing
+behaviour to reproduce and **no test can be proven red first on this row.** **Severity 🎨.**
 
 **What is there now.** `{freezes != null && <StreakFreeze count={freezes} />}`
 ([`HomeScreen.js:73`](../src/screens/HomeScreen.js#L73)) renders inside the hero, under a hairline rule —
@@ -49,8 +59,8 @@ three candle glyphs and a line of copy, stacked below the XP bar in a 336dp card
 76dp numeral, a subtitle, a level and a progress bar. Over a video sky it is also the part of the hero the
 scrim reaches, which is the only reason it survived WALK-21 at all.
 
-**Where it goes — decided, and this is the part the owner may want to overrule.** **Into the week-strip
-card, as a footer row beneath the seven dots.** Not a new card of its own: [`design-queue.md`](design-queue.md)
+**Where it goes — ✅ the owner's own choice, 2026-09-13.** **Into the week-strip card, as a footer row beneath
+the seven dots.** Not a new card of its own: [`design-queue.md`](design-queue.md)
 → D-12 already calls Home's lower half *"a stack with no hierarchy"* with the day's reflection fourth down,
 and a seventh equal-weight card makes the row it is filed under worse.
 
@@ -59,7 +69,12 @@ and a seventh equal-weight card makes the row it is filed under worse.
 effect in one card and the stock in another. Moving the candles under the strip puts the count directly
 beneath the thing it explains.
 
-**Steps, when and if it is approved.**
+**What the alternatives cost, recorded so this is not re-litigated.** Its own card was rejected as a
+**seventh** equal-weight card on a screen D-12 already calls a stack with no hierarchy, pushing the day's
+reflection further down. Shop-only was rejected because it removes the daily glance entirely — and a freeze
+notice would then arrive explaining a resource the user never saw they had.
+
+**Steps.**
 1. `HomeScreen.js` — remove `<StreakFreeze>` from `heroInner`; render it inside the week-strip `Card`,
    after the seven-dot row.
 2. `StreakFreeze` — **delete the `onVideo` branch IMP-124 added**, and the `heroChrome` import with it. The
@@ -72,9 +87,19 @@ beneath the thing it explains.
 4. Tests: `HomeScreenSkyHero.test.js` and any Home render test that locates the candle row must find it
    under the week strip. `__tests__/home/streakFreeze.test.js` loses its `onVideo` cases.
 
-**Ship.** `fix(home): the candle count sits with the week it protects (IMP-125)` — OTA, no native change.
-**Its proof folds into [WALK-22](walk-open.md#walk-22--the-day-mode-hero-re-check)** if both ship together;
-on its own it is a day-mode glance, not a walk row.
+**Ship.** `npm test` green (≥ **1228 passed, 115 suites**), `npx expo export --platform android` clean, then:
+
+```
+fix(home): the candle count sits with the week it protects (IMP-125)
+```
+
+OTA, no native change, **no `versionCode` bump.** ⚠️ **The test count will go DOWN** — step 2 deletes
+`StreakFreeze`'s `onVideo` cases, which is correct and is the one sanctioned exception to the ≥-count rule on
+this row. **State the number and the reason in the session note** rather than padding the suite to hide it.
+
+**Its proof folds into [WALK-22](walk-open.md#walk-22--the-day-mode-hero-re-check)**, whose step 5 changes
+from *"is the candle row readable over footage"* to *"is it gone from the hero and present under the week
+strip"*. **Update that step when this lands.**
 
 ---
 
