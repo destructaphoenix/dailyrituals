@@ -3,7 +3,7 @@
 // upsell banner / member-status card, sky previews and price tags.
 
 import React from 'react';
-import { View, Pressable, PixelRatio } from 'react-native';
+import { View, Image, Pressable, PixelRatio } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from './theme';
 import { T } from './ui';
@@ -89,9 +89,18 @@ export function PlusBanner({ plus, onOpenPaywall, onManage, compact, renewLabel 
 }
 
 // ── Small sky preview (sky cards) ─────────────────────────────────────────────
-export function SkyPreview({ kind }) {
+// A video sky (has a `poster`) shows its poster frame here — the list never
+// plays a live clip, which is what the hero card is for (IMP-122). A sky with
+// no `poster` keeps drawing its illustrated gradient, unchanged from before.
+export function SkyPreview({ kind, poster }) {
   const t = useTheme();
   const c = t.colors;
+  if (poster) {
+    return (
+      <Image source={{ uri: poster }} resizeMode="cover"
+        style={{ width: 58, height: 58, borderRadius: 16 }} />
+    );
+  }
   // Sun sky adapts to the active palette; night/special skies are fixed illustrations.
   const SKY_BG = {
     sun: [c.accentBright, c.accentDeep],

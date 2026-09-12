@@ -8,6 +8,7 @@
 import React, { useState, useMemo } from 'react';
 import { View, Pressable, Modal, StyleSheet, Platform, AppState, Alert, Linking } from 'react-native';
 import Constants from 'expo-constants';
+import { setVideoCacheSizeAsync } from 'expo-video';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createBackup, readBackup, backupFilename } from './backup/backup';
 import { runConfirmedImport } from './backup/importFlow';
@@ -565,6 +566,10 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
   // foreground reminder is seen at all, by design (owner, 2026-08-09).
   React.useEffect(() => { reminderIO.setForegroundBehavior(); }, []);
 
+  // Sized to the sky catalogue (IMP-122), not left at expo-video's 1GB
+  // default — it's a cache, not owned storage (docs/skies-route.md).
+  React.useEffect(() => { setVideoCacheSizeAsync(128 * 1024 * 1024); }, []);
+
   React.useEffect(() => {
     const receivedSub = reminderIO.onNotificationReceived((notification) => {
       if (!isOurReminder(notification)) return;
@@ -963,6 +968,7 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
             onDismissAnnualRecap={(year) => setSettings((s) => ({ ...s, recapSeen: year }))}
             onOpenAnnualRecap={(year) => setOpenRecapYear(year)}
             frozenDays={frozenDays}
+            activeSky={activeSky} ownedSkies={ownedSkies}
           />
         );
     }

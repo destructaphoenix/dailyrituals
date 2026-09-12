@@ -7,7 +7,7 @@ import { T, Card, PrimaryButton, ProgressBar } from '../ui';
 import { Sun, Moon, Check, Pencil, BADGE_ICON } from '../icons';
 import { RayFan, NightRays } from '../art';
 import SkyHero from '../home/skyHero';
-import { hasVideoSky } from '../home/videoSkyGate';
+import { activeSkyManifest, skyVideoSource } from '../home/videoSkyGate';
 import { greetingFor, todayLabel } from '../time/clock';
 import { dayKeyOf } from '../time/dayKey';
 import { pickForDay } from '../time/dailyPick';
@@ -28,19 +28,15 @@ import AnnualRecapCard from './AnnualRecapCard';
 // for why (a "year in review" outside Dec–Jan is either premature or stale).
 const RECAP_WINDOW_MONTHS = [11, 0]; // Dec, Jan
 
-// The streak hero's video sky (IMP-121). One bundled fixture clip; the gate
-// itself lives in videoSkyGate.js, which IMP-122 turns into a manifest lookup.
+// The streak hero's video sky (IMP-121 built the shell; IMP-122 wired it to
+// the real sky manifest instead of one hardcoded fixture clip).
 const HERO_HEIGHT = 336;
-const HERO_ACCENT = '#5AA9E6';
-const FIXTURE_SKY = {
-  source: require('../../assets/skies/fixture.mp4'),
-  poster: require('../../assets/skies/fixture-poster.png'),
-};
 
-export default function HomeScreen({ copy, mode, streak, level, levelName, xpInto, xpToNext, entries, quests, freezes, onOpenAchievements, done, onWrite, onToggleMode, embers, plus, plusEnabled = false, onOpenShop, dailyPrompt = '', userName = '', pendingFreezeNotice = [], onDismissFreezeNotice, onThisDayDismissed = '', onDismissOnThisDay, onOpenOnThisDay, onOpenPaywall, recapSeen = null, onDismissAnnualRecap, onOpenAnnualRecap, frozenDays = [] }) {
+export default function HomeScreen({ copy, mode, streak, level, levelName, xpInto, xpToNext, entries, quests, freezes, onOpenAchievements, done, onWrite, onToggleMode, embers, plus, plusEnabled = false, onOpenShop, dailyPrompt = '', userName = '', pendingFreezeNotice = [], onDismissFreezeNotice, onThisDayDismissed = '', onDismissOnThisDay, onOpenOnThisDay, onOpenPaywall, recapSeen = null, onDismissAnnualRecap, onOpenAnnualRecap, frozenDays = [], activeSky = 'classic', ownedSkies = [] }) {
   const t = useTheme();
   const c = t.colors;
-  const videoSkyActive = hasVideoSky();
+  const videoSky = activeSkyManifest(activeSky, ownedSkies, plus);
+  const videoSkyActive = videoSky != null;
   const Orb = mode === 'night' ? Moon : Sun;
   const hello = pickForDay(HELLOS);
   const week = buildWeekStrip(entries || [], new Date(), { frozenDays });
@@ -72,7 +68,7 @@ export default function HomeScreen({ copy, mode, streak, level, levelName, xpInt
           <T d w={700} color={c.ink} numberOfLines={1} style={{ fontSize: 14, flexShrink: 1 }}>Lv {level} · {levelName}</T>
           <T w={700} color={c.muted} style={{ fontSize: 12 }}>{xpToNext == null ? 'Max' : `${xpInto} / ${xpToNext} XP`}</T>
         </View>
-        <ProgressBar value={xpToNext == null ? 100 : Math.min(100, (xpInto / xpToNext) * 100)} accent={videoSkyActive ? HERO_ACCENT : undefined} />
+        <ProgressBar value={xpToNext == null ? 100 : Math.min(100, (xpInto / xpToNext) * 100)} accent={videoSkyActive ? videoSky.accent : undefined} />
       </View>
       {freezes != null && <StreakFreeze count={freezes} />}
     </>
@@ -106,7 +102,7 @@ export default function HomeScreen({ copy, mode, streak, level, levelName, xpInt
       <View style={{ paddingHorizontal: 20 }}>
         {videoSkyActive ? (
           <Card style={{ height: HERO_HEIGHT, overflow: 'hidden' }}>
-            <SkyHero source={FIXTURE_SKY.source} poster={FIXTURE_SKY.poster} accent={HERO_ACCENT}>
+            <SkyHero source={skyVideoSource(videoSky, mode)} poster={{ uri: videoSky.poster }} accent={videoSky.accent}>
               <View style={{ flex: 1, paddingHorizontal: 22, paddingTop: 26, paddingBottom: 22, alignItems: 'center' }}>
                 {heroInner}
               </View>

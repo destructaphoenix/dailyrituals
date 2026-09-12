@@ -137,7 +137,23 @@ export const SHOP_PALETTES = [
   { id: 'bloom',      name: 'Bloom',        swatch: ['#f472b6', '#db2777', '#fce7f3'], tier: 'plus', season: 'Spring' },
 ];
 
-// Skies — orb/backdrop motif behind the streak number. Cosmetic in prototype.
+// Video sky delivery — Cloudflare R2, public bucket (docs/skies-route.md).
+// One constant so moving hosts is a one-line change; a sky's `clip` /
+// `clipDay` + `clipNight` and `poster` are literal `${SKY_BASE}/...` strings
+// written in place below, not computed at runtime.
+export const SKY_BASE = 'https://skies.dailyrituals.app';
+
+// Skies — orb/backdrop motif behind the streak number. `classic` and
+// `crescent` are the frozen RayFan/NightRays art and never take a `clip`
+// (playbook -> Claude Design standing rules #3). A sky with a `clip` (or a
+// `clipDay` + `clipNight` pair) plays as a full-bleed video behind the streak
+// hero instead of SkyPreview's gradient — gated on ownership, never `plus`
+// directly (src/home/videoSkyGate.js). `credit` — the provenance line
+// (tool/licence + date) — is required and non-empty for every sky with a
+// clip; see docs/playbook.md -> "Every sky must be ours to sell". No sky
+// below carries one yet: Stage 2 of docs/skies-route.md (the real per-sky art)
+// hasn't cleared the provenance gate, so the catalogue stays all-gradient
+// until a clip does. Adding one after that is a data-only edit, no code.
 export const SHOP_SKIES = [
   { id: 'classic',  name: 'Golden Sun',    kind: 'sun',     tier: 'owned', note: 'Default' },
   { id: 'crescent', name: 'Crescent Moon', kind: 'moon',    tier: 'owned' },

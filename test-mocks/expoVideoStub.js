@@ -15,4 +15,5 @@ module.exports = {
     addListener: jest.fn(() => ({ remove: jest.fn() })),
   })),
   VideoView: (props) => React.createElement(View, props),
+  setVideoCacheSizeAsync: jest.fn(() => Promise.resolve()),
 };

@@ -181,7 +181,7 @@ export default function Shop({
                     else onBuySky(s);
                   }}
                   style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 12, borderRadius: t.radius.card, transform: [{ scale: pressed ? 0.99 : 1 }] }, { backgroundColor: c.surface, borderWidth: 1.5, borderColor: st === 'active' ? c.accent : c.border }, t.dark ? null : t.shadow(8, c.shadowColor, 0.08)]}>
-                  <SkyPreview kind={s.kind} />
+                  <SkyPreview kind={s.kind} poster={s.poster} />
                   <View style={{ flex: 1 }}>
                     <T d w={700} color={c.ink} style={{ fontSize: 15 }}>{s.name}</T>
                     {s.note && <T d w={800} color={c.muted} style={{ fontSize: 10.5, letterSpacing: 0.4, marginTop: 2 }}>{s.note.toUpperCase()}</T>}
