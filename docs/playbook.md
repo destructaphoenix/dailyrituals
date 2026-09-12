@@ -430,6 +430,11 @@ cannot be sold as it stands. See "Every sky must be ours to sell" below.
 exist, and which of them loop. Loop technique, subject selection and the day/night rule are in
 [`docs/design-queue.md`](design-queue.md) → "Plus skies".
 
+➡️ **The ordered route from here to shipped is [`docs/skies-route.md`](skies-route.md)** (2026-09-12) —
+six stages, the three owner rulings that gate them, and the three `IMP` specs still to be written. Read
+it before scoping any of this; it also records that **one clean stock clip unblocks all the engineering**,
+so the build does not wait on the footage replacement.
+
 ### 🔴 Every sky must be ours to sell — the provenance gate
 
 **Established 2026-09-12, and it blocks the whole feature.** The design project's `uploads/` folder holds

@@ -319,6 +319,11 @@ last beat. It works (IMP-066 numbered it), but it is the heaviest thing in the l
 
 > **Delivery is settled** — `.mp4`/H.264, 720p, 6–10s, downloaded per sky, `expo-video` + `expo-file-system`.
 > Locked in [`playbook.md`](playbook.md) → "Plus skies". **This section is the art direction only.**
+>
+> ➡️ **The order of work is [`skies-route.md`](skies-route.md)** — which of the steps below are owner-side
+> art, which are build specs, and what each has to settle first.
+
+
 
 ### The frame — measured from the hero box, not guessed
 
