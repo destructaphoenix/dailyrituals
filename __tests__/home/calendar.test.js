@@ -1,4 +1,4 @@
-import { buildHeatmap, buildWeekStrip, buildLifetimeHeatmap } from '../../src/home/calendar';
+import { buildHeatmap, buildWeekStrip, buildLifetimeHeatmap, buildMonthHeat } from '../../src/home/calendar';
 
 // 2026-06-07 is a Sunday; 2026-06-03 is a Wednesday. Construct via local
 // components (noon, so there's no local-midnight edge to worry about) —
@@ -226,5 +226,86 @@ describe('frozen days (IMP-063)', () => {
 
     const weekCell = buildWeekStrip([{ dayKey: '2026-06-01', moods: ['Proud'] }], wed)[1];
     expect(weekCell.state).toBe('missed');
+  });
+});
+
+describe('buildMonthHeat (IMP-120)', () => {
+  const cellFor = (months, dayKey) => months.flatMap((mo) => mo.cells).find((c) => c.dayKey === dayKey);
+
+  test('empty journal → []', () => {
+    expect(buildMonthHeat([], today)).toEqual([]);
+  });
+
+  test('a single-entry journal is one bounded month block', () => {
+    const months = buildMonthHeat([{ dayKey: '2026-06-14', moods: ['calm'] }], today);
+    expect(months.length).toBe(1);
+    expect(months[0]).toMatchObject({ year: 2026, month: 5, label: 'Jun', total: 30, kept: 1 });
+    expect(months[0].cells).toHaveLength(30);
+  });
+
+  test('a month whose 1st is a Sunday (lead === 6)', () => {
+    // 2026-02-01 is a Sunday.
+    const t = new Date(2026, 1, 15, 12, 0);
+    const months = buildMonthHeat([{ dayKey: '2026-02-01' }], t);
+    expect(months[0].lead).toBe(6);
+  });
+
+  test('February in a leap year has 29 days', () => {
+    const t = new Date(2028, 1, 29, 12, 0); // 2028 is a leap year
+    const months = buildMonthHeat([{ dayKey: '2028-02-01' }], t);
+    expect(months[0].total).toBe(29);
+  });
+
+  test('the three-tertile split', () => {
+    const entries = [
+      { dayKey: '2026-06-01', did: 'one', wished: '' },
+      { dayKey: '2026-06-08', did: 'one two three four five', wished: '' },
+      { dayKey: '2026-06-14', did: 'one two three four five six seven eight nine ten eleven twelve', wished: 'thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty' },
+    ];
+    const months = buildMonthHeat(entries, today);
+    expect(cellFor(months, '2026-06-01').heat).toBe(1);
+    expect(cellFor(months, '2026-06-08').heat).toBe(2);
+    expect(cellFor(months, '2026-06-14').heat).toBe(3);
+  });
+
+  test('fewer than 3 done days falls back to heat 2 for all of them', () => {
+    const entries = [
+      { dayKey: '2026-06-01', did: 'one', wished: '' },
+      { dayKey: '2026-06-02', did: 'one two three four five six seven eight nine ten', wished: '' },
+    ];
+    const months = buildMonthHeat(entries, today);
+    expect(cellFor(months, '2026-06-01').heat).toBe(2);
+    expect(cellFor(months, '2026-06-02').heat).toBe(2);
+  });
+
+  test('zero spread (every done day the same word count) falls back to heat 2 for all of them', () => {
+    const entries = [
+      { dayKey: '2026-06-01', did: 'one two three', wished: '' },
+      { dayKey: '2026-06-02', did: 'one two three', wished: '' },
+      { dayKey: '2026-06-03', did: 'one two three', wished: '' },
+    ];
+    const months = buildMonthHeat(entries, today);
+    expect(cellFor(months, '2026-06-01').heat).toBe(2);
+    expect(cellFor(months, '2026-06-02').heat).toBe(2);
+    expect(cellFor(months, '2026-06-03').heat).toBe(2);
+  });
+
+  test('a frozen day carries heat 0, not a ramp value', () => {
+    const months = buildMonthHeat(
+      [{ dayKey: '2026-06-01', did: 'one two three', wished: '' }],
+      today,
+      { frozenDays: ['2026-06-02'] }
+    );
+    const cell = cellFor(months, '2026-06-02');
+    expect(cell.state).toBe('frozen');
+    expect(cell.heat).toBe(0);
+  });
+
+  test('days after today inside the current month come back future', () => {
+    const t = new Date(2026, 5, 14, 12, 0);
+    const months = buildMonthHeat([{ dayKey: '2026-06-01' }], t);
+    const cell = cellFor(months, '2026-06-20');
+    expect(cell.state).toBe('future');
+    expect(cell.heat).toBe(0);
   });
 });

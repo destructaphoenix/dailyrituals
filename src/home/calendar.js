@@ -7,6 +7,8 @@
 // empty (past, no entry, before firstEntry — or no entries at all), today, future.
 
 import { dayKeyOf as keyOf } from '../time/dayKey';
+import { MONTH_SHORT, cellState } from '../insights/heatCells';
+import { countWords } from '../insights/words';
 
 // Shift a YYYY-MM-DD key by whole days in UTC (timezone-independent).
 function shiftKey(key, deltaDays) {
@@ -115,4 +117,87 @@ export function buildWeekStrip(entries, today = new Date(), { frozenDays = [] } 
     cells.push({ l: WEEK_LABELS[i], state });
   }
   return cells;
+}
+
+function daysInMonth(year, month) {
+  return new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+}
+
+function pad2(n) {
+  return String(n).padStart(2, '0');
+}
+
+// Tertiles over the `done` cells' word counts, computed across the whole
+// strip so the ramp is comparable month to month. Fewer than 3 done days, or
+// no spread at all, gives every done day heat2 rather than a ramp invented
+// from one value (IMP-120, decision 1).
+function assignHeatTiers(doneRefs) {
+  const n = doneRefs.length;
+  if (n === 0) return;
+  const sorted = [...doneRefs].sort((a, b) => a.words - b.words);
+  const noSpread = sorted[0].words === sorted[n - 1].words;
+  if (n < 3 || noSpread) {
+    for (const ref of doneRefs) ref.cell.heat = 2;
+    return;
+  }
+  sorted.forEach((ref, i) => {
+    ref.cell.heat = Math.floor((i * 3) / n) + 1;
+  });
+}
+
+// One block per calendar month from the first entry's month through the
+// current month, oldest first. Each block is a full calendar (every day of
+// the month, `lead` blanks before day 1) so the grid never grows past a
+// constant height however long the journal gets. Empty journal -> [].
+export function buildMonthHeat(entries, today = new Date(), { frozenDays = [] } = {}) {
+  const firstKey = minDayKey(entries);
+  if (!firstKey) return [];
+  const byDay = indexByDay(entries);
+  const todayK = keyOf(today);
+  const frozen = new Set(frozenDays || []);
+
+  const [fy, fm] = firstKey.split('-').map(Number);
+  const [ty, tm] = todayK.split('-').map(Number);
+
+  const doneRefs = [];
+  const months = [];
+  let y = fy;
+  let m = fm - 1;
+  while (y < ty || (y === ty && m <= tm - 1)) {
+    const total = daysInMonth(y, m);
+    const firstDayKey = `${y}-${pad2(m + 1)}-01`;
+    const lead = weekdayMon0(firstDayKey);
+    let kept = 0;
+    const cells = [];
+    for (let d = 1; d <= total; d += 1) {
+      const dayKey = `${y}-${pad2(m + 1)}-${pad2(d)}`;
+      const isToday = dayKey === todayK;
+      const entry = byDay[dayKey];
+      let raw;
+      if (entry) {
+        raw = { dayKey, moods: entry.moods || [], today: isToday };
+      } else if (dayKey > todayK) {
+        raw = { dayKey, future: true, today: isToday };
+      } else if (dayKey >= firstKey) {
+        raw = frozen.has(dayKey)
+          ? { dayKey, frozen: true, today: isToday }
+          : { dayKey, missed: true, today: isToday };
+      } else {
+        raw = { dayKey, empty: true, today: isToday };
+      }
+      const state = cellState(raw);
+      const cell = { dayKey, state, heat: 0, today: isToday, moods: raw.moods || [] };
+      if (state === 'done') {
+        kept += 1;
+        doneRefs.push({ cell, words: countWords(entry.did) + countWords(entry.wished) });
+      }
+      cells.push(cell);
+    }
+    months.push({ year: y, month: m, label: MONTH_SHORT[m], lead, kept, total, cells });
+    m += 1;
+    if (m > 11) { m = 0; y += 1; }
+  }
+
+  assignHeatTiers(doneRefs);
+  return months;
 }

@@ -8,9 +8,7 @@ import { ChartIcon } from '../icons';
 import { moodEmoji } from '../data';
 import { deriveInsights } from '../insights/derive';
 import { deriveLifetime } from '../insights/lifetime';
-import { cellState, monthLabelsForRows, heatGutterWidth, HEAT_CELL_GAP } from '../insights/heatCells';
-import { buildLifetimeHeatmap } from '../home/calendar';
-import { entryForDayKey } from '../entries/find';
+import { buildMonthHeat } from '../home/calendar';
 import { moodLabelWidth } from '../insights/moodMixLayout';
 import DeeperInsights from './DeeperInsights';
 
@@ -57,7 +55,7 @@ export default function InsightsScreen({ copy, entries = [], streak = 0, xp = 0,
   const rhythmMax = Math.max(1, ...rhythm.map((x) => x.n));
 
   const life = deriveLifetime(entries, { xp, currentStreak: streak });
-  const heat = buildLifetimeHeatmap(entries, new Date(), { frozenDays });
+  const monthHeat = buildMonthHeat(entries, new Date(), { frozenDays });
   const fmt = (n) => n.toLocaleString();
 
   return (
@@ -105,11 +103,11 @@ export default function InsightsScreen({ copy, entries = [], streak = 0, xp = 0,
             ))}
           </View>
 
-          {/* adaptive consistency heatmap */}
-          {heat.length > 0 && (
+          {/* bounded consistency month strip (IMP-120) */}
+          {monthHeat.length > 0 && (
             <View style={{ marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: c.border }}>
               <T w={700} color={c.muted} style={{ fontSize: 11.5, letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 12 }}>Consistency</T>
-              <LifetimeHeat rows={heat} entries={entries} onOpen={onOpen} />
+              <MonthStrip months={monthHeat} onOpenMonth={() => {}} />
             </View>
           )}
         </Card>
@@ -236,79 +234,87 @@ export function heatCellStyle(state, c) {
   return { backgroundColor: 'transparent', borderWidth: 1, borderColor: 'transparent' };
 }
 
-function LifetimeHeat({ rows, entries, onOpen }) {
+// The month strip's own geometry — dp, not type. Only the month label and the
+// legend text scale with the OS font; a 95dp block clears "Sep" at the 1.5x
+// cap with room to spare, so unlike the old gutter this never needs to grow.
+const MONTH_CELL_DP = 11;
+const MONTH_CELL_GAP = 3;
+const MONTH_BLOCK_WIDTH = 95; // 7 * 11 + 6 * 3
+
+// Fill/ring per state (IMP-120, decision 1): `done` ramps by word-density
+// tertile, `frozen` takes heat0 with a ring (a candle kept it, not a miss),
+// `missed` takes heat0 bare, `empty`/`future` stay transparent. Every branch
+// returns borderWidth: 1 so geometry never varies by state (decision 2).
+function monthCellStyle(cell, c) {
+  if (cell.state === 'done') {
+    const fill = cell.heat === 1 ? c.heat1 : cell.heat === 3 ? c.heat3 : c.heat2;
+    return { backgroundColor: fill, borderWidth: 1, borderColor: 'transparent' };
+  }
+  if (cell.state === 'frozen') {
+    return { backgroundColor: c.heat0, borderWidth: 1, borderColor: c.accentSoft };
+  }
+  if (cell.state === 'missed') {
+    return { backgroundColor: c.heat0, borderWidth: 1, borderColor: 'transparent' };
+  }
+  return { backgroundColor: 'transparent', borderWidth: 1, borderColor: 'transparent' };
+}
+
+function MonthStrip({ months, onOpenMonth }) {
   const c = useTheme().colors;
-  // LifetimeHeat is its own component, so it reads the scale itself rather than
-  // taking a prop — InsightsScreen's own `fontScale` is not in scope here.
-  const { fontScale } = useWindowDimensions();
-  const gutter = heatGutterWidth(fontScale);
-  const monthLabels = monthLabelsForRows(rows);
   return (
     <View>
-      <View style={{ gap: HEAT_CELL_GAP }}>
-        {rows.map((row, ri) => (
-          <View key={ri} style={{ flexDirection: 'row', alignItems: 'center', gap: HEAT_CELL_GAP }}>
-            <View style={{ width: gutter }}>
-              <T w={700} color={c.muted} numberOfLines={1} ellipsizeMode="clip" style={{ fontSize: 9.5 }}>{monthLabels[ri]}</T>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ gap: 10 }}
+        contentOffset={{ x: 100000, y: 0 }}
+      >
+        {months.map((mo) => (
+          <Pressable
+            key={`${mo.year}-${mo.month}`}
+            onPress={() => onOpenMonth(mo.year, mo.month)}
+            accessibilityRole="button"
+            accessibilityLabel={`${mo.label} ${mo.year}, ${mo.kept} of ${mo.total} days kept`}
+            style={{ width: MONTH_BLOCK_WIDTH }}
+          >
+            <T w={700} color={c.muted} style={{ fontSize: 10, marginBottom: 4 }}>{mo.label}</T>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', width: MONTH_BLOCK_WIDTH, gap: MONTH_CELL_GAP }}>
+              {Array.from({ length: mo.lead }).map((_, i) => (
+                <View key={`lead-${i}`} style={{ width: MONTH_CELL_DP, height: MONTH_CELL_DP }} />
+              ))}
+              {mo.cells.map((cell) => (
+                <View
+                  key={cell.dayKey}
+                  testID={`mh-cell-${cell.dayKey}`}
+                  style={{ width: MONTH_CELL_DP, height: MONTH_CELL_DP, borderRadius: 3, ...monthCellStyle(cell, c) }}
+                >
+                  {cell.today ? (
+                    <View
+                      pointerEvents="none"
+                      accessibilityElementsHidden
+                      importantForAccessibility="no-hide-descendants"
+                      style={{
+                        position: 'absolute', top: 1, left: 1, right: 1, bottom: 1,
+                        borderRadius: 1, borderWidth: 1, borderColor: c.accentDeep,
+                      }}
+                    />
+                  ) : null}
+                </View>
+              ))}
             </View>
-            <View style={{ flex: 1, flexDirection: 'row', gap: HEAT_CELL_GAP }}>
-              {row.map((cell, i) => {
-                const state = cellState(cell);
-                const pressable = state === 'done';
-                const cellStyle = {
-                  flex: 1,
-                  aspectRatio: 1,
-                  borderRadius: 4,
-                  ...heatCellStyle(state, c),
-                };
-                const ring = state === 'done' && cell.today ? (
-                  <View
-                    pointerEvents="none"
-                    accessibilityElementsHidden
-                    importantForAccessibility="no-hide-descendants"
-                    style={{
-                      position: 'absolute',
-                      top: 2,
-                      left: 2,
-                      right: 2,
-                      bottom: 2,
-                      borderRadius: 2,
-                      borderWidth: 1.5,
-                      borderColor: c.accentDeep,
-                    }}
-                  />
-                ) : null;
-                if (!pressable) {
-                  return <View key={i} style={cellStyle}>{ring}</View>;
-                }
-                const label = `${cell.dayKey}, ${(cell.moods || []).join(', ') || 'no mood recorded'}`;
-                return (
-                  <Pressable
-                    key={i}
-                    hitSlop={3}
-                    accessibilityRole="button"
-                    accessibilityLabel={label}
-                    onPress={() => {
-                      const e = entryForDayKey(entries, cell.dayKey);
-                      if (e) onOpen(e);
-                    }}
-                    style={({ pressed }) => [cellStyle, { transform: [{ scale: pressed ? 0.92 : 1 }] }]}
-                  >
-                    {ring}
-                  </Pressable>
-                );
-              })}
-            </View>
-          </View>
+          </Pressable>
         ))}
-      </View>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 14, rowGap: 8, marginTop: 12, paddingLeft: gutter + HEAT_CELL_GAP }}>
-        {LEGEND.map((l) => (
-          <View key={l.state} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <View style={{ width: 10, height: 10, borderRadius: 3, ...heatCellStyle(l.state, c) }} />
-            <T w={600} color={c.muted} style={{ fontSize: 11 }}>{l.label}</T>
-          </View>
+      </ScrollView>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 8, rowGap: 8, marginTop: 12 }}>
+        <T w={600} color={c.muted} style={{ fontSize: 11 }}>Fewer words</T>
+        {[c.heat0, c.heat1, c.heat2, c.heat3].map((fill, i) => (
+          <View key={i} style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: fill }} />
         ))}
+        <T w={600} color={c.muted} style={{ fontSize: 11 }}>More</T>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: 10 }}>
+          <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: c.heat0, borderWidth: 1, borderColor: c.accentSoft }} />
+          <T w={600} color={c.muted} style={{ fontSize: 11 }}>a candle kept this day</T>
+        </View>
       </View>
     </View>
   );
