@@ -141,7 +141,7 @@ export const SHOP_PALETTES = [
 // One constant so moving hosts is a one-line change; a sky's `clip` /
 // `clipDay` + `clipNight` and `poster` are literal `${SKY_BASE}/...` strings
 // written in place below, not computed at runtime.
-export const SKY_BASE = 'https://skies.dailyrituals.app';
+export const SKY_BASE = 'https://pub-95312985bf644116878d3ce5031a4f36.r2.dev';
 
 // Skies — orb/backdrop motif behind the streak number. `classic` and
 // `crescent` are the frozen RayFan/NightRays art and never take a `clip`
@@ -158,7 +158,11 @@ export const SHOP_SKIES = [
   { id: 'classic',  name: 'Golden Sun',    kind: 'sun',     tier: 'owned', note: 'Default' },
   { id: 'crescent', name: 'Crescent Moon', kind: 'moon',    tier: 'owned' },
   { id: 'harvest',  name: 'Harvest Moon',  kind: 'harvest', tier: 300 },
-  { id: 'meteor',   name: 'Meteor Shower', kind: 'meteor',  tier: 'plus' },
+  { id: 'meteor',   name: 'Meteor Shower', kind: 'meteor',  tier: 'plus',
+    clip: `${SKY_BASE}/ocean.mp4`,
+    poster: `${SKY_BASE}/ocean-poster.jpg`,
+    accent: '#5AA9E6',
+    credit: 'Pexels — Pexels Licence, free for commercial use, no attribution required. Sourced 2026-09-12; loop window (frames 226–345) cut 2026-09-13.' },
   { id: 'aurora',   name: 'Aurora',        kind: 'aurora',  tier: 'plus' },
 ];
 

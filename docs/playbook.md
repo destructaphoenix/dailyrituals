@@ -288,7 +288,7 @@ Full narrative in [`build-log.md`](build-log.md) → "The 2026-09-06 billing inc
    manifest publishes `rcAndroidKey:""` and **overwrites the key the installed build embedded** — billing
    goes off on every device that takes it. A local `.env` does **not** save you. **A publish log line is not
    evidence — read the manifest back**, every time:
-   `curl -sS -H 'expo-platform: android' -H 'expo-runtime-version: 1.0.9' -H 'expo-channel-name: production'`
+   `curl -sS -H 'expo-platform: android' -H 'expo-runtime-version: 1.0.10' -H 'expo-channel-name: production'`
    `-H 'expo-protocol-version: 1' -H 'accept: multipart/mixed' https://u.expo.dev/1a0f9b15-cb1a-4cec-9577-3cd66e9f1d36 | grep -o 'rcAndroidKey":"[^"]*"'`
    `scripts/check-billing-config.js` guards the workflow copy; **it cannot guard what you type by hand.**
 2. **Clearing app data DELETES the downloaded update.** The gesture used to "reproduce cleanly" sends the
@@ -306,8 +306,8 @@ full ~7d review — and it should not be taken until the device walks clear. **�
 account-wide**; every active release on every track is `targetSdkVersion 36`.
 
 **⚠️ The OTA lane.** `eas update` publishes to Expo's CDN — **no Play track, no Google, no review** — gated
-only by **channel** (`production`) + a **matching `runtimeVersion`** (= `appVersion`). It is **`1.0.9`,
-which means vc15 installs and nothing else** (`alpha` on vc12 and `beta`/`production` on vc9 receive
+only by **channel** (`production`) + a **matching `runtimeVersion`** (= `appVersion`). It is **`1.0.10`,
+which means vc17 installs and nothing else** (`alpha` on vc12 and `beta`/`production` on vc9 receive
 nothing). An installed build takes an OTA regardless of which track it came from, and **it applies on the
 SECOND launch**. **Anything native needs a build**, and **a `bump:native` closes the lane until that
 versionCode actually ships** — the trap IMP-076 and IMP-077 both sprang. **Do not OTA a fix and then treat
