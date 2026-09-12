@@ -134,6 +134,17 @@ kept for years.
 ### D-01 · Insights → "Consistency" draws every day since the first entry 🐛
 **Baseline:** `day-05` / `night-05` ✅
 
+> ✅ **SCOPED 2026-09-12 as [IMP-120](specs-open.md#imp-120--the-consistency-grid-becomes-a-bounded-month-strip)
+> — the design phase of this row is over.** The returned design's direction **A** won on measurement: a
+> horizontally scrolled strip of 95dp month blocks with 11dp cells, **~124dp tall and constant** against
+> today's ~1,870dp. Direction B measured worse on both counts (twelve 33dp months need 440dp against a
+> 280dp card, so it scrolls anyway, and 5dp cells are illegible on a phone).
+>
+> 🔑 **Building it does not pick A or B as a screen** — both directions retire the lifetime heatmap and
+> both replace it with this same month-blocked calendar. The whole-screen choice stays open for D-03.
+>
+> **Do not send this file to Claude Design again.** It is a port brief now, and the port is specified.
+
 **What happens.** [`buildLifetimeHeatmap`](../src/home/calendar.js#L68) emits **one row per calendar week
 from your first entry to today, forever**, and [`LifetimeHeat`](../src/screens/InsightsScreen.js#L239)
 renders every one of them inside the "Your record" card.
