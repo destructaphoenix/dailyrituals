@@ -5029,7 +5029,118 @@ vacuous credit check now has something to check. **1215 passed, 112 suites** (wa
 
 ---
 
+## IMP-124 — the Meteor Shower hero doesn't read in day mode (2026-09-13)
+
+**Found by** [WALK-21](walk-open.md#walk-21--the-first-video-sky-plays) steps 4 and 5, on Play `internal`
+vc17, hardware, owner-run. **One cause, five surfaces.** IMP-121 worked out that footage is not lighter in
+day mode the way the app's day theme is, and applied it to the text *shadow* only
+(`heroNeedsContrast = t.dark || videoSkyActive`) — every **color** in the hero stayed on the day theme, so
+day mode painted `c.ink` `#292524` and `c.dimText` `#6f6a78` onto mid-blue moving water. Two more instances
+of the same defect — `StreakFreeze`'s border/label and the XP bar's `Lv`/`XP` labels with no shadow at all —
+were found by reading the source, not by the walk, and built into the same spec so a second walk isn't owed.
+
+**New [`src/home/heroChrome.js`](../src/home/heroChrome.js).** One pure function,
+`heroChrome(colors, { dark, overVideo })`: over footage, a fixed white ramp that owes nothing to the
+palette (title `#ffffff`, subtitle `rgba(255,255,255,0.86)`, `metaDim` `rgba(255,255,255,0.80)`, hairline
+`rgba(255,255,255,0.26)`, the numeral's halo going **dark** — `rgba(0,0,0,0.55)` — since an accent-coloured
+glow behind an accent glyph reads as bloom on near-black and mush on a mid-tone); with no video, the
+existing theme tokens and shadows, reproduced exactly (no regression to the non-video hero).
+
+**Wired through four call sites.** [`HomeScreen.js`](../src/screens/HomeScreen.js) — the local
+`streakShadow`/`heroNeedsContrast`/`numberGlow` deleted, replaced by one
+`heroChrome(c, { dark: t.dark, overVideo: videoSkyActive })` call feeding every hero text color and the
+`Lv`/`XP` labels, which now also carry the shadow they were missing. [`ui.js`](../src/ui.js) — `ProgressBar`
+gains `onVideo`: the track becomes `rgba(0,0,0,0.62)` with a `rgba(255,255,255,0.26)` hairline border,
+because no single fill color survives arbitrary footage (`#BFE6FF` is 3.97:1 average but 2.29:1 under a
+whitecap) — the fix is a track the footage can't bleed through, a fixed pair with the fill.
+[`gamify.js`](../src/gamify.js) — `StreakFreeze` gains `onVideo`, importing `heroChrome` rather than
+repeating its values. [`data.js`](../src/data.js) — `meteor.accent` `'#5AA9E6'` (2.05:1 against the clip's
+`#437094`, under the 3:1 non-text minimum) → `'#BFE6FF'`, no hex pinned in a test since it's an
+art-direction value that changes per sky. [`skyHero.js`](../src/home/skyHero.js) — its `accent` prop
+deleted; it was destructured and never used, and left in place it wrongly implies the accent tints the
+scrim.
+
+⚠️ **The scrim itself was checked and deliberately not touched** — it covers the bottom 28% of a 336dp card
+(~242dp down); every failing element sits above ~225dp, so widening the scrim wouldn't have fixed anything
+and would have fought IMP-123's clip crop.
+
+**The proof.** New [`heroChrome.test.js`](../__tests__/home/heroChrome.test.js) (4 cases — the third,
+day-over-video giving the white ramp not day ink, is the one that shipped broken).
+[`HomeScreenSkyHero.test.js`](../__tests__/screens/HomeScreenSkyHero.test.js) extended with the `color`
+assertions its existing day-over-video case never made (only `textShadowColor` — precisely the hole this
+bug came through), plus a no-regression control and a `ProgressBar` `onVideo` prop check. New
+[`ProgressBar.test.js`](../__tests__/ui/ProgressBar.test.js) and new
+[`streakFreezeComponent.test.js`](../__tests__/home/streakFreezeComponent.test.js) — named apart from the
+pre-existing `streakFreeze.test.js`, which tests the unrelated `applyAutoFreeze` logic in
+`src/home/streakFreeze.js` (a same-name collision with the `StreakFreeze` *component* in `gamify.js`, not
+the same module; the spec's instruction to "extend" that file was a naming mix-up, not a design call).
+All four new/extended color assertions were run and confirmed **red** before the wiring changes, per the
+spec. **1228 passed, 115 suites** (was 1215/112), export clean, +13 tests. Commit `87771c4`.
+
+**Not in this row.** No native change — OTA, no `versionCode` bump, no `Release-Lane:` trailer (rides
+vc17's existing channel). **Its runtime proof is [WALK-22](walk-open.md#walk-22--the-day-mode-hero-re-check),
+not this chat.**
+
+---
+
 ## Session notes
+
+_2026-09-13 (Opus — **the WALK-21 fallout specced, plus three rows the repo carried as prose.**) — 📋 specs
+only, no source touched._
+
+**What finished.** Four `IMP` rows, two `WALK` rows; the reasoning lives in each spec, not here. **IMP-124** is
+WALK-21's defect and it is **one cause with five symptoms** — IMP-121 had already worked out that footage is
+not lighter in day mode the way the day theme is, applied it to the text **shadow**, and left every **color**
+on the day theme; new pure `src/home/heroChrome.js` decides the hero's colors from its **ground**, not the
+mode. **IMP-125** is the owner's candle-indicator remark, specced so it is buildable on a yes and ⏸ gated
+because it is a preference, not a defect. **IMP-126/127** close the standing "D-04, D-09, D-10 want IMP
+numbers" note, which **was one row too long and one row half wrong**: D-10's dead rows are IMP-022 (deferred),
+and D-09 is only the **Shop's** pill — Home's `+` opens the Shop and is fine, which is what saves IMP-119's
+owed centring walk.
+
+**The proof it rests on.** Arithmetic, not taste: `#5AA9E6` on the clip's `#437094` is **2.05:1** against a 3:1
+minimum, and **no** fill survives arbitrary footage (`#BFE6FF` is 3.97:1 average, **2.29:1** under a whitecap),
+so the XP bar becomes self-contained behind an `rgba(0,0,0,0.62)` track. The scrim was checked and
+**deliberately not touched** — it starts at ~242dp of 336, every failing element sits above ~225dp. IMP-126's
+`0.3` floor is where index 7 already sits, so **no journal that exists today changes a pixel**. 🔴 **WALK-23
+step 3 is the highest-value step filed today** — `MonthStrip` scrolls itself to the newest month with an
+initial `contentOffset` of 100000dp ([`InsightsScreen.js:270`](../src/screens/InsightsScreen.js#L270)) and jest
+asserts nothing about where Android landed. ⚠️ **The obvious theory was checked and killed before filing:**
+`contentOffset` is in RN 0.81's **shared** `ScrollViewBaseProps`, not an iOS-only block, so the row says so
+and a walk chat will not go looking for a trap that isn't there. ⚠️ **WALK-20 was deliberately NOT
+written** — unrunnable while `EMBER_PACKS_ENABLED` is `false`, and a ⬜ row a walk chat must refuse is worse
+than a named gap.
+
+**The exact next step (at the time).** Build chat takes **IMP-124** (OTA, no `versionCode` bump), then **IMP-126**. A walk
+chat can take **WALK-23** now — emulator, agent-runnable, no build. **IMP-125 needs the owner's yes**;
+**IMP-127 waits for IMP-124 to land.** **Done same session** — see the IMP-124 note above.
+
+---
+
+_2026-09-12 (Sonnet — **IMP-122 built: the sky catalogue becomes a manifest.**) — ✅ code-complete, no walk
+owed (nothing plays yet)._
+
+**What finished.** `SHOP_SKIES` gains real manifest fields (`clip`/`clipDay`+`clipNight`, `poster`, `accent`,
+`credit`) plus a `SKY_BASE` constant — **none populated yet**, since no per-sky clip has cleared the
+provenance gate (Stage 2 of `skies-route.md` still open) and `classic`/`crescent` stay frozen forever.
+[`videoSkyGate.js`](src/home/videoSkyGate.js) replaces IMP-121's hardcoded gate with a real,
+ownership-gated lookup (`activeSkyManifest`, `skyVideoSource`); `HomeScreen.js` reads it via new
+`activeSky`/`ownedSkies` props instead of the bundled fixture; `RitualsApp.js` sizes the video cache to
+~128MB once at startup; `SkyPreview` shows a poster for a video sky. **Home correctly still shows
+`RayFan`/`NightRays` for everyone** — the mechanism is proven, not yet fed; the first real sky is now a
+pure `data.js` edit.
+
+**The proof.** New `skyManifest.test.js` (every video sky needs a non-empty `credit`) and
+`videoSkyGate.test.js` (unowned never resolves; owned ember-priced resolves without `plus`; lapsed member
+gets nothing from a `tier: 'plus'` sky; two-clip sky differs by mode). `HomeScreenSkyHero.test.js` updated
+to mock `activeSkyManifest`. **1214 passed, 112 suites** (was 1205/110), export clean, +9 tests. Commit
+`738a99e`. Spec archived; **`docs/specs-open.md`'s queue is now empty.**
+
+**The exact next step (at the time).** Take **IMP-123**, filed by Opus the same day the queue emptied.
+**Done same day** — see the note below.
+
+---
+
 
 _2026-09-12 (Sonnet — **IMP-121 built: the streak hero plays a looping video sky.**) — ✅ code-complete,
 walk owed (device, new `WALK` row)._

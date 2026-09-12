@@ -13,7 +13,7 @@
 > re-litigate a "why", and do not improve the scope.** If a step turns out to be impossible or the code
 > contradicts the spec, **STOP** and log it to `PROGRESS.md` → Open items rather than inventing a fix.
 >
-> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **1215 passed, 112 suites** — verified 2026-09-13), `npx expo export --platform android` clean, commit with the **exact** message given, then
+> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **1228 passed, 115 suites** — verified 2026-09-13), `npx expo export --platform android` clean, commit with the **exact** message given, then
 > update `PROGRESS.md` (tick the backlog row, write the session note) and **move the finished spec from
 > this file into `docs/build-log.md`**.
 >
@@ -24,9 +24,153 @@
 
 ## The queue
 
-**The queue is empty.** IMP-123 was the only open row — archived in
-[`docs/build-log.md`](build-log.md#imp-123--the-first-sky-carries-a-clip-on-its-own-update-channel-2026-09-13),
-commit `26e644b`.
+**Three open rows.** **IMP-124 is done** (archived to `docs/build-log.md`, commit `87771c4`) — take
+**IMP-126** next. **IMP-125 is owner-gated** — it comes from an offhand remark, not a defect, and needs a yes
+before a build chat touches it. **IMP-127** is now buildable — its own spec gated it on IMP-124 being
+committed, which it now is.
+
+| Row | What | Lane | Take it? |
+| --- | --- | --- | --- |
+| **IMP-126** | The 11th mood's bar is invisible (D-04's defect half) | OTA | ✅ **first** |
+| IMP-127 | The Shop's ember `+` promises an action it cannot perform (D-09) | OTA | ✅ second — IMP-124 committed |
+| IMP-125 | The candle indicator leaves the hero card | OTA | ⏸ **owner's yes first** |
+
+---
+
+### IMP-125 — the candle indicator leaves the hero card
+
+⏸ **OWNER-GATED. Do not build this without an explicit yes.** It is not a defect: it is the owner's
+observation during WALK-21 that *"the candle indicator doesn't need to live inside the hero card at all"*.
+It was not tested against any walk step and nothing is broken. **Severity 🎨.**
+
+**What is there now.** `{freezes != null && <StreakFreeze count={freezes} />}`
+([`HomeScreen.js:73`](../src/screens/HomeScreen.js#L73)) renders inside the hero, under a hairline rule —
+three candle glyphs and a line of copy, stacked below the XP bar in a 336dp card that is also carrying a
+76dp numeral, a subtitle, a level and a progress bar. Over a video sky it is also the part of the hero the
+scrim reaches, which is the only reason it survived WALK-21 at all.
+
+**Where it goes — decided, and this is the part the owner may want to overrule.** **Into the week-strip
+card, as a footer row beneath the seven dots.** Not a new card of its own: [`design-queue.md`](design-queue.md)
+→ D-12 already calls Home's lower half *"a stack with no hierarchy"* with the day's reflection fourth down,
+and a seventh equal-weight card makes the row it is filed under worse.
+
+**The week strip is the right home, and not merely a free slot.** `buildWeekStrip` already renders
+`frozenDays` — the days a candle spent itself — as a state *in those very dots*. Today the app draws the
+effect in one card and the stock in another. Moving the candles under the strip puts the count directly
+beneath the thing it explains.
+
+**Steps, when and if it is approved.**
+1. `HomeScreen.js` — remove `<StreakFreeze>` from `heroInner`; render it inside the week-strip `Card`,
+   after the seven-dot row.
+2. `StreakFreeze` — **delete the `onVideo` branch IMP-124 added**, and the `heroChrome` import with it. The
+   hero is no longer one of its grounds, so the branch is dead the moment this lands. Restore the plain
+   `c.border` / `c.muted` styling.
+3. The hero's bottom padding is now carrying a component's worth of empty space — `paddingBottom: 22`
+   against a fixed `HERO_HEIGHT` of 336. **Leave `HERO_HEIGHT` alone.** It is pinned to the clip geometry in
+   [`design-queue.md`](design-queue.md) → "The frame", every sky was cropped against it, and shrinking the
+   card re-crops the whole catalogue. The XP bar simply sits higher in the frame.
+4. Tests: `HomeScreenSkyHero.test.js` and any Home render test that locates the candle row must find it
+   under the week strip. `__tests__/home/streakFreeze.test.js` loses its `onVideo` cases.
+
+**Ship.** `fix(home): the candle count sits with the week it protects (IMP-125)` — OTA, no native change.
+**Its proof folds into [WALK-22](walk-open.md#walk-22--the-day-mode-hero-re-check)** if both ship together;
+on its own it is a day-mode glance, not a walk row.
+
+---
+
+### IMP-126 — the 11th mood's bar is invisible
+
+**From** [`design-queue.md`](design-queue.md) → **D-04**, which said *"scope the clamp as an IMP now
+regardless of the design — it is a two-character fix and the design can land later."* This is that row.
+**Severity 🐛** — data present, nothing on screen.
+
+**What happens.** Mood mix renders every distinct mood ever logged and shades each bar
+`opacity: 1 - i * 0.1` ([`InsightsScreen.js:142`](../src/screens/InsightsScreen.js#L142)). At index **10**
+the opacity is **0**; past it, negative. There are 8 built-in moods and **no cap on custom ones** —
+`MoodManager` counts them, nothing limits them — so a user with three custom feelings in regular use
+renders a bar that is in the data, labelled with its own count beside it, and cannot be seen.
+
+**This is IMP-118's shape exactly**: a bar present in the data and invisible on screen, next to a label
+saying how big it is. The pairings list next door does not have it, because it `slice(0, 6)`s first.
+
+**The decision.** Clamp the floor, do not cap the list. A `slice` would silently drop a mood the user
+created and named; an opacity floor keeps every row visible and honest. The remainder-line design
+(*"+4 more feelings"*) stays open in D-04 and is **not** this spec — this row is the clamp only.
+
+**Step.** [`InsightsScreen.js:142`](../src/screens/InsightsScreen.js#L142):
+
+```js
+opacity: Math.max(0.3, 1 - i * 0.1),
+```
+
+**0.3, and the number is not arbitrary.** There are 8 built-in moods, so index **7** — the last row any
+journal can reach today without custom feelings — already sits at exactly `0.3`. Clamping there means
+**no journal that exists right now renders one pixel differently**, and every mood past the 8th draws like
+the 8th instead of fading to nothing. A lower floor (`0.1`) is not a visible bar either: `c.accent` at 10%
+over `c.accentSoft` is the track.
+
+**The test.** Beside the existing Insights tests: render a mood mix of **12** distinct moods and assert the
+11th and 12th bars flatten to `opacity: 0.3` — not `0`, not negative. Add the control too: the **8th** bar
+is still `0.3`, proving the clamp changed nothing that already worked. **Prove it red first** — today index
+10 flattens to exactly `0`.
+
+**Ship.** `npm test` green (≥ 1228/115), export clean, then:
+
+```
+fix(insights): the eleventh mood keeps a bar you can see (IMP-126)
+```
+
+OTA, no native change. **No walk owed** — it is a numeric clamp with a render assertion, and the emulator
+adds nothing a test does not already say. Update D-04's row in `docs/design-queue.md` to point at this
+commit and note that only the remainder-line design is still open there.
+
+---
+
+### IMP-127 — the Shop's ember `+` promises an action it cannot perform
+
+**From** [`design-queue.md`](design-queue.md) → **D-09**. **Severity 🎨.** ⏸ **Sequenced after IMP-124 —
+take it only once IMP-124 is committed**, so two cosmetic OTA rows do not land on the same surface in the
+same window and make a failed walk ambiguous.
+
+**⚠️ D-09 is half wrong, and the correction is what makes this row small.** D-09 says the `+` *"opens
+nothing"*. That is true of **one** of the two pills:
+
+| Call site | `onPress` | Verdict |
+| --- | --- | --- |
+| [`Shop.js:78`](../src/screens/Shop.js#L78) | `onGetEmbers()` → `openGetEmbers()` → with `EMBER_PACKS_ENABLED` false, a toast: *"Embers also gather on their own"* | 🔴 **the defect** |
+| [`HomeScreen.js:88`](../src/screens/HomeScreen.js#L88) | `onOpenShop` | ✅ **fine — leave it.** The `+` opens the Shop, which is where embers are got |
+
+**The decision.** Hide the `+` where it cannot act; keep it where it can. The alternative D-09 offers —
+redesigning the pill to read as a balance — is rejected: the flag flips to `true` the moment
+[WALK-20](../PROGRESS.md) passes, and a redesign would then have to be undone.
+
+**Steps.**
+1. [`src/shopui.js`](../src/shopui.js) — `EmberPill` gains `showAdd = true`; the `+` circle renders only
+   when it is true. Everything else about the pill is untouched.
+2. [`src/screens/Shop.js`](../src/screens/Shop.js#L78) — `showAdd={EMBER_PACKS_ENABLED}`, imported from
+   [`src/billing/config.js`](../src/billing/config.js). **Import the flag in `Shop.js`, not in `shopui.js`**
+   — a shared UI component should not know about billing config.
+3. `HomeScreen.js` — **no change.** It takes the default.
+
+**⚠️ Check this before you commit, and say so in the session note.** [IMP-119](build-log.md) fixed the `+`
+glyph's centring and **still owes a device walk**. This row must not delete the only thing that walk looks
+at. It does not: the **Home** pill keeps its `+`, it is the same `EmberPill` component, and `PixelRatio`
+does not care which screen it is on. **Record in the commit body that IMP-119's walk moves to Home's pill.**
+
+**The test.** [`__tests__/ui/EmberPill.test.js`](../__tests__/ui/EmberPill.test.js) — `showAdd={false}`
+renders no `+`; the default still renders it; **IMP-119's scaled-`lineHeight` assertion must still pass
+under the default** (do not let the new branch skip it).
+
+**Ship.** `npm test` green (≥ 1228/115), export clean, then:
+
+```
+fix(shop): the ember plus appears only where it can add embers (IMP-127)
+```
+
+OTA, no native change. **No walk of its own** — it folds into whichever Shop sitting comes next, and into
+WALK-20 when `EMBER_PACKS_ENABLED` flips, where the `+` must come **back**.
+
+---
 
 **IMP-123 is done** — archived in [`docs/build-log.md`](build-log.md#imp-123--the-first-sky-carries-a-clip-on-its-own-update-channel-2026-09-13), commit `26e644b`.
 **IMP-122 is done** — archived in [`docs/build-log.md`](build-log.md#imp-122--the-sky-catalogue-becomes-a-manifest-2026-09-12), commit `738a99e`.
