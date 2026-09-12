@@ -4932,8 +4932,19 @@ so `surfaceType="textureView"` is the fallback. Not switched pre-emptively.
 
 **Walk owed.** A new device walk: the clip plays and loops behind the numeral without visible seams at the
 card's rounded corners, the poster covers the cold launch frame, contrast holds in both day and night, and
-the 720-short-edge fixture (ocean waves, not embers — filename is a leftover, dev-only, never to be reused as
-a shipped sky) reads acceptably behind the scrim on a real screen.
+the fixture (ocean waves, not embers — filename is a leftover) reads acceptably behind the scrim on a real
+screen.
+
+⚠️ **Corrected 2026-09-13 — this paragraph originally called the fixture "720-short-edge" and dev-only on
+that basis. It is not.** `ffprobe` on the committed file reads **1280×1280**, h264, `yuv420p`, no audio
+stream, frame rate untouched — exactly the [`design-queue.md`](design-queue.md) encode recipe's output, and
+above the 1080 floor. **What is actually wrong with it is the loop, and it was never checked:** frame 0 is a
+single black frame (so `fixture-poster.png`, cut from frame 0, is byte-identical black), and first-vs-last
+scores **0.36 SSIM against an adjacent-frame floor of 0.43** — the waves do not end where they started. The
+2026-09-12 session encoded it correctly and verified nothing about the wrap. A loop window that does hold
+exists inside it (frames 226–345, 4.00s, 1.08× the floor) — found with
+[`scripts/find-loop.py`](../scripts/find-loop.py), added the same day along with the calibration rule that
+would have caught this.
 
 ---
 
@@ -4982,7 +4993,73 @@ Step 7 calls for one. Left alone.
 
 ---
 
+## IMP-123 — the first sky carries a clip, on its own update channel (2026-09-13)
+
+**Stage 6 of [`skies-route.md`](skies-route.md).** Puts IMP-121 + IMP-122 on a screen for the first time:
+`activeSkyManifest()` had returned `null` for every user because no `SHOP_SKIES` entry carried a `clip`.
+
+**The channel-collision fix, done first as ordered.** [`app.config.js`](../app.config.js) — `versionCode`
+16 → **17**, `version` `'1.0.9'` → **`'1.0.10'`** (`npm run bump:native`). vc15 installs (still on runtime
+`1.0.9`) now permanently stop matching the OTA channel that ships `expo-video`-dependent JS; vc16 installs
+that never took a build get the same protection. Both hardcoded runtime-version strings in
+[`playbook.md`](playbook.md) (the manifest read-back `curl` and "The OTA lane" paragraph) updated to
+`1.0.10` / vc17 to match.
+
+**The clip.** [`data.js`](../src/data.js) — `SKY_BASE` becomes the verified R2 host
+(`https://pub-95312985bf644116878d3ce5031a4f36.r2.dev`; the placeholder `skies.dailyrituals.app` served
+nothing). `meteor` gains `clip`/`poster`/`accent`/`credit`, pointing at the 2026-09-13 loop window cut from
+the IMP-121 fixture (frames 226–345, 4.00s, 1280×1280, 1.08× the clip's own adjacent-frame floor, frame 0
+not black) — found with [`scripts/find-loop.py`](../scripts/find-loop.py) and the calibration recipe in
+[`design-queue.md`](design-queue.md). `accent: '#5AA9E6'` carries IMP-121's value forward, unverified by eye
+against the real footage (WALK-21's job). `credit` records Pexels provenance, settled by the owner
+2026-09-12 — a record, not an attribution debt.
+
+⚠️ **The footage is ocean water in a slot named Meteor Shower.** Deliberate and temporary: `meteor` is the
+only `tier: 'plus'` slot reachable on a Play build with no dev panel to fake ownership. The R2 object is
+named for the footage, not the slot, so the URL never lies.
+
+**The proof.** [`skyManifest.test.js`](../__tests__/data/skyManifest.test.js) gains a case asserting
+`meteor` resolves through `activeSkyManifest('meteor', [], true)` to a manifest with absolute `https://`
+`clip`/`poster` URLs, and that `skyVideoSource` returns `{ uri, useCaching: true }` for it — the existing
+vacuous credit check now has something to check. **1215 passed, 112 suites** (was 1214/112), export clean,
++1 test. Commit `26e644b`.
+
+**Not in this row.** Ownership, pricing, which skies are Plus — `meteor` stays `tier: 'plus'`,
+`src/billing/` untouched. The other four skies stay clip-less. **Walk owed** — [WALK-21](walk-open.md#walk-21--the-first-video-sky-plays), device, needs vc17.
+
+---
+
 ## Session notes
+
+_2026-09-12 (Sonnet — **IMP-121 built: the streak hero plays a looping video sky.**) — ✅ code-complete,
+walk owed (device, new `WALK` row)._
+
+**What finished.** `expo-video` config plugin + `versionCode` 15→16 in [`app.config.js`](../app.config.js). New
+[`src/home/skyHero.js`](../src/home/skyHero.js) — `<SkyHero source poster accent>` layers a full-bleed
+`VideoView`, a poster held until `readyToPlay`, and a bottom scrim; renders `children` over itself, knows
+nothing about streaks. New [`src/home/videoSkyGate.js`](../src/home/videoSkyGate.js) exports `hasVideoSky()` —
+hardcoded `true`, the seam IMP-122 turns into a manifest lookup. [`HomeScreen.js`](../src/screens/HomeScreen.js)
+branches on the gate: true → fixed 336dp full-bleed `Card` wrapping `SkyHero` (bundled fixture clip, `accent
+'#5AA9E6'`); false → the pre-existing `RayFan`/`NightRays` shell, untouched. Contrast chrome
+(`streakShadow`/`numberGlow`) now applies whenever `t.dark || hasVideoSky()`, not `t.dark` alone.
+[`ProgressBar`](../src/ui.js) gained an optional `accent` override, used only under a video sky.
+
+**The proof.** New [`skyHero.test.js`](../__tests__/home/skyHero.test.js) (poster shows/hides on player status)
+and [`HomeScreenSkyHero.test.js`](../__tests__/screens/HomeScreenSkyHero.test.js) (falls back to `RayFan` with
+the gate mocked off; day-mode shadow present with the gate on, absent with it off). **1205 passed, 110
+suites** (was 1200/108), `npx expo export --platform android` clean, +5 tests. Commit `d0fe2cb`. Spec
+archived to `docs/build-log.md`; `docs/specs-open.md`'s queue now held **IMP-122 only**.
+
+**Open question, not a defect — carried to the walk.** Ships on the default `surfaceType="surfaceView"`
+per the spec's own ruling (lower power, but flagged as unreliable at clipping to a rounded, overlapping
+parent — exactly this card's shape). An emulator cannot answer this; **the device walk decides** whether to
+fall back to `textureView`. Not switched pre-emptively.
+
+**The exact next step (at the time).** Take **IMP-122**. **Done same day** — see the note below. Walk chats:
+IMP-121 owes a new device `WALK` row (clip loops cleanly at the card's rounded corners, poster covers cold
+launch, contrast holds in both modes) — not yet filed in `docs/walk-open.md` at the time (now **WALK-21**).
+
+---
 
 _2026-09-12 (Sonnet — **IMP-120 built: the Insights consistency grid stops growing with the journal.**) —
 ✅ code-complete, walk owed (new WALK row, filed separately)._

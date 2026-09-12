@@ -67,3 +67,7 @@ store/raw/
 # maestro's per-run artifacts (logs, hierarchies, the captures before they are
 # moved into store/raw/) — disposable, kept only to debug a failed run.
 store/.maestro-out/
+
+# Python
+__pycache__/
+*.pyc

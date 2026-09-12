@@ -32,12 +32,12 @@
 runtime proof is a separate WALK row for a separate chat, so a missing walk is *not* an unfinished spec.
 Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`](docs/playbook.md).
 
-> ## 🧭 WHAT TO TAKE RIGHT NOW (2026-09-12)
+> ## 🧭 WHAT TO TAKE RIGHT NOW (2026-09-13)
 >
 > | If this chat is… | Take |
 > | --- | --- |
-> | a **build task** | ✅ **IMP-122 done** (commit `738a99e`, code-complete, archived in `docs/build-log.md`) — `SHOP_SKIES` is a real manifest now (`clip`/`clipDay`+`clipNight`/`poster`/`accent`/`credit`, `SKY_BASE` constant), `activeSkyManifest()` replaces the IMP-121 hardcoded gate, `Shop.js`'s `SkyPreview` shows a poster for a video sky. **No sky carries a real clip yet** — Stage 2's per-sky art hasn't cleared the provenance gate — so Home still shows `RayFan`/`NightRays` for every user; adding the first real sky from here is a pure `data.js` edit. **Pure JS, shipped OTA-lane (no trailer added — not asked to release).** ⬜ **The Improvements backlog is EMPTY — no open `IMP-xxx` row.** Do not invent one and do not open the parked phase ladder (8 / 10b / 11) on your own read; ask the owner what to take next (likely: Stage 2 sky art/provenance, or a new owner-filed issue for Opus to scope). ✅ IMP-118/119 shipped by OTA 2026-09-11 19:21 IST — commit `a8cb64e`, CI run `34606754613` green. Group `b38ae63a-7a5c-4533-960f-2e78aef15c97`, runtime `1.0.9`, android update `01a090d8-88cb-7e99-a4f0-6091adc9df19` — manifest read back by hand, `rcAndroidKey` present and non-empty (IMP-086 holds). |
-> | a **runtime walk** | 🔄 **THE TARGET BUNDLE MOVED — the pre-flight string is now `update 01a090d8`, not `01a09044`.** The IMP-118/119 OTA published at 19:21 IST superseded the bundle the owner's phone was confirmed on two hours earlier; it applies on the **second** launch after the download. ⚠️ **Read all eight characters — `01a09044` and `01a090d8` share six**, and only the second carries IMP-118/IMP-119. ⚠️ **The You tab prints the UPDATE id, not the group** — [`diagnostic.js:35`](src/billing/diagnostic.js#L35) strips dashes and takes 8 chars of `Updates.updateId`, so look for **`01a090d8`**, never the group `b38ae63a`. A walk of 7C, the IMP-116 lapse block, WALK-08's circles or WALK-12 on any older bundle proves nothing; after any further OTA, re-read this string before starting. 📱 **Take the running order from [`walk-open.md`](docs/walk-open.md) → "THE DEVICE SITTING PLAN"** — three sittings (IMP-116 lapse + IMP-114/115 · WALK-19 step 8 real money · WALK-12 last), each with the membership state it needs. ⚠️ **7C stays unwalkable** until the candle holding drains to ≤2 — do not record it as passed because nothing broke. ✅ **Step 7 is DONE — the 2026-09-10/11 lapse sitting cleared it** (hardware, owner-run, monthly tester sub). **WALK-18 ✅, WALK-07 ✅, WALK-19 steps 7A/7B/7D ✅** — IMP-108, IMP-109, IMP-110, IMP-111 and IMP-096 are all now proven on hardware. ⚠️ **7C is NOT proven** — the owner held 6 pre-cap candles, so the cap was never exercised; it re-runs once the holding drains to ≤2 ([IMP-115](docs/specs-open.md#imp-115)). Remaining 🚦: **step 8** (the one real-money purchase, held for last) and **WALK-12 (R8) LAST** — it must be walked on the exact build you ship. ✅ **WALK-08 is CLOSED (2026-09-11, emulator, agent-run)** — DeeperInsights passes at max font, IMP-095 proven, cap measured biting (scale 2, caps 1.5/1.2). It found IMP-118 on the way. 🔴 **But its IMP-117 pass was HALF WRONG and the device overturned it** — the `+` was off-centre at every font size, fixed as [IMP-119](docs/build-log.md#imp-119-the-ember-pills--lost-the-line-that-centred-it-2026-09-11) (commit `1fc0664`, walk still owed on device); the emoji half stands. **A glyph-centring claim is not emulator-provable — route that shape to `device`.** ✅ **SITTING 1 is DONE (2026-09-11, hardware, owner-run) — do not re-run it.** IMP-116 proven: on lapse both cosmetics revert under one message. **IMP-114 stays UNEXERCISED** — `buyCandles` checks the cap before affordability, so 6 candles against a cap of 3 returns at the first guard and its message cannot fire; same blocker as 7C. Step 5's control was dropped by inspection (ownership is consulted independently of `plus` in all three paths). Still owed, cheaply: the `6 kept` label and the no-ember-price check. ⚠️ **WALK-20 (IMP-113's ember purchase) still does not exist in `docs/walk-open.md`, and cannot be walked at all while `EMBER_PACKS_ENABLED` is `false`.** |
+> | a **build task** | ✅ **The queue is EMPTY — IMP-123 is code-complete** (`26e644b`, `versionCode` 16→17, `version` 1.0.9→1.0.10) **and about to ship by push, `Release-Lane: build`.** Nothing to take until the owner files a new row. Once CI's build lands, vc17 is what unblocks WALK-21. |
+> | a **runtime walk** | 🔄 **THE TARGET BUNDLE MOVED — the pre-flight string is now `update 01a090d8`, not `01a09044`.** The IMP-118/119 OTA published at 19:21 IST superseded the bundle the owner's phone was confirmed on two hours earlier; it applies on the **second** launch after the download. ⚠️ **Read all eight characters — `01a09044` and `01a090d8` share six**, and only the second carries IMP-118/IMP-119. ⚠️ **The You tab prints the UPDATE id, not the group** — [`diagnostic.js:35`](src/billing/diagnostic.js#L35) strips dashes and takes 8 chars of `Updates.updateId`, so look for **`01a090d8`**, never the group `b38ae63a`. A walk of 7C, the IMP-116 lapse block, WALK-08's circles or WALK-12 on any older bundle proves nothing; after any further OTA, re-read this string before starting. 🆕 **[WALK-21](docs/walk-open.md#walk-21--the-first-video-sky-plays) is filed** — the first video sky, device-only, **needs vc17 which does not exist yet**; it also gets the first hardware look at IMP-120's month strip. 📱 **Take the running order from [`walk-open.md`](docs/walk-open.md) → "THE DEVICE SITTING PLAN"** — three sittings (IMP-116 lapse + IMP-114/115 · WALK-19 step 8 real money · WALK-12 last), each with the membership state it needs. ⚠️ **7C stays unwalkable** until the candle holding drains to ≤2 — do not record it as passed because nothing broke. ✅ **Step 7 is DONE — the 2026-09-10/11 lapse sitting cleared it** (hardware, owner-run, monthly tester sub). **WALK-18 ✅, WALK-07 ✅, WALK-19 steps 7A/7B/7D ✅** — IMP-108, IMP-109, IMP-110, IMP-111 and IMP-096 are all now proven on hardware. ⚠️ **7C is NOT proven** — the owner held 6 pre-cap candles, so the cap was never exercised; it re-runs once the holding drains to ≤2 ([IMP-115](docs/specs-open.md#imp-115)). Remaining 🚦: **step 8** (the one real-money purchase, held for last) and **WALK-12 (R8) LAST** — it must be walked on the exact build you ship. ✅ **WALK-08 is CLOSED (2026-09-11, emulator, agent-run)** — DeeperInsights passes at max font, IMP-095 proven, cap measured biting (scale 2, caps 1.5/1.2). It found IMP-118 on the way. 🔴 **But its IMP-117 pass was HALF WRONG and the device overturned it** — the `+` was off-centre at every font size, fixed as [IMP-119](docs/build-log.md#imp-119-the-ember-pills--lost-the-line-that-centred-it-2026-09-11) (commit `1fc0664`, walk still owed on device); the emoji half stands. **A glyph-centring claim is not emulator-provable — route that shape to `device`.** ✅ **SITTING 1 is DONE (2026-09-11, hardware, owner-run) — do not re-run it.** IMP-116 proven: on lapse both cosmetics revert under one message. **IMP-114 stays UNEXERCISED** — `buyCandles` checks the cap before affordability, so 6 candles against a cap of 3 returns at the first guard and its message cannot fire; same blocker as 7C. Step 5's control was dropped by inspection (ownership is consulted independently of `plus` in all three paths). Still owed, cheaply: the `6 kept` label and the no-ember-price check. ⚠️ **WALK-20 (IMP-113's ember purchase) still does not exist in `docs/walk-open.md`, and cannot be walked at all while `EMBER_PACKS_ENABLED` is `false`.** |
 > | a **design request** | 📋 **Take the first row of [`docs/design-queue.md`](docs/design-queue.md)** — a ranked audit of all 14 user-facing surfaces, written 2026-09-11 from source. ✅ **D-01 (the Insights consistency grid) is built as IMP-120** — no further design pass needed, `docs/design-queue.md` still names it first and wants its own row updated by a design chat. **D-02 (Reflections)** is next. ⚠️ **One screen per request**; the four standing rules stay in [`docs/playbook.md`](docs/playbook.md) → "Claude Design — standing rules". **Three rows need no design at all** (D-04, D-09, D-10) — they are defects found during the audit and want IMP numbers. |
 >
 > **The billing surface, honestly.** ✅ **Proven end to end on hardware:** purchase, already-owns (4e),
@@ -77,7 +77,7 @@ preflight. Detail → [`docs/build-log.md`](docs/build-log.md).
 
 **Current stack:** Expo SDK **54** · RN **0.81.5** · React **19.1.0** · **New Architecture** ·
 **Reanimated 4.1.1 + worklets 0.5.1** · `targetSdkVersion` **36**, `minSdk` **24** ·
-`npm test` → **1214 passed, 112 suites** (verified 2026-09-12) + **3 zone tests × 2 pinned zones**.
+`npm test` → **1215 passed, 112 suites** (verified 2026-09-13) + **3 zone tests × 2 pinned zones**.
 ⚠️ **Run `npm test`, not bare `npx jest`**, or the zone half is skipped. Version-checking a phone, the
 track-reading script and the rest of the stack notes are in [`docs/playbook.md`](docs/playbook.md).
 
@@ -119,6 +119,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 120 | **The Insights consistency grid grows one row per week forever** — ~1,870dp for a single year. Replaced with a horizontally-scrolled month strip of constant ~124dp, direction A of the returned design. **Closes D-01.** | OTA | ✅ **done, archived** in `docs/build-log.md` — `72b0049`. **1200 passed, 108 suites** (was 1199/107), export clean, +9 `buildMonthHeat` tests, +2 fontScale-invariance tests, -10 tests for the deleted `heatGutterWidth`/`monthLabelsForRows`. ⚠️ **Walk owed** — a new `WALK` row, filed separately |
 | 121 | **The streak hero is static art.** Teach it to play one looping video sky behind the numeral, against a single bundled fixture clip. **Native — new binary.** | Build | ✅ **done, archived** in `docs/build-log.md` — `d0fe2cb`. **1205 passed, 110 suites** (was 1200/108), export clean, +5 tests. `versionCode` 15→16. ⚠️ **Walk owed** — a new device `WALK` row, filed separately; `surfaceType` (surfaceView vs textureView) is the walk's call |
 | 122 | **`SHOP_SKIES` knows five gradient `kind` strings.** Make a sky a manifest (clip URL, poster, mode pair, accent) and feed the shop tiles from it. | OTA | ✅ **done, archived** in `docs/build-log.md` — `738a99e`. **1214 passed, 112 suites** (was 1205/110), export clean, +9 tests. No sky carries a real clip yet (provenance gate still open on Stage 2's art), so Home correctly still shows `RayFan`/`NightRays` for everyone — the manifest mechanism is proven, not yet fed. ⚠️ **No walk of its own** — nothing plays yet to walk |
+| 123 | **No sky carries a clip**, so the IMP-121/122 mechanism has never played anywhere — `activeSkyManifest()` returns `null` for every user and Home still draws `RayFan`. Give `meteor` the 2026-09-13 loop clip on R2, **and bump `version` so vc17 stops sharing an OTA channel with vc15.** | Build | ✅ **done, archived** in `docs/build-log.md` — `26e644b`. **1215 passed, 112 suites** (was 1214/112), export clean, +1 test. `versionCode` 16→17, `version` 1.0.9→1.0.10. ⚠️ **Walk owed** — [WALK-21](docs/walk-open.md#walk-21--the-first-video-sky-plays), device, needs vc17 |
 | 022 | Save as PDF + About sheet (the two dead You-tab buttons) | Build | ⏸ **deferred (owner)** — spec in build-log → "Deferred specs"; **perk #6 gate** |
 | 044 | R8 on release builds (dev client was shipping to the public) | Build | 🟢 **code-complete, UNWALKED.** R8 must be walked on the build you actually ship, so it rides **vc15 or later**; walk = WALK-12, on hardware, last in the sitting |
 | 057 | Historical `dayKey` migration | Build | 🔒 **reserved, not missing** — cannot be written until real device numbers come back from the dev panel's "Data health" reporter. See below |
@@ -196,36 +197,6 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
-_2026-09-12 (Sonnet — **IMP-121 built: the streak hero plays a looping video sky.**) — ✅ code-complete,
-walk owed (device, new `WALK` row)._
-
-**What finished.** `expo-video` config plugin + `versionCode` 15→16 in [`app.config.js`](app.config.js). New
-[`src/home/skyHero.js`](src/home/skyHero.js) — `<SkyHero source poster accent>` layers a full-bleed
-`VideoView`, a poster held until `readyToPlay`, and a bottom scrim; renders `children` over itself, knows
-nothing about streaks. New [`src/home/videoSkyGate.js`](src/home/videoSkyGate.js) exports `hasVideoSky()` —
-hardcoded `true`, the seam IMP-122 turns into a manifest lookup. [`HomeScreen.js`](src/screens/HomeScreen.js)
-branches on the gate: true → fixed 336dp full-bleed `Card` wrapping `SkyHero` (bundled fixture clip, `accent
-'#5AA9E6'`); false → the pre-existing `RayFan`/`NightRays` shell, untouched. Contrast chrome
-(`streakShadow`/`numberGlow`) now applies whenever `t.dark || hasVideoSky()`, not `t.dark` alone.
-[`ProgressBar`](src/ui.js) gained an optional `accent` override, used only under a video sky.
-
-**The proof.** New [`skyHero.test.js`](__tests__/home/skyHero.test.js) (poster shows/hides on player status)
-and [`HomeScreenSkyHero.test.js`](__tests__/screens/HomeScreenSkyHero.test.js) (falls back to `RayFan` with
-the gate mocked off; day-mode shadow present with the gate on, absent with it off). **1205 passed, 110
-suites** (was 1200/108), `npx expo export --platform android` clean, +5 tests. Commit `d0fe2cb`. Spec
-archived to `docs/build-log.md`; `docs/specs-open.md`'s queue now holds **IMP-122 only**.
-
-**Open question, not a defect — carried to the walk.** Ships on the default `surfaceType="surfaceView"`
-per the spec's own ruling (lower power, but flagged as unreliable at clipping to a rounded, overlapping
-parent — exactly this card's shape). An emulator cannot answer this; **the device walk decides** whether to
-fall back to `textureView`. Not switched pre-emptively.
-
-**The exact next step (at the time).** Take **IMP-122**. **Done same day** — see the note below. Walk chats:
-IMP-121 owes a new device `WALK` row (clip loops cleanly at the card's rounded corners, poster covers cold
-launch, contrast holds in both modes) — not yet filed in `docs/walk-open.md`.
-
----
-
 _2026-09-12 (Sonnet — **IMP-122 built: the sky catalogue becomes a manifest.**) — ✅ code-complete, no walk
 owed (nothing plays yet)._
 
@@ -245,6 +216,34 @@ gets nothing from a `tier: 'plus'` sky; two-clip sky differs by mode). `HomeScre
 to mock `activeSkyManifest`. **1214 passed, 112 suites** (was 1205/110), export clean, +9 tests. Commit
 `738a99e`. Spec archived; **`docs/specs-open.md`'s queue is now empty.**
 
-**The exact next step.** **No `IMP-xxx` row is open.** Ask the owner what to take next — likely candidates:
-Stage 2 of `skies-route.md` (the real per-sky art + provenance, unblocks a real video sky shipping), or a
-new owner-filed issue for Opus to scope. Do not open the parked phase ladder (8 / 10b / 11) without asking.
+**The exact next step (at the time).** Take **IMP-123**, filed by Opus the same day the queue emptied.
+**Done same day** — see the note below.
+
+---
+
+_2026-09-13 (Sonnet — **IMP-123 built: the first sky carries a clip, on its own update channel.**) — ✅
+code-complete, walk owed (device, WALK-21, needs vc17)._
+
+**What finished.** Step 1 done first as the spec ordered: `npm run bump:native` — `versionCode` 16→17,
+`version` `'1.0.9'`→`'1.0.10'` in [`app.config.js`](app.config.js), closing the channel collision (a vc15
+install would otherwise have kept matching an OTA channel now shipping `expo-video`-dependent JS). Both
+hardcoded runtime-version strings in [`docs/playbook.md`](docs/playbook.md) updated to `1.0.10`/vc17.
+[`src/data.js`](src/data.js) — `SKY_BASE` set to the verified live R2 host
+(`https://pub-95312985bf644116878d3ce5031a4f36.r2.dev`); `meteor` gains `clip`/`poster`/`accent`/`credit`
+pointing at the 2026-09-13 ocean loop (already produced, verified byte-exact on R2, provenance settled by
+the owner 2026-09-12 — none of that reopened here).
+
+**The proof.** [`skyManifest.test.js`](__tests__/data/skyManifest.test.js) gains a case: `meteor` resolves
+through `activeSkyManifest('meteor', [], true)` to a manifest with absolute `https://` `clip`/`poster` URLs,
+and `skyVideoSource` returns `{ uri, useCaching: true }` for it. **1215 passed, 112 suites** (was 1214/112),
+`npx expo export --platform android` clean, +1 test. Commit `26e644b`. Spec archived to `docs/build-log.md`;
+`docs/specs-open.md`'s queue is now empty.
+
+**Shipped this chat.** `Release-Lane: build` — pushed to `main` per the owner's go-ahead; CI builds vc17 and
+auto-submits to `internal` (~25 min).
+
+**The exact next step.** **No `IMP-xxx` row is open.** WALK-21 is filed and unblocks once CI's vc17 build
+lands on the owner's device — read the You tab's Version row for `1.0.10 / vc17` before starting it. Ask
+the owner what to take next otherwise: Stage 2 of `skies-route.md` (real per-sky art for the other four
+skies), a new owner-filed issue for Opus to scope, or WALK-21 itself as the next runtime-walk chat. Do not
+open the parked phase ladder (8 / 10b / 11) without asking.

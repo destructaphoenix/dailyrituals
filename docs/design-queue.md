@@ -400,6 +400,50 @@ ffmpeg -v error -sseof -0.05 -i out.mp4 -vframes 1 -y last.png
 ffmpeg -v error -i first.png -i last.png -lavfi ssim -f null -
 ```
 
+⚠️ **That pair of checks proves the ENCODE preserved the loop. It does not prove the source ever
+looped** — and a clip that never looped passes both, because the frame count is untouched and the
+out-vs-source SSIM only measures encode damage. Read the sections below before trusting a green run.
+
+**There is no fixed SSIM threshold, and assuming one is a real trap.** SSIM here is dominated by
+high-frequency detail, so the scale is subject-dependent: on fast-moving water two **consecutive**
+frames score **~0.43**, while near-static footage scores **~0.99**. A wrap scoring 0.41 is therefore
+excellent on the first clip and broken on the second. **Always calibrate against the clip's own
+adjacent-frame floor**, never against an absolute number:
+
+```sh
+# the floor — how much two CONSECUTIVE frames differ in this clip
+ffmpeg -v error -i out.mp4 -vf "select=eq(n\,100)" -vframes 1 -y a.png
+ffmpeg -v error -i out.mp4 -vf "select=eq(n\,101)" -vframes 1 -y b.png
+ffmpeg -v error -i a.png -i b.png -lavfi ssim -f null -
+```
+
+A wrap at or near that floor differs about as much as one ordinary frame step, which is as seamless
+as the subject allows. A wrap far below it is a visible jump.
+
+**If the source does not loop, search it for a window that does** — real footage of a non-cyclic
+subject (waves, traffic, drifting cloud) rarely ends where it started, but a 4–5s window inside it
+often does. [`scripts/find-loop.py`](../scripts/find-loop.py) scores every in/out pair in a duration
+range, prints each against the floor, and emits the cut command:
+
+```sh
+python3 scripts/find-loop.py in.mp4 --min-sec 4 --max-sec 5
+```
+
+Metrics saturate on water and noise, so the winner still has to be watched — the tool's last command
+writes a `seam-check.mp4` that plays the loop four times over for exactly that.
+
+**Cut the poster, and check it is not a black frame.** Many stock clips open on one black frame, and
+the poster is cut from frame 0 by default — which silently makes the poster black, and then reads on
+device as a bug in [`skyHero.js`](../src/home/skyHero.js) rather than a bad asset:
+
+```sh
+ffmpeg -i out.mp4 -vframes 1 -q:v 3 out-poster.jpg
+ls -la out-poster.jpg   # a near-black frame compresses to a few hundred bytes; expect ~10-15KB
+```
+
+If frame 0 is black, trim it (`select=gte(n\,1)`) rather than cutting the poster from elsewhere — the
+poster has to be the frame the video actually starts on, or it jumps when playback begins.
+
 ### When it is still too big
 
 AI-generated footage is usually **noisy**, and noise is incompressible — it is what turns an 8-second

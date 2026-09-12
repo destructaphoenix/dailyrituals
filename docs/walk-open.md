@@ -443,6 +443,7 @@ the lane now; CI (`release.yml`) ships from it on a `Release-Lane:` trailer. **N
 | WALK-18 | 🎨 | [The app moves](#walk-18--the-app-moves) | IMP-077 | **device** | 👤 (visual) | ✅ **CLOSED 2026-09-11 (hardware, owner-run) — IMP-111 proven.** Day mode, all four tabs, slow and rapid: tabs now switch **instantly with no transition at all** and **no shadow outlines around any card**. `ScreenFade` was deleted outright (`76c1d76` removed it from both `RitualsApp.js` and `motion.js`), so there is no fade left to composite elevation under. ⚠️ **Steps 2 and 3 of this row below are STRUCK, not owed** — "cards rise in and stagger" and press-scale describe `riseIn`/`stagger`, which have **no consumer**; the row's own audit already established six of eight motion exports are unused. Absence of animation is the designed state, not a failure. 🟠 Previously PARTIAL, 2026-09-10 (Galaxy S24 Ultra, owner-run) — **the row's PREMISE was wrong.** ⚠️ **The owner has no mid-range device and will not be getting one; this row cannot be run as written.** Two findings, both from a flagship, both valid there. **(1) "The animations are not there" — CORRECT AND EXPECTED.** [`motion.js`](../src/motion.js) states in its own header that it *"adds no animation to any screen"*: `riseIn`, `popIn`, `fadeOut` and `useCountUp` are **all unused**, and the only two live motions are `usePressScale` (a 0.99 scale, deliberately imperceptible) and `ScreenFade`. **There is essentially no motion here to frame-pace, so the mid-range requirement was never the real gate.** **(2) 🔴 NEW DEFECT — shadow outlines around the next screen's cards during a tab change, DAY MODE ONLY.** Cause found in source and it matches the day-mode-only symptom exactly: `ScreenFade` animates `opacity` over a subtree whose `Card`s carry Android `elevation: 8`, and elevation shadows do not composite under fractional parent opacity; dark mode has no elevation so it cannot occur. **Scoped as [IMP-111](specs-open.md#imp-111).** ✅ **DECIDED 2026-09-10 — the fade is being removed ([IMP-111](specs-open.md#imp-111)), and applying the motion vocabulary is parked until Plus is complete.** Re-run this row in **day mode** once IMP-111 ships: there should be no transition left to draw an outline during. ⚠️ **Correction to this row's own audit:** `stagger` is **also unused** — the hit in `Celebration.js:23` is RN's `Animated.stagger`, a different function. Six of eight motion exports have no consumer |
 | WALK-19a | 🚦 | [The IMP-105 isolation sitting](build-log.md#-walk-19a--the-imp-105-isolation-sitting-run-this-one-on-its-own) | [IMP-105](specs-open.md#imp-105) | **device** | 👤 | ✅ **2026-09-10 — PASSED (hardware, owner-run), 4 minutes.** Bought annual 00:43, uninstalled 00:44, reinstalled 00:45, **Plus already active on the second launch at 00:47 with no Restore tap** — the Restore row was gone and the You tab showed the member state. Elapsed 4 min against an annual test sub's ~3 hr life, so **expiry is arithmetically impossible and this run tested what step 9 always meant to test**. Play separately confirmed at uninstall that the subscription survives; the owner chose "keep the fresh start" (discarding local data) and Plus still returned, proving membership is store-authoritative. **IMP-105 closed — not reproducible, walk-protocol defect.** ⚠️ Named gap: `restorePurchases()` itself was never tapped (nothing to tap), so reinstall-then-Restore stays unexercised — not a blocker, step 4f already proved `restore()`. First walk here to name its own bundle before starting (`01a0877d`, via IMP-106). Detail in `build-log.md` → "Walk log" |
 | WALK-19 | 🚦 | [Money actually changes hands](#walk-19--money-actually-changes-hands) | **Phase 10b.5**, IMP-028, IMP-082 + IMP-083 (steps 5 and 10), IMP-084/085/086/087, **IMP-088** | **device** (real Play Billing + a license tester) | 👤 | 🔴 **2026-09-11 (hardware, owner-run, MONTHLY tester sub) — STEP 7 IS DONE.** Ran as the sub lapsed, the ordering rule honoured. **7A ✅ — [IMP-108](build-log.md) PROVEN:** with Plus live, Marigold, Honey, Rose Dusk, Sage Eve and Harvest Moon all showed **no ember price**, applied cleanly, and the balance stayed at 15. **7B ✅ — [IMP-109](build-log.md) PROVEN on palettes:** the shortfall names the item, its price and the balance. **7D ✅** — no "Gather Embers" section and no `$1.99`/`$4.99`/`$9.99` anywhere, so the `EMBER_PACKS_ENABLED` guard holds on a shipped build. **[IMP-110](build-log.md) ✅ PROVEN** — the paywall perk list no longer claims streak insurance is members-only. ⚠️ **7C is NOT a pass and was previously recorded as one in error:** the owner held **6 candles banked before IMP-112**, so the cap was never exercised — nothing capped, they simply had no room. It re-runs once the holding drains to ≤2. 🔴 **Three new defects out of this sitting:** [IMP-114](specs-open.md#imp-114) (the candle shortfall toast is unreachable — `disabled={!afford}` swallows the tap, which is why this call site survived four sittings unexercised), [IMP-115](specs-open.md#imp-115) (`6 / 3 kept`), and [IMP-117](specs-open.md#imp-117) (max-font centring). 🚦 **And one across the lapse:** [IMP-116](specs-open.md#imp-116) — Harvest Moon and Frostlight survived the subscription expiring, then **vanished at the next palette switch**, because `applyPalette` never adds to `ownedPalettes`. The paywall promises *"unlocked forever"*. **Blocked on an owner ruling.** **Owed now: step 8 only** (real money, held for last). Prior: 🔴 **2026-09-08 (hardware, owner-run) — steps 3, 4a, 4b, 4c, 4d, 4f, 5, 6 ✅ PASS.** [IMP-105](specs-open.md#imp-105) **blocks release**: reinstall + Restore on an account with an active subscription says "Nothing to restore" — and it is the one finding that survived the same-day source review (step 4f is its control: identical code passed minutes earlier). [IMP-104](specs-open.md#imp-104): default palette/sky items render as ember-locked, cause found, ready to build — **and tapping one wipes the ember balance to 0**. ⚠️ **Step 4e is INVALID, not a failure** — the phone ran OTA `d42b7ec7`, which predates IMP-100 **and** IMP-101; neither was ever pushed or shipped ([IMP-103](specs-open.md#imp-103)), so 4e owes a re-run after that OTA. Aeroplane-mode Restore reproduces the known IMP-092 cache limit (not new). 🔴 **2026-09-10 (hardware, owner-run), on group `f961b427`: step 4e ✅ PASS — "You already have Plus", which also settles IMP-103's open residual (the numeric `6`/`7` bet in `mapError.js` was correct). Step 7 ⚠️ INCONCLUSIVE for IMP-104 — the free items were never tapped (Crescent Moon ✅ applies cleanly), and with a 0 ember balance the NaN-wipe half is untestable; re-run once embers are earned. Step 7 instead found TWO new defects: [IMP-108](specs-open.md#imp-108) (a member is still charged embers for five palettes/skies the paywall promises) and [IMP-109](specs-open.md#imp-109) (the shortfall toast never names the price or balance). **Step 10 ✅ PASS, and the lapse confirmed at ~02:00** — the subscription bought at 00:43 expired at 01:43, and on re-opening the app the member state was gone. ✅ **That is [IMP-107](build-log.md)'s first and only hardware proof** — the row was opened 2026-09-09 because a lapsed member kept Plus until they happened to background the app. ⚠️ **The strength of this result depends on whether the app was truly force-closed first:** a cold start proves IMP-107's new launch check; a background→foreground cycle would have been caught by the pre-existing `AppState` listener and proves nothing new. Owner was asked for a force-close and reported the downgrade; recorded as a pass with that condition named. Step 10's earlier half ✅ PASS — the Play deep link worked, cancelling correctly did NOT revoke Plus before the period ended, and the "+3 candles — your Plus perk renewed" toast is IMP-102 firing on a test-compressed renewal, not a bug.** ✅ **Step 9 is SETTLED — see WALK-19a (2026-09-10): the entitlement survives a reinstall, IMP-105 was the walk's own ordering, not a defect.** That **unblocks step 10** (cancel flow), which was only ever blocked on step 9. Step 8 (real money) still deliberately held for last. Full detail in the RE-RUN section below. **Nothing is promoted `internal` → `production`.** |
+| WALK-21 | 🎨 | [The first video sky plays](#walk-21--the-first-video-sky-plays) | IMP-121, IMP-122, **IMP-123** | **device** (real panel, real GPU compositing, real battery) | 👤 | ⬜ — **needs vc17, which does not exist yet.** The whole animated-sky feature has never run outside jest, and the jest stub no-ops `useVideoPlayer` entirely. Also the first look at IMP-120's month strip on hardware |
 
 ---
 
@@ -1048,3 +1049,71 @@ reinstall (9), so **step 9 structurally cannot test what it exists to test.** Fr
 **Recording it.** Same rule as every row: ✅/❌ + date in the index, a paragraph here. **A failure is
 the deliverable** — scope it as a new `IMP-xxx` in `PROGRESS.md`, do not fix it mid-walk. **Do not
 promote `internal` → `production` until this row is ✅**, whatever the build says.
+
+---
+
+## WALK-21 — the first video sky plays
+
+**Covers:** IMP-121 (the `SkyHero` component), IMP-122 (the manifest lookup), IMP-123 (the first real
+clip). **Target: `device`. Runner: 👤 owner.**
+
+**Why none of this is provable anywhere else.** [`test-mocks/expoVideoStub.js`](../test-mocks/expoVideoStub.js)
+makes `useVideoPlayer` return a plain object and `VideoView` render an empty `View` — **the green suite
+proves the wiring and nothing about the picture.** Same shape as IMP-077's Reanimated mock and WALK-18.
+An emulator is barely better here: it fakes GPU compositing, has no real battery, and
+[`design-queue.md`](design-queue.md)'s own calibration section exists because emulators misreport exactly
+this class of detail.
+
+⚠️ **Pre-flight — this walk needs vc17 or later, not vc16.** IMP-123 bumps `version` to `1.0.10`, so the
+Version row in the You tab must read **1.0.10 / vc17**. A vc15 or vc16 install proves nothing, and vc15
+specifically **cannot** run this feature — `expo-video` is not in that binary.
+
+⚠️ **Plus must be ON.** `meteor` is `tier: 'plus'` and the hero resolves on ownership only; there is no dev
+panel on a Play build to fake it. Buy a monthly licence-tester sub, then **apply Meteor Shower in the Shop
+before opening Home**. A licence-tester monthly sub lives **~30 minutes** — see the standing warning in
+`PROGRESS.md`; do not plan a long sitting around one.
+
+⚠️ **The footage is ocean water in a slot called Meteor Shower.** Deliberate — IMP-123's "The asset"
+section says why. **Do not record it as a defect.**
+
+### Steps
+
+1. **Cold launch, Plus on, Meteor Shower applied.** The hero card is full-bleed 336dp with the numeral over
+   moving video. **The poster must cover the first frame** — if you see a blank, black or theme-coloured
+   card before the video starts, that is the poster failing and it is the whole reason it exists.
+2. 🔑 **The rounded corners — IMP-121's one named open question.** `SkyHero` ships on the default
+   `surfaceType: 'surfaceView'`, chosen for power, but the module's own docs flag `SurfaceView` as
+   unreliable when clipped to a rounded, overlapping parent — which is exactly this card
+   (`borderRadius: t.radius.card`, `overflow: 'hidden'`, numeral + scrim + XP bar stacked on top). **Look
+   at all four corners.** If the video squares off past the radius, or the numeral/scrim composite wrong,
+   the answer is `surfaceType="textureView"` and that becomes a new `IMP` row. **This walk decides it.**
+3. **The loop seam.** The clip is 4.00s, so the wrap comes round often. Watch the hero for ~30s. The join
+   was measured at 1.08× the clip's adjacent-frame floor and accepted by eye on 2026-09-13 — confirm it
+   still reads that way at hero size on a real panel, which is smaller and brighter than a desktop preview.
+4. **Contrast, both modes.** Drive night from the dev panel's Mode control if you are on a harness build;
+   on the Play build use the in-app Mode setting — **`adb uimode` does nothing for this app.** The numeral,
+   the streak text and the subtitle must stay legible over moving water in **both** modes; `streakShadow`
+   and `numberGlow` are applied in day mode too precisely because footage is not lighter than art.
+5. **The XP bar's accent.** `#5AA9E6` against footage averaging `#437094`. It must read as a bar, not
+   dissolve into the water. This is the value IMP-123 deliberately did not tune by eye — you are the test.
+6. **First-play latency on a fresh unlock.** Force-kill, wait, re-open. The clip is 2.0MB from R2 with
+   `useCaching: true`. Time roughly how long the poster is up. A long hold is not a bug by itself; a
+   *blank* hold is.
+7. **Offline.** Aeroplane mode, force-kill, re-open. A cached clip should still play. ⚠️ `expo-video`'s
+   cache is **LRU and evictable, not owned storage** — the poster must still cover the frame if the clip is
+   gone, and the card must never render empty.
+8. **Clear app storage, re-open.** Same expectation as a fresh install: poster first, then video once
+   re-fetched. ⚠️ Remember this also deletes any downloaded OTA — see the standing trap in
+   [`playbook.md`](playbook.md).
+9. **Battery / heat over a long session.** Leave Home open ~10 minutes. A clip looping all session on
+   `surfaceView` is the reason that surface type was chosen; if the device gets noticeably warm or the
+   battery visibly drops, say so with numbers.
+10. **The non-video fallback still works.** Switch to Golden Sun or Crescent Moon. Home must go back to the
+    `RayFan`/`NightRays` card — padded, not full-bleed — with no leftover video frame.
+11. **Bonus, free while you are here: IMP-120's month strip.** Insights → the consistency grid is a
+    horizontally-scrolled month strip of constant height now, not a grid that grows forever. Scroll it and
+    check the tertile shading reads against your real journal. Record it under this row.
+
+**If the sky does not appear at all**, the order of suspicion is: not on vc17 → Plus not active → Meteor
+Shower not applied → the R2 URLs not reachable from the phone. The You tab's Version row settles the first
+and `activeSkyManifest()` needs all three of the next.
