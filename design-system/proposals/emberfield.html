@@ -1,0 +1,83 @@
+<!-- @dsCard group="Plus art" viewport="1240x880" name="Emberfield — Windfall hero" subtitle="One clip in both modes, plain loop, ember-amber accents lifted from the footage" -->
+<!doctype html>
+<meta charset="utf-8">
+<title>Emberfield — Windfall hero</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;padding:34px 34px 70px;background:#fafafa;color:#18181b;font:15px/1.55 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+a{color:#b45309}a:hover{color:#92400e}
+h1{font:700 26px/1.2 'Quicksand',sans-serif;letter-spacing:-.01em;margin:0}
+.lede{margin:6px 0 0;color:#52525b;max-width:76ch}
+.note{border-left:3px solid #d97706;padding:10px 14px;background:#fef7ea;margin:16px 0;max-width:80ch;font-size:14px}
+.tk{font:12px/1.7 ui-monospace,Menlo,monospace;color:#52525b;margin-top:14px;max-width:90ch}
+.tk b{color:#3f3f46}
+.pair{margin-top:18px;display:grid;grid-template-columns:repeat(2,440px);gap:26px}
+.fr{border-radius:22px;padding:14px;background:#f9f7f4;border:1px solid #e8e3da}
+.frn{border-radius:22px;padding:14px;background:#000;border:1px solid #26241f}
+.lbl{margin-top:9px;font:12px ui-monospace,Menlo,monospace;color:#a1a1aa;text-align:center}
+.frn .lbl{color:#57534e}
+.cd{position:relative;overflow:hidden;background:#fff;border:1px solid #e8e3da;border-radius:26px;box-shadow:0 8px 14px #62360329}
+.cdn{position:relative;overflow:hidden;background:#0e0e10;border:1px solid #26241f;border-radius:26px}
+.skyc{position:relative;height:336px;overflow:hidden}
+.loop{position:absolute;inset:0}
+.loop video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 58%;display:block}
+.scrim{position:absolute;left:0;right:0;bottom:0;height:96px;pointer-events:none}
+.ov{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding-bottom:62px}
+.num{font:700 58px/1 'Quicksand',sans-serif}
+.numn{font:700 58px/1 'Quicksand',sans-serif}
+.ds{font:700 18px/1.2 'Quicksand',sans-serif}
+.dsn{font:700 18px/1.2 'Quicksand',sans-serif}
+.prog{position:absolute;left:18px;right:18px;bottom:15px}
+.lv{display:flex;justify-content:space-between;font:700 13px/1.2 'Quicksand',sans-serif;color:#3a2b14}
+.lvn{display:flex;justify-content:space-between;font:700 13px/1.2 'Quicksand',sans-serif;color:#fdf2dc}
+.trk{position:relative;margin-top:7px;height:7px;border-radius:999px}
+.fl{position:absolute;inset:0;border-radius:999px;overflow:hidden}
+.shim{position:absolute;top:0;bottom:0;width:70px;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.4),rgba(255,255,255,0));animation:shmr 7s linear infinite}
+@keyframes shmr{0%{transform:translateX(-80px)}60%{transform:translateX(430px)}100%{transform:translateX(430px)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}.loop{display:none}}
+</style>
+<h1>Emberfield — the Windfall hero</h1>
+<p class="lede">Emberfield is the sixth Plus hero and the fifth built from live footage: a windswept dusk field plays full-bleed behind the streak — storm-grey sky over dried gold grass, a bare seed-pod tree caught in the wind, embers drifting past. One clip serves day and night alike; the frame is already dusk-lit and doesn't have a brighter counterpart to cut to. Numeral, caption, scrim and XP bar are the layout the other five heroes share.</p>
+<div class="note"><strong>Accents lift straight off the footage.</strong> The grass and the drifting embers are already the warmest thing in frame — gold through amber to a deep ember brown — so the numeral, caption and XP bar run that ramp rather than an unrelated accent. Day and night differ only in scrim depth and how far into that ramp the type sits, the same way Event Horizon's two cards differ.</div>
+<div class="note"><strong>The crop.</strong> Source is 720×1280 portrait, 6.0s; the hero zone is 412×336, so <code>object-fit:cover</code> at <code>object-position:50% 58%</code> shows a band centred just above the horizon — storm cloud for the numeral to sit on, the grass line and seed-pod branch inside the scrim. Nothing is scaled or masked beyond the crop.</div>
+<div class="note"><strong>The loop is plain.</strong> The source already loops cleanly, so each card is a single <code>&lt;video autoplay loop muted playsinline&gt;</code> — no offset copy, no crossfade.</div>
+<div class="pair">
+<div class="fr">
+<div class="cd">
+<div class="skyc" style="background:#3c3a34">
+<video id="dayvid" src="assets/emberfield.mp4" autoplay muted playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 58%;display:block"></video>
+<div class="scrim" style="background:linear-gradient(to top,rgba(20,13,5,.88) 20%,rgba(20,13,5,0) 78%)"></div>
+<div class="ov"><div class="num" style="background:linear-gradient(180deg,#fff3d2,#f0b661 50%,#c2680a);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 14px rgba(0,0,0,.45))">210</div><div class="ds" style="color:#fdf2dc;text-shadow:0 1px 6px rgba(20,12,4,.6)">day streak</div></div>
+<div class="prog"><div class="lvn"><span>Lv 7 · Keeper of Days</span><span style="opacity:.6">Max</span></div>
+<div class="trk" style="background:rgba(0,0,0,.32)"><div class="fl" style="background:linear-gradient(90deg,#f0c877,#d9932e 55%,#a3540b)"><i class="shim"></i></div></div></div>
+</div>
+</div>
+<div class="lbl">day · light scrim, embers ramp on dark type</div>
+</div>
+<div class="frn">
+<div class="cdn">
+<div class="skyc" style="background:#0e0c08">
+<video id="nightvid" src="assets/emberfield.mp4" autoplay muted playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 58%;display:block"></video>
+<div class="scrim" style="background:linear-gradient(to top,rgba(8,6,3,.86) 20%,rgba(8,6,3,0))"></div>
+<div class="ov"><div class="numn" style="background:linear-gradient(180deg,#fff3d2,#f0b661 50%,#c2680a);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 16px rgba(240,182,97,.4))">210</div><div class="dsn" style="color:#fdf2dc">day streak</div></div>
+<div class="prog"><div class="lvn"><span>Lv 7 · Keeper of Days</span><span style="opacity:.55">Max</span></div>
+<div class="trk" style="background:rgba(255,255,255,.09)"><div class="fl" style="background:linear-gradient(90deg,#f0c877,#e0883a 55%,#a3540b);box-shadow:0 0 12px rgba(224,136,58,.45)"><i class="shim"></i></div></div></div>
+</div>
+</div>
+<div class="lbl">night · deep scrim, embers glow brighter</div>
+</div>
+</div>
+<script>
+(()=>{const a=dayvid,b=nightvid;const ready=v=>v.readyState>=1;
+const init=()=>{if(!ready(a)||!ready(b))return;const loop=Math.min(a.duration,b.duration)-0.05;
+  const tick=()=>{if(a.currentTime>=loop){a.currentTime=0;b.currentTime=0}
+    else if(Math.abs(b.currentTime-a.currentTime)>0.05){b.currentTime=a.currentTime}
+    a.paused&&a.play().catch(()=>{});b.paused&&b.play().catch(()=>{});
+    a.requestVideoFrameCallback?a.requestVideoFrameCallback(tick):setTimeout(tick,40)};
+  a.currentTime=0;b.currentTime=0;tick()};
+[a,b].forEach(v=>{v.addEventListener('loadedmetadata',init);v.play().catch(()=>{})});init()})();
+</script>
+<div class="tk"><b>Implementation.</b> Source 720×1280, 6.0s, filling the 412×336 hero zone with <code>object-fit:cover</code> at <code>object-position:50% 58%</code>. One <code>&lt;video autoplay muted playsinline&gt;</code> per card, both reset to frame 0 and locked to the same clock — the day card is nudged back onto the night card's <code>currentTime</code> whenever they drift more than 50ms, and both restart together at the loop point, so the two cards always show the same moment. Both cards keep a dark warm fill behind the video while the first frame decodes. Day mode now keeps the same dark type ramp as night, just on a lighter, shallower scrim, since the footage is dusk-dark under the numeral in both modes. Bar shimmer sweeps once per 7s, as on the other heroes. Accents are footage-sampled amber rather than Marigold proper — the ramp happens to line up closely with it.</div>

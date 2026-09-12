@@ -14,8 +14,8 @@
 | --- | --- |
 | ✅ **Safe** | `components/*`, `tokens/*`, `frozen/rays.html`, `screens/baseline-*.html` — all regenerate with `node scripts/gen-design-system.js`. |
 | ✅ **Safe** | `screens/day-0*.png` / `night-0*.png` — the 7×2 baselines are committed in `design-system/screens/`. |
-| ✅ **Backed up here** | `insights-redesign.html` — copied byte-exact. |
-| 🔴 **NOT backed up** | the other 13 project-only cards below, **and every `.mp4` in `art/assets/`**. |
+| ✅ **Backed up here** | `insights-redesign.html`, `emberfield.html`, `starfall.html` — copied byte-exact. Their `assets/*.mp4` `src` attributes are dead here; the cards are kept for their spec, not to play. |
+| 🔴 **NOT backed up** | the other 11 project-only cards below, **every `.mp4` in `art/assets/`, and every original in `uploads/`**. |
 
 **The `.mp4` files are the sharpest risk.** They are original footage — Aurora, Tideline, Fernlight,
 Sakura Fuji, Local Line, Event Horizon — and nothing in this repo, in git, or in any build contains them.
@@ -59,7 +59,14 @@ cost of six live clips in a list.
 ### Plus art — 7 heroes, and the footage lives only in the project
 
 `art/aurora-veil.html` · `art/tideline.html` · `art/tideline-hero.html` · `art/meteorfall.html` ·
-`art/sakura-fuji.html` · `art/fernlight.html` · `art/local-line.html` · `art/event-horizon.html`
+`art/sakura-fuji.html` · `art/fernlight.html` · `art/local-line.html` · `art/event-horizon.html` ·
+**`art/emberfield.html`** ✅ · **`art/starfall.html`** ✅ — the two newest, both mirrored here 2026-09-12.
+`screens/home-aurora.html` also appeared since this inventory and is 🔴 project only.
+
+⚠️ **`uploads/` is the real master shelf.** `art/assets/*.mp4` are working copies; the originals the owner
+uploaded (`Add_moving_cherry_blossoms_of.mp4`, `now_a_night_version_of_this_vi.mp4`, and the rest) sit in
+`uploads/` and are the only ungraded, uncropped source that exists. **A prune that clears `uploads/` is
+unrecoverable** — the design cards' crops are non-destructive CSS, so the upload *is* the negative.
 
 Full-bleed animated streak heroes with per-sky XP-bar colours. **The app has nothing like this** —
 `SkyPreview` ([`src/shopui.js`](../../src/shopui.js)) draws static gradients, and `SHOP_SKIES` knows five

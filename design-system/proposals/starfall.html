@@ -1,0 +1,72 @@
+<!-- @dsCard group="Plus art" viewport="1240x880" name="Starfall — Meteor Shower hero (video)" subtitle="Pixel-art night sky loop, one clip in both modes, same start frame, plain loop" -->
+<!doctype html>
+<meta charset="utf-8">
+<title>Starfall — Meteor Shower hero</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;padding:34px 34px 70px;background:#fafafa;color:#18181b;font:15px/1.55 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+a{color:#a855f7}a:hover{color:#8b2fd6}
+h1{font:700 26px/1.2 'Quicksand',sans-serif;letter-spacing:-.01em;margin:0}
+.lede{margin:6px 0 0;color:#52525b;max-width:76ch}
+.note{border-left:3px solid #c084fc;padding:10px 14px;background:#faf5ff;margin:16px 0;max-width:80ch;font-size:14px}
+.tk{font:12px/1.7 ui-monospace,Menlo,monospace;color:#52525b;margin-top:14px;max-width:90ch}
+.tk b{color:#3f3f46}
+.pair{margin-top:18px;display:grid;grid-template-columns:repeat(2,440px);gap:26px}
+.fr{border-radius:22px;padding:14px;background:#f9f7f4;border:1px solid #e8e3da}
+.frn{border-radius:22px;padding:14px;background:#000;border:1px solid #26241f}
+.lbl{margin-top:9px;font:12px ui-monospace,Menlo,monospace;color:#a1a1aa;text-align:center}
+.frn .lbl{color:#57534e}
+.cd{position:relative;overflow:hidden;background:#fff;border:1px solid #e8e3da;border-radius:26px;box-shadow:0 8px 14px #62360329}
+.cdn{position:relative;overflow:hidden;background:#0e0e10;border:1px solid #26241f;border-radius:26px}
+.skyc{position:relative;height:336px;overflow:hidden}
+.skyc video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 78%;display:block}
+.scrim{position:absolute;left:0;right:0;bottom:0;height:96px;pointer-events:none}
+.ov{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding-bottom:62px}
+.num{font:700 58px/1 'Quicksand',sans-serif}
+.numn{font:700 58px/1 'Quicksand',sans-serif}
+.ds{font:700 18px/1.2 'Quicksand',sans-serif}
+.dsn{font:700 18px/1.2 'Quicksand',sans-serif}
+.prog{position:absolute;left:18px;right:18px;bottom:15px}
+.lv{display:flex;justify-content:space-between;font:700 13px/1.2 'Quicksand',sans-serif;color:#2e1a4d}
+.lvn{display:flex;justify-content:space-between;font:700 13px/1.2 'Quicksand',sans-serif;color:#f2e8ff}
+.trk{position:relative;margin-top:7px;height:7px;border-radius:999px}
+.fl{position:absolute;inset:0;border-radius:999px;overflow:hidden}
+.shim{position:absolute;top:0;bottom:0;width:70px;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.4),rgba(255,255,255,0));animation:shmr 7s linear infinite}
+@keyframes shmr{0%{transform:translateX(-80px)}60%{transform:translateX(430px)}100%{transform:translateX(430px)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+<h1>Starfall — the Meteor Shower hero, live footage</h1>
+<p class="lede">Starfall is a live-footage take on the Meteor Shower sky, alongside the drawn Meteorfall: a pixel-art night scene plays full-bleed behind the streak — deep indigo sky, a rising cream moon over violet ridgelines, magenta horizon glow, and meteors crossing at random. One clip serves day and night alike, the way Event Horizon's does — the scene is already full night, so there's no brighter counterpart to cut to. Numeral, caption, scrim and XP bar are the shared hero layout.</p>
+<div class="note"><strong>Accents lift straight off the footage.</strong> The palette is already there in the pixels: the moon's warm cream, the horizon's magenta-pink, and the mountains' violet-purple. The numeral, caption and XP bar run that ramp — cream through orchid to deep violet — rather than Marigold, the same way Event Horizon runs its own footage-matched blues.</div>
+<div class="note"><strong>The crop.</strong> Source is 720×1280 portrait, 20.2s; the hero zone is 412×336, so <code>object-fit:cover</code> at <code>object-position:50% 78%</code> holds the moon and ridgeline low in the frame, in the scrim band, with open starfield and the falling meteors above it for the numeral to sit on.</div>
+<div class="note"><strong>Same clip, same start, no transition.</strong> Both cards mount an identical <code>&lt;video autoplay loop muted playsinline&gt;</code> pointed at the one file — no offset copy, no crossfade, no clock sync. Both start at frame 0 and loop natively; day and night differ only in card chrome, scrim depth and label colour.</div>
+<div class="pair">
+<div class="fr">
+<div class="cd">
+<div class="skyc" style="background:#150c29">
+<video src="assets/starfall.mp4" autoplay loop muted playsinline></video>
+<div class="scrim" style="background:linear-gradient(to top,rgba(9,5,20,.86) 20%,rgba(9,5,20,0))"></div>
+<div class="ov"><div class="numn" style="background:linear-gradient(180deg,#fff3e0,#f0abe0 50%,#a855f7);-webkit-background-clip:text;background-clip:text;color:transparent">210</div><div class="dsn" style="color:#f2e8ff">day streak</div></div>
+<div class="prog"><div class="lvn"><span>Lv 7 · Keeper of Days</span><span style="opacity:.55">Max</span></div>
+<div class="trk" style="background:rgba(255,255,255,.09)"><div class="fl" style="background:linear-gradient(90deg,#fbe3ff,#d68af0 55%,#a855f7)"><i class="shim"></i></div></div></div>
+</div>
+</div>
+<div class="lbl">day · same clip, same treatment</div>
+</div>
+<div class="frn">
+<div class="cdn">
+<div class="skyc" style="background:#0a0518">
+<video src="assets/starfall.mp4" autoplay loop muted playsinline></video>
+<div class="scrim" style="background:linear-gradient(to top,rgba(9,5,20,.86) 20%,rgba(9,5,20,0))"></div>
+<div class="ov"><div class="numn" style="background:linear-gradient(180deg,#fff3e0,#f0abe0 50%,#a855f7);-webkit-background-clip:text;background-clip:text;color:transparent">210</div><div class="dsn" style="color:#f2e8ff">day streak</div></div>
+<div class="prog"><div class="lvn"><span>Lv 7 · Keeper of Days</span><span style="opacity:.55">Max</span></div>
+<div class="trk" style="background:rgba(255,255,255,.09)"><div class="fl" style="background:linear-gradient(90deg,#fbe3ff,#d68af0 55%,#a855f7)"><i class="shim"></i></div></div></div>
+</div>
+</div>
+<div class="lbl">night · same clip, same treatment</div>
+</div>
+</div>
+<div class="tk"><b>Implementation.</b> Source 720×1280, 20.2s, filling the 412×336 hero zone with <code>object-fit:cover</code> at <code>object-position:50% 78%</code>. One <code>&lt;video autoplay loop muted playsinline&gt;</code> per card, both pointed at the same file, both starting and looping from frame 0 — no sync script needed since neither copy is ever nudged off the other's clock. Both cards keep an indigo fill behind the video while the first frame decodes. Bar shimmer sweeps once per 7s, as on the other heroes. Accents are footage-sampled cream/orchid/violet rather than Marigold.</div>

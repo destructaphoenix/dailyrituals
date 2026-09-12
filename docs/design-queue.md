@@ -407,6 +407,61 @@ cleanly. **Use `crop`, not `pad`** — the black bars `pad` adds would be baked 
 (`50% 68%` Aurora, `50% 46%` Fernlight, `50% 38%` Sakura Fuji, `50% 50%` Tideline). Bake that into the
 `crop` above with an explicit offset rather than centring blindly.
 
+### From a design card to a shipped clip — the handoff
+
+Three things leave a hero card, and only one of them is a file.
+
+| What | Where it goes | How it travels |
+| --- | --- | --- |
+| **The card HTML + spec** | `design-system/proposals/` in this repo | `DesignSync get_file` — text only |
+| **The crop**, as two percentages | into the `ffmpeg` offset below | read `object-position` off the card |
+| **The footage** | owner's disk → encode → static host | **not** through `DesignSync`; and **never** into git or an OTA |
+
+🟢 **The manual crop destroyed nothing.** Claude Design frames a hero with CSS `object-fit:cover` plus
+`object-position` over the **untouched upload** — it never re-encodes the file. "It cropped my video" means
+**a focal band was chosen**, and that choice travels as two numbers, not as an asset. The original is still
+whole in the project's `uploads/`, and `art/assets/*.mp4` is the working copy at full source resolution.
+
+**Converting `object-position` to an ffmpeg offset.** For a source `W×H` and a card reading
+`object-position: px% py%`, the square master is `S = min(W, H)` and:
+
+```
+x = round(px ÷ 100 × (W − S))        # one of these is always 0 —
+y = round(py ÷ 100 × (H − S))        # the square eats all the slack on the short axis
+
+ffmpeg -i in.mp4 -vf "crop=S:S:x:y,scale=1280:1280:flags=lanczos" …   # then the encode above
+```
+
+Worked: Emberfield is `720×1280` at `50% 58%` → `S=720`, `x=0`, `y=round(.58×560)=325` →
+`crop=720:720:0:325`.
+
+**Bake the band once, then ship centred.** Once the offset is in the master, the app plays it at
+`50% 50%`. Carrying the card's percentage through to the client too would apply the crop twice.
+
+⚠️ **The card's preview box is not the device's box.** A hero card frames `412×336` — aspect **1.23**,
+wider than *any* real device box (the table above: **0.83–1.17**), because 412 is the full screen width and
+the real card is inset by its margins. A real phone therefore shows **more vertical** than the card does
+(~51% of a portrait source at Pixel-class, vs ~46% in the card). The chosen band is close but not exact —
+**re-check it against a near-square box before baking**, rather than trusting the card's number blind.
+
+### 🔴 Open on the two newest heroes — owner's call
+
+`Emberfield` and `Starfall` are both live footage and both **`720×1280` portrait**, which collides with
+three things already settled above:
+
+1. **Resolution is short of the box.** The worst-case device box is **1298** px wide; these sources are
+   **720**. That is a **1.80×** upscale on a 1440p flagship and **1.33×** on a common 1080p phone — and the
+   floor in this doc is 1080. Either regenerate wider (square, ≥1080) or accept a soft hero and write that
+   down as accepted.
+2. **A 9:16 source is the shape this doc argues against** — it keeps 48–68% of the frame under `cover`
+   (vs 83–86% for 1:1). The band survives, but every generated pixel outside it is paid for and thrown away.
+3. **`Starfall` is 20.2s** against a **6–10s** spec, and neither hero has a `-poster.png` in the project
+   while all five older ones do. The poster is what covers first-play latency on a fresh unlock, so it is
+   not optional — it is the whole answer to a named risk in `playbook.md`.
+
+None of this blocks the design; the cards are approved art. It decides whether the footage is regenerated
+or the spec is relaxed, and that is not a chat's call to make.
+
 ### The loop rule
 
 A clip loops seamlessly when its motion is **statistically stationary** (any frame could be any other —
