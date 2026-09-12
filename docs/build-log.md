@@ -5085,6 +5085,36 @@ not this chat.**
 
 ## Session notes
 
+_2026-09-13 (Sonnet — **IMP-123 built: the first sky carries a clip, on its own update channel.**) — ✅
+code-complete, walk owed (device, WALK-21, needs vc17)._
+
+**What finished.** Step 1 done first as the spec ordered: `npm run bump:native` — `versionCode` 16→17,
+`version` `'1.0.9'`→`'1.0.10'` in [`app.config.js`](app.config.js), closing the channel collision (a vc15
+install would otherwise have kept matching an OTA channel now shipping `expo-video`-dependent JS). Both
+hardcoded runtime-version strings in [`docs/playbook.md`](docs/playbook.md) updated to `1.0.10`/vc17.
+[`src/data.js`](src/data.js) — `SKY_BASE` set to the verified live R2 host
+(`https://pub-95312985bf644116878d3ce5031a4f36.r2.dev`); `meteor` gains `clip`/`poster`/`accent`/`credit`
+pointing at the 2026-09-13 ocean loop (already produced, verified byte-exact on R2, provenance settled by
+the owner 2026-09-12 — none of that reopened here).
+
+**The proof.** [`skyManifest.test.js`](__tests__/data/skyManifest.test.js) gains a case: `meteor` resolves
+through `activeSkyManifest('meteor', [], true)` to a manifest with absolute `https://` `clip`/`poster` URLs,
+and `skyVideoSource` returns `{ uri, useCaching: true }` for it. **1215 passed, 112 suites** (was 1214/112),
+`npx expo export --platform android` clean, +1 test. Commit `26e644b`. Spec archived to `docs/build-log.md`;
+`docs/specs-open.md`'s queue is now empty.
+
+**Shipped this chat.** `Release-Lane: build` — pushed to `main` per the owner's go-ahead; CI builds vc17 and
+auto-submits to `internal` (~25 min).
+
+**The exact next step.** **No `IMP-xxx` row is open.** WALK-21 is filed and unblocks once CI's vc17 build
+lands on the owner's device — read the You tab's Version row for `1.0.10 / vc17` before starting it. Ask
+the owner what to take next otherwise: Stage 2 of `skies-route.md` (real per-sky art for the other four
+skies), a new owner-filed issue for Opus to scope, or WALK-21 itself as the next runtime-walk chat. Do not
+open the parked phase ladder (8 / 10b / 11) without asking.
+
+---
+
+
 _2026-09-13 (Opus — **the WALK-21 fallout specced, plus three rows the repo carried as prose.**) — 📋 specs
 only, no source touched._
 
