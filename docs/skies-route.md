@@ -21,10 +21,13 @@ Stage 1 — which is the whole reason Stage 1 exists.
 | 0 | Three rulings | 👤 owner | everything |
 | 1 | **One clean clip** | 👤 owner, ~1 hour | Stage 3 only |
 | 2 | The rest of the art | 👤 owner, per sky | Stage 6 |
-| 3 | `IMP-A` — the hero card learns video | 🤖 build | Stage 4 |
-| 4 | `IMP-B` — download + cache | 🤖 build | Stage 6 |
-| 5 | `IMP-C` — the catalogue and the shop tiles | 🤖 build | Stage 6 |
+| 3 | **[`IMP-121`](specs-open.md#imp-121--the-streak-hero-plays-a-video-sky)** — the hero card plays video | 🤖 build | Stage 5 |
+| 4 | ~~download + cache~~ — **gone, see below** | — | — |
+| 5 | **[`IMP-122`](specs-open.md#imp-122--the-sky-catalogue-becomes-a-manifest)** — the catalogue and the shop tiles | 🤖 build | Stage 6 |
 | 6 | The binary, then a device walk | 🤖 + 👤 | ship |
+
+✅ **Both specs are written** (2026-09-12). Stage 4 collapsed into a flag — see "What reading the SDK
+changed" at the foot of this file.
 
 ---
 
@@ -36,15 +39,17 @@ the hard blocker. Until it is answered, **no clip currently in the design projec
 The answer is also per-clip: a text-to-video hero with nothing fed in is clean; the eleven named after
 *editing* prompts are not.
 
-**2. `Emberfield` and `Starfall` — regenerate, or accept the spec relaxed?** Both are `720×1280` and
-neither has a poster; `Starfall` is 20.2s against a 6–10s spec. `design-queue.md` → "The short edge is the
-only number" lays out the four options and the cost of each. ⚠️ **If the answer is "accept 720", it must be
-written into `IMP-C`'s spec as accepted** — otherwise the next person finds it as a bug.
+**2. ✅ ANSWERED 2026-09-12 — the relaxed spec is accepted.** 720-short-edge footage and `Starfall`'s
+20.2s both ship as they are. Recorded as *accepted, not a defect* in
+[`IMP-121`](specs-open.md#imp-121--the-streak-hero-plays-a-video-sky) so the next person does not reopen
+it: at hero size, behind a 76px numeral under a scrim, 720 is @2× art on a @2.625–3.5× screen and the
+Pixel-class case is 1.35×. **Posters are still required** — they are the answer to first-play latency, not
+a quality setting, and neither of those two heroes has one yet.
 
-**3. Where do the clips live?** The delivery decision says "a static host" and rules out git and OTA, but
-does not name one. `IMP-B` cannot be written without a URL shape. Cheapest options that satisfy it: a
-public bucket (R2/S3), or GitHub Releases as a file host — **not** the repo tree. Play Asset Delivery is
-the documented fallback and is deliberately not the first move.
+**3. ✅ ANSWERED 2026-09-12 — Cloudflare R2, public bucket behind a custom domain.** Recommended and
+taken; see "The host" below for why it beat the alternatives. `SKY_BASE` is one constant in
+[`IMP-122`](specs-open.md#imp-122--the-sky-catalogue-becomes-a-manifest), so moving hosts later is a
+one-line change.
 
 ---
 
@@ -87,69 +92,57 @@ For each sky, in this order. All of it is in `design-queue.md`; this is the chec
 
 ---
 
-## Stage 3 — `IMP-A`: the hero card learns to play video
+## Stages 3–5 — the two build specs
 
-**The first binary through Play.** `expo-video` is a native dependency, so this is
-`Release-Lane: build` with a `versionCode` bump (currently **15**, [`app.config.js:49`](../app.config.js#L49)) —
-not the OTA lane everything since vc15 has used. Only this one.
+**Both are written and sitting in [`specs-open.md`](specs-open.md).** They are not repeated here.
 
-**What it has to do:** add `expo-video`, restructure the streak hero to a full-bleed video ground with the
-numeral over it, and play **one bundled fixture clip** — no download layer, no catalogue, no shop changes.
+| Spec | What | Lane |
+| --- | --- | --- |
+| [`IMP-121`](specs-open.md#imp-121--the-streak-hero-plays-a-video-sky) | The hero card plays **one bundled fixture clip**. Config plugin, jest mock, `SkyHero`, the card restructure, the scrim, poster-until-ready. | 🔴 **native — `Release-Lane: build`, vc 15 → 16** |
+| [`IMP-122`](specs-open.md#imp-122--the-sky-catalogue-becomes-a-manifest) | A sky becomes a manifest — clip URL(s), poster, accent, provenance — and the shop tiles read from it. | ✅ pure JS — OTA |
 
-⚠️ **Four collisions with the app as it stands, all found 2026-09-12 and all for the spec to settle:**
-
-1. **The hero card is not the design's box.** [`HomeScreen.js:71`](../src/screens/HomeScreen.js#L71) is a
-   `Card` with `paddingHorizontal: 22`, centred content, and the art (`RayFan`/`NightRays`) sitting inside
-   the padding. The design wants **full card width × 336dp, full-bleed**, with the bottom ~28% under a
-   scrim. That is a restructure of the card, not a background swap.
-2. **`RayFan`/`NightRays` are frozen art** ([`playbook.md`](playbook.md) → standing rules, #3). A video
-   sky does not *redraw* them — it replaces them for that sky only — but it does mean **a paid cosmetic
-   hides the app's signature**. Default and `crescent` keep the frozen art. 👤 **Owner's call that this is
-   what "buying a sky" means.**
-3. **The numeral's contrast is currently mode-dependent.** `streakShadow` and `numberGlow` are applied
-   `t.dark &&` — on footage the scrim has to carry the numeral in **both** modes, since a clip is not
-   lighter in day mode.
-4. **The XP bar lives inside the hero card** and the design gives it a per-sky colour. So a sky is not
-   only art: its manifest carries an accent that reaches the progress bar. Keep that field in the model
-   from the start even if `IMP-A` hardcodes one value.
-
-🔴 **Install `expo-video` first, then read `node_modules/expo-video` before writing the steps.** The
-playbook's `~3.0.16` pin is the version, not the API. Three billing specs were written against an imagined
-SDK shape and all three had to be redone — see [`build-log.md`](build-log.md). Same discipline here.
-A jest mock alongside [`test-mocks/expoFileSystemStub.js`](../test-mocks/expoFileSystemStub.js), wired in
-[`jest.setup.js`](../jest.setup.js), is part of the spec.
+The four app/design collisions this route was opened for are settled inside `IMP-121`: the padded-vs-
+full-bleed card, the frozen `RayFan`/`NightRays` staying for non-video skies, the numeral's contrast
+applying in both modes, and the XP bar's per-sky accent.
 
 ---
 
-## Stage 4 — `IMP-B`: download once, play from disk
+## The host — Cloudflare R2
 
-Pure JS on top of Stage 3, so **OTA-shippable** once the binary exists.
+**Public bucket behind a custom domain.** The catalogue is ~7–14 files of ~3.5MB, so every option is
+"free" on storage; **egress is the only number that matters**, because video is the one asset type that
+can actually run up a bill.
 
-- Download on **unlock or apply**, cache to a local URI keyed by sky id, play from disk thereafter.
-- The repo already uses **`expo-file-system/legacy`** ([`io.js:7`](../src/backup/io.js#L7)) — SDK 54's
-  default export dropped the string-based API. Match that import, do not reach for the new one mid-feature.
-- **The named risks are the test list**: first play on a fresh unlock (poster holds the frame), unlocking
-  offline (queue the download, keep the poster), and a user who clears app storage (re-download silently).
-- ⚠️ **The gate is ownership, not Plus.** `Harvest Moon` is ember-priced at 300, not `tier: 'plus'`
-  ([`data.js:144`](../src/data.js#L144)) — so the download trigger keys on `ownedSkies`/`activeSky`, never
-  on `plus`.
-- ⛔ **Never ship a clip inside an OTA.** `expo-updates` hands every user every asset in an update whether
-  they own that sky or not.
+| Option | Why not |
+| --- | --- |
+| **Cloudflare R2** ✅ | **zero egress fees, permanently** — not a free-tier allowance that lapses. 10GB storage free, ~200× this catalogue. S3-compatible, so it is a plain HTTPS URL to `expo-video`. Adding a sky is a drag-and-drop, which is exactly the "content, not code" property the delivery decision was chosen for |
+| S3 / Cloud Storage | works, but egress is metered — 10k users × 4 skies is ~140GB, which is a real monthly bill for a file that never changes |
+| GitHub Releases | free and CDN-backed, but it is a code host doing CDN work; awkward URLs, and app asset delivery at volume is not what it is for |
+| Netlify / Pages | free bandwidth, but aimed at sites — large media at volume is the case their terms push back on |
+| Play Asset Delivery | Google hosts it free, but wiring it through Expo means custom Gradle. The documented fallback, deliberately not the first move |
+
+**Shape:** `https://<your-domain>/skies/<id>.mp4` and `/skies/<id>-poster.jpg`, one-clip skies at `<id>`,
+two-clip at `<id>-day` / `<id>-night`. Set long cache headers — these files never change; a new sky is a
+new id, never an overwrite.
 
 ---
 
-## Stage 5 — `IMP-C`: the catalogue, and the shop tiles
+## What reading the SDK changed — 2026-09-12
 
-- **`SHOP_SKIES` grows a manifest per sky**: clip URL(s), poster URL, whether it is one clip or two, the
-  accent for the XP bar, and the provenance line from Stage 2. Today it knows five static `kind` strings
-  ([`data.js:141`](../src/data.js#L141)) and `SkyPreview` ([`shopui.js:92`](../src/shopui.js#L92)) draws
-  each as a gradient with an icon.
-- **`Meteor Shower` is `Meteorfall`**, which is drawn in CSS and has no footage. It is clean, and it is
-  also the odd one out of a set that must match — `design-queue.md` says regenerate it as footage.
-- **The shop list is the open design question**: `shop-plus-skins.html` plays six live clips at 58×58 and
-  flags its own cost. 💡 **Posters in the list, the clip only in the detail sheet** is the cheap answer,
-  and the detail sheet *is* the hero card — so it reuses Stage 3's component rather than adding one.
-- D-08 in the design queue is this row.
+**The planned download-and-cache layer is gone.** `expo-video@3.0.16` was installed and its types read
+before either spec was written (the discipline three billing specs had to learn the hard way). It turns out
+to own a real cache:
+
+- `VideoSource` takes **`useCaching: true`** — a remote sky is a URL, and the module handles the download.
+- `setVideoCacheSizeAsync(bytes)` (default 1GB, persistent, **LRU**), `getCurrentVideoCacheSize()`,
+  `clearVideoCacheAsync()`.
+
+So there is no hand-rolled `expo-file-system/legacy` download, no cache directory, no offline queue —
+`IMP-122` sets a cache size once and the rest is a flag. ⚠️ **It is a cache, not owned storage:** eviction
+is possible, so an owned sky must stay re-fetchable and the poster must always cover a cold frame.
+
+`contentFit="cover"` also lands the design's crop with no sizing maths, and **there is no `poster` prop** —
+the poster is a layered `<Image>` dropped when `player.status === 'readyToPlay'`.
 
 ---
 
