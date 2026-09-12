@@ -13,7 +13,7 @@
 > re-litigate a "why", and do not improve the scope.** If a step turns out to be impossible or the code
 > contradicts the spec, **STOP** and log it to `PROGRESS.md` → Open items rather than inventing a fix.
 >
-> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **1205 passed, 110 suites** — verified 2026-09-12), `npx expo export --platform android` clean, commit with the **exact** message given, then
+> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **1214 passed, 112 suites** — verified 2026-09-12), `npx expo export --platform android` clean, commit with the **exact** message given, then
 > update `PROGRESS.md` (tick the backlog row, write the session note) and **move the finished spec from
 > this file into `docs/build-log.md`**.
 >
@@ -24,10 +24,11 @@
 
 ## The queue
 
-| Row | What | State |
-| --- | --- | --- |
-| [IMP-122](#imp-122--the-sky-catalogue-becomes-a-manifest) | `SHOP_SKIES` knows five gradient `kind` strings. Make a sky a manifest (clip URL, poster, mode pair, accent) and feed the shop tiles from it. **Pure JS — OTA.** | ⬜ **open — take this one** (IMP-121 done, commit `d0fe2cb`) |
+**Empty — no open `IMP-xxx` spec right now.** Opus writes the next one into this file when the owner files
+a new row in `PROGRESS.md`'s Improvements backlog.
 
+**IMP-122 is done** — archived in [`docs/build-log.md`](build-log.md#imp-122--the-sky-catalogue-becomes-a-manifest-2026-09-12), commit `738a99e`.
+**IMP-121 is done** — archived in [`docs/build-log.md`](build-log.md#imp-121--the-streak-hero-plays-a-video-sky-2026-09-12), commit `d0fe2cb`.
 **IMP-120 is done** — archived in [`docs/build-log.md`](build-log.md#imp-120--the-consistency-grid-becomes-a-bounded-month-strip-2026-09-12), commit `72b0049`.
 **IMP-119 is done** — archived in [`docs/build-log.md`](build-log.md#imp-119-the-ember-pills--lost-the-line-that-centred-it-2026-09-11), commit `1fc0664`.
 **IMP-118 is done** — archived in [`docs/build-log.md`](build-log.md#imp-118-a-tied-weekday-no-longer-draws-as-an-empty-bar-2026-09-11), commit `dc22e32`.
@@ -113,46 +114,4 @@ design, not a compromise. Do not port them** ([`motion.js:16`](../src/motion.js#
 
 **The gate.** "Plus is complete" is the owner's phrase and the owner's call. At minimum that means the
 open Plus rows (IMP-108, IMP-109, IMP-110) shipped and WALK-19 finished.
-
----
-
-## IMP-122 — the sky catalogue becomes a manifest
-
-**Stage 5 of [`skies-route.md`](skies-route.md).** Pure JS on top of IMP-121, so this one **ships OTA**.
-
-### What exists now
-
-[`data.js:141`](../src/data.js#L141) — `SHOP_SKIES` is five entries with a `kind` string, and
-[`shopui.js:92`](../src/shopui.js#L92) `SkyPreview` maps each `kind` to a two-stop gradient and an icon.
-Nothing anywhere holds a URL.
-
-### Steps
-
-1. **`SHOP_SKIES` gains, per sky:** `clip` (URL) or `clipDay`/`clipNight` for a two-clip sky, `poster`,
-   `accent` (the XP-bar colour), and `credit` — the provenance line (tool/licence + date). ⚠️ **`credit` is
-   required and non-empty for every sky with a URL.** A sky whose origin nobody can state does not ship;
-   add a test that asserts it.
-2. **Base URL in one constant**, not per row — see the host decision in
-   [`skies-route.md`](skies-route.md). One sky is `${SKY_BASE}/${id}.mp4`.
-3. **Ownership, not Plus, is the gate.** `Harvest Moon` is ember-priced at 300, **not** `tier: 'plus'`
-   ([`data.js:144`](../src/data.js#L144)), so the player keys on `ownedSkies` / `activeSky`. Never on
-   `plus`.
-4. **Mode.** A one-clip sky plays the same file in both app modes; a two-clip sky picks on `mode`.
-   ⛔ Do not tint one clip to fake the other.
-5. **Cache size once at startup** — `setVideoCacheSizeAsync()` in the app's existing init path, sized to
-   the catalogue (~128MB), not left at the 1GB default.
-6. **`SkyPreview` keeps drawing gradients for the static skies** and shows the **poster** for video skies.
-   💡 **Posters in the list, the clip only in the detail sheet** — `shop-plus-skins.html` plays six live
-   clips at 58×58 and flags its own cost as its one open question. This is the answer: the detail sheet
-   *is* the hero card, so it reuses `SkyHero` from IMP-121 rather than adding a component.
-7. Tests: every video sky has a non-empty `credit`; a two-clip sky returns different sources per mode; an
-   unowned sky never resolves a URL.
-
-### Done when
-
-`npm test` green, export clean, commit:
-
-```
-feat(shop): a sky is a manifest, not a gradient (IMP-122)
-```
 

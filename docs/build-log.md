@@ -4937,7 +4937,77 @@ a shipped sky) reads acceptably behind the scrim on a real screen.
 
 ---
 
+## IMP-122 — the sky catalogue becomes a manifest (2026-09-12)
+
+**Stage 5 of [`skies-route.md`](skies-route.md).** Pure JS on top of IMP-121 — ships OTA.
+
+**What was built.** [`data.js`](../src/data.js) gains `SKY_BASE` (`https://skies.dailyrituals.app`, one
+constant so moving hosts later is a one-line change) and `SHOP_SKIES`'s five entries are now real manifest
+slots — `clip` / `clipDay`+`clipNight`, `poster`, `accent`, `credit` — though **none is populated yet**:
+`classic`/`crescent` stay frozen RayFan/NightRays art forever (Claude Design standing rule #3) and the other
+three (`harvest`, `meteor`, `aurora`) have no clip because no per-sky footage has cleared the provenance gate
+(Stage 2 of `skies-route.md` is still open). New [`src/home/videoSkyGate.js`](../src/home/videoSkyGate.js)
+replaces IMP-121's hardcoded `hasVideoSky() => true` with `activeSkyManifest(activeSky, ownedSkies, plus)` —
+a real lookup gated on ownership (`plus || tier === 'owned' || ownedSkies.includes(id)`, mirroring
+`Shop.js`'s own `skyState`, **never** a bare `tier === 'plus'` check, since Harvest Moon is ember-priced and
+still gets a clip once one exists) — and `skyVideoSource(sky, mode)`, which picks `clipDay`/`clipNight` by
+app mode for a two-clip sky or returns the one `clip` unchanged for a one-clip sky, wrapped as
+`{ uri, useCaching: true }` per `expo-video`'s own remote-caching contract.
+[`HomeScreen.js`](../src/screens/HomeScreen.js) drops the hardcoded `FIXTURE_SKY`/`HERO_ACCENT` and instead
+takes new `activeSky`/`ownedSkies` props (threaded from [`RitualsApp.js`](../src/RitualsApp.js)), resolving
+`SkyHero`'s `source`/`poster`/`accent` from the manifest lookup — so with no sky yet carrying a clip, Home
+correctly falls back to `RayFan`/`NightRays` for every user until real content drops in. `RitualsApp.js`
+also calls `setVideoCacheSizeAsync(128 * 1024 * 1024)` once on mount, sized to the catalogue instead of
+`expo-video`'s 1GB default. [`shopui.js`](../src/shopui.js)'s `SkyPreview` takes an optional `poster` prop —
+present, it renders the poster `<Image>` instead of the illustrated gradient; absent (every sky today), it
+draws exactly as before. The live clip itself is never played in the Shop list — only the streak hero plays
+video, by design (shop-plus-skins.html's six-live-clips-at-58×58 approach was rejected on cost).
+
+**The proof.** New [`skyManifest.test.js`](../__tests__/data/skyManifest.test.js) — a data-integrity check
+that every `SHOP_SKIES` entry with a clip has a non-empty `credit`; passes vacuously today, exists to catch
+the day someone adds a clip without one. New
+[`videoSkyGate.test.js`](../__tests__/home/videoSkyGate.test.js) — an unowned sky never resolves (no matter
+how it's priced), an owned ember-priced sky resolves without `plus`, a lapsed member gets nothing from a
+`tier: 'plus'` sky they never bought, a clip-less sky never resolves even when owned, and a two-clip sky
+returns a different `uri` per mode while a one-clip sky returns the same one in both.
+[`HomeScreenSkyHero.test.js`](../__tests__/screens/HomeScreenSkyHero.test.js) updated to mock
+`activeSkyManifest` (returning a sky object or `null`) instead of the old boolean `hasVideoSky`; the same
+three assertions (RayFan fallback, day-mode shadow with/without a video sky) still hold. **1214 passed, 112
+suites** (was 1205/110), `npx expo export --platform android` clean, +9 tests. Commit `738a99e`.
+
+**Not built — out of scope, not a defect.** The 💡 aside in the spec about a sky "detail sheet" reusing
+`SkyHero` is design rationale for *if* one is ever added (so it doesn't get its own component) — no detail
+sheet exists in `Shop.js` today, tapping a sky still applies/buys it directly, and no test in the spec's
+Step 7 calls for one. Left alone.
+
+---
+
 ## Session notes
+
+_2026-09-12 (Sonnet — **IMP-120 built: the Insights consistency grid stops growing with the journal.**) —
+✅ code-complete, walk owed (new WALK row, filed separately)._
+
+**What finished.** `buildMonthHeat` in [`calendar.js`](../src/home/calendar.js) returns one block per
+calendar month from the first entry's month through the current month, oldest first — every day of the
+month, `lead` blanks before day 1, word-density tertiles (`heat0-3`) computed once across every `done` cell
+in the whole strip, falling back to `heat2` when there are fewer than 3 done days or no spread.
+[`InsightsScreen.js`](../src/screens/InsightsScreen.js)'s `LifetimeHeat` is replaced by `MonthStrip` — a
+horizontally-scrolled strip of 95dp month blocks (7×11dp cells, 3dp gaps), month-level press target,
+`onOpenMonth` wired as a no-op. `heatGutterWidth`, `HEAT_GUTTER_BASE_DP` and `monthLabelsForRows` are deleted
+from `heatCells.js` with their tests; `cellState` and `buildLifetimeHeatmap` stay. **Closes D-01.**
+
+**The proof.** New `buildMonthHeat` tests (empty journal, single-entry month, Sunday-first month, leap-year
+February, the three-tertile split, both heat2 fallbacks, a frozen day's `heat === 0`, future days in the
+current month) plus a new `InsightsMonthStrip.test.js` rendering `InsightsScreen` at `fontScale` 1 and 1.5 to
+confirm a day cell stays 11×11dp. **1200 passed, 108 suites** (was 1199/107), `npx expo export --platform
+android` clean. Commit `72b0049`. Spec archived to `docs/build-log.md`; `docs/specs-open.md`'s queue now
+held **IMP-121 only** (IMP-122 needed IMP-121 first).
+
+**The exact next step (at the time).** Take **IMP-121**. **Done same day.** Walk chats: this row owes a new
+`WALK` row for the strip's real scroll behaviour and the tertile ramp under a real journal, not yet filed in
+`docs/walk-open.md`.
+
+---
 
 _2026-09-11 (Sonnet — **IMP-119 built: the ember pill's `+` keeps a `lineHeight` that scales with
 the font instead of a fixed or absent one.**) — ✅ code-complete, walk owed (device, folds into Sitting 1)._
