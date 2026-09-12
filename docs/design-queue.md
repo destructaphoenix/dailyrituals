@@ -449,10 +449,8 @@ the real card is inset by its margins. A real phone therefore shows **more verti
 `Emberfield` and `Starfall` are both live footage and both **`720×1280` portrait**, which collides with
 three things already settled above:
 
-1. **Resolution is short of the box.** The worst-case device box is **1298** px wide; these sources are
-   **720**. That is a **1.80×** upscale on a 1440p flagship and **1.33×** on a common 1080p phone — and the
-   floor in this doc is 1080. Either regenerate wider (square, ≥1080) or accept a soft hero and write that
-   down as accepted.
+1. **Resolution is short of the box** — see "The short edge is the only number" below, which is the
+   actionable version of this.
 2. **A 9:16 source is the shape this doc argues against** — it keeps 48–68% of the frame under `cover`
    (vs 83–86% for 1:1). The band survives, but every generated pixel outside it is paid for and thrown away.
 3. **`Starfall` is 20.2s** against a **6–10s** spec, and neither hero has a `-poster.png` in the project
@@ -461,6 +459,61 @@ three things already settled above:
 
 None of this blocks the design; the cards are approved art. It decides whether the footage is regenerated
 or the spec is relaxed, and that is not a chat's call to make.
+
+### The short edge is the only number that matters
+
+**720×1280 was the generator's ceiling**, so the question is what to do about it. The first thing to know
+is that **aspect does not affect sharpness at all** — the hero crop is near-square, so the delivered
+resolution is `min(width, height)` of the source and nothing else.
+
+| Source from the generator | Short edge | Upscale on a common 1080p phone | …on a 1440p flagship |
+| --- | --- | --- | --- |
+| **720×1280 portrait** (current) | 720 | 1.33× | **1.80×** |
+| 1280×720 landscape | 720 | 1.33× | 1.80× |
+| **1024×1024 square** | 1024 | 0.94× — *downscale* | 1.27× |
+| **1920×1080 landscape** | 1080 | 0.89× — *downscale* | 1.20× |
+| 1440×1440 square | 1440 | 0.67× | 0.90× |
+
+🔑 **Portrait and landscape at the same preset are identical.** `720×1280` and `1280×720` both deliver a
+720 short edge. The aspect-efficiency table earlier in this section ("a 16:9 clip throws away half the
+frame") optimises **how much of the frame you keep** — which is the right worry when resolution is free,
+and the *wrong* one when the generator caps resolution per aspect. **Keeping 55% of a 1080-tall frame beats
+keeping 100% of a 720-tall one.**
+
+**So, in order:**
+
+1. **Ask the generator for its largest short edge, in any aspect.** Square `1024×1024` clears the 1080 floor
+   in practice and wastes nothing; `1920×1080` landscape clears it outright. Most video generators bill by
+   total pixels, so a wider aspect is often available at the same cost as the portrait preset — `720×1280`
+   is 0.92 MP and `1920×1080` is 2.07 MP, but `1280×720` is the *same* 0.92 MP as what was already paid for
+   and buys nothing, which is the trap.
+   ⚠️ **Landscape costs vertical framing control.** A near-square crop of a 16:9 source takes the *whole*
+   height — there is no vertical slack left to place the band with. For these two that is probably fine
+   (both want a low horizon under open sky, which is what the full height gives), but the composition has
+   to be re-judged, not re-cropped.
+2. **Use the generator's own upscaler if it has one.** Runway, Kling, Luma and Sora all ship a post-hoc
+   upscale, and a model tuned on that generator's own output beats a general one.
+3. **Failing both, upscale offline — once, at encode time.** Shipping 720 makes the GPU interpolate every
+   frame, every session, with a bilinear filter. Doing it once with a better filter is strictly better
+   *output*, though it costs bytes:
+   - **An ML upscaler** (Real-ESRGAN, Topaz) is a real gain here, and unusually so: generated footage has no
+     sensor grain to preserve, just synthetic gradient and texture, so the model is not fighting anything.
+   - **Plain `lanczos`** is a marginal gain for ~1.4× the bitrate. Probably not worth it on its own.
+
+   🔴 **Spatial only — the same rule as the filter chain above.** Any upscaler with a temporal-consistency
+   or frame-interpolation stage carries state across frames, treats frame 0 as "the beginning", and quietly
+   stops it matching the last frame. Run the first-vs-last SSIM check after upscaling, not just after
+   encoding. **And do not add grain to mask softness** — it is incompressible, it is what blows an 8s clip
+   up to 40MB, and randomised per frame it breaks the loop check too.
+4. **Or accept it, deliberately.** 720 across a 371dp card is **1.94 px/dp** — this is **@2× art**, on
+   screens that are @2.625× (Pixel) to @3.5× (1440p flagship). On a still with hard edges that reads as
+   soft; on *moving footage, behind a 58px numeral, under a scrim over the bottom 28%*, it is close to
+   invisible. The Pixel-class case is 1.35×, which is the one most users will actually see. **If this is the
+   choice, write it in the build spec as accepted** — so the next person does not rediscover it as a bug.
+
+💡 **Cheapest experiment first:** re-run one prompt at the largest square or landscape preset the generator
+offers and compare it against the 720 original at hero size on a real device. If step 1 works, steps 2–4
+are moot.
 
 ### The loop rule
 
