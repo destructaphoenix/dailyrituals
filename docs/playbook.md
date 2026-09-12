@@ -468,6 +468,31 @@ are *heavily* covered stock subjects, usually shot on a locked-off camera — wh
 stationary framing the loop rule wants. It fixes ownership and sharpness in one move, and costs less
 than regenerating.
 
+#### The zero-budget route (owner, 2026-09-12: not paying for footage — and does not have to)
+
+**1. Keep every current clip exactly where it is.** In the design project they are *comps*, and comps with
+placeholder footage are normal practice. The cards have already done their job — layout, crop, accent ramp,
+day/night. Nothing there needs to change, and nothing needs deleting.
+
+**2. Reverse-search before replacing — a good share of Pinterest video is reposted free stock.** Pull a
+frame (`ffmpeg -i clip.mp4 -vframes 1 f.png`) and run it through Google Lens or TinEye. If it traces back
+to Pexels, Pixabay or Unsplash, the original is **free for commercial use, needs no attribution, and is
+usually higher resolution than Pinterest's 720×1280 re-encode**. That single step can clear ownership *and*
+the resolution floor at no cost — the pin was the lossy middleman.
+
+**3. Otherwise search Pexels/Pixabay directly.** Free, no account, commercial use granted, no attribution.
+The design cards already contain the search terms. *(Artgrid and Filmsupply are the paid tier — optional,
+not required.)*
+
+⚠️ **A free AI tier is the trap here.** Free plans commonly withhold commercial rights even when paid
+plans grant them. "Free to use" and "free to sell what it makes" are different clauses.
+
+⛔ **The one thing that does not work is shipping them as they are.** Distribution is what infringes, not
+the price tag — making a sky free instead of paid does not fix it.
+
+✅ **Already clean:** `Meteorfall` is drawn in CSS with no footage at all. Any hero that was genuinely
+text-to-video — nothing fed in — is fine as-is.
+
 **What survives:** the *design* is untouched. The cards, the crops, the accent ramps, the day/night
 decisions and the layout are all original work and all still good. **It is the footage underneath that has
 to be replaced**, and each card already specifies exactly what its replacement has to show.
