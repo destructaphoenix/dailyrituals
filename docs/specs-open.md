@@ -13,7 +13,7 @@
 > re-litigate a "why", and do not improve the scope.** If a step turns out to be impossible or the code
 > contradicts the spec, **STOP** and log it to `PROGRESS.md` → Open items rather than inventing a fix.
 >
-> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **1228 passed, 115 suites** — verified 2026-09-13), `npx expo export --platform android` clean, commit with the **exact** message given, then
+> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **1226 passed, 115 suites** — verified 2026-09-13), `npx expo export --platform android` clean, commit with the **exact** message given, then
 > update `PROGRESS.md` (tick the backlog row, write the session note) and **move the finished spec from
 > this file into `docs/build-log.md`**.
 >
@@ -24,82 +24,13 @@
 
 ## The queue
 
-**Three open rows, all buildable — no gates left.** **IMP-124 is done** (archived to `docs/build-log.md`,
-commit `87771c4`). ✅ **IMP-125's gate is lifted: the owner ruled on 2026-09-13 and chose the week-strip
-footer**, which is what its spec already specified — so the spec stands unchanged and needs no redesign.
+**Two open rows, both buildable — no gates left.** **IMP-124 and IMP-125 are done** (archived to
+`docs/build-log.md`, commits `87771c4` and `d57dc2d`).
 
 | Row | What | Lane | Take it? |
 | --- | --- | --- | --- |
-| **IMP-125** | The candle indicator leaves the hero card | OTA | ✅ **first — take this one** |
-| IMP-126 | The 11th mood's bar is invisible (D-04's defect half) | OTA | ✅ second |
-| IMP-127 | The Shop's ember `+` promises an action it cannot perform (D-09) | OTA | ✅ third |
-
-⚠️ **Why IMP-125 goes first even though IMP-126 is smaller.** IMP-124 is committed and **not yet shipped**.
-IMP-125 **deletes code IMP-124 just added** (`StreakFreeze`'s `onVideo` branch) and moves a surface
-[WALK-22](walk-open.md#walk-22--the-day-mode-hero-re-check) is about to walk. Landing it before the OTA means
-**one** OTA and **one** walk of the final layout, instead of shipping a candle row over footage and then
-moving it off the footage a day later.
-
----
-
-### IMP-125 — the candle indicator leaves the hero card
-
-✅ **APPROVED — the owner ruled on 2026-09-13 and chose the week-strip footer.** The gate is lifted and this
-spec is unchanged by the ruling: the destination below was already the recommendation and it was accepted
-against three alternatives (its own card under the hero, Shop-only with no candles on Home, and leaving it
-where it is). **Take it.**
-
-**It began as a preference, not a defect** — the owner's observation during WALK-21 that *"the candle
-indicator doesn't need to live inside the hero card at all"*. Nothing is broken today, so there is no failing
-behaviour to reproduce and **no test can be proven red first on this row.** **Severity 🎨.**
-
-**What is there now.** `{freezes != null && <StreakFreeze count={freezes} />}`
-([`HomeScreen.js:73`](../src/screens/HomeScreen.js#L73)) renders inside the hero, under a hairline rule —
-three candle glyphs and a line of copy, stacked below the XP bar in a 336dp card that is also carrying a
-76dp numeral, a subtitle, a level and a progress bar. Over a video sky it is also the part of the hero the
-scrim reaches, which is the only reason it survived WALK-21 at all.
-
-**Where it goes — ✅ the owner's own choice, 2026-09-13.** **Into the week-strip card, as a footer row beneath
-the seven dots.** Not a new card of its own: [`design-queue.md`](design-queue.md)
-→ D-12 already calls Home's lower half *"a stack with no hierarchy"* with the day's reflection fourth down,
-and a seventh equal-weight card makes the row it is filed under worse.
-
-**The week strip is the right home, and not merely a free slot.** `buildWeekStrip` already renders
-`frozenDays` — the days a candle spent itself — as a state *in those very dots*. Today the app draws the
-effect in one card and the stock in another. Moving the candles under the strip puts the count directly
-beneath the thing it explains.
-
-**What the alternatives cost, recorded so this is not re-litigated.** Its own card was rejected as a
-**seventh** equal-weight card on a screen D-12 already calls a stack with no hierarchy, pushing the day's
-reflection further down. Shop-only was rejected because it removes the daily glance entirely — and a freeze
-notice would then arrive explaining a resource the user never saw they had.
-
-**Steps.**
-1. `HomeScreen.js` — remove `<StreakFreeze>` from `heroInner`; render it inside the week-strip `Card`,
-   after the seven-dot row.
-2. `StreakFreeze` — **delete the `onVideo` branch IMP-124 added**, and the `heroChrome` import with it. The
-   hero is no longer one of its grounds, so the branch is dead the moment this lands. Restore the plain
-   `c.border` / `c.muted` styling.
-3. The hero's bottom padding is now carrying a component's worth of empty space — `paddingBottom: 22`
-   against a fixed `HERO_HEIGHT` of 336. **Leave `HERO_HEIGHT` alone.** It is pinned to the clip geometry in
-   [`design-queue.md`](design-queue.md) → "The frame", every sky was cropped against it, and shrinking the
-   card re-crops the whole catalogue. The XP bar simply sits higher in the frame.
-4. Tests: `HomeScreenSkyHero.test.js` and any Home render test that locates the candle row must find it
-   under the week strip. `__tests__/home/streakFreeze.test.js` loses its `onVideo` cases.
-
-**Ship.** `npm test` green (≥ **1228 passed, 115 suites**), `npx expo export --platform android` clean, then:
-
-```
-fix(home): the candle count sits with the week it protects (IMP-125)
-```
-
-OTA, no native change, **no `versionCode` bump.** ⚠️ **The test count will go DOWN** — step 2 deletes
-`StreakFreeze`'s `onVideo` cases, which is correct and is the one sanctioned exception to the ≥-count rule on
-this row. **State the number and the reason in the session note** rather than padding the suite to hide it.
-
-**Its proof folds into [WALK-22](walk-open.md#walk-22--the-day-mode-hero-re-check)**, whose step 5 changes
-from *"is the candle row readable over footage"* to *"is it gone from the hero and present under the week
-strip"*. **Update that step when this lands.**
+| IMP-126 | The 11th mood's bar is invisible (D-04's defect half) | OTA | ✅ **first — take this one** |
+| IMP-127 | The Shop's ember `+` promises an action it cannot perform (D-09) | OTA | ✅ second |
 
 ---
 
@@ -139,7 +70,7 @@ over `c.accentSoft` is the track.
 is still `0.3`, proving the clamp changed nothing that already worked. **Prove it red first** — today index
 10 flattens to exactly `0`.
 
-**Ship.** `npm test` green (≥ 1228/115), export clean, then:
+**Ship.** `npm test` green (≥ 1226/115), export clean, then:
 
 ```
 fix(insights): the eleventh mood keeps a bar you can see (IMP-126)
@@ -186,7 +117,7 @@ does not care which screen it is on. **Record in the commit body that IMP-119's 
 renders no `+`; the default still renders it; **IMP-119's scaled-`lineHeight` assertion must still pass
 under the default** (do not let the new branch skip it).
 
-**Ship.** `npm test` green (≥ 1228/115), export clean, then:
+**Ship.** `npm test` green (≥ 1226/115), export clean, then:
 
 ```
 fix(shop): the ember plus appears only where it can add embers (IMP-127)

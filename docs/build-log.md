@@ -5083,6 +5083,35 @@ not this chat.**
 
 ---
 
+## IMP-125 — the candle count sits with the week it protects (2026-09-13)
+
+**Owner's own call**, made during WALK-21: the streak-freeze candles didn't need to live inside a 336dp hero
+card already carrying a numeral, a subtitle, a level and an XP bar. ✅ **Approved 2026-09-13**, choosing the
+week-strip footer over the two rejected alternatives (a seventh card of its own; Shop-only with no daily
+glance) — see the ruling in `72c9ea3` for why. **Severity 🎨** — nothing was broken, so there was no failing
+behaviour to reproduce and no test was red first on this row.
+
+**[`HomeScreen.js`](../src/screens/HomeScreen.js).** `<StreakFreeze>` moved out of `heroInner` (both the
+video-sky and classic-art hero shells lose it identically) and into the week-strip `Card`, as a footer row
+after the seven-dot loop. `HERO_HEIGHT` (336) is untouched — it's pinned to the clip crop of every sky, and
+the numeral/subtitle/XP-bar block simply sits with the empty space it now owns alone.
+
+**[`gamify.js`](../src/gamify.js).** `StreakFreeze` loses the `onVideo` prop and the `heroChrome` import
+IMP-124 gave it — the week strip is never drawn over footage, so the branch was dead the moment the move
+landed. Back to the plain `c.border` rule and `c.muted` label, unconditionally.
+
+**The proof.** [`streakFreezeComponent.test.js`](../__tests__/home/streakFreezeComponent.test.js) loses its
+two `onVideo` cases (the prop no longer exists) and keeps one: the rule and label sit on theme tokens. No
+other test asserted the candle row's position relative to the hero, so nothing else needed updating.
+**1226 passed, 115 suites** (was 1228/115) — **down by exactly the two deleted `onVideo` cases**, the
+sanctioned exception to the ≥-count rule on this row. Export clean. Commit `d57dc2d`.
+
+**Not in this row.** No native change — OTA, no `versionCode` bump, no `Release-Lane:` trailer. Its proof
+folds into [WALK-22](walk-open.md#walk-22--the-day-mode-hero-re-check) step 5, updated from "is the candle
+row readable over footage" to "is it gone from the hero and present under the week strip."
+
+---
+
 ## Session notes
 
 _2026-09-13 (Sonnet — **IMP-123 built: the first sky carries a clip, on its own update channel.**) — ✅
@@ -5111,6 +5140,37 @@ lands on the owner's device — read the You tab's Version row for `1.0.10 / vc1
 the owner what to take next otherwise: Stage 2 of `skies-route.md` (real per-sky art for the other four
 skies), a new owner-filed issue for Opus to scope, or WALK-21 itself as the next runtime-walk chat. Do not
 open the parked phase ladder (8 / 10b / 11) without asking.
+
+---
+
+_2026-09-13 (Sonnet — **IMP-124 built: the hero reads its colours from the footage, not the theme.**) — ✅
+code-complete, walk owed (device, WALK-22, needs the OTA landed)._
+
+**What finished.** New [`src/home/heroChrome.js`](../src/home/heroChrome.js) — one pure function deciding the
+hero's colors from its **ground** (video vs. theme card), not the day/night mode. Wired into
+[`HomeScreen.js`](../src/screens/HomeScreen.js) (deleted the old `streakShadow`/`heroNeedsContrast`/`numberGlow`
+locals, now every hero text color and the previously-unshadowed `Lv`/`XP` labels come from `hero`),
+[`ui.js`](../src/ui.js)'s `ProgressBar` (`onVideo` → opaque `rgba(0,0,0,0.62)` track with a white hairline, since
+no fill color survives arbitrary footage), [`gamify.js`](../src/gamify.js)'s `StreakFreeze` (`onVideo`, importing
+`heroChrome` rather than repeating values), [`data.js`](../src/data.js) (`meteor.accent` → `#BFE6FF`), and
+[`skyHero.js`](../src/home/skyHero.js) (deleted the dead, never-read `accent` prop). One cause, five surfaces —
+the walk named two (subtitle, XP bar), source reading found the other three (`StreakFreeze`'s label, the
+unshadowed `Lv`/`XP` labels) in the same spec, so no second walk is owed for them.
+
+**The proof.** New `heroChrome.test.js` (4 cases), `ProgressBar.test.js` and `streakFreezeComponent.test.js`
+(the last named apart from the pre-existing `streakFreeze.test.js`, which tests unrelated `applyAutoFreeze`
+logic — a same-name collision with the `StreakFreeze` component, not the same module the spec meant).
+`HomeScreenSkyHero.test.js` extended with the `color` assertions its day-over-video case never made. All four
+new/extended color assertions confirmed **red** before the wiring changes, per spec. **1228 passed, 115
+suites** (was 1215/112), export clean, +13 tests. Commit `87771c4`. Spec archived to `docs/build-log.md`;
+`docs/specs-open.md`'s queue now holds IMP-125 (owner-gated), IMP-126, IMP-127.
+
+**Not shipped this chat** — no `Release-Lane:` trailer, per spec (rides vc17's existing OTA channel whenever
+next pushed).
+
+**The exact next step.** Take **IMP-126** (the 11th mood's invisible bar — a two-character opacity clamp,
+OTA). **IMP-127** is now buildable too (was gated only on IMP-124 being committed). **IMP-125 still needs the
+owner's yes** before any build chat touches it.
 
 ---
 
