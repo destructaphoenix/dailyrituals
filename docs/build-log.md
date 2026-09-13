@@ -5251,7 +5251,63 @@ now-uncovered lower third looks like composition or a void is
 
 ---
 
+## IMP-131 — the sunburst lost the numeral (2026-09-14)
+
+**Severity 🎨 — regression from IMP-130, live on the owner's phone via OTA `433eb53`.** `RayFan`/`NightRays`
+are `position: 'absolute', top: -70, height: 300` inside the `Card`, so their focal point is **fixed at
+card-y 80** regardless of what the card holds — the numeral used to land on it by construction
+(`26 + 13 + 82/2 = 80`). IMP-130's `justifyContent: 'center'` moved the content ~46dp down and left the art
+behind: the rays/night bloom converged above the numeral, and the level/XP row fell below the 300dp disc.
+**IMP-130's ruling was not reopened** — 336 and `art.js` stayed frozen.
+
+**The fix.** [`HomeScreen.js`](../src/screens/HomeScreen.js) — `justifyContent: 'center'` removed from
+`HERO_BOX`, so the numeral block goes back flush to `paddingTop` (focal point back on 80 by the same
+construction). The freed space becomes one `<View testID="hero-spacer" style={{ flex: 1 }} />` between the
+numeral block and the level/XP row, anchoring that row to the bottom padding edge — where `SkyHero`'s
+bottom-28% scrim already is. `testID`s added: `hero-box` (both shells' `HERO_BOX` view), `hero-numeral-block`,
+`hero-spacer`. `HERO_HEIGHT` (336) and `art.js` untouched.
+
+**The proof.** [`HomeScreenSkyHero.test.js`](../__tests__/screens/HomeScreenSkyHero.test.js) gained a fourth
+`describe`: two cases read the rendered art's `top + height/2` (never a typed `80`) and assert it equals the
+rendered box's `paddingTop + marginTop + lineHeight/2` on both day (`RayFan`) and night (`NightRays`)
+grounds; a third confirms the video shell shares the same unbounded box; a fourth asserts the spacer is bare
+`{ flex: 1 }` on both grounds. IMP-130's three height cases stayed green, unmoved. **1245 passed, 117 suites**
+(was 1241/117, +4 tests, no new suite). Export clean. Commit `28654cb`.
+
+**Not in this row.** OTA, pure JS, no `versionCode` bump, no `Release-Lane:` trailer — the owner's call to
+ship, given the regression is already live. Jest proves the arithmetic, not the picture; whether the
+composition now reads right is [WALK-24](walk-open.md#walk-24--one-card-two-grounds), device, re-scoped by
+this spec and still owed (steps 4/5 never run).
+
+---
+
 ## Session notes
+
+_2026-09-14 (Sonnet — **IMP-130 built: the hero card is one size, whichever sky is on.**) — ✅ code-complete,
+no walk of its own (WALK-24 owns the runtime proof, not run from this chat)._
+
+**What finished.** [`HomeScreen.js`](../src/screens/HomeScreen.js) — one module-scope `HERO_BOX` style
+(`flex: 1`, the shared padding, `alignItems: 'center'`, `justifyContent: 'center'`) replaces the two hero
+shells' separate inline styles. The video shell keeps `height: HERO_HEIGHT` (336) and gains
+`testID="streak-hero"`; its inner `View` now uses `HERO_BOX`. The classic shell becomes structurally
+identical — `height: HERO_HEIGHT`, `overflow: 'hidden'`, the same `testID` — with `RayFan`/`NightRays`
+staying direct children of the `Card` (so they keep the card, not the padded box, as their absolute-position
+containing block) and `heroInner` wrapped in `HERO_BOX`. `art.js` untouched, per the spec's standing rule.
+
+**The proof.** [`HomeScreenSkyHero.test.js`](../__tests__/screens/HomeScreenSkyHero.test.js) gained the
+spec's third `describe`, exactly as written: the video card measures 336, the classic card measures 336 too
+(confirmed **red** before the change — it had no explicit height at all), and the two grounds measure equal.
+None of the file's seven prior text/prop-based cases moved. **1241 passed, 117 suites** (was 1238/117, +3
+tests, no new suite). Export clean. Commit `111c3de`. Spec archived to `docs/build-log.md`;
+`docs/specs-open.md`'s queue now holds only the owner-gated IMP-128 — **no row a build chat may take.**
+
+**Not shipped this chat** — no `Release-Lane:` trailer.
+
+**The exact next step.** The backlog has nothing left for a build chat (IMP-128 stays owner-gated). A
+**walk chat** takes [WALK-24](walk-open.md#walk-24--one-card-two-grounds) once IMP-130 ships by OTA —
+it is not shipped yet, so WALK-24 is still blocked on that push. WALK-23 stays held by the owner regardless.
+
+---
 
 _2026-09-14 (Opus — **IMP-130 specced: the hero card is one size, whichever sky is on. WALK-24 filed with
 it.**) — 📝 spec session, no code written._
