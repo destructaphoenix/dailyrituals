@@ -5215,7 +5215,72 @@ not run from this chat, per the spec.
 
 ---
 
+## IMP-130 — the hero card is one size, whichever sky is on (2026-09-14)
+
+**Severity 🎨 — nothing broken, the card is the wrong shape.** Found live during
+[WALK-22](walk-open.md#walk-22--the-day-mode-hero-re-check): applying Meteor Shower made the streak hero
+~86dp taller than the default card and pushed every card below it down the page. Traced to
+[`HomeScreen.js`](../src/screens/HomeScreen.js): the video shell was pinned to `height: HERO_HEIGHT` (336)
+while the classic shell sized to content — and IMP-125 pulling `<StreakFreeze>` out of the shared
+`heroInner` shrank the classic card by ~73dp that the fixed video card didn't lose.
+
+**The ruling.** 336 stays — [`design-queue.md` → "The frame"](design-queue.md) derives the near-square box,
+the 1:1 "generate square" encode choice and the bottom-28% scrim rule from it, so shrinking the box would
+throw away ~18 points of 1:1 crop survival on every sky clip already encoded against it. The classic card
+grows to meet 336, and the freed space is distributed (`justifyContent: 'center'`), not pooled under the
+XP bar, so the numeral sits mid-frame on both grounds and `RayFan`'s 300dp disc doesn't leave a bare band.
+
+**What changed.** [`HomeScreen.js`](../src/screens/HomeScreen.js) — one module-scope `HERO_BOX` style
+(`flex: 1`, the shared padding, `alignItems: 'center'`, `justifyContent: 'center'`) replaces the two shells'
+separate inline styles. The video shell keeps `height: HERO_HEIGHT` and gains `testID="streak-hero"`; its
+inner `View` now uses `HERO_BOX`. The classic shell becomes structurally identical — `height: HERO_HEIGHT`,
+`overflow: 'hidden'`, the same `testID`, with `RayFan`/`NightRays` staying direct children of the `Card` (so
+they keep the card, not the padded box, as their absolute-position containing block) and `heroInner` now
+wrapped in `HERO_BOX`. `art.js` untouched — frozen art, per the standing rule.
+
+**The proof.** [`HomeScreenSkyHero.test.js`](../__tests__/screens/HomeScreenSkyHero.test.js) gained a third
+`describe` with three cases, querying `getByTestId('streak-hero')` and flattening its style: the video card
+measures 336, the classic card measures 336 too (confirmed **red** before the change — it had no explicit
+height at all), and the two grounds measure equal. None of the file's seven prior text/prop-based cases
+moved. **1241 passed, 117 suites** (was 1238/117, +3 tests, no new suite). Export clean. Commit `111c3de`.
+
+**Not in this row.** OTA, pure JS, no `versionCode` bump, no `Release-Lane:` trailer. A green suite proves
+the number, not the picture — whether the centred numeral reads right and whether the classic card's
+now-uncovered lower third looks like composition or a void is
+[WALK-24](walk-open.md#walk-24--one-card-two-grounds), device, still owed.
+
+---
+
 ## Session notes
+
+_2026-09-13 (Sonnet — **IMP-129 built: a paid ember pack is granted on the next launch, not lost.**) —
+✅ code-complete, no walk of its own (WALK-20 step 7 owns the runtime proof, not run from this chat)._
+
+**What finished.** `emberGrants.js` documented a self-healing launch sweep that nothing ever called —
+`applyEmberGrants` had exactly one call site, inside `buyEmberPack`. [`entitlementSync.js`](../src/billing/entitlementSync.js)'s
+`checkEntitlement` now returns a third key, `customerInfo` (the service's answer on success, `null` on the
+catch path; `nextPlusState` untouched). [`revenueCatService.js`](../src/billing/revenueCatService.js) gained
+`getCustomerInfoRaw()` — a second method, not a change to `getEntitlement`'s shape — mirrored in
+[`simService.js`](../src/billing/simService.js). [`RitualsApp.js`](../src/RitualsApp.js)'s `applyEntitlementResult`
+(shared by the `AppState` listener and the launch hook) now calls `applyEmberGrants(result.customerInfo)`
+when present — no new store call, no toast, silent self-heal on both the cold-start and
+background→foreground paths.
+
+**The proof.** New [`emberGrantSweep.test.js`](../__tests__/billing/emberGrantSweep.test.js) mounts the real
+`RitualsApp` (it is renderable — see `FabLabel.test.js`) with `createPurchaseService` swapped for a fake,
+rather than a source assertion: an un-applied `embers_240` transaction grants 240 and lands its id in
+`appliedEmberTx` (confirmed **red** before the `RitualsApp.js` wiring existed); the same transaction already
+in the ledger grants 0; an unreachable store grants nothing and — the control — does not move `plus`, and
+never reaches `getCustomerInfoRaw` at all. `purchaseFlow.test.js`'s ad-hoc fake service needed
+`getCustomerInfoRaw` added too — a real interface change surfaced a second caller (`PlusFlow.js`'s IMP-101
+reconcile) that the spec hadn't named. **1238 passed, 117 suites** (was 1230/116, +8 tests, +1 suite).
+Export clean. Commit `0a2f595`. Spec archived to `docs/build-log.md`; `docs/specs-open.md`'s queue now held
+only the owner-gated IMP-128.
+
+**Not shipped this chat** — no `Release-Lane:` trailer. IMP-124/125/126/127/129 awaited the owner's ship
+go-ahead, and `EMBER_PACKS_ENABLED` stays `false` until WALK-20 passes on hardware.
+
+---
 
 _2026-09-13 (Sonnet — **IMP-127 built: the Shop's ember `+` hides itself while it cannot add embers.**) —
 ✅ code-complete, no walk of its own._

@@ -32,11 +32,11 @@
 runtime proof is a separate WALK row for a separate chat, so a missing walk is *not* an unfinished spec.
 Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`](docs/playbook.md).
 
-> ## 🧭 WHAT TO TAKE RIGHT NOW (2026-09-13)
+> ## 🧭 WHAT TO TAKE RIGHT NOW (2026-09-14)
 >
 > | If this chat is… | Take |
 > | --- | --- |
-> | a **build task** | ✅ **IMP-124 is DONE** (2026-09-13, `87771c4`) — the hero now reads `heroChrome.js`'s ground-based colors, not the theme. ✅ **IMP-125 is DONE** (2026-09-13, `d57dc2d`) — the candle row moved out of the hero and into the week-strip footer, `StreakFreeze`'s `onVideo` branch deleted, `HERO_HEIGHT` untouched. ✅ **IMP-126 is DONE** (2026-09-13, `0502790`) — mood mix bar opacity floors at `0.3`, index 10 no longer flattens to `0`. ✅ **IMP-127 is DONE** (2026-09-13, `402391b`) — `EmberPill` gains `showAdd`, the Shop's pill hides its `+` while `EMBER_PACKS_ENABLED` is false, Home's pill unchanged, IMP-119's centring walk moves to it. ✅ **IMP-129 is DONE** (2026-09-13, `0a2f595`) — `checkEntitlement` threads `customerInfo` through, `revenueCatService`/`simService` gained `getCustomerInfoRaw()`, and `RitualsApp.js`'s `applyEntitlementResult` now runs the ember-grant sweep silently on every launch and foreground. 🆕 **TAKE [IMP-130](docs/specs-open.md#imp-130--the-hero-card-is-one-size-whichever-sky-is-on) — specced 2026-09-14, not gated, and it is the only row a build chat may take.** The hero card is one size whichever sky is on: **both shells render at `HERO_HEIGHT` (336) with the content centred**, so applying a sky stops moving every card below it. **The ruling to not re-litigate:** 336 stays and the *default* card grows to meet it, because `design-queue.md` → "The frame" derives the near-square box, the 1:1 "generate square" choice, the 1280×1280 encode recipe and the bottom-28% scrim rule **from 336** — shrinking it to the default card's ~250dp throws away a third of every sky frame already encoded against that recipe. ⏸ **[IMP-128](docs/specs-open.md#imp-128--apply-the-motion-vocabulary) is OWNER-GATED — do NOT take it.** **IMP-124/125/126/127/129 shipped by OTA 2026-09-13** (`5ccf020`, update `01a09b18`, confirmed on the owner's phone). |
+> | a **build task** | ✅ **IMP-130 is DONE** (2026-09-14, `111c3de`) — both hero shells now share one `HERO_BOX` at `HERO_HEIGHT` (336) with the content centred; a `testID="streak-hero"` on both `Card`s proves the two grounds measure equal. **The backlog is now EMPTY of anything a build chat may take** — [IMP-128](docs/specs-open.md#imp-128--apply-the-motion-vocabulary) is the only row left and it is **OWNER-GATED — do NOT take it.** ✅ **IMP-124 is DONE** (2026-09-13, `87771c4`) — the hero now reads `heroChrome.js`'s ground-based colors, not the theme. ✅ **IMP-125 is DONE** (2026-09-13, `d57dc2d`) — the candle row moved out of the hero and into the week-strip footer, `StreakFreeze`'s `onVideo` branch deleted, `HERO_HEIGHT` untouched. ✅ **IMP-126 is DONE** (2026-09-13, `0502790`) — mood mix bar opacity floors at `0.3`, index 10 no longer flattens to `0`. ✅ **IMP-127 is DONE** (2026-09-13, `402391b`) — `EmberPill` gains `showAdd`, the Shop's pill hides its `+` while `EMBER_PACKS_ENABLED` is false, Home's pill unchanged, IMP-119's centring walk moves to it. ✅ **IMP-129 is DONE** (2026-09-13, `0a2f595`) — `checkEntitlement` threads `customerInfo` through, `revenueCatService`/`simService` gained `getCustomerInfoRaw()`, and `RitualsApp.js`'s `applyEntitlementResult` now runs the ember-grant sweep silently on every launch and foreground. **IMP-124/125/126/127/129 shipped by OTA 2026-09-13** (`5ccf020`, update `01a09b18`, confirmed on the owner's phone). **IMP-130 not shipped yet** — no `Release-Lane:` trailer this chat. |
 > | a **runtime walk** | 🆕 **[WALK-24](docs/walk-open.md#walk-24--one-card-two-grounds) is FILED (2026-09-14) — IMP-130's proof, device, visual.** ⬜ Blocked on the OTA push and nothing else; its one gesture is switching skies and watching whether the page below the hero moves. ⏸ **WALK-23 is HELD at the owner's instruction (2026-09-14) — do not take it.** It is otherwise ready (agent-runnable, no build/device needed). ⚠️ **The stated reason for that hold has now lapsed** — it was "WALK-22 surfaced IMP-130 and the owner wants that looked at first", and IMP-130 is specced — but **lifting the hold is the owner's call, not a walk chat's.** ✅ **WALK-22 is DONE — PASS, 2026-09-14** (device, Play `internal`, owner-run, update `01a09b18`): IMP-124's hero text and IMP-125's candle-row move both confirmed on hardware, night mode identical to day. 🔴 **Found [IMP-130](docs/specs-open.md#imp-130--not-yet-specced) live** — the video hero card is a visibly different size from the default hero card when switching skies; not fixed, routed to Opus to spec. ✅ **WALK-21 is DONE — 🟠 PARTIAL, 2026-09-13** (Play `internal` vc17, owner-run). Steps 1-3, 6-10 passed clean (corners settle IMP-121's `surfaceView` question, step 8 re-confirms WALK-19a's store-authoritative membership); steps 4-5 failed into IMP-124 above; step 11 is a named gap (thin journal, nothing to scroll). Full write-up in `walk-open.md`'s WALK-21 section. 📱 **Next:** resume **"THE DEVICE SITTING PLAN"** below — three sittings (IMP-116 lapse + IMP-114/115 · WALK-19 step 8 real money · WALK-12 last), each with the membership state it needs. ⚠️ **7C stays unwalkable** until the candle holding drains to ≤2 — do not record it as passed because nothing broke. ✅ **Step 7 is DONE — the 2026-09-10/11 lapse sitting cleared it** (hardware, owner-run, monthly tester sub). **WALK-18 ✅, WALK-07 ✅, WALK-19 steps 7A/7B/7D ✅** — IMP-108, IMP-109, IMP-110, IMP-111 and IMP-096 are all now proven on hardware. ⚠️ **7C is NOT proven** — the owner held 6 pre-cap candles, so the cap was never exercised; it re-runs once the holding drains to ≤2 ([IMP-115](docs/specs-open.md#imp-115)). Remaining 🚦: **step 8** (the one real-money purchase, held for last) and **WALK-12 (R8) LAST** — it must be walked on the exact build you ship. ✅ **WALK-08 is CLOSED (2026-09-11, emulator, agent-run)** — DeeperInsights passes at max font, IMP-095 proven, cap measured biting (scale 2, caps 1.5/1.2). It found IMP-118 on the way. 🔴 **But its IMP-117 pass was HALF WRONG and the device overturned it** — the `+` was off-centre at every font size, fixed as [IMP-119](docs/build-log.md#imp-119-the-ember-pills--lost-the-line-that-centred-it-2026-09-11) (commit `1fc0664`, walk still owed on device); the emoji half stands. **A glyph-centring claim is not emulator-provable — route that shape to `device`.** ✅ **SITTING 1 is DONE (2026-09-11, hardware, owner-run) — do not re-run it.** IMP-116 proven: on lapse both cosmetics revert under one message. **IMP-114 stays UNEXERCISED** — `buyCandles` checks the cap before affordability, so 6 candles against a cap of 3 returns at the first guard and its message cannot fire; same blocker as 7C. Step 5's control was dropped by inspection (ownership is consulted independently of `plus` in all three paths). Still owed, cheaply: the `6 kept` label and the no-ember-price check. ✅ **WALK-20 (IMP-113's ember purchase) NOW EXISTS** — written 2026-09-13, [`docs/walk-open.md`](docs/walk-open.md#walk-20--money-for-embers). ⬜ **Still not runnable**, and its own pre-flight says why: three consumables must be live in Play **and** RevenueCat, [IMP-129](docs/specs-open.md#imp-129--the-ember-grant-that-never-heals-itself) must have shipped, and `EMBER_PACKS_ENABLED` must be flipped by OTA — safe to publish because `runtimeVersion` is `appVersion` `1.0.10`, so only vc17 on `internal` can receive it. 🔴 **Its step 4 is the point:** a consumable Play does not consume returns `ITEM_ALREADY_OWNED`, and the buyer gets *"you're already up to date"* and no embers. |
 > | a **design request** | 📋 **Take the first row of [`docs/design-queue.md`](docs/design-queue.md)** — a ranked audit of all 14 user-facing surfaces, written 2026-09-11 from source. ✅ **D-01 (the Insights consistency grid) is built as IMP-120** — no further design pass needed, `docs/design-queue.md` still names it first and wants its own row updated by a design chat. **D-02 (Reflections)** is next. ⚠️ **One screen per request**; the four standing rules stay in [`docs/playbook.md`](docs/playbook.md) → "Claude Design — standing rules". ✅ **The "three rows want IMP numbers" note is settled and was one row too long** (2026-09-13): **D-04's defect half is now [IMP-126](docs/specs-open.md#imp-126--the-11th-moods-bar-is-invisible)** (only its remainder-line design is still open), **D-09's is [IMP-127](docs/specs-open.md#imp-127--the-shops-ember--promises-an-action-it-cannot-perform)** — and reading the source corrected D-09: the **Home** pill's `+` opens the Shop and is fine, only the **Shop's own** pill toasts into nothing. **D-10 wants no number** — its two dead rows are IMP-022, already deferred; what is left there is genuine design. |
 >
@@ -105,7 +105,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 126 | **The 11th mood's bar is invisible.** Mood mix shades each bar `opacity: 1 - i * 0.1` ([`InsightsScreen.js:142`](src/screens/InsightsScreen.js#L142)); at index 10 that is **0**, past it negative. 8 built-in moods and **no cap on custom ones**, so three custom feelings in regular use render a bar that is in the data, labelled with its own count, and cannot be seen. **IMP-118's shape exactly.** | OTA | ✅ **done, archived** in `docs/build-log.md` — `0502790`. **1228 passed, 116 suites** (was 1226/115), export clean, +2 tests, +1 suite. Floor clamped at `0.3`; index 7 unchanged. No walk owed |
 | 127 | **The Shop's ember `+` promises an action it cannot perform.** With `EMBER_PACKS_ENABLED` false, `Shop.js:78`'s pill toasts *"Embers also gather on their own"* — an honest message behind a control that cannot do what its glyph says. | OTA | ✅ **done, archived** in `docs/build-log.md` — `402391b`. **1230 passed, 116 suites** (was 1228/116), export clean, +2 tests. `EmberPill` gains `showAdd`; Shop's pill hides the `+` when `EMBER_PACKS_ENABLED` is false, Home's pill unchanged. IMP-119's owed centring walk moves to Home's pill. No walk of its own |
 | 129 | **A paid ember pack that resolves while the app is dying is never granted.** [`emberGrants.js`](src/billing/emberGrants.js) documented a self-healing launch sweep; `applyEmberGrants` had exactly **one** call site, inside `buyEmberPack`, and `pendingEmberGrants` was imported nowhere else. Play charges, the embers never arrived, and relaunching did not fix it. | OTA | ✅ **done, archived** in `docs/build-log.md` — `0a2f595`. **1238 passed, 117 suites** (was 1230/116), export clean, +8 tests, +1 suite. Walk = [WALK-20](docs/walk-open.md#walk-20--money-for-embers) step 7, still owed — cannot run while `EMBER_PACKS_ENABLED` is `false` |
-| 130 | **The hero card changes size with the sky.** A cosmetic choice relayouts the screen: the video shell is `height: HERO_HEIGHT` (336, fixed) and the default shell has no height at all, so it sizes to content — and IMP-125 pulled `<StreakFreeze>` out of the **shared** `heroInner`, shrinking the default card by ~73dp while the video card stayed put. Both shells go to 336 with the content centred; 336 is pinned to the sky encode recipe, so the default card is the one that moves. | OTA | ⬜ **specced 2026-09-14, BUILDABLE, not gated — this is the first ⬜ row.** Spec in [`docs/specs-open.md`](docs/specs-open.md#imp-130--the-hero-card-is-one-size-whichever-sky-is-on). ⚠️ **Walk owed** — [WALK-24](docs/walk-open.md#walk-24--one-card-two-grounds), device |
+| 130 | **The hero card changes size with the sky.** A cosmetic choice relayouts the screen: the video shell is `height: HERO_HEIGHT` (336, fixed) and the default shell has no height at all, so it sizes to content — and IMP-125 pulled `<StreakFreeze>` out of the **shared** `heroInner`, shrinking the default card by ~73dp while the video card stayed put. Both shells go to 336 with the content centred; 336 is pinned to the sky encode recipe, so the default card is the one that moves. | OTA | ✅ **done, archived** in `docs/build-log.md` — `111c3de`. **1241 passed, 117 suites** (was 1238/117), export clean, +3 tests, no new suite. Both shells share `HERO_BOX` and a `testID="streak-hero"`. ⚠️ **Walk owed** — [WALK-24](docs/walk-open.md#walk-24--one-card-two-grounds), device |
 | 128 | **Apply the motion vocabulary** — `riseIn` on Home's card stack and the Keepsakes rows, `popIn` on earned badges, `useCountUp` on the streak numeral. Six of eight `motion.js` exports still have no consumer, and IMP-077 paid for them with two **native** deps and the vc14 build. | OTA | ⏸ **OWNER-GATED — specced 2026-09-13 at the owner's request, gate deliberately left ON.** A build chat must not take it until the owner lifts it. Spec in [`docs/specs-open.md`](docs/specs-open.md#imp-128--apply-the-motion-vocabulary) |
 | 022 | Save as PDF + About sheet (the two dead You-tab buttons) | Build | ⏸ **deferred (owner)** — spec in build-log → "Deferred specs"; **perk #6 gate** |
 | 044 | R8 on release builds (dev client was shipping to the public) | Build | 🟢 **code-complete, UNWALKED.** R8 must be walked on the build you actually ship, so it rides **vc15 or later**; walk = WALK-12, on hardware, last in the sitting |
@@ -187,38 +187,6 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
-_2026-09-13 (Sonnet — **IMP-129 built: a paid ember pack is granted on the next launch, not lost.**) —
-✅ code-complete, no walk of its own (WALK-20 step 7 owns the runtime proof, not run from this chat)._
-
-**What finished.** `emberGrants.js` documented a self-healing launch sweep that nothing ever called —
-`applyEmberGrants` had exactly one call site, inside `buyEmberPack`. [`entitlementSync.js`](src/billing/entitlementSync.js)'s
-`checkEntitlement` now returns a third key, `customerInfo` (the service's answer on success, `null` on the
-catch path; `nextPlusState` untouched). [`revenueCatService.js`](src/billing/revenueCatService.js) gained
-`getCustomerInfoRaw()` — a second method, not a change to `getEntitlement`'s shape — mirrored in
-[`simService.js`](src/billing/simService.js). [`RitualsApp.js`](src/RitualsApp.js)'s `applyEntitlementResult`
-(shared by the `AppState` listener and the launch hook) now calls `applyEmberGrants(result.customerInfo)`
-when present — no new store call, no toast, silent self-heal on both the cold-start and
-background→foreground paths.
-
-**The proof.** New [`emberGrantSweep.test.js`](__tests__/billing/emberGrantSweep.test.js) mounts the real
-`RitualsApp` (it is renderable — see `FabLabel.test.js`) with `createPurchaseService` swapped for a fake,
-rather than a source assertion: an un-applied `embers_240` transaction grants 240 and lands its id in
-`appliedEmberTx` (confirmed **red** before the `RitualsApp.js` wiring existed); the same transaction already
-in the ledger grants 0; an unreachable store grants nothing and — the control — does not move `plus`, and
-never reaches `getCustomerInfoRaw` at all. `purchaseFlow.test.js`'s ad-hoc fake service needed
-`getCustomerInfoRaw` added too — a real interface change surfaced a second caller (`PlusFlow.js`'s IMP-101
-reconcile) that the spec hadn't named. **1238 passed, 117 suites** (was 1230/116, +8 tests, +1 suite).
-Export clean. Commit `0a2f595`. Spec archived to `docs/build-log.md`; `docs/specs-open.md`'s queue now holds
-only the owner-gated IMP-128.
-
-**Not shipped this chat** — no `Release-Lane:` trailer.
-
-**The exact next step** — ⬆️ **superseded by the 2026-09-14 note below** (the queue is no longer empty).
-Still true from this one: IMP-124/125/126/127/129 await the owner's ship go-ahead, and
-`EMBER_PACKS_ENABLED` stays `false` until WALK-20 passes on hardware.
-
----
-
 _2026-09-14 (Opus — **IMP-130 specced: the hero card is one size, whichever sky is on. WALK-24 filed with
 it.**) — 📝 spec session, no code written._
 
@@ -245,6 +213,30 @@ equal — **the no-video case is red before the change.** Expect **1241 / 117** 
 proves the number, not the picture** — whether the classic card's now-uncovered lower third reads as
 composition or as a void is [WALK-24](docs/walk-open.md#walk-24--one-card-two-grounds) step 2.
 
-**The exact next step.** A **build chat** takes **IMP-130** — first ⬜ row, not gated; IMP-128 stays
-owner-gated. A **walk chat** has nothing new: WALK-24 is blocked on IMP-130's own OTA, and WALK-23 is still
-held by the owner even though its stated reason (*"look at IMP-130 first"*) has lapsed — **the owner's call.**
+**The exact next step.** ⬆️ **superseded by the 2026-09-14 note below** (IMP-130 is now built).
+
+---
+
+_2026-09-14 (Sonnet — **IMP-130 built: the hero card is one size, whichever sky is on.**) — ✅ code-complete,
+no walk of its own (WALK-24 owns the runtime proof, not run from this chat)._
+
+**What finished.** [`HomeScreen.js`](src/screens/HomeScreen.js) — one module-scope `HERO_BOX` style
+(`flex: 1`, the shared padding, `alignItems: 'center'`, `justifyContent: 'center'`) replaces the two hero
+shells' separate inline styles. The video shell keeps `height: HERO_HEIGHT` (336) and gains
+`testID="streak-hero"`; its inner `View` now uses `HERO_BOX`. The classic shell becomes structurally
+identical — `height: HERO_HEIGHT`, `overflow: 'hidden'`, the same `testID` — with `RayFan`/`NightRays`
+staying direct children of the `Card` (so they keep the card, not the padded box, as their absolute-position
+containing block) and `heroInner` wrapped in `HERO_BOX`. `art.js` untouched, per the spec's standing rule.
+
+**The proof.** [`HomeScreenSkyHero.test.js`](__tests__/screens/HomeScreenSkyHero.test.js) gained the
+spec's third `describe`, exactly as written: the video card measures 336, the classic card measures 336 too
+(confirmed **red** before the change — it had no explicit height at all), and the two grounds measure equal.
+None of the file's seven prior text/prop-based cases moved. **1241 passed, 117 suites** (was 1238/117, +3
+tests, no new suite). Export clean. Commit `111c3de`. Spec archived to `docs/build-log.md`;
+`docs/specs-open.md`'s queue now holds only the owner-gated IMP-128 — **no row a build chat may take.**
+
+**Not shipped this chat** — no `Release-Lane:` trailer.
+
+**The exact next step.** The backlog has nothing left for a build chat (IMP-128 stays owner-gated). A
+**walk chat** takes [WALK-24](docs/walk-open.md#walk-24--one-card-two-grounds) once IMP-130 ships by OTA —
+it is not shipped yet, so WALK-24 is still blocked on that push. WALK-23 stays held by the owner regardless.
