@@ -462,7 +462,7 @@ the lane now; CI (`release.yml`) ships from it on a `Release-Lane:` trailer. **N
 | WALK-21 | 🎨 | [The first video sky plays](#walk-21--the-first-video-sky-plays) | IMP-121, IMP-122, **IMP-123** | **device** (real panel, real GPU compositing, real battery) | 👤 | 🟠 **PARTIAL — 2026-09-13 (Play `internal` vc17, owner-run).** Steps 1-3, 6-10 ✅ — corners clean (no `textureView` needed, closes IMP-121's open question), loop seam holds, latency/offline/heat/fallback all clean, and step 8 re-confirms WALK-19a's store-authoritative membership. 🔴 **Steps 4 + 5 FAIL: day-mode hero contrast — scoped as [IMP-124](specs-open.md#imp-124)** (the streak subtitle is unreadable over the footage in day mode; the XP bar accent doesn't read as a bar). Step 11 (month strip) is a named gap — thin journal, nothing to scroll |
 | WALK-22 | 🎨 | [The day-mode hero re-check](#walk-22--the-day-mode-hero-re-check) | **IMP-124** + **IMP-125** | **device** | 👤 (visual) | ✅ **2026-09-14 (hardware, owner-run) — IMP-124 and IMP-125 both PROVEN, on update `01a09b18`.** Steps 1-3 (subtitle, "day streak" line, XP labels) all read clean over the water; step 5's candle row sits in the week-strip footer as designed; night mode is identical to day. 🔴 **NEW defect found live: the video hero card is a visibly different size from the default (RayFan) hero card when switching skies.** Scoped as **[IMP-130](specs-open.md#imp-130--the-hero-card-is-one-size-whichever-sky-is-on)** below — ✅ **now specced (2026-09-14): both shells render at 336dp with the content centred**, and its own proof is [WALK-24](#walk-24--one-card-two-grounds) |
 | WALK-23 | 🎨 | [The month strip on a journal that has months](#walk-23--the-month-strip-on-a-journal-that-has-months) | IMP-120 | **emulator** | 🤖 (agent-runnable) | ⏸ — **ready, agent can run it any time, but held at the owner's instruction 2026-09-14** (WALK-22 just found IMP-130; no other reason). WALK-21 step 11 could not run: the owner's journal is one month, so there was nothing to scroll. The dev panel's `storeShots` scenario is 210 days and settles it in a dev build |
-| WALK-24 | 🎨 | [One card, two grounds](#walk-24--one-card-two-grounds) | **IMP-130** | **device** | 👤 (visual) | ⬜ — **blocked on the OTA push and nothing else.** IMP-130 makes both hero shells 336dp with the content centred; this row is the only thing that can say whether the classic card's new lower third reads as composition or as a void. Filed 2026-09-14 with the spec |
+| WALK-24 | 🎨 | [One card, two grounds](#walk-24--one-card-two-grounds) | **IMP-130** + **IMP-131** | **device** | 👤 (visual) | 🟠 **PARTIAL, 2026-09-14 — half of it is already answered by the owner's own screenshot** on the IMP-130 OTA (`433eb53`). ✅ **Step 1 passes:** the classic card measures 336 and the page below the hero no longer moves with the sky. 🔴 **Steps 2/3 FAIL:** centring moved the numeral ~46dp off `RayFan`/`NightRays`' fixed focal point, so the rays and the night bloom converge **above** the numeral and the meta row sits below the art entirely — filed as **[IMP-131](specs-open.md#imp-131--the-sunburst-lost-the-numeral)**. ⬜ **Re-blocked on IMP-131 shipping by OTA**; steps 4 and 5 have still never run |
 
 ---
 
@@ -1413,9 +1413,20 @@ pass on a state you did not see on screen.**
 ## WALK-24 — one card, two grounds
 
 **Target: `device`. Runner: 👤 (visual judgement — every question here is "does it look right", and nothing
-else).** Proves [IMP-130](specs-open.md#imp-130--the-hero-card-is-one-size-whichever-sky-is-on).
+else).** Proves [IMP-130](build-log.md#imp-130--the-hero-card-is-one-size-whichever-sky-is-on-2026-09-14) **and now
+[IMP-131](specs-open.md#imp-131--the-sunburst-lost-the-numeral)**.
 
-🚦 **Blocked on the OTA push and nothing else.** IMP-130 is pure JS on `main`; until it ships, running this
+🟠 **PARTIAL as of 2026-09-14 — read this before running anything.** The owner shipped IMP-130 by OTA
+(`433eb53`) and sent a Home screenshot from their phone (night mode, streak 1). That one frame settles
+**step 1 as a PASS** — the classic card is 336dp and nothing below the hero moves — and **fails steps 2 and
+3**: the rays and `NightRays`' bloom converge in a pool of light **above** the numeral, and the level row and
+XP bar sit below where the 300dp disc ends. Cause and fix are
+**[IMP-131](specs-open.md#imp-131--the-sunburst-lost-the-numeral)**: the art is absolute at `top: -70` with a
+focal point fixed at card-y 80, and IMP-130's `justifyContent: 'center'` moved the content ~46dp off it.
+**Do not re-run this row to re-observe that** — it is already a filed, specced defect. **Steps 4 and 5 have
+never run and are still owed.**
+
+🚦 **Re-blocked on the IMP-131 OTA and nothing else.** IMP-130 is pure JS on `main`; until it ships, running this
 row re-observes the original WALK-22 defect and looks like a failed fix. **Pre-flight:** You tab → Version
 row still reads `1.0.10 / vc17` (this is **not** a new binary), and **the bundle id in that row is not the
 one WALK-22 ran on** (`01a09b18`). That comparison is the whole pre-flight — IMP-106 exists so it can be
@@ -1432,16 +1443,21 @@ minutes, so that is plenty, but if the sky vanishes mid-walk that is the sub, no
    Shop, apply **Golden Sun** (the default), and come back. **Nothing below the hero may move.** Before
    IMP-130 the whole page jumped ~86dp; after it, the only thing that changes is what is behind the numeral.
    Switch back and forth once more to be sure. **This is the pass/fail.**
-2. **The classic card's lower third.** On the default sky, the ray fan is a 300dp disc anchored near the top
-   of a 336dp card ([`art.js:34`](../src/art.js#L34)) — it does **not** stretch, and IMP-130 deliberately did
-   not make it. So: below the XP bar there is now plain card surface with no art on it. **Does that read as
-   breathing room, or as a card that failed to load?** If it reads as a void, that is a real finding and it
-   is an art row about `RayFan`'s size, **not** a re-open of IMP-130's height ruling.
-3. **The centred numeral, on both grounds.** IMP-130 added `justifyContent: 'center'`, so the big number sits
-   ~43dp lower in the frame than it did yesterday. Over footage that should put it closer to mid-frame, where
-   the art direction always assumed it was, and drop the XP bar **inside** the bottom scrim rather than on its
-   edge. Check the bar still reads as a bar over a passing whitecap — that was WALK-22 step 4 and it has
-   moved, so it does not carry over for free.
+2. 🔴 **The numeral and the light — the step that already failed once.** On the default sky, the art is a
+   300dp disc anchored at `top: -70` ([`art.js:34`](../src/art.js#L34)), so the rays converge at a **fixed**
+   card-y 80 and cannot follow the content. After IMP-131 the numeral must sit **in** that convergence — at
+   night, inside `NightRays`' bloom, which exists to be the pool of candlelight the number sits in. **Is the
+   big number in the light, or is the light above it?** That is the pass/fail, and it is what the owner's
+   2026-09-14 screenshot failed.
+3. **The card's lower third, with the meta row anchored to it.** IMP-131 pushes the level row and XP bar to
+   the bottom padding edge, so between the subtitle and that row there is now one open gap, and the row itself
+   sits below where the 300dp disc ends. **Does that read as a composition — hero above, stat line at the
+   foot — or as two things that drifted apart?** If it reads as a void, that is a real finding and it is an
+   art row about `RayFan`'s **size**, **not** a re-open of IMP-130's 336 or IMP-131's anchoring.
+3b. **Over footage, the same row.** With Meteor Shower on, the meta row should now land inside `SkyHero`'s
+   bottom-28% scrim ([`skyHero.js:45`](../src/home/skyHero.js#L45)) rather than above it. Check the XP bar
+   still reads as a bar over a passing whitecap — that was WALK-22 step 4, it has moved twice since, and it
+   does not carry over for free.
 4. **Font scale.** Settings → Display → largest font, relaunch, look at both grounds. The hero is a **fixed**
    336dp box with `overflow: 'hidden'`, so this is the one place the ruling can bite: the spec measured ~270dp
    of content against 288dp of usable box at the 1.5 cap. **Is anything clipped — the subtitle, the XP labels,

@@ -5253,6 +5253,39 @@ now-uncovered lower third looks like composition or a void is
 
 ## Session notes
 
+_2026-09-14 (Opus — **IMP-130 specced: the hero card is one size, whichever sky is on. WALK-24 filed with
+it.**) — 📝 spec session, no code written._
+
+**What finished.** WALK-22's raw finding is a buildable spec. **The defect as a rule:** a sky is a cosmetic
+choice, and **a cosmetic choice must not relayout the screen** — applying Meteor Shower makes the hero ~86dp
+taller and pushes every card below it down. **The ruling: `HERO_HEIGHT` (336) stays and the *default* card
+grows to meet it**, both shells sharing one `HERO_BOX` with `justifyContent: 'center'` so IMP-125's freed
+space is distributed, not pooled under the XP bar.
+
+**Why 336, not ~250 — do not re-litigate.** [`docs/design-queue.md`](docs/design-queue.md) → "The frame"
+derives the near-square box table, the **"generate square"** 1:1 choice (83–86% crop survival), the
+**1280×1280** encode recipe and the *"bottom ~28% (96 of 336dp)"* scrim rule **from 336**. Shrinking to
+~250dp takes the Pixel-class box to aspect 1.48 and 1:1 survival to ~68% — a third of every sky frame
+already encoded against it. **~250dp is IMP-125's residue, not a design decision.**
+
+**Four traps are in the spec, all read out of source** — `SkyHero`'s `absoluteFillObject` (so "let the video
+card size to content" is **not available**), ~250 being an **estimate** nothing may be hardcoded to, the
+fixed box vs `MAX_FONT_SCALE` 1.5 (~270dp in 288dp — fits, but not by much), and `RayFan`/`NightRays` not
+stretching, so `art.js` is **not touched**.
+
+**The proof it asks for.** One `describe` in `HomeScreenSkyHero.test.js` (it already mocks
+`activeSkyManifest` both ways): both grounds measure 336 via a new `testID="streak-hero"`, and the two are
+equal — **the no-video case is red before the change.** Expect **1241 / 117** (+3, no new suite). 🔴 **Green
+proves the number, not the picture** — whether the classic card's now-uncovered lower third reads as
+composition or as a void is [WALK-24](docs/walk-open.md#walk-24--one-card-two-grounds) step 2.
+
+**The exact next step.** ⬆️ **superseded by the 2026-09-14 note below** (IMP-130 is now built).
+
+---
+
+---
+
+
 _2026-09-13 (Sonnet — **IMP-129 built: a paid ember pack is granted on the next launch, not lost.**) —
 ✅ code-complete, no walk of its own (WALK-20 step 7 owns the runtime proof, not run from this chat)._
 
