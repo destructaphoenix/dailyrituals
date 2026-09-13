@@ -11,6 +11,7 @@ import { Chevron, Ember, Check, Candle, Sun } from '../icons';
 import { EmberPill, PlusBanner, SkyPreview, PalTag } from '../shopui';
 import { SHOP_PALETTES, SHOP_SKIES, CANDLE_PACKS, EMBER_PACKS } from '../data';
 import { keptLabel } from '../home/candleCap';
+import { EMBER_PACKS_ENABLED } from '../billing/config';
 
 export default function Shop({
   insets, onClose, embers, plus,
@@ -75,7 +76,7 @@ export default function Shop({
           style={({ pressed }) => ({ width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: c.ghostBtn, opacity: pressed ? 0.6 : 1 })}>
           <Chevron dir="left" size={22} color={c.ink} />
         </Pressable>
-        <EmberPill embers={embers} onPress={() => onGetEmbers()} lg />
+        <EmberPill embers={embers} onPress={() => onGetEmbers()} lg showAdd={EMBER_PACKS_ENABLED} />
       </View>
 
       <ScrollView

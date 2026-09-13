@@ -11,7 +11,7 @@ import { CHROME_FONT_SCALE } from './ui/textScale';
 import { Ember, Lock, Check, Sun, Moon, Chevron } from './icons';
 
 // ── Embers balance pill ───────────────────────────────────────────────────────
-export function EmberPill({ embers, plus, onPress, lg }) {
+export function EmberPill({ embers, plus, onPress, lg, showAdd = true }) {
   const c = useTheme().colors;
   const fontScale = Math.min(PixelRatio.getFontScale(), CHROME_FONT_SCALE);
   const plusSize = 17 * fontScale;
@@ -30,9 +30,11 @@ export function EmberPill({ embers, plus, onPress, lg }) {
       )}
       <Ember size={17} deep={c.accentDeep} />
       <T d w={800} color={c.accentDeep} maxFontSizeMultiplier={CHROME_FONT_SCALE} numberOfLines={1} style={{ fontSize: 15 }}>{embers}</T>
-      <View style={{ width: plusSize, height: plusSize, borderRadius: plusSize / 2, marginLeft: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: c.accent }}>
-        <T d w={800} color={c.onAccent} maxFontSizeMultiplier={CHROME_FONT_SCALE} numberOfLines={1} style={{ fontSize: 13, lineHeight: 15 * fontScale }}>+</T>
-      </View>
+      {showAdd && (
+        <View style={{ width: plusSize, height: plusSize, borderRadius: plusSize / 2, marginLeft: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: c.accent }}>
+          <T d w={800} color={c.onAccent} maxFontSizeMultiplier={CHROME_FONT_SCALE} numberOfLines={1} style={{ fontSize: 13, lineHeight: 15 * fontScale }}>+</T>
+        </View>
+      )}
     </Pressable>
   );
 }
