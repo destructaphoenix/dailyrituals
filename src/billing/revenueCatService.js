@@ -162,6 +162,14 @@ export function createRevenueCatService() {
       const info = await Purchases.getCustomerInfo();
       return toEntitlement(info);
     },
+    // IMP-129. The raw CustomerInfo, for the ember-grant launch sweep —
+    // getEntitlement() above deliberately keeps its existing return shape
+    // (four call sites read it), so this is a second method rather than a
+    // change to that one. Swallows its own error: checkEntitlement's catch
+    // path is keyed off getEntitlement() failing, not this.
+    async getCustomerInfoRaw() {
+      try { return await Purchases.getCustomerInfo(); } catch (e) { return null; }
+    },
     async getPrices() {
       try {
         const offerings = await Purchases.getOfferings();

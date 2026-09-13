@@ -496,6 +496,11 @@ export default function RitualsApp({ mode = 'day', settings, setSettings, onTogg
     }
     const next = nextPlusState(plus, result);
     if (next !== plus) setPlus(next);
+    // IMP-129. The same CustomerInfo checkEntitlement already fetched — no new
+    // store call — catches an ember pack that resolved while the app was
+    // dying: applyEmberGrants is idempotent, so this is a silent self-heal on
+    // both the cold-start path (below) and the AppState foreground path.
+    if (result.customerInfo) applyEmberGrants(result.customerInfo);
   };
 
   React.useEffect(() => {

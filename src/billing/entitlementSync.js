@@ -8,12 +8,17 @@ import { useEffect, useRef } from 'react';
 // Never throws. `verified: false` means the store couldn't be reached at all
 // (network, unavailable) — distinct from `verified: true, entitlement: null`,
 // which is the store definitively saying "no subscription here".
+//
+// `customerInfo` (IMP-129) rides along so the caller can run the ember-grant
+// sweep (src/billing/emberGrants.js) off the same launch check instead of a
+// second store call — null on the catch path, since there is nothing to sweep.
 export async function checkEntitlement(service) {
   try {
     const entitlement = await service.getEntitlement();
-    return { verified: true, entitlement: entitlement || null };
+    const customerInfo = await service.getCustomerInfoRaw();
+    return { verified: true, entitlement: entitlement || null, customerInfo };
   } catch (e) {
-    return { verified: false, entitlement: null };
+    return { verified: false, entitlement: null, customerInfo: null };
   }
 }
 

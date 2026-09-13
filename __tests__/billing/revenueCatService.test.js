@@ -278,6 +278,20 @@ describe('getEmberProducts', () => {
   });
 });
 
+// ── IMP-129 — the raw CustomerInfo for the ember-grant launch sweep ─────────
+describe('getCustomerInfoRaw', () => {
+  test('hands back the raw CustomerInfo, unmapped', async () => {
+    const customerInfo = { nonSubscriptionTransactions: [{ transactionIdentifier: 't1' }] };
+    Purchases.getCustomerInfo.mockResolvedValue(customerInfo);
+    expect(await createRevenueCatService().getCustomerInfoRaw()).toBe(customerInfo);
+  });
+
+  test('an unreachable store returns null, not a throw', async () => {
+    Purchases.getCustomerInfo.mockRejectedValue(new Error('offline'));
+    expect(await createRevenueCatService().getCustomerInfoRaw()).toBeNull();
+  });
+});
+
 describe('buyEmberPack', () => {
   const product = { identifier: 'embers_240', priceString: '$1.99' };
 

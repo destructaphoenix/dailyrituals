@@ -7,6 +7,7 @@ function fakeService(buyResult, restoreResult, entitlement = null) {
     buy: jest.fn(async () => buyResult),
     restore: jest.fn(async () => restoreResult),
     getEntitlement: jest.fn(async () => entitlement),
+    getCustomerInfoRaw: jest.fn(async () => null),
     getPrices: jest.fn(async () => ({})),
   };
 }

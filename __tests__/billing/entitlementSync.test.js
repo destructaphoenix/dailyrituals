@@ -1,22 +1,34 @@
 import { renderHook, waitFor } from '@testing-library/react-native';
 import { checkEntitlement, nextPlusState, useLaunchEntitlementSync } from '../../src/billing/entitlementSync';
 
-function fakeService(impl) {
-  return { getEntitlement: jest.fn(impl) };
+function fakeService(impl, customerInfo = null) {
+  return { getEntitlement: jest.fn(impl), getCustomerInfoRaw: jest.fn(async () => customerInfo) };
 }
 
 describe('checkEntitlement', () => {
   test('resolves with entitlement → verified true, entitlement returned', async () => {
     const svc = fakeService(async () => ({ active: true, plan: 'annual' }));
-    await expect(checkEntitlement(svc)).resolves.toEqual({ verified: true, entitlement: { active: true, plan: 'annual' } });
+    await expect(checkEntitlement(svc)).resolves.toEqual({ verified: true, entitlement: { active: true, plan: 'annual' }, customerInfo: null });
   });
   test('resolves with null (definitively no entitlement) → verified true, entitlement null', async () => {
     const svc = fakeService(async () => null);
-    await expect(checkEntitlement(svc)).resolves.toEqual({ verified: true, entitlement: null });
+    await expect(checkEntitlement(svc)).resolves.toEqual({ verified: true, entitlement: null, customerInfo: null });
   });
   test('rejects (network/unavailable) → verified false, entitlement null', async () => {
     const svc = fakeService(async () => { throw new Error('offline'); });
-    await expect(checkEntitlement(svc)).resolves.toEqual({ verified: false, entitlement: null });
+    await expect(checkEntitlement(svc)).resolves.toEqual({ verified: false, entitlement: null, customerInfo: null });
+  });
+  // IMP-129. customerInfo rides alongside a verified result — the ember-grant
+  // launch sweep reads it off this same call rather than a second store trip.
+  test('carries customerInfo through on the success path, for the ember-grant sweep', async () => {
+    const info = { nonSubscriptionTransactions: [{ transactionIdentifier: 't1' }] };
+    const svc = fakeService(async () => null, info);
+    await expect(checkEntitlement(svc)).resolves.toEqual({ verified: true, entitlement: null, customerInfo: info });
+  });
+  test('a getEntitlement failure never reaches getCustomerInfoRaw, and customerInfo is null', async () => {
+    const svc = fakeService(async () => { throw new Error('offline'); }, { nonSubscriptionTransactions: [] });
+    await checkEntitlement(svc);
+    expect(svc.getCustomerInfoRaw).not.toHaveBeenCalled();
   });
 });
 
@@ -43,7 +55,7 @@ describe('useLaunchEntitlementSync — IMP-107', () => {
     const onResult = jest.fn();
     renderHook(() => useLaunchEntitlementSync({ plus: true, service: svc, onResult }));
 
-    await waitFor(() => expect(onResult).toHaveBeenCalledWith({ verified: true, entitlement: null }));
+    await waitFor(() => expect(onResult).toHaveBeenCalledWith({ verified: true, entitlement: null, customerInfo: null }));
     expect(svc.getEntitlement).toHaveBeenCalledTimes(1);
   });
 
@@ -52,7 +64,7 @@ describe('useLaunchEntitlementSync — IMP-107', () => {
     const onResult = jest.fn();
     renderHook(() => useLaunchEntitlementSync({ plus: true, service: svc, onResult }));
 
-    await waitFor(() => expect(onResult).toHaveBeenCalledWith({ verified: false, entitlement: null }));
+    await waitFor(() => expect(onResult).toHaveBeenCalledWith({ verified: false, entitlement: null, customerInfo: null }));
   });
 
   test('plus false at mount, entitlement found → reports it (the lost-phone case, unregressed)', async () => {
@@ -61,7 +73,7 @@ describe('useLaunchEntitlementSync — IMP-107', () => {
     const onResult = jest.fn();
     renderHook(() => useLaunchEntitlementSync({ plus: false, service: svc, onResult }));
 
-    await waitFor(() => expect(onResult).toHaveBeenCalledWith({ verified: true, entitlement }));
+    await waitFor(() => expect(onResult).toHaveBeenCalledWith({ verified: true, entitlement, customerInfo: null }));
   });
 
   test('checks exactly once per mount, regardless of plus', async () => {

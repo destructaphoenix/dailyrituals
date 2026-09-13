@@ -35,6 +35,11 @@ export function createSimService(sim, alreadyPlus, buyDelay = 1500, restoreDelay
     async getEntitlement() {
       return alreadyPlus ? ent('annual') : null;
     },
+    // IMP-129 — mirrors revenueCatService's getCustomerInfoRaw so checkEntitlement
+    // can call it unconditionally; the sim keeps no purchase history of its own.
+    async getCustomerInfoRaw() {
+      return null;
+    },
     async getPrices() {
       return {}; // sim uses the PLUS_PRICES constants in the UI
     },
