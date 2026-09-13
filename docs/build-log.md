@@ -5251,6 +5251,54 @@ now-uncovered lower third looks like composition or a void is
 
 ---
 
+## IMP-133 — the sunburst was showing where it ends (2026-09-14)
+
+**Severity 🎨 — found by the owner on the IMP-132 OTA (`fc85377`), reported as "the hero card looks empty
+and ugly now."** They were right, and they guessed the fix: *"Do you think making the rays longer would
+work?"* It does, and for a reason worth writing down.
+
+**Cause, one line.** IMP-132 centred the disc and, in doing so, **made its own outer boundary visible for
+the first time.** At focal 80 the 300dp disc bled off the card's top edge, so you never saw where it
+stopped. Centred at 168 in a 350x336 card, all four sides of the circle fall *inside* the frame: an 18dp
+bare rim top and bottom, ~25dp left and right, and a ring of ray-tips terminating in mid-air. A sunburst
+that shows its own edge reads as a decal dropped on the card rather than light coming through it.
+
+**What finished.** [`art.js`](../src/art.js) — `RayFan`/`NightRays` gain `reach` (default `size / 2`, so both
+stay behaviourally frozen for any other caller). **Ray length is now independent of box size, and that
+separation is the whole point of the change:** the night bloom's `<Svg width={size}>` maps a *fixed*
+`viewBox="0 0 300 300"`, so simply scaling `size` up would have grown the pool of candlelight from r80 to
+r139 and washed the card out. The bloom keeps its own 300-box, centred inside the ray box.
+[`HomeScreen.js`](../src/screens/HomeScreen.js) — `heroReach(windowWidth)` derives the reach from the card's
+**own diagonal**, `hypot((width - 40) / 2, HERO_HEIGHT / 2) * 1.08`, so the tips are outside the card at any
+rotation on any phone; `useWindowDimensions` feeds it.
+
+| window | card | corner distance | reach | clearance |
+| --- | --- | --- | --- | --- |
+| 360 | 320x336 | 232.0 | 251 | 19.0 |
+| 393 | 353x336 | 243.7 | 264 | 20.3 |
+| 412 | 372x336 | 250.6 | 271 | 20.4 |
+| 430 | 390x336 | 257.4 | 278 | 20.6 |
+
+**The proof, and the test that had to be inverted.** IMP-132's case asserted the disc sat **wholly inside**
+the card (`top >= 0`, `top + height <= h`, symmetric margins). **That rule is precisely what produced the
+bare rim**, so it is now the opposite invariant: still centred on the focal (`focal - top === top + height -
+focal`), but `reach > hypot(cardWidth / 2, h / 2)` — long enough that the boundary is never visible. Red
+before on the reach clause. `focalOf` also now passes `reach` through, or it measures a differently sized
+box. **1249 passed, 117 suites** — unchanged, because a test was corrected rather than added.
+
+**Runtime proof (emulator, agent-run, 2026-09-14).** Fresh local dev build on `Pixel_9_Pro`, both grounds.
+The installed dev client was vc15/1.0.9 and died on `Cannot find native module 'ExpoVideo'`, and `android/`
+was 28 days stale — **the prebuild staleness trap, exactly as recorded**; `expo prebuild --clean` then
+`expo run:android` cleared it. Day and night both render the card filled edge to edge, the disc's boundary
+nowhere visible, and the night bloom still a tight pool at the numeral — confirming the decoupling held.
+
+**The judgement call, recorded because the owner may want it back.** The rays now pass behind the "day
+streak" label, the subtitle and the XP bar. That is **not new** — it is the pre-IMP-130 composition, where
+the disc reached the card's bottom edge — but it is busier than the last two builds shipped. Flagged to the
+owner before shipping; they approved on the emulator screenshots.
+
+---
+
 ## IMP-132 — the sunburst was centred on a card that no longer exists (2026-09-14)
 
 **Severity 🎨 — the other half of IMP-130's regression, found by the owner on the IMP-131 OTA (`d82c61f`).**

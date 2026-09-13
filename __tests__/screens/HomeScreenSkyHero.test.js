@@ -18,6 +18,9 @@ jest.mock('../../src/home/videoSkyGate', () => ({
 const { activeSkyManifest } = require('../../src/home/videoSkyGate');
 const VIDEO_SKY = { id: 'harvest', poster: 'https://skies.dailyrituals.app/harvest-poster.jpg', accent: '#5AA9E6' };
 
+const { Dimensions } = require('react-native');
+const WINDOW_WIDTH = Dimensions.get('window').width;
+
 const theme = makeTheme('day', DEFAULT_SETTINGS);
 const wrap = (ui) => render(<ThemeContext.Provider value={theme}>{ui}</ThemeContext.Provider>);
 
@@ -134,8 +137,8 @@ describe('the sunburst converges on the numeral again (IMP-131)', () => {
   // the SCREEN passes and measure where the disc actually lands. Rendering the
   // bare <Art /> would measure art.js's default, not the shipped hero.
   const focalOf = (view, Art) => {
-    const focal = view.UNSAFE_getByType(Art).props.focal;
-    const { top, height } = StyleSheet.flatten(wrap(<Art focal={focal} />).toJSON().props.style);
+    const { focal, reach } = view.UNSAFE_getByType(Art).props;
+    const { top, height } = StyleSheet.flatten(wrap(<Art focal={focal} reach={reach} />).toJSON().props.style);
     return top + height / 2; // read off the render, not typed
   };
 
@@ -216,17 +219,29 @@ describe('the sunburst is centred in the card it actually lives in (IMP-132)', (
     expect(renderedFocal(view, NightRays)).toBe(cardHeight(view) / 2);
   });
 
-  test('the disc is wholly inside the card — nothing clipped, no bare band', () => {
+  // IMP-133 corrects this case. It used to assert the disc sat WHOLLY INSIDE the
+  // card, which is the rule that produced the bare rim: a 300dp circle centred in
+  // a 350x336 card shows its own outer boundary on all four sides. The sunburst
+  // must never show where it ends. The invariant is the opposite one — centred on
+  // the focal, and long enough that its tips are outside the card at any rotation.
+  test('the disc stays centred on the focal and its boundary is never visible in the card', () => {
     activeSkyManifest.mockReturnValue(null);
     const view = wrap(<HomeScreen {...baseProps} mode="day" />);
     const h = cardHeight(view);
     const focal = renderedFocal(view, RayFan);
+    const reach = view.UNSAFE_getByType(RayFan).props.reach;
     const { top, height } = StyleSheet.flatten(
-      wrap(<RayFan focal={focal} />).toJSON().props.style
+      wrap(<RayFan focal={focal} reach={reach} />).toJSON().props.style
     );
-    expect(top).toBeGreaterThanOrEqual(0);
-    expect(top + height).toBeLessThanOrEqual(h);
-    expect(top).toBe(h - (top + height)); // symmetric top and bottom margin
+
+    // Still centred on the focal: the box is symmetric about it.
+    expect(height).toBe(reach * 2);
+    expect(focal - top).toBe(top + height - focal);
+
+    // And long enough to clear the card's farthest point — the corner.
+    const cardWidth = WINDOW_WIDTH - 40; // the hero wrapper's paddingHorizontal: 20
+    const corner = Math.hypot(cardWidth / 2, h / 2);
+    expect(reach).toBeGreaterThan(corner);
   });
 
   // Centring the numeral spends the slack the old layout had below it. The

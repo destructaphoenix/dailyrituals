@@ -10,7 +10,7 @@ import { useTheme } from './theme';
 const AView = Animated.View;
 
 // ── Faint rotating ray fan behind the day hero number ────────────────────────
-export function RayFan({ size = 300, focal = 80 }) {
+export function RayFan({ size = 300, focal = 80, reach = size / 2 }) {
   const t = useTheme();
   const spin = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -21,7 +21,8 @@ export function RayFan({ size = 300, focal = 80 }) {
     return () => loop.stop();
   }, [spin]);
   const rotate = spin.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
-  const c = size / 2;
+  const d = reach * 2;
+  const c = reach;
   const rays = [];
   for (let i = 0; i < 24; i++) {
     const a = (i / 24) * Math.PI * 2;
@@ -31,9 +32,9 @@ export function RayFan({ size = 300, focal = 80 }) {
     );
   }
   return (
-    <View pointerEvents="none" style={{ position: 'absolute', top: focal - size / 2, left: 0, right: 0, height: size, alignItems: 'center', opacity: 0.5 }}>
-      <AView style={{ width: size, height: size, transform: [{ rotate }] }}>
-        <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} fill="none">{rays}</Svg>
+    <View pointerEvents="none" style={{ position: 'absolute', top: focal - reach, left: 0, right: 0, height: d, alignItems: 'center', opacity: 0.5 }}>
+      <AView style={{ width: d, height: d, transform: [{ rotate }] }}>
+        <Svg width={d} height={d} viewBox={`0 0 ${d} ${d}`} fill="none">{rays}</Svg>
       </AView>
     </View>
   );
@@ -44,7 +45,7 @@ export function RayFan({ size = 300, focal = 80 }) {
 // rendered on pure AMOLED black, with a warm amber bloom at the convergence so
 // the streak number sits in a pool of candlelight. Symmetric and low-risk.
 // Focal point is the caller's to choose (IMP-132); the default 80 is IMP-003's.
-export function NightRays({ size = 300, focal = 80 }) {
+export function NightRays({ size = 300, focal = 80, reach = size / 2 }) {
   const t = useTheme();
   const spin    = useRef(new Animated.Value(0)).current;
   const breathe = useRef(new Animated.Value(0)).current;
@@ -67,7 +68,8 @@ export function NightRays({ size = 300, focal = 80 }) {
   const rotate       = spin.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
   const bloomOpacity = breathe.interpolate({ inputRange: [0, 1], outputRange: [0.22, 0.38] });
 
-  const c = size / 2;
+  const d = reach * 2;
+  const c = reach;
   const rays = [];
   for (let i = 0; i < 24; i++) {
     const a = (i / 24) * Math.PI * 2;
@@ -78,16 +80,19 @@ export function NightRays({ size = 300, focal = 80 }) {
   }
 
   return (
-    <View pointerEvents="none" style={{ position: 'absolute', top: focal - size / 2, left: 0, right: 0, height: size, alignItems: 'center' }}>
-      <View style={{ width: size, height: size }}>
+    <View pointerEvents="none" style={{ position: 'absolute', top: focal - reach, left: 0, right: 0, height: d, alignItems: 'center' }}>
+      {/* The rays reach past the card's corners; the bloom keeps its own 300-box
+          and is centred inside this one, so lengthening the rays does not scale
+          the pool of candlelight with them. */}
+      <View style={{ width: d, height: d, alignItems: 'center', justifyContent: 'center' }}>
         {/* Rotating ray fan — same 24-spoke sunburst as the day hero, slightly brighter on black */}
         <AView style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.6 }}>
-          <AView style={{ width: size, height: size, transform: [{ rotate }] }}>
-            <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} fill="none">{rays}</Svg>
+          <AView style={{ width: d, height: d, transform: [{ rotate }] }}>
+            <Svg width={d} height={d} viewBox={`0 0 ${d} ${d}`} fill="none">{rays}</Svg>
           </AView>
         </AView>
         {/* Soft central bloom — pool of light where the rays converge, tinted by accent */}
-        <AView style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: bloomOpacity }}>
+        <AView style={{ opacity: bloomOpacity }}>
           <Svg width={size} height={size} viewBox="0 0 300 300" fill="none">
             <Defs>
               <RadialGradient id="nightRaysBloom" cx="50%" cy="50%" r="50%">

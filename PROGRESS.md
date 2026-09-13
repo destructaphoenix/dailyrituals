@@ -188,6 +188,37 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
+_2026-09-14 (Opus — **IMP-133 built + walked: the sunburst was showing where it ends. Found by the owner on
+the IMP-132 OTA; they guessed the fix.**) — ✅ code-complete, ✅ emulator-proven, shipped by OTA._
+
+**What finished.** The owner's report was *"the hero card looks empty and ugly now"* and their guess —
+*"would making the rays longer work?"* — was right. IMP-132 centred the disc and in doing so **made its own
+outer boundary visible for the first time**: at focal 80 the disc bled off the top edge and you never saw
+where it stopped; centred at 168 in a 350x336 card, all four sides fall inside the frame and the ray-tips
+terminate in mid-air. [`art.js`](src/art.js) gains `reach` (default `size / 2`, frozen for other callers) —
+**ray length had to be separated from box size, not just increased**, because the night bloom's
+`<Svg width={size}>` maps a *fixed* `viewBox="0 0 300 300"` and scaling `size` would have grown the pool of
+candlelight from r80 to r139. [`HomeScreen.js`](src/screens/HomeScreen.js) derives the reach from the card's
+own diagonal (`hypot((width - 40) / 2, 336 / 2) * 1.08`), ~20dp of clearance on every width from 360 to 430.
+
+**The proof.** IMP-132's containment case asserted the disc sat **wholly inside** the card — **that rule is
+what produced the bare rim** — so it is inverted: still centred on the focal, but `reach` must exceed the
+card's corner distance so the boundary is never visible. **1249 passed, 117 suites, unchanged** (a test was
+corrected, not added); export clean. Full detail:
+[`docs/build-log.md`](docs/build-log.md#imp-133--the-sunburst-was-showing-where-it-ends-2026-09-14).
+
+**Runtime proof — emulator, agent-run, this chat.** Fresh local dev build on `Pixel_9_Pro`, day and night
+both confirmed filled edge to edge with the bloom still tight at the numeral. **The installed dev client was
+vc15/1.0.9 and died on `Cannot find native module 'ExpoVideo'` because `android/` was 28 days stale — the
+prebuild staleness trap, exactly as recorded;** `expo prebuild --clean` + `expo run:android` cleared it.
+
+**Flagged before shipping, and approved.** The rays now pass behind the "day streak" label, the subtitle and
+the XP bar. That is the pre-IMP-130 composition returning, not a new liberty, but it is busier than the last
+two builds — the owner saw the emulator shots and said go.
+
+**Exact next step.** WALK-24 stays owed on device; its steps 2/3 now cover IMP-131's convergence, IMP-132's
+centring and IMP-133's bleed, and its steps 4 (max font, both shells) and 5 (night) have still never run.
+
 _2026-09-14 (Opus — **IMP-132 built: the sunburst was centred on a card that no longer exists. The OTHER
 half of IMP-130's regression, found by the owner on the IMP-131 OTA.**) — ✅ code-complete, walk owed._
 

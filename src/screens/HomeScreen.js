@@ -1,7 +1,7 @@
 // HomeScreen.js — streak hub. Ported from HomeScreen in rituals-screens.jsx.
 
 import React from 'react';
-import { View, ScrollView, Pressable, Text } from 'react-native';
+import { View, ScrollView, Pressable, Text, useWindowDimensions } from 'react-native';
 import { useTheme } from '../theme';
 import { T, Card, PrimaryButton, ProgressBar } from '../ui';
 import { Sun, Moon, Check, Pencil, BADGE_ICON } from '../icons';
@@ -47,6 +47,17 @@ const HERO_BOX = { flex: 1, paddingHorizontal: 22, paddingTop: 26, paddingBottom
 // right place. It is the card's centre, and both the art and the numeral are
 // derived from it here so they cannot drift apart again.
 const HERO_FOCAL = HERO_HEIGHT / 2;
+
+// How far the rays run. IMP-132 centred the disc and, in doing so, made its own
+// outer boundary visible for the first time: a 300dp circle floating in a 350x336
+// card shows a bare rim on all four sides and reads as empty. The sunburst was
+// never meant to show where it ends -- before IMP-130 it bled off the top edge --
+// so the reach is now derived from the card's own diagonal: far enough that the
+// tips are always outside the card, at any rotation, on any phone width.
+const HERO_PAD = 20;        // the hero wrapper's paddingHorizontal, both sides
+const HERO_REACH_MARGIN = 1.08; // 8% past the corner, so no round cap ever lands on one
+const heroReach = (windowWidth) =>
+  Math.ceil(Math.hypot((windowWidth - HERO_PAD * 2) / 2, HERO_HEIGHT / 2) * HERO_REACH_MARGIN);
 const NUMERAL_LINE = 82;
 // Line heights below the numeral are explicit so the stack's height is known by
 // construction rather than left to three RN defaults (IMP-131's estimates).
@@ -57,6 +68,8 @@ const HERO_META_LINE = 18;
 export default function HomeScreen({ copy, mode, streak, level, levelName, xpInto, xpToNext, entries, quests, freezes, onOpenAchievements, done, onWrite, onToggleMode, embers, plus, plusEnabled = false, onOpenShop, dailyPrompt = '', userName = '', pendingFreezeNotice = [], onDismissFreezeNotice, onThisDayDismissed = '', onDismissOnThisDay, onOpenOnThisDay, onOpenPaywall, recapSeen = null, onDismissAnnualRecap, onOpenAnnualRecap, frozenDays = [], activeSky = 'classic', ownedSkies = [] }) {
   const t = useTheme();
   const c = t.colors;
+  const { width: windowWidth } = useWindowDimensions();
+  const reach = heroReach(windowWidth);
   const videoSky = activeSkyManifest(activeSky, ownedSkies, plus);
   const videoSkyActive = videoSky != null;
   const Orb = mode === 'night' ? Moon : Sun;
@@ -130,7 +143,7 @@ export default function HomeScreen({ copy, mode, streak, level, levelName, xpInt
           </Card>
         ) : (
           <Card testID="streak-hero" style={{ height: HERO_HEIGHT, overflow: 'hidden' }}>
-            {mode === 'night' ? <NightRays focal={HERO_FOCAL} /> : <RayFan focal={HERO_FOCAL} />}
+            {mode === 'night' ? <NightRays focal={HERO_FOCAL} reach={reach} /> : <RayFan focal={HERO_FOCAL} reach={reach} />}
             <View testID="hero-box" style={HERO_BOX}>{heroInner}</View>
           </Card>
         )}
