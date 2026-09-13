@@ -13,7 +13,7 @@
 > re-litigate a "why", and do not improve the scope.** If a step turns out to be impossible or the code
 > contradicts the spec, **STOP** and log it to `PROGRESS.md` → Open items rather than inventing a fix.
 >
-> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **1228 passed, 116 suites** — verified 2026-09-13), `npx expo export --platform android` clean, commit with the **exact** message given, then
+> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **1230 passed, 116 suites** — verified 2026-09-13), `npx expo export --platform android` clean, commit with the **exact** message given, then
 > update `PROGRESS.md` (tick the backlog row, write the session note) and **move the finished spec from
 > this file into `docs/build-log.md`**.
 >
@@ -24,9 +24,223 @@
 
 ## The queue
 
-**Empty.** **IMP-124, IMP-125, IMP-126 and IMP-127 are done** (archived to `docs/build-log.md`, commits
-`87771c4`, `d57dc2d`, `0502790`, `402391b`). No open row — the next build task is scoped by Opus into a new
-`IMP-xxx` heading here.
+**Two rows, and they are not equal.** **IMP-129 is a real defect on a path that is about to take real
+money** — take it. **IMP-128 is owner-gated** and exists so the parked motion decision has a body to read;
+it is not for a build chat until the owner lifts the gate.
+
+| Row | What | Lane | Take it? |
+| --- | --- | --- | --- |
+| **IMP-129** | A paid ember pack that resolves while the app is dying is never granted — the "self-healing" the module documents was never wired | OTA | ✅ **take this one** |
+| IMP-128 | Apply the motion vocabulary — `riseIn` on cards and rows, `popIn` on badges, `useCountUp` on the streak | OTA | ⏸ **owner's yes first — do not start** |
+
+**IMP-124, IMP-125, IMP-126 and IMP-127 are done** (archived to `docs/build-log.md`, commits `87771c4`,
+`d57dc2d`, `0502790`, `402391b`).
+
+---
+
+### IMP-129 — the ember grant that never heals itself
+
+**Severity 🚦 — it takes money and gives nothing back.** It cannot fire today (`EMBER_PACKS_ENABLED` is
+`false`) and it becomes live the moment that flag flips, which is what
+[WALK-20](walk-open.md#walk-20--money-for-embers) is written to test. **Build this before that flag flips**,
+not after.
+
+**The defect, in the module's own words.** [`emberGrants.js:11-16`](../src/billing/emberGrants.js#L11) says:
+
+> *"This is also what makes the grant self-healing: a purchase that resolves while the app is being killed
+> never runs the grant, but the transaction is still in the next customerInfo's history and not yet in
+> `applied`, so the very next launch catches it."*
+
+**No launch catches it.** `applyEmberGrants` ([`RitualsApp.js:340`](../src/RitualsApp.js#L340)) has exactly
+one call site — inside `buyEmberPack` at [`RitualsApp.js:357`](../src/RitualsApp.js#L357) — and
+`pendingEmberGrants` is imported nowhere else in `src/`. Verified by grep, 2026-09-13. The comment describes
+a mechanism that was designed, written as a pure function, tested as a pure function, and then never
+connected to a launch.
+
+**What the user experiences.** Play charges. The app is killed (or backgrounded to death by the OEM, or
+crashes) before `purchaseStoreProduct` resolves. The embers never arrive, and **relaunching does not fix
+it** — the only thing that ever grants them is *another* purchase, which would then grant both at once.
+That is a real-money loss with a working receipt on Play's side and no balance change on ours.
+
+**Why it is cheap to fix.** The launch already fetches exactly the object the sweep needs and throws it
+away. [`useLaunchEntitlementSync`](../src/billing/entitlementSync.js#L44) runs `checkEntitlement(service)`
+at mount, `checkEntitlement` calls `service.getEntitlement()`, and
+[`revenueCatService.js`](../src/billing/revenueCatService.js)'s `getEntitlement()` is
+`const info = await Purchases.getCustomerInfo(); return toEntitlement(info);` — the full `CustomerInfo`,
+with its `nonSubscriptionTransactions`, exists on that line and is discarded one line later. **No new store
+call.**
+
+**Steps.**
+
+1. **`src/billing/entitlementSync.js` — carry the raw info out.** `checkEntitlement` currently returns
+   `{ verified, entitlement }`. Add a third key: `{ verified, entitlement, customerInfo }`. On the success
+   path, `customerInfo` is whatever the service hands back; on the `catch` path it is `null`. ⚠️ **Do not
+   change `nextPlusState`** — it reads `verified` and `entitlement` only, and the offline-first downgrade
+   policy must not acquire a new input.
+2. **`src/billing/revenueCatService.js` — return both.** `getEntitlement()` must hand back the entitlement
+   *and* the `CustomerInfo` it was derived from. Give it a second method rather than changing
+   `getEntitlement`'s return shape, because four call sites read that shape:
+   `async getCustomerInfoRaw() { try { return await Purchases.getCustomerInfo(); } catch (e) { return null; } }`
+   and have `checkEntitlement` ask for it. **Mirror it in [`simService.js`](../src/billing/simService.js)**
+   — every sim path must answer this method or `npm test` breaks on an undefined call.
+3. **`src/RitualsApp.js` — sweep at launch.** In `applyEntitlementResult`, after the existing entitlement
+   handling, add `if (result.customerInfo) applyEmberGrants(result.customerInfo);`. It is already the one
+   shared policy function for both the `AppState` path and the launch path, so this buys the
+   background→foreground sweep for free as well.
+4. ⚠️ **No toast on the launch path.** `applyEmberGrants` returns the amount and changes state; it does not
+   speak. `buyEmberPack` keeps its own toast. **Do not add a launch toast** — `useLaunchEntitlementSync`'s
+   header states the whole point of that hook is that opening the journal is never interrupted by a notice
+   about billing, and a silent balance correction is the right behaviour.
+5. **Tests, red first.** A new `__tests__/billing/emberGrantSweep.test.js`:
+   - the launch sweep grants an un-applied transaction: mount with `appliedEmberTx: []` and a service whose
+     `getCustomerInfoRaw` returns one `embers_240` transaction → balance rises by 240 and the id lands in
+     `appliedEmberTx`. **This must fail before step 3.**
+   - it is idempotent: the same transaction already in `appliedEmberTx` grants **0** and mutates nothing.
+   - a `verified: false` result (the store unreachable) grants nothing and — the control — **does not move
+     `plus`**, proving step 1 did not leak a new input into the downgrade policy.
+   - `checkEntitlement`'s `catch` path returns `customerInfo: null` and step 3 does not throw on it.
+
+**Ship.** `npm test` green (≥ **1230 passed, 116 suites**), `npx expo export --platform android` clean, then:
+
+```
+fix(billing): a paid ember pack is granted on the next launch, not lost (IMP-129)
+```
+
+OTA, no native change, **no `versionCode` bump.**
+
+**Its runtime proof is [WALK-20](walk-open.md#walk-20--money-for-embers) step 7**, which kills the app
+mid-purchase deliberately. ⚠️ **Do not run that walk from this chat** — and do not read its absence as an
+unfinished spec.
+
+---
+
+### IMP-128 — apply the motion vocabulary
+
+⏸ **OWNER-GATED. Do not build this without an explicit yes, and do not take it as "the first open row".**
+The gate is the owner's own, recorded 2026-09-10: *"some time later when plus is complete I can work on the
+motion."* **Plus is not complete** by that sentence's own definition — WALK-19 step 8 (the one real-money
+purchase) and WALK-12 (R8, must be last) are both unwalked, and WALK-20 does not have a result. **This spec
+exists so the decision has a body to read when the gate lifts, not so it can be taken early.** Severity 🎨.
+
+**What it buys, and what it already cost.** IMP-077 added a motion vocabulary and the app never spent it.
+**Six of eight exports have no consumer**: `riseIn`, `popIn`, `fadeOut`, `stagger`, `useCountUp` and
+`ScreenFade` (IMP-111 deleted that one rather than fixing it). Only `usePressScale` is live, at a 0.99 press
+scale deliberately built to be imperceptible. **That vocabulary was not free** — IMP-077 added
+`react-native-reanimated` and `react-native-worklets` as **native** deps and forced the vc14 build. **This
+row is the only thing that ever makes that cost worth paying.** WALK-18's owner verdict — *"the animations
+are not there"* — is the defect, and it is correct.
+
+**Scope: three surfaces, and no more.** This is deliberately not "apply motion everywhere". It is the
+smallest set that makes the app visibly move on the screens a user opens first, and it is the set the
+parked note already named.
+
+⚠️ **`art.js`, `Celebration.js` and `Toast.js` stay on the RN `Animated` API. Do not port them** —
+coexistence is the stated design ([`motion.js:16`](../src/motion.js#L16)), not a compromise. ⚠️ **`stagger`
+is unused — do not be fooled by `Animated.stagger` in
+[`Celebration.js:23`](../src/screens/Celebration.js#L23).** That is React Native's own `Animated` API, a
+different function entirely; an audit on 2026-09-10 miscounted it as a consumer.
+
+---
+
+#### 🔴 Read this before step 1 — four traps, all verified in source on 2026-09-13
+
+**1. `riseIn` and `popIn` are hooks wearing function names.** Both call `useSharedValue`, `useEffect` and
+`useAnimatedStyle`. They are **not** `use`-prefixed, so React's lint rule will not flag them, and calling
+`riseIn(stagger(i))` inside a `.map()` callback or behind a `showRecapCard &&` guard breaks the rules of
+hooks **silently**. Home's card stack is conditional in three places
+([`HomeScreen.js:117`, `:128`, `:140`](../src/screens/HomeScreen.js#L117)) and Keepsakes is a `.map()`
+([`Achievements.js:40`](../src/screens/Achievements.js#L40)), so **every intended call site is one of these
+two shapes.** This is why step 1 introduces wrapper components instead of sprinkling calls.
+
+**2. `motion.test.js` asserts the module's top-level bindings are exactly `['DUR', 'EASE']`**
+([`__tests__/motion.test.js`](../__tests__/motion.test.js), last test, a `^(?:export )?(?:const|let|var)`
+regex). **Declare the new components as `export function Rise(...)`, never `export const Rise = ...`**, or
+that test goes red for a reason that has nothing to do with motion.
+
+**3. Under jest, a `riseIn` subtree renders at `opacity: 0`.** The mock's
+`useAnimatedStyle` is `IMMEDIATE_CALLBACK_INVOCATION` and `useSharedValue` returns a plain proxy, so the
+style is computed once at render with `p.value` still `0`; the `useEffect` then sets it to `1` and **nothing
+re-renders**, because a shared value is not React state. React Native Testing Library queries by text and
+does not care about opacity, so the existing suites should pass unchanged — **but if a Home or Keepsakes
+test asserts on a style object or holds a snapshot, it will move.** Expect that, and do not "fix" it by
+changing the initial value.
+
+**4. `useReducedMotion` is NOT in the Reanimated jest mock.** `node_modules/react-native-reanimated/src/mock.ts`
+line 84 reads `// useReducedMotion: ADD ME IF NEEDED`. Importing it makes every suite that renders Home
+throw `useReducedMotion is not a function`. **If step 5 is taken, `jest.setup.js` must extend the mock
+first** — this is the exact shape of the 085/099/100 mistake (a test written against an imagined SDK), so
+read the mock, do not assume it.
+
+---
+
+**Steps.**
+
+1. **`src/motion.js` — add two wrapper components, nothing else.** Both are `function` declarations (trap 2),
+   both render `Animated.View` from Reanimated so the animated style actually binds, and both take
+   `delay`, `style` and `children`:
+
+   ```js
+   export function Rise({ delay = 0, style, children, ...rest }) {
+     const a = riseIn(delay);
+     return <Animated.View {...rest} style={[style, a]}>{children}</Animated.View>;
+   }
+   export function Pop({ delay = 0, style, children, ...rest }) { /* popIn, same shape */ }
+   ```
+
+   ⚠️ **`motion.js` is currently a `.js` file with no JSX in it.** Confirm the Babel/Metro config compiles
+   JSX there (it is `babel-preset-expo` over the whole tree, so it should) by running `npm test` after this
+   step alone — **before** touching a screen. If it does not, **STOP and log it**; do not move the
+   components into `ui.js` on your own initiative, because `ui.js` imports theme and would break
+   `motion.test.js`'s purity assertion in the other direction.
+2. **Keep `motion.js` pure.** The purity test forbids imports from `persistence`, `billing`, `gamify` and
+   `insights`. `react` and `react-native-reanimated` are already imported and are fine. **Do not import
+   `theme` or `ui`.**
+3. **`HomeScreen.js` — wrap the card stack.** Each of the card wrappers under the hero becomes
+   `<Rise delay={stagger(i)}>`, in the source order they already appear: the hero card, the freeze notice,
+   On this day, the Annual Recap card, the quest/write card block, the week strip, the keepsakes rail.
+   ⚠️ **The index must be a literal per call site, not a running counter over conditionals** — a card that
+   is absent must not shift the delays of the cards after it, or the stack re-choreographs every time a
+   notice appears. Assign fixed indices 0…6 in source order and accept the gaps.
+   ⚠️ **Do not wrap the hero's *contents*** — `HERO_HEIGHT` is fixed at 336dp and the video sky sits behind
+   it; wrap the `Card`, not the numeral.
+4. **`Achievements.js` — stagger the keepsake rows.** The `.map()` at
+   [`Achievements.js:40`](../src/screens/Achievements.js#L40) wraps each row in
+   `<Rise delay={stagger(i, 40)}>`. **40ms, not the 60 default** — there are enough rows that 60 finishes
+   after the user has read the list, which is what `stagger`'s own comment warns about. Use `<Pop>` on the
+   **earned** badge circle only (`done === true`), so an earned keepsake lands and an unearned one merely
+   arrives.
+5. **`useCountUp` on the streak numeral.** [`HomeScreen.js:58`](../src/screens/HomeScreen.js#L58) renders
+   `{streak}` at 76pt. It becomes `useCountUp(streak)` — the hook returns a plain number in React state, so
+   the existing `<T>` and every shadow style stay exactly as they are.
+   ⚠️ **It animates only on *change*** (`if (from.current === value) return`), so a cold launch shows the
+   real number immediately and a completed entry counts up. **That is the intended behaviour; do not
+   "fix" it into a launch animation.** Leave the XP line alone this round — it is inside the same 336dp
+   box and two counters in one card compete.
+6. **Reduced motion — the accessibility question, and it is a real one.** ⚠️ **See trap 4.** Either extend
+   the Reanimated mock in `jest.setup.js` with `useReducedMotion: () => false` **and** honour it in `Rise`
+   and `Pop` (return the plain `View` with no animated style), **or do not import it at all.** Both are
+   acceptable; **what is not acceptable is importing it without extending the mock.** If you take the
+   no-import path, say so in the session note so the debt is recorded rather than forgotten.
+7. **Tests.** Extend [`__tests__/motion.test.js`](../__tests__/motion.test.js) rather than starting a new
+   suite: `Rise` and `Pop` render their children; the top-level-binding assertion still passes (trap 2);
+   the purity assertion still passes (step 2). Add one render test per touched screen asserting the
+   content is still **present** — that is all a no-op mock can honestly assert.
+
+**Ship.** `npm test` green (≥ **1230 passed, 116 suites**), `npx expo export --platform android` clean, then:
+
+```
+feat(motion): the app moves — riseIn on Home and Keepsakes, popIn on earned badges (IMP-128)
+```
+
+OTA, no native change, **no `versionCode` bump** — Reanimated is already in the binary since vc14. **Do not
+add a `Release-Lane` trailer** unless the owner asks.
+
+🔴 **A green suite proves nothing about the motion here, and this row is the clearest case of that in the
+project.** `jest.setup.js` no-ops every Reanimated hook and worklet — it says so in its own comment. Green
+means the screens still *render* with motion wired in. **Its runtime proof is a re-run of
+[WALK-18](walk-open.md#walk-18--the-app-moves), whose steps 2 and 3 were struck precisely because `riseIn`
+and `stagger` had no consumer.** When this lands, **un-strike them** — they become runnable for the first
+time since they were written.
 
 ---
 
@@ -97,9 +311,14 @@ Reanimated jest mock no-ops every hook. WALK-18 settles it.
 
 ### ⏸ Parked: apply the motion vocabulary — owner's (c), deferred 2026-09-10
 
-**Owner: *"some time later when plus is complete I can work on the motion."* NOT A ROW YET. Do not open a
-number for it and do not start it — Plus is not complete.** [IMP-111](build-log.md) (removing `ScreenFade`)
-is done — archived in `docs/build-log.md`.
+➡️ **This is now written up as [IMP-128](#imp-128--apply-the-motion-vocabulary), and the gate is UNCHANGED.**
+The owner asked on 2026-09-13 for every open suggestion in this file to be specced, and chose *"spec it,
+gated"* over *"spec it, buildable"* — so a spec body now exists to read, and **a build chat still may not
+take it.** The reasoning below is kept here because it is the argument for the row, not part of the row.
+
+**Owner: *"some time later when plus is complete I can work on the motion."* Do not start it — Plus is not
+complete** (WALK-19 step 8 and WALK-12 are both unwalked, and WALK-20 has no result).
+[IMP-111](build-log.md) (removing `ScreenFade`) is done — archived in `docs/build-log.md`.
 
 **Why it exists.** IMP-077 bought a motion vocabulary and the app never spent it. **Six exports have no
 consumer**: `riseIn`, `popIn`, `fadeOut`, `stagger`, `useCountUp`, and `ScreenFade` (IMP-111 deleted it

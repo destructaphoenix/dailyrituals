@@ -88,10 +88,14 @@ wipes data. **Export a backup first**; that export *is* WALK-03 step 1, so seque
 > ⚠️ **7C (the candle cap) is NOT proven and was briefly recorded as passed in error.** The owner held 6
 > candles banked before IMP-112; nothing capped, they merely had no room. Re-runs when the holding drains.
 >
-> ⛔ **WALK-20 still does not exist, and writing it is not the blocker** —
+> ✅ **WALK-20 now exists — written 2026-09-13, [its section is below](#walk-20--money-for-embers).** The
+> old note here was right that writing it was never the blocker, and that is still true:
 > `EMBER_PACKS_ENABLED` is `false` in [`config.js:82`](../src/billing/config.js#L82), which gates the modal,
-> the buy handler and the Shop prop. There is no surface to walk until the owner flips it, and WALK-19
-> step 6 currently asserts the opposite (that the packs are absent).
+> the buy handler and the Shop prop, so **there is no surface to walk until it is flipped** — and WALK-19
+> step 6 currently asserts the opposite (that the packs are absent). ⚠️ **Those two rows contradict each
+> other by design: whichever you run, the flag's state is the pre-flight.** WALK-20's own pre-flight lists
+> the four conditions, one of which is that
+> [IMP-129](specs-open.md#imp-129--the-ember-grant-that-never-heals-itself) has shipped.
 >
 > 📱 **The running order for everything above that needs the phone is written out below — "THE DEVICE SITTING PLAN" (2026-09-11): three sittings, the state each needs, and a 30-second pre-flight. It also corrects two stale instructions inside WALK-12's own section.**
 >
@@ -454,6 +458,7 @@ the lane now; CI (`release.yml`) ships from it on a `Release-Lane:` trailer. **N
 | WALK-18 | 🎨 | [The app moves](#walk-18--the-app-moves) | IMP-077 | **device** | 👤 (visual) | ✅ **CLOSED 2026-09-11 (hardware, owner-run) — IMP-111 proven.** Day mode, all four tabs, slow and rapid: tabs now switch **instantly with no transition at all** and **no shadow outlines around any card**. `ScreenFade` was deleted outright (`76c1d76` removed it from both `RitualsApp.js` and `motion.js`), so there is no fade left to composite elevation under. ⚠️ **Steps 2 and 3 of this row below are STRUCK, not owed** — "cards rise in and stagger" and press-scale describe `riseIn`/`stagger`, which have **no consumer**; the row's own audit already established six of eight motion exports are unused. Absence of animation is the designed state, not a failure. 🟠 Previously PARTIAL, 2026-09-10 (Galaxy S24 Ultra, owner-run) — **the row's PREMISE was wrong.** ⚠️ **The owner has no mid-range device and will not be getting one; this row cannot be run as written.** Two findings, both from a flagship, both valid there. **(1) "The animations are not there" — CORRECT AND EXPECTED.** [`motion.js`](../src/motion.js) states in its own header that it *"adds no animation to any screen"*: `riseIn`, `popIn`, `fadeOut` and `useCountUp` are **all unused**, and the only two live motions are `usePressScale` (a 0.99 scale, deliberately imperceptible) and `ScreenFade`. **There is essentially no motion here to frame-pace, so the mid-range requirement was never the real gate.** **(2) 🔴 NEW DEFECT — shadow outlines around the next screen's cards during a tab change, DAY MODE ONLY.** Cause found in source and it matches the day-mode-only symptom exactly: `ScreenFade` animates `opacity` over a subtree whose `Card`s carry Android `elevation: 8`, and elevation shadows do not composite under fractional parent opacity; dark mode has no elevation so it cannot occur. **Scoped as [IMP-111](specs-open.md#imp-111).** ✅ **DECIDED 2026-09-10 — the fade is being removed ([IMP-111](specs-open.md#imp-111)), and applying the motion vocabulary is parked until Plus is complete.** Re-run this row in **day mode** once IMP-111 ships: there should be no transition left to draw an outline during. ⚠️ **Correction to this row's own audit:** `stagger` is **also unused** — the hit in `Celebration.js:23` is RN's `Animated.stagger`, a different function. Six of eight motion exports have no consumer |
 | WALK-19a | 🚦 | [The IMP-105 isolation sitting](build-log.md#-walk-19a--the-imp-105-isolation-sitting-run-this-one-on-its-own) | [IMP-105](specs-open.md#imp-105) | **device** | 👤 | ✅ **2026-09-10 — PASSED (hardware, owner-run), 4 minutes.** Bought annual 00:43, uninstalled 00:44, reinstalled 00:45, **Plus already active on the second launch at 00:47 with no Restore tap** — the Restore row was gone and the You tab showed the member state. Elapsed 4 min against an annual test sub's ~3 hr life, so **expiry is arithmetically impossible and this run tested what step 9 always meant to test**. Play separately confirmed at uninstall that the subscription survives; the owner chose "keep the fresh start" (discarding local data) and Plus still returned, proving membership is store-authoritative. **IMP-105 closed — not reproducible, walk-protocol defect.** ⚠️ Named gap: `restorePurchases()` itself was never tapped (nothing to tap), so reinstall-then-Restore stays unexercised — not a blocker, step 4f already proved `restore()`. First walk here to name its own bundle before starting (`01a0877d`, via IMP-106). Detail in `build-log.md` → "Walk log" |
 | WALK-19 | 🚦 | [Money actually changes hands](#walk-19--money-actually-changes-hands) | **Phase 10b.5**, IMP-028, IMP-082 + IMP-083 (steps 5 and 10), IMP-084/085/086/087, **IMP-088** | **device** (real Play Billing + a license tester) | 👤 | 🔴 **2026-09-11 (hardware, owner-run, MONTHLY tester sub) — STEP 7 IS DONE.** Ran as the sub lapsed, the ordering rule honoured. **7A ✅ — [IMP-108](build-log.md) PROVEN:** with Plus live, Marigold, Honey, Rose Dusk, Sage Eve and Harvest Moon all showed **no ember price**, applied cleanly, and the balance stayed at 15. **7B ✅ — [IMP-109](build-log.md) PROVEN on palettes:** the shortfall names the item, its price and the balance. **7D ✅** — no "Gather Embers" section and no `$1.99`/`$4.99`/`$9.99` anywhere, so the `EMBER_PACKS_ENABLED` guard holds on a shipped build. **[IMP-110](build-log.md) ✅ PROVEN** — the paywall perk list no longer claims streak insurance is members-only. ⚠️ **7C is NOT a pass and was previously recorded as one in error:** the owner held **6 candles banked before IMP-112**, so the cap was never exercised — nothing capped, they simply had no room. It re-runs once the holding drains to ≤2. 🔴 **Three new defects out of this sitting:** [IMP-114](specs-open.md#imp-114) (the candle shortfall toast is unreachable — `disabled={!afford}` swallows the tap, which is why this call site survived four sittings unexercised), [IMP-115](specs-open.md#imp-115) (`6 / 3 kept`), and [IMP-117](specs-open.md#imp-117) (max-font centring). 🚦 **And one across the lapse:** [IMP-116](specs-open.md#imp-116) — Harvest Moon and Frostlight survived the subscription expiring, then **vanished at the next palette switch**, because `applyPalette` never adds to `ownedPalettes`. The paywall promises *"unlocked forever"*. **Blocked on an owner ruling.** **Owed now: step 8 only** (real money, held for last). Prior: 🔴 **2026-09-08 (hardware, owner-run) — steps 3, 4a, 4b, 4c, 4d, 4f, 5, 6 ✅ PASS.** [IMP-105](specs-open.md#imp-105) **blocks release**: reinstall + Restore on an account with an active subscription says "Nothing to restore" — and it is the one finding that survived the same-day source review (step 4f is its control: identical code passed minutes earlier). [IMP-104](specs-open.md#imp-104): default palette/sky items render as ember-locked, cause found, ready to build — **and tapping one wipes the ember balance to 0**. ⚠️ **Step 4e is INVALID, not a failure** — the phone ran OTA `d42b7ec7`, which predates IMP-100 **and** IMP-101; neither was ever pushed or shipped ([IMP-103](specs-open.md#imp-103)), so 4e owes a re-run after that OTA. Aeroplane-mode Restore reproduces the known IMP-092 cache limit (not new). 🔴 **2026-09-10 (hardware, owner-run), on group `f961b427`: step 4e ✅ PASS — "You already have Plus", which also settles IMP-103's open residual (the numeric `6`/`7` bet in `mapError.js` was correct). Step 7 ⚠️ INCONCLUSIVE for IMP-104 — the free items were never tapped (Crescent Moon ✅ applies cleanly), and with a 0 ember balance the NaN-wipe half is untestable; re-run once embers are earned. Step 7 instead found TWO new defects: [IMP-108](specs-open.md#imp-108) (a member is still charged embers for five palettes/skies the paywall promises) and [IMP-109](specs-open.md#imp-109) (the shortfall toast never names the price or balance). **Step 10 ✅ PASS, and the lapse confirmed at ~02:00** — the subscription bought at 00:43 expired at 01:43, and on re-opening the app the member state was gone. ✅ **That is [IMP-107](build-log.md)'s first and only hardware proof** — the row was opened 2026-09-09 because a lapsed member kept Plus until they happened to background the app. ⚠️ **The strength of this result depends on whether the app was truly force-closed first:** a cold start proves IMP-107's new launch check; a background→foreground cycle would have been caught by the pre-existing `AppState` listener and proves nothing new. Owner was asked for a force-close and reported the downgrade; recorded as a pass with that condition named. Step 10's earlier half ✅ PASS — the Play deep link worked, cancelling correctly did NOT revoke Plus before the period ended, and the "+3 candles — your Plus perk renewed" toast is IMP-102 firing on a test-compressed renewal, not a bug.** ✅ **Step 9 is SETTLED — see WALK-19a (2026-09-10): the entitlement survives a reinstall, IMP-105 was the walk's own ordering, not a defect.** That **unblocks step 10** (cancel flow), which was only ever blocked on step 9. Step 8 (real money) still deliberately held for last. Full detail in the RE-RUN section below. **Nothing is promoted `internal` → `production`.** |
+| WALK-20 | 🚦 | [Money for embers](#walk-20--money-for-embers) | **IMP-113**, IMP-112, + **IMP-129** | **device** (real Play Billing, consumables, a licence tester) | 👤 | ⬜ — **written 2026-09-13, and BLOCKED on four pre-flight conditions, not on a build.** IMP-113's purchase path has never run anywhere: `EMBER_PACKS_ENABLED` is `false` on every build ever shipped, so the Shop section, the Get Embers sheet and every store call behind them are unreachable. 🔴 **Its step 4 is the point** — a consumable Play does not consume returns `ITEM_ALREADY_OWNED`, the app's `owned` rescue finds the transaction already in its ledger, and the buyer gets a cheerful *"you're already up to date"* and no embers. 🚦 **Needs [IMP-129](specs-open.md#imp-129--the-ember-grant-that-never-heals-itself) shipped first** (step 7 has nothing to test without it), the three consumables live in Play **and** RevenueCat, and the flag flipped by OTA. **This walk is the only thing that can authorise that flip** |
 | WALK-21 | 🎨 | [The first video sky plays](#walk-21--the-first-video-sky-plays) | IMP-121, IMP-122, **IMP-123** | **device** (real panel, real GPU compositing, real battery) | 👤 | 🟠 **PARTIAL — 2026-09-13 (Play `internal` vc17, owner-run).** Steps 1-3, 6-10 ✅ — corners clean (no `textureView` needed, closes IMP-121's open question), loop seam holds, latency/offline/heat/fallback all clean, and step 8 re-confirms WALK-19a's store-authoritative membership. 🔴 **Steps 4 + 5 FAIL: day-mode hero contrast — scoped as [IMP-124](specs-open.md#imp-124)** (the streak subtitle is unreadable over the footage in day mode; the XP bar accent doesn't read as a bar). Step 11 (month strip) is a named gap — thin journal, nothing to scroll |
 | WALK-22 | 🎨 | [The day-mode hero re-check](#walk-22--the-day-mode-hero-re-check) | **IMP-124** + **IMP-125** | **device** | 👤 (visual) | ⬜ — ✅ **IMP-124 built** (`87771c4`) and ✅ **IMP-125 built** (`d57dc2d`), both 2026-09-13. **Blocked only on the OTA push now** — neither commit carries a `Release-Lane` trailer, so nothing has shipped and the phone is still running the bundle that failed. WALK-21's steps 4 and 5, plus the three elements the walk did not name. 4 minutes; a single day-mode look at one card |
 | WALK-23 | 🎨 | [The month strip on a journal that has months](#walk-23--the-month-strip-on-a-journal-that-has-months) | IMP-120 | **emulator** | 🤖 (agent-runnable) | ⬜ — **ready now, needs no build.** WALK-21 step 11 could not run: the owner's journal is one month, so there was nothing to scroll. The dev panel's `storeShots` scenario is 210 days and settles it in a dev build |
@@ -1064,6 +1069,113 @@ the deliverable** — scope it as a new `IMP-xxx` in `PROGRESS.md`, do not fix i
 promote `internal` → `production` until this row is ✅**, whatever the build says.
 
 ---
+
+---
+
+## WALK-20 — money for embers
+
+**Target: `device`. Runner: 👤 — a real Play purchase sheet, real money, and a licence tester. An agent
+cannot drive a single step of this.**
+
+**What it settles.** [IMP-113](build-log.md) built the cash→embers purchase path and it has **never run
+anywhere**: `EMBER_PACKS_ENABLED` is `false`, so the Shop section, the Get Embers sheet and every store call
+behind them are unreachable on every build ever shipped. `npm test` proves nothing here — it runs
+`simService`, which fabricates every purchase result. **This walk is the only thing that can authorise the
+flag flip**, and the flag flip is what puts three priced buttons in front of a paying user.
+
+### 🔴 Pre-flight — four things must be true, and none of them is a walk step
+
+Stop and say so if any is missing. **A missing prerequisite is not a failed walk.**
+
+1. **Three Play in-app products exist and are ACTIVE**, as **consumable** managed products:
+   `embers_240`, `embers_680`, `embers_1500`. Those ids are read off
+   [`data.js:182`](../src/data.js#L182) verbatim. ⚠️ **Consumable, not one-time** — step 4 is entirely about
+   what happens when Play does not consume.
+2. **The same three are attached in RevenueCat** as non-subscription products. The app fetches them by id
+   with `PRODUCT_CATEGORY.NON_SUBSCRIPTION` ([`revenueCatService.js:198`](../src/billing/revenueCatService.js#L198))
+   — **no Offering carries them**, so an Offering-only setup returns an empty list and every pack tap dies
+   at *"That pack isn't available right now"*.
+3. ✅ **[IMP-129](specs-open.md#imp-129--the-ember-grant-that-never-heals-itself) is built and shipped.**
+   Step 7 below tests the launch sweep, and without IMP-129 there is no launch sweep to test — the step
+   would fail by construction and tell you nothing you do not already know.
+4. **`EMBER_PACKS_ENABLED` is `true` on the bundle the phone is running.** This is a **code change** in
+   [`config.js:82`](../src/billing/config.js#L82) — commit it, ship it `Release-Lane: ota`, and confirm the
+   bundle id in the You tab changed (IMP-106 exists for exactly this).
+   ✅ **Why that OTA is safe to publish:** `runtimeVersion` is `{ policy: 'appVersion' }` and `version` is
+   `1.0.10` ([`app.config.js:5`](../app.config.js#L5), `:23`), so the update is only picked up by builds on
+   runtime 1.0.10 — **vc17 on `internal`, and nothing else.** `production` is on 1.0.3 / vc9 and cannot
+   receive it. 🔴 **But do not promote vc17 to any public track while the flag is true**, and flip it back
+   if this walk fails.
+
+**Also remember the two standing traps.** An OTA applies on the **second** launch (open, wait ~15s, fully
+kill, open again). And a licence tester's purchases are **free and do not appear in Play Console** — you
+will see no order, no receipt and no revenue, and that is correct, not a failure.
+
+### Steps
+
+1. **The flag is visibly on.** Shop → a **"Gather Embers"** section with three packs, and the ember pill at
+   the top of the Shop has its **`+` back**. ⚠️ **That `+` is a live regression check on
+   [IMP-127](build-log.md)** — it hides itself when the flag is false and must return when it is true. If
+   the section is there and the `+` is not, IMP-127 wired `showAdd` to the wrong thing.
+2. 🔴 **The prices are the store's, not ours — and this is the step most likely to pass vacuously.**
+   `EMBER_PACKS` carries offline fallbacks of **$1.99 / $4.99 / $9.99**, and `useLiveEmberProducts`
+   *silently keeps the fallbacks* if the fetch fails ([`useLiveEmberProducts.js:23`](../src/billing/useLiveEmberProducts.js#L23)
+   — the `.catch` is a comment and nothing else). **So a broken product fetch looks exactly like a working
+   one.** Set at least one Play price to something that is *not* its fallback before this walk, and check
+   that number here. If you did not, **record this step as unproven** rather than as a pass.
+3. **Buy the smallest pack.** Tap **240** in the Shop. The Play sheet opens, names the right product and the
+   right price. Complete it. Expect: a **`+240 Embers`** toast, the sheet closes, and the balance rises by
+   **exactly 240**. Write the before and after numbers down — "it went up" is not the assertion.
+4. 🔴 **Buy the SAME pack again. This is the highest-value step in the row.** A consumable that Play does not
+   consume throws `ITEM_ALREADY_OWNED` on the second purchase, which
+   [`mapError.js`](../src/billing/mapError.js) maps to `owned`, which sends the app down the rescue path to
+   `getCustomerInfo` — and `pendingEmberGrants` then finds that transaction id **already in the local
+   ledger** and grants **0**. **The failure signature is precise: no Play sheet or an instant dismissal,
+   the toast *"Nothing new to grant — you're already up to date"*, and no change in balance.** A pass is a
+   second real sheet, a second charge, and **+240 again**. If it fails, the product is misconfigured in
+   Play as non-consumable — that is a store fix, not an app fix, and it must not be filed as an IMP.
+5. **Cancel the sheet.** Tap a pack, then back out of Play's sheet. Expect **silence**: no toast at all, the
+   balance unchanged, the Get Embers sheet still open.
+   ([`RitualsApp.js:360`](../src/RitualsApp.js#L360) — `cancel` is deliberately the one outcome that says
+   nothing.) ⚠️ **A "Purchase failed" toast here is a defect**, and a real one: it accuses the store of
+   breaking when the user simply changed their mind.
+6. **Double-tap guard.** Tap a pack twice, fast, from the **Get Embers sheet** (the `+` route, not the Shop
+   tile route). Expect **one** Play sheet, the tapped row showing **…** in place of its price, and the other
+   two rows dimmed ([`GetEmbers.js:24`](../src/screens/GetEmbers.js#L24)). Two sheets or two charges is a
+   defect.
+7. 🔴 **Kill the app mid-purchase — [IMP-129](specs-open.md#imp-129--the-ember-grant-that-never-heals-itself)'s
+   only proof.** Tap a pack, complete the Play sheet, and **force-stop the app from the recents/app-info
+   screen before the toast appears.** Then relaunch. Expect: the balance **includes** that pack on the next
+   launch, silently, with **no toast**. ⚠️ **The silence is the design** — `useLaunchEntitlementSync`'s whole
+   contract is that opening the journal is never interrupted by a billing notice. Check the number, not for
+   a message. **This is the step that justifies building IMP-129 before flipping the flag**, so if it fails,
+   the flag goes back to `false` the same day.
+8. **Spend them, which is the point.** The owner's decided economy is **cash → embers → candles**. With a
+   fresh balance, buy a candle in the Shop and confirm the ember balance drops by the candle price and the
+   candle count rises. ⚠️ **`MAX_CANDLES` is 3** — if the holding is already at the cap, `buyCandles` returns
+   at the **cap guard before the affordability guard**, so nothing happens and **that is not this walk
+   failing.** It is the same blocker that has kept WALK-19's 7C and IMP-114 unexercised for four sittings.
+   **Drain to ≤2 first or record the step as unrun.**
+9. **Relaunch once more and confirm nothing double-grants.** The balance after a plain relaunch must be
+   **identical** to the balance before it. `appliedEmberTx` is persisted
+   ([`state.js:22`](../src/persistence/state.js#L22)), so a rising number here means the ledger is not being
+   written and every relaunch is free money.
+
+### ⚠️ What this walk cannot settle, and must not claim to
+
+- **Reinstall.** A fresh install clears `appliedEmberTx`, so the whole purchase history re-grants and the
+  balance comes back — which is *desirable*, but it also means a user who reinstalls **and** restores a
+  backup carrying an ember balance could plausibly end up granted twice. **Not tested here.** It needs its
+  own sitting and its own thinking; note it, do not improvise a test for it.
+- **Refunds and chargebacks.** A refunded consumable stays in `nonSubscriptionTransactions`. Nothing in the
+  app revokes embers. Out of scope, real, unwritten.
+- **Real money.** Every purchase here is a licence tester's, therefore free. WALK-19 step 8 is still the
+  only row that spends actual money, and it is still held for last.
+
+### After it passes
+
+**The flag stays `true` and the result is what authorises it** — record the commit that flipped it, and
+write the pass into `PROGRESS.md`. **Until then `EMBER_PACKS_ENABLED` is `false` on every public track.**
 
 ## WALK-21 — the first video sky plays
 
