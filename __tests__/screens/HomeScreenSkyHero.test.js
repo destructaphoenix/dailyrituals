@@ -96,3 +96,33 @@ describe('the streak hero\'s ground (IMP-121/122)', () => {
     expect(view.UNSAFE_getByType(ProgressBar).props.onVideo).toBe(true);
   });
 });
+
+describe('the streak hero card is one size, whichever sky is on (IMP-130)', () => {
+  afterEach(() => activeSkyManifest.mockReset());
+
+  test('with a video sky active, the hero card is 336', () => {
+    activeSkyManifest.mockReturnValue(VIDEO_SKY);
+    const view = wrap(<HomeScreen {...baseProps} mode="day" />);
+    const flat = StyleSheet.flatten(view.getByTestId('streak-hero').props.style);
+    expect(flat.height).toBe(336);
+  });
+
+  test('with no video sky, the hero card is 336 too (red before IMP-130)', () => {
+    activeSkyManifest.mockReturnValue(null);
+    const view = wrap(<HomeScreen {...baseProps} mode="day" />);
+    const flat = StyleSheet.flatten(view.getByTestId('streak-hero').props.style);
+    expect(flat.height).toBe(336);
+  });
+
+  test('the two grounds measure the same height', () => {
+    activeSkyManifest.mockReturnValue(VIDEO_SKY);
+    const video = wrap(<HomeScreen {...baseProps} mode="day" />);
+    const videoHeight = StyleSheet.flatten(video.getByTestId('streak-hero').props.style).height;
+
+    activeSkyManifest.mockReturnValue(null);
+    const classic = wrap(<HomeScreen {...baseProps} mode="day" />);
+    const classicHeight = StyleSheet.flatten(classic.getByTestId('streak-hero').props.style).height;
+
+    expect(classicHeight).toBe(videoHeight);
+  });
+});

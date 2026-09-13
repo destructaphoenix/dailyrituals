@@ -33,6 +33,11 @@ const RECAP_WINDOW_MONTHS = [11, 0]; // Dec, Jan
 // the real sky manifest instead of one hardcoded fixture clip).
 const HERO_HEIGHT = 336;
 
+// Both hero shells are the same box — only the ground behind them differs.
+// The height is pinned to the sky-clip crop (design-queue.md → "The frame"),
+// so the classic card's content does not get to decide it (IMP-130).
+const HERO_BOX = { flex: 1, paddingHorizontal: 22, paddingTop: 26, paddingBottom: 22, alignItems: 'center', justifyContent: 'center' };
+
 export default function HomeScreen({ copy, mode, streak, level, levelName, xpInto, xpToNext, entries, quests, freezes, onOpenAchievements, done, onWrite, onToggleMode, embers, plus, plusEnabled = false, onOpenShop, dailyPrompt = '', userName = '', pendingFreezeNotice = [], onDismissFreezeNotice, onThisDayDismissed = '', onDismissOnThisDay, onOpenOnThisDay, onOpenPaywall, recapSeen = null, onDismissAnnualRecap, onOpenAnnualRecap, frozenDays = [], activeSky = 'classic', ownedSkies = [] }) {
   const t = useTheme();
   const c = t.colors;
@@ -96,17 +101,17 @@ export default function HomeScreen({ copy, mode, streak, level, levelName, xpInt
       {/* streak hero */}
       <View style={{ paddingHorizontal: 20 }}>
         {videoSkyActive ? (
-          <Card style={{ height: HERO_HEIGHT, overflow: 'hidden' }}>
+          <Card testID="streak-hero" style={{ height: HERO_HEIGHT, overflow: 'hidden' }}>
             <SkyHero source={skyVideoSource(videoSky, mode)} poster={{ uri: videoSky.poster }}>
-              <View style={{ flex: 1, paddingHorizontal: 22, paddingTop: 26, paddingBottom: 22, alignItems: 'center' }}>
+              <View style={HERO_BOX}>
                 {heroInner}
               </View>
             </SkyHero>
           </Card>
         ) : (
-          <Card style={{ paddingHorizontal: 22, paddingTop: 26, paddingBottom: 22, alignItems: 'center', overflow: 'hidden' }}>
+          <Card testID="streak-hero" style={{ height: HERO_HEIGHT, overflow: 'hidden' }}>
             {mode === 'night' ? <NightRays /> : <RayFan />}
-            {heroInner}
+            <View style={HERO_BOX}>{heroInner}</View>
           </Card>
         )}
       </View>
