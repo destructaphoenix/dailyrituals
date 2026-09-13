@@ -137,10 +137,13 @@ export default function InsightsScreen({ copy, entries = [], streak = 0, xp = 0,
                       <T w={700} color={c.ink} numberOfLines={1} style={{ fontSize: 13.5, flexShrink: 1 }}>{x.m}</T>
                     </View>
                     <View style={{ flex: 1, height: 12, borderRadius: 999, backgroundColor: c.accentSoft, overflow: 'hidden' }}>
-                      <View style={{
-                        width: `${(x.n / moodMax) * 100}%`, height: '100%', borderRadius: 999,
-                        backgroundColor: c.accent, opacity: 1 - i * 0.1,
-                      }} />
+                      <View
+                        testID={`mood-bar-${x.m}`}
+                        style={{
+                          width: `${(x.n / moodMax) * 100}%`, height: '100%', borderRadius: 999,
+                          backgroundColor: c.accent, opacity: Math.max(0.3, 1 - i * 0.1),
+                        }}
+                      />
                     </View>
                     <T w={700} color={c.muted} style={{ minWidth: 18, fontSize: 12.5, textAlign: 'right' }}>{x.n}</T>
                   </View>
