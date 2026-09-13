@@ -5139,7 +5139,62 @@ remainder-line design ("+4 more feelings") is still open there.
 
 ---
 
+## IMP-127 — the Shop's ember `+` promises an action it cannot perform (2026-09-13)
+
+**From** [`design-queue.md`](design-queue.md) → D-09, and D-09 itself was half wrong. It said the `+` on
+the ember pill "opens nothing" — true only at [`Shop.js:78`](../src/screens/Shop.js#L78), whose `onGetEmbers`
+→ `openGetEmbers()` toasted *"Embers also gather on their own"* while `EMBER_PACKS_ENABLED` was `false`.
+Home's own pill (`HomeScreen.js:88`) opens the Shop with its `+` and was always fine — the correction is
+what kept this row small. **Severity 🎨.**
+
+**The decision.** Hide the `+` where it cannot act; keep it where it can. Rejected the alternative D-09
+offered — redesigning the pill to read as a balance — because `EMBER_PACKS_ENABLED` flips to `true` the
+moment WALK-20 passes, and a redesign would then have to be undone.
+
+**What changed.** [`shopui.js`](../src/shopui.js) — `EmberPill` gains `showAdd = true`; the `+` circle
+renders only when it is true, everything else about the pill untouched. [`Shop.js`](../src/screens/Shop.js)
+— `showAdd={EMBER_PACKS_ENABLED}`, the flag imported from [`billing/config.js`](../src/billing/config.js)
+into `Shop.js` (not into `shopui.js`, which stays ignorant of billing config). `HomeScreen.js` took no
+change — it keeps the default and keeps opening the Shop.
+
+**IMP-119's walk moves, it doesn't vanish.** IMP-119 fixed the `+` glyph's centring and still owes a device
+walk; this row does not delete the only thing that walk looks at — Home's pill is the same `EmberPill`
+component, the same `PixelRatio` math, on a screen this row never touched. The walk now looks at Home's
+pill instead of the Shop's.
+
+**The proof.** [`EmberPill.test.js`](../__tests__/ui/EmberPill.test.js) kept its two IMP-117/IMP-119 source
+assertions (lineHeight scaling, capped-fontScale circle sizing) and gained two render tests:
+`showAdd={false}` renders no `+`, and the default still renders it. **1230 passed, 116 suites** (was
+1228/116, +2 tests). Export clean. Commit `402391b`.
+
+**Not in this row.** OTA, no native change. No walk of its own — folds into whichever Shop sitting comes
+next, and into WALK-20 when `EMBER_PACKS_ENABLED` flips, where the `+` must come back.
+
+---
+
 ## Session notes
+
+_2026-09-13 (Sonnet — **IMP-125 built: the candle count moved out of the hero and into the week-strip
+footer.**) — ✅ code-complete, walk owed (device, WALK-22, needs the OTA landed)._
+
+**What finished.** [`HomeScreen.js`](../src/screens/HomeScreen.js) — `<StreakFreeze>` removed from
+`heroInner` (both the video-sky and classic-art shells) and rendered instead inside the week-strip `Card`,
+as a footer row after the seven-dot loop. `HERO_HEIGHT` (336) left untouched, per spec — the
+numeral/subtitle/XP-bar block now simply owns the freed space alone. [`gamify.js`](../src/gamify.js) —
+`StreakFreeze` loses the `onVideo` prop and the `heroChrome` import IMP-124 gave it (dead the moment the
+move landed); back to the plain `c.border` rule and `c.muted` label unconditionally.
+
+**The proof.** [`streakFreezeComponent.test.js`](../__tests__/home/streakFreezeComponent.test.js) loses its
+two `onVideo` cases (the prop no longer exists), keeping one: the rule and label sit on theme tokens. No
+other test located the candle row relative to the hero, so nothing else needed touching. **1226 passed, 115
+suites** (was 1228/115) — **down by exactly 2**, the deleted `onVideo` cases, the one sanctioned exception
+to the ≥-count rule on this row. Export clean. Commit `d57dc2d`. Spec archived to `docs/build-log.md`;
+`docs/specs-open.md`'s queue then held only IMP-126, IMP-127.
+
+**Not shipped this chat** — no `Release-Lane:` trailer, per spec. [WALK-22](walk-open.md#walk-22--the-day-mode-hero-re-check)
+step 5 updated to its single (shipped) form now that IMP-125 is built.
+
+---
 
 _2026-09-13 (Opus — **IMP-125 ruled on and resequenced; WALK-21's result and two new walks committed.**) —
 📋 docs only, no source touched._

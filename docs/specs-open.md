@@ -24,61 +24,13 @@
 
 ## The queue
 
-**One open row, buildable — no gates left.** **IMP-124, IMP-125 and IMP-126 are done** (archived to
-`docs/build-log.md`, commits `87771c4`, `d57dc2d`, `0502790`).
-
-| Row | What | Lane | Take it? |
-| --- | --- | --- | --- |
-| IMP-127 | The Shop's ember `+` promises an action it cannot perform (D-09) | OTA | ✅ **take this one** |
+**Empty.** **IMP-124, IMP-125, IMP-126 and IMP-127 are done** (archived to `docs/build-log.md`, commits
+`87771c4`, `d57dc2d`, `0502790`, `402391b`). No open row — the next build task is scoped by Opus into a new
+`IMP-xxx` heading here.
 
 ---
 
-### IMP-127 — the Shop's ember `+` promises an action it cannot perform
-
-**From** [`design-queue.md`](design-queue.md) → **D-09**. **Severity 🎨.** ⏸ **Sequenced after IMP-124 —
-take it only once IMP-124 is committed**, so two cosmetic OTA rows do not land on the same surface in the
-same window and make a failed walk ambiguous.
-
-**⚠️ D-09 is half wrong, and the correction is what makes this row small.** D-09 says the `+` *"opens
-nothing"*. That is true of **one** of the two pills:
-
-| Call site | `onPress` | Verdict |
-| --- | --- | --- |
-| [`Shop.js:78`](../src/screens/Shop.js#L78) | `onGetEmbers()` → `openGetEmbers()` → with `EMBER_PACKS_ENABLED` false, a toast: *"Embers also gather on their own"* | 🔴 **the defect** |
-| [`HomeScreen.js:88`](../src/screens/HomeScreen.js#L88) | `onOpenShop` | ✅ **fine — leave it.** The `+` opens the Shop, which is where embers are got |
-
-**The decision.** Hide the `+` where it cannot act; keep it where it can. The alternative D-09 offers —
-redesigning the pill to read as a balance — is rejected: the flag flips to `true` the moment
-[WALK-20](../PROGRESS.md) passes, and a redesign would then have to be undone.
-
-**Steps.**
-1. [`src/shopui.js`](../src/shopui.js) — `EmberPill` gains `showAdd = true`; the `+` circle renders only
-   when it is true. Everything else about the pill is untouched.
-2. [`src/screens/Shop.js`](../src/screens/Shop.js#L78) — `showAdd={EMBER_PACKS_ENABLED}`, imported from
-   [`src/billing/config.js`](../src/billing/config.js). **Import the flag in `Shop.js`, not in `shopui.js`**
-   — a shared UI component should not know about billing config.
-3. `HomeScreen.js` — **no change.** It takes the default.
-
-**⚠️ Check this before you commit, and say so in the session note.** [IMP-119](build-log.md) fixed the `+`
-glyph's centring and **still owes a device walk**. This row must not delete the only thing that walk looks
-at. It does not: the **Home** pill keeps its `+`, it is the same `EmberPill` component, and `PixelRatio`
-does not care which screen it is on. **Record in the commit body that IMP-119's walk moves to Home's pill.**
-
-**The test.** [`__tests__/ui/EmberPill.test.js`](../__tests__/ui/EmberPill.test.js) — `showAdd={false}`
-renders no `+`; the default still renders it; **IMP-119's scaled-`lineHeight` assertion must still pass
-under the default** (do not let the new branch skip it).
-
-**Ship.** `npm test` green (≥ 1228/116), export clean, then:
-
-```
-fix(shop): the ember plus appears only where it can add embers (IMP-127)
-```
-
-OTA, no native change. **No walk of its own** — it folds into whichever Shop sitting comes next, and into
-WALK-20 when `EMBER_PACKS_ENABLED` flips, where the `+` must come **back**.
-
----
-
+**IMP-127 is done** — archived in [`docs/build-log.md`](build-log.md#imp-127--the-shops-ember--promises-an-action-it-cannot-perform-2026-09-13), commit `402391b`.
 **IMP-123 is done** — archived in [`docs/build-log.md`](build-log.md#imp-123--the-first-sky-carries-a-clip-on-its-own-update-channel-2026-09-13), commit `26e644b`.
 **IMP-122 is done** — archived in [`docs/build-log.md`](build-log.md#imp-122--the-sky-catalogue-becomes-a-manifest-2026-09-12), commit `738a99e`.
 **IMP-121 is done** — archived in [`docs/build-log.md`](build-log.md#imp-121--the-streak-hero-plays-a-video-sky-2026-09-12), commit `d0fe2cb`.
