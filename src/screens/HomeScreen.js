@@ -36,7 +36,7 @@ const HERO_HEIGHT = 336;
 // Both hero shells are the same box — only the ground behind them differs.
 // The height is pinned to the sky-clip crop (design-queue.md → "The frame"),
 // so the classic card's content does not get to decide it (IMP-130).
-const HERO_BOX = { flex: 1, paddingHorizontal: 22, paddingTop: 26, paddingBottom: 22, alignItems: 'center', justifyContent: 'center' };
+const HERO_BOX = { flex: 1, paddingHorizontal: 22, paddingTop: 26, paddingBottom: 22, alignItems: 'center' };
 
 export default function HomeScreen({ copy, mode, streak, level, levelName, xpInto, xpToNext, entries, quests, freezes, onOpenAchievements, done, onWrite, onToggleMode, embers, plus, plusEnabled = false, onOpenShop, dailyPrompt = '', userName = '', pendingFreezeNotice = [], onDismissFreezeNotice, onThisDayDismissed = '', onDismissOnThisDay, onOpenOnThisDay, onOpenPaywall, recapSeen = null, onDismissAnnualRecap, onOpenAnnualRecap, frozenDays = [], activeSky = 'classic', ownedSkies = [] }) {
   const t = useTheme();
@@ -59,11 +59,12 @@ export default function HomeScreen({ copy, mode, streak, level, levelName, xpInt
   // every respect except what sits behind it (IMP-121).
   const heroInner = (
     <>
-      <View style={{ zIndex: 1, alignItems: 'center', marginTop: 13 }}>
+      <View testID="hero-numeral-block" style={{ zIndex: 1, alignItems: 'center', marginTop: 13 }}>
         <T d w={800} color={c.accentDeep} style={[{ fontSize: 76, lineHeight: 82, includeFontPadding: false, textAlign: 'center' }, hero.numeralShadow]}>{streak}</T>
         <T d w={700} color={hero.title} style={[{ fontSize: 16, marginTop: 2 }, hero.textShadow]}>day streak</T>
         <T w={600} color={hero.subtitle} style={[{ fontSize: 13, marginTop: 4 }, hero.textShadow]}>{streakSubtitle(streak)}</T>
       </View>
+      <View testID="hero-spacer" style={{ flex: 1 }} />
       <View style={{ zIndex: 1, width: '100%', marginTop: 22 }}>
         <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 7 }}>
           <T d w={700} color={hero.meta} numberOfLines={1} style={[{ fontSize: 14, flexShrink: 1 }, hero.textShadow]}>Lv {level} · {levelName}</T>
@@ -103,7 +104,7 @@ export default function HomeScreen({ copy, mode, streak, level, levelName, xpInt
         {videoSkyActive ? (
           <Card testID="streak-hero" style={{ height: HERO_HEIGHT, overflow: 'hidden' }}>
             <SkyHero source={skyVideoSource(videoSky, mode)} poster={{ uri: videoSky.poster }}>
-              <View style={HERO_BOX}>
+              <View testID="hero-box" style={HERO_BOX}>
                 {heroInner}
               </View>
             </SkyHero>
@@ -111,7 +112,7 @@ export default function HomeScreen({ copy, mode, streak, level, levelName, xpInt
         ) : (
           <Card testID="streak-hero" style={{ height: HERO_HEIGHT, overflow: 'hidden' }}>
             {mode === 'night' ? <NightRays /> : <RayFan />}
-            <View style={HERO_BOX}>{heroInner}</View>
+            <View testID="hero-box" style={HERO_BOX}>{heroInner}</View>
           </Card>
         )}
       </View>

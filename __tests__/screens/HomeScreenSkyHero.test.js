@@ -6,7 +6,7 @@ import React from 'react';
 import { render } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 import HomeScreen from '../../src/screens/HomeScreen';
-import { RayFan } from '../../src/art';
+import { RayFan, NightRays } from '../../src/art';
 import { ProgressBar } from '../../src/ui';
 import { streakSubtitle } from '../../src/home/streakCopy';
 import { ThemeContext, makeTheme, DEFAULT_SETTINGS } from '../../src/theme';
@@ -124,5 +124,54 @@ describe('the streak hero card is one size, whichever sky is on (IMP-130)', () =
     const classicHeight = StyleSheet.flatten(classic.getByTestId('streak-hero').props.style).height;
 
     expect(classicHeight).toBe(videoHeight);
+  });
+});
+
+describe('the sunburst converges on the numeral again (IMP-131)', () => {
+  afterEach(() => activeSkyManifest.mockReset());
+
+  const focalOf = (Art) => {
+    const { top, height } = StyleSheet.flatten(wrap(<Art />).toJSON().props.style);
+    return top + height / 2; // -70 + 300/2 = 80 — read, not typed
+  };
+
+  test('the classic hero\'s numeral sits on the ray fan\'s focal point', () => {
+    activeSkyManifest.mockReturnValue(null);
+    const view = wrap(<HomeScreen {...baseProps} mode="day" />);
+    const box = StyleSheet.flatten(view.getByTestId('hero-box').props.style);
+    const block = StyleSheet.flatten(view.getByTestId('hero-numeral-block').props.style);
+    const num = StyleSheet.flatten(view.getByText('5').props.style);
+    expect(box.justifyContent).not.toBe('center');
+    expect(box.paddingTop + block.marginTop + num.lineHeight / 2).toBe(focalOf(RayFan));
+  });
+
+  test('night is the same construction', () => {
+    activeSkyManifest.mockReturnValue(null);
+    const view = wrap(<HomeScreen {...baseProps} mode="night" />);
+    const box = StyleSheet.flatten(view.getByTestId('hero-box').props.style);
+    const block = StyleSheet.flatten(view.getByTestId('hero-numeral-block').props.style);
+    const num = StyleSheet.flatten(view.getByText('5').props.style);
+    expect(box.justifyContent).not.toBe('center');
+    expect(box.paddingTop + block.marginTop + num.lineHeight / 2).toBe(focalOf(NightRays));
+  });
+
+  test('the video shell shares the box', () => {
+    activeSkyManifest.mockReturnValue(VIDEO_SKY);
+    const view = wrap(<HomeScreen {...baseProps} mode="day" />);
+    const box = StyleSheet.flatten(view.getByTestId('hero-box').props.style);
+    const block = StyleSheet.flatten(view.getByTestId('hero-numeral-block').props.style);
+    const num = StyleSheet.flatten(view.getByText('5').props.style);
+    expect(box.justifyContent).not.toBe('center');
+    expect(box.paddingTop + block.marginTop + num.lineHeight / 2).toBe(focalOf(RayFan));
+  });
+
+  test('the spacer can collapse', () => {
+    activeSkyManifest.mockReturnValue(null);
+    const classic = wrap(<HomeScreen {...baseProps} mode="day" />);
+    expect(StyleSheet.flatten(classic.getByTestId('hero-spacer').props.style)).toEqual({ flex: 1 });
+
+    activeSkyManifest.mockReturnValue(VIDEO_SKY);
+    const video = wrap(<HomeScreen {...baseProps} mode="day" />);
+    expect(StyleSheet.flatten(video.getByTestId('hero-spacer').props.style)).toEqual({ flex: 1 });
   });
 });
