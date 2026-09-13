@@ -24,15 +24,40 @@
 
 ## The queue
 
-**Empty for a build chat.** The only row left, **IMP-128, is owner-gated** and exists so the parked motion
-decision has a body to read; it is not for a build chat until the owner lifts the gate.
+**Empty for a build chat.** **IMP-128 is owner-gated** and **IMP-130 has no spec body yet** — both need an
+Opus session before a build chat can touch either.
 
 | Row | What | Lane | Take it? |
 | --- | --- | --- | --- |
 | IMP-128 | Apply the motion vocabulary — `riseIn` on cards and rows, `popIn` on badges, `useCountUp` on the streak | OTA | ⏸ **owner's yes first — do not start** |
+| IMP-130 | The video hero card is a different size from the default hero card | ? | ⏸ **not specced — needs Opus.** Raw finding only, see below |
 
 **IMP-124, IMP-125, IMP-126, IMP-127 and IMP-129 are done** (archived to `docs/build-log.md`, commits
 `87771c4`, `d57dc2d`, `0502790`, `402391b`, `0a2f595`).
+
+---
+
+### IMP-130 — not yet specced
+
+⏸ **RAW FINDING ONLY — this is not a spec, and a build chat must not take it as one.** Found live during
+[WALK-22](walk-open.md#walk-22--the-day-mode-hero-re-check), 2026-09-14 (device, owner-run), while checking
+IMP-124/125's hero-text fix: switching the active sky from Meteor Shower back to the default, the owner
+noticed the **video hero card is visibly a different size from the default (`RayFan`/`NightRays`) hero
+card**.
+
+**Confirmed in source, not just by eye.** [`HomeScreen.js:34`](../src/screens/HomeScreen.js#L34) fixes the
+video hero at `HERO_HEIGHT = 336` and applies it as an explicit `height`
+([`HomeScreen.js:99`](../src/screens/HomeScreen.js#L99)); the default hero
+([`HomeScreen.js:107`](../src/screens/HomeScreen.js#L107)) has no explicit height and sizes to its own
+content padding. IMP-125 pulled the candle row out of the video hero's content on 2026-09-13 and its own
+build note says `HERO_HEIGHT` was **deliberately left untouched** — so the video card kept its old fixed
+height against shorter content, while the default card (which never had candles inside it) sizes normally.
+Nobody had switched skies side by side on a device since, so the mismatch went unnoticed until this walk.
+
+**What is genuinely open, and why this needs Opus rather than a quick patch:** whether the fix is making the
+default hero match the video hero's fixed height, shrinking `HERO_HEIGHT` to match the (now candle-less)
+content, or something else — this is a layout/design call about what the hero *should* look like, not an
+obvious one-line correction. **Do not build against this note as written; wait for a spec.**
 
 ---
 
