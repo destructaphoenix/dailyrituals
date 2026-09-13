@@ -5217,6 +5217,27 @@ not run from this chat, per the spec.
 
 ## Session notes
 
+_2026-09-13 (Sonnet — **IMP-127 built: the Shop's ember `+` hides itself while it cannot add embers.**) —
+✅ code-complete, no walk of its own._
+
+**What finished.** [`shopui.js`](../src/shopui.js) — `EmberPill` gains `showAdd = true`; the `+` circle now
+renders only when `showAdd` is true, everything else about the pill untouched.
+[`Shop.js`](../src/screens/Shop.js) — its pill now passes `showAdd={EMBER_PACKS_ENABLED}`, the flag imported
+from [`billing/config.js`](../src/billing/config.js) into `Shop.js` (not into `shopui.js`, which still knows
+nothing about billing). `HomeScreen.js`'s pill took no change and keeps the default, so it keeps opening
+the Shop exactly as before. **IMP-119's owed device walk (the `+` glyph's centring) moves to Home's pill**
+— same `EmberPill` component, same `PixelRatio` math, recorded in the commit body per the spec's checklist.
+
+**The proof.** [`EmberPill.test.js`](../__tests__/ui/EmberPill.test.js) kept its two IMP-117/IMP-119 source
+assertions and gained two render tests: `showAdd={false}` renders no `+`, the default still renders it.
+**1230 passed, 116 suites** (was 1228/116, +2 tests). Export clean. Commit `402391b`. Spec archived to
+`docs/build-log.md`; `docs/specs-open.md`'s queue is now **empty**.
+
+**Not shipped this chat** — no `Release-Lane:` trailer. No walk of its own, per spec — folds into the next
+Shop sitting, and into WALK-20 when `EMBER_PACKS_ENABLED` flips (the `+` must come back then).
+
+---
+
 _2026-09-13 (Sonnet — **IMP-126 built: the mood mix bar opacity floors at 0.3.**) — ✅ code-complete, no
 walk owed._
 

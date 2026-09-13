@@ -24,40 +24,180 @@
 
 ## The queue
 
-**Empty for a build chat.** **IMP-128 is owner-gated** and **IMP-130 has no spec body yet** — both need an
-Opus session before a build chat can touch either.
+**IMP-130 is the row to take.** It was specced 2026-09-14 and is **not gated** — a build chat opens
+[its heading](#imp-130--the-hero-card-is-one-size-whichever-sky-is-on) and nothing else in this file.
+**IMP-128 stays owner-gated** and is not a build chat's to take.
 
 | Row | What | Lane | Take it? |
 | --- | --- | --- | --- |
+| IMP-130 | The hero card is one size, whichever sky is on — both shells render at `HERO_HEIGHT`, content centred | OTA | ✅ **yes — this is the first ⬜ row** |
 | IMP-128 | Apply the motion vocabulary — `riseIn` on cards and rows, `popIn` on badges, `useCountUp` on the streak | OTA | ⏸ **owner's yes first — do not start** |
-| IMP-130 | The video hero card is a different size from the default hero card | ? | ⏸ **not specced — needs Opus.** Raw finding only, see below |
 
 **IMP-124, IMP-125, IMP-126, IMP-127 and IMP-129 are done** (archived to `docs/build-log.md`, commits
 `87771c4`, `d57dc2d`, `0502790`, `402391b`, `0a2f595`).
 
 ---
 
-### IMP-130 — not yet specced
+### IMP-130 — the hero card is one size, whichever sky is on
 
-⏸ **RAW FINDING ONLY — this is not a spec, and a build chat must not take it as one.** Found live during
-[WALK-22](walk-open.md#walk-22--the-day-mode-hero-re-check), 2026-09-14 (device, owner-run), while checking
-IMP-124/125's hero-text fix: switching the active sky from Meteor Shower back to the default, the owner
-noticed the **video hero card is visibly a different size from the default (`RayFan`/`NightRays`) hero
-card**.
+**Severity 🎨** — nothing is broken; the card is the wrong shape. **Lane: OTA** — pure JS layout, no native
+change, no `versionCode` bump. Found live during
+[WALK-22](walk-open.md#walk-22--the-day-mode-hero-re-check), 2026-09-14 (device, owner-run), and specced
+2026-09-14 from source.
 
-**Confirmed in source, not just by eye.** [`HomeScreen.js:34`](../src/screens/HomeScreen.js#L34) fixes the
-video hero at `HERO_HEIGHT = 336` and applies it as an explicit `height`
-([`HomeScreen.js:99`](../src/screens/HomeScreen.js#L99)); the default hero
-([`HomeScreen.js:107`](../src/screens/HomeScreen.js#L107)) has no explicit height and sizes to its own
-content padding. IMP-125 pulled the candle row out of the video hero's content on 2026-09-13 and its own
-build note says `HERO_HEIGHT` was **deliberately left untouched** — so the video card kept its old fixed
-height against shorter content, while the default card (which never had candles inside it) sizes normally.
-Nobody had switched skies side by side on a device since, so the mismatch went unnoticed until this walk.
+**The defect, stated as the rule the app broke.** A sky is a **cosmetic** choice. **A cosmetic choice must
+not relayout the screen.** Applying Meteor Shower today makes the streak hero ~86dp taller and pushes every
+card below it down the page; switching back to the default pulls them up again. That is what the owner saw
+— not a hero that is wrong, but two heroes that are different, and a page that jumps between them.
 
-**What is genuinely open, and why this needs Opus rather than a quick patch:** whether the fix is making the
-default hero match the video hero's fixed height, shrinking `HERO_HEIGHT` to match the (now candle-less)
-content, or something else — this is a layout/design call about what the hero *should* look like, not an
-obvious one-line correction. **Do not build against this note as written; wait for a spec.**
+**Where the ~86dp came from.** [`HomeScreen.js:99`](../src/screens/HomeScreen.js#L99) gives the video shell
+`height: HERO_HEIGHT` (336, [line 34](../src/screens/HomeScreen.js#L34));
+[`HomeScreen.js:107`](../src/screens/HomeScreen.js#L107) gives the classic shell **no height at all**, so it
+sizes to `heroInner` plus its own 26/22 padding. The two agreed until 2026-09-13:
+[IMP-125](build-log.md#imp-125--the-candle-count-sits-with-the-week-it-protects-2026-09-13) pulled
+`<StreakFreeze>` out of `heroInner`, which is **shared by both shells**, so both lost the same ~73dp of
+content — the classic card shrank by it and the video card, being fixed, did not. IMP-125's note recorded
+`HERO_HEIGHT` as deliberately untouched and was right to leave it to a design session. **This is that
+session.**
+
+---
+
+#### The ruling, part 1 — 336 stays, and the classic card grows to meet it
+
+**336 is not a number someone picked. It is the contract the entire sky asset pipeline is derived from.**
+[`design-queue.md` → "The frame — measured from the hero box, not guessed"](design-queue.md) measures the
+hero box as **the card's full width × 336dp** and builds everything downstream on it:
+
+- the box-aspect table — **0.83** (small phone) to **1.17** (large phone) — and its conclusion, *"the box is
+  near-square"*;
+- **"generate square"**: a 1:1 source survives **83–86%** of the `cover` crop, which is the whole reason the
+  encode recipe is **1280 × 1280**;
+- the crop safe zone — keep anything essential inside a **centred 83% × 86%** region;
+- the scrim rule — *"the bottom **~28% (96 of 336dp)** sits under a scrim"*, so keep the centre quiet.
+
+Shrinking `HERO_HEIGHT` to the classic card's content height takes the Pixel-class box from **371 × 336
+(aspect 1.10)** to roughly **371 × 250 (aspect 1.48)** — off the bottom of that table entirely. A 1:1 source
+would then survive about **68%** of the crop instead of 86%: a third of every sky frame generated, encoded
+and downloaded, thrown away at draw time. Every figure quoted above becomes wrong for the clips **already
+encoded against it** — IMP-121's fixture, `meteor`'s shipped loop (IMP-123), and the `Emberfield` /
+`Starfall` heroes still in the art queue.
+
+**The classic card's ~250dp is not a design decision. It is IMP-125's residue.** The pinned number wins.
+
+⚠️ **This does not re-open IMP-125.** The candles stay in the week-strip footer where the owner put them.
+This row only decides what the hero does with the space they left behind.
+
+#### The ruling, part 2 — the freed space is distributed, not pooled at the bottom
+
+Growing the classic card to 336 with its content still top-anchored would leave ~86dp of bare `surface`
+under the XP bar, **and the classic art will not cover it**: [`art.js:34`](../src/art.js#L34) renders
+`RayFan` at `position: 'absolute', top: -70` with `height: size` (300), so it reaches y≈230 of 336 and
+**does not stretch with its parent**. An empty band under the fan reads as a bug, and it is precisely the
+thing the owner would look at next.
+
+So the shared content box gains **`justifyContent: 'center'`**. The numeral block moves down ~43dp into the
+middle of the frame — where `design-queue.md`'s own art direction already assumes it sits (*"the streak
+number sits mid-frame"*) — and the XP bar lands **inside** the bottom-28% scrim instead of on its edge,
+which over footage is a small legibility gain, not a loss.
+
+⚠️ **Do not retune `heroInner`'s internal margins** (`marginTop: 13`, `marginTop: 22`, `marginBottom: 7`) to
+"rebalance" the card. Centring is the entire adjustment. Those margins are shared with the video shell,
+which **WALK-22 passed on hardware four hours ago** — do not put that result back in play.
+
+⚠️ **Do not touch `art.js`.** `RayFan` / `NightRays` are frozen art (`playbook.md` → Claude Design standing
+rule #3). Scaling the fan to fill 336dp is a different and larger row, and it is not wanted here.
+
+---
+
+#### 🔴 Read this before step 1 — four traps, all verified in source on 2026-09-14
+
+**1. "Just let the video card size to its content instead" is not available.**
+[`skyHero.js`](../src/home/skyHero.js) returns `<View style={StyleSheet.absoluteFillObject}>` and renders
+`children` **inside** it. An absolutely-positioned subtree contributes nothing to its parent's height, so
+the video `Card` **can never** size to its content without restructuring `SkyHero`'s contract (flow children
+beside absolute video/poster/scrim layers). **Do not attempt that here.** This is why `HERO_HEIGHT` exists
+at all, and the symmetry it buys is what this row is protecting.
+
+**2. ~250dp is an estimate, and nothing may be hardcoded to it.** It is
+`26 + 13 + 82 + 2 + ~21 + 4 + ~17 + 22 + ~19 + 7 + 12 + 22` plus 2px of border — and three of those terms
+are React Native's **default** line height for a `<T>` with no explicit `lineHeight`, which is font-metric
+dependent and not computable from source. **This spec never needs that number**; both cards get 336. If a
+step tempts you to introduce a second height constant, you have left the spec — **STOP and log it**.
+
+**3. Fixed height + `overflow: 'hidden'` + font scale.** `MAX_FONT_SCALE` is **1.5**
+([`ui/textScale.js`](../src/ui/textScale.js)) and both shells already carry `overflow: 'hidden'`. The
+scalable text in `heroInner` is ~139dp of the box, so at the cap the content runs to roughly **270dp**
+against **336 − 48 = 288dp** of usable box. It fits — but not by much. **Do not add a scale-reactive
+height**; that is `PixelRatio` plumbing this row does not want, and it is a walk's question, not jest's.
+The video shell has carried this exposure since IMP-121; this row extends it to the classic shell,
+knowingly, and WALK-24 step 4 looks at it.
+
+**4. The existing hero tests query by text, not by layout.**
+[`HomeScreenSkyHero.test.js`](../__tests__/screens/HomeScreenSkyHero.test.js)'s seven cases flatten
+`props.style` on **text nodes** and read `ProgressBar`'s props; **none of them asserts a height**, so none of
+them should move. **If one does move, you changed something this spec did not ask for** — stop and log it
+rather than updating the assertion.
+
+---
+
+**Steps.**
+
+1. **`HomeScreen.js` — one shared content-box style, at module scope.** Directly under `HERO_HEIGHT`
+   ([line 34](../src/screens/HomeScreen.js#L34)), add:
+
+   ```js
+   // Both hero shells are the same box — only the ground behind them differs.
+   // The height is pinned to the sky-clip crop (design-queue.md → "The frame"),
+   // so the classic card's content does not get to decide it (IMP-130).
+   const HERO_BOX = { flex: 1, paddingHorizontal: 22, paddingTop: 26, paddingBottom: 22, alignItems: 'center', justifyContent: 'center' };
+   ```
+
+2. **The video shell** ([`HomeScreen.js:99`](../src/screens/HomeScreen.js#L99)) keeps
+   `<Card style={{ height: HERO_HEIGHT, overflow: 'hidden' }}>` and gains `testID="streak-hero"`. Its inner
+   `<View>` drops its inline style in favour of `style={HERO_BOX}` — which is **the same object it already
+   had, plus `justifyContent: 'center'`**, and nothing else.
+
+3. **The classic shell** ([`HomeScreen.js:107`](../src/screens/HomeScreen.js#L107)) becomes structurally
+   identical to the video shell, so the two differ in **ground alone**:
+
+   ```jsx
+   <Card testID="streak-hero" style={{ height: HERO_HEIGHT, overflow: 'hidden' }}>
+     {mode === 'night' ? <NightRays /> : <RayFan />}
+     <View style={HERO_BOX}>{heroInner}</View>
+   </Card>
+   ```
+
+   ⚠️ **`RayFan` / `NightRays` stay direct children of the `Card`, before the box.** They are
+   `position: 'absolute'` and must keep the **card** as their containing block, not the padded box — moving
+   them inside `HERO_BOX` shifts the fan by the padding and is a visible regression.
+
+   ⚠️ `Card` spreads unknown props onto its `View` ([`ui.js:45`](../src/ui.js#L45)), so `testID` passes
+   through with **no change to `ui.js`**.
+
+4. **Tests — extend [`__tests__/screens/HomeScreenSkyHero.test.js`](../__tests__/screens/HomeScreenSkyHero.test.js),
+   do not start a new suite.** It already mocks `activeSkyManifest` both ways, which is exactly the fixture
+   this needs. Add one `describe` with three cases, in the file's existing idiom
+   (`StyleSheet.flatten(view.getByTestId('streak-hero').props.style)`):
+   - with a video sky active, the hero card's height is **336**;
+   - with **no** video sky, the hero card's height is **336** too — **this is the case that is red before
+     step 3**, and it is the row's regression guard;
+   - the row's actual claim: render both grounds and assert the two heights are **equal**.
+
+**Ship.** `npm test` green (≥ **1238 passed, 117 suites**; expect **1241 / 117** — +3 tests, no new suite),
+`npx expo export --platform android` clean, then commit with **exactly**:
+
+```
+fix(home): the hero card is one size, whichever sky is on (IMP-130)
+```
+
+OTA — pure JS, **no `versionCode` bump**, and **no `Release-Lane:` trailer** unless the owner asks to ship.
+
+**Its runtime proof is [WALK-24](walk-open.md#walk-24--one-card-two-grounds), a device row filed with this
+spec.** 🔴 **A green suite proves the number, not the picture.** The assertion above proves both cards
+measure 336dp; **it cannot see** whether the centred numeral sits right on the classic card, whether
+`RayFan`'s 300dp disc now leaves a visible void in the lower third, or whether the footage still reads at
+336 with the content sitting lower inside it. Those are WALK-24's questions, and they are why this row is
+not finished at green.
 
 ---
 

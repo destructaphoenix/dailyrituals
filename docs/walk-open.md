@@ -460,8 +460,9 @@ the lane now; CI (`release.yml`) ships from it on a `Release-Lane:` trailer. **N
 | WALK-19 | 🚦 | [Money actually changes hands](#walk-19--money-actually-changes-hands) | **Phase 10b.5**, IMP-028, IMP-082 + IMP-083 (steps 5 and 10), IMP-084/085/086/087, **IMP-088** | **device** (real Play Billing + a license tester) | 👤 | 🔴 **2026-09-11 (hardware, owner-run, MONTHLY tester sub) — STEP 7 IS DONE.** Ran as the sub lapsed, the ordering rule honoured. **7A ✅ — [IMP-108](build-log.md) PROVEN:** with Plus live, Marigold, Honey, Rose Dusk, Sage Eve and Harvest Moon all showed **no ember price**, applied cleanly, and the balance stayed at 15. **7B ✅ — [IMP-109](build-log.md) PROVEN on palettes:** the shortfall names the item, its price and the balance. **7D ✅** — no "Gather Embers" section and no `$1.99`/`$4.99`/`$9.99` anywhere, so the `EMBER_PACKS_ENABLED` guard holds on a shipped build. **[IMP-110](build-log.md) ✅ PROVEN** — the paywall perk list no longer claims streak insurance is members-only. ⚠️ **7C is NOT a pass and was previously recorded as one in error:** the owner held **6 candles banked before IMP-112**, so the cap was never exercised — nothing capped, they simply had no room. It re-runs once the holding drains to ≤2. 🔴 **Three new defects out of this sitting:** [IMP-114](specs-open.md#imp-114) (the candle shortfall toast is unreachable — `disabled={!afford}` swallows the tap, which is why this call site survived four sittings unexercised), [IMP-115](specs-open.md#imp-115) (`6 / 3 kept`), and [IMP-117](specs-open.md#imp-117) (max-font centring). 🚦 **And one across the lapse:** [IMP-116](specs-open.md#imp-116) — Harvest Moon and Frostlight survived the subscription expiring, then **vanished at the next palette switch**, because `applyPalette` never adds to `ownedPalettes`. The paywall promises *"unlocked forever"*. **Blocked on an owner ruling.** **Owed now: step 8 only** (real money, held for last). Prior: 🔴 **2026-09-08 (hardware, owner-run) — steps 3, 4a, 4b, 4c, 4d, 4f, 5, 6 ✅ PASS.** [IMP-105](specs-open.md#imp-105) **blocks release**: reinstall + Restore on an account with an active subscription says "Nothing to restore" — and it is the one finding that survived the same-day source review (step 4f is its control: identical code passed minutes earlier). [IMP-104](specs-open.md#imp-104): default palette/sky items render as ember-locked, cause found, ready to build — **and tapping one wipes the ember balance to 0**. ⚠️ **Step 4e is INVALID, not a failure** — the phone ran OTA `d42b7ec7`, which predates IMP-100 **and** IMP-101; neither was ever pushed or shipped ([IMP-103](specs-open.md#imp-103)), so 4e owes a re-run after that OTA. Aeroplane-mode Restore reproduces the known IMP-092 cache limit (not new). 🔴 **2026-09-10 (hardware, owner-run), on group `f961b427`: step 4e ✅ PASS — "You already have Plus", which also settles IMP-103's open residual (the numeric `6`/`7` bet in `mapError.js` was correct). Step 7 ⚠️ INCONCLUSIVE for IMP-104 — the free items were never tapped (Crescent Moon ✅ applies cleanly), and with a 0 ember balance the NaN-wipe half is untestable; re-run once embers are earned. Step 7 instead found TWO new defects: [IMP-108](specs-open.md#imp-108) (a member is still charged embers for five palettes/skies the paywall promises) and [IMP-109](specs-open.md#imp-109) (the shortfall toast never names the price or balance). **Step 10 ✅ PASS, and the lapse confirmed at ~02:00** — the subscription bought at 00:43 expired at 01:43, and on re-opening the app the member state was gone. ✅ **That is [IMP-107](build-log.md)'s first and only hardware proof** — the row was opened 2026-09-09 because a lapsed member kept Plus until they happened to background the app. ⚠️ **The strength of this result depends on whether the app was truly force-closed first:** a cold start proves IMP-107's new launch check; a background→foreground cycle would have been caught by the pre-existing `AppState` listener and proves nothing new. Owner was asked for a force-close and reported the downgrade; recorded as a pass with that condition named. Step 10's earlier half ✅ PASS — the Play deep link worked, cancelling correctly did NOT revoke Plus before the period ended, and the "+3 candles — your Plus perk renewed" toast is IMP-102 firing on a test-compressed renewal, not a bug.** ✅ **Step 9 is SETTLED — see WALK-19a (2026-09-10): the entitlement survives a reinstall, IMP-105 was the walk's own ordering, not a defect.** That **unblocks step 10** (cancel flow), which was only ever blocked on step 9. Step 8 (real money) still deliberately held for last. Full detail in the RE-RUN section below. **Nothing is promoted `internal` → `production`.** |
 | WALK-20 | 🚦 | [Money for embers](#walk-20--money-for-embers) | **IMP-113**, IMP-112, + **IMP-129** | **device** (real Play Billing, consumables, a licence tester) | 👤 | ⬜ — **written 2026-09-13, and BLOCKED on four pre-flight conditions, not on a build.** IMP-113's purchase path has never run anywhere: `EMBER_PACKS_ENABLED` is `false` on every build ever shipped, so the Shop section, the Get Embers sheet and every store call behind them are unreachable. 🔴 **Its step 4 is the point** — a consumable Play does not consume returns `ITEM_ALREADY_OWNED`, the app's `owned` rescue finds the transaction already in its ledger, and the buyer gets a cheerful *"you're already up to date"* and no embers. 🚦 **Needs [IMP-129](specs-open.md#imp-129--the-ember-grant-that-never-heals-itself) shipped first** (step 7 has nothing to test without it), the three consumables live in Play **and** RevenueCat, and the flag flipped by OTA. **This walk is the only thing that can authorise that flip** |
 | WALK-21 | 🎨 | [The first video sky plays](#walk-21--the-first-video-sky-plays) | IMP-121, IMP-122, **IMP-123** | **device** (real panel, real GPU compositing, real battery) | 👤 | 🟠 **PARTIAL — 2026-09-13 (Play `internal` vc17, owner-run).** Steps 1-3, 6-10 ✅ — corners clean (no `textureView` needed, closes IMP-121's open question), loop seam holds, latency/offline/heat/fallback all clean, and step 8 re-confirms WALK-19a's store-authoritative membership. 🔴 **Steps 4 + 5 FAIL: day-mode hero contrast — scoped as [IMP-124](specs-open.md#imp-124)** (the streak subtitle is unreadable over the footage in day mode; the XP bar accent doesn't read as a bar). Step 11 (month strip) is a named gap — thin journal, nothing to scroll |
-| WALK-22 | 🎨 | [The day-mode hero re-check](#walk-22--the-day-mode-hero-re-check) | **IMP-124** + **IMP-125** | **device** | 👤 (visual) | ✅ **2026-09-14 (hardware, owner-run) — IMP-124 and IMP-125 both PROVEN, on update `01a09b18`.** Steps 1-3 (subtitle, "day streak" line, XP labels) all read clean over the water; step 5's candle row sits in the week-strip footer as designed; night mode is identical to day. 🔴 **NEW defect found live: the video hero card is a visibly different size from the default (RayFan) hero card when switching skies.** Scoped as [IMP-130](#imp-130-not-yet-specced) below — held for an Opus spec session, not fixed here |
+| WALK-22 | 🎨 | [The day-mode hero re-check](#walk-22--the-day-mode-hero-re-check) | **IMP-124** + **IMP-125** | **device** | 👤 (visual) | ✅ **2026-09-14 (hardware, owner-run) — IMP-124 and IMP-125 both PROVEN, on update `01a09b18`.** Steps 1-3 (subtitle, "day streak" line, XP labels) all read clean over the water; step 5's candle row sits in the week-strip footer as designed; night mode is identical to day. 🔴 **NEW defect found live: the video hero card is a visibly different size from the default (RayFan) hero card when switching skies.** Scoped as **[IMP-130](specs-open.md#imp-130--the-hero-card-is-one-size-whichever-sky-is-on)** below — ✅ **now specced (2026-09-14): both shells render at 336dp with the content centred**, and its own proof is [WALK-24](#walk-24--one-card-two-grounds) |
 | WALK-23 | 🎨 | [The month strip on a journal that has months](#walk-23--the-month-strip-on-a-journal-that-has-months) | IMP-120 | **emulator** | 🤖 (agent-runnable) | ⏸ — **ready, agent can run it any time, but held at the owner's instruction 2026-09-14** (WALK-22 just found IMP-130; no other reason). WALK-21 step 11 could not run: the owner's journal is one month, so there was nothing to scroll. The dev panel's `storeShots` scenario is 210 days and settles it in a dev build |
+| WALK-24 | 🎨 | [One card, two grounds](#walk-24--one-card-two-grounds) | **IMP-130** | **device** | 👤 (visual) | ⬜ — **blocked on the OTA push and nothing else.** IMP-130 makes both hero shells 336dp with the content centred; this row is the only thing that can say whether the classic card's new lower third reads as composition or as a void. Filed 2026-09-14 with the spec |
 
 ---
 
@@ -1329,7 +1330,7 @@ of the hero and sitting under the week-strip's seven dots, on ordinary theme col
 shipped it. **Night mode confirmed identical to day mode.** Step 4 (the XP bar reading as a bar, not a smear)
 was not separately called out by the owner but nothing was reported against it.
 
-🔴 **NEW defect, not on this row's checklist — [IMP-130, not yet specced](#imp-130-not-yet-specced).** Switching
+🔴 **NEW defect, not on this row's checklist — [IMP-130](specs-open.md#imp-130--the-hero-card-is-one-size-whichever-sky-is-on).** Switching
 from Meteor Shower back to the default sky, the owner noticed the video hero card is **visibly a different
 size** from the default (`RayFan`/`NightRays`) card — the video card is significantly bigger. **Confirmed in
 source, not just by eye:**
@@ -1344,6 +1345,14 @@ shorter, and nobody had switched skies side by side on a device to notice the tw
 own split: this is a layout/sizing call (does the default hero grow to match, or does the video hero shrink
 to match content, or is a fixed height still wanted for video and a matching one added to the default card?),
 not a one-line patch.
+
+✅ **Specced 2026-09-14 — the ruling is the first of those three.** `HERO_HEIGHT` (336) **stays** and the
+default card grows to meet it, because 336 is not an arbitrary number: `design-queue.md` → "The frame"
+derives the near-square box, the 1:1 "generate square" choice, the 1280×1280 encode recipe and the
+bottom-28% scrim rule from it, and shrinking it to the default card's ~250dp would throw away a third of
+every sky frame already encoded against that recipe. The freed space is **centred**, not left at the
+bottom. Full spec → [IMP-130](specs-open.md#imp-130--the-hero-card-is-one-size-whichever-sky-is-on); its
+runtime proof is **[WALK-24](#walk-24--one-card-two-grounds)**, filed with it.
 
 ---
 
@@ -1398,3 +1407,51 @@ therefore not trigger — **if every cell comes out the same shade, that is a fi
 `brokenStreak` has the gaps but only 6 entries, so it cannot fill the other half; a long-and-gapped scenario
 in [`src/dev/scenarios.js`](../src/dev/scenarios.js) would, and nobody has asked for one. **Do not record a
 pass on a state you did not see on screen.**
+
+---
+
+## WALK-24 — one card, two grounds
+
+**Target: `device`. Runner: 👤 (visual judgement — every question here is "does it look right", and nothing
+else).** Proves [IMP-130](specs-open.md#imp-130--the-hero-card-is-one-size-whichever-sky-is-on).
+
+🚦 **Blocked on the OTA push and nothing else.** IMP-130 is pure JS on `main`; until it ships, running this
+row re-observes the original WALK-22 defect and looks like a failed fix. **Pre-flight:** You tab → Version
+row still reads `1.0.10 / vc17` (this is **not** a new binary), and **the bundle id in that row is not the
+one WALK-22 ran on** (`01a09b18`). That comparison is the whole pre-flight — IMP-106 exists so it can be
+made.
+
+**Pre-flight, continued:** Plus ON, and **Meteor Shower owned** so it can be applied and un-applied. A
+licence-tester monthly sub lapses in ~30 minutes and the sky goes with it (IMP-116) — this walk takes three
+minutes, so that is plenty, but if the sky vanishes mid-walk that is the sub, not a new defect.
+
+**Day mode. The whole walk is one gesture, done twice.**
+
+1. 🔴 **The gesture, and the point of the row.** With Meteor Shower applied, look at Home and note where the
+   **"Today's reflection" card** (or "Today is at rest") sits against the top of the screen. Now go to the
+   Shop, apply **Golden Sun** (the default), and come back. **Nothing below the hero may move.** Before
+   IMP-130 the whole page jumped ~86dp; after it, the only thing that changes is what is behind the numeral.
+   Switch back and forth once more to be sure. **This is the pass/fail.**
+2. **The classic card's lower third.** On the default sky, the ray fan is a 300dp disc anchored near the top
+   of a 336dp card ([`art.js:34`](../src/art.js#L34)) — it does **not** stretch, and IMP-130 deliberately did
+   not make it. So: below the XP bar there is now plain card surface with no art on it. **Does that read as
+   breathing room, or as a card that failed to load?** If it reads as a void, that is a real finding and it
+   is an art row about `RayFan`'s size, **not** a re-open of IMP-130's height ruling.
+3. **The centred numeral, on both grounds.** IMP-130 added `justifyContent: 'center'`, so the big number sits
+   ~43dp lower in the frame than it did yesterday. Over footage that should put it closer to mid-frame, where
+   the art direction always assumed it was, and drop the XP bar **inside** the bottom scrim rather than on its
+   edge. Check the bar still reads as a bar over a passing whitecap — that was WALK-22 step 4 and it has
+   moved, so it does not carry over for free.
+4. **Font scale.** Settings → Display → largest font, relaunch, look at both grounds. The hero is a **fixed**
+   336dp box with `overflow: 'hidden'`, so this is the one place the ruling can bite: the spec measured ~270dp
+   of content against 288dp of usable box at the 1.5 cap. **Is anything clipped — the subtitle, the XP labels,
+   the bar?** Reset the font size afterwards. ⚠️ **The video shell has carried this exposure since IMP-121
+   and nobody has ever looked at it**; this step is the first look, for both shells at once.
+5. **Night mode** (dev panel → Mode — **not** `adb uimode`, which does nothing in this app), then repeat
+   step 1's gesture once. Day and night over footage are meant to be identical (IMP-124); on the default sky
+   `NightRays` replaces `RayFan` at the same 300dp, so step 2's question is asked again on black.
+
+**What this row cannot settle.** It says nothing about any sky other than `meteor` — it is the only one with
+a clip. The 336dp ruling was made to protect the encode recipe for clips **not yet shipped**
+([`design-queue.md`](design-queue.md) → "The frame"), and no walk can confirm that until those clips exist.
+**Do not record this row as proving the crop is right for every sky.**
