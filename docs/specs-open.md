@@ -13,7 +13,7 @@
 > re-litigate a "why", and do not improve the scope.** If a step turns out to be impossible or the code
 > contradicts the spec, **STOP** and log it to `PROGRESS.md` → Open items rather than inventing a fix.
 >
-> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **1226 passed, 115 suites** — verified 2026-09-13), `npx expo export --platform android` clean, commit with the **exact** message given, then
+> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **1228 passed, 116 suites** — verified 2026-09-13), `npx expo export --platform android` clean, commit with the **exact** message given, then
 > update `PROGRESS.md` (tick the backlog row, write the session note) and **move the finished spec from
 > this file into `docs/build-log.md`**.
 >
@@ -24,61 +24,12 @@
 
 ## The queue
 
-**Two open rows, both buildable — no gates left.** **IMP-124 and IMP-125 are done** (archived to
-`docs/build-log.md`, commits `87771c4` and `d57dc2d`).
+**One open row, buildable — no gates left.** **IMP-124, IMP-125 and IMP-126 are done** (archived to
+`docs/build-log.md`, commits `87771c4`, `d57dc2d`, `0502790`).
 
 | Row | What | Lane | Take it? |
 | --- | --- | --- | --- |
-| IMP-126 | The 11th mood's bar is invisible (D-04's defect half) | OTA | ✅ **first — take this one** |
-| IMP-127 | The Shop's ember `+` promises an action it cannot perform (D-09) | OTA | ✅ second |
-
----
-
-### IMP-126 — the 11th mood's bar is invisible
-
-**From** [`design-queue.md`](design-queue.md) → **D-04**, which said *"scope the clamp as an IMP now
-regardless of the design — it is a two-character fix and the design can land later."* This is that row.
-**Severity 🐛** — data present, nothing on screen.
-
-**What happens.** Mood mix renders every distinct mood ever logged and shades each bar
-`opacity: 1 - i * 0.1` ([`InsightsScreen.js:142`](../src/screens/InsightsScreen.js#L142)). At index **10**
-the opacity is **0**; past it, negative. There are 8 built-in moods and **no cap on custom ones** —
-`MoodManager` counts them, nothing limits them — so a user with three custom feelings in regular use
-renders a bar that is in the data, labelled with its own count beside it, and cannot be seen.
-
-**This is IMP-118's shape exactly**: a bar present in the data and invisible on screen, next to a label
-saying how big it is. The pairings list next door does not have it, because it `slice(0, 6)`s first.
-
-**The decision.** Clamp the floor, do not cap the list. A `slice` would silently drop a mood the user
-created and named; an opacity floor keeps every row visible and honest. The remainder-line design
-(*"+4 more feelings"*) stays open in D-04 and is **not** this spec — this row is the clamp only.
-
-**Step.** [`InsightsScreen.js:142`](../src/screens/InsightsScreen.js#L142):
-
-```js
-opacity: Math.max(0.3, 1 - i * 0.1),
-```
-
-**0.3, and the number is not arbitrary.** There are 8 built-in moods, so index **7** — the last row any
-journal can reach today without custom feelings — already sits at exactly `0.3`. Clamping there means
-**no journal that exists right now renders one pixel differently**, and every mood past the 8th draws like
-the 8th instead of fading to nothing. A lower floor (`0.1`) is not a visible bar either: `c.accent` at 10%
-over `c.accentSoft` is the track.
-
-**The test.** Beside the existing Insights tests: render a mood mix of **12** distinct moods and assert the
-11th and 12th bars flatten to `opacity: 0.3` — not `0`, not negative. Add the control too: the **8th** bar
-is still `0.3`, proving the clamp changed nothing that already worked. **Prove it red first** — today index
-10 flattens to exactly `0`.
-
-**Ship.** `npm test` green (≥ 1226/115), export clean, then:
-
-```
-fix(insights): the eleventh mood keeps a bar you can see (IMP-126)
-```
-
-OTA, no native change. **No walk owed** — it is a numeric clamp with a render assertion, and the emulator
-adds nothing a test does not already say. Update D-04's row in `docs/design-queue.md` to point at this
-commit and note that only the remainder-line design is still open there.
+| IMP-127 | The Shop's ember `+` promises an action it cannot perform (D-09) | OTA | ✅ **take this one** |
 
 ---
 
@@ -117,7 +68,7 @@ does not care which screen it is on. **Record in the commit body that IMP-119's 
 renders no `+`; the default still renders it; **IMP-119's scaled-`lineHeight` assertion must still pass
 under the default** (do not let the new branch skip it).
 
-**Ship.** `npm test` green (≥ 1226/115), export clean, then:
+**Ship.** `npm test` green (≥ 1228/116), export clean, then:
 
 ```
 fix(shop): the ember plus appears only where it can add embers (IMP-127)

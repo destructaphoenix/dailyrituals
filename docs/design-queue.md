@@ -218,10 +218,10 @@ the bug: it `slice(0, 6)`s first ([`DeeperInsights.js:137`](../src/screens/Deepe
 bounded by construction rather than by index — e.g. clamp at a floor, or key the opacity to the value
 rather than the row number.
 
-✅ **The clamp half is now [IMP-126](specs-open.md#imp-126--the-11th-moods-bar-is-invisible)** (filed
-2026-09-13), as this row instructed. Floor is `0.3` — the value index 7, the last of the 8 built-ins, already
-sits at — so no journal that exists today renders differently. **Only the remainder line is still open here,
-and a design request for this row must say so** rather than re-asking for the clamp.
+✅ **The clamp half is DONE — [IMP-126](build-log.md#imp-126--the-11th-moods-bar-is-invisible)**, commit
+`0502790`, 2026-09-13. Floor is `0.3` — the value index 7, the last of the 8 built-ins, already sits at — so
+no journal that exists today renders differently. **Only the remainder line is still open here, and a design
+request for this row must say so** rather than re-asking for the clamp.
 
 ---
 

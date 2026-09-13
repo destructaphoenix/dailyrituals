@@ -5112,7 +5112,62 @@ row readable over footage" to "is it gone from the hero and present under the we
 
 ---
 
+## IMP-126 — the 11th mood's bar is invisible (2026-09-13)
+
+**From** [`design-queue.md`](design-queue.md) → D-04, which said to scope the clamp as an IMP now
+regardless of the design. **Severity 🐛** — data present, nothing on screen. Mood mix shaded each bar
+`opacity: 1 - i * 0.1`; at index 10 that hit **0**, past it negative. 8 built-in moods and no cap on custom
+ones meant a journal with 3+ custom feelings in regular use rendered a bar that was in the data, labelled
+with its own count, and couldn't be seen — IMP-118's shape exactly.
+
+**The decision.** Clamp the floor, don't cap the list — a `slice` would silently drop a mood the user named.
+[`InsightsScreen.js:142`](../src/screens/InsightsScreen.js#L142): `opacity: Math.max(0.3, 1 - i * 0.1)`.
+`0.3` is not arbitrary — index 7, the last row any journal can reach today without custom feelings, already
+sat at (within float epsilon of) `0.3`, so no journal that existed before this commit renders one pixel
+differently.
+
+**The proof.** New [`moodMixOpacity.test.js`](../__tests__/insights/moodMixOpacity.test.js) renders
+`InsightsScreen` with 12 distinct moods (descending counts, so sort order is deterministic) and a `testID`
+added to each bar (`mood-bar-${x.m}`, InsightsScreen.js had none before). Confirmed **red first**: index 10
+flattened to exactly `0`, and even index 7 was `0.29999999999999993`, not a clean `0.3` — float error the
+`Math.max` clamp also happens to round away. Then green: 11th/12th bars flatten to `0.3`, 8th stays `0.3`.
+**1228 passed, 116 suites** (was 1226/115, +2 tests +1 suite). Export clean. Commit `0502790`.
+
+**Not in this row.** OTA, no native change, no walk owed — a numeric clamp with a render assertion, nothing
+an emulator adds. [`design-queue.md`](design-queue.md) D-04 updated to point at this commit; only its
+remainder-line design ("+4 more feelings") is still open there.
+
+---
+
 ## Session notes
+
+_2026-09-13 (Opus — **IMP-125 ruled on and resequenced; WALK-21's result and two new walks committed.**) —
+📋 docs only, no source touched._
+
+**What finished.** The WALK-21 write-up had been sitting uncommitted since the sitting and is now in history
+(`ced2229`) along with **WALK-22** (IMP-124's proof) and **WALK-23** (the month strip on a 210-day
+`storeShots` fixture — no build, no device, agent-runnable). `docs/design-queue.md` gained three
+cross-references so D-04, D-09 and D-12 stop asking for work that is already specced. ✅ **The owner ruled on
+[IMP-125](build-log.md#imp-125--the-candle-count-sits-with-the-week-it-protects-2026-09-13)** (`72c9ea3`) and
+chose the **week-strip footer** over its own card, Shop-only, and leaving it — which is what the spec already
+said, so the body is unchanged and the gate simply lifted. **The three rejected options are recorded in the
+spec so they are not re-litigated.**
+
+**The proof, and the one non-obvious call.** `npm test` verified green here at **1228 passed, 115 suites**
+after IMP-124 — `PROGRESS.md`'s stack line still read 1215/112 and was corrected. **IMP-125 is sequenced
+FIRST, ahead of two smaller rows**, because IMP-124 is committed and **not shipped**: IMP-125 deletes code
+IMP-124 just added (`StreakFreeze`'s `onVideo` branch) and moves the surface WALK-22 will walk, so landing it
+before the OTA buys **one** OTA and **one** walk of the final layout. ⚠️ **Its test count will go DOWN** —
+the deleted `onVideo` cases, the one sanctioned exception to the ≥-count rule; name the number rather than
+padding the suite. **WALK-22's step 5 already carries both forms** depending on whether IMP-125 rides the
+same OTA.
+
+**The exact next step.** A build chat takes **IMP-125**, then **IMP-126**, then **IMP-127** — no row is gated
+any more, all three are OTA with no `versionCode` bump. 🚦 **Nothing is pushed:** five commits sit on local
+`main` and none carries a `Release-Lane` trailer, so IMP-124's fix is in `main` and **on no phone** —
+[WALK-22](walk-open.md#walk-22--the-day-mode-hero-re-check) stays blocked until the owner asks to ship.
+
+---
 
 _2026-09-13 (Sonnet — **IMP-123 built: the first sky carries a clip, on its own update channel.**) — ✅
 code-complete, walk owed (device, WALK-21, needs vc17)._
