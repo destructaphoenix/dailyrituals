@@ -5251,6 +5251,61 @@ now-uncovered lower third looks like composition or a void is
 
 ---
 
+## IMP-132 — the sunburst was centred on a card that no longer exists (2026-09-14)
+
+**Severity 🎨 — the other half of IMP-130's regression, found by the owner on the IMP-131 OTA (`d82c61f`).**
+IMP-131 proved the numeral sits **on** the focal point and stopped there. It never asked whether the focal
+was still in the right *place*. It was not.
+
+**Cause, one line.** The focal point `80` dates to IMP-003, when the classic hero `Card` had **no explicit
+height** and sized itself to its content (`26 + ~125 + ~59 + 22 ≈ 232`). In that card, `top: -70, size: 300`
+was a deliberate composition: the disc bled 70dp off the top and **landed on the bottom edge** (`80 + 150 =
+230 ≈ 232`). IMP-130 pinned the card to `HERO_HEIGHT` 336 for the sky crop and left the focal at 80, so the
+same disc now hangs 70dp off the top and leaves a **106dp bare band** under it — which is exactly what
+IMP-130's own build-log line claimed it did not do (*"the 300dp disc doesn't leave a bare band"*). The
+numeral, correctly welded to the focal by IMP-131, rode 88dp too high along with it.
+
+**What finished.** [`art.js`](../src/art.js) — `RayFan`/`NightRays` take `focal` as a prop
+(`top: focal - size / 2`), defaulting to `80`, so the art stays behaviourally frozen for any other caller and
+the hardcoded `-70` is gone. [`HomeScreen.js`](../src/screens/HomeScreen.js) — one module-scope
+`HERO_FOCAL = HERO_HEIGHT / 2` (**derived, not typed**: the focal is the card's centre by definition now);
+both the art's `focal` prop and the numeral block's `marginTop`
+(`HERO_FOCAL - HERO_BOX.paddingTop - NUMERAL_LINE / 2`) are computed from it, so they cannot drift apart
+again the way IMP-130 let them. The three line heights under the numeral (`20 / 17 / 18`) are now **explicit**
+instead of RN defaults, which is what makes the stack's height knowable; the meta row's vestigial
+`marginTop: 22` came out, because centring the numeral spends the slack that margin used to have for free.
+
+**The geometry, before and after (336dp card):**
+
+| | focal | disc spans | clipped off top | bare band below |
+| --- | --- | --- | --- | --- |
+| before | 80 | −70 … 230 | 70dp | 106dp |
+| after | 168 | 18 … 318 | 0 | 18dp (= the top margin) |
+
+**The proof.** [`HomeScreenSkyHero.test.js`](../__tests__/screens/HomeScreenSkyHero.test.js) gained a fifth
+`describe` that reads every number off the render — no `80`, `168` or `336` typed on either side: the focal
+the screen passes equals the rendered card height ÷ 2 (day and night), the disc is wholly inside the card
+with its top margin **equal to** its bottom margin, and the whole content stack (paddings, margins, all four
+line heights, the rendered `ProgressBar` height) sums to ≤ the card height with ≥ 12dp of real slack left for
+the spacer. **Red before on the first three** (80 vs 168).
+
+**IMP-131's own `describe` needed two repairs, and both were the test's fault, not the fix's.** Its `focalOf`
+helper rendered a bare `<Art />` and so measured `art.js`'s *default* focal rather than the one the screen
+passes — it now reads `focal` off the rendered art first. And its "the video shell shares the box" case read
+a `RayFan` out of the **video** shell, which never renders one; it now takes the focal from the classic
+shell, which is what that case was always trying to say. The invariant it guards — numeral on focal — was
+green throughout and still is.
+
+**1249 passed, 117 suites** (was 1245/117, +4).
+
+**What this cost, recorded because it is the reusable part.** IMP-130 and IMP-131 both asserted a
+*relationship* and neither asserted a *position*. `height === 336` stayed green through the whole affair;
+so did `numeral === focal`. An absolutely-positioned decoration inside a fixed-height card has **two**
+invariants and a test suite that only knows one of them will pass while the card looks wrong. The new
+`describe` asserts the second: **where the focal sits in the card**, symmetric by subtraction.
+
+---
+
 ## IMP-131 — the sunburst lost the numeral (2026-09-14)
 
 **Severity 🎨 — regression from IMP-130, live on the owner's phone via OTA `433eb53`.** `RayFan`/`NightRays`

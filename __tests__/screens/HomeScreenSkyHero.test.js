@@ -130,9 +130,13 @@ describe('the streak hero card is one size, whichever sky is on (IMP-130)', () =
 describe('the sunburst converges on the numeral again (IMP-131)', () => {
   afterEach(() => activeSkyManifest.mockReset());
 
-  const focalOf = (Art) => {
-    const { top, height } = StyleSheet.flatten(wrap(<Art />).toJSON().props.style);
-    return top + height / 2; // -70 + 300/2 = 80 — read, not typed
+  // The art's focal point is a prop as of IMP-132, so render it with the focal
+  // the SCREEN passes and measure where the disc actually lands. Rendering the
+  // bare <Art /> would measure art.js's default, not the shipped hero.
+  const focalOf = (view, Art) => {
+    const focal = view.UNSAFE_getByType(Art).props.focal;
+    const { top, height } = StyleSheet.flatten(wrap(<Art focal={focal} />).toJSON().props.style);
+    return top + height / 2; // read off the render, not typed
   };
 
   test('the classic hero\'s numeral sits on the ray fan\'s focal point', () => {
@@ -142,7 +146,7 @@ describe('the sunburst converges on the numeral again (IMP-131)', () => {
     const block = StyleSheet.flatten(view.getByTestId('hero-numeral-block').props.style);
     const num = StyleSheet.flatten(view.getByText('5').props.style);
     expect(box.justifyContent).not.toBe('center');
-    expect(box.paddingTop + block.marginTop + num.lineHeight / 2).toBe(focalOf(RayFan));
+    expect(box.paddingTop + block.marginTop + num.lineHeight / 2).toBe(focalOf(view, RayFan));
   });
 
   test('night is the same construction', () => {
@@ -152,17 +156,23 @@ describe('the sunburst converges on the numeral again (IMP-131)', () => {
     const block = StyleSheet.flatten(view.getByTestId('hero-numeral-block').props.style);
     const num = StyleSheet.flatten(view.getByText('5').props.style);
     expect(box.justifyContent).not.toBe('center');
-    expect(box.paddingTop + block.marginTop + num.lineHeight / 2).toBe(focalOf(NightRays));
+    expect(box.paddingTop + block.marginTop + num.lineHeight / 2).toBe(focalOf(view, NightRays));
   });
 
   test('the video shell shares the box', () => {
+    // The video shell renders SkyHero instead of the art, so the focal comes
+    // from the classic shell — which is the point: one box, two grounds.
+    activeSkyManifest.mockReturnValue(null);
+    const classic = wrap(<HomeScreen {...baseProps} mode="day" />);
+    const focal = focalOf(classic, RayFan);
+
     activeSkyManifest.mockReturnValue(VIDEO_SKY);
     const view = wrap(<HomeScreen {...baseProps} mode="day" />);
     const box = StyleSheet.flatten(view.getByTestId('hero-box').props.style);
     const block = StyleSheet.flatten(view.getByTestId('hero-numeral-block').props.style);
     const num = StyleSheet.flatten(view.getByText('5').props.style);
     expect(box.justifyContent).not.toBe('center');
-    expect(box.paddingTop + block.marginTop + num.lineHeight / 2).toBe(focalOf(RayFan));
+    expect(box.paddingTop + block.marginTop + num.lineHeight / 2).toBe(focal);
   });
 
   test('the spacer can collapse', () => {
@@ -173,5 +183,78 @@ describe('the sunburst converges on the numeral again (IMP-131)', () => {
     activeSkyManifest.mockReturnValue(VIDEO_SKY);
     const video = wrap(<HomeScreen {...baseProps} mode="day" />);
     expect(StyleSheet.flatten(video.getByTestId('hero-spacer').props.style)).toEqual({ flex: 1 });
+  });
+});
+
+// IMP-132 — IMP-131 proved the numeral sits ON the focal point and stopped
+// there. It never asked whether the focal was still in the right place: 80 is
+// the middle of the ~232dp content-sized card the hero was before IMP-130, and
+// in a 336dp card it hangs the 300dp disc 70dp off the top and leaves 106dp of
+// bare card under it. These read every number off the render -- no 80, no 168,
+// no 336 typed on either side of an assertion.
+describe('the sunburst is centred in the card it actually lives in (IMP-132)', () => {
+  afterEach(() => activeSkyManifest.mockReset());
+
+  const cardHeight = (view) => StyleSheet.flatten(view.getByTestId('streak-hero').props.style).height;
+
+  // The focal the screen actually passes, read back off the rendered art rather
+  // than imported, so the test fails if HomeScreen stops passing one.
+  const renderedFocal = (view, Art) => {
+    const art = view.UNSAFE_getByType(Art);
+    return art.props.focal;
+  };
+
+  test('the classic day hero centres the focal in the card (red before IMP-132: 80 vs 168)', () => {
+    activeSkyManifest.mockReturnValue(null);
+    const view = wrap(<HomeScreen {...baseProps} mode="day" />);
+    expect(renderedFocal(view, RayFan)).toBe(cardHeight(view) / 2);
+  });
+
+  test('night passes the same focal', () => {
+    activeSkyManifest.mockReturnValue(null);
+    const view = wrap(<HomeScreen {...baseProps} mode="night" />);
+    expect(renderedFocal(view, NightRays)).toBe(cardHeight(view) / 2);
+  });
+
+  test('the disc is wholly inside the card — nothing clipped, no bare band', () => {
+    activeSkyManifest.mockReturnValue(null);
+    const view = wrap(<HomeScreen {...baseProps} mode="day" />);
+    const h = cardHeight(view);
+    const focal = renderedFocal(view, RayFan);
+    const { top, height } = StyleSheet.flatten(
+      wrap(<RayFan focal={focal} />).toJSON().props.style
+    );
+    expect(top).toBeGreaterThanOrEqual(0);
+    expect(top + height).toBeLessThanOrEqual(h);
+    expect(top).toBe(h - (top + height)); // symmetric top and bottom margin
+  });
+
+  // Centring the numeral spends the slack the old layout had below it. The
+  // stack must still fit inside the fixed card, or IMP-130's height squeezes
+  // the content instead of the content deciding the height.
+  test('the hero content stack still fits inside the fixed card height', () => {
+    activeSkyManifest.mockReturnValue(null);
+    const view = wrap(<HomeScreen {...baseProps} mode="day" />);
+    const box = StyleSheet.flatten(view.getByTestId('hero-box').props.style);
+    const block = StyleSheet.flatten(view.getByTestId('hero-numeral-block').props.style);
+    const num = StyleSheet.flatten(view.getByText('5').props.style);
+    const label = StyleSheet.flatten(view.getByText('day streak').props.style);
+    const sub = StyleSheet.flatten(view.getByText(streakSubtitle(5)).props.style);
+    const meta = StyleSheet.flatten(view.getByText(/^Lv /).props.style);
+    const bar = StyleSheet.flatten(wrap(<ProgressBar value={0} />).toJSON().props.style);
+
+    // Every line height is explicit, so this sum is the real stack, not an estimate.
+    [num.lineHeight, label.lineHeight, sub.lineHeight, meta.lineHeight].forEach((lh) =>
+      expect(typeof lh).toBe('number')
+    );
+
+    const used =
+      box.paddingTop + block.marginTop +
+      num.lineHeight + label.marginTop + label.lineHeight + sub.marginTop + sub.lineHeight +
+      meta.lineHeight + 7 /* meta row marginBottom */ + bar.height +
+      box.paddingBottom;
+
+    expect(used).toBeLessThanOrEqual(cardHeight(view));
+    expect(cardHeight(view) - used).toBeGreaterThanOrEqual(12); // real slack for the spacer
   });
 });

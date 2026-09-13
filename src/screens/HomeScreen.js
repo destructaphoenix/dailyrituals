@@ -38,6 +38,22 @@ const HERO_HEIGHT = 336;
 // so the classic card's content does not get to decide it (IMP-130).
 const HERO_BOX = { flex: 1, paddingHorizontal: 22, paddingTop: 26, paddingBottom: 22, alignItems: 'center' };
 
+// The sunburst's focal point. It was 80 from IMP-003 until now, which was the
+// middle of a card that sized itself to its content (~232) -- the 300dp disc
+// bled off the top and landed on the bottom edge. IMP-130 pinned the card to
+// 336 for the sky crop and left the focal where it was, so the disc now hangs
+// 70dp off the top and leaves a 106dp bare band underneath. IMP-131 put the
+// numeral back ON that focal; it never asked whether the focal was still in the
+// right place. It is the card's centre, and both the art and the numeral are
+// derived from it here so they cannot drift apart again.
+const HERO_FOCAL = HERO_HEIGHT / 2;
+const NUMERAL_LINE = 82;
+// Line heights below the numeral are explicit so the stack's height is known by
+// construction rather than left to three RN defaults (IMP-131's estimates).
+const HERO_LABEL_LINE = 20;
+const HERO_SUB_LINE = 17;
+const HERO_META_LINE = 18;
+
 export default function HomeScreen({ copy, mode, streak, level, levelName, xpInto, xpToNext, entries, quests, freezes, onOpenAchievements, done, onWrite, onToggleMode, embers, plus, plusEnabled = false, onOpenShop, dailyPrompt = '', userName = '', pendingFreezeNotice = [], onDismissFreezeNotice, onThisDayDismissed = '', onDismissOnThisDay, onOpenOnThisDay, onOpenPaywall, recapSeen = null, onDismissAnnualRecap, onOpenAnnualRecap, frozenDays = [], activeSky = 'classic', ownedSkies = [] }) {
   const t = useTheme();
   const c = t.colors;
@@ -59,16 +75,19 @@ export default function HomeScreen({ copy, mode, streak, level, levelName, xpInt
   // every respect except what sits behind it (IMP-121).
   const heroInner = (
     <>
-      <View testID="hero-numeral-block" style={{ zIndex: 1, alignItems: 'center', marginTop: 13 }}>
-        <T d w={800} color={c.accentDeep} style={[{ fontSize: 76, lineHeight: 82, includeFontPadding: false, textAlign: 'center' }, hero.numeralShadow]}>{streak}</T>
-        <T d w={700} color={hero.title} style={[{ fontSize: 16, marginTop: 2 }, hero.textShadow]}>day streak</T>
-        <T w={600} color={hero.subtitle} style={[{ fontSize: 13, marginTop: 4 }, hero.textShadow]}>{streakSubtitle(streak)}</T>
+      <View testID="hero-numeral-block" style={{ zIndex: 1, alignItems: 'center', marginTop: HERO_FOCAL - HERO_BOX.paddingTop - NUMERAL_LINE / 2 }}>
+        <T d w={800} color={c.accentDeep} style={[{ fontSize: 76, lineHeight: NUMERAL_LINE, includeFontPadding: false, textAlign: 'center' }, hero.numeralShadow]}>{streak}</T>
+        <T d w={700} color={hero.title} style={[{ fontSize: 16, lineHeight: HERO_LABEL_LINE, marginTop: 2 }, hero.textShadow]}>day streak</T>
+        <T w={600} color={hero.subtitle} style={[{ fontSize: 13, lineHeight: HERO_SUB_LINE, marginTop: 4 }, hero.textShadow]}>{streakSubtitle(streak)}</T>
       </View>
       <View testID="hero-spacer" style={{ flex: 1 }} />
-      <View style={{ zIndex: 1, width: '100%', marginTop: 22 }}>
+      {/* No marginTop here: the spacer already separates this row, and with the
+          numeral on the card's centre the old 22 was spending slack the stack
+          no longer has. */}
+      <View testID="hero-meta" style={{ zIndex: 1, width: '100%' }}>
         <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 7 }}>
-          <T d w={700} color={hero.meta} numberOfLines={1} style={[{ fontSize: 14, flexShrink: 1 }, hero.textShadow]}>Lv {level} · {levelName}</T>
-          <T w={700} color={hero.metaDim} style={[{ fontSize: 12 }, hero.textShadow]}>{xpToNext == null ? 'Max' : `${xpInto} / ${xpToNext} XP`}</T>
+          <T d w={700} color={hero.meta} numberOfLines={1} style={[{ fontSize: 14, lineHeight: HERO_META_LINE, flexShrink: 1 }, hero.textShadow]}>Lv {level} · {levelName}</T>
+          <T w={700} color={hero.metaDim} style={[{ fontSize: 12, lineHeight: HERO_META_LINE }, hero.textShadow]}>{xpToNext == null ? 'Max' : `${xpInto} / ${xpToNext} XP`}</T>
         </View>
         <ProgressBar value={xpToNext == null ? 100 : Math.min(100, (xpInto / xpToNext) * 100)} accent={videoSkyActive ? videoSky.accent : undefined} onVideo={videoSkyActive} />
       </View>
@@ -111,7 +130,7 @@ export default function HomeScreen({ copy, mode, streak, level, levelName, xpInt
           </Card>
         ) : (
           <Card testID="streak-hero" style={{ height: HERO_HEIGHT, overflow: 'hidden' }}>
-            {mode === 'night' ? <NightRays /> : <RayFan />}
+            {mode === 'night' ? <NightRays focal={HERO_FOCAL} /> : <RayFan focal={HERO_FOCAL} />}
             <View testID="hero-box" style={HERO_BOX}>{heroInner}</View>
           </Card>
         )}

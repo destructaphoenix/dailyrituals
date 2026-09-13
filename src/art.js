@@ -10,7 +10,7 @@ import { useTheme } from './theme';
 const AView = Animated.View;
 
 // ── Faint rotating ray fan behind the day hero number ────────────────────────
-export function RayFan({ size = 300 }) {
+export function RayFan({ size = 300, focal = 80 }) {
   const t = useTheme();
   const spin = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -31,7 +31,7 @@ export function RayFan({ size = 300 }) {
     );
   }
   return (
-    <View pointerEvents="none" style={{ position: 'absolute', top: -70, left: 0, right: 0, height: size, alignItems: 'center', opacity: 0.5 }}>
+    <View pointerEvents="none" style={{ position: 'absolute', top: focal - size / 2, left: 0, right: 0, height: size, alignItems: 'center', opacity: 0.5 }}>
       <AView style={{ width: size, height: size, transform: [{ rotate }] }}>
         <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} fill="none">{rays}</Svg>
       </AView>
@@ -43,8 +43,8 @@ export function RayFan({ size = 300 }) {
 // Reuses the same golden sunburst as the day RayFan — proven premium brand —
 // rendered on pure AMOLED black, with a warm amber bloom at the convergence so
 // the streak number sits in a pool of candlelight. Symmetric and low-risk.
-// Focal point y≈80 from card top (consistent with day hero, IMP-003).
-export function NightRays({ size = 300 }) {
+// Focal point is the caller's to choose (IMP-132); the default 80 is IMP-003's.
+export function NightRays({ size = 300, focal = 80 }) {
   const t = useTheme();
   const spin    = useRef(new Animated.Value(0)).current;
   const breathe = useRef(new Animated.Value(0)).current;
@@ -78,7 +78,7 @@ export function NightRays({ size = 300 }) {
   }
 
   return (
-    <View pointerEvents="none" style={{ position: 'absolute', top: -70, left: 0, right: 0, height: size, alignItems: 'center' }}>
+    <View pointerEvents="none" style={{ position: 'absolute', top: focal - size / 2, left: 0, right: 0, height: size, alignItems: 'center' }}>
       <View style={{ width: size, height: size }}>
         {/* Rotating ray fan — same 24-spoke sunburst as the day hero, slightly brighter on black */}
         <AView style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.6 }}>

@@ -13,7 +13,7 @@
 > re-litigate a "why", and do not improve the scope.** If a step turns out to be impossible or the code
 > contradicts the spec, **STOP** and log it to `PROGRESS.md` → Open items rather than inventing a fix.
 >
-> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **1245 passed, 117 suites** — verified 2026-09-14, after IMP-131), `npx expo export --platform android` clean, commit with the **exact** message given, then
+> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **1249 passed, 117 suites** — verified 2026-09-14, after IMP-132), `npx expo export --platform android` clean, commit with the **exact** message given, then
 > update `PROGRESS.md` (tick the backlog row, write the session note) and **move the finished spec from
 > this file into `docs/build-log.md`**.
 >
@@ -24,15 +24,16 @@
 
 ## The queue
 
-**Nothing is open for a build chat.** IMP-131 (the sunburst regression) is done and archived; IMP-128 stays
-owner-gated.
+**Nothing is open for a build chat.** IMP-131 and IMP-132 (the sunburst regressions) are done and archived;
+IMP-128 stays owner-gated.
 
 | Row | What | Lane | Take it? |
 | --- | --- | --- | --- |
 | IMP-128 | Apply the motion vocabulary — `riseIn` on cards and rows, `popIn` on badges, `useCountUp` on the streak | OTA | ⏸ **owner's yes first — do not start** |
 
-**IMP-124, IMP-125, IMP-126, IMP-127, IMP-129, IMP-130 and IMP-131 are done** (archived to
-`docs/build-log.md`, commits `87771c4`, `d57dc2d`, `0502790`, `402391b`, `0a2f595`, `111c3de`, `28654cb`).
+**IMP-124, IMP-125, IMP-126, IMP-127, IMP-129, IMP-130, IMP-131 and IMP-132 are done** (archived to
+`docs/build-log.md`, commits `87771c4`, `d57dc2d`, `0502790`, `402391b`, `0a2f595`, `111c3de`, `28654cb`,
+this chat's).
 
 ---
 

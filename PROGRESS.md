@@ -188,6 +188,40 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
+_2026-09-14 (Opus — **IMP-132 built: the sunburst was centred on a card that no longer exists. The OTHER
+half of IMP-130's regression, found by the owner on the IMP-131 OTA.**) — ✅ code-complete, walk owed._
+
+**What finished.** IMP-131 proved the numeral sits **on** the focal point. It never asked whether the focal
+was still in the right *place*, and it was not. `80` is the middle of the **content-sized ~232dp** card the
+hero was before IMP-130 — there, `top: -70, size: 300` put the disc's bottom edge on the card's bottom edge
+by design. IMP-130 pinned the card to 336 and left the focal at 80, so the disc hangs 70dp off the top and
+leaves a **106dp bare band** underneath, and the numeral rode 88dp too high with it.
+[`art.js`](src/art.js) now takes `focal` as a prop (default 80 — frozen for any other caller);
+[`HomeScreen.js`](src/screens/HomeScreen.js) derives **one** `HERO_FOCAL = HERO_HEIGHT / 2` and computes
+both the art's `focal` and the numeral block's `marginTop` from it, so they cannot drift apart again. Disc
+now spans 18…318 in a 336 card: **nothing clipped, top margin = bottom margin.** The three line heights
+under the numeral are explicit now, and the meta row's vestigial `marginTop: 22` came out to pay for the
+centring.
+
+**The proof.** A fifth `describe` in [`HomeScreenSkyHero.test.js`](__tests__/screens/HomeScreenSkyHero.test.js)
+that types no `80`, `168` or `336`: the focal the screen passes = rendered card height ÷ 2 (day + night), the
+disc's top margin = its bottom margin, and the full content stack sums to ≤ the card height with ≥ 12dp of
+slack. Red before on the first three. IMP-131's `focalOf` helper and its video-shell case both needed
+repair — the helper measured `art.js`'s *default* focal instead of the shipped one, and the video shell has
+no `RayFan` to read; **both were the test's bugs, and the invariant they guard stayed green.**
+**1249 passed, 117 suites** (was 1245/117, +4). Full detail:
+[`docs/build-log.md`](docs/build-log.md#imp-132--the-sunburst-was-centred-on-a-card-that-no-longer-exists-2026-09-14).
+
+**The lesson, because it is the third time this card has bitten.** IMP-130 asserted `height === 336`.
+IMP-131 asserted `numeral === focal`. Both stayed green while the card looked wrong, because an
+absolutely-positioned decoration in a fixed-height card has **two** invariants — what it's aligned to, and
+**where that alignment sits in the frame**. Only the second one is visible to the owner.
+
+**Exact next step.** No `Release-Lane:` trailer this chat — it is pure JS on runtime `1.0.10` and wants an
+OTA, but that is the owner's call. WALK-24 stays blocked until it ships; its steps 2/3 now test IMP-132's
+centring as well as IMP-131's convergence, and its steps 4 (max font, both shells) and 5 (night) have still
+never run.
+
 _2026-09-14 (Opus — **IMP-131 specced: the sunburst lost the numeral. A regression from IMP-130, found by the
 owner on the OTA I told them to ship.**) — 📝 spec session, no code written._
 
