@@ -13,7 +13,7 @@
 > re-litigate a "why", and do not improve the scope.** If a step turns out to be impossible or the code
 > contradicts the spec, **STOP** and log it to `PROGRESS.md` → Open items rather than inventing a fix.
 >
-> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **1230 passed, 116 suites** — verified 2026-09-13), `npx expo export --platform android` clean, commit with the **exact** message given, then
+> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **1238 passed, 117 suites** — verified 2026-09-13), `npx expo export --platform android` clean, commit with the **exact** message given, then
 > update `PROGRESS.md` (tick the backlog row, write the session note) and **move the finished spec from
 > this file into `docs/build-log.md`**.
 >
@@ -24,93 +24,15 @@
 
 ## The queue
 
-**Two rows, and they are not equal.** **IMP-129 is a real defect on a path that is about to take real
-money** — take it. **IMP-128 is owner-gated** and exists so the parked motion decision has a body to read;
-it is not for a build chat until the owner lifts the gate.
+**Empty for a build chat.** The only row left, **IMP-128, is owner-gated** and exists so the parked motion
+decision has a body to read; it is not for a build chat until the owner lifts the gate.
 
 | Row | What | Lane | Take it? |
 | --- | --- | --- | --- |
-| **IMP-129** | A paid ember pack that resolves while the app is dying is never granted — the "self-healing" the module documents was never wired | OTA | ✅ **take this one** |
 | IMP-128 | Apply the motion vocabulary — `riseIn` on cards and rows, `popIn` on badges, `useCountUp` on the streak | OTA | ⏸ **owner's yes first — do not start** |
 
-**IMP-124, IMP-125, IMP-126 and IMP-127 are done** (archived to `docs/build-log.md`, commits `87771c4`,
-`d57dc2d`, `0502790`, `402391b`).
-
----
-
-### IMP-129 — the ember grant that never heals itself
-
-**Severity 🚦 — it takes money and gives nothing back.** It cannot fire today (`EMBER_PACKS_ENABLED` is
-`false`) and it becomes live the moment that flag flips, which is what
-[WALK-20](walk-open.md#walk-20--money-for-embers) is written to test. **Build this before that flag flips**,
-not after.
-
-**The defect, in the module's own words.** [`emberGrants.js:11-16`](../src/billing/emberGrants.js#L11) says:
-
-> *"This is also what makes the grant self-healing: a purchase that resolves while the app is being killed
-> never runs the grant, but the transaction is still in the next customerInfo's history and not yet in
-> `applied`, so the very next launch catches it."*
-
-**No launch catches it.** `applyEmberGrants` ([`RitualsApp.js:340`](../src/RitualsApp.js#L340)) has exactly
-one call site — inside `buyEmberPack` at [`RitualsApp.js:357`](../src/RitualsApp.js#L357) — and
-`pendingEmberGrants` is imported nowhere else in `src/`. Verified by grep, 2026-09-13. The comment describes
-a mechanism that was designed, written as a pure function, tested as a pure function, and then never
-connected to a launch.
-
-**What the user experiences.** Play charges. The app is killed (or backgrounded to death by the OEM, or
-crashes) before `purchaseStoreProduct` resolves. The embers never arrive, and **relaunching does not fix
-it** — the only thing that ever grants them is *another* purchase, which would then grant both at once.
-That is a real-money loss with a working receipt on Play's side and no balance change on ours.
-
-**Why it is cheap to fix.** The launch already fetches exactly the object the sweep needs and throws it
-away. [`useLaunchEntitlementSync`](../src/billing/entitlementSync.js#L44) runs `checkEntitlement(service)`
-at mount, `checkEntitlement` calls `service.getEntitlement()`, and
-[`revenueCatService.js`](../src/billing/revenueCatService.js)'s `getEntitlement()` is
-`const info = await Purchases.getCustomerInfo(); return toEntitlement(info);` — the full `CustomerInfo`,
-with its `nonSubscriptionTransactions`, exists on that line and is discarded one line later. **No new store
-call.**
-
-**Steps.**
-
-1. **`src/billing/entitlementSync.js` — carry the raw info out.** `checkEntitlement` currently returns
-   `{ verified, entitlement }`. Add a third key: `{ verified, entitlement, customerInfo }`. On the success
-   path, `customerInfo` is whatever the service hands back; on the `catch` path it is `null`. ⚠️ **Do not
-   change `nextPlusState`** — it reads `verified` and `entitlement` only, and the offline-first downgrade
-   policy must not acquire a new input.
-2. **`src/billing/revenueCatService.js` — return both.** `getEntitlement()` must hand back the entitlement
-   *and* the `CustomerInfo` it was derived from. Give it a second method rather than changing
-   `getEntitlement`'s return shape, because four call sites read that shape:
-   `async getCustomerInfoRaw() { try { return await Purchases.getCustomerInfo(); } catch (e) { return null; } }`
-   and have `checkEntitlement` ask for it. **Mirror it in [`simService.js`](../src/billing/simService.js)**
-   — every sim path must answer this method or `npm test` breaks on an undefined call.
-3. **`src/RitualsApp.js` — sweep at launch.** In `applyEntitlementResult`, after the existing entitlement
-   handling, add `if (result.customerInfo) applyEmberGrants(result.customerInfo);`. It is already the one
-   shared policy function for both the `AppState` path and the launch path, so this buys the
-   background→foreground sweep for free as well.
-4. ⚠️ **No toast on the launch path.** `applyEmberGrants` returns the amount and changes state; it does not
-   speak. `buyEmberPack` keeps its own toast. **Do not add a launch toast** — `useLaunchEntitlementSync`'s
-   header states the whole point of that hook is that opening the journal is never interrupted by a notice
-   about billing, and a silent balance correction is the right behaviour.
-5. **Tests, red first.** A new `__tests__/billing/emberGrantSweep.test.js`:
-   - the launch sweep grants an un-applied transaction: mount with `appliedEmberTx: []` and a service whose
-     `getCustomerInfoRaw` returns one `embers_240` transaction → balance rises by 240 and the id lands in
-     `appliedEmberTx`. **This must fail before step 3.**
-   - it is idempotent: the same transaction already in `appliedEmberTx` grants **0** and mutates nothing.
-   - a `verified: false` result (the store unreachable) grants nothing and — the control — **does not move
-     `plus`**, proving step 1 did not leak a new input into the downgrade policy.
-   - `checkEntitlement`'s `catch` path returns `customerInfo: null` and step 3 does not throw on it.
-
-**Ship.** `npm test` green (≥ **1230 passed, 116 suites**), `npx expo export --platform android` clean, then:
-
-```
-fix(billing): a paid ember pack is granted on the next launch, not lost (IMP-129)
-```
-
-OTA, no native change, **no `versionCode` bump.**
-
-**Its runtime proof is [WALK-20](walk-open.md#walk-20--money-for-embers) step 7**, which kills the app
-mid-purchase deliberately. ⚠️ **Do not run that walk from this chat** — and do not read its absence as an
-unfinished spec.
+**IMP-124, IMP-125, IMP-126, IMP-127 and IMP-129 are done** (archived to `docs/build-log.md`, commits
+`87771c4`, `d57dc2d`, `0502790`, `402391b`, `0a2f595`).
 
 ---
 

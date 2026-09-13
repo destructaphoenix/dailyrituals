@@ -36,7 +36,7 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 >
 > | If this chat is… | Take |
 > | --- | --- |
-> | a **build task** | ✅ **IMP-124 is DONE** (2026-09-13, `87771c4`) — the hero now reads `heroChrome.js`'s ground-based colors, not the theme. ✅ **IMP-125 is DONE** (2026-09-13, `d57dc2d`) — the candle row moved out of the hero and into the week-strip footer, `StreakFreeze`'s `onVideo` branch deleted, `HERO_HEIGHT` untouched. ✅ **IMP-126 is DONE** (2026-09-13, `0502790`) — mood mix bar opacity floors at `0.3`, index 10 no longer flattens to `0`. ✅ **IMP-127 is DONE** (2026-09-13, `402391b`) — `EmberPill` gains `showAdd`, the Shop's pill hides its `+` while `EMBER_PACKS_ENABLED` is false, Home's pill unchanged, IMP-119's centring walk moves to it. 🆕 **The backlog is NO LONGER empty — take [IMP-129](docs/specs-open.md#imp-129--the-ember-grant-that-never-heals-itself)** (scoped 2026-09-13). A paid ember pack that resolves while the app is being killed is **never granted**: `emberGrants.js` documents a self-healing launch sweep and nothing calls it — `applyEmberGrants` has one call site, inside `buyEmberPack`. Money in, nothing out, and a relaunch does not recover it. It cannot fire while `EMBER_PACKS_ENABLED` is `false`, which is exactly why it must be built **before** that flag flips. ⏸ **[IMP-128](docs/specs-open.md#imp-128--apply-the-motion-vocabulary) is also open but OWNER-GATED — do NOT take it**: it is the parked motion vocabulary, specced on 2026-09-13 at the owner's request with the "Plus is complete" gate deliberately left on. **None of IMP-124/125/126/127 has shipped yet** — all four sit on local `main` with no `Release-Lane` trailer. |
+> | a **build task** | ✅ **IMP-124 is DONE** (2026-09-13, `87771c4`) — the hero now reads `heroChrome.js`'s ground-based colors, not the theme. ✅ **IMP-125 is DONE** (2026-09-13, `d57dc2d`) — the candle row moved out of the hero and into the week-strip footer, `StreakFreeze`'s `onVideo` branch deleted, `HERO_HEIGHT` untouched. ✅ **IMP-126 is DONE** (2026-09-13, `0502790`) — mood mix bar opacity floors at `0.3`, index 10 no longer flattens to `0`. ✅ **IMP-127 is DONE** (2026-09-13, `402391b`) — `EmberPill` gains `showAdd`, the Shop's pill hides its `+` while `EMBER_PACKS_ENABLED` is false, Home's pill unchanged, IMP-119's centring walk moves to it. ✅ **IMP-129 is DONE** (2026-09-13, `0a2f595`) — `checkEntitlement` threads `customerInfo` through, `revenueCatService`/`simService` gained `getCustomerInfoRaw()`, and `RitualsApp.js`'s `applyEntitlementResult` now runs the ember-grant sweep silently on every launch and foreground. **The build queue is now EMPTY** — its only remaining row is owner-gated. ⏸ **[IMP-128](docs/specs-open.md#imp-128--apply-the-motion-vocabulary) is open but OWNER-GATED — do NOT take it**: it is the parked motion vocabulary, specced on 2026-09-13 at the owner's request with the "Plus is complete" gate deliberately left on. A build chat here needs Opus to scope a new `IMP-xxx` first. **None of IMP-124/125/126/127/129 has shipped yet** — all five sit on local `main` with no `Release-Lane` trailer. |
 > | a **runtime walk** | 🆕 **TAKE [WALK-23](docs/walk-open.md#walk-23--the-month-strip-on-a-journal-that-has-months) — ready right now, no build, no device, and an agent can drive all of it.** It is WALK-21 step 11 made runnable: the owner's journal is one month so the IMP-120 month strip had nothing to scroll; the dev panel's `storeShots` scenario is 210 days. 🔴 **Its step 3 is the point** — the strip scrolls itself to the newest month with an initial `contentOffset` of 100000dp, and nothing in the suite can say where Android actually landed; if the clamp misses, every user with history opens on their *oldest* month. (⚠️ `contentOffset` **is** in RN 0.81's shared prop block — verified in `node_modules` — so this is not the old iOS-only-prop trap.) 🔜 **[WALK-22](docs/walk-open.md#walk-22--the-day-mode-hero-re-check) is filed, and both IMP-124 and IMP-125 are now built** — it is blocked **only on the OTA push**: neither `87771c4` nor `d57dc2d` carries a `Release-Lane` trailer, so the fix is in `main` and on no phone, and walking it now would re-observe the original defect. A 4-minute day-mode look at one card once it ships. ✅ **WALK-21 is DONE — 🟠 PARTIAL, 2026-09-13** (Play `internal` vc17, owner-run). Steps 1-3, 6-10 passed clean (corners settle IMP-121's `surfaceView` question, step 8 re-confirms WALK-19a's store-authoritative membership); steps 4-5 failed into IMP-124 above; step 11 is a named gap (thin journal, nothing to scroll). Full write-up in `walk-open.md`'s WALK-21 section. 📱 **Next:** resume **"THE DEVICE SITTING PLAN"** below — three sittings (IMP-116 lapse + IMP-114/115 · WALK-19 step 8 real money · WALK-12 last), each with the membership state it needs. ⚠️ **7C stays unwalkable** until the candle holding drains to ≤2 — do not record it as passed because nothing broke. ✅ **Step 7 is DONE — the 2026-09-10/11 lapse sitting cleared it** (hardware, owner-run, monthly tester sub). **WALK-18 ✅, WALK-07 ✅, WALK-19 steps 7A/7B/7D ✅** — IMP-108, IMP-109, IMP-110, IMP-111 and IMP-096 are all now proven on hardware. ⚠️ **7C is NOT proven** — the owner held 6 pre-cap candles, so the cap was never exercised; it re-runs once the holding drains to ≤2 ([IMP-115](docs/specs-open.md#imp-115)). Remaining 🚦: **step 8** (the one real-money purchase, held for last) and **WALK-12 (R8) LAST** — it must be walked on the exact build you ship. ✅ **WALK-08 is CLOSED (2026-09-11, emulator, agent-run)** — DeeperInsights passes at max font, IMP-095 proven, cap measured biting (scale 2, caps 1.5/1.2). It found IMP-118 on the way. 🔴 **But its IMP-117 pass was HALF WRONG and the device overturned it** — the `+` was off-centre at every font size, fixed as [IMP-119](docs/build-log.md#imp-119-the-ember-pills--lost-the-line-that-centred-it-2026-09-11) (commit `1fc0664`, walk still owed on device); the emoji half stands. **A glyph-centring claim is not emulator-provable — route that shape to `device`.** ✅ **SITTING 1 is DONE (2026-09-11, hardware, owner-run) — do not re-run it.** IMP-116 proven: on lapse both cosmetics revert under one message. **IMP-114 stays UNEXERCISED** — `buyCandles` checks the cap before affordability, so 6 candles against a cap of 3 returns at the first guard and its message cannot fire; same blocker as 7C. Step 5's control was dropped by inspection (ownership is consulted independently of `plus` in all three paths). Still owed, cheaply: the `6 kept` label and the no-ember-price check. ✅ **WALK-20 (IMP-113's ember purchase) NOW EXISTS** — written 2026-09-13, [`docs/walk-open.md`](docs/walk-open.md#walk-20--money-for-embers). ⬜ **Still not runnable**, and its own pre-flight says why: three consumables must be live in Play **and** RevenueCat, [IMP-129](docs/specs-open.md#imp-129--the-ember-grant-that-never-heals-itself) must have shipped, and `EMBER_PACKS_ENABLED` must be flipped by OTA — safe to publish because `runtimeVersion` is `appVersion` `1.0.10`, so only vc17 on `internal` can receive it. 🔴 **Its step 4 is the point:** a consumable Play does not consume returns `ITEM_ALREADY_OWNED`, and the buyer gets *"you're already up to date"* and no embers. |
 > | a **design request** | 📋 **Take the first row of [`docs/design-queue.md`](docs/design-queue.md)** — a ranked audit of all 14 user-facing surfaces, written 2026-09-11 from source. ✅ **D-01 (the Insights consistency grid) is built as IMP-120** — no further design pass needed, `docs/design-queue.md` still names it first and wants its own row updated by a design chat. **D-02 (Reflections)** is next. ⚠️ **One screen per request**; the four standing rules stay in [`docs/playbook.md`](docs/playbook.md) → "Claude Design — standing rules". ✅ **The "three rows want IMP numbers" note is settled and was one row too long** (2026-09-13): **D-04's defect half is now [IMP-126](docs/specs-open.md#imp-126--the-11th-moods-bar-is-invisible)** (only its remainder-line design is still open), **D-09's is [IMP-127](docs/specs-open.md#imp-127--the-shops-ember--promises-an-action-it-cannot-perform)** — and reading the source corrected D-09: the **Home** pill's `+` opens the Shop and is fine, only the **Shop's own** pill toasts into nothing. **D-10 wants no number** — its two dead rows are IMP-022, already deferred; what is left there is genuine design. |
 >
@@ -77,7 +77,7 @@ preflight. Detail → [`docs/build-log.md`](docs/build-log.md).
 
 **Current stack:** Expo SDK **54** · RN **0.81.5** · React **19.1.0** · **New Architecture** ·
 **Reanimated 4.1.1 + worklets 0.5.1** · `targetSdkVersion` **36**, `minSdk` **24** ·
-`npm test` → **1230 passed, 116 suites** (verified 2026-09-13, after IMP-127) + **3 zone tests × 2 pinned zones**.
+`npm test` → **1238 passed, 117 suites** (verified 2026-09-13, after IMP-129) + **3 zone tests × 2 pinned zones**.
 ⚠️ **Run `npm test`, not bare `npx jest`**, or the zone half is skipped. Version-checking a phone, the
 track-reading script and the rest of the stack notes are in [`docs/playbook.md`](docs/playbook.md).
 
@@ -104,7 +104,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 125 | **The candle indicator leaves the hero card.** The owner's remark during WALK-21: it does not need to live inside a 336dp card already carrying a numeral, a subtitle, a level and a bar. Destination: a footer row in the **week-strip** card, where `buildWeekStrip` already draws the days a candle spent itself. | OTA | ✅ **done, archived** in `docs/build-log.md` — `d57dc2d`. **1226 passed, 115 suites** (was 1228/115) — down by the two deleted `StreakFreeze` `onVideo` cases, the sanctioned exception. Export clean. ⚠️ **Walk owed** — folds into [WALK-22](docs/walk-open.md#walk-22--the-day-mode-hero-re-check) step 5, updated |
 | 126 | **The 11th mood's bar is invisible.** Mood mix shades each bar `opacity: 1 - i * 0.1` ([`InsightsScreen.js:142`](src/screens/InsightsScreen.js#L142)); at index 10 that is **0**, past it negative. 8 built-in moods and **no cap on custom ones**, so three custom feelings in regular use render a bar that is in the data, labelled with its own count, and cannot be seen. **IMP-118's shape exactly.** | OTA | ✅ **done, archived** in `docs/build-log.md` — `0502790`. **1228 passed, 116 suites** (was 1226/115), export clean, +2 tests, +1 suite. Floor clamped at `0.3`; index 7 unchanged. No walk owed |
 | 127 | **The Shop's ember `+` promises an action it cannot perform.** With `EMBER_PACKS_ENABLED` false, `Shop.js:78`'s pill toasts *"Embers also gather on their own"* — an honest message behind a control that cannot do what its glyph says. | OTA | ✅ **done, archived** in `docs/build-log.md` — `402391b`. **1230 passed, 116 suites** (was 1228/116), export clean, +2 tests. `EmberPill` gains `showAdd`; Shop's pill hides the `+` when `EMBER_PACKS_ENABLED` is false, Home's pill unchanged. IMP-119's owed centring walk moves to Home's pill. No walk of its own |
-| 129 | **A paid ember pack that resolves while the app is dying is never granted.** [`emberGrants.js`](src/billing/emberGrants.js) documents a self-healing launch sweep; `applyEmberGrants` has exactly **one** call site, inside `buyEmberPack`, and `pendingEmberGrants` is imported nowhere else. Play charges, the embers never arrive, and relaunching does not fix it. The launch already fetches the `CustomerInfo` the sweep needs and discards it. | OTA | ⬜ **open — take this one.** Spec in [`docs/specs-open.md`](docs/specs-open.md#imp-129--the-ember-grant-that-never-heals-itself). Cannot fire while `EMBER_PACKS_ENABLED` is `false`; **build it before that flag flips.** Walk = [WALK-20](docs/walk-open.md#walk-20--money-for-embers) step 7 |
+| 129 | **A paid ember pack that resolves while the app is dying is never granted.** [`emberGrants.js`](src/billing/emberGrants.js) documented a self-healing launch sweep; `applyEmberGrants` had exactly **one** call site, inside `buyEmberPack`, and `pendingEmberGrants` was imported nowhere else. Play charges, the embers never arrived, and relaunching did not fix it. | OTA | ✅ **done, archived** in `docs/build-log.md` — `0a2f595`. **1238 passed, 117 suites** (was 1230/116), export clean, +8 tests, +1 suite. Walk = [WALK-20](docs/walk-open.md#walk-20--money-for-embers) step 7, still owed — cannot run while `EMBER_PACKS_ENABLED` is `false` |
 | 128 | **Apply the motion vocabulary** — `riseIn` on Home's card stack and the Keepsakes rows, `popIn` on earned badges, `useCountUp` on the streak numeral. Six of eight `motion.js` exports still have no consumer, and IMP-077 paid for them with two **native** deps and the vc14 build. | OTA | ⏸ **OWNER-GATED — specced 2026-09-13 at the owner's request, gate deliberately left ON.** A build chat must not take it until the owner lifts it. Spec in [`docs/specs-open.md`](docs/specs-open.md#imp-128--apply-the-motion-vocabulary) |
 | 022 | Save as PDF + About sheet (the two dead You-tab buttons) | Build | ⏸ **deferred (owner)** — spec in build-log → "Deferred specs"; **perk #6 gate** |
 | 044 | R8 on release builds (dev client was shipping to the public) | Build | 🟢 **code-complete, UNWALKED.** R8 must be walked on the build you actually ship, so it rides **vc15 or later**; walk = WALK-12, on hardware, last in the sitting |
@@ -186,28 +186,6 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
-_2026-09-13 (Sonnet — **IMP-126 built: the mood mix bar opacity floors at 0.3.**) — ✅ code-complete, no
-walk owed._
-
-**What finished.** [`InsightsScreen.js:142`](src/screens/InsightsScreen.js#L142) — the bar's
-`opacity: 1 - i * 0.1` clamped to `opacity: Math.max(0.3, 1 - i * 0.1)`. Index 10 (the 11th mood) no longer
-flattens to `0`; index 7 (the 8th, the last built-in) is unaffected by design — it already sat within float
-epsilon of `0.3`. Added a `testID={`mood-bar-${x.m}`}` to the bar `View` (there was none before) so the new
-test can query individual bars.
-
-**The proof.** New [`moodMixOpacity.test.js`](__tests__/insights/moodMixOpacity.test.js) renders
-`InsightsScreen` with 12 distinct moods (descending counts for a deterministic sort). Confirmed **red
-first**: index 10 was exactly `0`, index 7 was `0.29999999999999993` (float error, not a clean `0.3`). Green
-after the clamp: 11th/12th bars are `0.3`, 8th stays `0.3`. **1228 passed, 116 suites** (was 1226/115, +2
-tests +1 suite). Export clean. Commit `0502790`. Spec archived to `docs/build-log.md`; `docs/design-queue.md`
-D-04 updated to point at this commit — only its remainder-line design is still open there.
-`docs/specs-open.md`'s queue now holds only IMP-127.
-
-**Not shipped this chat** — no `Release-Lane:` trailer. No walk owed, per spec (a numeric clamp with a
-render assertion).
-
----
-
 _2026-09-13 (Sonnet — **IMP-127 built: the Shop's ember `+` hides itself while it cannot add embers.**) —
 ✅ code-complete, no walk of its own._
 
@@ -227,6 +205,35 @@ assertions and gained two render tests: `showAdd={false}` renders no `+`, the de
 **Not shipped this chat** — no `Release-Lane:` trailer. No walk of its own, per spec — folds into the next
 Shop sitting, and into WALK-20 when `EMBER_PACKS_ENABLED` flips (the `+` must come back then).
 
-**The exact next step.** `docs/specs-open.md`'s queue is empty — the next build chat needs Opus to scope a
-new `IMP-xxx` from the owner's backlog first. IMP-124/125/126/127 all still await the owner's ship
-go-ahead — none carries a `Release-Lane` trailer.
+---
+
+_2026-09-13 (Sonnet — **IMP-129 built: a paid ember pack is granted on the next launch, not lost.**) —
+✅ code-complete, no walk of its own (WALK-20 step 7 owns the runtime proof, not run from this chat)._
+
+**What finished.** `emberGrants.js` documented a self-healing launch sweep that nothing ever called —
+`applyEmberGrants` had exactly one call site, inside `buyEmberPack`. [`entitlementSync.js`](src/billing/entitlementSync.js)'s
+`checkEntitlement` now returns a third key, `customerInfo` (the service's answer on success, `null` on the
+catch path; `nextPlusState` untouched). [`revenueCatService.js`](src/billing/revenueCatService.js) gained
+`getCustomerInfoRaw()` — a second method, not a change to `getEntitlement`'s shape — mirrored in
+[`simService.js`](src/billing/simService.js). [`RitualsApp.js`](src/RitualsApp.js)'s `applyEntitlementResult`
+(shared by the `AppState` listener and the launch hook) now calls `applyEmberGrants(result.customerInfo)`
+when present — no new store call, no toast, silent self-heal on both the cold-start and
+background→foreground paths.
+
+**The proof.** New [`emberGrantSweep.test.js`](__tests__/billing/emberGrantSweep.test.js) mounts the real
+`RitualsApp` (it is renderable — see `FabLabel.test.js`) with `createPurchaseService` swapped for a fake,
+rather than a source assertion: an un-applied `embers_240` transaction grants 240 and lands its id in
+`appliedEmberTx` (confirmed **red** before the `RitualsApp.js` wiring existed); the same transaction already
+in the ledger grants 0; an unreachable store grants nothing and — the control — does not move `plus`, and
+never reaches `getCustomerInfoRaw` at all. `purchaseFlow.test.js`'s ad-hoc fake service needed
+`getCustomerInfoRaw` added too — a real interface change surfaced a second caller (`PlusFlow.js`'s IMP-101
+reconcile) that the spec hadn't named. **1238 passed, 117 suites** (was 1230/116, +8 tests, +1 suite).
+Export clean. Commit `0a2f595`. Spec archived to `docs/build-log.md`; `docs/specs-open.md`'s queue now holds
+only the owner-gated IMP-128.
+
+**Not shipped this chat** — no `Release-Lane:` trailer.
+
+**The exact next step.** `docs/specs-open.md`'s build queue is empty (IMP-128 is owner-gated, not a build
+chat's to take) — the next build chat needs Opus to scope a new `IMP-xxx` first, or the owner to lift
+IMP-128's gate. IMP-124/125/126/127/129 all still await the owner's ship go-ahead — none carries a
+`Release-Lane` trailer. `EMBER_PACKS_ENABLED` must stay `false` until WALK-20 passes on hardware.

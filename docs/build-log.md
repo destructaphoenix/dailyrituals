@@ -5172,7 +5172,72 @@ next, and into WALK-20 when `EMBER_PACKS_ENABLED` flips, where the `+` must come
 
 ---
 
+## IMP-129 — the ember grant that never heals itself (2026-09-13)
+
+**Severity 🚦 — it takes money and gives nothing back.** [`emberGrants.js`](../src/billing/emberGrants.js)
+documented a self-healing launch sweep — a purchase that resolves while the app is being killed never runs
+`applyEmberGrants`, but the next launch's `CustomerInfo` still carries the un-applied transaction — and
+nothing ever called it. `applyEmberGrants` had exactly one call site, inside `buyEmberPack`;
+`pendingEmberGrants` was imported nowhere else. Play charges, the app is killed before
+`purchaseStoreProduct` resolves, and relaunching did not fix it — only another purchase granted both at
+once. Could not fire while `EMBER_PACKS_ENABLED` is `false`; had to ship before that flag flips.
+
+**What changed.**
+- [`entitlementSync.js`](../src/billing/entitlementSync.js) — `checkEntitlement` now returns a third key,
+  `customerInfo`: whatever the service hands back on the success path, `null` on the catch path.
+  `nextPlusState` untouched — it still reads only `verified`/`entitlement`, so the offline-first downgrade
+  policy gained no new input.
+- [`revenueCatService.js`](../src/billing/revenueCatService.js) — new `getCustomerInfoRaw()`, a second
+  method rather than a change to `getEntitlement`'s shape (four call sites read that one). Swallows its own
+  error. Mirrored in [`simService.js`](../src/billing/simService.js) (returns `null` — the sim keeps no
+  purchase history of its own).
+- [`RitualsApp.js`](../src/RitualsApp.js) — `applyEntitlementResult` (the one shared downgrade policy for
+  both the `AppState` listener and the launch hook) now calls `applyEmberGrants(result.customerInfo)` when
+  present. No new store call — the launch already fetches the `CustomerInfo` the sweep needs. No toast — a
+  silent balance correction, consistent with `useLaunchEntitlementSync`'s "opening the journal is never
+  interrupted by a billing notice."
+
+**The proof.** New [`emberGrantSweep.test.js`](../__tests__/billing/emberGrantSweep.test.js) — RitualsApp
+IS renderable (see `FabLabel.test.js`), so this mounts it for real with `createPurchaseService` swapped for
+a fake, rather than a source assertion: a service whose `getCustomerInfoRaw` returns one un-applied
+`embers_240` transaction grants 240 embers and lands the id in `appliedEmberTx` (confirmed **red** before
+the `RitualsApp.js` wiring existed); the same transaction already in the ledger grants 0 and mutates
+nothing; an unreachable store (`getEntitlement` rejects) grants nothing and — the control — does not move
+`plus`, and never reaches `getCustomerInfoRaw` at all. Plus a direct unit test that `checkEntitlement`'s
+catch path returns `customerInfo: null`. `entitlementSync.test.js` and `revenueCatService.test.js` gained
+coverage for the new field/method; `purchaseFlow.test.js`'s ad-hoc fake service needed `getCustomerInfoRaw`
+added or its IMP-101 reconcile test broke — a real service-interface change, not a fluke. **1238 passed,
+117 suites** (was 1230/116, +8 tests, +1 suite). Export clean. Commit `0a2f595`.
+
+**Not in this row.** OTA, no native change, no `versionCode` bump. Its runtime proof is
+[WALK-20](walk-open.md#walk-20--money-for-embers) step 7, which kills the app mid-purchase deliberately —
+not run from this chat, per the spec.
+
+---
+
 ## Session notes
+
+_2026-09-13 (Sonnet — **IMP-126 built: the mood mix bar opacity floors at 0.3.**) — ✅ code-complete, no
+walk owed._
+
+**What finished.** [`InsightsScreen.js:142`](../src/screens/InsightsScreen.js#L142) — the bar's
+`opacity: 1 - i * 0.1` clamped to `opacity: Math.max(0.3, 1 - i * 0.1)`. Index 10 (the 11th mood) no longer
+flattens to `0`; index 7 (the 8th, the last built-in) is unaffected by design — it already sat within float
+epsilon of `0.3`. Added a `testID={`mood-bar-${x.m}`}` to the bar `View` (there was none before) so the new
+test can query individual bars.
+
+**The proof.** New [`moodMixOpacity.test.js`](../__tests__/insights/moodMixOpacity.test.js) renders
+`InsightsScreen` with 12 distinct moods (descending counts for a deterministic sort). Confirmed **red
+first**: index 10 was exactly `0`, index 7 was `0.29999999999999993` (float error, not a clean `0.3`). Green
+after the clamp: 11th/12th bars are `0.3`, 8th stays `0.3`. **1228 passed, 116 suites** (was 1226/115, +2
+tests +1 suite). Export clean. Commit `0502790`. Spec archived to `docs/build-log.md`; `docs/design-queue.md`
+D-04 updated to point at this commit — only its remainder-line design is still open there.
+`docs/specs-open.md`'s queue then held only IMP-127.
+
+**Not shipped this chat** — no `Release-Lane:` trailer. No walk owed, per spec (a numeric clamp with a
+render assertion).
+
+---
 
 _2026-09-13 (Sonnet — **IMP-125 built: the candle count moved out of the hero and into the week-strip
 footer.**) — ✅ code-complete, walk owed (device, WALK-22, needs the OTA landed)._
