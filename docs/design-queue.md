@@ -77,6 +77,17 @@ by looking which half they are holding.
 | **Soon** | **[WALK-25](walk-open.md#walk-25--recapture-the-shot-set)** re-runs `npm run shots` in both modes. It is not a new pipeline (that is still out of scope) — it is the one that exists, and the same sitting also refreshes **`store/play/`, the live Play listing, which is the same 2026-08-16 vintage and is currently advertising a version of this app that no longer exists.** |
 | **Never again** | The generator now has to state what the app actually renders, guarded by a test — see [IMP-134](specs-open.md#imp-134--the-design-system-has-to-say-what-the-app-actually-draws). |
 
+🗑️ **The live Claude Design project was cleaned the same day — 63 files deleted via `DesignSync`:** its own
+copies of the 14 baselines and both baseline cards, the 19-file `scraps/` folder (probe and frame PNGs from
+the sky work), and a 25-file duplicate of `art/brand/` that was sitting under `uploads/`. **Not touched, and
+deliberately:** everything in `art/` (the sky heroes and their `.mp4`s), the returned designs in `screens/`
+(`insights-redesign`, `plus-home`, `shop-plus-skins`, `celebration`, `home-plus-skies`, `home-aurora`), the
+generated `tokens/` and `components/` cards, and **the loose `uploads/*.mp4` footage** — that last one is
+raw source material for skies still in flight, which is neither stale nor unused. ⚠️ **One thing worth a
+look:** `art/brand/play/screenshot-*.png` are seven 1080×1920 Play screenshots living in the project. If
+they are the same 2026-08-16 set as `store/play/`, they are stale by D-16's argument; if they came out of
+the brand work they may be newer. **Nobody has checked, and D-16 replaces them either way.**
+
 ### ✅ The Plus card was wrong — fixed 2026-09-11, but it still has to be re-pushed
 
 `design-system/components/plus.html` had carried **four** stale claims. All four are corrected in
@@ -93,7 +104,9 @@ by looking which half they are holding.
 asserts every string on the card is still present in `src/shopui.js`, and that the four retired claims stay
 retired. All five checks were verified red against the previous generator before the fix landed.
 
-✅ **Pushed to the live project 2026-09-11** via `DesignSync` after the owner ran `/design-login` —
+✅ **Pushed to the live project 2026-09-11** via `DesignSync` (⚠️ that note used to say the owner had to run
+`/design-login` first — **wrong, and corrected 2026-09-14:** `/design-login` is only for a session without a
+claude.ai login; here `DesignSync` just works) —
 `components/plus.html` plus both `screens/baseline-*.html` (the caption fixes — **those two cards are since deleted**). The project now shows the
 corrected card; nothing else in it was touched.
 

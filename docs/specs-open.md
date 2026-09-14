@@ -124,9 +124,15 @@ fix(design-system): the frozen card draws the rays the app actually draws (IMP-1
 
 **No `Release-Lane:` trailer** — there is nothing to release; the app bundle is byte-identical.
 
-⚠️ **What this row does NOT do.** It does not push to the live Claude Design project. `DesignSync` needs the
-owner to run `/design-login` first, and the push is theirs to trigger — the project still holds the two
-deleted baseline cards and it is the owner who decides when it is refreshed.
+⚠️ **What this row does NOT do.** It does not push to the live Claude Design project. ✅ **The live project's
+own stale copies are already gone** — 63 files deleted 2026-09-14 by `DesignSync` (the 14 baselines, both
+baseline cards, `scraps/`, and a duplicate of `art/brand/` sitting under `uploads/`). Pushing the *corrected*
+frozen card is a separate act and belongs to whoever runs this spec, after the regeneration is committed.
+
+✅ **`DesignSync` needs no login step — corrected 2026-09-14.** The repo previously said the owner had to run
+`/design-login` first. **That is wrong and it wasted a round trip:** `/design-login` is the fallback for a
+session with no claude.ai login. This session has one, so `list_projects` / `list_files` / `finalize_plan`
+just work, and the only gate is the ordinary permission prompt on a write. **Do not ask the owner to log in.**
 
 
 ---
