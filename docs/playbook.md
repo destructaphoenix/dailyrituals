@@ -437,7 +437,16 @@ so the build does not wait on the footage replacement.
 
 ### 🔴 Every sky must be ours to sell — the provenance gate
 
-> 🟡 **UPDATED 2026-09-15 — requirement #2 is answered, #1 is not.** The owner: *"Everything from Pinterest
+> ✅ **CLOSED 2026-09-15 — both open requirements answered, in two passes the same day.**
+> **🔴 Blocked, and they must never be uploaded to R2 or ported: `Fernlight`, `Local Line` ("train hero")
+> and `Tideline`** (including `tideline-hero.html` and the `-v2` pair) — all three are Pinterest images fed
+> to Veo/Higgsfield, which makes them derivatives. **✅ Cleared: `Aurora`, `Sakura Fuji`, `Event Horizon`,
+> `Emberfield`, `Starfall`** (Veo/Higgsfield direct), **`Meteorfall`** (CSS, no footage) and the already-live
+> `meteor` → `ocean.mp4` (Pexels). ⚠️ **The blocked three are still fine as private mockups** — the risk
+> starts at distribution, not generation. **Requirement #3 (a provenance line per sky) is the only part
+> still outstanding**, and it is written as each sky is added to `SHOP_SKIES`.
+>
+> _The reasoning, kept because a ruling without it gets re-litigated:_ The owner: *"Everything from Pinterest
 > is either directly AI generated, or was an image that I had converted to video using higgsfield or veo
 > subscriptions."* **Higgsfield and Veo grant commercial use and output ownership on paid tiers**, which the
 > owner holds — so **requirement #2 below is satisfied and must not be re-asked**. Requirement #1 (*nothing

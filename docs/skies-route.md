@@ -33,7 +33,7 @@ changed" at the foot of this file.
 
 ## Stage 0 — three rulings, and none of them is a chat's to make
 
-**1. 🟡 PARTLY ANSWERED 2026-09-15 by the owner — and the remaining half is one question per clip.**
+**1. ✅ ANSWERED AND CLOSED 2026-09-15 by the owner, in two passes — the tool question, then the per-clip classification.**
 
 > **Owner, 2026-09-15:** *"Everything from Pinterest is either directly AI generated, or was an image that
 > I had converted to video using higgsfield or veo subscriptions."* Also ruled the same day: **we are not
@@ -44,9 +44,11 @@ ownership*. **Higgsfield and Veo both grant commercial use and output ownership 
 owner holds subscriptions to both. That requirement is satisfied and does not need re-asking. It also
 answers the *"find out which tool it was"* note in the playbook: it was those two.
 
-**What it does NOT clear — requirement #1, *nothing scraped in the chain*.** The owner's sentence splits
-the library in half, and the half it lands in is decided per clip by **one question: where did the seed
-image come from?**
+**What that first answer did NOT settle — requirement #1, *nothing scraped in the chain*.** It splits the
+library in half rather than clearing it, and which half a clip lands in is decided by **one question: where
+did the seed image come from?** ➡️ **The owner answered that too, later the same day — the table below is
+the result, and requirement #1 is now settled per clip.** This rule is kept because it is the test any
+*future* clip has to pass:
 
 | The chain | Verdict |
 | --- | --- |
@@ -59,10 +61,66 @@ else generated it; selling their output is the same problem in a different coat.
 copyrightable at all is contested and jurisdiction-specific — it is not a defence to build a paid IAP on,
 and it says nothing about Pinterest's own terms.)
 
-🔴 **So the gate is now one owner task, not a research question:** go down the clip list and mark each one
-**owner-image**, **text-to-video**, or **Pinterest-image**. The first two ship. The third does not.
-**Until that list exists, no clip in the design project may ship**, free or paid — and note that the one
-sky that *is* live (`meteor` → `ocean.mp4`) is Pexels-licensed and is not affected by any of this.
+### ✅ THE CLASSIFICATION — owner, 2026-09-15. **The gate is CLOSED.**
+
+> **Owner:** *"Fernlight, train hero and tideline hero cards video are derived from pinterest. Everything
+> else is Veo or Higgsfield directly."*
+
+**"Train hero" is `Local Line`** — the only train in the set.
+
+| Hero | Chain | Verdict |
+| --- | --- | --- |
+| `Fernlight` | Pinterest image → Veo/Higgsfield | 🔴 **DERIVATIVE — cannot ship.** |
+| `Local Line` ("train hero") | Pinterest image → Veo/Higgsfield | 🔴 **DERIVATIVE — cannot ship.** Already dead anyway: ⛔ it cannot loop (the train traverses). |
+| `Tideline` | Pinterest image → Veo/Higgsfield | 🔴 **DERIVATIVE — cannot ship.** Covers `tideline.html`, `tideline-hero.html` **and the `-v2` pair.** |
+| `Aurora` | Veo/Higgsfield direct | ✅ **CLEAR.** |
+| `Sakura Fuji` | Veo/Higgsfield direct | ✅ **CLEAR.** |
+| `Event Horizon` | Veo/Higgsfield direct | ✅ **CLEAR.** |
+| `Emberfield` | Veo/Higgsfield direct | ✅ **CLEAR.** |
+| `Starfall` | Veo/Higgsfield direct | ✅ **CLEAR.** |
+| `Meteorfall` | drawn in CSS — no footage exists | ✅ **CLEAR by construction**, and the only one with no provenance surface at all. |
+| `meteor` → `ocean.mp4` (**the one already live**) | Pexels stock | ✅ **CLEAR**, unaffected by any of this. |
+
+🔴 **The three blocked cards must not be ported, and their `.mp4`s must not be uploaded to R2** — not as a
+placeholder, not "just to test the path", not free rather than paid. **An AI edit does not clear a
+copyright**; these carry the original pin's rights. ⚠️ **They are still fine as private design mockups**,
+which is what they have always been — the risk starts at *distribution*, not at generation. Leave the cards
+in the project.
+
+**What the loss actually costs: two heroes, not three.** `Local Line` was already ruled out on the loop
+rule below, so it takes nothing with it. The real casualties are **`Fernlight` and `Tideline`** — and
+`Tideline` is the more expensive of the two, because it had a day/night pair, posters, *and* a `-v2`
+regeneration already done.
+
+⚠️ **Write the provenance line per sky when each one is added to `SHOP_SKIES`** — requirement #3, and the
+only part of the gate that is still outstanding. For the cleared six it is the same sentence with the tool
+name and date filled in; `credit` is already a required non-empty field on any sky carrying a clip
+([`data.js`](../src/data.js)).
+
+### What is actually ready to ship, sky by sky
+
+**Provenance is no longer the blocker for any of these. Files are.** Read against the two rulings already
+made above (720 short edge accepted; **posters are required, not optional**):
+
+| Hero | Footage | Poster | What it still needs |
+| --- | --- | --- | --- |
+| **Aurora** | ✅ day + night | ✅ both | **Nothing but encode → R2 → a data edit.** Consider collapsing to one clip (an aurora is not a daylight phenomenon — see the loop-rule table). |
+| **Sakura Fuji** | ✅ day + night | ✅ both | **Nothing but encode → R2 → a data edit.** Daylight-defined, so it correctly keeps both modes. |
+| **Event Horizon** | ✅ one clip, both modes | 🔴 none | A poster frame. Also: the file is `eventhorizon-temp.mp4` — **confirm it is the final grade, not a working copy**, before it is baked. |
+| **Emberfield** | ✅ one clip | 🔴 none | A poster frame. |
+| **Starfall** | ✅ one clip | 🔴 none | A poster frame. 20.2s against a 6–10s spec — **accepted, do not re-open** (ruling 2). |
+| **Meteorfall** | 🔴 none — it is CSS | — | Footage, if it is wanted as a sky. **Or port the CSS as a drawn sky**, which is the cheapest thing on this page and needs no clip, no R2 and no poster. |
+
+🔑 **A poster is one command** (`ffmpeg -i clip.mp4 -vframes 1 -ss <t> poster.png`), so three of the six are
+a few minutes apart from Aurora and Sakura Fuji.
+
+🔴 **The one thing a chat cannot do: get the footage out.** `art/assets/*.mp4` are megabytes of binary and
+**`DesignSync get_file` is capped at 256 KiB** — the clips cannot travel through the read path, which
+`design-system/proposals/README.md` has said since 2026-09-11. **The owner has to export the cleared clips
+to disk.** Everything after that (crop offsets, encode, SSIM loop check, posters) is scriptable.
+
+💡 **The stock route below is not deleted, but the owner has declined it** (2026-09-15). It is kept as the
+record of what the alternative was.
 
 💡 **The stock route below is not deleted, but the owner has declined it** (2026-09-15). It is kept as the
 record of what the alternative was.

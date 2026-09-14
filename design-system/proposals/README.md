@@ -19,8 +19,18 @@
 
 **The `.mp4` files are the sharpest risk.** They are original footage — Aurora, Tideline, Fernlight,
 Sakura Fuji, Local Line, Event Horizon — and nothing in this repo, in git, or in any build contains them.
-They cannot travel through the `DesignSync` read path either. **Do not delete an art card until the
-footage is somewhere else.**
+They cannot travel through the `DesignSync` read path either (**binary, and `get_file` caps at 256 KiB**).
+**Do not delete an art card until the footage is somewhere else.**
+
+> 🔑 **Sharpened 2026-09-15 by the provenance ruling** ([`skies-route.md`](../../docs/skies-route.md) →
+> Stage 0 ruling 1). The footage now splits in two, and the halves want opposite things:
+>
+> - ✅ **`Aurora`, `Sakura Fuji`, `Event Horizon`, `Emberfield`, `Starfall` are CLEARED to ship.** These are
+>   the ones actually worth getting off the project and onto disk — they are shippable product, and the
+>   project is still their only copy. **The owner has to export them; no chat can.**
+> - 🔴 **`Fernlight`, `Local Line`, `Tideline` are Pinterest-derived and can never ship** — not paid, not
+>   free, not as a placeholder. They stay valuable as *mockups* (the risk starts at distribution), so do
+>   not delete them either; just never upload them to R2 or put them in `SHOP_SKIES`.
 
 **The real fix is the GitHub connection.** `docs/playbook.md` already notes it: the pane's GitHub sync was
 blocked only because the branch was unpublished, and `main` has carried `design-system/` since 2026-09-08.

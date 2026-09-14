@@ -181,17 +181,21 @@ the two are indistinguishable. **Do not remove the fallback** — see WALK-19.
   second ink set over video. Owner: *"I want consistency in the app… we will stick to the colour scheme of
   the app for light and dark mode."* **One treatment over footage** (`heroChrome`'s white ramp, IMP-124),
   theme tokens everywhere else. 🔴 **Do not re-open it and do not add `tone` to `SHOP_SKIES`.**
-- 🟡 **THE SKY PROVENANCE GATE — HALF ANSWERED 2026-09-15, and the other half is an owner task.** Owner:
-  *"Everything from Pinterest is either directly AI generated, or was an image that I had converted to
-  video using higgsfield or veo subscriptions."* — and **stock sourcing is declined.** That settles the
-  tool question (Higgsfield/Veo paid tiers grant commercial use and output ownership, so **requirement #2
-  is closed and must not be re-asked**). **Requirement #1 — nothing scraped in the chain — is still open**
-  and now reduces to one question per clip: **where did the seed image come from?** An owner-held image or
-  pure text-to-video ships; a Pinterest image fed to Higgsfield or Veo is a derivative and does not.
-  🔴 **The next action is the owner's: classify each clip owner-image / text-to-video / Pinterest-image.**
-  Until that list exists no design-project clip may ship. Full ruling in
-  [`docs/skies-route.md`](docs/skies-route.md) → Stage 0 ruling 1. ⚠️ **The engineering is NOT the blocker**
-  — IMP-121/122/123 shipped it, and adding a cleared sky is a data-only edit to `SHOP_SKIES`.
+- ✅ **THE SKY PROVENANCE GATE — CLOSED 2026-09-15, in two passes.** (a) The tool question: Higgsfield/Veo
+  paid tiers grant commercial use and output ownership, so **requirement #2 is closed and must not be
+  re-asked**; stock sourcing declined. (b) The per-clip classification, owner: *"Fernlight, train hero and
+  tideline hero cards video are derived from pinterest. Everything else is Veo or Higgsfield directly."*
+  🔴 **BLOCKED FOREVER — never upload to R2, never put in `SHOP_SKIES`: `Fernlight`, `Local Line` ("train
+  hero"), `Tideline`** (incl. `tideline-hero` and the `-v2` pair). They stay fine as private mockups.
+  ✅ **CLEARED: `Aurora`, `Sakura Fuji`, `Event Horizon`, `Emberfield`, `Starfall`, `Meteorfall`** (CSS) —
+  plus the already-live `meteor` → `ocean.mp4` (Pexels). **The loss is two heroes, not three** — `Local
+  Line` was already dead on the loop rule. Full table + per-sky readiness in
+  [`docs/skies-route.md`](docs/skies-route.md) → Stage 0 ruling 1.
+  ▶️ **The next action is the owner's, and it is not a decision — it is a file export.** `Aurora` and
+  `Sakura Fuji` are complete (footage **and** posters); `Event Horizon`, `Emberfield` and `Starfall` need
+  one poster frame each. **The clips cannot travel through `DesignSync` (binary, 256 KiB cap), so the owner
+  must export them to disk**; everything after that — crop offsets, encode, SSIM loop check, R2 upload — is
+  scriptable, and the app side is a **data-only edit** to `SHOP_SKIES` with no code at all.
 - **Perk #6, the PDF, is still not built** (IMP-022, deferred). It was **cut** from `PLUS_PERKS` rather
   than built, which is how `PLUS_ENABLED` flipped honestly. Gate checklist in the playbook → Phase 10b.
 

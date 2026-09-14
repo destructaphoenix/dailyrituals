@@ -150,10 +150,15 @@ export const SKY_BASE = 'https://pub-95312985bf644116878d3ce5031a4f36.r2.dev';
 // hero instead of SkyPreview's gradient — gated on ownership, never `plus`
 // directly (src/home/videoSkyGate.js). `credit` — the provenance line
 // (tool/licence + date) — is required and non-empty for every sky with a
-// clip; see docs/playbook.md -> "Every sky must be ours to sell". No sky
-// below carries one yet: Stage 2 of docs/skies-route.md (the real per-sky art)
-// hasn't cleared the provenance gate, so the catalogue stays all-gradient
-// until a clip does. Adding one after that is a data-only edit, no code.
+// clip; see docs/playbook.md -> "Every sky must be ours to sell".
+//
+// Provenance status, 2026-09-15 -- the gate is CLOSED, so this list is now
+// limited by FILES, not by permission. `Aurora`, `Sakura Fuji`,
+// `Event Horizon`, `Emberfield` and `Starfall` are cleared to ship (Veo /
+// Higgsfield direct) and are waiting on encode + R2 upload; `Fernlight`,
+// `Local Line` and `Tideline` are Pinterest-derived and MUST NEVER get a
+// clip here, free or paid. The per-clip table is in docs/skies-route.md ->
+// Stage 0 ruling 1. Adding a cleared sky is a data-only edit, no code.
 export const SHOP_SKIES = [
   { id: 'classic',  name: 'Golden Sun',    kind: 'sun',     tier: 'owned', note: 'Default' },
   { id: 'crescent', name: 'Crescent Moon', kind: 'moon',    tier: 'owned' },

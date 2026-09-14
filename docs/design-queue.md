@@ -656,12 +656,22 @@ three things already settled above:
 None of this blocks the design; the cards are approved art. It decides whether the footage is regenerated
 or the spec is relaxed, and that is not a chat's call to make.
 
+> ✅ **SETTLED. Both were relaxed** (`skies-route.md` ruling 2, 2026-09-12): 720 short edge and Starfall's
+> 20.2s **ship as they are — do not re-open either.** ✅ **And both cleared the provenance gate 2026-09-15**
+> — Veo/Higgsfield direct. 🔴 **The one thing here that is still outstanding is the poster**, for both, and
+> it was never a quality setting: it is the answer to first-play latency on a fresh unlock. One `ffmpeg`
+> command each. `Event Horizon` owes one too.
+
 ### The short edge is the only number that matters
 
-> 🔴 **Read the provenance gate first** — [`playbook.md`](playbook.md) → "Every sky must be ours to sell".
-> Most of this footage traces back to Pinterest and has to be replaced regardless of its resolution.
-> **This section applies to the replacements**, which are ours; there is no preset to change on a scraped
-> clip, and `720×1280` is simply what Pinterest serves.
+> ✅ **CORRECTED 2026-09-15 — the provenance gate is CLOSED and this warning was mostly wrong.** It assumed
+> *"most of this footage traces back to Pinterest and has to be replaced regardless of its resolution"*.
+> The owner's classification says otherwise: **only `Fernlight`, `Local Line` and `Tideline` are
+> Pinterest-derived**; `Aurora`, `Sakura Fuji`, `Event Horizon`, `Emberfield` and `Starfall` are Veo or
+> Higgsfield **direct** and are ours. **So this section applies to the footage we already have**, not to
+> hypothetical replacements — and the `720×1280` short edge is the *generator's* preset, not what Pinterest
+> served. ⚠️ The resolution ruling is already made (**720 accepted, see `skies-route.md` ruling 2**); what
+> follows is the reasoning behind it, and the guidance for anything generated from here on.
 
 **Assume the ceiling is the generator's preset**, and the question is what to do about it. The first thing to know
 is that **aspect does not affect sharpness at all** — the hero crop is near-square, so the delivered
