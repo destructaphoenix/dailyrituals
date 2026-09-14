@@ -6,10 +6,11 @@ import React from 'react';
 import { render } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 import HomeScreen from '../../src/screens/HomeScreen';
-import { RayFan, NightRays } from '../../src/art';
+import { RayFan, NightRays, Bloom } from '../../src/art';
 import { ProgressBar } from '../../src/ui';
 import { streakSubtitle } from '../../src/home/streakCopy';
 import { ThemeContext, makeTheme, DEFAULT_SETTINGS } from '../../src/theme';
+import { HERO_FOCAL, HERO_ART_FOCAL } from '../../src/home/heroFrame';
 
 jest.mock('../../src/home/videoSkyGate', () => ({
   activeSkyManifest: jest.fn(),
@@ -142,14 +143,21 @@ describe('the sunburst converges on the numeral again (IMP-131)', () => {
     return top + height / 2; // read off the render, not typed
   };
 
-  test('the classic hero\'s numeral sits on the ray fan\'s focal point', () => {
+  // IMP-136 ("Sunrise") decoupled the art's focal from the numeral's on
+  // purpose — see heroFrame.js's HERO_FOCAL / HERO_ART_FOCAL comments. The
+  // numeral still sits on HERO_FOCAL; the art now converges higher, in the
+  // band, and the two are no longer the same point.
+  test('the classic hero\'s numeral sits on HERO_FOCAL, no longer the ray fan\'s focal (IMP-136)', () => {
     activeSkyManifest.mockReturnValue(null);
     const view = wrap(<HomeScreen {...baseProps} mode="day" />);
     const box = StyleSheet.flatten(view.getByTestId('hero-box').props.style);
     const block = StyleSheet.flatten(view.getByTestId('hero-numeral-block').props.style);
     const num = StyleSheet.flatten(view.getByText('5').props.style);
     expect(box.justifyContent).not.toBe('center');
-    expect(box.paddingTop + block.marginTop + num.lineHeight / 2).toBe(focalOf(view, RayFan));
+    const numeralCentre = box.paddingTop + block.marginTop + num.lineHeight / 2;
+    expect(numeralCentre).toBe(HERO_FOCAL);
+    expect(focalOf(view, RayFan)).toBe(HERO_ART_FOCAL);
+    expect(numeralCentre).not.toBe(focalOf(view, RayFan));
   });
 
   test('night is the same construction', () => {
@@ -159,23 +167,23 @@ describe('the sunburst converges on the numeral again (IMP-131)', () => {
     const block = StyleSheet.flatten(view.getByTestId('hero-numeral-block').props.style);
     const num = StyleSheet.flatten(view.getByText('5').props.style);
     expect(box.justifyContent).not.toBe('center');
-    expect(box.paddingTop + block.marginTop + num.lineHeight / 2).toBe(focalOf(view, NightRays));
+    const numeralCentre = box.paddingTop + block.marginTop + num.lineHeight / 2;
+    expect(numeralCentre).toBe(HERO_FOCAL);
+    expect(focalOf(view, NightRays)).toBe(HERO_ART_FOCAL);
+    expect(numeralCentre).not.toBe(focalOf(view, NightRays));
   });
 
   test('the video shell shares the box', () => {
-    // The video shell renders SkyHero instead of the art, so the focal comes
-    // from the classic shell — which is the point: one box, two grounds.
-    activeSkyManifest.mockReturnValue(null);
-    const classic = wrap(<HomeScreen {...baseProps} mode="day" />);
-    const focal = focalOf(classic, RayFan);
-
+    // The video shell renders SkyHero instead of the art, so its numeral
+    // position cannot be read off any art component — it is HERO_FOCAL
+    // directly, the same anchor the classic shell's numeral uses.
     activeSkyManifest.mockReturnValue(VIDEO_SKY);
     const view = wrap(<HomeScreen {...baseProps} mode="day" />);
     const box = StyleSheet.flatten(view.getByTestId('hero-box').props.style);
     const block = StyleSheet.flatten(view.getByTestId('hero-numeral-block').props.style);
     const num = StyleSheet.flatten(view.getByText('5').props.style);
     expect(box.justifyContent).not.toBe('center');
-    expect(box.paddingTop + block.marginTop + num.lineHeight / 2).toBe(focal);
+    expect(box.paddingTop + block.marginTop + num.lineHeight / 2).toBe(HERO_FOCAL);
   });
 
   test('the spacer can collapse', () => {
@@ -207,16 +215,20 @@ describe('the sunburst is centred in the card it actually lives in (IMP-132)', (
     return art.props.focal;
   };
 
-  test('the classic day hero centres the focal in the card (red before IMP-132: 80 vs 168)', () => {
+  // IMP-136 moved the art's focal off the card's centre and into the band —
+  // see HERO_ART_FOCAL's comment in heroFrame.js. It is a fixed point now,
+  // not a fraction of the card height.
+  test('the classic day hero\'s art converges at HERO_ART_FOCAL, not the card\'s centre (IMP-136)', () => {
     activeSkyManifest.mockReturnValue(null);
     const view = wrap(<HomeScreen {...baseProps} mode="day" />);
-    expect(renderedFocal(view, RayFan)).toBe(cardHeight(view) / 2);
+    expect(renderedFocal(view, RayFan)).toBe(HERO_ART_FOCAL);
+    expect(renderedFocal(view, RayFan)).not.toBe(cardHeight(view) / 2);
   });
 
-  test('night passes the same focal', () => {
+  test('night passes the same art focal', () => {
     activeSkyManifest.mockReturnValue(null);
     const view = wrap(<HomeScreen {...baseProps} mode="night" />);
-    expect(renderedFocal(view, NightRays)).toBe(cardHeight(view) / 2);
+    expect(renderedFocal(view, NightRays)).toBe(HERO_ART_FOCAL);
   });
 
   // IMP-133 corrects this case. It used to assert the disc sat WHOLLY INSIDE the
@@ -271,5 +283,47 @@ describe('the sunburst is centred in the card it actually lives in (IMP-132)', (
 
     expect(used).toBeLessThanOrEqual(cardHeight(view));
     expect(cardHeight(view) - used).toBeGreaterThanOrEqual(12); // real slack for the spacer
+  });
+});
+
+// IMP-136 ("Sunrise") — the band reads empty because the rays are faintest
+// where there is most of them to see, not because it holds no content. The
+// art's focal moves into the band (heroFrame.js's HERO_ART_FOCAL) and a
+// day-only Bloom joins it, both ramped by heroLight(streak).
+describe('the band is filled with light, not content (IMP-136)', () => {
+  afterEach(() => activeSkyManifest.mockReset());
+
+  test('day, streak 0: no Bloom at all — the card is genuinely empty', () => {
+    activeSkyManifest.mockReturnValue(null);
+    const view = wrap(<HomeScreen {...baseProps} mode="day" streak={0} />);
+    expect(view.UNSAFE_queryAllByType(Bloom)).toHaveLength(0);
+    expect(view.UNSAFE_getByType(RayFan).props.rayOpacity).toBe(0.18);
+  });
+
+  test('day, streak 1: the Bloom appears', () => {
+    activeSkyManifest.mockReturnValue(null);
+    const view = wrap(<HomeScreen {...baseProps} mode="day" streak={1} />);
+    expect(view.UNSAFE_getAllByType(Bloom)).toHaveLength(1);
+    expect(view.UNSAFE_getByType(RayFan).props.rayOpacity).toBe(0.34);
+  });
+
+  test('the Bloom never renders on the night shell — NightRays already has its own', () => {
+    activeSkyManifest.mockReturnValue(null);
+    const view = wrap(<HomeScreen {...baseProps} mode="night" streak={5} />);
+    expect(view.UNSAFE_queryAllByType(Bloom)).toHaveLength(0);
+  });
+
+  test('the Bloom never renders on the video shell', () => {
+    activeSkyManifest.mockReturnValue(VIDEO_SKY);
+    const view = wrap(<HomeScreen {...baseProps} mode="day" streak={5} />);
+    expect(view.UNSAFE_queryAllByType(Bloom)).toHaveLength(0);
+  });
+
+  test('both the fan and the Bloom converge at HERO_ART_FOCAL, not HERO_FOCAL', () => {
+    activeSkyManifest.mockReturnValue(null);
+    const view = wrap(<HomeScreen {...baseProps} mode="day" streak={5} />);
+    expect(view.UNSAFE_getByType(RayFan).props.focal).toBe(HERO_ART_FOCAL);
+    expect(view.UNSAFE_getByType(Bloom).props.focal).toBe(HERO_ART_FOCAL);
+    expect(view.UNSAFE_getByType(RayFan).props.focal).not.toBe(HERO_FOCAL);
   });
 });

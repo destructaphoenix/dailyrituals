@@ -4,13 +4,19 @@
 
 import React, { useEffect, useRef, useMemo } from 'react';
 import { Animated, Easing, View, StyleSheet } from 'react-native';
-import Svg, { Circle, Line, Defs, RadialGradient, Stop, Path } from 'react-native-svg';
+import Svg, { Circle, Line, Defs, RadialGradient, Stop, Path, Mask, G, Rect } from 'react-native-svg';
 import { useTheme } from './theme';
 
 const AView = Animated.View;
 
 // ── Faint rotating ray fan behind the day hero number ────────────────────────
-export function RayFan({ size = 300, focal = 80, reach = size / 2 }) {
+// rayOpacity and the radial fade are IMP-136 ("Sunrise"): the fan is densest
+// at its focal and sparsest at its tips, which is exactly backwards for a card
+// that wants the focal to read as the brightest point. The fade is a <Mask>
+// inside the rotating <Svg> so it stays centred on the geometry at every
+// rotation, rather than fighting the 60s spin from outside it. The 24-spoke
+// geometry itself, the stroke, and the rotation are unchanged.
+export function RayFan({ size = 300, focal = 80, reach = size / 2, rayOpacity = 0.5 }) {
   const t = useTheme();
   const spin = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -32,10 +38,49 @@ export function RayFan({ size = 300, focal = 80, reach = size / 2 }) {
     );
   }
   return (
-    <View pointerEvents="none" style={{ position: 'absolute', top: focal - reach, left: 0, right: 0, height: d, alignItems: 'center', opacity: 0.5 }}>
+    <View pointerEvents="none" style={{ position: 'absolute', top: focal - reach, left: 0, right: 0, height: d, alignItems: 'center', opacity: rayOpacity }}>
       <AView style={{ width: d, height: d, transform: [{ rotate }] }}>
-        <Svg width={d} height={d} viewBox={`0 0 ${d} ${d}`} fill="none">{rays}</Svg>
+        <Svg width={d} height={d} viewBox={`0 0 ${d} ${d}`} fill="none">
+          <Defs>
+            <RadialGradient id="rayFanFade" cx="50%" cy="50%" r="50%">
+              <Stop offset="0%"   stopColor="#ffffff" stopOpacity="1"    />
+              <Stop offset="26%"  stopColor="#ffffff" stopOpacity="1"    />
+              <Stop offset="52%"  stopColor="#ffffff" stopOpacity="0.55" />
+              <Stop offset="78%"  stopColor="#ffffff" stopOpacity="0.12" />
+              <Stop offset="100%" stopColor="#ffffff" stopOpacity="0"    />
+            </RadialGradient>
+            <Mask id="rayFanMask">
+              <Rect x={0} y={0} width={d} height={d} fill="url(#rayFanFade)" />
+            </Mask>
+          </Defs>
+          <G mask="url(#rayFanMask)">{rays}</G>
+        </Svg>
       </AView>
+    </View>
+  );
+}
+
+// ── Day-only bloom behind the fan's convergence (IMP-136, "Sunrise") ────────
+// NightRays already draws its own breathing amber pool at the focal (see the
+// comment on that component) — this is its day counterpart, and DAY ONLY: a
+// second glow stacked under NightRays' own would double the light on black.
+export function Bloom({ focal = 80, strength = 1 }) {
+  const t = useTheme();
+  const size = 420; // 210dp radius
+  const c = size / 2;
+  return (
+    <View pointerEvents="none" style={{ position: 'absolute', top: focal - c, left: 0, right: 0, alignItems: 'center' }}>
+      <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} fill="none">
+        <Defs>
+          <RadialGradient id="heroBloom" cx="50%" cy="50%" r="50%">
+            <Stop offset="0%"   stopColor={t.colors.accent} stopOpacity={0.26 * strength} />
+            <Stop offset="42%"  stopColor={t.colors.accent} stopOpacity={0.10 * strength} />
+            <Stop offset="72%"  stopColor={t.colors.accent} stopOpacity="0" />
+            <Stop offset="100%" stopColor={t.colors.accent} stopOpacity="0" />
+          </RadialGradient>
+        </Defs>
+        <Circle cx={c} cy={c} r={c} fill="url(#heroBloom)" />
+      </Svg>
     </View>
   );
 }

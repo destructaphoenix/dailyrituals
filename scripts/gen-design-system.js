@@ -86,7 +86,7 @@ const SVG_STUB = Object.assign(
     Svg: 'svg', Circle: 'circle', Line: 'line', G: 'g', Defs: 'defs',
     RadialGradient: 'radialGradient', LinearGradient: 'linearGradient',
     Stop: 'stop', ClipPath: 'clipPath', Path: 'path', Rect: 'rect',
-    Ellipse: 'ellipse', Polygon: 'polygon', Text: 'text',
+    Ellipse: 'ellipse', Polygon: 'polygon', Text: 'text', Mask: 'mask',
   }
 );
 

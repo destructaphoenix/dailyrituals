@@ -5,7 +5,7 @@ import { View, ScrollView, Pressable, Text, useWindowDimensions } from 'react-na
 import { useTheme } from '../theme';
 import { T, Card, PrimaryButton, ProgressBar } from '../ui';
 import { Sun, Moon, Check, Pencil, BADGE_ICON } from '../icons';
-import { RayFan, NightRays } from '../art';
+import { RayFan, NightRays, Bloom } from '../art';
 import SkyHero from '../home/skyHero';
 import { activeSkyManifest, skyVideoSource } from '../home/videoSkyGate';
 import { greetingFor, todayLabel } from '../time/clock';
@@ -14,7 +14,7 @@ import { pickForDay } from '../time/dailyPick';
 import { HELLOS } from '../content/greetings';
 import { streakSubtitle } from '../home/streakCopy';
 import { heroChrome } from '../home/heroChrome';
-import { HERO_HEIGHT, HERO_FOCAL, heroReach } from '../home/heroFrame';
+import { HERO_HEIGHT, HERO_FOCAL, HERO_ART_FOCAL, heroReach, heroLight } from '../home/heroFrame';
 import { buildWeekStrip } from '../home/calendar';
 import { MISS_EMOJI, FREEZE_EMOJI } from '../data';
 import { deriveKeepsakes } from '../profile/achievements';
@@ -47,6 +47,7 @@ export default function HomeScreen({ copy, mode, streak, level, levelName, xpInt
   const c = t.colors;
   const { width: windowWidth } = useWindowDimensions();
   const reach = heroReach(windowWidth);
+  const light = heroLight(streak);
   const videoSky = activeSkyManifest(activeSky, ownedSkies, plus);
   const videoSkyActive = videoSky != null;
   const Orb = mode === 'night' ? Moon : Sun;
@@ -120,7 +121,12 @@ export default function HomeScreen({ copy, mode, streak, level, levelName, xpInt
           </Card>
         ) : (
           <Card testID="streak-hero" style={{ height: HERO_HEIGHT, overflow: 'hidden' }}>
-            {mode === 'night' ? <NightRays focal={HERO_FOCAL} reach={reach} /> : <RayFan focal={HERO_FOCAL} reach={reach} />}
+            {mode === 'night'
+              ? <NightRays focal={HERO_ART_FOCAL} reach={reach} />
+              : <>
+                  {light.bloom && <Bloom focal={HERO_ART_FOCAL} strength={light.bloom.strength} />}
+                  <RayFan focal={HERO_ART_FOCAL} reach={reach} rayOpacity={light.rayOpacity} />
+                </>}
             <View testID="hero-box" style={HERO_BOX}>{heroInner}</View>
           </Card>
         )}
