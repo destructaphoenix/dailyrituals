@@ -24,15 +24,130 @@
 
 ## The queue
 
-**The queue is EMPTY for build chats.** IMP-131, IMP-132, IMP-133 (the sunburst regressions) and IMP-134
-(the design system) are all done, and IMP-128 stays owner-gated.
+**One row is open.** IMP-131, IMP-132, IMP-133 (the sunburst regressions) and IMP-134 (the frozen card) are
+all done; IMP-128 stays owner-gated.
 
 | Row | What | Lane | Take it? |
 | --- | --- | --- | --- |
+| **IMP-135** | **Screen cards that render from the shipped code** — `react-native-web` instead of a screenshot, so a design surface can never go stale again | **tooling** (ships nothing) | ✅ **TAKE THIS ONE** |
 | IMP-128 | Apply the motion vocabulary — `riseIn` on cards and rows, `popIn` on badges, `useCountUp` on the streak | OTA | ⏸ **owner's yes first — do not start** |
 
 **IMP-124 through IMP-134 are done** (archived to `docs/build-log.md`, commits `87771c4`, `d57dc2d`,
 `0502790`, `402391b`, `0a2f595`, `111c3de`, `28654cb`, `bcaebb6`, `c9dc2dc`).
+
+---
+
+### IMP-135 — screen cards that render from the shipped code
+
+**Severity 🎨 · Lane: tooling — ships nothing to a user.** No app behaviour changes, no OTA. ⚠️ **One file
+under `src/` moves and nothing else in the app is touched** (Step 3), and even that is a pure extraction.
+
+**Why this exists, in the owner's words:** *"I want to know if Claude Design has all the updated screenshots
+so it can build on top of those, or does it have the code to build it directly."* **Today it has neither.**
+The 14 baselines were deleted 2026-09-14 because the app had outrun them, and a design project holds HTML
+cards, never `src/`. The only current, screen-level truth reaches Claude Design **inside a request**, pasted.
+
+**What this row changes.** A screen card becomes **generated from the shipped code**, like `tokens/` and
+`frozen/` already are. It cannot go stale, because there is nothing to re-capture — regenerate and it is
+current. And because the output is HTML in the project, **Claude Design can read and edit the real screen**
+rather than imagining it from a paste. This is the permanent end of the class of problem that cost a day.
+
+⚠️ **A generated card is not a photograph, and the card must say so.** `react-native-web` is a faithful
+*layout*, not a device: shadows, real font metrics and the video hero all differ. **Device captures remain
+the ground truth for the Play listing** — that is [WALK-25](walk-open.md#walk-25--recapture-the-shot-set),
+and the two coexist on purpose. `baselinePages()` stays exactly as it is for that.
+
+#### What was verified before this spec was written — do not re-derive it
+
+| Question | Answer, checked 2026-09-14 |
+| --- | --- |
+| Is `react-native-web` available? | ✅ `^0.21.0`, already a dependency, with `react-dom` 19.1.0. |
+| Can it server-render outside a bundler? | ✅ `require('react-native-web/dist/cjs/exports/AppRegistry').default.getApplication` resolves and is a function in plain node. |
+| Does `react-native-svg` have a web build? | ✅ `lib/commonjs/ReactNativeSVG.web.js` + `elements.web.js`. |
+| How big is the native surface to stub? | **Small.** Across every screen, `src/home/` and `src/ui.js`, the only non-relative imports are `react-native`, `react-native-svg`, `react-native-reanimated` (2 files), `expo-linear-gradient` (2), `react-native-safe-area-context` (1) and `expo-video` (1). |
+| Where does a fixture come from? | ✅ `buildScenario(key, today)` / `buildState(knobs, today)` in [`src/dev/`](../src/dev/buildState.js) are **pure functions**, and `storeShots` is the same fixture the Play screenshots use: 128 streak, 210 entries, "Sam", 2,400 embers, owns everything. |
+
+#### Step 1 — a new script, because the existing stub must not change
+
+Write **`scripts/gen-screens.js`**. Do **not** extend `gen-design-system.js`: its require hook maps every RN
+`View` to an SVG `<g>` and **deliberately drops position and size**, which is correct for rasterising
+artwork and fatal for rendering a screen. The two mappings cannot coexist in one process. Two scripts, two
+hooks, one output directory.
+
+Reuse the babel require hook from `gen-design-system.js:36` verbatim (ESM + JSX for anything under `src/`).
+Then map:
+
+| Request | Maps to |
+| --- | --- |
+| `react-native` | `react-native-web/dist/cjs` |
+| `react-native-svg` | `react-native-svg/lib/commonjs/ReactNativeSVG.web.js` |
+| `expo-video` | a stub: `useVideoPlayer()` returns `{ status: 'idle', loop: false, muted: true, play(){}, addListener: () => ({ remove(){} }) }`; `VideoView` renders nothing. **This is deliberate and it is the right picture** — [`SkyHero`](../src/home/skyHero.js) holds its poster over any frame that is not `readyToPlay`, so the card shows the **poster**, which is exactly what a still of a video sky should be. |
+| `expo-linear-gradient` | a `View` whose style carries the equivalent CSS `linear-gradient`. |
+| `react-native-safe-area-context` | `SafeAreaProvider` passthrough; `useSafeAreaInsets()` → zeros. |
+| `react-native-reanimated` | no-op identity stub. Six of eight `motion.js` exports have no consumer and the live one (`usePressScale`) is a 0.99 press scale, so **there is nothing here worth rendering** — see IMP-128. |
+
+Render with `AppRegistry.registerComponent` + `getApplication(...)`, which returns `{ element, getStyleElement() }`;
+emit `renderToStaticMarkup(element)` plus that style element. **Take the app's fonts from
+`componentFonts()` in the existing generator** rather than inventing a second embed path.
+
+#### Step 2 — Home, and only Home
+
+**Scope is one screen on purpose.** Home is the hardest one in the app — frozen SVG art, the video shell, a
+gradient scrim, a fixed-height card and two grounds. **If Home renders, the rest are prop-mapping.** The
+remaining six are a follow-up row and must not be smuggled into this one.
+
+Emit **`design-system/screens/home-day.html`** and **`home-night.html`**, each carrying a first-line
+`<!-- @dsCard group="Screens" ... -->` marker (that is how the pane indexes a card — see any existing file),
+inside a 360dp-wide phone frame. Each card shows **both grounds**: the classic `RayFan`/`NightRays` hero and
+the video hero on its poster, because [D-15](../docs/design-queue.md) turns on the difference between them.
+
+The card's copy must state, in its own words: **this is a layout render, not a device capture**; what
+differs (shadow rendering, font metrics, no video playback); and that the fixture is `storeShots`.
+
+#### Step 3 — the prop mapping, and the guard that keeps it honest
+
+`HomeScreen` takes ~25 props, wired in [`RitualsApp.js:959`](../src/RitualsApp.js#L959). **Copying that
+wiring into a script creates a second source of truth that will drift** — that is the one real risk in this
+row, so it gets a test rather than a comment.
+
+Put the mapping in **one exported function**, `homePropsFromState(state)`, in `scripts/screenFixtures.js`,
+fed by `buildScenario('storeShots', <a fixed date>)`. **Pin the date** — a fixture built from `new Date()`
+makes every regeneration a diff. Callbacks map to no-ops.
+
+**The guard test** (new file, `__tests__/scripts/genScreens.test.js`): parse `HomeScreen.js`'s default
+export with `@babel/core` (already a dependency), read the **destructured prop names** from its signature,
+and assert `homePropsFromState` supplies every one of them. **A prop added to or renamed on `HomeScreen`
+then fails this test** instead of quietly rendering a screen with a hole in it. Verify it red by adding a
+throwaway prop to the screen's signature before you trust it.
+
+Add one rendering assertion too: the generated `home-day.html` contains the hero at `HERO_HEIGHT` from
+[`heroFrame.js`](../src/home/heroFrame.js) — **imported, never typed** — so IMP-134's rule holds here too.
+
+#### Step 4 — the docs the next chat reads
+
+- `docs/design-queue.md` → "What the design system actually has": the Now/Soon/Never-again table gains the
+  generated cards, and D-15's row notes that its screen is now **in** the project rather than pasted.
+- `docs/playbook.md` → standing rule 1 currently says *"there are no baselines — paste source"*. It becomes:
+  paste source for a screen with no generated card; **for one that has a card, point at the card.**
+
+#### Done means
+
+`npm test` green and **≥ 1252 passed, 117 suites** (IMP-134's count), `node scripts/gen-screens.js` clean,
+both cards committed, and `npx expo export --platform android` clean — **that last one is not ceremony:** it
+is what proves Step 3's `src/dev/` import stayed in `scripts/` and never reached the app bundle.
+
+**Commit message, exactly:**
+
+```
+feat(design-system): screens render from the code, not from a screenshot (IMP-135)
+```
+
+**No `Release-Lane:` trailer** — the app bundle is byte-identical.
+
+⚠️ **Not in this row:** the other six screens (follow-up), pushing to the live project (`DesignSync`, a
+separate act — and it needs **no** `/design-login`, that claim was wrong), and anything that touches how the
+app itself renders. **If a screen will not render without changing app code, STOP and log it** — the app
+does not bend for the tooling.
 
 ---
 
