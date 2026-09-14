@@ -3,8 +3,17 @@
 > **This whole file is the request.** Select all, paste into Claude Design, send. Generated from the real
 > files **2026-09-14**. Queue row: [`docs/design-queue.md`](../design-queue.md) → D-15.
 >
-> ⚠️ **There are no baseline screenshots any more** — all 14 were deleted on 2026-09-14 because the app had
-> outrun them. The source below is the evidence, and it is the real thing, spliced from the files.
+> ✅ **This screen is already in the project — open `screens/home-day.html` and `screens/home-night.html`
+> first.** They are not screenshots. They are **rendered from the app's shipped code** (`react-native-web`,
+> IMP-135), from the same 210-day "Sam" fixture the Play listing uses, and each card shows **both hero
+> grounds** — the classic rays and the video sky on its poster. Regenerating them is a command, so they
+> cannot drift from the app the way a capture does.
+>
+> ⚠️ **They are a layout render, not a photograph.** Shadows and real font metrics differ from a phone, and
+> the video hero shows its poster rather than playing. Trust the geometry; do not trust the shadow.
+>
+> The old baseline screenshots were deleted on 2026-09-14 because the app had outrun them. The source
+> blocks at the end of this file are still the authority on *why* the numbers are what they are.
 
 ---
 
