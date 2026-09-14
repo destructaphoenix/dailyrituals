@@ -5504,6 +5504,37 @@ trailer — the app bundle is byte-identical, nothing to ship.
 
 _Moved from `PROGRESS.md` 2026-09-14 under its two-notes rule._
 
+_2026-09-14 (Sonnet — **IMP-134 built: the frozen card draws the rays the app actually draws.**) — ✅
+code-complete, no walk of its own (tooling, ships nothing)._
+
+**What finished.** New [`src/home/heroFrame.js`](src/home/heroFrame.js) — `HERO_HEIGHT`, `HERO_FOCAL`,
+`HERO_PAD`, `HERO_REACH_MARGIN`, `heroReach()` moved out of `HomeScreen.js` verbatim, comments included; a
+pure move confirmed by `HomeScreenSkyHero.test.js` passing untouched (18/18). [`gen-design-system.js`](scripts/gen-design-system.js)'s
+`frozenPage()` now calls `renderArt(f.C, { size: f.size, focal: HERO_FOCAL, reach: heroReach(360) }, t, reach
+* 2)` — the app's real geometry, not the component's `focal 80 / reach 150` defaults — and draws the
+focal/reach relationship in the card's own HTML (a `HERO_HEIGHT`-tall demo box, `overflow:hidden`, the PNG
+absolutely positioned), since the require hook's `View → <g>` stub drops position/size on purpose. The
+caption now says what is frozen (24 spokes, colour, 60s rotation, night bloom) versus what a design may move
+(`focal`, `reach`), and drops the false "what you see is what renders" claim. `baselinePages()` now
+timestamps every capture with its own mtime and says a stale one is to be deleted, not captioned.
+
+**The proof.** [`genDesignSystem.test.js`](__tests__/scripts/genDesignSystem.test.js) gained a third
+`describe` reading the *generated* `design-system/frozen/rays.html` against `HERO_FOCAL`/`heroReach(360)`
+imported fresh from `heroFrame.js` — no `336`/`168`/`230` typed in the test. **Confirmed red first** against
+the stale committed file (3 failures), green after `node scripts/gen-design-system.js` regenerated the file
+and both PNGs. **1252 passed, 117 suites** (was 1249/117, +3, no new suite). Export clean. Commit `c9dc2dc`.
+Spec archived to `docs/build-log.md`; `docs/specs-open.md`'s queue is now empty except the owner-gated
+IMP-128.
+
+**Not in this row.** Does not push to the live Claude Design project — a separate act for whoever runs this
+spec next. No `Release-Lane:` trailer — the app bundle is byte-identical, nothing to ship.
+
+**The exact next step.** The backlog has nothing left for a build chat (IMP-128 stays owner-gated). A design
+chat sends D-15 or D-16; WALK-25 (recapture the shot set) is agent-runnable on an emulator whenever raw
+captures are wanted, sequenced behind D-16.
+
+---
+
 _2026-09-14 (Opus — **the design system stops lying, and design gets two new rows: the hero's empty top and the storefront.**) — ✅ specs written, deletions done._
 
 **What the owner asked for, in their words:** *"I do not want anything stale in the design system. Delete it,

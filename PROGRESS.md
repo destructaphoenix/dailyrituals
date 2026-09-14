@@ -222,6 +222,63 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
+_2026-09-15 (Opus — **the hero design is locked and specced, the sky provenance gate is closed, and the
+sky pipeline is a command.**) — ✅ specs + tooling; no app behaviour changed._
+
+**What the owner decided, in their words.** Three rulings, all recorded where they will be read rather than
+where they were said:
+
+1. **The hero band.** Locked **take three, direction A ("Sunrise")** of the returned D-15 design. On the
+   card's carried-over per-sky ink proposal: *"I want consistency in the app, I don't care how a design
+   system 'felt', we will stick to the colour scheme of the app for light and dark mode."* → **declined**,
+   no `tone` field, one treatment over footage (`heroChrome`'s white ramp, IMP-124).
+2. **Sky provenance.** *"Fernlight, train hero and tideline hero cards video are derived from pinterest.
+   Everything else is Veo or Higgsfield directly."* Stock sourcing declined. **The gate is CLOSED.**
+3. **Meteorfall.** *"Hold off on meteorfall. I do not like it and will replace it with something better."*
+
+**What finished.** **[IMP-136](docs/specs-open.md#imp-136--sunrise-the-heros-empty-band-is-filled-with-light-not-content)**
+is specced (art-only: `HERO_ART_FOCAL = 96` decoupled from the numeral's `HERO_FOCAL`, a radial fade on the
+fan, a day-only bloom, both ramped by streak) with **[WALK-26](docs/walk-open.md#walk-26--the-band-is-full-of-light)**
+filed behind it. The locked card is mirrored to
+[`design-system/proposals/hero-band-v3.html`](design-system/proposals/hero-band-v3.html) — it was
+project-only, and the spec cites it. **[`scripts/encode-sky.py`](scripts/encode-sky.py)** now runs the whole
+clip pipeline in one command, with `sky-src/` (drop zone) and `sky-build/` gitignored.
+
+**The proof, and it is the part worth keeping.** The pipeline was **validated against the one clip whose
+answer was already on record** — the committed IMP-121 fixture. It independently re-found both defects the
+build log documents (the black opening frame; the wrap that does not hold) and passed on the shipped window
+(frames 226–345). That exercise found **three real defects, two of them in instructions this repo has been
+following**:
+
+- 🔴 **The recipe's SSIM checks said `-v error`, which suppresses the SSIM line itself.** The loop check has
+  been printing nothing and reading as a pass. Corrected in `design-queue.md`.
+- 🔴 **The recipe judged a black poster frame by file size.** The fixture's frame 0 is **luma 16 against
+  ~115** mid-clip and still compressed to **9.6 KB** — past any size threshold. Now measured by luma
+  against a mid-clip frame, which is exact and does not false-positive on a night sky.
+- 🔴 **I gated the loop at 0.95× the floor and it rejected the clip that is currently live.** The shipped
+  window scores **0.87×** at full-resolution SSIM; the build log's "1.08×" for the same frames is
+  `find-loop.py`'s coarse 32×32 MAD and is not comparable. The verdict is **banded** now, with the middle
+  band explicitly undecided. This is the exact trap `design-queue.md` warns about and it still caught me.
+
+**Two owner questions answered from source, not from the pictures.** **Sakura Fuji:** there is no
+downloader — `expo-video` streams from R2 on first play and caches LRU under the 128 MB ceiling at
+[`RitualsApp.js:576`](src/RitualsApp.js#L576), so a second clip is ~2.5–3.5 MB, lazy, and only for owners
+who switch mode. Recommended **day clip only** as a one-clip sky, noting this cuts against the loop-rule
+table (written before either clip existed) and is a reversible data edit. **Event Horizon:** its card states
+the crop outright (69% across, 43% down, 1.35×), so `encode-sky.py` gained `--focus-x/--focus-y/--zoom` and
+the framing is now free. **But the card's picture hid two blockers:** the source is **736×414**, cut to
+**307** by the zoom — a 4.17× upscale against a 1080 floor — and **the clip does not loop**; the card's fix
+is two cross-dissolved copies, which `skyHero.js` (one `VideoView`, `p.loop = true`) cannot do.
+
+**Not in this row.** No app behaviour changed — the only `src/` edit is a corrected comment in `data.js`.
+No `Release-Lane:` trailer. IMP-136 is **not built**; a build chat takes it. **1257 passed, 118 suites**
+throughout.
+
+**The exact next step.** A build chat takes **IMP-136**. In parallel the owner exports the cleared clips
+(`Aurora`, `Sakura Fuji`, `Emberfield`, `Starfall`, and `Event Horizon` only if its master beats 414) into
+`sky-src/` — **no chat can do this**, the clips are binary and `DesignSync get_file` caps at 256 KiB. Start
+with **Aurora and Sakura Fuji**: both already have posters and neither has a known blocker.
+
 _2026-09-14 (Sonnet — **IMP-135 built: Home's screen renders from the shipped code with react-native-web.**)
 — ✅ code-complete, no walk of its own (tooling, ships nothing)._
 
@@ -249,32 +306,3 @@ react-native-web patches, and one spec discrepancy found and logged) archived to
 specced.** A build chat takes **[IMP-136](docs/specs-open.md#imp-136--sunrise-the-heros-empty-band-is-filled-with-light-not-content)**
 (Sunrise). A design chat sends D-16. WALK-25 is agent-runnable on an emulator whenever raw captures are
 wanted, sequenced behind D-16.
-
-_2026-09-14 (Sonnet — **IMP-134 built: the frozen card draws the rays the app actually draws.**) — ✅
-code-complete, no walk of its own (tooling, ships nothing)._
-
-**What finished.** New [`src/home/heroFrame.js`](src/home/heroFrame.js) — `HERO_HEIGHT`, `HERO_FOCAL`,
-`HERO_PAD`, `HERO_REACH_MARGIN`, `heroReach()` moved out of `HomeScreen.js` verbatim, comments included; a
-pure move confirmed by `HomeScreenSkyHero.test.js` passing untouched (18/18). [`gen-design-system.js`](scripts/gen-design-system.js)'s
-`frozenPage()` now calls `renderArt(f.C, { size: f.size, focal: HERO_FOCAL, reach: heroReach(360) }, t, reach
-* 2)` — the app's real geometry, not the component's `focal 80 / reach 150` defaults — and draws the
-focal/reach relationship in the card's own HTML (a `HERO_HEIGHT`-tall demo box, `overflow:hidden`, the PNG
-absolutely positioned), since the require hook's `View → <g>` stub drops position/size on purpose. The
-caption now says what is frozen (24 spokes, colour, 60s rotation, night bloom) versus what a design may move
-(`focal`, `reach`), and drops the false "what you see is what renders" claim. `baselinePages()` now
-timestamps every capture with its own mtime and says a stale one is to be deleted, not captioned.
-
-**The proof.** [`genDesignSystem.test.js`](__tests__/scripts/genDesignSystem.test.js) gained a third
-`describe` reading the *generated* `design-system/frozen/rays.html` against `HERO_FOCAL`/`heroReach(360)`
-imported fresh from `heroFrame.js` — no `336`/`168`/`230` typed in the test. **Confirmed red first** against
-the stale committed file (3 failures), green after `node scripts/gen-design-system.js` regenerated the file
-and both PNGs. **1252 passed, 117 suites** (was 1249/117, +3, no new suite). Export clean. Commit `c9dc2dc`.
-Spec archived to `docs/build-log.md`; `docs/specs-open.md`'s queue is now empty except the owner-gated
-IMP-128.
-
-**Not in this row.** Does not push to the live Claude Design project — a separate act for whoever runs this
-spec next. No `Release-Lane:` trailer — the app bundle is byte-identical, nothing to ship.
-
-**The exact next step.** The backlog has nothing left for a build chat (IMP-128 stays owner-gated). A design
-chat sends D-15 or D-16; WALK-25 (recapture the shot set) is agent-runnable on an emulator whenever raw
-captures are wanted, sequenced behind D-16.
