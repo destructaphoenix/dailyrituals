@@ -71,3 +71,11 @@ store/.maestro-out/
 # Python
 __pycache__/
 *.pyc
+
+# Sky footage. Raw clips in, encoded clips out — neither belongs in git, a
+# build or an OTA (docs/playbook.md -> "Plus skies": the clips are downloaded
+# from R2 at runtime, never bundled). sky-src/README.md is the exception: it
+# explains the folder to a fresh clone. See scripts/encode-sky.py.
+sky-src/*
+!sky-src/README.md
+sky-build/

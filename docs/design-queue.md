@@ -525,6 +525,11 @@ stop matching the last one. Spatial-only filters are safe.
 
 **Verify the loop survived, rather than assuming:**
 
+> ✅ **All of this is now one command** — [`scripts/encode-sky.py`](../scripts/encode-sky.py) runs the crop,
+> the encode, and every check below in order, calibrated against the clip's own floor, and prints the
+> `SHOP_SKIES` line. Drop a clip in [`sky-src/`](../sky-src/README.md) and run it. The commands are kept
+> here because they are the *reasoning*, and the script is only their current spelling.
+
 ```sh
 # frame count must be identical in and out
 ffprobe -v error -count_frames -select_streams v:0 \
@@ -533,8 +538,13 @@ ffprobe -v error -count_frames -select_streams v:0 \
 # first vs last frame — compare against the same pair from the source
 ffmpeg -v error -i out.mp4 -vf "select=eq(n\,0)" -vframes 1 -y first.png
 ffmpeg -v error -sseof -0.05 -i out.mp4 -vframes 1 -y last.png
-ffmpeg -v error -i first.png -i last.png -lavfi ssim -f null -
+ffmpeg -v info  -i first.png -i last.png -lavfi ssim -f null -
 ```
+
+🔴 **`-v info` on the SSIM line, NOT `-v error` — corrected 2026-09-15.** This recipe said `-v error` for
+years and **that suppresses the only line worth reading**: the `ssim` filter reports at *info* level, so the
+check ran, printed nothing, and looked like it had passed. Found by running it against the committed
+fixture. The same correction applies to the floor command below.
 
 ⚠️ **That pair of checks proves the ENCODE preserved the loop. It does not prove the source ever
 looped** — and a clip that never looped passes both, because the frame count is untouched and the
@@ -550,7 +560,7 @@ adjacent-frame floor**, never against an absolute number:
 # the floor — how much two CONSECUTIVE frames differ in this clip
 ffmpeg -v error -i out.mp4 -vf "select=eq(n\,100)" -vframes 1 -y a.png
 ffmpeg -v error -i out.mp4 -vf "select=eq(n\,101)" -vframes 1 -y b.png
-ffmpeg -v error -i a.png -i b.png -lavfi ssim -f null -
+ffmpeg -v info  -i a.png -i b.png -lavfi ssim -f null -   # -v info, see above
 ```
 
 A wrap at or near that floor differs about as much as one ordinary frame step, which is as seamless
@@ -574,8 +584,19 @@ device as a bug in [`skyHero.js`](../src/home/skyHero.js) rather than a bad asse
 
 ```sh
 ffmpeg -i out.mp4 -vframes 1 -q:v 3 out-poster.jpg
-ls -la out-poster.jpg   # a near-black frame compresses to a few hundred bytes; expect ~10-15KB
+
+# Mean luma of the poster frame vs a mid-clip frame. A black opening frame is
+# a small fraction of the clip's normal luma; a NIGHT SKY is dark in both, so
+# this does not false-positive on one.
+ffmpeg -v info -i out.mp4 -vf "select=eq(n\,0),signalstats,metadata=print:key=lavfi.signalstats.YAVG" \
+  -vframes 1 -f null - 2>&1 | grep -o "YAVG=[0-9.]*"
 ```
+
+🔴 **Do NOT infer blackness from file size — corrected 2026-09-15.** This recipe used to say *"a near-black
+frame compresses to a few hundred bytes; expect ~10-15KB"*, and it is **not reliable**: the committed
+fixture's frame 0 is **luma 16 against ~115 mid-clip** — unambiguously the black opening frame the
+paragraph below describes — and it still produced a **9.6 KB** jpg, which sails past any size threshold.
+Measure the luma; it is exact. `encode-sky.py` does this automatically.
 
 If frame 0 is black, trim it (`select=gte(n\,1)`) rather than cutting the poster from elsewhere — the
 poster has to be the frame the video actually starts on, or it jumps when playback begins.

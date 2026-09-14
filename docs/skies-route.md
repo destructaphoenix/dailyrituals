@@ -114,6 +114,29 @@ made above (720 short edge accepted; **posters are required, not optional**):
 🔑 **A poster is one command** (`ffmpeg -i clip.mp4 -vframes 1 -ss <t> poster.png`), so three of the six are
 a few minutes apart from Aurora and Sakura Fuji.
 
+### ▶️ The pipeline is built — `scripts/encode-sky.py`
+
+**Added 2026-09-15.** One command per clip does what was done by hand for the live `meteor` sky: crop →
+encode → frame-count identity → adjacent-frame floor → wrap score against that floor → poster + black-frame
+check, then it prints the `SHOP_SKIES` line to paste.
+
+```sh
+python3 scripts/encode-sky.py sky-src/aurora-night.mp4 --id aurora --mode night
+```
+
+Drop clips in [`sky-src/`](../sky-src/README.md) (gitignored); output lands in `sky-build/` (gitignored too
+— footage never enters git, a build or an OTA).
+
+**Validated against the one clip whose answer is already known.** On the committed IMP-121 fixture it
+independently re-finds both recorded defects — the black opening frame and the wrap that does not hold —
+and on the shipped window (frames 226–345) it passes and emits the manifest line. ⚠️ **It refuses
+`Fernlight`, `Local Line` and `Tideline` by name**, as a backstop to the ruling above.
+
+⚠️ **It reports; it does not decide.** The loop verdict is banded, not thresholded — the shipped clip scores
+**0.87× its own floor** at full-resolution SSIM, so a "0.95+" gate would have rejected the sky that is live.
+(The build log's "1.08× the floor" for that same window is `find-loop.py`'s coarse 32×32 MAD, a different
+and far less sensitive metric; the two numbers are not comparable and neither is wrong.) **Watch the seam.**
+
 🔴 **The one thing a chat cannot do: get the footage out.** `art/assets/*.mp4` are megabytes of binary and
 **`DesignSync get_file` is capped at 256 KiB** — the clips cannot travel through the read path, which
 `design-system/proposals/README.md` has said since 2026-09-11. **The owner has to export the cleared clips
