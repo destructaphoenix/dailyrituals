@@ -22,7 +22,6 @@
     ],
     "testPathIgnorePatterns": [
       "/node_modules/",
-      "/design_handoff_plus_compliance/",
       "/__tests__/zone/"
     ],
     "transformIgnorePatterns": [

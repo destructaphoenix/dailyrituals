@@ -9,8 +9,10 @@
 > **How to use it.** Take ONE row, in order, and make it one Claude Design request. The four standing
 > rules — baseline-first, specs in token names, the frozen sun/rays, design-is-not-enablement — are in
 > [`docs/playbook.md`](playbook.md) → "Claude Design — standing rules" and are not repeated here.
-> **Only `day-01…07`/`night-01…07` have baselines** (today, write, moods, reflections, insights,
-> achievements, shop). Every row below says whether it has one or whether you paste source instead.
+> ⚠️ **There are no baselines any more.** All 14 captures were deleted 2026-09-14 (owner's instruction:
+> nothing stale in the design system) — they were shot 2026-08-17 and the app has moved 30+ commits past
+> them. **Every request pastes source.** A fresh set is filed as [WALK-25](walk-open.md#walk-25--recapture-the-shot-set),
+> which re-runs the pipeline that already exists and refreshes the **Play listing** in the same sitting.
 >
 > **A returned design is not a change.** Porting one is a normal `IMP-xxx` build task scoped by Opus.
 > Rows marked 🐛 found a real defect on the way and can be built without any design at all.
@@ -57,21 +59,23 @@ is over) **and [D-02 is written](design-requests/D-02-reflections.md)** (2026-09
 request: the live project holds no Reflections card at all). Ask and I will write the next one; they are
 generated from source, so a row whose code has moved should be regenerated rather than edited.
 
-### What the design system actually has
+### What the design system actually has — corrected 2026-09-14
 
-**Baselines are 7 screens × 2 modes, captured 2026-08-17** (`design-system/screens/`), and three facts
-about them decide how much help they are:
+🗑️ **The baselines are gone. All 14 of them, deleted, on the owner's instruction: nothing stale lives in
+the design system.** They were single-viewport captures shot 2026-08-17 against a 210-day fixture, and by
+2026-09-14 four of the seven screens had been rebuilt underneath them — Today by 8 commits (the whole
+video-hero chain, IMP-121 → IMP-133), Shop by 11 plus 6 to `shopui.js`, Insights by IMP-120 (which deleted
+the very grid `day-05` was evidence *of*), Write by 1. The other three were untouched by source but were
+still crops of one viewport, and **a half-trustworthy baseline set is worse than none** — nobody can tell
+by looking which half they are holding.
 
-1. **They are single-viewport captures, not full-page.** `day-05-insights.png` ends mid-grid in "Mar" —
-   which makes it *excellent* evidence for D-01 — but **"Your patterns", "Weekly rhythm" and "Deeper" are
-   all below the fold and appear in no asset anywhere.** D-03 and D-04 have no picture at all.
-2. **The fixture is a 210-day perfect streak.** Every consistency cell is `done`; **`missed`, `frozen` and
-   `empty` never appear in any baseline**, so the four states D-01 must carry through the transpose are
-   invisible in the only picture of them. Paste
-   [`heatCellStyle`](../src/screens/InsightsScreen.js#L217) with that request.
-3. **They predate ~28 commits to `src/screens/`** — IMP-094 through IMP-119 among them. `day-07-shop.png`
-   in particular is older than the candle cap (IMP-112), the kept label (IMP-115), the tier tags
-   (IMP-104/108) and both ember-pill fixes (IMP-117/119).
+**What replaces them, and it is not a smaller version of the same thing:**
+
+| | |
+| --- | --- |
+| **Now** | **Paste source.** Every packet in [`design-requests/`](design-requests/) already splices the real files in, generated, so they cannot drift. That is the mechanism; it is better evidence than a screenshot and it was always the fallback for un-captured screens. |
+| **Soon** | **[WALK-25](walk-open.md#walk-25--recapture-the-shot-set)** re-runs `npm run shots` in both modes. It is not a new pipeline (that is still out of scope) — it is the one that exists, and the same sitting also refreshes **`store/play/`, the live Play listing, which is the same 2026-08-16 vintage and is currently advertising a version of this app that no longer exists.** |
+| **Never again** | The generator now has to state what the app actually renders, guarded by a test — see [IMP-134](specs-open.md#imp-134--the-design-system-has-to-say-what-the-app-actually-draws). |
 
 ### ✅ The Plus card was wrong — fixed 2026-09-11, but it still has to be re-pushed
 
@@ -90,27 +94,32 @@ asserts every string on the card is still present in `src/shopui.js`, and that t
 retired. All five checks were verified red against the previous generator before the fix landed.
 
 ✅ **Pushed to the live project 2026-09-11** via `DesignSync` after the owner ran `/design-login` —
-`components/plus.html` plus both `screens/baseline-*.html` (the caption fixes). The project now shows the
+`components/plus.html` plus both `screens/baseline-*.html` (the caption fixes — **those two cards are since deleted**). The project now shows the
 corrected card; nothing else in it was touched.
 
 ### Row-by-row: what exists, what you must paste
 
-| Row | Baseline | Also paste | Note |
-| --- | --- | --- | --- |
-| D-01 Insights grid | `day/night-05` ✅ — shows the defect | `calendar.js:68`, `heatCellStyle`, `heatCells.js` | the 4 states are not in the shot |
-| D-02 Reflections | `day/night-04` ✅ — shows "210 matches" + one card | `ArchiveScreen.js` | the shot is *with* a query active |
-| D-03 period window | ❌ below the fold | `InsightsScreen.js` + `derive.js` | **no picture of these cards exists** |
-| D-04 mood mix | ❌ below the fold | `InsightsScreen.js:134-149` | buildable without any design |
-| D-05 one lock treatment | partial (`day-07` shows the swatch lock) | all four locked shapes' source | re-push the Plus card first |
-| D-06 paywall | ❌ none | `Paywall.js`, `PLUS_PERKS` | **start from your 5 hero cards already in the project** |
-| D-07 member home | ❌ none | `PlusPerks.js`, `PlusBanner`, `ManageSubscription` | re-push the Plus card first |
-| D-08 member Shop | `day/night-07` ⚠️ stale | `Shop.js:41-46` | shot predates 4 shipped changes |
-| D-09 ember `+` | in `day-07` chrome | `shopui.js:14` | IMP-119's fix is **unwalked** — do not redesign over it |
-| D-10 You | ❌ none | `YouScreen.js` | no baseline will ever exist (7-shot cap) |
-| D-11 zero states | ❌ none, uncapturable | the empty branch of each screen | |
-| D-12 Home | `day/night-01` ✅ | — | notice cards are absent from the fixture |
-| D-13 Keepsakes | `day/night-06` ✅ | `Achievements.js` | |
-| D-14 WriteFlow | `day/night-02,03` ✅ | `WriteFlow.js:173-262` | the custom-mood form is below the fold |
+**Every row now pastes source — the Baseline column is retired with the captures it named.** What each
+one has to include:
+
+| Row | Paste | Note |
+| --- | --- | --- |
+| D-01 Insights grid | `calendar.js:68`, `heatCellStyle`, `heatCells.js` | ✅ built as IMP-120 — port brief only |
+| D-02 Reflections | `ArchiveScreen.js`, `ArchiveFilters.js`, `search.js` | 📋 packet written |
+| D-03 period window | `InsightsScreen.js` + `derive.js` | |
+| D-04 mood mix | `InsightsScreen.js:134-149` | defect half built as IMP-126 |
+| D-05 one lock treatment | all four locked shapes' source | |
+| D-06 paywall | `Paywall.js`, `PLUS_PERKS` | **start from your 5 hero cards already in the project** |
+| D-07 member home | `PlusPerks.js`, `PlusBanner`, `ManageSubscription` | |
+| D-08 member Shop | `Shop.js:41-46`, `shopui.js` | 17 commits since anyone last pictured this screen |
+| D-09 ember `+` | `shopui.js:14` | built as IMP-127 |
+| D-10 You | `YouScreen.js` | |
+| D-11 zero states | the empty branch of each screen | |
+| D-12 Home | `HomeScreen.js` | ⚠️ **overlaps D-15** — read that row first |
+| D-13 Keepsakes | `Achievements.js` | |
+| D-14 WriteFlow | `WriteFlow.js:173-262` | |
+| **D-15 the hero's empty top** | `HomeScreen.js:34-66`, `art.js` | 📋 **packet written — the newest row** |
+| **D-16 the listing** | `store/play/`, whatever ships | 📋 **packet written — not an app screen** |
 
 **Not in the repo, but in the project:** the five Plus hero cards, the celebration screens and the updated
 skies you designed there. They are the right starting point for D-06 — this file cannot see them, so check
@@ -128,13 +137,80 @@ rather than cosmetic.
 
 ---
 
+## Tier 0 — added 2026-09-14, and both are about how the app *presents itself*
+
+Everything below this section is about the app working better. These two are about it **looking like
+something worth downloading** — one inside the product, one in the storefront. The owner's framing, and it
+changes the brief: *design is not only for improving the app, it is what the app is sold on.*
+
+### D-15 · The hero card's top third holds nothing 🎨
+
+**No baseline** — paste [`HomeScreen.js:34-66`](../src/screens/HomeScreen.js#L34) and
+[`art.js`](../src/art.js). 📋 **Packet: [`design-requests/D-15-hero-top.md`](design-requests/D-15-hero-top.md).**
+
+**This is not a defect and nothing is broken.** [WALK-24](build-log.md#walk-24--one-card-two-grounds--closed-2026-09-14-device-owner-run)
+closed ✅ on hardware the same day, all five steps, both grounds, max font, night. The hero is *correct*.
+It is also, now, mostly empty at the top, and nobody has looked at that as a composition.
+
+**The measurement.** The numeral block's `marginTop` is `HERO_FOCAL - paddingTop - NUMERAL_LINE / 2` =
+168 − 26 − 41 = **101dp**, on top of the box's own 26dp padding:
+
+| Band | Card-y | Holds |
+| --- | --- | --- |
+| top | **0 → 127** | **nothing.** Rays, or footage. No content at all. |
+| numeral block | 127 → 252 | the streak numeral (82dp line), "day streak", the subtitle |
+| spacer | 252 → ~281 | `flex: 1` |
+| meta row | ~281 → 314 | `Lv N · name`, XP counter, the progress bar |
+
+**127dp is 38% of the card**, and it is the single most-looked-at rectangle in the product. Before IMP-130
+it was 39dp. **The card grew 104dp for the sky crop and 88 of those went to the top** — the numeral is
+welded to the card's centre and the meta row to the bottom edge, so the slack had nowhere else to go.
+
+**Why it is not simply a bug to fix.** `HERO_HEIGHT` 336 exists for the **video** crop (see "The frame"
+below), and IMP-130 made the classic card adopt it so the page stops jumping when you switch skies. So the
+empty band is the classic ground paying for the video ground's frame. That makes at least three answers
+legitimate, and **choosing between them is the design question, not a matter of taste**: fill it, use it
+(the sky is the point — give it room and let the card read as art with a caption), or restructure what the
+top of Home even is.
+
+**What is fair game, and this is deliberately wide.** The date, the ember pill, the mode toggle and the
+greeting all sit *immediately above* this card in page chrome — a design may absorb, move or re-rank any of
+them. It may propose a different relationship between hero and page entirely. **It may also say the
+emptiness is right and prove it.**
+
+**The three real constraints** (everything else is open): `HERO_HEIGHT` 336 is pinned to the sky encode
+recipe; `RayFan`/`NightRays` are frozen as artwork, though where they sit and how far they reach are now
+props and are fair game; and the candle row does **not** come back into this card — IMP-125 moved it out
+into the week strip on purpose.
+
+### D-16 · The Play listing is advertising an app that no longer exists 🐛
+
+**Not an app screen** — this row is the storefront. 📋 **Packet:
+[`design-requests/D-16-the-listing.md`](design-requests/D-16-the-listing.md).**
+
+**The evidence is a timestamp.** `store/play/` holds seven 1080×1920 assets, all committed
+**2026-08-16/17**, produced by `npm run shots` from the `storeShots` fixture. Since that morning: the whole
+video-sky hero landed and was rebuilt four times (IMP-121, 124, 125, 130 → 133), Insights' consistency grid
+was **deleted and replaced** (IMP-120), the Shop moved 17 commits, and the candle row changed cards.
+**Screenshot 01 shows a hero that no longer exists and screenshot 05 shows a grid that was removed from the
+app.** Anyone who installs from that listing sees a different product than the one they were shown.
+
+**Two halves, and only one of them is a capture job.** Re-running the pipeline is
+[WALK-25](walk-open.md#walk-25--recapture-the-shot-set) and it is mechanical. What has **never** been
+designed is the listing itself: the seven-shot **story** (what each frame is for, in what order, what the
+caption on each one says), the feature graphic, and what a first-time viewer understands in the four
+seconds they give it. That is this row, and it should be answered before the shutter opens — a re-capture
+of the same seven compositions just refreshes a listing nobody designed.
+
+---
+
 ## Tier 1 — it degrades as the journal grows. Fix first.
 
 These are not taste. Each one is measurably worse at 500 entries than at 5, and the app is built to be
 kept for years.
 
 ### D-01 · Insights → "Consistency" draws every day since the first entry 🐛
-**Baseline:** `day-05` / `night-05` ✅
+**No baseline** — paste [`InsightsScreen.js`](../src/screens/InsightsScreen.js)
 
 > ✅ **SCOPED 2026-09-12 as [IMP-120](specs-open.md#imp-120--the-consistency-grid-becomes-a-bounded-month-strip)
 > — the design phase of this row is over.** The returned design's direction **A** won on measurement: a
@@ -170,7 +246,7 @@ the transpose — those four states are load-bearing and pinned by
 design re-open borderWidth or the dashed outline).
 
 ### D-02 · Reflections → every entry ever, mounted at once 🐛
-**Baseline:** `day-04` / `night-04` ✅ · 📋 **Packet ready: [`design-requests/D-02-reflections.md`](design-requests/D-02-reflections.md)** (2026-09-14) — select all, paste, send. ⚠️ **The baseline was shot with a query active**, so the browsing state — the one this row is about — has no picture anywhere.
+**No baseline** (the shot that existed was taken *with a query active*, and it is deleted) · 📋 **Packet ready: [`design-requests/D-02-reflections.md`](design-requests/D-02-reflections.md)** (2026-09-14) — select all, paste, send. ⚠️ **The baseline was shot with a query active**, so the browsing state — the one this row is about — has no picture anywhere.
 
 **What happens.** [`ArchiveScreen`](../src/screens/ArchiveScreen.js#L76) does `results.map(...)` inside a
 plain `ScrollView`. No `FlatList`, no windowing, no pagination, no grouping. Every entry that matches the
@@ -188,7 +264,7 @@ between *browsing* (no query) and *results* (a query is active — the count alr
 everything above it. The `FlatList`/`SectionList` port is then an ordinary build task.
 
 ### D-03 · Insights answers only one question: "ever"
-**Baseline:** `day-05` / `night-05` ✅
+**No baseline** — paste [`InsightsScreen.js`](../src/screens/InsightsScreen.js)
 
 **What happens.** [`deriveInsights`](../src/insights/derive.js#L17) counts across **all** entries with no
 window anywhere. Mood mix is lifetime. Weekly rhythm is lifetime. "Your record" is lifetime by name.
@@ -204,7 +280,7 @@ the empty/thin-data state of each card *under a narrow window*, because a 30-day
 is the common case and it is the state the current design has never had to show.
 
 ### D-04 · Insights → the 11th mood's bar is invisible 🐛
-**Baseline:** `day-05` / `night-05` ✅ — **but this one is a defect, buildable without a design**
+**No baseline** (deleted 2026-09-14) — **but this one is a defect, buildable without a design**
 
 **What happens.** Mood mix renders **every distinct mood ever logged**, and shades each bar
 `opacity: 1 - i * 0.1` ([`InsightsScreen.js:144`](../src/screens/InsightsScreen.js#L144)). At index 10 the
@@ -311,7 +387,7 @@ here"* ([`InsightsScreen.js:43-48`](../src/screens/InsightsScreen.js#L43)). A fi
 these states, and they are the least-designed screens in the app.
 
 ### D-12 · Home's lower half is a stack with no hierarchy
-**Baseline:** `day-01` / `night-01` ✅. The streak hero is strong; below it sit up to six cards of equal
+**No baseline** (deleted 2026-09-14; ⚠️ see **D-15**, which is about this same card). The streak hero is strong; below it sit up to six cards of equal
 weight (freeze notice, on-this-day, recap, today's CTA, quests, week strip) plus the Keepsakes rail.
 **Today's reflection — the reason the app exists — is the fourth card down** on a day with notices. Ask
 for a priority rule, not a reshuffle.
@@ -323,13 +399,13 @@ seventh equal-weight card to the stack this row is about. A design pass here sho
 the assumption, or say plainly why it is wrong.
 
 ### D-13 · Keepsakes are "tiered" in the comment only
-**Baseline:** `day-06` / `night-06` ✅. [`Achievements.js`](../src/screens/Achievements.js) renders one
+**No baseline** — paste [`Achievements.js`](../src/screens/Achievements.js), which renders one
 flat list with earned and unearned interleaved; the tiers named in its own header comment are invisible.
 Also the app's own naming splits: the screen says **Keepsakes**, the file and the data say
 **achievements**.
 
 ### D-14 · WriteFlow step 3 carries a whole form
-**Baseline:** `day-02` / `night-02` ✅ (write), `day-03` / `night-03` ✅ (moods). "Name your own" is a
+**No baseline** — paste [`WriteFlow.js`](../src/screens/WriteFlow.js). "Name your own" is a
 two-step emoji-picker-plus-text-field nested inside the mood step
 ([`WriteFlow.js:173-262`](../src/screens/WriteFlow.js#L173)) — a settings screen inside the daily ritual's
 last beat. It works (IMP-066 numbered it), but it is the heaviest thing in the lightest flow.
@@ -746,13 +822,17 @@ subjects to fill the shop without generating a single daylight pair.
   be replaced; `NightSky` and `DARK_THEME` were deleted and must not come back.
 - **Nothing under `src/billing/`.** Design is not enablement — `EMBER_PACKS_ENABLED` stays `false` until
   you flip it, and no design may assume the packs are visible.
-- **No new baseline-capture pipeline.** Settled 2026-09-05.
+- **No NEW baseline-capture pipeline.** Settled 2026-09-05, and it still stands. ⚠️ **Re-running the one that already exists is a different thing and is now filed** as [WALK-25](walk-open.md#walk-25--recapture-the-shot-set) — `npm run shots` is alive, WALK-15 passed it end to end, and it is what produced both the deleted baselines and the Play listing.
 - **Keepsakes is deferred, not dropped** — it stays in the app and is Play screenshot 06.
 
 ## Suggested order
 
+**Revised 2026-09-14.** The two new rows go first, and not because they are new: one is the screen every
+user opens every day, the other is the only thing a stranger ever sees.
+
+0. **D-15** (the hero's empty top) and **D-16** (the listing) — packets written, send either now.
 1. **D-01** (Insights consistency) — your original complaint, and the request already queued.
-2. **D-02** (Reflections) — same disease, worse, and it has a baseline.
+2. **D-02** (Reflections) — same disease, worse, and its packet is written.
 3. **D-05** (one lock treatment) — cheapest Plus win, touches five screens.
 4. **D-03** (a period window for Insights) — bigger; do it after D-01 settles the grid.
 5. **D-07** (a member home) + **D-06** (the paywall, from your existing hero cards).

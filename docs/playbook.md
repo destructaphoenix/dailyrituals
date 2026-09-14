@@ -514,9 +514,11 @@ published, and `main` now carries `design-system/`. Wiring the pane's GitHub con
 call, not a chat's.
 
 **Ask for ONE screen per request** — "redesign the app" produces mush. **The queue is
-[`design-queue.md`](design-queue.md)** (2026-09-11, 14 ranked rows); **D-01 Insights is still first**,
-as it has been since 2026-09-05. ⚠️ **The four standing rules — baseline-first, specs in token names, the
-frozen sun/rays, and design-is-not-enablement — plus the motion-card and night-shot rules now live in
+[`design-queue.md`](design-queue.md)** (16 rows as of 2026-09-14). **D-01 Insights is built (IMP-120); the
+front of the queue is now Tier 0 — [D-15](design-queue.md) the hero's empty top and
+[D-16](design-queue.md) the Play listing**, both with packets written. ⚠️ **The five standing rules — paste
+source (there are no baselines), specs in token names, the frozen sun/rays, design-is-not-enablement, and
+it-has-to-sell-the-app — plus the motion-card and night-shot rules live in
 [`docs/playbook.md`](docs/playbook.md) → "Claude Design — standing rules". Read them before asking.**
 **Porting a returned design is a normal build task** — a new `IMP-xxx` scoped by Opus. Claude Design does
 not emit React Native; it returns HTML/CSS previews plus a spec.
@@ -580,12 +582,22 @@ rules and the rest of the detail are in [`docs/playbook.md`](playbook.md).
 
 _Moved from `PROGRESS.md` 2026-09-07. The **live request** stays in `PROGRESS.md`; these rules do not change._
 
+⚠️ **Rewritten 2026-09-14 on the owner's instruction, and the change of tone is the point:** *"I want you
+to spec with room for creativity. Do not bound Claude Design with your jargon and restrictions. The purpose
+of design is not only to improve the app but also to make it appealing for marketing and ads."* These rules
+exist to stop a design being **unshippable** or **untrue**, and for nothing else. A rule that only encodes
+the current app's habits is not a rule — it is a preference, and it goes in the packet as a preference the
+designer may argue with.
+
 **Ask for ONE screen per request** — "redesign the app" produces mush. The queue is
-[`design-queue.md`](design-queue.md); the first row is still **Insights** (owner, 2026-09-05). Four rules:
-1. **Check the screen has a baseline first** — only `day-01…07`/`night-01…07` exist. For one that does
-   not, **paste its source** into the request rather than describing it.
-2. **Insist the spec comes back in token names** (`c.accentSoft`, `t.radius.card`) — not hex, not "gentle
-   fade".
+[`design-queue.md`](design-queue.md). Five rules:
+1. **There are no baselines — paste source.** All 14 captures were deleted 2026-09-14 (stale by 30+
+   commits). Every packet in [`design-requests/`](design-requests/) splices the real files in and is
+   generated, so it cannot drift. A fresh set is [WALK-25](walk-open.md#walk-25--recapture-the-shot-set).
+2. **Ask for the spec in token names** (`c.accentSoft`, `t.radius.card`) — not hex, not "gentle fade" —
+   **so a port does not have to guess. That is the whole reason, and it is a floor, not a ceiling:** never
+   let the bookkeeping shrink the idea. A vivid direction with three loose numbers is worth more than a
+   precise diagram of something safe.
 3. **The sun and rays are frozen.** `RayFan` + `NightRays` are the signature. If a returned design redraws
    them, reject it — it cannot ship. `BigSun`/`BigMoon` were demoted out of Frozen (still shipping in
    Onboarding/Celebration/Paywall, but a design may replace them); `NightSky` and the `DARK_THEME` revert
@@ -594,6 +606,16 @@ _Moved from `PROGRESS.md` 2026-09-07. The **live request** stays in `PROGRESS.md
 4. **It is a design request, not an enablement.** Everything under `src/billing/` is untouched by design
    work. ⚠️ *(Corrected 2026-09-06: this rule used to read "`PLUS_ENABLED` stays `false`". It has been
    `true` since 2026-09-05 — the rule is hands-off, not off.)*
+5. **It has to sell the app, not only serve it** *(added 2026-09-14, owner's instruction).* Every packet
+   says so in as many words: assume any screen may end up in a Play listing, an ad or a social post —
+   cropped, at thumbnail size, beside a competitor, with four seconds of attention. **Design is a
+   marketing surface here, not only a usability one.** Where the two pull apart, ask for both and for the
+   designer's verdict on which wins. The storefront itself is its own row —
+   [D-16](design-queue.md#d-16--the-play-listing-is-advertising-an-app-that-no-longer-exists).
+
+⚠️ **What is NOT a rule, and never was:** the app's current information architecture, its card rhythm, the
+number of screens, where the page header lives, or what any given surface is currently called. A packet
+that hands over the measurement and then dictates the answer has wasted the request.
 
 ⚠️ **Motion cards may now be re-added** — `src/motion.js` EXISTS as of IMP-077 — but **written from the
 file, not from the old deleted cards**: `DUR` (`tap:120, enter:320, settle:480, celebrate:900`), `EASE`,

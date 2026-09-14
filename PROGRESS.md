@@ -36,9 +36,9 @@ Neither queue is the phase ladder (8 / 10b / 11), parked in [`docs/playbook.md`]
 >
 > | If this chat is… | Take |
 > | --- | --- |
-> | a **build task** | ✅ **The hero-regression run is CLOSED and SHIPPED — IMP-131, IMP-132 and IMP-133, all three by OTA** (2026-09-14, `28654cb` → `d82c61f`, `bcaebb6` → `fc85377`, `e258694` → `7d08eb5`; runtime `1.0.10`, vc17 on `internal` only). Each one was found by the owner on the previous one's OTA: **131** put the numeral back on the focal point, **132** moved the focal to the middle of the 336dp card it actually lives in, **133** gave `RayFan`/`NightRays` a `reach` so the disc bleeds past every corner instead of ending in mid-air. **1249 passed, 117 suites**, export clean. `HERO_HEIGHT` (336) never reopened. **The backlog is now EMPTY of anything a build chat may take** — [IMP-128](docs/specs-open.md#imp-128--apply-the-motion-vocabulary) is the only row left and it is **OWNER-GATED — do NOT take it.** ⬜ **The runtime proof is owed: [WALK-24](docs/walk-open.md#walk-24--one-card-two-grounds), device, owner-run.** ✅ **IMP-130 is DONE** (2026-09-14, `111c3de`) — both hero shells now share one `HERO_BOX` at `HERO_HEIGHT` (336) with the content centred; a `testID="streak-hero"` on both `Card`s proves the two grounds measure equal. ✅ **IMP-124 is DONE** (2026-09-13, `87771c4`) — the hero now reads `heroChrome.js`'s ground-based colors, not the theme. ✅ **IMP-125 is DONE** (2026-09-13, `d57dc2d`) — the candle row moved out of the hero and into the week-strip footer, `StreakFreeze`'s `onVideo` branch deleted, `HERO_HEIGHT` untouched. ✅ **IMP-126 is DONE** (2026-09-13, `0502790`) — mood mix bar opacity floors at `0.3`, index 10 no longer flattens to `0`. ✅ **IMP-127 is DONE** (2026-09-13, `402391b`) — `EmberPill` gains `showAdd`, the Shop's pill hides its `+` while `EMBER_PACKS_ENABLED` is false, Home's pill unchanged, IMP-119's centring walk moves to it. ✅ **IMP-129 is DONE** (2026-09-13, `0a2f595`) — `checkEntitlement` threads `customerInfo` through, `revenueCatService`/`simService` gained `getCustomerInfoRaw()`, and `RitualsApp.js`'s `applyEntitlementResult` now runs the ember-grant sweep silently on every launch and foreground. **IMP-124/125/126/127/129 shipped by OTA 2026-09-13** (`5ccf020`, update `01a09b18`, confirmed on the owner's phone). ✅ **IMP-130's runtime proof is now DONE too** — see the runtime-walk row below. |
-> | a **runtime walk** | ✅ **[WALK-24](docs/build-log.md#walk-24--one-card-two-grounds--closed-2026-09-14-device-owner-run) is CLOSED — PASS, 2026-09-14, hardware, owner-run, update `01a09cc2`.** All five steps passed: the card holds its size across sky switches, the numeral sits centred in the convergence with rays running to every edge, the meta row reads as one composition (over both the default sky and Meteor Shower footage), nothing clips at max font, and night mode matches day. **IMP-130, IMP-131, IMP-132 and IMP-133 are all proven on device — nothing residual.** Full detail archived in `build-log.md` → "Walk log". 📍 **Next per THE DEVICE SITTING PLAN below: Sitting 2 — [WALK-19](docs/walk-open.md#walk-19--money-actually-changes-hands) step 8**, the one real-money purchase, held for last; Sitting 3 (WALK-12, R8) still goes after it. ⏸ **WALK-23 stays HELD at the owner's instruction — do not take it without them lifting the hold**, even though its stated reason (WALK-22 → IMP-130) has since been resolved; lifting it is the owner's call, not a walk chat's. ✅ **WALK-22 is DONE — PASS, 2026-09-14** (device, Play `internal`, owner-run, update `01a09b18`): IMP-124's hero text and IMP-125's candle-row move both confirmed on hardware, night mode identical to day. 🔴 **Found [IMP-130](docs/specs-open.md#imp-130--not-yet-specced) live** — the video hero card is a visibly different size from the default hero card when switching skies; not fixed, routed to Opus to spec. ✅ **WALK-21 is DONE — 🟠 PARTIAL, 2026-09-13** (Play `internal` vc17, owner-run). Steps 1-3, 6-10 passed clean (corners settle IMP-121's `surfaceView` question, step 8 re-confirms WALK-19a's store-authoritative membership); steps 4-5 failed into IMP-124 above; step 11 is a named gap (thin journal, nothing to scroll). Full write-up in `walk-open.md`'s WALK-21 section. 📱 **Next:** resume **"THE DEVICE SITTING PLAN"** below — three sittings (IMP-116 lapse + IMP-114/115 · WALK-19 step 8 real money · WALK-12 last), each with the membership state it needs. ⚠️ **7C stays unwalkable** until the candle holding drains to ≤2 — do not record it as passed because nothing broke. ✅ **Step 7 is DONE — the 2026-09-10/11 lapse sitting cleared it** (hardware, owner-run, monthly tester sub). **WALK-18 ✅, WALK-07 ✅, WALK-19 steps 7A/7B/7D ✅** — IMP-108, IMP-109, IMP-110, IMP-111 and IMP-096 are all now proven on hardware. ⚠️ **7C is NOT proven** — the owner held 6 pre-cap candles, so the cap was never exercised; it re-runs once the holding drains to ≤2 ([IMP-115](docs/specs-open.md#imp-115)). Remaining 🚦: **step 8** (the one real-money purchase, held for last) and **WALK-12 (R8) LAST** — it must be walked on the exact build you ship. ✅ **WALK-08 is CLOSED (2026-09-11, emulator, agent-run)** — DeeperInsights passes at max font, IMP-095 proven, cap measured biting (scale 2, caps 1.5/1.2). It found IMP-118 on the way. 🔴 **But its IMP-117 pass was HALF WRONG and the device overturned it** — the `+` was off-centre at every font size, fixed as [IMP-119](docs/build-log.md#imp-119-the-ember-pills--lost-the-line-that-centred-it-2026-09-11) (commit `1fc0664`, walk still owed on device); the emoji half stands. **A glyph-centring claim is not emulator-provable — route that shape to `device`.** ✅ **SITTING 1 is DONE (2026-09-11, hardware, owner-run) — do not re-run it.** IMP-116 proven: on lapse both cosmetics revert under one message. **IMP-114 stays UNEXERCISED** — `buyCandles` checks the cap before affordability, so 6 candles against a cap of 3 returns at the first guard and its message cannot fire; same blocker as 7C. Step 5's control was dropped by inspection (ownership is consulted independently of `plus` in all three paths). Still owed, cheaply: the `6 kept` label and the no-ember-price check. ✅ **WALK-20 (IMP-113's ember purchase) NOW EXISTS** — written 2026-09-13, [`docs/walk-open.md`](docs/walk-open.md#walk-20--money-for-embers). ⬜ **Still not runnable**, and its own pre-flight says why: three consumables must be live in Play **and** RevenueCat, [IMP-129](docs/specs-open.md#imp-129--the-ember-grant-that-never-heals-itself) must have shipped, and `EMBER_PACKS_ENABLED` must be flipped by OTA — safe to publish because `runtimeVersion` is `appVersion` `1.0.10`, so only vc17 on `internal` can receive it. 🔴 **Its step 4 is the point:** a consumable Play does not consume returns `ITEM_ALREADY_OWNED`, and the buyer gets *"you're already up to date"* and no embers. |
-> | a **design request** | 📋 **Take the first row of [`docs/design-queue.md`](docs/design-queue.md)** — a ranked audit of all 14 user-facing surfaces, written 2026-09-11 from source. ✅ **D-01 (the Insights consistency grid) is built as IMP-120** — no further design pass needed, `docs/design-queue.md` still names it first and wants its own row updated by a design chat. **D-02 (Reflections)** is next and 📋 **its packet is written — [`docs/design-requests/D-02-reflections.md`](docs/design-requests/D-02-reflections.md)** (2026-09-14, generated from source): select all, paste into Claude Design, send. It is a **fresh** request, not a port brief — the live project holds no Reflections card at all, and the `day-04`/`night-04` baseline was shot **with a query active**, so the browsing state this row is about has no picture anywhere. ⚠️ **One screen per request**; the four standing rules stay in [`docs/playbook.md`](docs/playbook.md) → "Claude Design — standing rules". ✅ **The "three rows want IMP numbers" note is settled and was one row too long** (2026-09-13): **D-04's defect half is now [IMP-126](docs/specs-open.md#imp-126--the-11th-moods-bar-is-invisible)** (only its remainder-line design is still open), **D-09's is [IMP-127](docs/specs-open.md#imp-127--the-shops-ember--promises-an-action-it-cannot-perform)** — and reading the source corrected D-09: the **Home** pill's `+` opens the Shop and is fine, only the **Shop's own** pill toasts into nothing. **D-10 wants no number** — its two dead rows are IMP-022, already deferred; what is left there is genuine design. |
+> | a **build task** | ✅ **The hero-regression run is CLOSED and SHIPPED — IMP-131, IMP-132 and IMP-133, all three by OTA** (2026-09-14, `28654cb` → `d82c61f`, `bcaebb6` → `fc85377`, `e258694` → `7d08eb5`; runtime `1.0.10`, vc17 on `internal` only). Each one was found by the owner on the previous one's OTA: **131** put the numeral back on the focal point, **132** moved the focal to the middle of the 336dp card it actually lives in, **133** gave `RayFan`/`NightRays` a `reach` so the disc bleeds past every corner instead of ending in mid-air. **1249 passed, 117 suites**, export clean. `HERO_HEIGHT` (336) never reopened. ✅ **WALK-24 CLOSED 2026-09-14 (device, owner-run) — the whole hero chain is proven on hardware.** 📍 **TAKE [IMP-134](docs/specs-open.md#imp-134--the-design-system-has-to-say-what-the-app-actually-draws) — the one open row.** It is **tooling, not app code**: the design system's frozen card renders the rays at `focal 80 / reach 150`, the defaults the app stopped passing at IMP-132, while the card's own copy claims it is what renders. Fix the generator, guard it with a test in the Plus-card shape, and give the hero frame one home (`src/home/heroFrame.js`) so the generator and the test can read it without importing a screen. **No OTA — the app bundle is byte-identical.** [IMP-128](docs/specs-open.md#imp-128--apply-the-motion-vocabulary) is still **OWNER-GATED — do NOT take it.** ✅ **IMP-130 is DONE** (2026-09-14, `111c3de`) — both hero shells now share one `HERO_BOX` at `HERO_HEIGHT` (336) with the content centred; a `testID="streak-hero"` on both `Card`s proves the two grounds measure equal. ✅ **IMP-124 is DONE** (2026-09-13, `87771c4`) — the hero now reads `heroChrome.js`'s ground-based colors, not the theme. ✅ **IMP-125 is DONE** (2026-09-13, `d57dc2d`) — the candle row moved out of the hero and into the week-strip footer, `StreakFreeze`'s `onVideo` branch deleted, `HERO_HEIGHT` untouched. ✅ **IMP-126 is DONE** (2026-09-13, `0502790`) — mood mix bar opacity floors at `0.3`, index 10 no longer flattens to `0`. ✅ **IMP-127 is DONE** (2026-09-13, `402391b`) — `EmberPill` gains `showAdd`, the Shop's pill hides its `+` while `EMBER_PACKS_ENABLED` is false, Home's pill unchanged, IMP-119's centring walk moves to it. ✅ **IMP-129 is DONE** (2026-09-13, `0a2f595`) — `checkEntitlement` threads `customerInfo` through, `revenueCatService`/`simService` gained `getCustomerInfoRaw()`, and `RitualsApp.js`'s `applyEntitlementResult` now runs the ember-grant sweep silently on every launch and foreground. **IMP-124/125/126/127/129 shipped by OTA 2026-09-13** (`5ccf020`, update `01a09b18`, confirmed on the owner's phone). ✅ **IMP-130's runtime proof is now DONE too** — see the runtime-walk row below. |
+> | a **runtime walk** | ✅ **[WALK-24](docs/build-log.md#walk-24--one-card-two-grounds--closed-2026-09-14-device-owner-run) is CLOSED — PASS, 2026-09-14, hardware, owner-run, update `01a09cc2`.** All five steps passed: the card holds its size across sky switches, the numeral sits centred in the convergence with rays running to every edge, the meta row reads as one composition (over both the default sky and Meteor Shower footage), nothing clips at max font, and night mode matches day. **IMP-130, IMP-131, IMP-132 and IMP-133 are all proven on device — nothing residual.** Full detail archived in `build-log.md` → "Walk log". 📦 **NEW ROW — [WALK-25](docs/walk-open.md#walk-25--recapture-the-shot-set), re-capture the shot set** (emulator, 🤖 agent-runnable): `store/play/`'s seven **live Play listing** assets were shot 2026-08-16/17, and shot 01 pictures a hero that no longer exists while shot 05 pictures a grid [IMP-120](docs/build-log.md) **deleted**. ⚠️ **Its finished assets are sequenced behind [D-16](docs/design-queue.md); raw captures may be taken any time.** 📍 **Next per THE DEVICE SITTING PLAN below: Sitting 2 — [WALK-19](docs/walk-open.md#walk-19--money-actually-changes-hands) step 8**, the one real-money purchase, held for last; Sitting 3 (WALK-12, R8) still goes after it. ⏸ **WALK-23 stays HELD at the owner's instruction — do not take it without them lifting the hold**, even though its stated reason (WALK-22 → IMP-130) has since been resolved; lifting it is the owner's call, not a walk chat's. ✅ **WALK-22 is DONE — PASS, 2026-09-14** (device, Play `internal`, owner-run, update `01a09b18`): IMP-124's hero text and IMP-125's candle-row move both confirmed on hardware, night mode identical to day. 🔴 **Found [IMP-130](docs/specs-open.md#imp-130--not-yet-specced) live** — the video hero card is a visibly different size from the default hero card when switching skies; not fixed, routed to Opus to spec. ✅ **WALK-21 is DONE — 🟠 PARTIAL, 2026-09-13** (Play `internal` vc17, owner-run). Steps 1-3, 6-10 passed clean (corners settle IMP-121's `surfaceView` question, step 8 re-confirms WALK-19a's store-authoritative membership); steps 4-5 failed into IMP-124 above; step 11 is a named gap (thin journal, nothing to scroll). Full write-up in `walk-open.md`'s WALK-21 section. 📱 **Next:** resume **"THE DEVICE SITTING PLAN"** below — three sittings (IMP-116 lapse + IMP-114/115 · WALK-19 step 8 real money · WALK-12 last), each with the membership state it needs. ⚠️ **7C stays unwalkable** until the candle holding drains to ≤2 — do not record it as passed because nothing broke. ✅ **Step 7 is DONE — the 2026-09-10/11 lapse sitting cleared it** (hardware, owner-run, monthly tester sub). **WALK-18 ✅, WALK-07 ✅, WALK-19 steps 7A/7B/7D ✅** — IMP-108, IMP-109, IMP-110, IMP-111 and IMP-096 are all now proven on hardware. ⚠️ **7C is NOT proven** — the owner held 6 pre-cap candles, so the cap was never exercised; it re-runs once the holding drains to ≤2 ([IMP-115](docs/specs-open.md#imp-115)). Remaining 🚦: **step 8** (the one real-money purchase, held for last) and **WALK-12 (R8) LAST** — it must be walked on the exact build you ship. ✅ **WALK-08 is CLOSED (2026-09-11, emulator, agent-run)** — DeeperInsights passes at max font, IMP-095 proven, cap measured biting (scale 2, caps 1.5/1.2). It found IMP-118 on the way. 🔴 **But its IMP-117 pass was HALF WRONG and the device overturned it** — the `+` was off-centre at every font size, fixed as [IMP-119](docs/build-log.md#imp-119-the-ember-pills--lost-the-line-that-centred-it-2026-09-11) (commit `1fc0664`, walk still owed on device); the emoji half stands. **A glyph-centring claim is not emulator-provable — route that shape to `device`.** ✅ **SITTING 1 is DONE (2026-09-11, hardware, owner-run) — do not re-run it.** IMP-116 proven: on lapse both cosmetics revert under one message. **IMP-114 stays UNEXERCISED** — `buyCandles` checks the cap before affordability, so 6 candles against a cap of 3 returns at the first guard and its message cannot fire; same blocker as 7C. Step 5's control was dropped by inspection (ownership is consulted independently of `plus` in all three paths). Still owed, cheaply: the `6 kept` label and the no-ember-price check. ✅ **WALK-20 (IMP-113's ember purchase) NOW EXISTS** — written 2026-09-13, [`docs/walk-open.md`](docs/walk-open.md#walk-20--money-for-embers). ⬜ **Still not runnable**, and its own pre-flight says why: three consumables must be live in Play **and** RevenueCat, [IMP-129](docs/specs-open.md#imp-129--the-ember-grant-that-never-heals-itself) must have shipped, and `EMBER_PACKS_ENABLED` must be flipped by OTA — safe to publish because `runtimeVersion` is `appVersion` `1.0.10`, so only vc17 on `internal` can receive it. 🔴 **Its step 4 is the point:** a consumable Play does not consume returns `ITEM_ALREADY_OWNED`, and the buyer gets *"you're already up to date"* and no embers. |
+> | a **design request** | 📍 **The front of the queue is new: Tier 0, added 2026-09-14, and both rows have packets written.** **[D-15 — the hero card's top third holds nothing](docs/design-requests/D-15-hero-top.md):** 127dp of the 336dp hero (38%) sits above the numeral holding no content at all — the card grew 104dp for the video crop and 88 of it went to the top. **Nothing is broken** (WALK-24 passed every step); it has simply never been composed. **[D-16 — the Play listing](docs/design-requests/D-16-the-listing.md):** the seven live store assets are from 2026-08-16/17 — shot 01 shows a hero that no longer exists, shot 05 a grid that was deleted from the app. Its capture half is [WALK-25](docs/walk-open.md#walk-25--recapture-the-shot-set); **the design half comes first.** 🗑️ **The 14 baselines are DELETED** (owner, 2026-09-14 — nothing stale in the design system), so **every request pastes source**; the packets in [`docs/design-requests/`](docs/design-requests/) are generated from the real files so they cannot drift. ⚠️ **The standing rules were rewritten the same day** ([`playbook.md`](docs/playbook.md) → "Claude Design — standing rules"): five rules, they exist only to stop a design being unshippable or untrue, and rule 5 is **it has to sell the app, not only serve it.** 📋 **Also ready:** [D-02 Reflections](docs/design-requests/D-02-reflections.md). ✅ D-01 is built as IMP-120. |
 >
 > **The billing surface, honestly.** ✅ **Proven end to end on hardware:** purchase, already-owns (4e),
 > reinstall + entitlement survival (WALK-19a), cancel, and lapse-at-cold-start (IMP-107). **089/090/099 too.**
@@ -109,6 +109,7 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 | 131 | **The sunburst lost the numeral — regression from IMP-130, already on the owner's phone.** `RayFan`/`NightRays` are absolute at `top: -70`, `height: 300`, so their focal point is **fixed at card-y 80** and `art.js` says so; the numeral used to land on it by construction (`26 + 13 + 82/2`). IMP-130's `justifyContent: 'center'` moved the content ~46dp down and left the art behind — the rays and the night bloom converge **above** the numeral, and the meta row fell below the 300dp disc entirely. 336 and `art.js` are **not** reopened: the centring comes out and the freed space becomes one flex spacer that anchors the level/XP row to the bottom padding edge, where `SkyHero`'s bottom-28% scrim already is. | OTA | ✅ **done, archived** in `docs/build-log.md` — `28654cb`. **1245 passed, 117 suites** (was 1241/117), export clean, +4 tests, no new suite. ✅ **Shipped by OTA 2026-09-14** (`d82c61f`). ✅ **Walked — [WALK-24](docs/build-log.md#walk-24--one-card-two-grounds--closed-2026-09-14-device-owner-run) PASS, 2026-09-14**, update `01a09cc2` |
 | 132 | **The sunburst was centred on a card that no longer exists.** IMP-131 proved the numeral sits **on** the focal point and never asked whether the focal was in the right *place*. `80` is the middle of the content-sized ~232dp card the hero was **before** IMP-130; pinned to 336, the same disc hangs 70dp off the top and leaves a **106dp bare band** under it. `art.js` takes `focal` as a prop (default 80, frozen for other callers); `HomeScreen.js` derives one `HERO_FOCAL = HERO_HEIGHT / 2` and computes both the art's focal and the numeral's `marginTop` from it, so they cannot drift apart again. | OTA | ✅ **done, archived** in `docs/build-log.md` — `bcaebb6`. **1249 passed, 117 suites** (was 1245/117, +4), export clean. ✅ **Shipped by OTA 2026-09-14** (`fc85377`). ✅ **Walked — [WALK-24](docs/build-log.md#walk-24--one-card-two-grounds--closed-2026-09-14-device-owner-run) PASS, 2026-09-14**, update `01a09cc2` |
 | 133 | **The sunburst was showing where it ends.** Found by the owner on IMP-132's OTA — *"empty and ugly"* — and they guessed the fix. Centring the disc **made its own outer boundary visible for the first time**: at focal 80 it bled off the top edge, at 168 all four sides fall inside the frame and the ray-tips terminate in mid-air. `art.js` gains `reach` (default `size / 2`, frozen for other callers) — **ray length had to be separated from box size**, or the night bloom's fixed `viewBox` would have grown the candlelight pool from r80 to r139. `HomeScreen.js` derives the reach from the card's own diagonal. | OTA | ✅ **done, archived** in `docs/build-log.md` — `e258694`. **1249 passed, 117 suites** — unchanged, a test was **corrected** (IMP-132's containment case was what produced the bare rim, so it is inverted), not added. Export clean. ✅ **Shipped by OTA 2026-09-14** (`7d08eb5`). ✅ **Walked — [WALK-24](docs/build-log.md#walk-24--one-card-two-grounds--closed-2026-09-14-device-owner-run) PASS, 2026-09-14**, update `01a09cc2` |
+| 134 | **The design system says the app draws something it stopped drawing.** `gen-design-system.js`'s `frozenPage()` renders `RayFan`/`NightRays` with `{ size }` only, so both PNGs come out at the component defaults — `focal 80`, `reach 150` — which the app stopped passing at IMP-132 (it now passes `focal 168` and a reach derived from the card's diagonal). The card's own copy says *"what you see is what renders"*. Same failure class as the Plus card in September. Also: give the hero frame one home so the generator and a guard test can read it without importing a screen. | tooling | ⬜ **OPEN — take this one.** Spec in [`docs/specs-open.md`](docs/specs-open.md#imp-134--the-design-system-has-to-say-what-the-app-actually-draws). Ships nothing — no OTA, the app bundle is byte-identical |
 | 128 | **Apply the motion vocabulary** — `riseIn` on Home's card stack and the Keepsakes rows, `popIn` on earned badges, `useCountUp` on the streak numeral. Six of eight `motion.js` exports still have no consumer, and IMP-077 paid for them with two **native** deps and the vc14 build. | OTA | ⏸ **OWNER-GATED — specced 2026-09-13 at the owner's request, gate deliberately left ON.** A build chat must not take it until the owner lifts it. Spec in [`docs/specs-open.md`](docs/specs-open.md#imp-128--apply-the-motion-vocabulary) |
 | 022 | Save as PDF + About sheet (the two dead You-tab buttons) | Build | ⏸ **deferred (owner)** — spec in build-log → "Deferred specs"; **perk #6 gate** |
 | 044 | R8 on release builds (dev client was shipping to the public) | Build | 🟢 **code-complete, UNWALKED.** R8 must be walked on the build you actually ship, so it rides **vc15 or later**; walk = WALK-12, on hardware, last in the sitting |
@@ -121,10 +122,12 @@ writes the session note. **Full detail for every ✅ row is in [`docs/build-log.
 
 **Moved to [`docs/playbook.md`](docs/playbook.md) → "Claude Design" (2026-09-10, size rule).** Stable
 reference — project id, card list, regeneration steps. **The queue itself is now
-[`docs/design-queue.md`](docs/design-queue.md)** (2026-09-11): 14 ranked rows across three tiers —
-what degrades as the journal grows, the six disagreeing Plus surfaces, and polish. ✅ **D-01 (Insights)
-is built as IMP-120** — `docs/design-queue.md` itself still wants a design chat to update its own row.
-**D-02 (Reflections)** is next, and its ready-to-paste packet is written: [`docs/design-requests/D-02-reflections.md`](docs/design-requests/D-02-reflections.md) (2026-09-14).
+[`docs/design-queue.md`](docs/design-queue.md)**: **16 rows** as of 2026-09-14 — a new **Tier 0** (how the
+app presents itself), then what degrades as the journal grows, the six disagreeing Plus surfaces, and
+polish. ✅ **D-01 (Insights) is built as IMP-120.** 📋 **Three packets are written and ready to send:**
+[D-15 the hero's empty top](docs/design-requests/D-15-hero-top.md), [D-16 the Play listing](docs/design-requests/D-16-the-listing.md)
+and [D-02 Reflections](docs/design-requests/D-02-reflections.md).
+🗑️ **No baselines exist any more** — all 14 were deleted 2026-09-14; packets paste generated source instead.
 
 ## Open items / blockers
 
@@ -190,6 +193,47 @@ _Only the **two newest** notes stay here; each chat moves the older one into
 [`docs/build-log.md`](docs/build-log.md) → "Session notes". Keep them to the shape below: what finished,
 the proof, the exact next step._
 
+_2026-09-14 (Opus — **the design system stops lying, and design gets two new rows: the hero's empty top and the storefront.**) — ✅ specs written, deletions done._
+
+**What the owner asked for, in their words:** *"I do not want anything stale in the design system. Delete it,
+don't even ask for confirmation"*, and *"spec with room for creativity — do not bound Claude Design with your
+jargon and restrictions. The purpose of design is not only to improve the app but also to make it appealing
+for marketing and ads."* Both are structural instructions, not preferences about one row, so both are written
+into the playbook's standing rules rather than into a single packet.
+
+**Deleted, this chat, no confirmation asked (as instructed):** all **14** baseline captures
+(`design-system/screens/*.png`, ~3.8MB), both `screens/baseline-*.html` cards that existed only to display
+them, and `package.json`'s jest-ignore for `design_handoff_plus_compliance/`, a directory that no longer
+exists. **The deletion was evidence-led, not a sweep:** four of the seven screens had been rebuilt underneath
+their pictures (Today 8 commits, Shop 11 + 6 to `shopui.js`, Insights 2 — one of which *deleted the grid the
+picture was evidence of* — Write 1). The other three were untouched by source, and went anyway on the
+owner's call: a half-trustworthy baseline set is worse than none, because nobody can tell which half they
+are holding. `proposals/` was exempted and is untouched.
+
+**What survives the deletion, and it is better:** every packet in `docs/design-requests/` splices the real
+source in, generated, so it cannot drift. That was always the fallback for un-captured screens; it is now
+the only mechanism, and it is stronger evidence than a screenshot.
+
+**IMP-134 is scoped** — the drift the deletion exposed. `frozenPage()` renders the frozen pair at the
+component defaults (`focal 80`, `reach 150`), which the app stopped passing at IMP-132, while the card's own
+copy claims *"what you see is what renders"*. ⚠️ **The build has one real trap and the spec names it:** the
+generator's require hook maps every RN `View` to `<g>` and **deliberately drops position and size**, so
+`top: focal - reach` can never reach the SVG — the frame has to be drawn in the card's own HTML, with every
+number imported from a new `src/home/heroFrame.js` rather than typed.
+
+**Two design rows, both packeted.** **D-15 — the hero's empty top:** 127dp of 336 (38%) above the numeral
+holds nothing; the card grew 104dp for the video crop and 88 went to the top, because the numeral is welded
+to the centre and the meta row to the bottom edge. ⚠️ **This is not a defect** — WALK-24 closed ✅ the same
+day, all five steps — which is exactly why the packet offers four legitimate answers including *"the
+emptiness is right and here is why"*, and puts the page header, the greeting and the mode toggle in play.
+**D-16 — the Play listing:** the seven live store assets are 2026-08-16/17, shot 05 pictures a grid IMP-120
+deleted, and the app's best feature (video skies) appears nowhere. Its capture half is **WALK-25**,
+deliberately sequenced *behind* the design so a re-shoot does not just refresh seven compositions nobody
+designed.
+
+**The exact next step.** A build chat takes IMP-134. A design chat sends D-15 or D-16 — both are
+select-all-and-paste. WALK-25 is emulator work and agent-runnable whenever raw captures are wanted.
+
 _2026-09-14 (Opus — **IMP-133 built + walked: the sunburst was showing where it ends. Found by the owner on
 the IMP-132 OTA; they guessed the fix.**) — ✅ code-complete, ✅ emulator-proven, shipped by OTA._
 
@@ -220,97 +264,3 @@ two builds — the owner saw the emulator shots and said go.
 
 **Exact next step.** WALK-24 stays owed on device; its steps 2/3 now cover IMP-131's convergence, IMP-132's
 centring and IMP-133's bleed, and its steps 4 (max font, both shells) and 5 (night) have still never run.
-
-_2026-09-14 (Opus — **IMP-132 built: the sunburst was centred on a card that no longer exists. The OTHER
-half of IMP-130's regression, found by the owner on the IMP-131 OTA.**) — ✅ code-complete, walk owed._
-
-**What finished.** IMP-131 proved the numeral sits **on** the focal point. It never asked whether the focal
-was still in the right *place*, and it was not. `80` is the middle of the **content-sized ~232dp** card the
-hero was before IMP-130 — there, `top: -70, size: 300` put the disc's bottom edge on the card's bottom edge
-by design. IMP-130 pinned the card to 336 and left the focal at 80, so the disc hangs 70dp off the top and
-leaves a **106dp bare band** underneath, and the numeral rode 88dp too high with it.
-[`art.js`](src/art.js) now takes `focal` as a prop (default 80 — frozen for any other caller);
-[`HomeScreen.js`](src/screens/HomeScreen.js) derives **one** `HERO_FOCAL = HERO_HEIGHT / 2` and computes
-both the art's `focal` and the numeral block's `marginTop` from it, so they cannot drift apart again. Disc
-now spans 18…318 in a 336 card: **nothing clipped, top margin = bottom margin.** The three line heights
-under the numeral are explicit now, and the meta row's vestigial `marginTop: 22` came out to pay for the
-centring.
-
-**The proof.** A fifth `describe` in [`HomeScreenSkyHero.test.js`](__tests__/screens/HomeScreenSkyHero.test.js)
-that types no `80`, `168` or `336`: the focal the screen passes = rendered card height ÷ 2 (day + night), the
-disc's top margin = its bottom margin, and the full content stack sums to ≤ the card height with ≥ 12dp of
-slack. Red before on the first three. IMP-131's `focalOf` helper and its video-shell case both needed
-repair — the helper measured `art.js`'s *default* focal instead of the shipped one, and the video shell has
-no `RayFan` to read; **both were the test's bugs, and the invariant they guard stayed green.**
-**1249 passed, 117 suites** (was 1245/117, +4). Full detail:
-[`docs/build-log.md`](docs/build-log.md#imp-132--the-sunburst-was-centred-on-a-card-that-no-longer-exists-2026-09-14).
-
-**The lesson, because it is the third time this card has bitten.** IMP-130 asserted `height === 336`.
-IMP-131 asserted `numeral === focal`. Both stayed green while the card looked wrong, because an
-absolutely-positioned decoration in a fixed-height card has **two** invariants — what it's aligned to, and
-**where that alignment sits in the frame**. Only the second one is visible to the owner.
-
-**Exact next step.** No `Release-Lane:` trailer this chat — it is pure JS on runtime `1.0.10` and wants an
-OTA, but that is the owner's call. WALK-24 stays blocked until it ships; its steps 2/3 now test IMP-132's
-centring as well as IMP-131's convergence, and its steps 4 (max font, both shells) and 5 (night) have still
-never run.
-
-_2026-09-14 (Opus — **IMP-131 specced: the sunburst lost the numeral. A regression from IMP-130, found by the
-owner on the OTA I told them to ship.**) — 📝 spec session, no code written._
-
-**What finished.** The owner's Home screenshot from the IMP-130 OTA (`433eb53`, night mode, streak 1) is a
-defect and it is IMP-130's. **The rays and `NightRays`' bloom converge above the numeral, and the level row
-and XP bar sit below where the art ends.** Cause: `RayFan`/`NightRays` are `position: 'absolute', top: -70,
-height: 300` inside the `Card`, so their focal point is **fixed at card-y 80** whatever the card holds — and
-the numeral used to land on it **by construction** (`26 + 13 + 82/2 = 80`). IMP-130's
-`justifyContent: 'center'` moved the content ~46dp down and left the art where it was.
-
-**What I got wrong, precisely.** IMP-130's trap 4 wrote down *"they do not stretch"* and WALK-24 step 3 wrote
-down *"the number sits ~43dp lower than yesterday"* — **one subtraction apart, and I never did it.** I judged
-the numeral against the *frame* and never against the *art*. The build-log's IMP-130 line (*"the numeral sits
-mid-frame… and the 300dp disc doesn't leave a bare band"*) is inverted on both counts; IMP-131 corrects it.
-**The rule to carry: absolutely-positioned art in a card is a fixed point, so changing how that card lays out
-its content changes a relationship — and the relationship, not the box, is what a test must assert.**
-IMP-130's three tests asserted `height === 336` and stayed green through all of this.
-
-**The ruling.** **336 stays, `art.js` stays frozen, IMP-130 is not reopened.** `justifyContent: 'center'` comes
-out of `HERO_BOX`; the freed space becomes **one flex spacer** that anchors the level/XP row to the bottom
-padding edge — where `SkyHero`'s **bottom-28%** scrim already is (top-aligned as IMP-121 shipped it, that row
-sat *above* its own scrim).
-
-**The proof it asks for.** A fourth `describe` in `HomeScreenSkyHero.test.js` reads the focal point off the
-**rendered** art (`top + height / 2`) and asserts it equals `paddingTop + marginTop + lineHeight / 2` off the
-rendered box — **no `80` typed on either side, nothing hardcoded to the ~195/126/46 estimates** (three terms
-are RN default line heights). Red before on `justifyContent`. Expect **1245 / 117** (+4, no new suite).
-
-**The exact next step.** A **build chat** takes
-[IMP-131](docs/specs-open.md#imp-131--the-sunburst-lost-the-numeral) — it is the first and only open row.
-⚠️ **The regression is live on the owner's phone**, and the fix is pure JS on runtime `1.0.10`, so it wants a
-`Release-Lane: ota` trailer as soon as it is green — **the owner's call, not the build chat's.**
-[WALK-24](docs/walk-open.md#walk-24--one-card-two-grounds) is re-scoped to it and stays blocked on that push;
-its steps 4 (max font) and 5 (night) have still never run.
-
----
-
-_2026-09-14 (Sonnet — **IMP-131 built: the sunburst converges on the numeral again.**) — ✅ code-complete,
-no walk of its own (WALK-24 owns the runtime proof, not run from this chat)._
-
-**What finished.** [`HomeScreen.js`](src/screens/HomeScreen.js) — `justifyContent: 'center'` removed from
-`HERO_BOX`, putting the numeral block back flush to `paddingTop` so its optical centre lands back on the
-art's fixed focal point (card-y 80). A `<View testID="hero-spacer" style={{ flex: 1 }} />` between the
-numeral block and the level/XP row anchors that row to the bottom padding edge. `testID`s added per spec:
-`hero-box` (both shells), `hero-numeral-block`. `art.js`, `skyHero.js`, `heroChrome.js`, `ui.js` and
-`HERO_HEIGHT` all untouched, per the ruling.
-
-**The proof.** [`HomeScreenSkyHero.test.js`](__tests__/screens/HomeScreenSkyHero.test.js) gained the spec's
-fourth `describe`: day/night cases read the rendered art's focal point (`top + height/2`, never a typed
-`80`) against the box's `paddingTop + marginTop + lineHeight/2` (red before on the day case); a third
-confirms the video shell shares the box; a fourth asserts the spacer is bare `{ flex: 1 }`. IMP-130's three
-height cases stayed green. **1245 passed, 117 suites** (was 1241/117, +4, no new suite) — the exact count
-expected. Export clean. Commit `28654cb`. Spec archived to `docs/build-log.md`; `docs/specs-open.md` now
-holds only the owner-gated IMP-128.
-
-**Not shipped** — no `Release-Lane:` trailer; shipping the live-regression fix is the owner's call.
-
-**The exact next step.** Backlog has nothing left for a build chat. [WALK-24](docs/walk-open.md#walk-24--one-card-two-grounds)
-is re-scoped to IMP-131 and stays blocked until this fix ships by OTA. WALK-23 stays held by the owner.

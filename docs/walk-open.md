@@ -463,6 +463,7 @@ the lane now; CI (`release.yml`) ships from it on a `Release-Lane:` trailer. **N
 | WALK-22 | 🎨 | [The day-mode hero re-check](#walk-22--the-day-mode-hero-re-check) | **IMP-124** + **IMP-125** | **device** | 👤 (visual) | ✅ **2026-09-14 (hardware, owner-run) — IMP-124 and IMP-125 both PROVEN, on update `01a09b18`.** Steps 1-3 (subtitle, "day streak" line, XP labels) all read clean over the water; step 5's candle row sits in the week-strip footer as designed; night mode is identical to day. 🔴 **NEW defect found live: the video hero card is a visibly different size from the default (RayFan) hero card when switching skies.** Scoped as **[IMP-130](specs-open.md#imp-130--the-hero-card-is-one-size-whichever-sky-is-on)** below — ✅ **now specced (2026-09-14): both shells render at 336dp with the content centred**, and its own proof is [WALK-24](#walk-24--one-card-two-grounds) |
 | WALK-23 | 🎨 | [The month strip on a journal that has months](#walk-23--the-month-strip-on-a-journal-that-has-months) | IMP-120 | **emulator** | 🤖 (agent-runnable) | ⏸ — **ready, agent can run it any time, but held at the owner's instruction 2026-09-14** (WALK-22 just found IMP-130; no other reason). WALK-21 step 11 could not run: the owner's journal is one month, so there was nothing to scroll. The dev panel's `storeShots` scenario is 210 days and settles it in a dev build |
 | WALK-24 | 🎨 | [One card, two grounds](build-log.md#walk-24--one-card-two-grounds--closed-2026-09-14-device-owner-run) | **IMP-130** + **IMP-131** + **IMP-132** + **IMP-133** | **device** | 👤 (visual) | ✅ **CLOSED 2026-09-14 (hardware, owner-run, update `01a09cc2`) — all five steps PASS.** Card size holds across sky switches; the numeral sits in the convergence, centred, rays running to every edge; the meta row reads as one composition; Meteor Shower footage clean; max font and night mode both clean. IMP-130/131/132/133 all proven on device. Detail in `build-log.md` → "Walk log" |
+| WALK-25 | 📦 | [Re-capture the shot set](#walk-25--recapture-the-shot-set) | the whole app since 2026-08-17 | **emulator** | 🤖 (Maestro + adb) | ⬜ — **filed 2026-09-14.** `store/play/`'s seven Play assets were shot **2026-08-16/17** and the app has moved 30+ commits past them: shot 01 shows a hero that no longer exists, shot 05 a grid that was **deleted** (IMP-120). The 14 design-system baselines from the same morning are already **deleted** rather than refreshed. ⚠️ **Sequenced behind [D-16](design-queue.md#d-16--the-play-listing-is-advertising-an-app-that-no-longer-exists) for the finished assets** — re-shooting the same seven undesigned compositions just refreshes a listing nobody designed. Raw captures for design evidence may be taken any time |
 
 ---
 
@@ -1070,6 +1071,58 @@ the deliverable** — scope it as a new `IMP-xxx` in `PROGRESS.md`, do not fix i
 promote `internal` → `production` until this row is ✅**, whatever the build says.
 
 ---
+
+---
+
+## WALK-25 — re-capture the shot set
+
+**Target: `emulator`. Runner: 🤖 (agent-runnable — Maestro + `adb`, no visual judgement in the capture
+itself).** ⚠️ **Run it in a Terminal window the owner can watch**, never a hidden shell — `npm run shots`
+drives a live emulator and its failures are visible, not logged.
+
+**Why this row exists.** Everything the outside world sees of this app was photographed on **2026-08-16/17**
+and nothing has been re-shot since. `store/play/` — the seven 1080×1920 assets on the live Play listing —
+still shows the pre-video hero and, in shot 05, a consistency grid that [IMP-120](build-log.md) **deleted
+from the app**. The 14 design-system baselines from the same morning were **deleted on 2026-09-14** rather
+than refreshed, on the owner's instruction that nothing stale lives in the design system.
+
+🔴 **Sequencing, and it is the whole reason this is a `📦` and not a `🚦`.** The finished listing assets
+**wait for [D-16](design-queue.md#d-16--the-play-listing-is-advertising-an-app-that-no-longer-exists)**.
+Re-running the pipeline today would produce seven current pictures of seven compositions nobody has ever
+designed — a fresher version of the same undesigned listing. **Raw captures are a different matter**: they
+cost one emulator sitting, they are useful as design evidence, and they may be taken whenever they are
+wanted.
+
+**Pre-flight.**
+
+1. One emulator running, `adb devices` shows **exactly one**; `maestro` and `java` on `PATH` (the script
+   checks all three and fails loudly).
+2. A **`__DEV__` build** — the flow reaches the fixture through the dev harness (long-press the `v1.0` row
+   in You), which does not exist in a release build.
+3. ⚠️ **The prebuild staleness trap.** `android/` is git-ignored and can be weeks behind the JS. A local
+   build that dies on `Cannot find native module 'ExpoVideo'` is that, not a code fault:
+   `expo prebuild --clean` then `expo run:android`.
+
+**The capture.**
+
+4. `npm run shots`. It puts the status bar in demo mode, loads the `storeShots` fixture (210-day streak,
+   "Sam", 2,400 embers), takes seven raw screens into `store/raw/` (git-ignored) and composes them onto the
+   1080×1920 canvas from [`scripts/shots.config.js`](../scripts/shots.config.js) into `store/play/`.
+   **It hard-fails past seven — do not try to add an eighth.**
+5. For a night set, drive **the app's own Mode control in the dev panel**. ⚠️ **`adb uimode` does nothing in
+   this app** — the theme is in-app state, not an OS setting.
+
+**What to check before recording a pass** (this is the only judgement in the row):
+
+6. Shot **01** shows the **336dp hero** with the numeral centred in the convergence — if it shows the old
+   short card, the fixture ran against a stale bundle.
+7. Shot **05** shows the **month strip**, not a lifetime grid. If a lifetime grid appears, stop: the build
+   predates IMP-120 and every other shot is suspect too.
+8. Shot **07**'s ember pill has **no `+`** (IMP-127, `EMBER_PACKS_ENABLED` is false) and no `6 / 3 kept`.
+
+**What this row cannot settle.** Whether the listing *works* — that is D-16's question and no capture
+answers it. And it says nothing about a real device's font metrics; these are pictures of an emulator, which
+is exactly what a store screenshot has always been.
 
 ---
 

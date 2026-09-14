@@ -73,10 +73,14 @@ matches, does everything expand?
 
 ---
 
-## What must survive the redesign
+## What is load-bearing — and how to read this list
 
-These are not preferences — each is either shipped behaviour that a design can silently delete, or a bug
-that was already found and fixed here.
+⚠️ **This is not a fence around the design.** Reflections has never been designed; the shape of the answer
+is genuinely open, and a proposal that reorganises the whole screen is more welcome than a tidier list.
+What follows is the set of things that are **load-bearing** — shipped behaviour a redesign can delete by
+accident, and bugs that were already found and fixed here. **Take a different position on any of them if
+the design is better for it — just say so out loud**, so a build chat does not re-introduce a fixed bug
+while thinking it is following a spec.
 
 1. **Newest first.** `searchEntries` sorts `dayKey` **descending** and the screen relies on it. Do not
    invert the order.
@@ -109,18 +113,29 @@ that was already found and fixed here.
 
 ## What to return
 
-An HTML/CSS preview in **both day and night**, plus a spec **written in token names** — `c.ink`, `c.muted`,
-`c.surface`, `c.border`, `c.cream`, `c.accent`, `c.accentSoft`, `c.accentDeep`, `c.onAccent`,
-`c.placeholder`, `t.radius.card`, `t.radius.btn` — never hex, never prose like "a gentle fade". Name the dp
-of every gap, inset, header height and collapsed-row height. State the **sticky** behaviour explicitly.
+Whatever makes the case best — one direction argued hard, or two compared. HTML/CSS in **both day and
+night** is the house format. Name colours in the app's token names (`c.ink`, `c.muted`, `c.surface`,
+`c.border`, `c.cream`, `c.accent`, `c.accentSoft`, `c.accentDeep`, `c.onAccent`, `c.placeholder`,
+`t.radius.card`, `t.radius.btn`) and give real dp for what you place, so a build chat can port it without
+guessing — but do not let the bookkeeping flatten the idea. **A vivid direction with three loose numbers
+beats a precise diagram of something safe.** Do state the **sticky** behaviour explicitly; that one is
+structural and a port cannot guess it.
 
 The port to React Native (`FlatList` / `SectionList`) is a separate build task, so **the spec is the
 deliverable, not code**.
 
-⚠️ **Out of scope:** `RayFan` / `NightRays` (frozen — this screen does not use them), anything under
-`src/billing/`, the Insights tab (D-01/D-03/D-04 are separate requests), and the mood-filter chip row's
-scroll behaviour (it deliberately does **not** scroll to follow the selected chip — IMP-071 reversed
-IMP-065 on purpose; do not re-open it).
+**Genuinely out of scope, and only this:** anything under `src/billing/` (design is not enablement), and
+redrawing `RayFan` / `NightRays`, which are the brand — this screen does not use them anyway. The Insights
+tab has its own rows (D-01/D-03/D-04), so leave it alone here.
+
+## This has to sell the app, not only serve it
+
+Assume any screen you design may end up in the Play listing, an ad, or a social post — cropped, scaled to a
+thumbnail, seen for four seconds beside a competitor. **Reflections is the screen that proves the app is
+worth keeping for years**, which makes it one of the most persuasive surfaces in the product and one nobody
+has ever composed for that job. A version of this screen that makes a stranger want a two-year journal is a
+better answer than a version that merely scrolls efficiently. If serving the daily user and selling the app
+pull apart, show both and say which is which.
 
 ---
 
