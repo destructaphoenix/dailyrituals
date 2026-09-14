@@ -128,43 +128,9 @@ const DEFAULT_DAY = THEMES.find((x) => x.id === 'goldenhour-day').t;
 const DEFAULT_NIGHT = THEMES.find((x) => x.id === 'goldenhour-night').t;
 
 // ── shared page chrome ────────────────────────────────────────────────────────
-// Deliberately monochrome and neutral: the page frame must never be mistaken for
-// the app's own visual language, or Claude Design will copy the frame too.
-const PAGE_CSS = `
-  *,*::before,*::after{box-sizing:border-box}
-  body{margin:0;padding:32px;font:15px/1.55 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
-       color:#18181b;background:#fafafa}
-  h1{font-size:24px;margin:0 0 4px;letter-spacing:-.01em}
-  h2{font-size:15px;margin:36px 0 12px;text-transform:uppercase;letter-spacing:.08em;color:#71717a}
-  .lede{margin:0 0 8px;color:#52525b;max-width:70ch}
-  .rule{border:0;border-top:1px solid #e4e4e7;margin:28px 0}
-  .note{border-left:3px solid #a1a1aa;padding:10px 14px;background:#f4f4f5;margin:16px 0;max-width:80ch}
-  .note strong{color:#18181b}
-  code{font:13px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;background:#f4f4f5;padding:1px 5px;border-radius:4px}
-  table{border-collapse:collapse;width:100%;max-width:900px;margin:12px 0}
-  th,td{text-align:left;padding:7px 10px;border-bottom:1px solid #e4e4e7;vertical-align:top}
-  th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:#71717a;font-weight:600}
-  td code{background:none;padding:0}
-  .grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));max-width:1100px}
-  .sw{border:1px solid #e4e4e7;border-radius:8px;overflow:hidden;background:#fff}
-  .sw .chip{height:56px}
-  .sw .nm{font:12px/1.3 ui-monospace,SFMono-Regular,Menlo,monospace;padding:7px 8px;border-top:1px solid #e4e4e7;
-          word-break:break-all;color:#3f3f46}
-  .modes{display:grid;gap:22px;grid-template-columns:repeat(auto-fit,minmax(430px,1fr));max-width:1100px}
-  .pane{border:1px solid #e4e4e7;border-radius:12px;padding:16px;background:#fff}
-  .pane h3{margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:.07em;color:#71717a}
-`;
-
-const page = (title, body) =>
-  `<!-- @dsCard group="${title.group}" -->
-<!doctype html>
-<meta charset="utf-8">
-<title>${title.name}</title>
-<style>${PAGE_CSS}${title.extraCss || ''}</style>
-<h1>${title.name}</h1>
-<p class="lede">${title.lede}</p>
-${body}
-`;
+// Shared with gen-screens.js (IMP-135) via dsCard.js, so every preview page —
+// screens included — wraps in the identical neutral chrome and card marker.
+const { PAGE_CSS, page } = require('./dsCard');
 
 // A swatch names its token and NEVER prints a hex. The value reaches the browser
 // only through a CSS custom property, so the readable content is token names —
@@ -470,18 +436,9 @@ ${cards}
 // The component previews embed a 3-face subset rather than the full ramp — they
 // exist to show colour and geometry, and type.html already carries the whole
 // story. Embedding all seven on six pages would add ~6 MB for no extra signal.
-let _compFonts = null;
-function componentFonts() {
-  if (_compFonts === null) {
-    _compFonts = [['Quicksand_700Bold', 'quicksand'], ['Nunito_400Regular', 'nunito'], ['Nunito_600SemiBold', 'nunito']]
-      .map(([family, pkg]) => {
-        const f = path.join(ROOT, 'node_modules', '@expo-google-fonts', pkg, `${family}.ttf`);
-        if (!fs.existsSync(f)) return '';
-        return `@font-face{font-family:'${family}';src:url(data:font/ttf;base64,${fs.readFileSync(f).toString('base64')}) format('truetype');font-display:block}`;
-      }).join('\n');
-  }
-  return _compFonts;
-}
+// Shared with gen-screens.js (IMP-135) via fontEmbed.js, so both generators
+// embed the identical subset rather than drifting apart.
+const { componentFonts } = require('./fontEmbed');
 
 function comp(name, group, lede, notes, render) {
   const panes = [['day', DEFAULT_DAY], ['night', DEFAULT_NIGHT]].map(([mode, t]) => {

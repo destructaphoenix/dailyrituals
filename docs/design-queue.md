@@ -73,9 +73,9 @@ by looking which half they are holding.
 
 | | |
 | --- | --- |
-| **Now** | **Paste source.** Every packet in [`design-requests/`](design-requests/) already splices the real files in, generated, so they cannot drift. That is the mechanism; it is better evidence than a screenshot and it was always the fallback for un-captured screens. |
+| **Now** | **Home has a generated screen card.** [IMP-135](specs-open.md#imp-135--screen-cards-that-render-from-the-shipped-code) renders `src/screens/HomeScreen.js` with `react-native-web` into [`design-system/screens/home-day.html`](../design-system/screens/home-day.html) / `home-night.html` — both grounds (classic rays and the video sky's poster) side by side, regenerated with `node scripts/gen-screens.js`. It cannot go stale the way a capture does: there is nothing to re-shoot, only to re-run. ⚠️ It is a layout render, not a device capture — the card itself says what differs (shadows, font metrics, no video playback). **The other six screens still paste source** — that is Now too, unchanged, until a follow-up row generates them. |
 | **Soon** | **[WALK-25](walk-open.md#walk-25--recapture-the-shot-set)** re-runs `npm run shots` in both modes. It is not a new pipeline (that is still out of scope) — it is the one that exists, and the same sitting also refreshes **`store/play/`, the live Play listing, which is the same 2026-08-16 vintage and is currently advertising a version of this app that no longer exists.** |
-| **Never again** | The generator now has to state what the app actually renders, guarded by a test — see [IMP-134](specs-open.md#imp-134--the-design-system-has-to-say-what-the-app-actually-draws). |
+| **Never again** | The generator now has to state what the app actually renders, guarded by a test — see [IMP-134](specs-open.md#imp-134--the-design-system-has-to-say-what-the-app-actually-draws) (the frozen rays) and [IMP-135](specs-open.md#imp-135--screen-cards-that-render-from-the-shipped-code) (the Home screen itself). |
 
 🗑️ **The live Claude Design project was cleaned the same day — 63 files deleted via `DesignSync`:** its own
 copies of the 14 baselines and both baseline cards, the 19-file `scraps/` folder (probe and frame PNGs from
@@ -128,10 +128,10 @@ one has to include:
 | D-09 ember `+` | `shopui.js:14` | built as IMP-127 |
 | D-10 You | `YouScreen.js` | |
 | D-11 zero states | the empty branch of each screen | |
-| D-12 Home | `HomeScreen.js` | ⚠️ **overlaps D-15** — read that row first |
+| D-12 Home | `HomeScreen.js` | ⚠️ **overlaps D-15** — read that row first. ✅ **also has a generated card now** — [`design-system/screens/home-day.html`](../design-system/screens/home-day.html) / `home-night.html` (IMP-135) |
 | D-13 Keepsakes | `Achievements.js` | |
 | D-14 WriteFlow | `WriteFlow.js:173-262` | |
-| **D-15 the hero's empty top** | `HomeScreen.js:34-66`, `art.js` | 📋 **packet written — the newest row** |
+| **D-15 the hero's empty top** | `HomeScreen.js:34-66`, `art.js` | 📋 **packet written.** Its screen is now **in** the project rather than pasted — see D-12's generated card above |
 | **D-16 the listing** | `store/play/`, whatever ships | 📋 **packet written — not an app screen** |
 
 **Not in the repo, but in the project:** the five Plus hero cards, the celebration screens and the updated

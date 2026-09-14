@@ -591,9 +591,15 @@ designer may argue with.
 
 **Ask for ONE screen per request** — "redesign the app" produces mush. The queue is
 [`design-queue.md`](design-queue.md). Five rules:
-1. **There are no baselines — paste source.** All 14 captures were deleted 2026-09-14 (stale by 30+
-   commits). Every packet in [`design-requests/`](design-requests/) splices the real files in and is
-   generated, so it cannot drift. A fresh set is [WALK-25](walk-open.md#walk-25--recapture-the-shot-set).
+1. **There are no baselines. Paste source for a screen with no generated card; for one that has a card,
+   point at the card.** All 14 captures were deleted 2026-09-14 (stale by 30+ commits). Every packet in
+   [`design-requests/`](design-requests/) splices the real files in and is generated, so it cannot drift —
+   that is still the mechanism for six of the seven screens. **Home is the exception** (IMP-135):
+   [`design-system/screens/home-day.html`](../design-system/screens/home-day.html) / `home-night.html`
+   render the real `HomeScreen.js` with `react-native-web`, regenerated with `node scripts/gen-screens.js`
+   — Claude Design can read and edit that card directly, no pasting required. It is a layout render, not a
+   device capture (the card says what differs: shadows, font metrics, no video playback); a fresh device
+   capture is still [WALK-25](walk-open.md#walk-25--recapture-the-shot-set).
 2. **Ask for the spec in token names** (`c.accentSoft`, `t.radius.card`) — not hex, not "gentle fade" —
    **so a port does not have to guess. That is the whole reason, and it is a floor, not a ceiling:** never
    let the bookkeeping shrink the idea. A vivid direction with three loose numbers is worth more than a
