@@ -137,6 +137,74 @@ and on the shipped window (frames 226–345) it passes and emits the manifest li
 (The build log's "1.08× the floor" for that same window is `find-loop.py`'s coarse 32×32 MAD, a different
 and far less sensitive metric; the two numbers are not comparable and neither is wrong.) **Watch the seam.**
 
+### 🔴 Event Horizon — the crop is solved, and it is not what blocks it
+
+**Read from its own design card** (`art/event-horizon.html`) on 2026-09-15, in answer to *"can't you just
+ask Claude Design for the coordinates?"* — **yes, and the card states them outright:** the event horizon
+sits at **69% across, 43% down**, the video is scaled **1.35×**, and the source is **736×414**.
+
+`encode-sky.py` now takes exactly that, with `--focus-x/--focus-y/--zoom`:
+
+```sh
+python3 scripts/encode-sky.py sky-src/event-horizon.mp4 --id eventhorizon --zoom 1.35 \
+    --focus-x 69 --focus-y 43          # -> crop 307x307 at +354+25, black hole centred
+```
+
+⚠️ **`--focus-x/y` is not `--crop-x/y`.** `object-position` is relative to the *slack*, so on a landscape
+source its Y value **does nothing** — a square crop of 16:9 takes the whole height and there is no vertical
+slack to spend. `--focus-x/y` is the subject's own position in the frame, which is what the card states and
+what survives the card's preview box not being the device's box.
+
+**So the framing is a solved, one-command problem. Two other things are not:**
+
+1. 🔴 **Resolution. The source is 736×414 — a 414 short edge, and the 1.35× zoom cuts it to 307.** Scaled to
+   the 1280 delivery that is a **4.17× upscale**. The floor is 1080, and 720 was already a grudging
+   exception accepted only because it is @2× art behind a numeral under a scrim. **307 is not in the same
+   conversation** — it is under half the grudging exception. ⚠️ **`eventhorizon-temp.mp4` is a working copy;
+   the ungraded master is in the project's `uploads/`.** Check the master's real dimensions before
+   concluding anything — but if it is also 414, **this hero cannot ship at hero size**, however good the
+   crop is, and the answer is to regenerate it at the largest square or landscape preset the tool offers.
+2. 🔴 **It does not loop, and the card's fix is not something the app can do.** The card measured the
+   end-to-start jump at **~25× the mean frame-to-frame change** and worked around it by running **two copies
+   of the clip half a length apart with a 2s cross-dissolve**. [`skyHero.js`](../src/home/skyHero.js) plays
+   **one** `VideoView` with `p.loop = true` — a hard cut. **The card's loop does not exist in the app**, so
+   ported as-is this hero visibly snaps every 10 seconds. Either find a genuine loop window
+   (`find-loop.py`), or `SkyHero` grows a crossfade shell, which is a real build task and not a data edit.
+
+**Neither of these is a cropping problem, and neither was visible from the card's picture.** Take them
+before spending time on the framing, which is now free.
+
+### Sakura Fuji — one clip or two? And what a second clip actually costs
+
+**How a sky reaches the phone — there is no downloader, and Stage 4 exists to say so.** The manifest entry
+holds an `https://` URL on R2; [`videoSkyGate.js`](../src/home/videoSkyGate.js) hands it to `expo-video` as
+`{ uri, useCaching: true }` and that is the whole mechanism:
+
+- **Nothing is bundled.** The app ships no sky footage; `assets/skies/fixture.mp4` is the IMP-121 test
+  fixture and is not a shipped sky.
+- **Nothing is pre-fetched.** A clip is streamed **the first time it is actually played** — i.e. when a user
+  who owns that sky has it active. A sky nobody selects is never downloaded.
+- **It is then cached to disk, LRU**, at a ceiling of **128 MB** set in
+  [`RitualsApp.js:576`](../src/RitualsApp.js#L576) (expo-video's own default is 1 GB; we size it to the
+  catalogue because it is a cache, not owned storage).
+- **The poster is what covers the first play**, which is why every sky needs one. It is not optional.
+
+**So a second clip costs ~2.5–3.5 MB, downloaded lazily, only for users who own the sky AND switch to that
+mode.** It is not a bundle-size or install-size cost, and it cannot be paid twice for the same mode.
+
+**Recommendation: ship Sakura Fuji's DAY clip only, as a one-clip sky (`clip`, not `clipDay`/`clipNight`).**
+The reasoning is not cost — the cost is small — it is that **a one-clip sky is a strictly safer object**:
+it has one loop to verify, one poster, one provenance line, and it cannot desynchronise. ⚠️ **Note this
+cuts against the loop-rule table above, which files `Sakura Fuji` under "daylight-defined → keep both
+modes".** That table is right in principle: cherry blossom under a night sky is a different picture, not a
+dimmer one. **But it was written before either clip existed, and the owner has now seen both — "its better
+one" is a judgement about the actual footage that no rule can overrule.** If the night clip is weak, one
+good clip in both modes beats a good one and a weak one, and `skyVideoSource` already handles a one-clip
+sky in both modes by design ("never tints one clip to fake the other").
+
+▶️ **Reversible, and cheaply: adding the night clip later is a data-only edit** — `clip` becomes
+`clipDay` + `clipNight`. **Ship the day clip, look at it on a phone at night, and decide then.**
+
 🔴 **The one thing a chat cannot do: get the footage out.** `art/assets/*.mp4` are megabytes of binary and
 **`DesignSync get_file` is capped at 256 KiB** — the clips cannot travel through the read path, which
 `design-system/proposals/README.md` has said since 2026-09-11. **The owner has to export the cleared clips

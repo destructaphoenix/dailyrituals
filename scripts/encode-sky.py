@@ -107,6 +107,16 @@ def main():
                    help="object-position X%% read off the design card (default 50, centred)")
     p.add_argument('--crop-y', type=float, default=50.0,
                    help="object-position Y%% read off the design card (default 50, centred)")
+    p.add_argument('--focus-x', type=float,
+                   help="where the SUBJECT sits in the source, X%%. Use instead of --crop-x/y "
+                        "when the design card names the subject's position (e.g. Event Horizon: "
+                        "'the event horizon sits at roughly 69%% across and 43%% down')")
+    p.add_argument('--focus-y', type=float,
+                   help="where the subject sits in the source, Y%%. Requires --focus-x")
+    p.add_argument('--zoom', type=float, default=1.0,
+                   help="crop tighter than the full square, to enlarge the subject. Read the "
+                        "card's `transform: scale(N)` (Event Horizon uses 1.35). Costs "
+                        "resolution: the delivered short edge is min(W,H)/zoom")
     p.add_argument('--trim-in', type=int, help='first frame to keep (from find-loop.py)')
     p.add_argument('--trim-out', type=int, help='last frame to keep (from find-loop.py)')
     p.add_argument('--size', type=int, default=SIZE_DEFAULT, help='square edge (default 1280)')
@@ -129,15 +139,35 @@ def main():
     os.makedirs(OUT_DIR, exist_ok=True)
 
     src = probe(a.clip)
-    S = min(src['w'], src['h'])
-    x = round(a.crop_x / 100 * (src['w'] - S))
-    y = round(a.crop_y / 100 * (src['h'] - S))
+    if (a.focus_x is None) != (a.focus_y is None):
+        sys.exit("  ✗ --focus-x and --focus-y go together.")
+
+    # Two ways to place the crop, and they answer different questions.
+    #
+    # --crop-x/y is `object-position` read off the card: "which part of the
+    #   frame does the box show". It is relative to the SLACK, so on a landscape
+    #   source the Y value does nothing at all -- a square crop of 16:9 takes
+    #   the whole height and there is no vertical slack to spend.
+    # --focus-x/y is the SUBJECT's own position in the source: "put this here".
+    #   Design cards state it directly for off-centre subjects, and unlike
+    #   object-position it does not depend on the card's preview box, which is
+    #   NOT the device's box (docs/design-queue.md warns about exactly this).
+    #   Prefer it whenever the card gives it.
+    S = round(min(src['w'], src['h']) / a.zoom)
+    if a.focus_x is not None:
+        cx, cy = a.focus_x / 100 * src['w'], a.focus_y / 100 * src['h']
+        rx, ry = round(cx - S / 2), round(cy - S / 2)
+        x, y = max(0, min(rx, src['w'] - S)), max(0, min(ry, src['h'] - S))
+        if (x, y) != (rx, ry):
+            print(f"  ⚠️  the subject cannot be centred — the crop hit the frame edge\n"
+                  f"      (wanted +{rx}+{ry}, clamped to +{x}+{y}). It will sit off-centre\n"
+                  "      by that much. A higher --zoom buys room, at the cost of resolution.")
+    else:
+        x = round(a.crop_x / 100 * (src['w'] - S))
+        y = round(a.crop_y / 100 * (src['h'] - S))
 
     print(f"\n  source   {src['w']}x{src['h']}  {src['fps']:.3f} fps  "
           f"{src['frames']} frames  {src['frames'] / src['fps']:.2f}s  {src['pix_fmt']}")
-    if S < 1080:
-        print(f"  ⚠️  short edge is {S} — below the 1080 floor. Accepted for the existing\n"
-              "      library (skies-route.md ruling 2); do not accept it for new art.")
 
     # ── the filter chain. Spatial only: anything temporal (denoise, minterpolate,
     #    deflicker, stabilisation) carries state across frames and quietly stops
@@ -153,7 +183,15 @@ def main():
               f"{expected / src['fps']:.2f}s)")
     vf.append(f"crop={S}:{S}:{x}:{y}")
     vf.append(f"scale={a.size}:{a.size}:flags=lanczos")
-    print(f"  crop     {S}x{S} at +{x}+{y}   (object-position {a.crop_x:g}% {a.crop_y:g}%)")
+    how = (f"subject at {a.focus_x:g}% {a.focus_y:g}%" if a.focus_x is not None
+           else f"object-position {a.crop_x:g}% {a.crop_y:g}%")
+    zoomnote = f", zoom {a.zoom:g}x" if a.zoom != 1.0 else ""
+    print(f"  crop     {S}x{S} at +{x}+{y}   ({how}{zoomnote})")
+    if S < 1080:
+        print(f"  🔴 DELIVERED SHORT EDGE IS {S}px, upscaling {a.size / S:.2f}x to {a.size}.\n"
+              "      1080 is the floor and 720 was already a grudging exception\n"
+              "      (skies-route.md ruling 2). Below ~720 this is visible on a phone\n"
+              "      even behind a scrim. Get a larger source before spending time here.")
 
     suffix = '' if a.mode == 'both' else f'-{a.mode}'
     out = f"{OUT_DIR}/{a.id}{suffix}.mp4"
