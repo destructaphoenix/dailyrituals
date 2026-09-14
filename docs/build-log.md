@@ -5500,6 +5500,53 @@ trailer — the app bundle is byte-identical, nothing to ship.
 
 ---
 
+## IMP-136 — Sunrise: the hero's empty band is filled with light, not content (2026-09-15)
+
+**Severity 🎨 · Lane OTA — no native change.** Ports the D-15 design the owner locked 2026-09-15
+(`design-system/proposals/hero-band-v3.html`, direction A · "Sunrise"). The band at card-y 0→127 reads
+empty not because it holds no content but because the rays are faintest exactly where there is most of them
+to see. **Art-only** — nothing moves, nothing new enters the card; the video shells are untouched.
+
+**What changed.**
+- [`src/home/heroFrame.js`](../src/home/heroFrame.js) — `HERO_ART_FOCAL = 96`, decoupled from the numeral's
+  `HERO_FOCAL` (`HERO_HEIGHT / 2`, unchanged). `heroReach` re-derives from `HERO_HEIGHT - HERO_ART_FOCAL`
+  (the farthest corner from a focal near the top), not `HERO_HEIGHT / 2`. New pure `heroLight(streak)`: the
+  band's light ramp — `rayOpacity` 0.18 at streak 0 (no bloom at all) up to 0.5 at streak ≥7 (today's
+  value), linear in between, `HERO_ART_FOCAL` itself never moves.
+- [`src/art.js`](../src/art.js) — `RayFan` gains `rayOpacity` (default `0.5`, every existing caller
+  unchanged) and a `<Mask>` + `<RadialGradient>` radial fade over the ray group, inside the rotating `<Svg>`
+  so it does not fight the 60s spin (0–26% opaque, 55% at 52%, 12% at 78%, 0 at 100%). New exported `Bloom`
+  — a 210dp-radius radial glow at the given focal with a `strength` multiplier, **day only**: `NightRays`
+  already draws its own breathing amber pool at the focal (IMP-019 Round 4) and a second one would double
+  the light on black — deliberately not touched.
+- [`src/screens/HomeScreen.js`](../src/screens/HomeScreen.js) — classic shell passes `focal={HERO_ART_FOCAL}`
+  and the ramped `rayOpacity` to `RayFan`/`NightRays`, and day additionally renders `<Bloom>` before the fan
+  (behind it in source order) when `heroLight(streak).bloom` is non-null. The numeral block's `marginTop`
+  still derives from `HERO_FOCAL` alone and was not touched; the video branch was not edited.
+- [`scripts/gen-design-system.js`](../scripts/gen-design-system.js) — its SVG stub (plain node has no
+  `react-native-svg`) was missing `Mask`; added (`Mask: 'mask'`), or the frozen-card regeneration throws.
+  Regenerated `design-system/frozen/{RayFan-day,NightRays-night}.png` / `rays.html` and
+  `design-system/screens/home-{day,night}.html` — both move, correctly, per IMP-134's own rule that these
+  cannot lie about what the app draws.
+
+**The proof.** Trap 4 in the spec (`<Mask>` unproven in this tree) was retired **before** touching a screen:
+[`__tests__/art.test.js`](../__tests__/art.test.js) renders bare `RayFan` and confirms the mask is present
+and `rayOpacity` defaults to `0.5`. The five tests the spec named as coupled to the old shared-focal
+invariant ([`HomeScreenSkyHero.test.js`](../__tests__/screens/HomeScreenSkyHero.test.js), IMP-131 and
+IMP-132 describes) were **corrected, not deleted** — they now assert the numeral sits on `HERO_FOCAL`, the
+art on `HERO_ART_FOCAL`, and that the two differ, reading `HERO_FOCAL`/`HERO_ART_FOCAL` from `heroFrame.js`
+rather than retyping either number. New [`__tests__/home/heroFrame.test.js`](../__tests__/home/heroFrame.test.js)
+covers `heroLight` at streaks 0, 1, 4, 7, 210. New cases in `HomeScreenSkyHero.test.js` confirm: no `Bloom`
+at streak 0, present at streak 1, never on the night shell, never on the video shell, and both the fan and
+`Bloom` converge at `HERO_ART_FOCAL`. **1271 passed, 119 suites** (was 1257/118, +14 tests, +2 suites),
+export clean. Commit `2c2ab5a`.
+
+**Not in this row.** The owner's runtime look — a green suite proves the wiring, not the composition, and
+three of IMP-130→133 exist precisely because a prior green suite hid what the card looked like on a screen.
+Walk = [WALK-26](walk-open.md), device, both modes, streak 0/1/210, at max font. No `Release-Lane` trailer.
+
+---
+
 ## Session notes
 
 _Moved from `PROGRESS.md` 2026-09-14 under its two-notes rule._
@@ -5532,6 +5579,35 @@ spec next. No `Release-Lane:` trailer — the app bundle is byte-identical, noth
 **The exact next step.** The backlog has nothing left for a build chat (IMP-128 stays owner-gated). A design
 chat sends D-15 or D-16; WALK-25 (recapture the shot set) is agent-runnable on an emulator whenever raw
 captures are wanted, sequenced behind D-16.
+
+---
+
+_2026-09-14 (Sonnet — **IMP-135 built: Home's screen renders from the shipped code with react-native-web.**)
+— ✅ code-complete, no walk of its own (tooling, ships nothing)._
+
+**What finished.** New [`scripts/gen-screens.js`](../scripts/gen-screens.js) installs its own require hook
+(separate from `gen-design-system.js`'s, which maps `View → <g>` for rasterising art) mapping `react-native`
+to `react-native-web` wholesale, so real layout comes out. New
+[`scripts/screenFixtures.js`](../scripts/screenFixtures.js) exports `homePropsFromState(state)`, mapping a
+`buildScenario('storeShots', ...)` fixture to HomeScreen's ~32 props, mirroring `RitualsApp.js:959`'s
+hand-wiring. `gen-design-system.js`'s page chrome and font embed moved to new
+[`scripts/dsCard.js`](../scripts/dsCard.js) / [`scripts/fontEmbed.js`](../scripts/fontEmbed.js) so both
+generators share them — verified byte-identical regeneration of `design-system/` before/after. New
+`design-system/screens/home-day.html` / `home-night.html` show both grounds (classic rays + video-sky
+poster) side by side, at `HERO_HEIGHT` imported from `heroFrame.js`.
+
+**The proof.** [`genScreens.test.js`](../__tests__/scripts/genScreens.test.js) parses `HomeScreen.js`'s own
+signature with `@babel/core` and asserts `homePropsFromState` supplies every prop — **confirmed red** against
+a throwaway prop added to the signature, green once removed. **1257 passed, 118 suites** (was 1252/117, +5,
++1 suite). `node scripts/gen-screens.js` and `npx expo export --platform android` both clean — the export
+confirms `src/dev/` never reaches the app bundle. Commit `bbb2d20`. Full detail (two empirically-found
+react-native-web patches, and one spec discrepancy found and logged) archived above, under IMP-135.
+**Not in this row:** the other six screens (follow-up row) and pushing to the live Claude Design project
+(`DesignSync`, separate act). No `Release-Lane:` trailer — byte-identical app bundle.
+
+**The exact next step.** ⚠️ **Superseded 2026-09-15 — D-15 came back, the owner locked it, and it is
+specced.** A build chat takes **IMP-136** (Sunrise). A design chat sends D-16. WALK-25 is agent-runnable on
+an emulator whenever raw captures are wanted, sequenced behind D-16.
 
 ---
 
