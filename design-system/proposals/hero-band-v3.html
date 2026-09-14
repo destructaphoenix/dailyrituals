@@ -1,0 +1,348 @@
+<!-- @dsCard group="Screens" viewport="1700x3600" name="Streak hero — the empty band" subtitle="Fill the band with light, not content. Art-only treatment, shipped layout untouched." -->
+<!doctype html>
+<meta charset="utf-8">
+<title>Streak hero — the empty band</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;padding:34px 34px 90px;background:#fafafa;color:#18181b;font:15px/1.55 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+a{color:#d97706}a:hover{color:#b45309}
+h1{font:700 26px/1.2 'Quicksand',sans-serif;letter-spacing:-.01em;margin:0}
+.lede{margin:8px 0 0;color:#52525b;max-width:80ch;text-wrap:pretty}
+.claim{margin:18px 0 0;max-width:80ch;font:600 17px/1.5 'Nunito',sans-serif;color:#292524;border-left:3px solid #d97706;padding:2px 0 2px 14px;text-wrap:pretty}
+.sec{margin-top:44px;display:flex;align-items:baseline;gap:12px;border-top:1px solid #e4e4e7;padding-top:16px}
+.sec h2{font:700 19px/1.2 'Quicksand',sans-serif;margin:0}
+.sec em{font:12px ui-monospace,Menlo,monospace;color:#a1a1aa;font-style:normal}
+.why{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:26px;margin-top:16px;max-width:1400px}
+.why h3{font:700 15px/1.3 'Quicksand',sans-serif;margin:0 0 6px}
+.why p{margin:0 0 8px;font:14px/1.55 'Nunito',sans-serif;color:#52525b;text-wrap:pretty}
+.why b{color:#3f3f46}
+.why ul{margin:0;padding-left:18px;font:13.5px/1.6 'Nunito',sans-serif;color:#52525b}
+code{font:12px ui-monospace,Menlo,monospace;color:#7c5a13}
+table{border-collapse:collapse;max-width:900px;margin:14px 0 0;width:100%}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid #e4e4e7;vertical-align:top;font:14px/1.5 'Nunito',sans-serif}
+th{font:600 12px/1.4 ui-sans-serif,system-ui,sans-serif;text-transform:uppercase;letter-spacing:.06em;color:#71717a}
+.row{margin-top:22px;display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start}
+.col{display:flex;flex-direction:column;gap:9px}
+.cap{font:700 13px/1.3 'Quicksand',sans-serif;color:#3f3f46;max-width:372px}
+.cap span{display:block;font:11px/1.4 ui-monospace,Menlo,monospace;color:#a1a1aa;letter-spacing:.03em;margin-top:2px}
+
+/* ── phone + theme tokens (same vocabulary as insights-redesign) ── */
+.ph{width:372px;border-radius:32px;overflow:hidden;font-family:'Nunito',sans-serif;background:var(--cream);color:var(--ink);border:1px solid var(--border)}
+.day{--cream:#f9f7f4;--surface:#fff;--ink:#292524;--muted:#6f6a78;--border:#e8e3da;--accent:#f59e0b;--deep:#d97706;--soft:#fef3c7;--bright:#f8b94f;--deepb:rgba(217,119,6,.22);--card:0 8px 14px rgba(98,54,3,.16);--track:rgba(41,37,36,.10);--icon:#6d3c03;--rayo:.5}
+.night{--cream:#000;--surface:#0e0e10;--ink:#f4eee4;--muted:#8b857c;--border:#26241f;--accent:#f59e0b;--deep:#f59e0b;--soft:#1d1301;--bright:#f8b94f;--deepb:rgba(217,119,6,.22);--card:none;--track:rgba(244,238,228,.16);--icon:#f59e0b;--rayo:.38}
+.sb{display:flex;justify-content:space-between;align-items:center;padding:12px 20px 2px;font:600 13px/1 'Nunito',sans-serif;color:var(--ink);opacity:.85}
+.sb i{display:block;width:10px;height:14px;border-radius:2px;background:var(--ink);opacity:.8}
+.sbr{display:flex;gap:5px;align-items:center}
+.scr{padding:4px 0 18px;display:flex;flex-direction:column;gap:14px}
+
+/* ── the hero ─────────────────────────────────────────────── */
+.hero{position:relative;width:100%;height:336px;border-radius:26px;overflow:hidden;background:var(--surface);box-shadow:var(--card);border:1px solid var(--border);flex:none}
+.night .hero{border-color:var(--border)}
+.rays{position:absolute;top:-87px;left:50%;width:510px;height:510px;margin-left:-255px;opacity:var(--rayo);animation:spin 60s linear infinite}
+.night .rays{filter:drop-shadow(0 0 6px rgba(245,158,11,.35))}
+@keyframes spin{to{transform:rotate(360deg)}}
+.hbox{position:relative;z-index:1;height:100%;padding:26px 22px 22px;display:flex;flex-direction:column;align-items:center}
+.lint{width:100%;height:101px;flex:none;display:flex;flex-direction:column}
+.lrow{display:flex;align-items:center;gap:8px;height:36px;flex:none}
+.date{font:600 13px/1 'Nunito',sans-serif;color:var(--muted);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pill{display:flex;align-items:center;gap:5px;height:36px;padding:0 11px 0 9px;border-radius:999px;background:var(--soft);border:1px solid var(--deepb);font:700 13px/1 'Quicksand',sans-serif;color:var(--deep);flex:none}
+.pill .plus{width:16px;height:16px;border-radius:8px;background:var(--deep);color:#fff;font:700 11px/16px 'Quicksand',sans-serif;text-align:center}
+.orb{width:36px;height:36px;border-radius:18px;background:var(--soft);border:1px solid var(--border);display:grid;place-items:center;flex:none}
+.orb b{display:block;width:18px;height:18px;border-radius:9px;background:var(--icon);box-shadow:inset -5px -1px 0 0 var(--soft)}
+.day .orb b{box-shadow:none;background:var(--icon)}
+.greet{margin-top:6px;font:700 23px/28px 'Quicksand',sans-serif;letter-spacing:-.01em;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.num{text-align:center;flex:none}
+.n{font:700 76px/82px 'Quicksand',sans-serif;color:var(--deep)}
+.lbl{font:700 16px/20px 'Nunito',sans-serif;color:var(--ink);margin-top:2px}
+.sub{font:600 13px/17px 'Nunito',sans-serif;color:var(--muted);margin-top:4px}
+.sp{flex:1}
+.meta{width:100%;flex:none}
+.mrow{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:7px}
+.mrow b{font:700 14px/18px 'Quicksand',sans-serif;color:var(--ink)}
+.mrow i{font:700 12px/18px 'Nunito',sans-serif;font-style:normal;color:var(--muted)}
+.bar{height:8px;border-radius:999px;background:var(--track);overflow:hidden}
+.bar span{display:block;height:100%;border-radius:999px;background:var(--accent)}
+
+/* video ground */
+.hero.vid{border-color:transparent}
+.sky{position:absolute;inset:0}
+.sky-day{background:radial-gradient(120% 80% at 20% 12%,#f6e0d2 0%,transparent 60%),linear-gradient(#b9d4e6 0%,#e3c6cd 52%,#f2dac6 100%)}
+.sky-night{background:radial-gradient(70% 44% at 78% 16%,rgba(140,170,255,.34),transparent 70%),linear-gradient(#05070f,#111733 58%,#241d38)}
+.stars{position:absolute;inset:0;background-image:radial-gradient(1.4px 1.4px at 18% 22%,#fff,transparent),radial-gradient(1.2px 1.2px at 62% 14%,#fff,transparent),radial-gradient(1.6px 1.6px at 82% 34%,#fff,transparent),radial-gradient(1.2px 1.2px at 34% 44%,#fff,transparent),radial-gradient(1.2px 1.2px at 72% 62%,#fff,transparent),radial-gradient(1.3px 1.3px at 46% 8%,#fff,transparent),radial-gradient(1.1px 1.1px at 8% 52%,#fff,transparent);opacity:.8}
+.scrimT{position:absolute;inset:0 0 auto;height:158px;background:linear-gradient(rgba(0,0,0,.52),rgba(0,0,0,0))}
+.day .scrimT{background:linear-gradient(rgba(0,0,0,.48),rgba(0,0,0,0))}
+.scrimB{position:absolute;inset:auto 0 0;height:132px;background:linear-gradient(rgba(0,0,0,0),rgba(0,0,0,.62))}
+.vid .date,.vid .sub{color:rgba(255,253,245,.84)}
+.vid .greet,.vid .lbl,.vid .mrow b{color:#fffdf5}
+.vid .mrow i{color:rgba(255,253,245,.76)}
+.vid .n{color:#fffdf5}
+.vid .greet,.vid .lbl,.vid .sub,.vid .date,.vid .mrow b,.vid .mrow i{text-shadow:0 1px 6px rgba(0,0,0,.55)}
+.vid .n{text-shadow:0 3px 16px rgba(0,0,0,.55)}
+.vid .pill{background:rgba(0,0,0,.34);border-color:rgba(255,253,245,.34);color:#fffdf5}
+.vid .pill .plus{background:rgba(255,253,245,.9);color:#292524}
+.vid .orb{background:rgba(0,0,0,.34);border-color:rgba(255,253,245,.34)}
+.vid .orb b{background:#fffdf5;box-shadow:inset -5px -1px 0 0 rgba(0,0,0,.34);mask:none}
+.vid .bar{background:rgba(255,253,245,.28)}
+.vid .bar span{background:#fffdf5}
+/* pale skies: ink, not white — a 48% black scrim over a ~(210,212,218) field still leaves white type at 2:1 */
+.vid.pale .date,.vid.pale .sub{color:var(--muted)}
+.vid.pale .greet,.vid.pale .lbl,.vid.pale .mrow b,.vid.pale .n{color:var(--ink)}
+.vid.pale .mrow i{color:var(--muted)}
+.vid.pale .greet,.vid.pale .lbl,.vid.pale .sub,.vid.pale .date,.vid.pale .mrow b,.vid.pale .mrow i{text-shadow:0 1px 5px rgba(255,253,245,.85)}
+.vid.pale .n{text-shadow:0 2px 14px rgba(255,253,245,.9)}
+.vid.pale .scrimT{background:linear-gradient(rgba(255,253,245,.52),rgba(255,253,245,0))}
+.vid.pale .scrimB{background:linear-gradient(rgba(255,253,245,0),rgba(255,253,245,.58))}
+.vid.pale .pill{background:rgba(255,253,245,.74);border-color:var(--deepb);color:var(--deep)}
+.vid.pale .pill .plus{background:var(--deep);color:#fff}
+.vid.pale .orb{background:rgba(255,253,245,.74);border-color:var(--deepb)}
+.vid.pale .orb b{background:var(--icon);box-shadow:none}
+.vid.pale .bar{background:rgba(41,37,36,.22)}
+.vid.pale .bar span{background:var(--accent)}
+.vid.pale .skyname{color:rgba(41,37,36,.64);text-shadow:0 1px 4px rgba(255,253,245,.85)}
+.skyname{position:absolute;left:22px;bottom:60px;z-index:1;font:11px/1 ui-monospace,Menlo,monospace;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,253,245,.62);text-shadow:0 1px 4px rgba(0,0,0,.6)}
+
+/* today's build, for the before/after */
+.hdrblock{padding:0 20px;display:flex;flex-direction:column;gap:2px}
+.hdrblock .lrow{width:100%}
+.hdrblock .greet{margin-top:2px;font:700 27px/32px 'Quicksand',sans-serif}
+.before .lint{height:101px;visibility:hidden}
+
+/* page furniture below the hero, so the flow is visible */
+.cd{background:var(--surface);border:1px solid var(--border);border-radius:26px;box-shadow:var(--card);padding:14px 16px;flex:none;margin:0 20px}
+.week{display:flex;justify-content:space-between;align-items:center}
+.week i{width:30px;height:30px;border-radius:15px;border:1px solid var(--border);display:grid;place-items:center;font:600 11px/1 'Nunito',sans-serif;color:var(--muted);font-style:normal}
+.week i.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.rites{display:flex;align-items:center;gap:12px}
+.ringy{width:46px;height:46px;border-radius:23px;flex:none;background:conic-gradient(var(--accent) 0 67%,var(--track) 67% 100%);display:grid;place-items:center}
+.ringy b{width:34px;height:34px;border-radius:17px;background:var(--surface);display:grid;place-items:center;font:700 12px/1 'Quicksand',sans-serif;color:var(--ink)}
+.rites p{margin:0;font:700 15px/1.25 'Quicksand',sans-serif}
+.rites p span{display:block;font:400 13px/1.4 'Nunito',sans-serif;color:var(--muted)}
+
+/* scale tests */
+.shots{display:flex;gap:28px;align-items:flex-end;flex-wrap:wrap}
+.shot{position:relative;flex:none}
+.shot .in{transform-origin:top left}
+.tag{font:11px/1.4 ui-monospace,Menlo,monospace;color:#a1a1aa;margin-top:8px;letter-spacing:.03em}
+
+
+/* ── v3: the band is filled with light ───────────────────── */
+.hbox{padding:26px 22px 22px}
+.num{margin-top:101px;text-align:center;flex:none}
+.n{font:700 76px/82px 'Quicksand',sans-serif;color:var(--deep);letter-spacing:-.02em}
+.lbl{font:700 16px/20px 'Nunito',sans-serif;color:var(--ink);margin-top:2px}
+.sub{font:600 13px/17px 'Nunito',sans-serif;color:var(--muted);margin-top:4px}
+.sp{flex:1}
+.fan{position:absolute;left:50%;opacity:var(--rayo);animation:spin 60s linear infinite}
+.fan svg{width:100%;height:100%;display:block}
+.fan-mid{top:-87px;width:510px;height:510px;margin-left:-255px}
+.fan-high{top:-220px;width:632px;height:632px;margin-left:-316px;-webkit-mask-image:radial-gradient(circle at 50% 50%,#000 0 26%,rgba(0,0,0,.55) 52%,rgba(0,0,0,.12) 78%,transparent 100%);mask-image:radial-gradient(circle at 50% 50%,#000 0 26%,rgba(0,0,0,.55) 52%,rgba(0,0,0,.12) 78%,transparent 100%)}
+.bloom{position:absolute;inset:0;background:radial-gradient(circle 210px at 50% 96px,var(--bloomA) 0%,var(--bloomB) 42%,transparent 72%)}
+.wash{position:absolute;inset:0;background:linear-gradient(var(--soft) 0,transparent 191px)}
+.washbloom{position:absolute;inset:0;background:radial-gradient(circle 128px at 50% 62px,var(--bloomA) 0%,transparent 70%)}
+.day{--bloomA:rgba(245,158,11,.26);--bloomB:rgba(245,158,11,.10)}
+.night{--bloomA:rgba(245,158,11,.20);--bloomB:rgba(245,158,11,.07)}
+.hollowline{position:absolute;left:0;right:0;top:127px;border-top:1px dashed var(--deepb);z-index:2}
+.hollowline span{position:absolute;right:8px;top:-16px;font:10px/1 ui-monospace,Menlo,monospace;color:var(--muted);letter-spacing:.04em}
+.vid .n{color:#fffdf5}.vid .lbl{color:#fffdf5}.vid .sub{color:rgba(255,253,245,.84)}
+.vid .n,.vid .lbl,.vid .sub,.vid .mrow b,.vid .mrow i{text-shadow:0 1px 6px rgba(0,0,0,.55)}
+.vid.pale .n,.vid.pale .lbl,.vid.pale .mrow b{color:var(--ink)}
+.vid.pale .sub,.vid.pale .mrow i{color:var(--muted)}
+.vid.pale .n,.vid.pale .lbl,.vid.pale .sub,.vid.pale .mrow b,.vid.pale .mrow i{text-shadow:0 1px 5px rgba(255,253,245,.85)}
+.scrimB{height:168px}
+.night .hero{border-color:var(--border)}
+</style>
+<h1>The empty band</h1>
+<p class="lede">Earlier takes moved <em>content</em>. That was wrong: nothing may sit in that band,
+because a Plus user has footage running there. So the band has to be filled by the layer that is already
+allowed to occupy it — the art. Sunrise, below, is art-only, and leaves the shipped text layout,
+the page header and every dp of type untouched. On the video ground it is not drawn at all: the sky was
+never the problem.</p>
+
+<p class="claim">The band does not read empty because it has no content. It reads empty because the rays are
+at their <em>faintest</em> exactly where there is most of them to see: the convergence is a point of maximum
+density rendered at a flat 50% with no light around it. Fill the band with light — move the art's focal up
+into it and put a bloom behind the convergence — and 0 → 191 becomes the brightest part of the card without
+a single new element.</p>
+
+<div class="sec"><h2>Why light and not content</h2><em>the constraint, restated as a brief</em></div>
+<div class="why">
+<div>
+<h3>The band's only legal occupant is the ground</h3>
+<p>On the video shell that band is footage. Anything drawn over it needs a scrim, and a scrim on a sky is the
+sky thrown away — which is also why a caption cannot live there. On the classic shell the same band is the
+rays. <b>So the band is a ground in both shells, and the only fix available is to make the classic ground as
+worth looking at as the video one.</b> That is a finite, achievable brief, and it is the one the card has
+never been given.</p>
+</div>
+<div>
+<h3>What "empty" actually is here</h3>
+<p>Rays are densest at the focal and sparsest at the tips. Since the card was pinned to 336 the focal sits at
+its centre, so the dense half of the art is <em>behind the numeral</em> and the band above it gets the thin
+ends — 24 near-parallel hairlines at 50%, with nothing behind them. The band is not missing an object. It is
+missing the part of the art that makes the art read.</p>
+</div>
+<div>
+<h3>Both treatments stay inside the rules</h3>
+<p><code>RayFan</code> and <code>NightRays</code> are not redrawn: same 24 spokes, same 2dp stroke, same
+<code>c.accent</code>, same 60s rotation. Sunrise changes only <code>focal</code> and <code>reach</code> —
+the two props the brief already declares ordinary — and adds a radial bloom behind the convergence.
+It does not touch the height, the numeral or the meta row.</p>
+</div>
+<div>
+<h3>The numeral stays where it is</h3>
+<p>Card-y 127 → 252, centred, on <code>HERO_FOCAL</code>. Take two moved it and that was the wrong trade:
+the centred numeral is the asset. In <b>A</b> the art's focal and the numeral's anchor stop being the same
+number — the art gets its own focal at 96 and the numeral keeps the card's centre — which is the relationship
+the rays were composed for before the card was pinned.</p>
+</div>
+</div>
+
+<div class="sec"><h2>Today, A</h2><em>day, classic ground, streak 210 — the page header is unchanged in both</em></div>
+<div class="row">
+<div class="col"><div class="cap">Today<span>focal 168, reach 255, flat .5 — the band gets the ray tips and nothing else</span></div><div class="ph day"><div class="sb"><span>9:41</span><div class="sbr"><i></i><i></i><i></i></div></div><div class="scr" style="gap:12px"><div class="hdrblock"><div class="lrow"><span class="date">Monday, 14 September</span><span class="pill"><svg width="17" height="17" viewBox="4.75 1.6 14.5 14.5" fill="none"><defs><radialGradient cx="50%" cy="64%" r="62%" id="em1"><stop offset="0%" stop-color="#fde68a"></stop><stop offset="100%" stop-color="#f59e0b"></stop></radialGradient></defs><path d="M12 2.3c3.1 3 4.7 5.7 4.7 8.4a4.7 4.7 0 0 1-9.4 0c0-1.4.5-2.8 1.5-4.1.25 1.1.9 1.8 1.8 2.1-.35-2.2.2-4.4 1.4-6.4z" fill="url(#em1)" stroke="#d97706" stroke-width="0.6"></path></svg>2400<span class="plus">+</span></span><span class="orb"><b></b></span></div><div class="greet">Good evening, Sam.</div></div><div class="hero">
+      <div class="fan fan-mid"><svg viewBox="0 0 400 400" fill="none" aria-hidden="true"><g stroke="#f59e0b" stroke-width="2" stroke-linecap="round"><line x1="400" y1="200" x2="0" y2="200"></line><line x1="393.2" y1="251.8" x2="6.8" y2="148.2"></line><line x1="373.2" y1="300" x2="26.8" y2="100"></line><line x1="341.4" y1="341.4" x2="58.6" y2="58.6"></line><line x1="300" y1="373.2" x2="100" y2="26.8"></line><line x1="251.8" y1="393.2" x2="148.2" y2="6.8"></line><line x1="200" y1="400" x2="200" y2="0"></line><line x1="148.2" y1="393.2" x2="251.8" y2="6.8"></line><line x1="100" y1="373.2" x2="300" y2="26.8"></line><line x1="58.6" y1="341.4" x2="341.4" y2="58.6"></line><line x1="26.8" y1="300" x2="373.2" y2="100"></line><line x1="6.8" y1="251.8" x2="393.2" y2="148.2"></line></g></svg></div>
+      <div class="hollowline"><span>card-y 127</span></div><div class="hbox">
+        <div class="num"><div class="n">210</div><div class="lbl">day streak</div><div class="sub">210 days running — keep it tender.</div></div>
+        <div class="sp"></div>
+        <div class="meta"><div class="mrow"><b>Lv 7 · Keeper of Days</b><i>Max</i></div><div class="bar"><span style="width:100%"></span></div></div>
+      </div>
+    </div><div class="cd rites"><div class="ringy"><b>20<small>/30</small></b></div><p>Today's rites<span>Three small acts. They renew at midnight.</span></p></div></div></div></div>
+<div class="col"><div class="cap">A · Sunrise <b>recommended</b><span>art focal 96, reach 316, radial fade + bloom — the convergence moves into the band and lights it</span></div><div class="ph day"><div class="sb"><span>9:41</span><div class="sbr"><i></i><i></i><i></i></div></div><div class="scr" style="gap:12px"><div class="hdrblock"><div class="lrow"><span class="date">Monday, 14 September</span><span class="pill"><svg width="17" height="17" viewBox="4.75 1.6 14.5 14.5" fill="none"><defs><radialGradient cx="50%" cy="64%" r="62%" id="em2"><stop offset="0%" stop-color="#fde68a"></stop><stop offset="100%" stop-color="#f59e0b"></stop></radialGradient></defs><path d="M12 2.3c3.1 3 4.7 5.7 4.7 8.4a4.7 4.7 0 0 1-9.4 0c0-1.4.5-2.8 1.5-4.1.25 1.1.9 1.8 1.8 2.1-.35-2.2.2-4.4 1.4-6.4z" fill="url(#em2)" stroke="#d97706" stroke-width="0.6"></path></svg>2400<span class="plus">+</span></span><span class="orb"><b></b></span></div><div class="greet">Good evening, Sam.</div></div><div class="hero">
+      <div class="bloom"></div><div class="fan fan-high"><svg viewBox="0 0 400 400" fill="none" aria-hidden="true"><g stroke="#f59e0b" stroke-width="2" stroke-linecap="round"><line x1="400" y1="200" x2="0" y2="200"></line><line x1="393.2" y1="251.8" x2="6.8" y2="148.2"></line><line x1="373.2" y1="300" x2="26.8" y2="100"></line><line x1="341.4" y1="341.4" x2="58.6" y2="58.6"></line><line x1="300" y1="373.2" x2="100" y2="26.8"></line><line x1="251.8" y1="393.2" x2="148.2" y2="6.8"></line><line x1="200" y1="400" x2="200" y2="0"></line><line x1="148.2" y1="393.2" x2="251.8" y2="6.8"></line><line x1="100" y1="373.2" x2="300" y2="26.8"></line><line x1="58.6" y1="341.4" x2="341.4" y2="58.6"></line><line x1="26.8" y1="300" x2="373.2" y2="100"></line><line x1="6.8" y1="251.8" x2="393.2" y2="148.2"></line></g></svg></div>
+      <div class="hbox">
+        <div class="num"><div class="n">210</div><div class="lbl">day streak</div><div class="sub">210 days running — keep it tender.</div></div>
+        <div class="sp"></div>
+        <div class="meta"><div class="mrow"><b>Lv 7 · Keeper of Days</b><i>Max</i></div><div class="bar"><span style="width:100%"></span></div></div>
+      </div>
+    </div><div class="cd rites"><div class="ringy"><b>20<small>/30</small></b></div><p>Today's rites<span>Three small acts. They renew at midnight.</span></p></div></div></div></div>
+</div>
+
+<div class="sec"><h2>Four grounds</h2><em>A in day and night; and the two video shells, where nothing changes because nothing is drawn</em></div>
+<div class="row">
+<div class="col"><div class="cap">A · classic · day<span>bloom <code>c.accent</code> at 26% → 10%, rays .5 under a radial fade</span></div><div class="ph day"><div class="sb"><span>9:41</span><div class="sbr"><i></i><i></i><i></i></div></div><div class="scr" style="gap:14px"><div class="hero">
+      <div class="bloom"></div><div class="fan fan-high"><svg viewBox="0 0 400 400" fill="none" aria-hidden="true"><g stroke="#f59e0b" stroke-width="2" stroke-linecap="round"><line x1="400" y1="200" x2="0" y2="200"></line><line x1="393.2" y1="251.8" x2="6.8" y2="148.2"></line><line x1="373.2" y1="300" x2="26.8" y2="100"></line><line x1="341.4" y1="341.4" x2="58.6" y2="58.6"></line><line x1="300" y1="373.2" x2="100" y2="26.8"></line><line x1="251.8" y1="393.2" x2="148.2" y2="6.8"></line><line x1="200" y1="400" x2="200" y2="0"></line><line x1="148.2" y1="393.2" x2="251.8" y2="6.8"></line><line x1="100" y1="373.2" x2="300" y2="26.8"></line><line x1="58.6" y1="341.4" x2="341.4" y2="58.6"></line><line x1="26.8" y1="300" x2="373.2" y2="100"></line><line x1="6.8" y1="251.8" x2="393.2" y2="148.2"></line></g></svg></div>
+      <div class="hbox">
+        <div class="num"><div class="n">210</div><div class="lbl">day streak</div><div class="sub">210 days running — keep it tender.</div></div>
+        <div class="sp"></div>
+        <div class="meta"><div class="mrow"><b>Lv 7 · Keeper of Days</b><i>Max</i></div><div class="bar"><span style="width:100%"></span></div></div>
+      </div>
+    </div></div></div></div>
+<div class="col"><div class="cap">A · classic · night<span>same geometry; bloom at 20% → 7% so the glow does not grey the black canvas. <code>NightRays</code> keeps its own opacity.</span></div><div class="ph night"><div class="sb"><span>9:41</span><div class="sbr"><i></i><i></i><i></i></div></div><div class="scr" style="gap:14px"><div class="hero">
+      <div class="bloom"></div><div class="fan fan-high"><svg viewBox="0 0 400 400" fill="none" aria-hidden="true"><g stroke="#f59e0b" stroke-width="2" stroke-linecap="round"><line x1="400" y1="200" x2="0" y2="200"></line><line x1="393.2" y1="251.8" x2="6.8" y2="148.2"></line><line x1="373.2" y1="300" x2="26.8" y2="100"></line><line x1="341.4" y1="341.4" x2="58.6" y2="58.6"></line><line x1="300" y1="373.2" x2="100" y2="26.8"></line><line x1="251.8" y1="393.2" x2="148.2" y2="6.8"></line><line x1="200" y1="400" x2="200" y2="0"></line><line x1="148.2" y1="393.2" x2="251.8" y2="6.8"></line><line x1="100" y1="373.2" x2="300" y2="26.8"></line><line x1="58.6" y1="341.4" x2="341.4" y2="58.6"></line><line x1="26.8" y1="300" x2="373.2" y2="100"></line><line x1="6.8" y1="251.8" x2="393.2" y2="148.2"></line></g></svg></div>
+      <div class="hbox">
+        <div class="num"><div class="n">210</div><div class="lbl">day streak</div><div class="sub">210 days running — keep it tender.</div></div>
+        <div class="sp"></div>
+        <div class="meta"><div class="mrow"><b>Lv 7 · Keeper of Days</b><i>Max</i></div><div class="bar"><span style="width:100%"></span></div></div>
+      </div>
+    </div></div></div></div>
+<div class="col"><div class="cap">video · day<span>Sakura Fuji. <b>Sunrise changes nothing here.</b> The bottom scrim and the pale-sky ink are a separate open recommendation, carried over from take two.</span></div><div class="ph day"><div class="sb"><span>9:41</span><div class="sbr"><i></i><i></i><i></i></div></div><div class="scr" style="gap:14px"><div class="hero vid pale">
+      <div class="sky sky-day"></div><div class="scrimB"></div>
+      <div class="hbox">
+        <div class="num"><div class="n">210</div><div class="lbl">day streak</div><div class="sub">210 days running — keep it tender.</div></div>
+        <div class="sp"></div>
+        <div class="meta"><div class="mrow"><b>Lv 7 · Keeper of Days</b><i>Max</i></div><div class="bar"><span style="width:100%"></span></div></div>
+      </div>
+    </div></div></div></div>
+<div class="col"><div class="cap">video · night<span>Meteorfall. Dark sky, white ink, same carried-over scrim. Nothing is drawn over the footage at any height, under any proposal here.</span></div><div class="ph night"><div class="sb"><span>9:41</span><div class="sbr"><i></i><i></i><i></i></div></div><div class="scr" style="gap:14px"><div class="hero vid dark">
+      <div class="sky sky-night"></div><div class="stars"></div><div class="scrimB"></div>
+      <div class="hbox">
+        <div class="num"><div class="n">210</div><div class="lbl">day streak</div><div class="sub">210 days running — keep it tender.</div></div>
+        <div class="sp"></div>
+        <div class="meta"><div class="mrow"><b>Lv 7 · Keeper of Days</b><i>Max</i></div><div class="bar"><span style="width:100%"></span></div></div>
+      </div>
+    </div></div></div></div>
+</div>
+
+<div class="sec"><h2>Streak 0 → 400</h2><em>A, with the band carrying the state</em></div>
+<div class="row">
+<div class="col"><div class="cap">streak 0<span>Rays .18 and no bloom: the card is genuinely empty, and says so with light rather than with a sentence.</span></div><div class="ph day"><div class="sb"><span>9:41</span><div class="sbr"><i></i><i></i><i></i></div></div><div class="scr" style="gap:14px"><div class="hero">
+      <div class="fan fan-high" style="opacity:0.18"><svg viewBox="0 0 400 400" fill="none" aria-hidden="true"><g stroke="#f59e0b" stroke-width="2" stroke-linecap="round"><line x1="400" y1="200" x2="0" y2="200"></line><line x1="393.2" y1="251.8" x2="6.8" y2="148.2"></line><line x1="373.2" y1="300" x2="26.8" y2="100"></line><line x1="341.4" y1="341.4" x2="58.6" y2="58.6"></line><line x1="300" y1="373.2" x2="100" y2="26.8"></line><line x1="251.8" y1="393.2" x2="148.2" y2="6.8"></line><line x1="200" y1="400" x2="200" y2="0"></line><line x1="148.2" y1="393.2" x2="251.8" y2="6.8"></line><line x1="100" y1="373.2" x2="300" y2="26.8"></line><line x1="58.6" y1="341.4" x2="341.4" y2="58.6"></line><line x1="26.8" y1="300" x2="373.2" y2="100"></line><line x1="6.8" y1="251.8" x2="393.2" y2="148.2"></line></g></svg></div>
+      <div class="hbox">
+        <div class="num"><div class="n">0</div><div class="lbl">no streak yet</div><div class="sub">Light the first day.</div></div>
+        <div class="sp"></div>
+        <div class="meta"><div class="mrow"><b>Lv 1 · Spark</b><i>0 / 40 XP</i></div><div class="bar"><span style="width:0"></span></div></div>
+      </div>
+    </div></div></div></div>
+<div class="col"><div class="cap">streak 1<span>Rays .34, bloom at half strength — the first day is the first light in the band.</span></div><div class="ph day"><div class="sb"><span>9:41</span><div class="sbr"><i></i><i></i><i></i></div></div><div class="scr" style="gap:14px"><div class="hero">
+      <div class="bloom"></div><div class="fan fan-high" style="opacity:0.34"><svg viewBox="0 0 400 400" fill="none" aria-hidden="true"><g stroke="#f59e0b" stroke-width="2" stroke-linecap="round"><line x1="400" y1="200" x2="0" y2="200"></line><line x1="393.2" y1="251.8" x2="6.8" y2="148.2"></line><line x1="373.2" y1="300" x2="26.8" y2="100"></line><line x1="341.4" y1="341.4" x2="58.6" y2="58.6"></line><line x1="300" y1="373.2" x2="100" y2="26.8"></line><line x1="251.8" y1="393.2" x2="148.2" y2="6.8"></line><line x1="200" y1="400" x2="200" y2="0"></line><line x1="148.2" y1="393.2" x2="251.8" y2="6.8"></line><line x1="100" y1="373.2" x2="300" y2="26.8"></line><line x1="58.6" y1="341.4" x2="341.4" y2="58.6"></line><line x1="26.8" y1="300" x2="373.2" y2="100"></line><line x1="6.8" y1="251.8" x2="393.2" y2="148.2"></line></g></svg></div>
+      <div class="hbox">
+        <div class="num"><div class="n">1</div><div class="lbl">day streak</div><div class="sub">Day one. The tender part.</div></div>
+        <div class="sp"></div>
+        <div class="meta"><div class="mrow"><b>Lv 1 · Spark</b><i>10 / 40 XP</i></div><div class="bar"><span style="width:25%"></span></div></div>
+      </div>
+    </div></div></div></div>
+<div class="col"><div class="cap">streak 400 · night<span>Full bloom. Three digits at 76 are 138dp of a 288dp box; four clamp to 60/82 and stay centred on the focal.</span></div><div class="ph night"><div class="sb"><span>9:41</span><div class="sbr"><i></i><i></i><i></i></div></div><div class="scr" style="gap:14px"><div class="hero">
+      <div class="bloom"></div><div class="fan fan-high"><svg viewBox="0 0 400 400" fill="none" aria-hidden="true"><g stroke="#f59e0b" stroke-width="2" stroke-linecap="round"><line x1="400" y1="200" x2="0" y2="200"></line><line x1="393.2" y1="251.8" x2="6.8" y2="148.2"></line><line x1="373.2" y1="300" x2="26.8" y2="100"></line><line x1="341.4" y1="341.4" x2="58.6" y2="58.6"></line><line x1="300" y1="373.2" x2="100" y2="26.8"></line><line x1="251.8" y1="393.2" x2="148.2" y2="6.8"></line><line x1="200" y1="400" x2="200" y2="0"></line><line x1="148.2" y1="393.2" x2="251.8" y2="6.8"></line><line x1="100" y1="373.2" x2="300" y2="26.8"></line><line x1="58.6" y1="341.4" x2="341.4" y2="58.6"></line><line x1="26.8" y1="300" x2="373.2" y2="100"></line><line x1="6.8" y1="251.8" x2="393.2" y2="148.2"></line></g></svg></div>
+      <div class="hbox">
+        <div class="num"><div class="n">400</div><div class="lbl">day streak</div><div class="sub">Four hundred days. Nothing to prove.</div></div>
+        <div class="sp"></div>
+        <div class="meta"><div class="mrow"><b>Lv 7 · Keeper of Days</b><i>Max</i></div><div class="bar"><span style="width:100%"></span></div></div>
+      </div>
+    </div></div></div></div>
+</div>
+
+<div class="sec"><h2>The store shot</h2><em>screenshot 01, cropped to the card, at 100% / 48% / 24%</em></div>
+<div class="why" style="grid-template-columns:minmax(320px,660px)">
+<div>
+<p>This is where A pays for itself. Today's card crops to a numeral in a pale square with a grey band on top;
+A crops to a light source with a number under it. At 24% the bloom is the only thing that still has shape,
+and shape is all a thumbnail carries.</p>
+<p><b>The one conflict with the in-app goal is intensity.</b> The listing wants the bloom warmer than a phone
+held at 7am does. So: ship A at 26%/10%, and give the listing fixture a single multiplier (1.35×) on the
+bloom's two stops — no second layout, no change to the rays. The 100% crop below is at listing strength, the
+48% at shipped strength.</p>
+</div>
+</div>
+<div class="row shots">
+<div class="shot"><div class="in" style="width:332px;height:336px"><div class="day" style="width:332px;transform:scale(1);transform-origin:top left"><div class="hero">
+      <div class="bloom" style="background:radial-gradient(circle 210px at 50% 96px,rgba(245,158,11,.35) 0%,rgba(245,158,11,.14) 42%,transparent 72%)"></div><div class="fan fan-high"><svg viewBox="0 0 400 400" fill="none" aria-hidden="true"><g stroke="#f59e0b" stroke-width="2" stroke-linecap="round"><line x1="400" y1="200" x2="0" y2="200"></line><line x1="393.2" y1="251.8" x2="6.8" y2="148.2"></line><line x1="373.2" y1="300" x2="26.8" y2="100"></line><line x1="341.4" y1="341.4" x2="58.6" y2="58.6"></line><line x1="300" y1="373.2" x2="100" y2="26.8"></line><line x1="251.8" y1="393.2" x2="148.2" y2="6.8"></line><line x1="200" y1="400" x2="200" y2="0"></line><line x1="148.2" y1="393.2" x2="251.8" y2="6.8"></line><line x1="100" y1="373.2" x2="300" y2="26.8"></line><line x1="58.6" y1="341.4" x2="341.4" y2="58.6"></line><line x1="26.8" y1="300" x2="373.2" y2="100"></line><line x1="6.8" y1="251.8" x2="393.2" y2="148.2"></line></g></svg></div>
+      <div class="hbox">
+        <div class="num"><div class="n">210</div><div class="lbl">day streak</div><div class="sub">210 days running — keep it tender.</div></div>
+        <div class="sp"></div>
+        <div class="meta"><div class="mrow"><b>Lv 7 · Keeper of Days</b><i>Max</i></div><div class="bar"><span style="width:100%"></span></div></div>
+      </div>
+    </div></div></div><div class="tag">100% — listing fixture, bloom ×1.35</div></div>
+<div class="shot"><div class="in" style="width:159px;height:161px"><div class="day" style="width:332px;transform:scale(0.48);transform-origin:top left"><div class="hero">
+      <div class="bloom"></div><div class="fan fan-high"><svg viewBox="0 0 400 400" fill="none" aria-hidden="true"><g stroke="#f59e0b" stroke-width="2" stroke-linecap="round"><line x1="400" y1="200" x2="0" y2="200"></line><line x1="393.2" y1="251.8" x2="6.8" y2="148.2"></line><line x1="373.2" y1="300" x2="26.8" y2="100"></line><line x1="341.4" y1="341.4" x2="58.6" y2="58.6"></line><line x1="300" y1="373.2" x2="100" y2="26.8"></line><line x1="251.8" y1="393.2" x2="148.2" y2="6.8"></line><line x1="200" y1="400" x2="200" y2="0"></line><line x1="148.2" y1="393.2" x2="251.8" y2="6.8"></line><line x1="100" y1="373.2" x2="300" y2="26.8"></line><line x1="58.6" y1="341.4" x2="341.4" y2="58.6"></line><line x1="26.8" y1="300" x2="373.2" y2="100"></line><line x1="6.8" y1="251.8" x2="393.2" y2="148.2"></line></g></svg></div>
+      <div class="hbox">
+        <div class="num"><div class="n">210</div><div class="lbl">day streak</div><div class="sub">210 days running — keep it tender.</div></div>
+        <div class="sp"></div>
+        <div class="meta"><div class="mrow"><b>Lv 7 · Keeper of Days</b><i>Max</i></div><div class="bar"><span style="width:100%"></span></div></div>
+      </div>
+    </div></div></div><div class="tag">48% — in-app, shipped strength</div></div>
+<div class="shot"><div class="in" style="width:80px;height:81px"><div class="day" style="width:332px;transform:scale(0.24);transform-origin:top left"><div class="hero">
+      <div class="bloom"></div><div class="fan fan-high"><svg viewBox="0 0 400 400" fill="none" aria-hidden="true"><g stroke="#f59e0b" stroke-width="2" stroke-linecap="round"><line x1="400" y1="200" x2="0" y2="200"></line><line x1="393.2" y1="251.8" x2="6.8" y2="148.2"></line><line x1="373.2" y1="300" x2="26.8" y2="100"></line><line x1="341.4" y1="341.4" x2="58.6" y2="58.6"></line><line x1="300" y1="373.2" x2="100" y2="26.8"></line><line x1="251.8" y1="393.2" x2="148.2" y2="6.8"></line><line x1="200" y1="400" x2="200" y2="0"></line><line x1="148.2" y1="393.2" x2="251.8" y2="6.8"></line><line x1="100" y1="373.2" x2="300" y2="26.8"></line><line x1="58.6" y1="341.4" x2="341.4" y2="58.6"></line><line x1="26.8" y1="300" x2="373.2" y2="100"></line><line x1="6.8" y1="251.8" x2="393.2" y2="148.2"></line></g></svg></div>
+      <div class="hbox">
+        <div class="num"><div class="n">210</div><div class="lbl">day streak</div><div class="sub">210 days running — keep it tender.</div></div>
+        <div class="sp"></div>
+        <div class="meta"><div class="mrow"><b>Lv 7 · Keeper of Days</b><i>Max</i></div><div class="bar"><span style="width:100%"></span></div></div>
+      </div>
+    </div></div></div><div class="tag">24% — thumbnail</div></div>
+</div>
+
+<div class="sec"><h2>Porting notes</h2><em>for the build chat</em></div>
+<div class="why">
+<div>
+<h3>What does not change</h3>
+<ul>
+<li><code>HERO_HEIGHT</code> 336, <code>HERO_BOX</code>, <code>HERO_FOCAL</code>, both shells, the numeral block and its <code>marginTop</code>, the spacer, the meta row, <code>ProgressBar</code> — all untouched.</li>
+<li>The page header above the card — date, <code>EmberPill</code>, mode toggle, greeting at 27/32 — stays exactly where it is. No user data, no text of any kind, enters the card.</li>
+<li>The video shells: <b>Sunrise changes nothing in them</b> — it is classic-ground only.</li>
+<li><code>RayFan</code> / <code>NightRays</code> internals: 24 spokes, 2dp, <code>c.accent</code>, round caps, 60s. The candle row stays in the week strip.</li>
+<li><b>Carried over from take two, and still open, and independent of this proposal:</b> the video shells' own contrast fix — one 168dp bottom scrim (<code>c.scrim</code> → transparent, 62% dark skies / 58% <code>c.plusWhite</code> pale skies) and an ink set chosen from a new per-sky <code>tone: 'pale' | 'dark'</code> manifest field, because white type on a pale sky measures ~2:1 and <code>c.accentDeep</code> measures ~1.5:1. The two video mocks above are drawn <em>with</em> it. Ship it or don't, but decide it separately: nothing in A or B depends on it.</li>
+</ul>
+</div>
+<div>
+<h3>A · Sunrise — what changes</h3>
+<ul>
+<li><b>Art focal decouples from the numeral.</b> New constant <code>HERO_ART_FOCAL = 96</code>, passed as <code>focal</code>; <code>HERO_FOCAL</code> keeps positioning the numeral. Two names because they are now two ideas.</li>
+<li><b>Reach grows to clear the far corners from the higher focal:</b> <code>Math.hypot((w − 40) / 2, HERO_HEIGHT − HERO_ART_FOCAL) × 1.08</code> — 316 at 372dp, against 255 today. The tips stay outside the card at every rotation.</li>
+<li><b>New radial fade on the fan</b> (inside <code>RayFan</code>'s wrapper, not its geometry): opaque to 26% of the radius, 55% at 52%, 12% at 78%, 0 at the rim. This is what keeps a 632dp fan from greying the lower card, and it is the one addition to the art component.</li>
+<li><b>New <code>Bloom</code> behind the fan:</b> a radial gradient, 210dp radius, centred on <code>HERO_ART_FOCAL</code>, <code>c.accent</code> at 26% → 10% → transparent at 72% (day) and 20% → 7% (night). Below streak 7 the two stops scale with the ray opacity ramp; at streak 0 it is not rendered.</li>
+<li><b><code>HERO_ART_FOCAL</code> is a constant at every streak, 0 included</b> — only the fan's opacity and the bloom ramp. The streak-0 card above is focal 96 with the bloom absent, which is why its convergence still sits in the band.</li>
+</ul>
+</div>
+</div>

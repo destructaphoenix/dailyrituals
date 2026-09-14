@@ -1460,3 +1460,65 @@ therefore not trigger — **if every cell comes out the same shade, that is a fi
 `brokenStreak` has the gaps but only 6 entries, so it cannot fill the other half; a long-and-gapped scenario
 in [`src/dev/scenarios.js`](../src/dev/scenarios.js) would, and nobody has asked for one. **Do not record a
 pass on a state you did not see on screen.**
+
+---
+
+## WALK-26 — the band is full of light
+
+⬜ **Gate 🎨** — follows the release. Proves [IMP-136](specs-open.md#imp-136--sunrise-the-heros-empty-band-is-filled-with-light-not-content),
+which ports the locked D-15 design ("Sunrise"). **Runs on an emulator** — see the named gaps at the foot,
+which are the only reasons it might not settle everything.
+
+**Why this row exists.** IMP-136 changes what the top of the streak card *looks like*, and nothing else.
+A green test suite cannot see a composition — IMP-130 through IMP-133 are four rows in a row that each
+passed their tests and still had to be looked at on a screen, and three of them exist **because** the
+previous one's green suite hid what the card actually looked like. This is the row that looks at it.
+
+**Before you start.** Confirm the phone or emulator is running a build that has IMP-136 in it. Home,
+classic sky (**not** a video sky — Sunrise deliberately changes nothing behind footage; if a video sky is
+playing, go to the Shop and switch back to **Golden Sun**).
+
+**The steps.**
+
+1. **Look at the top third of the streak card, day mode.** The old card had a pale grey band across the top
+   with faint hairlines in it. It should now read as a **light source** — the rays converging into a warm
+   glow, high up in the card, with the big number sitting underneath it. **The question to answer is the
+   plain one: does the top of the card still look empty?** If it does, that is a finding and the row fails —
+   say so, and say what it looks like instead.
+2. **Check the number did not move.** The streak numeral should sit exactly where it sat before, dead centre
+   of the card. Sunrise moves the *art*, not the text. If the number has shifted up or down, that is a
+   defect, not the design.
+3. **Check the rays still run off the edges.** Follow a ray outward to a corner. It must leave the card —
+   you must never be able to see where a ray *stops* in mid-air. This is the thing IMP-133 fixed and the
+   longer rays could plausibly break again.
+4. **Check the bottom half did not go grey.** The glow is meant to be the top of the card. Look at the level
+   line and the XP bar at the foot — they should sit on clean card colour, not on a haze. A faint wash down
+   there means the fade on the rays is not working.
+5. **Night mode** (dev panel → Mode — **not** `adb uimode`, which does nothing in this app). Same four
+   checks. Night should look like the day version's sibling, not a different card: the glow moves up into
+   the band, and the black stays black. ⚠️ **Specifically look for the glow being doubled** — night already
+   had its own amber pool before this change, and the spec says day gets a new one and night does not. If
+   night looks washed out or milky where it used to be black, that is the doubling, and it is a defect.
+6. **A brand-new user — streak 0.** Dev panel → a zero-entry scenario. The card should go **quiet**: the
+   rays very faint, and **no glow at all**. It should read as "nothing has happened yet" without a sentence
+   saying so. Then **streak 1** — the glow should appear, at about half strength. This is the part of the
+   design that is hardest to get right and the easiest to skip; do not skip it.
+7. **Max font.** `adb shell settings put system font_scale 2.0`, relaunch, look again in both modes. Nothing
+   in this row should move at all — the change is artwork, and artwork does not scale with text. If the card
+   relayouts, that is a finding. Reset to `1.0` afterwards.
+8. **The thumbnail test, and it is the reason the design was chosen.** Stand back from the screen, or
+   squint, until the card is about the size of a postage stamp. The design's claim is that at that size the
+   glow is **the only thing that still has a shape**, and that this is what a stranger sees on a Play
+   listing. Does it? A yes here is worth more than any of the steps above.
+
+**⚠️ What this walk cannot settle, and must not claim to.**
+
+- **The video sky is out of scope.** Sunrise draws nothing behind footage. If a video sky looks wrong,
+  that is a separate finding and belongs to a different row — do not record it as a pass or a fail here.
+- **An emulator renders the glow honestly but the screen dishonestly.** Radial gradients and SVG are
+  drawn by the same code on both, so the *composition* settles on an emulator. What does not settle is how
+  a warm low-opacity glow reads on **real OLED at real brightness**, which is the whole point of night
+  mode. **Record step 5 as emulator-only if that is what you ran**, and fold a 30-second device look into
+  whichever sitting happens next.
+- **Do not record a pass on a streak state you did not put on the screen.** Steps 6 exists because the
+  ramp at 0 and 1 is invisible on the owner's own journal.

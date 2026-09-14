@@ -156,7 +156,33 @@ Everything below this section is about the app working better. These two are abo
 something worth downloading** — one inside the product, one in the storefront. The owner's framing, and it
 changes the brief: *design is not only for improving the app, it is what the app is sold on.*
 
-### D-15 · The hero card's top third holds nothing 🎨
+### D-15 · The hero card's top third holds nothing 🎨 — ✅ ANSWERED AND LOCKED
+
+> ✅ **CLOSED 2026-09-15. The design came back, the owner chose it, and it is specced.**
+> Returned card: **`screens/hero-band-v3.html`** in the live project — *"The empty band"* — mirrored to
+> [`design-system/proposals/hero-band-v3.html`](../design-system/proposals/hero-band-v3.html) because it is
+> otherwise project-only and unbacked-up. Three takes were returned; the owner locked **take three,
+> direction A · "Sunrise"**, which is also the card's own recommendation.
+>
+> **The answer was (1) fill it — with light, not content.** The band reads empty not because it holds
+> nothing but because the rays are at their *faintest* exactly where there is most of them to see: with one
+> shared focal at the card's centre, the dense half of the sunburst sits behind the numeral and the band
+> gets the thin ends. Raise the **art's** focal into the band, add a bloom behind the convergence, fade the
+> ray tips, and the band becomes the brightest part of the card with **no new element**. Nothing moves —
+> not the numeral, not the page header — because nothing *may* move into that band: a Plus user has footage
+> running there.
+>
+> **The port is [IMP-136](specs-open.md#imp-136--sunrise-the-heros-empty-band-is-filled-with-light-not-content).**
+> Runtime proof is [WALK-26](walk-open.md#walk-26--the-band-is-full-of-light).
+>
+> ⚠️ **One carried-over recommendation was DECLINED by the owner, 2026-09-15.** The card proposed a per-sky
+> `tone: 'pale' | 'dark'` manifest field driving a second ink set over video. The owner's ruling:
+> *"I want consistency in the app… we will stick to the colour scheme of the app for light and dark mode."*
+> One treatment over footage (`heroChrome`'s white ramp, IMP-124), theme tokens everywhere else. **Do not
+> re-open it**, and do not add a `tone` field to `SHOP_SKIES`.
+
+The measurement that produced the request is kept below, because it is the argument for the row.
+
 
 **No baseline** — paste [`HomeScreen.js:34-66`](../src/screens/HomeScreen.js#L34) and
 [`art.js`](../src/art.js). 📋 **Packet: [`design-requests/D-15-hero-top.md`](design-requests/D-15-hero-top.md).**

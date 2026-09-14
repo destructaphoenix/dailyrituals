@@ -33,11 +33,39 @@ changed" at the foot of this file.
 
 ## Stage 0 — three rulings, and none of them is a chat's to make
 
-**1. 🔴 Which tool made the AI clips, and does the tier that made them grant commercial output ownership?**
-This is the provenance gate in [`playbook.md`](playbook.md) → "Every sky must be ours to sell", and it is
-the hard blocker. Until it is answered, **no clip currently in the design project may ship**, free or paid.
-The answer is also per-clip: a text-to-video hero with nothing fed in is clean; the eleven named after
-*editing* prompts are not.
+**1. 🟡 PARTLY ANSWERED 2026-09-15 by the owner — and the remaining half is one question per clip.**
+
+> **Owner, 2026-09-15:** *"Everything from Pinterest is either directly AI generated, or was an image that
+> I had converted to video using higgsfield or veo subscriptions."* Also ruled the same day: **we are not
+> sourcing stock replacements.**
+
+**What that clears.** Requirement **#2** of the gate — *the tool's terms grant commercial use and output
+ownership*. **Higgsfield and Veo both grant commercial use and output ownership on paid tiers**, and the
+owner holds subscriptions to both. That requirement is satisfied and does not need re-asking. It also
+answers the *"find out which tool it was"* note in the playbook: it was those two.
+
+**What it does NOT clear — requirement #1, *nothing scraped in the chain*.** The owner's sentence splits
+the library in half, and the half it lands in is decided per clip by **one question: where did the seed
+image come from?**
+
+| The chain | Verdict |
+| --- | --- |
+| An image **the owner owns** → Higgsfield/Veo → clip | ✅ **Clean. Ships**, once its provenance line is written. |
+| Text-to-video, **nothing fed in** | ✅ **Clean. Ships.** |
+| An image **off Pinterest** → Higgsfield/Veo → clip | 🔴 **Derivative.** The output carries the seed image's rights, whichever tool did the conversion. |
+
+⚠️ **"It was already AI-generated when I found it on Pinterest" does not by itself clear a clip.** Someone
+else generated it; selling their output is the same problem in a different coat. (Whether AI output is
+copyrightable at all is contested and jurisdiction-specific — it is not a defence to build a paid IAP on,
+and it says nothing about Pinterest's own terms.)
+
+🔴 **So the gate is now one owner task, not a research question:** go down the clip list and mark each one
+**owner-image**, **text-to-video**, or **Pinterest-image**. The first two ship. The third does not.
+**Until that list exists, no clip in the design project may ship**, free or paid — and note that the one
+sky that *is* live (`meteor` → `ocean.mp4`) is Pexels-licensed and is not affected by any of this.
+
+💡 **The stock route below is not deleted, but the owner has declined it** (2026-09-15). It is kept as the
+record of what the alternative was.
 
 **2. ✅ ANSWERED 2026-09-12 — the relaxed spec is accepted.** 720-short-edge footage and `Starfall`'s
 20.2s both ship as they are. Recorded as *accepted, not a defect* in

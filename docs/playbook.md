@@ -437,6 +437,17 @@ so the build does not wait on the footage replacement.
 
 ### 🔴 Every sky must be ours to sell — the provenance gate
 
+> 🟡 **UPDATED 2026-09-15 — requirement #2 is answered, #1 is not.** The owner: *"Everything from Pinterest
+> is either directly AI generated, or was an image that I had converted to video using higgsfield or veo
+> subscriptions."* **Higgsfield and Veo grant commercial use and output ownership on paid tiers**, which the
+> owner holds — so **requirement #2 below is satisfied and must not be re-asked**. Requirement #1 (*nothing
+> scraped in the chain*) still stands, and now reduces to **one question per clip: where did the seed image
+> come from?** An owner-held image or pure text-to-video is clean; a Pinterest image fed to Higgsfield or
+> Veo is a derivative and is not. The owner has also **declined the stock-replacement route.** Full ruling,
+> and the three-way per-clip classification the gate now needs, is in
+> [`skies-route.md`](skies-route.md) → Stage 0 ruling 1.
+
+
 **Established 2026-09-12, and it blocks the whole feature.** The design project's `uploads/` folder holds
 **8 Pinterest clips** pulled through `Klickpin.com`, and **11 of the 12** AI-tool files beside them are named
 after *editing* prompts, not creation prompts — `Change_the_lighting_in_the_vid`, `now_a_night_version_of_this_vide`,

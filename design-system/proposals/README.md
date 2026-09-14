@@ -14,7 +14,7 @@
 | --- | --- |
 | ✅ **Safe** | `components/*`, `tokens/*`, `frozen/rays.html`, `screens/baseline-*.html` — all regenerate with `node scripts/gen-design-system.js`. |
 | ✅ **Safe** | `screens/day-0*.png` / `night-0*.png` — the 7×2 baselines are committed in `design-system/screens/`. |
-| ✅ **Backed up here** | `insights-redesign.html`, `emberfield.html`, `starfall.html` — copied byte-exact. Their `assets/*.mp4` `src` attributes are dead here; the cards are kept for their spec, not to play. |
+| ✅ **Backed up here** | `insights-redesign.html`, `emberfield.html`, `starfall.html`, **`hero-band-v3.html`** — copied byte-exact. Their `assets/*.mp4` `src` attributes are dead here; the cards are kept for their spec, not to play. |
 | 🔴 **NOT backed up** | the other 11 project-only cards below, **every `.mp4` in `art/assets/`, and every original in `uploads/`**. |
 
 **The `.mp4` files are the sharpest risk.** They are original footage — Aurora, Tideline, Fernlight,
@@ -33,6 +33,7 @@ backup than anything copied by hand. **That is the one thing worth doing before 
 
 | Card | Covers | State |
 | --- | --- | --- |
+| `screens/hero-band-v3.html` | **D-15** — the locked answer, ported as `IMP-136` | ✅ mirrored here 2026-09-15 |
 | `screens/insights-redesign.html` | **D-01 + D-03** | ✅ mirrored here |
 | `screens/plus-home.html` | **D-05**, much of **D-07**, reshapes **D-12** | 🔴 project only |
 | `screens/shop-plus-skins.html` | **D-08** | 🔴 project only |

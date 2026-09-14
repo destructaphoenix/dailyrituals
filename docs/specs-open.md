@@ -24,14 +24,207 @@
 
 ## The queue
 
-**The backlog is empty except IMP-128, which is owner-gated.** IMP-131 through IMP-135 are all done.
+**One open row: IMP-136.** IMP-128 is owner-gated. IMP-131 through IMP-135 are all done.
 
 | Row | What | Lane | Take it? |
 | --- | --- | --- | --- |
+| IMP-136 | **Sunrise** — the hero's empty band is filled with light, not content (ports D-15's locked design) | OTA | ✅ **yes — this is the first open row** |
 | IMP-128 | Apply the motion vocabulary — `riseIn` on cards and rows, `popIn` on badges, `useCountUp` on the streak | OTA | ⏸ **owner's yes first — do not start** |
 
 **IMP-124 through IMP-135 are done** (archived to `docs/build-log.md`, commits `87771c4`, `d57dc2d`,
 `0502790`, `402391b`, `0a2f595`, `111c3de`, `28654cb`, `bcaebb6`, `c9dc2dc`, `bbb2d20`).
+
+---
+
+### IMP-136 — Sunrise: the hero's empty band is filled with light, not content
+
+**This ports a returned Claude Design, and the design is locked.** Source card:
+[`design-system/proposals/hero-band-v3.html`](../design-system/proposals/hero-band-v3.html) — *"The empty
+band"*, **direction A · Sunrise**, the card's own recommendation, chosen by the owner 2026-09-15. It closes
+[D-15](design-queue.md#d-15--the-hero-cards-top-third-holds-nothing-). Severity 🎨. Lane **OTA** — no native
+change, no `versionCode` bump.
+
+**The one-sentence version.** The band at card-y 0 → 127 does not read empty because it has no content; it
+reads empty because the rays are at their *faintest* exactly where there is most of them to see. Move the
+**art's** focal up into the band, put a bloom behind the convergence, and the band becomes the brightest
+part of the card **without a single new element**.
+
+🔴 **Nothing moves. No content enters the card.** Not the greeting, not the date, not the ember pill, not a
+caption. The page header above the card is untouched. `HERO_HEIGHT`, `HERO_BOX`, `HERO_FOCAL`, the numeral
+block and its `marginTop`, the spacer, the meta row and `ProgressBar` are all untouched. **This is an
+art-only change**, and that is *why* it was the direction chosen: the other two takes moved text, and text
+cannot go in that band because a Plus user has footage running there.
+
+🔴 **The video shells change NOTHING.** Sunrise is classic-ground only. `SkyHero`, `heroChrome`'s
+over-video branch and the `videoSkyActive` shell are out of scope — do not touch them, and do not add a
+`tone` field to `SHOP_SKIES`. **The owner ruled on this on 2026-09-15:** one treatment over footage (the
+white ramp `heroChrome` already ships from IMP-124), theme tokens everywhere else. *"I want consistency in
+the app… we will stick to the colour scheme of the app for light and dark mode."* A per-sky ink inversion
+was proposed by the design card as a carried-over open item and is **declined** — do not re-open it.
+
+---
+
+#### 🔴 Read this before step 1 — four traps, all verified in source on 2026-09-15
+
+**1. Five existing tests assert the thing this spec deliberately breaks.** `HERO_FOCAL` currently positions
+**both** the numeral and the art, and
+[`__tests__/screens/HomeScreenSkyHero.test.js`](../__tests__/screens/HomeScreenSkyHero.test.js) pins that
+coupling in five places — the three `focalOf(...)` cases in the `IMP-131` describe (lines ~145, ~156, ~165)
+and the two `renderedFocal(view, Art) === cardHeight / 2` cases in the `IMP-132` describe (lines ~213,
+~219). **Sunrise decouples them on purpose.** These tests must be **corrected, not deleted and not worked
+around** — this is the IMP-133 pattern exactly (that row's test count was flat because a case was
+*inverted*, and its comment says so in the file). Rewrite them to assert the **new** invariant:
+
+- the numeral's centre is still `HERO_FOCAL` (`box.paddingTop + block.marginTop + num.lineHeight / 2`),
+- the art's focal is `HERO_ART_FOCAL`, read off the rendered component's props,
+- and the two are **no longer equal**, which is the assertion that would have gone red before this row.
+
+⚠️ **Do not type `96`, `168` or `336` on both sides of an assertion.** Those describes already read every
+number off the render; keep that property.
+
+**2. `RayFan`'s ray opacity is hardcoded on its wrapper, not a prop.** [`art.js:34`](../src/art.js#L34) —
+`opacity: 0.5` sits in the outer `View`'s style. The streak ramp needs it to vary. **Add it as an optional
+prop with the current value as the default** (`rayOpacity = 0.5`), exactly the way IMP-132 added `focal` and
+IMP-133 added `reach`: the signature grows, every existing caller keeps today's render.
+[`gen-design-system.js:365`](../scripts/gen-design-system.js#L365) calls it with `{ size, focal, reach }`
+and must keep producing the same PNG.
+
+**3. `NightRays` ALREADY HAS the bloom. Do not give night a second one.** [`art.js:95`](../src/art.js#L95)
+draws a breathing amber pool (`nightRaysBloom`, `Circle r=80`, opacity 0.22→0.38 on a 4.2s loop) centred on
+the focal. Moving the focal to 96 carries it into the band **for free** — that is most of Sunrise on night,
+already built. **The new `Bloom` is DAY ONLY.** The design card draws a `.bloom` div under both phones, but
+its HTML has no model of `NightRays`' built-in glow, so its "night bloom 20% → 7%" *is* that glow described
+from the outside. Stacking a second radial under it would double the light on black. **This is a deliberate
+deviation from the card and it is decided — do not "fix" it back.**
+
+**4. The fade is a `<Mask>`, and `mask-image` is CSS that does not exist in React Native.** The card
+expresses the radial fade as `-webkit-mask-image`. `react-native-svg` is **15.12.1** and does support
+`<Mask>` + `<RadialGradient>` on both platforms — but nothing in this tree uses `Mask` yet, so it is
+**unproven here**. Step 2 is therefore taken and tested **alone**, before a screen is touched. If `Mask`
+does not render on Android, **STOP and log it to `PROGRESS.md` → Open items** rather than inventing a
+substitute; the obvious fallback (overlaying a radial gradient in the card's own surface colour) is wrong
+on night, where the card surface and the page ground are different colours.
+
+---
+
+**Steps.**
+
+1. **`src/home/heroFrame.js` — decouple the art's focal from the numeral's, and re-derive the reach.**
+
+   ```js
+   // The NUMERAL's anchor. Unchanged — the centred numeral is the asset (IMP-131/132).
+   export const HERO_FOCAL = HERO_HEIGHT / 2;
+
+   // The ART's focal (IMP-136, "Sunrise"). Two names because they are now two
+   // ideas: the rays are densest at the focal and sparsest at the tips, so with
+   // one shared focal at the card's centre the dense half of the art sits BEHIND
+   // the numeral and the band above it gets 24 near-parallel hairlines. Raising
+   // only the art's focal puts the convergence IN the band. The numeral does not
+   // move.
+   export const HERO_ART_FOCAL = 96;
+   ```
+
+   `heroReach` re-derives from the **new** focal, because the farthest corner from a focal at y=96 is now
+   the *bottom* one:
+
+   ```js
+   export const heroReach = (windowWidth) =>
+     Math.ceil(Math.hypot((windowWidth - HERO_PAD * 2) / 2, HERO_HEIGHT - HERO_ART_FOCAL) * HERO_REACH_MARGIN);
+   ```
+
+   ⚠️ **`HERO_HEIGHT - HERO_ART_FOCAL`, not `HERO_HEIGHT / 2`.** At a 372dp window this is 316 against
+   today's 256 — the tips must still finish outside the card **at every rotation**, which is IMP-133's
+   invariant and the test that guards it still applies unchanged.
+   ⚠️ **This file is imported by [`gen-design-system.js`](../scripts/gen-design-system.js) and by
+   [`genDesignSystem.test.js`](../__tests__/scripts/genDesignSystem.test.js)** — expect the frozen card's
+   reach to move and the generated PNG to change. That is correct (it is IMP-134's whole point: the card
+   draws what the app draws). **Regenerate `design-system/` in step 6.**
+
+2. **`src/art.js` — `RayFan` gains a radial fade and a ray-opacity prop. Take this step alone (trap 4).**
+   Signature becomes `RayFan({ size = 300, focal = 80, reach = size / 2, rayOpacity = 0.5 })`. The
+   hardcoded `opacity: 0.5` on the wrapper becomes `opacity: rayOpacity`.
+
+   The fade goes **inside the existing `<Svg>`**, as a `<Mask>` over the ray group — *not* on the
+   geometry, which is frozen:
+
+   | Stop | Alpha |
+   | --- | --- |
+   | 0% → 26% of radius | 1.0 (opaque) |
+   | 52% | 0.55 |
+   | 78% | 0.12 |
+   | 100% | 0 |
+
+   A radial mask is rotation-invariant, so it may live inside the rotating `<Svg>` without fighting the
+   60s spin. **This is what keeps a 632dp fan from greying the lower card** and is the one addition to the
+   art component.
+
+   🔴 **The frozen rule is not broken and must not be:** 24 spokes, `strokeWidth={2}`, `t.colors.accent`,
+   round caps, one rotation per 60s — **all unchanged**. `focal`, `reach` and now `rayOpacity` are the
+   ordinary props; the fade is a light layer over the same geometry.
+
+   **Prove this step before moving on:** `npm test` green, and a new case asserting the mask is present and
+   that `rayOpacity` defaults to `0.5` (so every existing caller is untouched).
+
+3. **`src/art.js` — a new `Bloom`, exported, DAY ONLY (trap 3).** A radial gradient, **210dp radius**,
+   centred on the focal it is given, `c.accent`:
+
+   | Stop | Opacity |
+   | --- | --- |
+   | 0% | 0.26 |
+   | 42% | 0.10 |
+   | 72% → 100% | 0 |
+
+   It renders **behind** the fan and is `pointerEvents="none"` like the rest of `art.js`. It takes
+   `focal`, and a `strength` multiplier (default 1) for step 4. ⚠️ **`NightRays` does not get one** — see
+   trap 3.
+
+4. **The streak ramp — the band carries the state.** Three points are given by the design card; the
+   in-between is linear and is specified here so it is not guessed:
+
+   | Streak | `rayOpacity` | Bloom |
+   | --- | --- | --- |
+   | 0 | **0.18** | **not rendered at all** |
+   | 1 | 0.34 | `strength` 0.5 |
+   | 2 → 6 | `0.34 + 0.16 × (s − 1) / 6` | `strength` `0.5 + 0.5 × (s − 1) / 6` |
+   | ≥ 7 | 0.5 (today's value) | `strength` 1 |
+
+   ⚠️ **`HERO_ART_FOCAL` is a constant at every streak, 0 included.** Only the opacity and the bloom ramp.
+   At streak 0 the convergence still sits in the band — the card is genuinely empty and **says so with
+   light rather than with a sentence.** Put this ramp in a pure exported helper (`heroLight(streak)` in
+   `src/home/heroFrame.js`) so it is unit-testable without rendering a screen; `HomeScreen` should not
+   carry the arithmetic.
+
+5. **`src/screens/HomeScreen.js` — wire it, and change nothing else.** The classic shell at
+   [`HomeScreen.js:123`](../src/screens/HomeScreen.js#L123) passes `focal={HERO_ART_FOCAL}` (not
+   `HERO_FOCAL`) and the ramped `rayOpacity`; day additionally renders `<Bloom focal={HERO_ART_FOCAL}
+   strength={…} />` **before** the fan in source order so it sits behind it. The numeral block's
+   `marginTop` still derives from `HERO_FOCAL` and **must not be touched**. The video branch is not edited.
+
+6. **Regenerate the design system and the screen cards.** `node scripts/gen-design-system.js` and
+   `node scripts/gen-screens.js`, and commit what they emit. The frozen PNGs and `home-day.html` /
+   `home-night.html` all move, which is the correct outcome — IMP-134 exists so these cannot lie about
+   what the app draws. ⚠️ **Do not hand-edit a generated file.**
+
+7. **Tests.** Correct the five coupled cases (trap 1) rather than adding parallel ones. Then add:
+   the `heroLight` ramp at streaks 0, 1, 4, 7 and 210 (pure, no render); `Bloom` is absent at streak 0 and
+   present at streak 1; **`Bloom` never renders on the night shell or the video shell**; the art's focal is
+   `HERO_ART_FOCAL` and the numeral's is `HERO_FOCAL` and they differ; and IMP-133's containment invariant
+   (tips outside the card at any rotation) still holds at the new reach.
+
+**Ship.** `npm test` green (must stay ≥ **1257 passed, 118 suites**), `npx expo export --platform android`
+clean, then commit with **exactly**:
+
+```
+feat(home): the hero's empty band is filled with light, not content (IMP-136)
+```
+
+**No `Release-Lane` trailer** unless the owner asks to ship.
+
+🔴 **A green suite proves very little here — this is a composition, and jest cannot see it.** Every one of
+IMP-130 → IMP-133 passed its tests and still had to be looked at on a screen; three of those four rows
+*exist* because the previous one's green suite hid what the card actually looked like. Its runtime proof is
+**[WALK-26](walk-open.md)** — classic ground, both modes, streak 0 / 1 / 210, at max font — which this spec
+does **not** run. File it and stop at code-complete.
 
 ---
 
