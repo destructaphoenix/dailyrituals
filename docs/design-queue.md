@@ -52,8 +52,10 @@ names**, and **the constraints that are already pinned** (see each row).
 
 📋 **Ready-to-paste packets live in [`docs/design-requests/`](design-requests/)** — one file per row,
 select-all-and-send, with the source blocks pulled from the real files so they cannot drift.
-**[D-01 is written](design-requests/D-01-insights-consistency.md).** Ask and I will write the next one;
-they are generated from source, so a row whose code has moved should be regenerated rather than edited.
+**[D-01 is written](design-requests/D-01-insights-consistency.md)** (now a *port* brief — its design phase
+is over) **and [D-02 is written](design-requests/D-02-reflections.md)** (2026-09-14 — a genuine fresh
+request: the live project holds no Reflections card at all). Ask and I will write the next one; they are
+generated from source, so a row whose code has moved should be regenerated rather than edited.
 
 ### What the design system actually has
 
@@ -168,7 +170,7 @@ the transpose — those four states are load-bearing and pinned by
 design re-open borderWidth or the dashed outline).
 
 ### D-02 · Reflections → every entry ever, mounted at once 🐛
-**Baseline:** `day-04` / `night-04` ✅
+**Baseline:** `day-04` / `night-04` ✅ · 📋 **Packet ready: [`design-requests/D-02-reflections.md`](design-requests/D-02-reflections.md)** (2026-09-14) — select all, paste, send. ⚠️ **The baseline was shot with a query active**, so the browsing state — the one this row is about — has no picture anywhere.
 
 **What happens.** [`ArchiveScreen`](../src/screens/ArchiveScreen.js#L76) does `results.map(...)` inside a
 plain `ScrollView`. No `FlatList`, no windowing, no pagination, no grouping. Every entry that matches the
