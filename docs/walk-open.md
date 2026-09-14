@@ -462,7 +462,7 @@ the lane now; CI (`release.yml`) ships from it on a `Release-Lane:` trailer. **N
 | WALK-21 | 🎨 | [The first video sky plays](#walk-21--the-first-video-sky-plays) | IMP-121, IMP-122, **IMP-123** | **device** (real panel, real GPU compositing, real battery) | 👤 | 🟠 **PARTIAL — 2026-09-13 (Play `internal` vc17, owner-run).** Steps 1-3, 6-10 ✅ — corners clean (no `textureView` needed, closes IMP-121's open question), loop seam holds, latency/offline/heat/fallback all clean, and step 8 re-confirms WALK-19a's store-authoritative membership. 🔴 **Steps 4 + 5 FAIL: day-mode hero contrast — scoped as [IMP-124](specs-open.md#imp-124)** (the streak subtitle is unreadable over the footage in day mode; the XP bar accent doesn't read as a bar). Step 11 (month strip) is a named gap — thin journal, nothing to scroll |
 | WALK-22 | 🎨 | [The day-mode hero re-check](#walk-22--the-day-mode-hero-re-check) | **IMP-124** + **IMP-125** | **device** | 👤 (visual) | ✅ **2026-09-14 (hardware, owner-run) — IMP-124 and IMP-125 both PROVEN, on update `01a09b18`.** Steps 1-3 (subtitle, "day streak" line, XP labels) all read clean over the water; step 5's candle row sits in the week-strip footer as designed; night mode is identical to day. 🔴 **NEW defect found live: the video hero card is a visibly different size from the default (RayFan) hero card when switching skies.** Scoped as **[IMP-130](specs-open.md#imp-130--the-hero-card-is-one-size-whichever-sky-is-on)** below — ✅ **now specced (2026-09-14): both shells render at 336dp with the content centred**, and its own proof is [WALK-24](#walk-24--one-card-two-grounds) |
 | WALK-23 | 🎨 | [The month strip on a journal that has months](#walk-23--the-month-strip-on-a-journal-that-has-months) | IMP-120 | **emulator** | 🤖 (agent-runnable) | ⏸ — **ready, agent can run it any time, but held at the owner's instruction 2026-09-14** (WALK-22 just found IMP-130; no other reason). WALK-21 step 11 could not run: the owner's journal is one month, so there was nothing to scroll. The dev panel's `storeShots` scenario is 210 days and settles it in a dev build |
-| WALK-24 | 🎨 | [One card, two grounds](#walk-24--one-card-two-grounds) | **IMP-130** + **IMP-131** + **IMP-132** + **IMP-133** | **device** | 👤 (visual) | 🟠 **PARTIAL, 2026-09-14 — half of it is already answered by the owner's own screenshot** on the IMP-130 OTA (`433eb53`). ✅ **Step 1 passes:** the classic card measures 336 and the page below the hero no longer moves with the sky. 🔴 **Steps 2/3 FAIL:** centring moved the numeral ~46dp off `RayFan`/`NightRays`' fixed focal point, so the rays and the night bloom converge **above** the numeral and the meta row sits below the art entirely — filed as **[IMP-131](build-log.md#imp-131--the-sunburst-lost-the-numeral-2026-09-14)**. ✅ **UNBLOCKED 2026-09-14 — IMP-131, IMP-132 and IMP-133 all shipped by OTA** (`d82c61f`, `fc85377`, `7d08eb5`; runtime `1.0.10`, so vc17 on `internal` only). ⬜ **Steps 2/3 now test all three fixes in one look** — the numeral back on the focal (131), the disc re-centred on the 336dp card (132), and the ray reach that ends the bare rim (133) — and **steps 4 and 5 have still never run** |
+| WALK-24 | 🎨 | [One card, two grounds](build-log.md#walk-24--one-card-two-grounds--closed-2026-09-14-device-owner-run) | **IMP-130** + **IMP-131** + **IMP-132** + **IMP-133** | **device** | 👤 (visual) | ✅ **CLOSED 2026-09-14 (hardware, owner-run, update `01a09cc2`) — all five steps PASS.** Card size holds across sky switches; the numeral sits in the convergence, centred, rays running to every edge; the meta row reads as one composition; Meteor Shower footage clean; max font and night mode both clean. IMP-130/131/132/133 all proven on device. Detail in `build-log.md` → "Walk log" |
 
 ---
 
@@ -1407,83 +1407,3 @@ therefore not trigger — **if every cell comes out the same shade, that is a fi
 `brokenStreak` has the gaps but only 6 entries, so it cannot fill the other half; a long-and-gapped scenario
 in [`src/dev/scenarios.js`](../src/dev/scenarios.js) would, and nobody has asked for one. **Do not record a
 pass on a state you did not see on screen.**
-
----
-
-## WALK-24 — one card, two grounds
-
-**Target: `device`. Runner: 👤 (visual judgement — every question here is "does it look right", and nothing
-else).** Proves [IMP-130](build-log.md#imp-130--the-hero-card-is-one-size-whichever-sky-is-on-2026-09-14) **and now
-[IMP-131](build-log.md#imp-131--the-sunburst-lost-the-numeral-2026-09-14)**.
-
-🟠 **PARTIAL as of 2026-09-14 — read this before running anything.** The owner shipped IMP-130 by OTA
-(`433eb53`) and sent a Home screenshot from their phone (night mode, streak 1). That one frame settles
-**step 1 as a PASS** — the classic card is 336dp and nothing below the hero moves — and **fails steps 2 and
-3**: the rays and `NightRays`' bloom converge in a pool of light **above** the numeral, and the level row and
-XP bar sit below where the 300dp disc ends. Cause and fix are
-**[IMP-131](build-log.md#imp-131--the-sunburst-lost-the-numeral-2026-09-14)**: the art is absolute at `top: -70` with a
-focal point fixed at card-y 80, and IMP-130's `justifyContent: 'center'` moved the content ~46dp off it.
-That defect is filed, fixed and shipped — **do not read that screenshot as the current state.** **Steps 4
-and 5 have never run and are still owed.** ⚠️ **The screenshot is now two OTAs old** — what it shows was fixed by
-IMP-131 and then twice more by IMP-132/133, so re-run steps 2 and 3 from scratch rather than reading them
-against it.
-
-✅ **UNBLOCKED 2026-09-14 — the OTA has shipped, and it carries THREE fixes, not one.** IMP-131 (`d82c61f`)
-put the numeral back on the focal point; the owner then found two more on that same OTA, both now shipped
-and stacked on it: **IMP-132** (`fc85377`) — the focal itself was still at the pre-IMP-130 card's middle, so
-the whole disc hung 70dp off the top and left a 106dp bare band; and **IMP-133** (`7d08eb5`) — centring the
-disc made its own outer edge visible for the first time, so `RayFan`/`NightRays` gained a `reach` that bleeds
-past every corner. **All three are pure JS at runtime `1.0.10`, so only vc17 on `internal` can receive them.**
-
-⚠️ **Bring the phone current first, or this row re-observes a fixed defect:** open, wait ~15s, **fully kill**,
-open again — an OTA applies on the *second* launch. **Pre-flight:** You tab → Version row still reads
-`1.0.10 / vc17` (this is **not** a new binary), and **the bundle id in that row is neither the one WALK-22
-ran on** (`01a09b18`) **nor the one in the 2026-09-14 screenshot** that failed steps 2/3. That comparison is
-the whole pre-flight — IMP-106 exists so it can be made. **Write the bundle id into the result.**
-
-**Pre-flight, continued:** Plus ON, and **Meteor Shower owned** so it can be applied and un-applied. A
-licence-tester monthly sub lapses in ~30 minutes and the sky goes with it (IMP-116) — this walk takes three
-minutes, so that is plenty, but if the sky vanishes mid-walk that is the sub, not a new defect.
-
-**Day mode. The whole walk is one gesture, done twice.**
-
-1. 🔴 **The gesture, and the point of the row.** With Meteor Shower applied, look at Home and note where the
-   **"Today's reflection" card** (or "Today is at rest") sits against the top of the screen. Now go to the
-   Shop, apply **Golden Sun** (the default), and come back. **Nothing below the hero may move.** Before
-   IMP-130 the whole page jumped ~86dp; after it, the only thing that changes is what is behind the numeral.
-   Switch back and forth once more to be sure. **This is the pass/fail.**
-2. 🔴 **The numeral and the light — the step that already failed once, and has been fixed three times since.**
-   The art is no longer anchored at a hard-coded card-y 80: [`HomeScreen.js`](../src/screens/HomeScreen.js)
-   derives **one** `HERO_FOCAL = HERO_HEIGHT / 2` (168) and hands it to both the art and the numeral block, so
-   they cannot drift apart. **Three questions, one look, on the default sky:** is the big number sitting **in**
-   the convergence (IMP-131) — at night, inside `NightRays`' bloom, which exists to be the pool of candlelight
-   the number sits in; is the disc **centred in the card**, top margin equal to bottom, with no bare band under
-   it (IMP-132); and do the rays **run off every edge** rather than terminating in mid-air short of the rim
-   (IMP-133)? ⚠️ **The rays now pass behind the "day streak" label, the subtitle and the XP bar.** That is the
-   pre-IMP-130 composition returning and the owner approved it on emulator shots — it is busier than the last
-   two builds, but it is **not** a finding unless it costs legibility on the phone.
-3. **The card's lower third, with the meta row anchored to it.** IMP-131 pushes the level row and XP bar to
-   the bottom padding edge, so between the subtitle and that row there is now one open gap, and the row itself
-   sits below where the disc used to end. **Does that read as a composition — hero above, stat line at the
-   foot — or as two things that drifted apart?** ⚠️ **This question was already asked and answered once:** the
-   owner read it as a void (*"empty and ugly"*) and the answer was **IMP-133**, which grew the ray reach rather
-   than moving anything. So the disc no longer ends inside the card at all, and if this still reads as a void
-   it is a **new** finding about the gap between the subtitle and the meta row — **not** a re-open of
-   IMP-130's 336, IMP-131's anchoring or IMP-133's reach.
-3b. **Over footage, the same row.** With Meteor Shower on, the meta row should now land inside `SkyHero`'s
-   bottom-28% scrim ([`skyHero.js:45`](../src/home/skyHero.js#L45)) rather than above it. Check the XP bar
-   still reads as a bar over a passing whitecap — that was WALK-22 step 4, it has moved twice since, and it
-   does not carry over for free.
-4. **Font scale.** Settings → Display → largest font, relaunch, look at both grounds. The hero is a **fixed**
-   336dp box with `overflow: 'hidden'`, so this is the one place the ruling can bite: the spec measured ~270dp
-   of content against 288dp of usable box at the 1.5 cap. **Is anything clipped — the subtitle, the XP labels,
-   the bar?** Reset the font size afterwards. ⚠️ **The video shell has carried this exposure since IMP-121
-   and nobody has ever looked at it**; this step is the first look, for both shells at once.
-5. **Night mode** (dev panel → Mode — **not** `adb uimode`, which does nothing in this app), then repeat
-   step 1's gesture once. Day and night over footage are meant to be identical (IMP-124); on the default sky
-   `NightRays` replaces `RayFan` at the same 300dp, so step 2's question is asked again on black.
-
-**What this row cannot settle.** It says nothing about any sky other than `meteor` — it is the only one with
-a clip. The 336dp ruling was made to protect the encode recipe for clips **not yet shipped**
-([`design-queue.md`](design-queue.md) → "The frame"), and no walk can confirm that until those clips exist.
-**Do not record this row as proving the crop is right for every sky.**
