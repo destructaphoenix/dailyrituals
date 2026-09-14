@@ -5431,9 +5431,119 @@ bundle is byte-identical, nothing to ship.
 
 ---
 
+## IMP-135 — screen cards that render from the shipped code (2026-09-14)
+
+**Severity 🎨 · Lane: tooling — ships nothing, no OTA, no build.** Claude Design had no current, screen-level
+truth: the 14 baselines were deleted the same day (outrun by 30+ commits), and a design request could only
+paste source by hand. This generates **Home's** screen — day and night — straight from
+[`HomeScreen.js`](../src/screens/HomeScreen.js) with `react-native-web`, so there is nothing to re-capture:
+regenerate and it is today's screen. The other six screens are a follow-up row.
+
+**What changed.**
+- New [`scripts/gen-screens.js`](../scripts/gen-screens.js) — a **second** require hook, deliberately not
+  sharing `gen-design-system.js`'s: that one maps `View → <g>` for rasterising art (drops position/size on
+  purpose), which would be fatal to a screen's layout. This hook maps `react-native` to
+  `react-native-web/dist/cjs` wholesale (not a narrow stub), so every RN export the app actually uses —
+  `Animated`, `Easing`, `PixelRatio`, `useWindowDimensions` — comes from the real react-native-web
+  implementation rather than a hand-picked subset. `react-native-svg` maps to its own `.web.js` build; a
+  `Module._resolveFilename` patch redirects that build's internal `require("./elements")` to
+  `elements.web.js`, since plain node has no bundler-style platform-extension resolution and would otherwise
+  pull in the native Fabric codegen (Flow syntax, fatal under node). `expo-video`, `expo-linear-gradient`,
+  `react-native-safe-area-context` and `react-native-reanimated` are stubbed per the spec's own audit — the
+  reanimated stub is a no-op identity (six of eight `motion.js` exports have no consumer, and effects never
+  run under `renderToStaticMarkup` anyway, so every shared value simply stays at its initial frame).
+  Two more small, load-bearing patches, both diagnosed empirically rather than assumed: react-native-web's
+  `Platform.select` ignores `.OS` entirely and only ever reads a `web` key (its own source), so without a
+  patch every `Card` shadow silently drops to `{}`; and `<Image>` only paints a background for a URI already
+  in `ImageLoader`'s cache (populated by a real fetch), so under a one-shot SSR render the video sky's poster
+  would render as nothing without one line forcing `has()` true. `Dimensions.set()` pins the render to a
+  360dp window, the same convention `heroReach(360)` already uses on the frozen card, so both cards' reach
+  numbers describe the same phone.
+- New [`scripts/screenFixtures.js`](../scripts/screenFixtures.js) — `homePropsFromState(state)`, the one
+  function that turns a `buildState()`/`buildScenario()` output (a persisted-state slice) into HomeScreen's
+  ~32 props, mirroring the derivations `RitualsApp.js:959` makes by hand (`levelFromXp`, `currentStreak`
+  anchored to the fixture's own newest entry rather than the real device date, `COPY[tone]`). Callbacks are
+  all no-ops. `gen-screens.js` feeds it `buildScenario('storeShots', '2026-01-01')` — the date is pinned only
+  so a regeneration is reproducible.
+- New [`scripts/dsCard.js`](../scripts/dsCard.js) and [`scripts/fontEmbed.js`](../scripts/fontEmbed.js) —
+  `gen-design-system.js`'s page chrome (`PAGE_CSS`/`page()`) and its 3-face `componentFonts()` embed, pulled
+  out verbatim so both generators share one page frame and one font subset without either requiring the
+  other (which would install a conflicting hook). `gen-design-system.js`'s own output is byte-for-byte
+  identical before and after this extraction — verified by diffing a full regeneration of `design-system/`
+  against a stashed pre-change tree.
+- `design-system/screens/home-day.html` / `home-night.html` — each shows **both grounds** side by side
+  (classic `RayFan`/`NightRays` and the video-sky poster, `activeSky: 'meteor'`, owned via `storeShots`'
+  `ownAll` knob), states in its own copy that this is a layout render and not a device capture (shadows, font
+  metrics and video playback all differ), and cites the fixture. The hero is drawn at `HERO_HEIGHT` imported
+  from [`heroFrame.js`](../src/home/heroFrame.js) — never retyped, the same rule IMP-134 set for the frozen
+  card.
+
+**The proof.** [`genScreens.test.js`](../__tests__/scripts/genScreens.test.js) parses `HomeScreen.js`'s own
+destructured signature with `@babel/core` (not a hand-typed list, which would be exactly the drift being
+guarded against) and asserts `homePropsFromState` supplies every one of its ~32 props. **Confirmed red
+first**: a throwaway prop added to `HomeScreen`'s signature failed the assertion (`["throwawayProp"]` not
+empty); removed, green again. Two more tests read the *generated* HTML and confirm `height:336px` appears
+twice in each mode's card (once per ground) and that the card states it is not a device capture. **1257
+passed, 118 suites** (was 1252/117, +5 tests, +1 suite). `node scripts/gen-screens.js` and
+`npx expo export --platform android` both clean — the export confirms `src/dev/` (pulled in only by
+`screenFixtures.js`) never reaches the app bundle. Commit `bbb2d20`.
+
+**One correction to the spec's own pre-verification.** Its audit table said
+`require('react-native-web/dist/cjs/exports/AppRegistry').default.getApplication` resolves to a function —
+in practice `.default` is `undefined` on that module (it exports the `AppRegistry` class directly, no ESM
+interop wrapper needed); dropping `.default` was all that was needed. Logged per the spec's own instruction
+to name a discrepancy rather than silently work around it; nothing else in the audit needed correcting.
+
+**Not in this row.** The other six screens (a follow-up row), pushing to the live Claude Design project
+(`DesignSync`, a separate act), and anything that changes how the app itself renders. No `Release-Lane:`
+trailer — the app bundle is byte-identical, nothing to ship.
+
+---
+
 ## Session notes
 
 _Moved from `PROGRESS.md` 2026-09-14 under its two-notes rule._
+
+_2026-09-14 (Opus — **the design system stops lying, and design gets two new rows: the hero's empty top and the storefront.**) — ✅ specs written, deletions done._
+
+**What the owner asked for, in their words:** *"I do not want anything stale in the design system. Delete it,
+don't even ask for confirmation"*, and *"spec with room for creativity — do not bound Claude Design with your
+jargon and restrictions. The purpose of design is not only to improve the app but also to make it appealing
+for marketing and ads."* Both are structural instructions, not preferences about one row, so both are written
+into the playbook's standing rules rather than into a single packet.
+
+**Deleted, this chat, no confirmation asked (as instructed):** all **14** baseline captures
+(`design-system/screens/*.png`, ~3.8MB), both `screens/baseline-*.html` cards that existed only to display
+them, and `package.json`'s jest-ignore for `design_handoff_plus_compliance/`, a directory that no longer
+exists. **The deletion was evidence-led, not a sweep:** four of the seven screens had been rebuilt underneath
+their pictures (Today 8 commits, Shop 11 + 6 to `shopui.js`, Insights 2 — one of which *deleted the grid the
+picture was evidence of* — Write 1). The other three were untouched by source, and went anyway on the
+owner's call: a half-trustworthy baseline set is worse than none, because nobody can tell which half they
+are holding. `proposals/` was exempted and is untouched.
+
+**What survives the deletion, and it is better:** every packet in `docs/design-requests/` splices the real
+source in, generated, so it cannot drift. That was always the fallback for un-captured screens; it is now
+the only mechanism, and it is stronger evidence than a screenshot.
+
+**IMP-134 is scoped** — the drift the deletion exposed. `frozenPage()` renders the frozen pair at the
+component defaults (`focal 80`, `reach 150`), which the app stopped passing at IMP-132, while the card's own
+copy claims *"what you see is what renders"*. ⚠️ **The build has one real trap and the spec names it:** the
+generator's require hook maps every RN `View` to `<g>` and **deliberately drops position and size**, so
+`top: focal - reach` can never reach the SVG — the frame has to be drawn in the card's own HTML, with every
+number imported from a new `src/home/heroFrame.js` rather than typed.
+
+**Two design rows, both packeted.** **D-15 — the hero's empty top:** 127dp of 336 (38%) above the numeral
+holds nothing; the card grew 104dp for the video crop and 88 went to the top, because the numeral is welded
+to the centre and the meta row to the bottom edge. ⚠️ **This is not a defect** — WALK-24 closed ✅ the same
+day, all five steps — which is exactly why the packet offers four legitimate answers including *"the
+emptiness is right and here is why"*, and puts the page header, the greeting and the mode toggle in play.
+**D-16 — the Play listing:** the seven live store assets are 2026-08-16/17, shot 05 pictures a grid IMP-120
+deleted, and the app's best feature (video skies) appears nowhere. Its capture half is **WALK-25**,
+deliberately sequenced *behind* the design so a re-shoot does not just refresh seven compositions nobody
+designed.
+
+**The exact next step.** A build chat takes IMP-134. A design chat sends D-15 or D-16 — both are
+select-all-and-paste. WALK-25 is emulator work and agent-runnable whenever raw captures are wanted.
 
 _2026-09-14 (Opus — **IMP-133 built + walked: the sunburst was showing where it ends. Found by the owner on
 the IMP-132 OTA; they guessed the fix.**) — ✅ code-complete, ✅ emulator-proven, shipped by OTA._
