@@ -50,6 +50,35 @@ describe('the Plus card quotes the app, not a memory of it', () => {
   });
 });
 
+describe('the frozen card states the geometry the app renders', () => {
+  // IMP-134: frozenPage() used to call renderArt() with `{ size }` only, so
+  // both PNGs came out at the component defaults (focal 80, reach 150) — the
+  // app stopped passing those at IMP-132. Reading the GENERATED file (not this
+  // generator's source) is the point: if the app's geometry moves again and
+  // nobody reruns `node scripts/gen-design-system.js`, the stale committed
+  // rays.html no longer matches these imported, freshly-computed numbers, and
+  // this test catches it.
+  const { HERO_HEIGHT, HERO_FOCAL, heroReach } = require('../../src/home/heroFrame');
+  const reach = heroReach(360);
+  const rays = fs.readFileSync(path.join(ROOT, 'design-system', 'frozen', 'rays.html'), 'utf8');
+
+  test('both figures are drawn at the app\'s real focal and reach, not the component defaults', () => {
+    const focalCount = (rays.match(new RegExp(`focal ${HERO_FOCAL} `, 'g')) || []).length;
+    const reachCount = (rays.match(new RegExp(`reach ${reach}(?:[^0-9]|$)`, 'g')) || []).length;
+    expect(focalCount).toBe(2);
+    expect(reachCount).toBe(2);
+  });
+
+  test('the demo box is the hero card\'s own height', () => {
+    expect((rays.match(new RegExp(`height:${HERO_HEIGHT}px`, 'g')) || []).length).toBe(2);
+  });
+
+  test('does not describe the rays as a fixed 300dp disc', () => {
+    expect(rays).not.toMatch(/300\s*dp\s*disc/i);
+    expect(rays).not.toMatch(/what you see is what renders/);
+  });
+});
+
 describe('the retired claims stay retired', () => {
   test('does not say PLUS_ENABLED is false', () => {
     expect(gen).not.toMatch(/PLUS_ENABLED<\/code> is <code>false<\/code> and stays false/);

@@ -27,17 +27,22 @@
   .pane h3{margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:.07em;color:#71717a}
 </style>
 <h1>The rays</h1>
-<p class="lede">The two hero backdrops — one per mode — rendered from the real components in <code>src/art.js</code>, at t=0.</p>
+<p class="lede">The two hero backdrops — one per mode — rendered from the real components in <code>src/art.js</code>, at the app's own geometry, at t=0.</p>
 <div class="note" style="border-left-color:#dc2626;background:#fef2f2">
-<strong>FROZEN — reference only.</strong> This pair is the app's whole signature: the same 24-spoke fan,
-once for day and once for night. Compose around them. Never redraw, restyle, recolor, or re-time them.
-Designs may position them, size them, and animate their <em>container</em> (opacity, translate, scale)
-— nothing inside.
+<strong>FROZEN — reference only.</strong> The signature is the 24-spoke fan itself: its colour, the 60s
+rotation, and (at night) the amber bloom where the rays converge. Never redraw, restyle, recolor, or
+re-time those. Compose around them.
 </div>
 
-<div class="note">These are not mockups or redraws: each PNG is rasterised from the shipped component with
-the shipped default palette, so what you see is what renders. Both are captured at rotation 0 —
-<code>RayFan</code> and <code>NightRays</code> turn once per 60s in the app.</div>
+<div class="note"><strong><code>focal</code> and <code>reach</code> are ordinary props, not part of the
+signature.</strong> They say where the fan converges and how far it runs, and a design is free to move or
+scale the disc by changing them — that is exactly what IMP-131/132/133 did to fit the hero's own card. The
+box below is drawn at the app's real values (<code>HERO_FOCAL</code>, and the reach for a 360dp window),
+imported from <code>src/home/heroFrame.js</code>, so what you see here is what renders on the phone —
+not the component's own unmoved defaults.</div>
+
+<div class="note">Both are captured at rotation 0 — <code>RayFan</code> and <code>NightRays</code> turn
+once per 60s in the app.</div>
 
 <div class="note"><strong>Nothing else is frozen.</strong> Any other artwork you find in the app is
 ordinary decoration, not brand: a design is free to replace it. If it is not on this card, it is not
@@ -45,16 +50,24 @@ the signature.</div>
 
 <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr));max-width:1180px">
   <figure style="margin:0;border:1px solid #e4e4e7;border-radius:12px;overflow:hidden;background:#fff">
-    <img src="RayFan-day.png" alt="RayFan" style="display:block;width:100%;background:#f9f7f4">
+    <div style="position:relative;width:100%;max-width:350px;height:336px;
+         overflow:hidden;background:#f9f7f4">
+      <img src="RayFan-day.png" alt="RayFan" style="position:absolute;top:-83px;left:50%;
+           width:502px;height:502px;margin-left:-251px">
+    </div>
     <figcaption style="padding:10px 12px;border-top:1px solid #e4e4e7">
-      <code>RayFan</code> · mode day<br>
+      <code>RayFan</code> · mode day · focal 168 · reach 251<br>
       <span style="color:#52525b;font-size:13px">Day hero backdrop. 24 spokes, one full rotation per 60s.</span>
     </figcaption>
   </figure>
   <figure style="margin:0;border:1px solid #e4e4e7;border-radius:12px;overflow:hidden;background:#fff">
-    <img src="NightRays-night.png" alt="NightRays" style="display:block;width:100%;background:#000000">
+    <div style="position:relative;width:100%;max-width:350px;height:336px;
+         overflow:hidden;background:#000000">
+      <img src="NightRays-night.png" alt="NightRays" style="position:absolute;top:-83px;left:50%;
+           width:502px;height:502px;margin-left:-251px">
+    </div>
     <figcaption style="padding:10px 12px;border-top:1px solid #e4e4e7">
-      <code>NightRays</code> · mode night<br>
+      <code>NightRays</code> · mode night · focal 168 · reach 251<br>
       <span style="color:#52525b;font-size:13px">Night hero. The same 24-spoke fan on true black + a central amber bloom.</span>
     </figcaption>
   </figure>

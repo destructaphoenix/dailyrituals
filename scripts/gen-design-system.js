@@ -103,6 +103,9 @@ const { Resvg } = require('@resvg/resvg-js');
 const theme = require(path.join(SRC, 'theme.js'));
 const data = require(path.join(SRC, 'data.js'));
 const art = require(path.join(SRC, 'art.js'));
+const heroFrame = require(path.join(SRC, 'home', 'heroFrame.js'));
+
+const { HERO_HEIGHT, HERO_FOCAL, heroReach } = heroFrame;
 
 const { makeTheme, DEFAULT_SETTINGS, ThemeContext } = theme;
 const { SHOP_PALETTES } = data;
@@ -397,18 +400,32 @@ const FROZEN = [
   { name: 'NightRays', C: art.NightRays, size: 300, mode: 'night', note: 'Night hero. The same 24-spoke fan on true black + a central amber bloom.' },
 ];
 
+// The generator's own illustrative card width — a round stand-in for a common
+// phone width (390 minus the hero wrapper's 20+20 padding), NOT one of
+// HERO_FRAME's exports: it only sizes the demo box below, and the box centres
+// the disc with `left:50%`, so its exact width never affects the geometry
+// under test. What the app actually computes — HERO_FOCAL and the reach for a
+// 360dp window — comes from heroFrame.js and is never retyped here.
+const FROZEN_FRAME_WIDTH = 350;
+
 function frozenPage() {
   fs.mkdirSync(path.join(OUT, 'frozen'), { recursive: true });
+  const reach = heroReach(360);
+  const canvas = reach * 2;
   const cards = FROZEN.map((f) => {
     const t = f.mode === 'night' ? DEFAULT_NIGHT : DEFAULT_DAY;
     const bg = t.colors.cream;
-    const svg = renderArt(f.C, { size: f.size }, t, f.size);
+    const svg = renderArt(f.C, { size: f.size, focal: HERO_FOCAL, reach }, t, canvas);
     const png = `${f.name}-${f.mode}.png`;
     writePng(path.join(OUT, 'frozen', png), svg, bg);
     return `  <figure style="margin:0;border:1px solid #e4e4e7;border-radius:12px;overflow:hidden;background:#fff">
-    <img src="${png}" alt="${f.name}" style="display:block;width:100%;background:${bg}">
+    <div style="position:relative;width:100%;max-width:${FROZEN_FRAME_WIDTH}px;height:${HERO_HEIGHT}px;
+         overflow:hidden;background:${bg}">
+      <img src="${png}" alt="${f.name}" style="position:absolute;top:${HERO_FOCAL - reach}px;left:50%;
+           width:${canvas}px;height:${canvas}px;margin-left:${-canvas / 2}px">
+    </div>
     <figcaption style="padding:10px 12px;border-top:1px solid #e4e4e7">
-      <code>${f.name}</code> · mode ${f.mode}<br>
+      <code>${f.name}</code> · mode ${f.mode} · focal ${HERO_FOCAL} · reach ${reach}<br>
       <span style="color:#52525b;font-size:13px">${f.note}</span>
     </figcaption>
   </figure>`;
@@ -417,18 +434,23 @@ function frozenPage() {
   return page(
     {
       group: 'Frozen', name: 'The rays',
-      lede: 'The two hero backdrops — one per mode — rendered from the real components in <code>src/art.js</code>, at t=0.',
+      lede: 'The two hero backdrops — one per mode — rendered from the real components in <code>src/art.js</code>, at the app\'s own geometry, at t=0.',
     },
     `<div class="note" style="border-left-color:#dc2626;background:#fef2f2">
-<strong>FROZEN — reference only.</strong> This pair is the app's whole signature: the same 24-spoke fan,
-once for day and once for night. Compose around them. Never redraw, restyle, recolor, or re-time them.
-Designs may position them, size them, and animate their <em>container</em> (opacity, translate, scale)
-— nothing inside.
+<strong>FROZEN — reference only.</strong> The signature is the 24-spoke fan itself: its colour, the 60s
+rotation, and (at night) the amber bloom where the rays converge. Never redraw, restyle, recolor, or
+re-time those. Compose around them.
 </div>
 
-<div class="note">These are not mockups or redraws: each PNG is rasterised from the shipped component with
-the shipped default palette, so what you see is what renders. Both are captured at rotation 0 —
-<code>RayFan</code> and <code>NightRays</code> turn once per 60s in the app.</div>
+<div class="note"><strong><code>focal</code> and <code>reach</code> are ordinary props, not part of the
+signature.</strong> They say where the fan converges and how far it runs, and a design is free to move or
+scale the disc by changing them — that is exactly what IMP-131/132/133 did to fit the hero's own card. The
+box below is drawn at the app's real values (<code>HERO_FOCAL</code>, and the reach for a 360dp window),
+imported from <code>src/home/heroFrame.js</code>, so what you see here is what renders on the phone —
+not the component's own unmoved defaults.</div>
+
+<div class="note">Both are captured at rotation 0 — <code>RayFan</code> and <code>NightRays</code> turn
+once per 60s in the app.</div>
 
 <div class="note"><strong>Nothing else is frozen.</strong> Any other artwork you find in the app is
 ordinary decoration, not brand: a design is free to replace it. If it is not on this card, it is not
@@ -777,9 +799,11 @@ function baselinePages() {
     if (!shots.length) continue;
     const figs = shots.map((f) => {
       const key = f.replace(`${mode}-`, '').replace('.png', '');
+      const captured = fs.statSync(path.join(dir, f)).mtime.toISOString().slice(0, 10);
       return `  <figure style="margin:0">
     <img src="${f}" alt="${key}" style="display:block;width:100%;border:1px solid #e4e4e7;border-radius:10px">
-    <figcaption style="padding:8px 2px;font-size:13px;color:#52525b"><code>${key}</code> — ${SCREEN_TITLES[key] || ''}</figcaption>
+    <figcaption style="padding:8px 2px;font-size:13px;color:#52525b"><code>${key}</code> — ${SCREEN_TITLES[key] || ''}<br>
+    <span style="font-size:11px;color:#a1a1aa">captured ${captured}</span></figcaption>
   </figure>`;
     }).join('\n');
 
@@ -802,6 +826,10 @@ Note what carries the depth here: there are <em>no shadows</em> in night mode. S
       `<div class="note"><strong>Design <em>from</em> these, not from a description.</strong> This is the
 single biggest lever on whether output reads as the next version of Daily Rituals rather than a generic
 wellness app. Match the density, the card rhythm and the amount of breathing room you see here.</div>
+<div class="note"><strong>A stale capture is worse than none.</strong> Each figure above is timestamped
+with its own file's mtime. A capture older than the app it claims to show is to be <strong>deleted, not
+captioned</strong> — 14 baselines survived a month past the builds that changed underneath them, which is
+the exact failure this line exists to stop happening again.</div>
 ${pairNote}
 <div class="note">Captured through <code>npm run shots</code> (Maestro + adb) against the
 <code>storeShots</code> dev scenario — a 210-day streak, "Sam", 2,400 embers — with the status bar in demo
