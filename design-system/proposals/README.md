@@ -82,8 +82,9 @@ unrecoverable** — the design cards' crops are non-destructive CSS, so the uplo
 Full-bleed animated streak heroes with per-sky XP-bar colours. **The app has nothing like this** —
 `SkyPreview` ([`src/shopui.js`](../../src/shopui.js)) draws static gradients, and `SHOP_SKIES` knows five
 static kinds. Porting these is a product decision with native weight (video playback, bundle size,
-battery), not a design task. **Meteorfall is the exception: it is drawn in CSS, so it has no footage
-dependency and is the cheapest of the seven to port.**
+battery), not a design task. ~~**Meteorfall is the exception: it is drawn in CSS, so it has no footage
+dependency and is the cheapest of the seven to port.**~~ ⏸ **Struck 2026-09-15 — the owner does not want
+Meteorfall and will replace it.** Being cheap to port is not a reason to port something nobody wants.
 
 ### Brand
 

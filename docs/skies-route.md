@@ -109,7 +109,7 @@ made above (720 short edge accepted; **posters are required, not optional**):
 | **Event Horizon** | ✅ one clip, both modes | 🔴 none | A poster frame. Also: the file is `eventhorizon-temp.mp4` — **confirm it is the final grade, not a working copy**, before it is baked. |
 | **Emberfield** | ✅ one clip | 🔴 none | A poster frame. |
 | **Starfall** | ✅ one clip | 🔴 none | A poster frame. 20.2s against a 6–10s spec — **accepted, do not re-open** (ruling 2). |
-| **Meteorfall** | 🔴 none — it is CSS | — | Footage, if it is wanted as a sky. **Or port the CSS as a drawn sky**, which is the cheapest thing on this page and needs no clip, no R2 and no poster. |
+| **Meteorfall** | 🔴 none — it is CSS | — | ⏸ **PARKED — owner, 2026-09-15: *"hold off on meteorfall. I do not like it and will replace it with something better so leave it."*** Do not port it, do not generate footage for it, do not propose it as the cheap win. Its replacement is the owner's to choose. |
 
 🔑 **A poster is one command** (`ffmpeg -i clip.mp4 -vframes 1 -ss <t> poster.png`), so three of the six are
 a few minutes apart from Aurora and Sakura Fuji.

@@ -195,7 +195,10 @@ the two are indistinguishable. **Do not remove the fallback** — see WALK-19.
   `Sakura Fuji` are complete (footage **and** posters); `Event Horizon`, `Emberfield` and `Starfall` need
   one poster frame each. **The clips cannot travel through `DesignSync` (binary, 256 KiB cap), so the owner
   must export them to disk**; everything after that — crop offsets, encode, SSIM loop check, R2 upload — is
-  scriptable, and the app side is a **data-only edit** to `SHOP_SKIES` with no code at all.
+  scriptable (**[`scripts/encode-sky.py`](scripts/encode-sky.py)**, drop clips in `sky-src/`), and the
+  app side is a **data-only edit** to `SHOP_SKIES` with no code at all.
+  ⏸ **Meteorfall is PARKED — owner, 2026-09-15:** *"hold off on meteorfall. I do not like it and will
+  replace it with something better so leave it."* **Do not port it and do not offer it as the cheap win.**
 - **Perk #6, the PDF, is still not built** (IMP-022, deferred). It was **cut** from `PLUS_PERKS` rather
   than built, which is how `PLUS_ENABLED` flipped honestly. Gate checklist in the playbook → Phase 10b.
 
