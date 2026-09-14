@@ -13,7 +13,7 @@
 > re-litigate a "why", and do not improve the scope.** If a step turns out to be impossible or the code
 > contradicts the spec, **STOP** and log it to `PROGRESS.md` → Open items rather than inventing a fix.
 >
-> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **1249 passed, 117 suites** — verified 2026-09-14, after IMP-133), `npx expo export --platform android` clean, commit with the **exact** message given, then
+> **Every spec ends the same way:** `npm test` green (must stay ≥ the prior count, currently **1252 passed, 117 suites** — verified 2026-09-14, after IMP-134), `npx expo export --platform android` clean, commit with the **exact** message given, then
 > update `PROGRESS.md` (tick the backlog row, write the session note) and **move the finished spec from
 > this file into `docs/build-log.md`**.
 >
@@ -24,116 +24,15 @@
 
 ## The queue
 
-**One row is open.** IMP-131, IMP-132 and IMP-133 (the sunburst regressions) are done, shipped and proven
-on hardware ([WALK-24](walk-open.md) closed ✅ 2026-09-14); IMP-128 stays owner-gated.
+**The queue is EMPTY for build chats.** IMP-131, IMP-132, IMP-133 (the sunburst regressions) and IMP-134
+(the design system) are all done, and IMP-128 stays owner-gated.
 
 | Row | What | Lane | Take it? |
 | --- | --- | --- | --- |
-| **IMP-134** | **The design system has to say what the app actually draws** — the frozen card renders the rays at defaults the app stopped passing three fixes ago | **tooling** (ships nothing to users) | ✅ **TAKE THIS ONE** |
 | IMP-128 | Apply the motion vocabulary — `riseIn` on cards and rows, `popIn` on badges, `useCountUp` on the streak | OTA | ⏸ **owner's yes first — do not start** |
 
-**IMP-124 through IMP-133 are done** (archived to `docs/build-log.md`, commits `87771c4`, `d57dc2d`,
-`0502790`, `402391b`, `0a2f595`, `111c3de`, `28654cb`, `bcaebb6`, this chat's).
-
----
-
-
-### IMP-134 — the design system has to say what the app actually draws
-
-**Severity 🎨 · Lane: tooling — this ships nothing to a user.** No app behaviour changes, no OTA, no build.
-The deliverable is that `design-system/` stops describing a version of the art the app abandoned, and that
-a test makes it impossible for that to happen again.
-
-**The defect, in one line.** [`gen-design-system.js`](../scripts/gen-design-system.js) renders the frozen
-pair as `renderArt(f.C, { size: f.size }, t, f.size)` — **props: `size` only** — so both PNGs come out at
-the component defaults, `focal = 80` and `reach = size / 2 = 150`. The app has passed neither of those
-since IMP-132: it passes `focal = HERO_FOCAL` (168) and a `reach` derived from the hero card's diagonal
-(~230dp at a 360dp window). **The card's own copy says *"each PNG is rasterised from the shipped component
-with the shipped default palette, so what you see is what renders."* That sentence is now false**, and it is
-the exact failure the Plus card had in September — a card describing something the app does not have.
-
-⚠️ **Already done, 2026-09-14 — do NOT redo or revert it.** On the owner's instruction (*"I do not want
-anything stale in the design system"*): all **14** baseline PNGs and both `screens/baseline-*.html` cards
-are **deleted**, and `package.json`'s dead `design_handoff_plus_compliance` jest-ignore is gone. The
-re-capture is [WALK-25](walk-open.md#walk-25--recapture-the-shot-set), a separate row for a separate chat.
-
-#### Step 1 — give the hero frame one home, `src/home/heroFrame.js`
-
-Move these five out of [`HomeScreen.js`](../src/screens/HomeScreen.js#L34) into a new pure module and
-export each one: `HERO_HEIGHT` (336), `HERO_FOCAL` (`HERO_HEIGHT / 2`), `HERO_PAD` (20),
-`HERO_REACH_MARGIN` (1.08) and `heroReach(windowWidth)`. `HomeScreen.js` imports them; **the comments move
-with them, they are the reasoning and they are not to be summarised.** Nothing else changes — no behaviour,
-no render output, and every existing hero test must pass **untouched**. If one needs editing, stop: the move
-was not pure.
-
-**Why a module and not an export from the screen:** the generator and the test both have to read these, and
-importing a screen pulls the whole render tree into node for two numbers.
-
-#### Step 2 — the frozen card renders the real composition
-
-In `frozenPage()`:
-
-- Pass the app's real props: `renderArt(f.C, { size: f.size, focal: HERO_FOCAL, reach: heroReach(360) }, t, ...)`.
-  ⚠️ **The raster size must follow `reach`, not stay at 300** — the component builds its own `d = reach * 2`
-  viewBox, so a 300px canvas would crop the disc it is supposed to be showing.
-- ⚠️ **The require hook cannot place it.** [The stub](../scripts/gen-design-system.js#L52) maps every RN
-  `View` to `<g>` and **drops position and size on purpose** — *"only opacity survives"* — so `top: focal -
-  reach` never reaches the SVG. **Do not fight this and do not extend the stub.** Draw the relationship in
-  the card's own HTML instead, which is what the file says it is for (*"this file owns layout and captions,
-  never values"*): a `350 × HERO_HEIGHT` box at `t.radius.card` with `overflow:hidden`, the PNG absolutely
-  positioned at `top: HERO_FOCAL - reach`, sized `reach * 2`. That is the app's geometry, expressed in the
-  one language available here, with **every number imported from Step 1's module and none of them typed**.
-- Rewrite the caption to state what is frozen and what is not: the 24 spokes, the colour, the 60s rotation
-  and the night bloom are frozen; **`focal` and `reach` are ordinary props and a design may move and scale
-  the disc.** D-15 turns on exactly that distinction, so it has to be legible here.
-
-#### Step 3 — a capture can no longer hide its age
-
-`baselinePages()` stays (it self-disables when no PNGs are present, which is why it emits nothing today, and
-WALK-25 will refill it). Add one thing: each figure's caption prints that file's **mtime**, and the card
-carries a line saying a capture older than the app is to be deleted rather than captioned. **This is the
-whole reason 14 stale shots survived a month.**
-
-#### Step 4 — the guard test
-
-Extend [`__tests__/scripts/genDesignSystem.test.js`](../__tests__/scripts/genDesignSystem.test.js) in the
-shape it already uses for the Plus card. New `describe`: **the frozen card states the geometry the app
-renders.** Assert the generated `frozen/rays.html` contains the values imported from `src/home/heroFrame.js`
-— **the test must not contain the literals `336`, `168` or `230`**; it computes them the way the app does,
-so changing the app's geometry fails this test until the card is regenerated. Also assert the retired claim
-stays retired: the card must **not** describe the rays as a 300dp disc.
-
-**Verify red first.** Run the new `describe` against the *current* generator output before touching
-`frozenPage()`; if it passes, it is asserting the wrong thing.
-
-#### Step 5 — regenerate and commit the output
-
-`node scripts/gen-design-system.js` (there is no npm script; do not add one), then commit the regenerated
-`frozen/rays.html` and both PNGs **with** the source change. A generator commit that leaves stale output in
-the tree is the same defect in a different file.
-
-#### Done means
-
-`npm test` green and **≥ 1249 passed, 117 suites** (the new `describe` adds cases; no existing test may
-move), `npx expo export --platform android` clean, and the regenerated card committed. **Commit message,
-exactly:**
-
-```
-fix(design-system): the frozen card draws the rays the app actually draws (IMP-134)
-```
-
-**No `Release-Lane:` trailer** — there is nothing to release; the app bundle is byte-identical.
-
-⚠️ **What this row does NOT do.** It does not push to the live Claude Design project. ✅ **The live project's
-own stale copies are already gone** — 63 files deleted 2026-09-14 by `DesignSync` (the 14 baselines, both
-baseline cards, `scraps/`, and a duplicate of `art/brand/` sitting under `uploads/`). Pushing the *corrected*
-frozen card is a separate act and belongs to whoever runs this spec, after the regeneration is committed.
-
-✅ **`DesignSync` needs no login step — corrected 2026-09-14.** The repo previously said the owner had to run
-`/design-login` first. **That is wrong and it wasted a round trip:** `/design-login` is the fallback for a
-session with no claude.ai login. This session has one, so `list_projects` / `list_files` / `finalize_plan`
-just work, and the only gate is the ordinary permission prompt on a write. **Do not ask the owner to log in.**
-
+**IMP-124 through IMP-134 are done** (archived to `docs/build-log.md`, commits `87771c4`, `d57dc2d`,
+`0502790`, `402391b`, `0a2f595`, `111c3de`, `28654cb`, `bcaebb6`, `c9dc2dc`).
 
 ---
 

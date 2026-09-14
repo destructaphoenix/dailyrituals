@@ -5384,9 +5384,89 @@ this spec and still owed (steps 4/5 never run).
 
 ---
 
+## IMP-134 — the design system has to say what the app actually draws (2026-09-14)
+
+**Severity 🎨 · Lane: tooling — ships nothing, no OTA, no build.** [`gen-design-system.js`](../scripts/gen-design-system.js)'s
+`frozenPage()` called `renderArt(f.C, { size: f.size }, t, f.size)` — props: `size` only — so both frozen
+PNGs came out at the component defaults, `focal 80` and `reach 150`. The app has passed neither since
+IMP-132 (`focal HERO_FOCAL` = 168, `reach` derived from the hero card's own diagonal). The card's own copy
+said *"each PNG is rasterised from the shipped component with the shipped default palette, so what you see
+is what renders"* — false since IMP-132, the same failure class as the Plus card in September (a card
+describing an app it no longer has).
+
+**What changed.**
+- New [`src/home/heroFrame.js`](../src/home/heroFrame.js) — `HERO_HEIGHT` (336), `HERO_FOCAL`
+  (`HERO_HEIGHT / 2`), `HERO_PAD` (20), `HERO_REACH_MARGIN` (1.08) and `heroReach(windowWidth)`, moved out of
+  [`HomeScreen.js`](../src/screens/HomeScreen.js) verbatim, comments included — a pure move, confirmed by
+  `HomeScreenSkyHero.test.js` passing untouched (18/18). Reason for a module rather than a screen export: the
+  generator and a guard test both need to read these two numbers without pulling a screen's render tree into
+  node.
+- `frozenPage()` now calls `renderArt(f.C, { size: f.size, focal: HERO_FOCAL, reach: heroReach(360) }, t,
+  reach * 2)` — the raster canvas follows `reach`, not a fixed 300, or a wider disc gets cropped. The
+  require hook's `View → <g>` stub drops position/size on purpose (*"only opacity survives"*), so the
+  focal/reach relationship is drawn in the card's own HTML instead: a `100% (max 350) × HERO_HEIGHT` box,
+  `overflow:hidden`, the PNG absolutely positioned at `top: HERO_FOCAL - reach`, horizontally centred. The
+  caption states what is frozen (24 spokes, colour, 60s rotation, night bloom) versus what is not (`focal`,
+  `reach` — ordinary props a design may move or scale), and drops the retired "what you see is what renders"
+  / fixed-disc framing.
+- `baselinePages()` — each screen-capture figure's caption now prints that file's own mtime, plus a card-wide
+  note that a capture older than the app it claims to show is to be **deleted, not captioned**. This is the
+  mechanism that would have caught the 14 stale baselines the owner deleted by hand 2026-09-14, for whichever
+  chat refills `screens/` next (WALK-25).
+
+**The proof.** [`genDesignSystem.test.js`](../__tests__/scripts/genDesignSystem.test.js) gained a third
+`describe` — **the frozen card states the geometry the app renders** — reading the *generated*
+`design-system/frozen/rays.html` (not this script's source text, unlike the existing Plus-card checks) and
+comparing it against `HERO_FOCAL`/`heroReach(360)`/`HERO_HEIGHT` imported fresh from `heroFrame.js`: no
+`336`, `168` or `230` is typed anywhere in the test, so if the app's geometry moves again and nobody reruns
+the generator, the stale committed file stops matching and the test fails. **Confirmed red first** against
+the pre-fix committed file (3 failures — focal/reach not found, retired "what you see is what renders" claim
+still present), then green after `node scripts/gen-design-system.js` regenerated `frozen/rays.html` and both
+PNGs. **1252 passed, 117 suites** (was 1249/117, +3 tests, no new suite). Export clean. Commit `c9dc2dc`.
+
+**Not in this row.** Does not push to the live Claude Design project — that project's own stale copies were
+already deleted 2026-09-14 by `DesignSync` (63 files). Pushing the corrected frozen card there is a separate
+act for whoever runs this spec next, after the regeneration commit. No `Release-Lane:` trailer — the app
+bundle is byte-identical, nothing to ship.
+
+---
+
 ## Session notes
 
 _Moved from `PROGRESS.md` 2026-09-14 under its two-notes rule._
+
+_2026-09-14 (Opus — **IMP-133 built + walked: the sunburst was showing where it ends. Found by the owner on
+the IMP-132 OTA; they guessed the fix.**) — ✅ code-complete, ✅ emulator-proven, shipped by OTA._
+
+**What finished.** The owner's report was *"the hero card looks empty and ugly now"* and their guess —
+*"would making the rays longer work?"* — was right. IMP-132 centred the disc and in doing so **made its own
+outer boundary visible for the first time**: at focal 80 the disc bled off the top edge and you never saw
+where it stopped; centred at 168 in a 350x336 card, all four sides fall inside the frame and the ray-tips
+terminate in mid-air. [`art.js`](src/art.js) gains `reach` (default `size / 2`, frozen for other callers) —
+**ray length had to be separated from box size, not just increased**, because the night bloom's
+`<Svg width={size}>` maps a *fixed* `viewBox="0 0 300 300"` and scaling `size` would have grown the pool of
+candlelight from r80 to r139. [`HomeScreen.js`](src/screens/HomeScreen.js) derives the reach from the card's
+own diagonal (`hypot((width - 40) / 2, 336 / 2) * 1.08`), ~20dp of clearance on every width from 360 to 430.
+
+**The proof.** IMP-132's containment case asserted the disc sat **wholly inside** the card — **that rule is
+what produced the bare rim** — so it is inverted: still centred on the focal, but `reach` must exceed the
+card's corner distance so the boundary is never visible. **1249 passed, 117 suites, unchanged** (a test was
+corrected, not added); export clean. Full detail:
+[`docs/build-log.md`](docs/build-log.md#imp-133--the-sunburst-was-showing-where-it-ends-2026-09-14).
+
+**Runtime proof — emulator, agent-run, this chat.** Fresh local dev build on `Pixel_9_Pro`, day and night
+both confirmed filled edge to edge with the bloom still tight at the numeral. **The installed dev client was
+vc15/1.0.9 and died on `Cannot find native module 'ExpoVideo'` because `android/` was 28 days stale — the
+prebuild staleness trap, exactly as recorded;** `expo prebuild --clean` + `expo run:android` cleared it.
+
+**Flagged before shipping, and approved.** The rays now pass behind the "day streak" label, the subtitle and
+the XP bar. That is the pre-IMP-130 composition returning, not a new liberty, but it is busier than the last
+two builds — the owner saw the emulator shots and said go.
+
+**Exact next step.** WALK-24 stays owed on device; its steps 2/3 now cover IMP-131's convergence, IMP-132's
+centring and IMP-133's bleed, and its steps 4 (max font, both shells) and 5 (night) have still never run.
+
+---
 
 _2026-09-14 (Opus — **IMP-132 built: the sunburst was centred on a card that no longer exists. The OTHER
 half of IMP-130's regression, found by the owner on the IMP-131 OTA.**) — ✅ code-complete, walk owed._
