@@ -177,12 +177,17 @@ export const SHOP_SKIES = [
     clip: `${SKY_BASE}/emberfield.mp4`,
     poster: `${SKY_BASE}/emberfield-poster.jpg`,
     accent: '#D98A3D',
-    credit: 'Higgsfield, paid tier, output owned. Generated 2026-09-12; full clip (60 frames) cut sky-src/embers.mp4, encoded 2026-09-15.' },
+    credit: 'Higgsfield, paid tier, output owned. Generated 2026-09-12; full clip (60 frames) cut sky-src/embers.mp4, encoded 2026-09-15, re-cropped to the card\'s 50%/58% framing 2026-09-16.' },
   { id: 'sakurafuji', name: 'Sakura Fuji', kind: 'sakura',  tier: 'plus',
     clip: `${SKY_BASE}/sakurafuji-night.mp4`,
     poster: `${SKY_BASE}/sakurafuji-night-poster.jpg`,
     accent: '#D9578A',
     credit: 'Veo, paid tier, output owned. Generated 2026-08-21; full clip (240 frames) cut sky-src/sakura blossom night.mp4, encoded 2026-09-15. Night clip only, one-clip sky by design; the day clip was also generated and can be added later as clipDay/clipNight if wanted.' },
+  { id: 'starfall', name: 'Starfall',      kind: 'star',    tier: 'plus',
+    clip: `${SKY_BASE}/starfall.mp4`,
+    poster: `${SKY_BASE}/starfall-poster.jpg`,
+    accent: '#C084E8',
+    credit: 'Veo, paid tier, output owned. Generated 2026-09-12; full clip (604 frames) cut sky-src/retro sky.mp4, encoded 2026-09-16. 20.2s against the 6-10s spec — accepted (skies-route.md ruling 2).' },
 ];
 
 // Max candles a user can hold at once. Caps CANDLE_PACKS and the Plus renewal grant.
