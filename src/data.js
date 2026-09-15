@@ -168,12 +168,21 @@ export const SHOP_SKIES = [
     poster: `${SKY_BASE}/ocean-poster.jpg`,
     accent: '#BFE6FF',
     credit: 'Pexels — Pexels Licence, free for commercial use, no attribution required. Sourced 2026-09-12; loop window (frames 226–345) cut 2026-09-13.' },
-  { id: 'aurora',   name: 'Aurora',        kind: 'aurora',  tier: 'plus' },
+  { id: 'aurora',   name: 'Aurora',        kind: 'aurora',  tier: 'plus',
+    clip: `${SKY_BASE}/aurora.mp4`,
+    poster: `${SKY_BASE}/aurora-poster.jpg`,
+    accent: '#6EE7B7',
+    credit: 'Veo, paid tier, output owned. Generated 2026-08-21; full clip (240 frames) cut sky-src/aurora.mp4, encoded 2026-09-15. One-clip sky by design (self-lit, no day form).' },
   { id: 'emberfield', name: 'Emberfield',  kind: 'ember',   tier: 'plus',
     clip: `${SKY_BASE}/emberfield.mp4`,
     poster: `${SKY_BASE}/emberfield-poster.jpg`,
     accent: '#D98A3D',
     credit: 'Higgsfield, paid tier, output owned. Generated 2026-09-12; full clip (60 frames) cut sky-src/embers.mp4, encoded 2026-09-15.' },
+  { id: 'sakurafuji', name: 'Sakura Fuji', kind: 'sakura',  tier: 'plus',
+    clip: `${SKY_BASE}/sakurafuji-night.mp4`,
+    poster: `${SKY_BASE}/sakurafuji-night-poster.jpg`,
+    accent: '#D9578A',
+    credit: 'Veo, paid tier, output owned. Generated 2026-08-21; full clip (240 frames) cut sky-src/sakura blossom night.mp4, encoded 2026-09-15. Night clip only, one-clip sky by design; the day clip was also generated and can be added later as clipDay/clipNight if wanted.' },
 ];
 
 // Max candles a user can hold at once. Caps CANDLE_PACKS and the Plus renewal grant.
