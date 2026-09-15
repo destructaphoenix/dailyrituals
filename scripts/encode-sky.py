@@ -122,6 +122,13 @@ def main():
     p.add_argument('--size', type=int, default=SIZE_DEFAULT, help='square edge (default 1280)')
     p.add_argument('--poster-frame', type=int, default=0,
                    help='which frame the poster is cut from (default 0)')
+    p.add_argument('--gop', type=int, default=48,
+                   help="keyframe interval (default 48). Use --gop 1 (all-keyframe) on a LOW-FPS "
+                        "clip: SkyHero plays with p.loop = true, and every loop restart is a seek "
+                        "back to frame 0. With a long GOP the player must re-decode from the last "
+                        "keyframe to get there, and at 10fps one held frame is 100ms -- long enough "
+                        "to read as a freeze. All-keyframe costs file size (Emberfield: 1.3 -> 2.8 MB) "
+                        "and NOTHING in fidelity -- it does not touch a pixel.")
     a = p.parse_args()
 
     stem = os.path.basename(a.clip).lower()
@@ -200,7 +207,7 @@ def main():
     r = run(['ffmpeg', '-v', 'error', '-i', a.clip, '-vf', ','.join(vf),
              '-c:v', 'libx264', '-profile:v', 'high', '-pix_fmt', 'yuv420p',
              '-crf', '23', '-maxrate', '3500k', '-bufsize', '7000k',
-             '-g', '48', '-keyint_min', '48', '-sc_threshold', '0',
+             '-g', str(a.gop), '-keyint_min', str(a.gop), '-sc_threshold', '0',
              '-an', '-fps_mode', 'passthrough', '-movflags', '+faststart',
              '-y', out])
     if r.returncode:
@@ -208,6 +215,11 @@ def main():
 
     enc = probe(out)
     mb = os.path.getsize(out) / 1e6
+    if enc['fps'] < 20 and a.gop != 1:
+        print(f"  ⚠️  {enc['fps']:.0f} fps with a {a.gop}-frame GOP. One frame is "
+              f"{1000 / enc['fps']:.0f}ms here, so a loop-restart re-decode is visible as a\n"
+              "      freeze where a 24fps clip hides it. Consider --gop 1 (see Emberfield,\n"
+              "      skies-route.md -> 'Emberfield does not stutter -- it loops').")
     print(f"  encoded  {out}  {enc['w']}x{enc['h']}  {enc['frames']} frames  {mb:.2f} MB")
 
     ok = True

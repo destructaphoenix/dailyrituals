@@ -1522,3 +1522,68 @@ playing, go to the Shop and switch back to **Golden Sun**).
   whichever sitting happens next.
 - **Do not record a pass on a streak state you did not put on the screen.** Steps 6 exists because the
   ramp at 0 and 1 is invisible on the owner's own journal.
+
+---
+
+## WALK-27 — four skies and a white numeral
+
+⬜ **Gate 🐛 — device only, and the owner has to run it.** Proves three things at once, because they are
+all one look at one card: [IMP-137](specs-open.md#imp-137--the-streak-numeral-stops-borrowing-the-palette-over-footage)
+(the numeral goes white over footage), [IMP-138](specs-open.md#imp-138--the-sky-catalogue-stops-shipping-placeholders)
+(three placeholder skies deleted), and the **unproven** Emberfield loop fix
+([skies-route.md](skies-route.md#emberfield-does-not-stutter--it-loops-2026-09-16)).
+
+🔴 **An emulator cannot run this row.** Every question in it is about moving video on a real panel at real
+brightness, and two of them are about a single held frame. An emulator drops frames on its own and will
+invent the exact defect this row is looking for.
+
+### Before you start — two things, and skipping either wastes the sitting
+
+1. **You must have Plus active**, or you own none of the four skies and there is nothing to look at.
+2. 🔴 **Clear the app's storage before you begin** (Settings → Apps → Daily Rituals → Storage → Clear
+   storage), **then sign back in / restore.** `expo-video` caches clips **by URL**, and the Emberfield fix
+   re-uploads the *same file name*. A phone that has played Emberfield before is holding the old bytes and
+   step 3 will measure nothing. ⚠️ This also wipes your journal if it is not backed up — **back up first.**
+
+### The steps
+
+1. **Open the Shop → Skies, and count the rows.** There should be **five**: Golden Sun (owned) and the four
+   Plus skies — Aurora, Emberfield, Sakura Fuji, Starfall. **Crescent Moon, Harvest Moon and Meteor Shower
+   must all be gone.** If any of the three is still listed, IMP-138 did not ship and the rest of this row
+   still runs.
+2. **Turn on each of the four skies in turn and look at the big streak number.** It should be **white** on
+   every one of them, with a soft dark halo behind it — not amber, not the colour of whichever palette you
+   are using. **Then go to the Shop and switch your palette** (any one) and come back. **The number must not
+   change colour.** That is the whole of IMP-137 in one check: over footage, the palette no longer reaches
+   the number. ⚠️ Now switch to **Golden Sun** — there the number *should* go back to the palette's deep
+   accent. If it stays white on the classic sky, that is a defect, not the fix.
+3. **Emberfield, and give it a full minute.** This is the freeze you reported. The clip is 6 seconds long,
+   so it restarts ten times a minute. **Watch the whole card, not the number**, and count whether you see it
+   hitch. Answer one of three ways, and please be literal:
+   - **gone** — a minute of watching and it never hitched;
+   - **still there, same rhythm** — roughly once every six seconds. That means the loop restart itself is
+     the cause and the cheap fix failed; the answer is the crossfade shell, which is a build task;
+   - **still there, but random** — not on a rhythm. That is something else entirely and worth describing.
+4. **Sakura Fuji — is it the daytime one?** It should be **cherry blossom in daylight** with Fuji behind it.
+   The day clip has been verified live on R2 since 2026-09-16, so if it is still the dark blue night
+   version the data edit (IMP-138 step 5) did not ship — that is a code finding, not an upload one. Look at it in **both** app modes (dev panel → Mode) and say whether the day clip still works at night
+   — that decides whether this sky ends up with one clip or two.
+5. **Aurora and Starfall — a shorter look, but do look.** You called both beautiful; this is only checking
+   nothing *else* broke. Thirty seconds each: does the loop restart show, and is the white number readable
+   over the brightest part of each clip? Starfall is the risk — it is 20 seconds long and violet.
+6. **Max font, on any video sky.** `adb shell settings put system font_scale 2.0`, relaunch. The number gets
+   bigger; nothing should clip out of the card and the level/XP row at the foot should still be readable
+   over the scrim. Reset to `1.0`.
+7. **Last, and it takes two seconds: kill the app and reopen it on a video sky.** The **poster image** is
+   what covers the first moment before the video starts. It should be a still frame of the same sky — you
+   should not see a black card, a grey card, or a flash of a different picture.
+
+### ⚠️ What this walk cannot settle
+
+- **It cannot prove the Emberfield fix worked on other phones.** One panel, one decoder. A "gone" here is
+  good evidence, not a guarantee, and it is worth a second look on any other device that is around.
+- **It says nothing about battery.** Four skies now exist and a video hero runs whenever Home is open.
+  That is still owed and belongs to its own sitting — do not answer it from this one.
+- **Do not record step 3 as a pass if you skipped the storage clear.** A cached old clip will hitch exactly
+  as before and look like a failed fix, and a cached *new* clip on a phone that never played the old one
+  proves nothing about the change. If you are not sure which happened, say so rather than guessing.

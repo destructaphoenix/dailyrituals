@@ -344,3 +344,72 @@ the poster is a layered `<Image>` dropped when `player.status === 'readyToPlay'`
 - **Bundling clips with the binary.** Costed and rejected — see the delivery decision.
 
 _Written 2026-09-12. The route only; every "why" behind it is in `playbook.md` and `design-queue.md`._
+
+---
+
+## Emberfield does not stutter — it loops (2026-09-16)
+
+The owner, first sitting with all four skies on the phone: *"Emberfield: looks good, but sometimes it feels
+like it freezes for one frame."* **"Sometimes" is the whole clue** — a constant judder is a frame rate, an
+intermittent one is a seam. Measured from the encoded clip, not guessed:
+
+| | Aurora | Emberfield | Sakura Fuji | Starfall |
+| --- | --- | --- | --- | --- |
+| fps | 24 | **10** | 24 | 30 |
+| frames | 240 | 60 | 240 | 604 |
+| one frame lasts | 42ms | **100ms** | 42ms | 33ms |
+
+**Three things were ruled out by measurement, and each one is a dead end somebody will otherwise re-walk:**
+
+1. **It is not a duplicate frame.** All 59 adjacent frame pairs score SSIM 0.860–0.885 against each other —
+   a tight band with no outlier anywhere near 1.0. There is no repeated frame in the clip.
+2. **It is not a bad loop window.** The wrap (last frame → frame 0) scores **0.863 against an adjacent-frame
+   floor of 0.877 — 0.98× the floor**, i.e. the jump back to the start is the same size as any ordinary
+   frame step. By `encode-sky.py`'s own calibration that is better than the clip that shipped as `meteor`.
+3. 🔴 **It is NOT fixable by frame interpolation, and trying is actively destructive.** The obvious move is
+   `minterpolate` 10 → 30fps, and it was tried both ways (`mi_mode=mci` and `blend`, over a doubled clip so
+   the interpolation crosses the wrap — that part works, both score 0.97–0.98× floor at 180 frames).
+   **Look at the output before believing the numbers: Emberfield is PIXEL ART.** Motion compensation
+   resamples hard-edged pixel clusters into mush, and the falling orange leaf in the upper right is smeared
+   away entirely by frame 91. **10fps is not a defect in this clip — it is the medium.** Never interpolate
+   this source.
+
+### What is left, and what was done about it
+
+`SkyHero` plays with `p.loop = true` — one `VideoView`, a hard restart. **Every loop restart is a seek back
+to frame 0**, and the clip was encoded `-g 48`, so it held **two keyframes in 60 frames**. At 10fps a
+restart that has to re-decode costs up to 100ms of held frame; at 24 or 30fps the same hitch is 42 or 33ms
+and hides under the scrim. That is exactly "sometimes it freezes for one frame", once every 6 seconds.
+
+**Fix applied — `emberfield.mp4` re-encoded all-keyframe.** `encode-sky.py` gains **`--gop`** (default 48
+unchanged) and warns on its own whenever an output is under 20fps with a long GOP. Emberfield was rebuilt as
+`--gop 1`: 60 frames, **60 keyframes**, wrap now **0.99× floor**, and a loop restart cannot stall because
+there is nothing to re-decode.
+
+```
+python3 scripts/encode-sky.py sky-src/embers.mp4 --id emberfield --mode both \
+    --crop-x 50 --crop-y 58 --gop 1
+```
+
+**It costs 1.3 → 2.97 MB and nothing else** — still inside the 2.5–3.5 MB per-sky target, still lazily
+downloaded and LRU-cached, and **not one pixel is touched** (frame 30 scores 0.974 against the old encode,
+all of it compression, all-intra at crf 23 being the higher-quality side of that number).
+
+✅ **The re-encode is live.** The owner uploaded it 2026-09-16; verified from here rather than taken on
+trust — `emberfield.mp4` returns **200, 2,970,779 bytes**, SHA-matching `sky-build/emberfield.mp4` byte for
+byte. ⚠️ **One thing did not come with it: `emberfield-poster.jpg` on R2 is still the OLD file** (91,064
+bytes vs the new 82,489). **Harmless and not worth a re-upload on its own** — both are frame 0 of the same
+clip and score 0.985 against each other; the difference is JPEG compression, not picture. Replace it
+whenever the bucket is next open.
+
+⚠️ **The fix is NOT PROVEN and must not be recorded as proven.** Being live is not being watched. It is a
+well-supported hypothesis with the other three candidates measured out — it is not a device result, and it
+needs an eye on it for a full minute:
+[WALK-27](walk-open.md#walk-27--four-skies-and-a-white-numeral) step 3. ⚠️ **`expo-video` caches by URL** —
+a phone that has already played Emberfield holds the old bytes, so the walk has to clear app storage or the
+test proves nothing.
+
+**If it still hitches after that,** the cause is the loop restart itself rather than the decode, and the
+answer is the crossfade shell `skies-route.md` already costed for Event Horizon — two players half a length
+apart. That is a real build task on `SkyHero`, not a data edit, and it should not be started before the
+device says the cheap fix failed.
