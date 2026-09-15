@@ -169,6 +169,11 @@ export const SHOP_SKIES = [
     accent: '#BFE6FF',
     credit: 'Pexels — Pexels Licence, free for commercial use, no attribution required. Sourced 2026-09-12; loop window (frames 226–345) cut 2026-09-13.' },
   { id: 'aurora',   name: 'Aurora',        kind: 'aurora',  tier: 'plus' },
+  { id: 'emberfield', name: 'Emberfield',  kind: 'ember',   tier: 'plus',
+    clip: `${SKY_BASE}/emberfield.mp4`,
+    poster: `${SKY_BASE}/emberfield-poster.jpg`,
+    accent: '#D98A3D',
+    credit: 'Higgsfield, paid tier, output owned. Generated 2026-09-12; full clip (60 frames) cut sky-src/embers.mp4, encoded 2026-09-15.' },
 ];
 
 // Max candles a user can hold at once. Caps CANDLE_PACKS and the Plus renewal grant.
