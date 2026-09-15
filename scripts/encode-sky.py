@@ -231,7 +231,12 @@ def main():
     floor = ssim(tmp[0], tmp[1])
 
     frame_png(out, 0, tmp[2])
-    run(['ffmpeg', '-v', 'error', '-sseof', '-0.05', '-i', out,
+    # The seek must clear at least one whole frame at this clip's own fps —
+    # a fixed -0.05 lands inside the last frame's decode window on anything
+    # below ~20fps (e.g. Emberfield's 10fps: 0.1s/frame) and ffmpeg emits
+    # nothing. Found 2026-09-15 running this against the real clip.
+    eof_offset = max(0.05, 1.5 / enc['fps'])
+    run(['ffmpeg', '-v', 'error', '-sseof', f'-{eof_offset:.3f}', '-i', out,
          '-vframes', '1', '-y', tmp[3]])
     wrap = ssim(tmp[2], tmp[3])
 
